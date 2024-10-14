@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_documents
 from danswer.access.models import DocumentAccess
+from danswer.configs.app_configs import ENABLE_CONTEXTUAL_RAG
 from danswer.configs.app_configs import ENABLE_MULTIPASS_INDEXING
 from danswer.configs.app_configs import INDEXING_EXCEPTION_LIMIT
 from danswer.configs.constants import DEFAULT_BOOST
@@ -34,6 +35,7 @@ from danswer.indexing.embedder import IndexingEmbedder
 from danswer.indexing.indexing_heartbeat import IndexingHeartbeat
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
+from danswer.llm.factory import get_default_llms
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_function_time
 from shared_configs.enums import EmbeddingProvider
@@ -389,6 +391,13 @@ def build_indexing_pipeline(
         else ENABLE_MULTIPASS_INDEXING
     )
 
+    enable_contextual_rag = (
+        search_settings.enable_contextual_rag
+        if search_settings
+        else ENABLE_CONTEXTUAL_RAG
+    )
+    llm = get_default_llms()[0] if enable_contextual_rag else None
+
     enable_large_chunks = (
         multipass
         and
@@ -405,6 +414,7 @@ def build_indexing_pipeline(
     chunker = chunker or Chunker(
         tokenizer=embedder.embedding_model.tokenizer,
         enable_multipass=multipass,
+        enable_contextual_rag=enable_contextual_rag,
         enable_large_chunks=enable_large_chunks,
         # after every doc, update status in case there are a bunch of
         # really long docs
@@ -413,6 +423,7 @@ def build_indexing_pipeline(
         )
         if attempt_id
         else None,
+        llm=llm,
     )
 
     return partial(
