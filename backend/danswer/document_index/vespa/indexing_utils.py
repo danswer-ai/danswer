@@ -123,6 +123,7 @@ def _index_vespa_chunk(
     chunk: DocMetadataAwareIndexChunk,
     index_name: str,
     http_client: httpx.Client,
+    multitenant: bool,
 ) -> None:
     json_header = {
         "Content-Type": "application/json",
@@ -179,8 +180,9 @@ def _index_vespa_chunk(
         BOOST: chunk.boost,
     }
 
-    if chunk.tenant_id:
-        vespa_document_fields[TENANT_ID] = chunk.tenant_id
+    if multitenant:
+        if chunk.tenant_id:
+            vespa_document_fields[TENANT_ID] = chunk.tenant_id
 
     vespa_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{vespa_chunk_id}"
     logger.debug(f'Indexing to URL "{vespa_url}"')
@@ -200,6 +202,7 @@ def batch_index_vespa_chunks(
     chunks: list[DocMetadataAwareIndexChunk],
     index_name: str,
     http_client: httpx.Client,
+    multitenant: bool,
     executor: concurrent.futures.ThreadPoolExecutor | None = None,
 ) -> None:
     external_executor = True
@@ -210,7 +213,9 @@ def batch_index_vespa_chunks(
 
     try:
         chunk_index_future = {
-            executor.submit(_index_vespa_chunk, chunk, index_name, http_client): chunk
+            executor.submit(
+                _index_vespa_chunk, chunk, index_name, http_client, multitenant
+            ): chunk
             for chunk in chunks
         }
         for future in concurrent.futures.as_completed(chunk_index_future):

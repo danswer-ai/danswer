@@ -124,9 +124,15 @@ def add_ngrams_to_schema(schema_content: str) -> str:
 
 
 class VespaIndex(DocumentIndex):
-    def __init__(self, index_name: str, secondary_index_name: str | None) -> None:
+    def __init__(
+        self,
+        index_name: str,
+        secondary_index_name: str | None,
+        multitenant: bool = False,
+    ) -> None:
         self.index_name = index_name
         self.secondary_index_name = secondary_index_name
+        self.multitenant = multitenant
 
     def ensure_indices_exist(
         self,
@@ -341,6 +347,7 @@ class VespaIndex(DocumentIndex):
                     chunks=chunk_batch,
                     index_name=self.index_name,
                     http_client=http_client,
+                    multitenant=self.multitenant,
                     executor=executor,
                 )
 
