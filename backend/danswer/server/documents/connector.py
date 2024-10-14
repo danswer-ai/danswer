@@ -76,6 +76,7 @@ from danswer.db.models import IndexingStatus
 from danswer.db.models import User
 from danswer.db.models import UserRole
 from danswer.db.search_settings import get_current_search_settings
+from danswer.db.search_settings import get_secondary_search_settings
 from danswer.file_store.file_store import get_default_file_store
 from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.redis.redis_pool import get_redis_client
@@ -536,6 +537,11 @@ def get_connector_indexing_status(
             relationship.user_group_id
         )
 
+    if not secondary_index:
+        search_settings = get_current_search_settings(db_session)
+    else:
+        search_settings = get_secondary_search_settings(db_session)
+
     for cc_pair in cc_pairs:
         # TODO remove this to enable ingestion API
         if cc_pair.name == "DefaultCCPair":
@@ -547,7 +553,7 @@ def get_connector_indexing_status(
             # This may happen if background deletion is happening
             continue
 
-        rci = RedisConnectorIndexing(connector.id, credential.id)
+        rci = RedisConnectorIndexing(cc_pair.id, search_settings.id)
 
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
             (connector.id, credential.id)
