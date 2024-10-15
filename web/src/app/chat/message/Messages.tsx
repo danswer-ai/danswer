@@ -256,7 +256,7 @@ export const AIMessage = ({
     () => ({
       a: MemoizedLink,
       p: MemoizedParagraph,
-      code: ({ node, inline, className, children, ...props }: any) => {
+      code: ({ node, className, children, ...props }: any) => {
         const codeText = extractCodeText(
           node,
           finalContent as string,
