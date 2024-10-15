@@ -22,11 +22,7 @@ export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
 
   // for SAML / OIDC, we auto-redirect the user to the IdP when the user visits
   // Danswer in an un-authenticated state
-  if (
-    authType === "oidc" ||
-    authType === "saml" ||
-    authType === "google_oauth"
-  ) {
+  if (authType === "oidc" || authType === "saml") {
     return {
       authType,
       autoRedirect: true,
@@ -44,7 +40,7 @@ export const getAuthDisabledSS = async (): Promise<boolean> => {
   return (await getAuthTypeMetadataSS()).authType === "disabled";
 };
 
-const geOIDCAuthUrlSS = async (nextUrl: string | null): Promise<string> => {
+const getOIDCAuthUrlSS = async (nextUrl: string | null): Promise<string> => {
   const res = await fetch(
     buildUrl(
       `/auth/oidc/authorize${nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : ""}`
@@ -58,12 +54,8 @@ const geOIDCAuthUrlSS = async (nextUrl: string | null): Promise<string> => {
   return data.authorization_url;
 };
 
-const getGoogleOAuthUrlSS = async (nextUrl: string | null): Promise<string> => {
-  const res = await fetch(
-    buildUrl(
-      `/auth/oauth/authorize${nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : ""}`
-    )
-  );
+const getGoogleOAuthUrlSS = async (): Promise<string> => {
+  const res = await fetch(buildUrl(`/auth/oauth/authorize`));
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }
@@ -93,13 +85,13 @@ export const getAuthUrlSS = async (
     case "basic":
       return "";
     case "google_oauth": {
-      return await getGoogleOAuthUrlSS(nextUrl);
+      return await getGoogleOAuthUrlSS();
     }
     case "saml": {
       return await getSAMLAuthUrlSS();
     }
     case "oidc": {
-      return await geOIDCAuthUrlSS(nextUrl);
+      return await getOIDCAuthUrlSS(nextUrl);
     }
   }
 };
