@@ -145,7 +145,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     if (!cachedBatches[0]) {
       fetchBatchData(0);
     }
-  }, [ccPair.id, page, cachedBatches, totalPages]);
+  }, [ccPair.id, page, cachedBatches, totalPages, fetchBatchData]);
 
   // This updates the data on the current page
   useEffect(() => {
@@ -159,6 +159,15 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
       setIsCurrentPageLoading(true);
     }
   }, [page, cachedBatches]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const batchNum = Math.floor((page - 1) / BATCH_SIZE);
+      fetchBatchData(batchNum); // Re-fetch the current batch data
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, [page, fetchBatchData]); // Dependencies to ensure correct batch is fetched
 
   // This updates the page number and manages the URL
   const updatePage = (newPage: number) => {

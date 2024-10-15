@@ -74,7 +74,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
     ) {
       finishConnectorDeletion();
     }
-  }, [isLoading, ccPair, error, hasLoadedOnce]);
+  }, [isLoading, ccPair, error, hasLoadedOnce, finishConnectorDeletion]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditableName(e.target.value);
