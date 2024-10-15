@@ -435,8 +435,6 @@ def cancel_indexing_attempts_for_ccpair(
 
     db_session.execute(stmt)
 
-    # db_session.commit()
-
 
 def cancel_indexing_attempts_past_model(
     db_session: Session,

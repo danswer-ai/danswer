@@ -172,6 +172,8 @@ def update_cc_pair_status(
         status=status_update_request.status,
     )
 
+    db_session.commit()
+
 
 @router.put("/admin/cc-pair/{cc_pair_id}/name")
 def update_cc_pair_name(
