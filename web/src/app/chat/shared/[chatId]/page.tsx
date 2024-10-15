@@ -11,7 +11,7 @@ import { SharedChatDisplay } from "./SharedChatDisplay";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { fetchAssistantsSS } from "@/lib/assistants/fetchAssistantsSS";
 import FunctionalHeader from "@/components/chat_search/Header";
-import { fetchAssistantSS } from "@/lib/assistants/fetchAssistantSS";
+import { defaultPersona } from "@/app/admin/assistants/lib";
 
 async function getSharedChat(chatId: string) {
   const response = await fetchSS(
@@ -58,8 +58,9 @@ export default async function Page({ params }: { params: { chatId: string } }) {
     ? (availableAssistants?.find((p) => p.id === chatSession.persona_id) ??
       availableAssistants?.[0] ??
       null)
-    : (availableAssistants?.[0] ?? null);
+    : (availableAssistants?.[0] ?? defaultPersona);
 
+  console.log(persona);
   return (
     <div>
       <div className="absolute top-0 z-40 w-full">
