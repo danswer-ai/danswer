@@ -1,6 +1,7 @@
 import re
 from typing import cast
 
+from fastapi.datastructures import Headers
 from sqlalchemy.orm import Session
 
 from danswer.chat.models import CitationInfo
@@ -166,3 +167,31 @@ def reorganize_citations(
             new_citation_info[citation.citation_num] = citation
 
     return new_answer, list(new_citation_info.values())
+
+
+def extract_headers(
+    headers: dict[str, str] | Headers, pass_through_headers: list[str] | None
+) -> dict[str, str]:
+    """
+    Extract headers specified in pass_through_headers from input headers.
+    Handles both dict and FastAPI Headers objects, accounting for lowercase keys.
+
+    Args:
+        headers: Input headers as dict or Headers object.
+
+    Returns:
+        dict: Filtered headers based on pass_through_headers.
+    """
+    if not pass_through_headers:
+        return {}
+
+    extracted_headers: dict[str, str] = {}
+    for key in pass_through_headers:
+        if key in headers:
+            extracted_headers[key] = headers[key]
+        else:
+            # fastapi makes all header keys lowercase, handling that here
+            lowercase_key = key.lower()
+            if lowercase_key in headers:
+                extracted_headers[lowercase_key] = headers[lowercase_key]
+    return extracted_headers
