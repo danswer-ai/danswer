@@ -184,9 +184,9 @@ def setup_logger(
     return DanswerLoggingAdapter(logger, extra=extra)
 
 
-def print_loggers():
+def print_loggers() -> None:
     root_logger = logging.getLogger()
-    loggers = [root_logger]
+    loggers: list[logging.Logger | logging.PlaceHolder] = [root_logger]
     loggers.extend(logging.Logger.manager.loggerDict.values())
 
     for logger in loggers:
