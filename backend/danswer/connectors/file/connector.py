@@ -16,7 +16,7 @@ from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.file_processing.extract_file_text import check_file_ext_is_valid
 from danswer.file_processing.extract_file_text import detect_encoding
 from danswer.file_processing.extract_file_text import extract_file_text
@@ -158,11 +158,13 @@ def _process_file(
 class LocalFileConnector(LoadConnector):
     def __init__(
         self,
+        tenant_id: str,
         file_locations: list[Path | str],
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.file_locations = [Path(file_location) for file_location in file_locations]
         self.batch_size = batch_size
+        self.tenant_id = tenant_id
         self.pdf_pass: str | None = None
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
@@ -171,7 +173,7 @@ class LocalFileConnector(LoadConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         documents: list[Document] = []
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(self.tenant_id) as db_session:
             for file_path in self.file_locations:
                 current_datetime = datetime.now(timezone.utc)
                 files = _read_files_and_metadata(
