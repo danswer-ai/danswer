@@ -22,7 +22,11 @@ export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
 
   // for SAML / OIDC, we auto-redirect the user to the IdP when the user visits
   // Danswer in an un-authenticated state
-  if (authType === "oidc" || authType === "saml") {
+  if (
+    authType === "oidc" ||
+    authType === "saml" ||
+    authType === "google_oauth"
+  ) {
     return {
       authType,
       autoRedirect: true,
@@ -40,8 +44,12 @@ export const getAuthDisabledSS = async (): Promise<boolean> => {
   return (await getAuthTypeMetadataSS()).authType === "disabled";
 };
 
-const geOIDCAuthUrlSS = async (): Promise<string> => {
-  const res = await fetch(buildUrl("/auth/oidc/authorize"));
+const geOIDCAuthUrlSS = async (nextUrl: string | null): Promise<string> => {
+  const res = await fetch(
+    buildUrl(
+      `/auth/oidc/authorize${nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : ""}`
+    )
+  );
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }
@@ -50,8 +58,12 @@ const geOIDCAuthUrlSS = async (): Promise<string> => {
   return data.authorization_url;
 };
 
-const getGoogleOAuthUrlSS = async (): Promise<string> => {
-  const res = await fetch(buildUrl("/auth/oauth/authorize"));
+const getGoogleOAuthUrlSS = async (nextUrl: string | null): Promise<string> => {
+  const res = await fetch(
+    buildUrl(
+      `/auth/oauth/authorize${nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : ""}`
+    )
+  );
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }
@@ -70,7 +82,10 @@ const getSAMLAuthUrlSS = async (): Promise<string> => {
   return data.authorization_url;
 };
 
-export const getAuthUrlSS = async (authType: AuthType): Promise<string> => {
+export const getAuthUrlSS = async (
+  authType: AuthType,
+  nextUrl: string | null
+): Promise<string> => {
   // Returns the auth url for the given auth type
   switch (authType) {
     case "disabled":
@@ -78,13 +93,13 @@ export const getAuthUrlSS = async (authType: AuthType): Promise<string> => {
     case "basic":
       return "";
     case "google_oauth": {
-      return await getGoogleOAuthUrlSS();
+      return await getGoogleOAuthUrlSS(nextUrl);
     }
     case "saml": {
       return await getSAMLAuthUrlSS();
     }
     case "oidc": {
-      return await geOIDCAuthUrlSS();
+      return await geOIDCAuthUrlSS(nextUrl);
     }
   }
 };

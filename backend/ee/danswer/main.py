@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from httpx_oauth.clients.openid import OpenID
 
 from danswer.auth.users import auth_backend
+from danswer.auth.users import create_danswer_oauth_router
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import MULTI_TENANT
@@ -61,7 +62,7 @@ def get_application() -> FastAPI:
     if AUTH_TYPE == AuthType.OIDC:
         include_router_with_global_prefix_prepended(
             application,
-            fastapi_users.get_oauth_router(
+            create_danswer_oauth_router(
                 OpenID(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OPENID_CONFIG_URL),
                 auth_backend,
                 USER_AUTH_SECRET,

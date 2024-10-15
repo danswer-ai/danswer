@@ -22,6 +22,7 @@ from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
+from danswer.auth.users import create_danswer_oauth_router
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
@@ -81,7 +82,6 @@ from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
 from danswer.setup import setup_danswer
-from danswer.setup import setup_multitenant_danswer
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import get_or_generate_uuid
 from danswer.utils.telemetry import optional_telemetry
@@ -176,11 +176,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # We cache this at the beginning so there is no delay in the first telemetry
         get_or_generate_uuid()
 
+        # If we are multi-tenant, we need to only set up initial public tables
         with Session(engine) as db_session:
             setup_danswer(db_session)
-
-    else:
-        setup_multitenant_danswer()
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
@@ -290,7 +288,7 @@ def get_application() -> FastAPI:
         oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
         include_router_with_global_prefix_prepended(
             application,
-            fastapi_users.get_oauth_router(
+            create_danswer_oauth_router(
                 oauth_client,
                 auth_backend,
                 USER_AUTH_SECRET,
