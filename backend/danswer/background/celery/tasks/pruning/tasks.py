@@ -104,6 +104,7 @@ def is_pruning_due(
     last_pruned = cc_pair.last_pruned
     if not last_pruned:
         if not cc_pair.last_successful_index_time:
+            # if we've never indexed, we can't prune
             return False
 
         # if never pruned, use the last time the connector indexed successfully
@@ -214,7 +215,9 @@ def connector_pruning_generator_task(
 
     acquired = lock.acquire(blocking=False)
     if not acquired:
-        task_logger.warning(f"Pruning task conflict: cc_pair_id={cc_pair_id}")
+        task_logger.warning(
+            f"Pruning task already running, exiting...: cc_pair_id={cc_pair_id}"
+        )
         return None
 
     try:

@@ -308,12 +308,12 @@ def monitor_document_set_taskset(
     key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    document_set_string_id = RedisDocumentSet.get_id_from_fence_key(fence_key)
-    if document_set_string_id is None:
+    document_set_id_str = RedisDocumentSet.get_id_from_fence_key(fence_key)
+    if document_set_id_str is None:
         task_logger.warning(f"could not parse document set id from {fence_key}")
         return
 
-    document_set_id = int(document_set_string_id)
+    document_set_id = int(document_set_id_str)
 
     rds = RedisDocumentSet(document_set_id)
 
@@ -358,12 +358,12 @@ def monitor_document_set_taskset(
 
 def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
     fence_key = key_bytes.decode("utf-8")
-    cc_pair_string_id = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
-    if cc_pair_string_id is None:
+    cc_pair_id_str = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
+    if cc_pair_id_str is None:
         task_logger.warning(f"could not parse cc_pair_id from {fence_key}")
         return
 
-    cc_pair_id = int(cc_pair_string_id)
+    cc_pair_id = int(cc_pair_id_str)
 
     rcd = RedisConnectorDeletion(cc_pair_id)
 
@@ -461,14 +461,14 @@ def monitor_ccpair_pruning_taskset(
     key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    cc_pair_string_id = RedisConnectorPruning.get_id_from_fence_key(fence_key)
-    if cc_pair_string_id is None:
+    cc_pair_id_str = RedisConnectorPruning.get_id_from_fence_key(fence_key)
+    if cc_pair_id_str is None:
         task_logger.warning(
             f"monitor_ccpair_pruning_taskset: could not parse cc_pair_id from {fence_key}"
         )
         return
 
-    cc_pair_id = int(cc_pair_string_id)
+    cc_pair_id = int(cc_pair_id_str)
 
     rcp = RedisConnectorPruning(cc_pair_id)
 
@@ -699,7 +699,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
             )
 
             for a in attempts:
-                # if attempts appear to exist but we don't detect them in redis, mark them as failed
+                # if attempts exist in the db but we don't detect them in redis, mark them as failed
                 rci = RedisConnectorIndexing(
                     a.connector_credential_pair_id, a.search_settings_id
                 )

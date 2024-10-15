@@ -246,7 +246,7 @@ class CCPairManager:
                     fetched_cc_pair.last_success
                     and fetched_cc_pair.last_success > after
                 ):
-                    print(f"cc_pair {cc_pair.id} indexing complete.")
+                    print(f"CC pair {cc_pair.id} indexing complete.")
                     return
 
             elapsed = time.monotonic() - start
@@ -256,7 +256,7 @@ class CCPairManager:
                 )
 
             print(
-                f"Waiting for cc_pair {cc_pair.id} indexing to complete. elapsed={elapsed:.2f} timeout={timeout}"
+                f"CC pair {cc_pair.id} indexing to complete. elapsed={elapsed:.2f} timeout={timeout}"
             )
             time.sleep(5)
 

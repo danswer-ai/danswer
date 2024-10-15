@@ -387,27 +387,6 @@ class CeleryTaskColoredFormatter(ColoredFormatter):
         return super().format(record)
 
 
-# def print_logger_tree():
-#     root_logger = logging.getLogger()
-#     loggers = [root_logger]
-#     loggers.extend(logging.Logger.manager.loggerDict.values())
-
-#     for logger in loggers:
-#         if isinstance(logger, logging.PlaceHolder):
-#             # Skip placeholders that aren't actual loggers
-#             continue
-
-#         print(f"Logger: '{logger.name}' (Level: {logging.getLevelName(logger.level)})")
-#         if logger.handlers:
-#             for handler in logger.handlers:
-#                 print(f"  Handler: {handler}")
-#         else:
-#             print("  No handlers")
-
-#         print(f"  Propagate: {logger.propagate}")
-#         print()
-
-
 @signals.setup_logging.connect
 def on_setup_logging(
     loglevel: Any, logfile: Any, format: Any, colorize: Any, **kwargs: Any
@@ -457,9 +436,6 @@ def on_setup_logging(
 
     task_logger.setLevel(loglevel)
     task_logger.propagate = False
-
-    # Run the function to print the logger tree
-    # print_logger_tree()
 
 
 class HubPeriodicTask(bootsteps.StartStopStep):
@@ -571,7 +547,7 @@ tasks_to_schedule = [
     {
         "name": "check-for-indexing",
         "task": "check_for_indexing",
-        "schedule": timedelta(seconds=15),
+        "schedule": timedelta(seconds=10),
         "options": {"priority": DanswerCeleryPriority.HIGH},
     },
     {

@@ -378,7 +378,8 @@ def connector_indexing_task(
     acquired = lock.acquire(blocking=False)
     if not acquired:
         task_logger.warning(
-            f"Indexing task conflict: cc_pair_id={cc_pair_id} search_settings_id={search_settings_id}"
+            f"Indexing task already running, exiting...: "
+            f"cc_pair_id={cc_pair_id} search_settings_id={search_settings_id}"
         )
         # r.set(rci.generator_complete_key, HTTPStatus.CONFLICT.value)
         return None
