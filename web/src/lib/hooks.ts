@@ -287,8 +287,6 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   "meta.llama3-2-3b-instruct-v1:0": "Llama 3.2 3B",
   "meta.llama3-2-11b-instruct-v1:0": "Llama 3.2 11B",
   "meta.llama3-2-90b-instruct-v1:0": "Llama 3.2 90B",
-  "eu.meta.llama3-2-1b-instruct-v1:0": "Llama 3.2 1B (EU)",
-  "eu.meta.llama3-2-3b-instruct-v1:0": "Llama 3.2 3B (EU)",
   "meta.llama3-8b-instruct-v1:0": "Llama 3 8B",
   "meta.llama2-70b-chat-v1": "Llama 2 70B",
   "meta.llama2-13b-chat-v1": "Llama 2 13B",
