@@ -63,7 +63,7 @@ const Page = async ({
   let authUrl: string | null = null;
   if (authTypeMetadata) {
     try {
-      authUrl = await getAuthUrlSS(authTypeMetadata.authType, nextUrl);
+      authUrl = await getAuthUrlSS(authTypeMetadata.authType, nextUrl!);
     } catch (e) {
       console.log(`Some fetch failed for the login page - ${e}`);
     }

@@ -29,7 +29,6 @@ import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/Wel
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
 import { NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN } from "../constants";
 import { checkLLMSupportsImageInput } from "../llm/utils";
-import { redirectToLogin } from "@/app/auth/libss";
 import { redirect } from "next/navigation";
 
 interface FetchChatDataResult {
