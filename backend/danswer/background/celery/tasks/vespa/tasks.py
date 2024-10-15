@@ -39,7 +39,6 @@ from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
 from danswer.db.engine import get_session_with_tenant
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.index_attempt import delete_index_attempts
 from danswer.db.models import DocumentSet
 from danswer.db.models import UserGroup
@@ -341,7 +340,9 @@ def monitor_document_set_taskset(
     r.delete(rds.fence_key)
 
 
-def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
+def monitor_connector_deletion_taskset(
+    key_bytes: bytes, r: Redis, tenant_id: str | None
+) -> None:
     fence_key = key_bytes.decode("utf-8")
     cc_pair_id = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
     if cc_pair_id is None:
@@ -367,7 +368,7 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
     if count > 0:
         return
 
-    with Session(get_sqlalchemy_engine()) as db_session:
+    with get_session_with_tenant(tenant_id) as db_session:
         cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
         if not cc_pair:
             task_logger.warning(
@@ -529,7 +530,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> None:
 
         lock_beat.reacquire()
         for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
-            monitor_connector_deletion_taskset(key_bytes, r)
+            monitor_connector_deletion_taskset(key_bytes, r, tenant_id)
 
         with get_session_with_tenant(tenant_id) as db_session:
             lock_beat.reacquire()

@@ -154,6 +154,7 @@ def update_cc_pair_status(
         user=user,
         get_editable=True,
     )
+
     if not cc_pair:
         raise HTTPException(
             status_code=400,
@@ -163,7 +164,6 @@ def update_cc_pair_status(
     if status_update_request.status == ConnectorCredentialPairStatus.PAUSED:
         cancel_indexing_attempts_for_ccpair(cc_pair_id, db_session)
 
-        # Just for good measure
         cancel_indexing_attempts_past_model(db_session)
 
     update_connector_credential_pair_from_id(
@@ -171,6 +171,8 @@ def update_cc_pair_status(
         cc_pair_id=cc_pair_id,
         status=status_update_request.status,
     )
+
+    db_session.commit()
 
 
 @router.put("/admin/cc-pair/{cc_pair_id}/name")

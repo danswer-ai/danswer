@@ -435,14 +435,13 @@ def cancel_indexing_attempts_for_ccpair(
 
     db_session.execute(stmt)
 
-    db_session.commit()
-
 
 def cancel_indexing_attempts_past_model(
     db_session: Session,
 ) -> None:
     """Stops all indexing attempts that are in progress or not started for
     any embedding model that not present/future"""
+
     db_session.execute(
         update(IndexAttempt)
         .where(
@@ -454,8 +453,6 @@ def cancel_indexing_attempts_past_model(
         )
         .values(status=IndexingStatus.FAILED)
     )
-
-    db_session.commit()
 
 
 def count_unique_cc_pairs_with_successful_index_attempts(

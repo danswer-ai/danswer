@@ -65,6 +65,7 @@ def _get_connector_runner(
             input_type=task,
             connector_specific_config=attempt.connector_credential_pair.connector.connector_specific_config,
             credential=attempt.connector_credential_pair.credential,
+            tenant_id=tenant_id,
         )
     except Exception as e:
         logger.exception(f"Unable to instantiate connector due to {e}")
