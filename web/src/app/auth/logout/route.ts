@@ -8,6 +8,10 @@ export const POST = async (request: NextRequest) => {
   const authTypeMetadata = await getAuthTypeMetadataSS();
   const response = await logoutSS(authTypeMetadata.authType, request.headers);
 
+  if (response && !response.ok) {
+    return new Response(response.body, { status: response?.status });
+  }
+
   // Delete cookies only if cloud is enabled (jwt auth)
   if (CLOUD_ENABLED) {
     const cookiesToDelete = ["fastapiusersauth", "tenant_details"];
@@ -18,32 +22,23 @@ export const POST = async (request: NextRequest) => {
       sameSite: "lax" as const,
     };
 
-    if (!response || response.ok) {
-      const newResponse = new Response(null, { status: 204 });
-      cookiesToDelete.forEach((cookieName) => {
-        newResponse.headers.append(
-          "Set-Cookie",
-          `${cookieName}=; Max-Age=0; ${Object.entries(cookieOptions)
-            .map(([key, value]) => `${key}=${value}`)
-            .join("; ")}`
-        );
-      });
-      return newResponse;
-    }
+    // Logout successful, delete cookies
+    const headers = new Headers();
 
-    const newResponse = new Response(response.body, {
-      status: response?.status,
-    });
     cookiesToDelete.forEach((cookieName) => {
-      newResponse.headers.append(
+      headers.append(
         "Set-Cookie",
         `${cookieName}=; Max-Age=0; ${Object.entries(cookieOptions)
           .map(([key, value]) => `${key}=${value}`)
           .join("; ")}`
       );
     });
-    return newResponse;
-  }
 
-  return response;
+    return new Response(null, {
+      status: 204,
+      headers: headers,
+    });
+  } else {
+    return new Response(null, { status: 204 });
+  }
 };
