@@ -5,6 +5,7 @@ from http import HTTPStatus
 from typing import cast
 
 import redis
+from celery import Celery
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
@@ -14,8 +15,7 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
-from danswer.background.celery.celery_app import celery_app
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import celery_get_queue_length
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
@@ -23,7 +23,7 @@ from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
-from danswer.background.celery.tasks.shared.tasks import RedisFenceData
+from danswer.background.celery.tasks.shared.RedisFenceData import RedisFenceData
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
@@ -73,8 +73,9 @@ from danswer.utils.variable_functionality import noop_fallback
     name="check_for_vespa_sync_task",
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
+    bind=True,
 )
-def check_for_vespa_sync_task(tenant_id: str | None) -> None:
+def check_for_vespa_sync_task(self: Task, tenant_id: str | None) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
 
@@ -91,7 +92,9 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
             return
 
         with get_session_with_tenant(tenant_id) as db_session:
-            try_generate_stale_document_sync_tasks(db_session, r, lock_beat, tenant_id)
+            try_generate_stale_document_sync_tasks(
+                self.app, db_session, r, lock_beat, tenant_id
+            )
 
             # check if any document sets are not synced
             document_set_info = fetch_document_sets(
@@ -99,7 +102,7 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
             )
             for document_set, _ in document_set_info:
                 try_generate_document_set_sync_tasks(
-                    document_set, db_session, r, lock_beat, tenant_id
+                    self.app, document_set, db_session, r, lock_beat, tenant_id
                 )
 
             # check if any user groups are not synced
@@ -114,7 +117,7 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
                     )
                     for usergroup in user_groups:
                         try_generate_user_group_sync_tasks(
-                            usergroup, db_session, r, lock_beat, tenant_id
+                            self.app, usergroup, db_session, r, lock_beat, tenant_id
                         )
                 except ModuleNotFoundError:
                     # Always exceptions on the MIT version, which is expected
@@ -133,7 +136,11 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
 
 
 def try_generate_stale_document_sync_tasks(
-    db_session: Session, r: Redis, lock_beat: redis.lock.Lock, tenant_id: str | None
+    celery_app: Celery,
+    db_session: Session,
+    r: Redis,
+    lock_beat: redis.lock.Lock,
+    tenant_id: str | None,
 ) -> int | None:
     # the fence is up, do nothing
     if r.exists(RedisConnectorCredentialPair.get_fence_key()):
@@ -184,6 +191,7 @@ def try_generate_stale_document_sync_tasks(
 
 
 def try_generate_document_set_sync_tasks(
+    celery_app: Celery,
     document_set: DocumentSet,
     db_session: Session,
     r: Redis,
@@ -235,6 +243,7 @@ def try_generate_document_set_sync_tasks(
 
 
 def try_generate_user_group_sync_tasks(
+    celery_app: Celery,
     usergroup: UserGroup,
     db_session: Session,
     r: Redis,

@@ -121,7 +121,7 @@ def celery_is_listening_to_queue(worker: Any, name: str) -> bool:
 def celery_is_worker_primary(worker: Any) -> bool:
     """There are multiple approaches that could be taken to determine if a celery worker
     is 'primary', as defined by us. But the way we do it is to check the hostname set
-    for the celery worker, which can be done either in celeryconfig.py or on the
+    for the celery worker, which can be done on the
     command line with '--hostname'."""
     hostname = worker.hostname
     if hostname.startswith("primary"):

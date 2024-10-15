@@ -21,14 +21,13 @@ def run_jobs() -> None:
     cmd_worker_primary = [
         "celery",
         "-A",
-        "ee.danswer.background.celery.celery_app",
+        "danswer.background.celery.versioned_apps.primary",
         "worker",
         "--pool=threads",
         "--concurrency=6",
         "--prefetch-multiplier=1",
         "--loglevel=INFO",
-        "-n",
-        "primary@%n",
+        "--hostname=primary@%n",
         "-Q",
         "celery",
     ]
@@ -36,14 +35,13 @@ def run_jobs() -> None:
     cmd_worker_light = [
         "celery",
         "-A",
-        "ee.danswer.background.celery.celery_app",
+        "danswer.background.celery.versioned_apps.light",
         "worker",
         "--pool=threads",
         "--concurrency=16",
         "--prefetch-multiplier=8",
         "--loglevel=INFO",
-        "-n",
-        "light@%n",
+        "--hostname=light@%n",
         "-Q",
         "vespa_metadata_sync,connector_deletion",
     ]
@@ -51,14 +49,13 @@ def run_jobs() -> None:
     cmd_worker_heavy = [
         "celery",
         "-A",
-        "ee.danswer.background.celery.celery_app",
+        "danswer.background.celery.versioned_apps.heavy",
         "worker",
         "--pool=threads",
         "--concurrency=6",
         "--prefetch-multiplier=1",
         "--loglevel=INFO",
-        "-n",
-        "heavy@%n",
+        "--hostname=heavy@%n",
         "-Q",
         "connector_pruning",
     ]
@@ -66,21 +63,20 @@ def run_jobs() -> None:
     cmd_worker_indexing = [
         "celery",
         "-A",
-        "ee.danswer.background.celery.celery_app",
+        "danswer.background.celery.versioned_apps.indexing",
         "worker",
         "--pool=threads",
         "--concurrency=1",
         "--prefetch-multiplier=1",
         "--loglevel=INFO",
-        "-n",
-        "indexing@%n",
+        "--hostname=indexing@%n",
         "--queues=connector_indexing",
     ]
 
     cmd_beat = [
         "celery",
         "-A",
-        "ee.danswer.background.celery.celery_app",
+        "danswer.background.celery.versioned_apps.beat",
         "beat",
         "--loglevel=INFO",
     ]

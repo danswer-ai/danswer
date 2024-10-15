@@ -5,15 +5,16 @@ from time import sleep
 from typing import cast
 from uuid import uuid4
 
+from celery import Celery
 from celery import shared_task
+from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celery_app import celery_app
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
-from danswer.background.celery.tasks.shared.tasks import RedisFenceData
+from danswer.background.celery.tasks.shared.RedisFenceData import RedisFenceData
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
@@ -50,8 +51,9 @@ logger = setup_logger()
 @shared_task(
     name="check_for_indexing",
     soft_time_limit=300,
+    bind=True,
 )
-def check_for_indexing(tenant_id: str | None) -> int | None:
+def check_for_indexing(self: Task, tenant_id: str | None) -> int | None:
     tasks_created = 0
 
     r = get_redis_client()
@@ -101,6 +103,7 @@ def check_for_indexing(tenant_id: str | None) -> int | None:
                     # using a task queue and only allowing one task per cc_pair/search_setting
                     # prevents us from starving out certain attempts
                     attempt_id = try_creating_indexing_task(
+                        self.app,
                         cc_pair,
                         search_settings_instance,
                         False,
@@ -210,6 +213,7 @@ def _should_index(
 
 
 def try_creating_indexing_task(
+    celery_app: Celery,
     cc_pair: ConnectorCredentialPair,
     search_settings: SearchSettings,
     reindex: bool,

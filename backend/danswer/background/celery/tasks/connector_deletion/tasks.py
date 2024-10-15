@@ -1,12 +1,13 @@
 import redis
+from celery import Celery
 from celery import shared_task
+from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import ObjectDeletedError
 
-from danswer.background.celery.celery_app import celery_app
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -22,8 +23,9 @@ from danswer.redis.redis_pool import get_redis_client
     name="check_for_connector_deletion_task",
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
+    bind=True,
 )
-def check_for_connector_deletion_task(tenant_id: str | None) -> None:
+def check_for_connector_deletion_task(self: Task, tenant_id: str | None) -> None:
     r = get_redis_client()
 
     lock_beat = r.lock(
@@ -40,7 +42,7 @@ def check_for_connector_deletion_task(tenant_id: str | None) -> None:
             cc_pairs = get_connector_credential_pairs(db_session)
             for cc_pair in cc_pairs:
                 try_generate_document_cc_pair_cleanup_tasks(
-                    cc_pair, db_session, r, lock_beat, tenant_id
+                    self.app, cc_pair, db_session, r, lock_beat, tenant_id
                 )
     except SoftTimeLimitExceeded:
         task_logger.info(
@@ -54,6 +56,7 @@ def check_for_connector_deletion_task(tenant_id: str | None) -> None:
 
 
 def try_generate_document_cc_pair_cleanup_tasks(
+    app: Celery,
     cc_pair: ConnectorCredentialPair,
     db_session: Session,
     r: Redis,
@@ -91,9 +94,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
     task_logger.info(
         f"RedisConnectorDeletion.generate_tasks starting. cc_pair_id={cc_pair.id}"
     )
-    tasks_generated = rcd.generate_tasks(
-        celery_app, db_session, r, lock_beat, tenant_id
-    )
+    tasks_generated = rcd.generate_tasks(app, db_session, r, lock_beat, tenant_id)
     if tasks_generated is None:
         return None
 

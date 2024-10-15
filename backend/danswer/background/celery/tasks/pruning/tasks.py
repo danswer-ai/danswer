@@ -3,13 +3,14 @@ from datetime import timedelta
 from datetime import timezone
 from uuid import uuid4
 
+from celery import Celery
 from celery import shared_task
+from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celery_app import celery_app
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
 from danswer.configs.app_configs import ALLOW_SIMULTANEOUS_PRUNING
@@ -37,8 +38,9 @@ logger = setup_logger()
 @shared_task(
     name="check_for_pruning",
     soft_time_limit=JOB_TIMEOUT,
+    bind=True,
 )
-def check_for_pruning(tenant_id: str | None) -> None:
+def check_for_pruning(self: Task, tenant_id: str | None) -> None:
     r = get_redis_client()
 
     lock_beat = r.lock(
@@ -59,7 +61,7 @@ def check_for_pruning(tenant_id: str | None) -> None:
                     continue
 
                 tasks_created = try_creating_prune_generator_task(
-                    cc_pair, db_session, r, tenant_id
+                    self.app, cc_pair, db_session, r, tenant_id
                 )
                 if not tasks_created:
                     continue
@@ -118,6 +120,7 @@ def is_pruning_due(
 
 
 def try_creating_prune_generator_task(
+    celery_app: Celery,
     cc_pair: ConnectorCredentialPair,
     db_session: Session,
     r: Redis,
@@ -196,9 +199,14 @@ def try_creating_prune_generator_task(
     soft_time_limit=JOB_TIMEOUT,
     track_started=True,
     trail=False,
+    bind=True,
 )
 def connector_pruning_generator_task(
-    cc_pair_id: int, connector_id: int, credential_id: int, tenant_id: str | None
+    self: Task,
+    cc_pair_id: int,
+    connector_id: int,
+    credential_id: int,
+    tenant_id: str | None,
 ) -> None:
     """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
@@ -278,7 +286,7 @@ def connector_pruning_generator_task(
                 f"RedisConnectorPruning.generate_tasks starting. cc_pair_id={cc_pair.id}"
             )
             tasks_generated = rcp.generate_tasks(
-                celery_app, db_session, r, None, tenant_id
+                self.app, db_session, r, None, tenant_id
             )
             if tasks_generated is None:
                 return None
