@@ -64,7 +64,7 @@ def check_for_pruning(tenant_id: str | None) -> None:
                 if not tasks_created:
                     continue
 
-                task_logger.info(f"Pruning started: cc_pair_id={cc_pair.id}")
+                task_logger.info(f"Pruning queued: cc_pair_id={cc_pair.id}")
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."

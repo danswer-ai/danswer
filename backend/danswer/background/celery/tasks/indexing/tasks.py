@@ -98,6 +98,8 @@ def check_for_indexing(tenant_id: str | None) -> int | None:
                     ):
                         continue
 
+                    # using a task queue and only allowing one task per cc_pair/search_setting
+                    # prevents us from starving out certain attempts
                     attempt_id = try_creating_indexing_task(
                         cc_pair,
                         search_settings_instance,
@@ -108,7 +110,7 @@ def check_for_indexing(tenant_id: str | None) -> int | None:
                     )
                     if attempt_id:
                         task_logger.info(
-                            f"Indexing started: cc_pair_id={cc_pair.id} index_attempt_id={attempt_id}"
+                            f"Indexing queued: cc_pair_id={cc_pair.id} index_attempt_id={attempt_id}"
                         )
                         tasks_created += 1
     except SoftTimeLimitExceeded:
