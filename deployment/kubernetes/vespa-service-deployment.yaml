@@ -36,7 +36,7 @@ spec:
       containers:
       - name: vespa
         image: vespaengine/vespa:8.277.17
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         securityContext:
           privileged: true
           runAsUser: 0

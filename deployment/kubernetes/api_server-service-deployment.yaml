@@ -28,13 +28,17 @@ spec:
     spec:
       containers:
       - name: api-server
-        image: danswer/danswer-backend:latest
-        imagePullPolicy: IfNotPresent
+        # image: pablodanswer/cloud-backend-danswer:latest
+        image: danswer/danswer-backend:v0.7.5
+
+        imagePullPolicy: Always
         command:
           - "/bin/sh"
           - "-c"
           - |
-            alembic upgrade head &&
+            echo "helllo" &&
+            ls &&
+            alembic -n schema_private upgrade head &&
             echo "Starting Danswer Api Server" &&
             uvicorn danswer.main:app --host 0.0.0.0 --port 8080
         ports:

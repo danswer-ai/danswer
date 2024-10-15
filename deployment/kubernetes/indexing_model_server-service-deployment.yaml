@@ -29,7 +29,7 @@ spec:
       containers:
       - name: indexing-model-server
         image: danswer/danswer-model-server:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         command: [ "uvicorn", "model_server.main:app", "--host", "0.0.0.0", "--port", "9000" ]
         ports:
         - containerPort: 9000
