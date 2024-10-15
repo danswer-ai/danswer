@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-configmap
+  namespace: danswer
 data:
   nginx.conf: |
     upstream api_server {
@@ -14,7 +15,7 @@ data:
 
     server {
         listen 80;
-        server_name $$DOMAIN;
+        server_name beta.danswer.ai;
 
         client_max_body_size 5G;    # Maximum upload size
 

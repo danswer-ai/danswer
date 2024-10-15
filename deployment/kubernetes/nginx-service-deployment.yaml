@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nginx-service
+  namespace: danswer
 spec:
   selector:
     app: nginx
@@ -10,16 +11,13 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 80
-    - name: danswer
-      protocol: TCP
-      port: 3000
-      targetPort: 80
-  type: LoadBalancer
+  type: ClusterIP
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx-deployment
+  namespace: danswer
 spec:
   replicas: 1
   selector:
