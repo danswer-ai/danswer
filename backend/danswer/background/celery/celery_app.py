@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import Any
 
 import redis
+import sentry_sdk
 from celery import bootsteps  # type: ignore
 from celery import Celery
 from celery import current_task
@@ -16,6 +17,7 @@ from celery.signals import worker_ready
 from celery.signals import worker_shutdown
 from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
+from sentry_sdk.integrations.celery import CeleryIntegration
 
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
@@ -36,11 +38,23 @@ from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import SENTRY_DSN
 
 logger = setup_logger()
 
 # use this within celery tasks to get celery task specific logging
 task_logger = get_task_logger(__name__)
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[CeleryIntegration()],
+        traces_sample_rate=0.5,
+    )
+    logger.info("Sentry initialized")
+else:
+    logger.debug("Sentry DSN not provided, skipping Sentry initialization")
+
 
 celery_app = Celery(__name__)
 celery_app.config_from_object(
