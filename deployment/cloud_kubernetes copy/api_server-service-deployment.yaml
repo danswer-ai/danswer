@@ -31,7 +31,7 @@ spec:
         # image: pablodanswer/cloud-backend-danswer:latest
         image: danswer/danswer-backend:v0.7.5
 
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         command:
           - "/bin/sh"
           - "-c"
@@ -46,16 +46,16 @@ spec:
         # There are some extra values since this is shared between services
         # There are no conflicts though, extra env variables are simply ignored
         env:
-        - name: OAUTH_CLIENT_ID
-          valueFrom:
-            secretKeyRef:
-              name: danswer-secrets
-              key: google_oauth_client_id
-        - name: OAUTH_CLIENT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: danswer-secrets
-              key: google_oauth_client_secret
+        # - name: OAUTH_CLIENT_ID
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: danswer-secrets
+        #       key: google_oauth_client_id
+        # - name: OAUTH_CLIENT_SECRET
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: danswer-secrets
+        #       key: google_oauth_client_secret
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:

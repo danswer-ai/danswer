@@ -4,7 +4,7 @@ metadata:
   name: env-configmap
 data:
   # Auth Setting, also check the secrets file
-  AUTH_TYPE: "disabled"  # Change this for production uses unless Danswer is only accessible behind VPN
+  AUTH_TYPE: "google_oauth"  # Change this for production uses unless Danswer is only accessible behind VPN
   ENCRYPTION_KEY_SECRET: ""  # This should not be specified directly in the yaml, this is just for reference
   SESSION_EXPIRE_TIME_SECONDS: "86400"  # 1 Day Default
   VALID_EMAIL_DOMAINS: ""  # Can be something like danswer.ai, as an extra double-check
@@ -31,13 +31,13 @@ data:
   QA_PROMPT_OVERRIDE: ""
   # Other Servicesg
   POSTGRES_HOST: "database-1.cluster-c4vuxevtpnhl.us-east-2.rds.amazonaws.com"           # e.g., danswer-postgres.cluster-abc123xyz.us-east-1.rds.amazonaws.com
-  POSTGRES_PORT: "5432"
+  POSTGRES_PORT: "5433"
   POSTGRES_DB: "danswer"            # e.g., danswerdb
   POSTGRES_USER: "postgres"        # e.g., danswer_admin
   POSTGRES_PASSWORD: "kBdZ21rJ8ntLGxrXBaBV"
   # Authentication and Authorization
-  OAUTH_CLIENT_ID: "80118066002-2gcdbm15v44kdo79vlus4jighg04k61b.apps.googleusercontent.com"
-  OAUTH_CLIENT_SECRET: "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"
+  OAUTH_CLIENT_ID: "1085783458085-jvdp13db7u3nnb7e42r1a137t9rkil4g.apps.googleusercontent.com"
+  OAUTH_CLIENT_SECRET: "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"
 
   # Enterprise Features
   ENABLE_PAID_ENTERPRISE_EDITION_FEATURES: "true"
@@ -125,22 +125,22 @@ data:
   NOTIFY_SLACKBOT_NO_ANSWER: ""
   # Logging
   # Optional Telemetry, please keep it on (nothing sensitive is collected)? <3
-  # https://docs.danswer.dev/more/telemetry
+  # https://docs.danswer.dev/more/telemetry 
   DISABLE_TELEMETRY: ""
-  LOG_LEVEL: ""
+  LOG_LEVEL: "debug"
   LOG_ALL_MODEL_INTERACTIONS: ""
   LOG_DANSWER_MODEL_INTERACTIONS: ""
   LOG_VESPA_TIMING_INFORMATION: ""
   # Shared or Non-backend Related
-  INTERNAL_URL: "http://api-server-service:80"  # for web server
-  WEB_DOMAIN: "http://a3a67c3eff4044a7cbd1e62b1ebdfff2-1543735950.us-east-2.elb.amazonaws.com"  # for web server and api server
+  INTERNAL_URL: "http://api-server-service"  # for web server
+  WEB_DOMAIN: "https://beta.danswer.ai"  # for web server and api server
   DOMAIN: "localhost"  # for nginx
   # Chat Configs
   HARD_DELETE_CHATS: ""
 
 
 
-  NEXT_PUBLIC_APP_URL: "http://a3a67c3eff4044a7cbd1e62b1ebdfff2-1543735950.us-east-2.elb.amazonaws.com"
+  NEXT_PUBLIC_APP_URL: "https://beta.danswer.ai"
 
 # # Multi-tenancy configuration
 # MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"

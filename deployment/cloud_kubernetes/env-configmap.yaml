@@ -31,7 +31,7 @@ data:
   QA_PROMPT_OVERRIDE: ""
   # Other Servicesg
   POSTGRES_HOST: "database-1.cluster-c4vuxevtpnhl.us-east-2.rds.amazonaws.com"           # e.g., danswer-postgres.cluster-abc123xyz.us-east-1.rds.amazonaws.com
-  POSTGRES_PORT: "5432"
+  POSTGRES_PORT: "5433"
   POSTGRES_DB: "danswer"            # e.g., danswerdb
   POSTGRES_USER: "postgres"        # e.g., danswer_admin
   POSTGRES_PASSWORD: "kBdZ21rJ8ntLGxrXBaBV"
