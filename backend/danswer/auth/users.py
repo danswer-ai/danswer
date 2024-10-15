@@ -226,7 +226,6 @@ def send_user_verification_email(
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = USER_AUTH_SECRET
     verification_token_secret = USER_AUTH_SECRET
-    print("insidezzzzzzz3")
 
     async def create(
         self,
@@ -270,16 +269,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         request: Request | None = None,
         response: Response | None = None,
     ) -> None:
-        if request:
-            print("Request details:")
-            print(f"Method: {request.method}")
-            print(f"URL: {request.url}")
-            print(f"Headers: {request.headers}")
-            print(f"Query Params: {request.query_params}")
-            print(f"Client Host: {request.client.host}")
-            print(f"Client Port: {request.client.port}")
-        else:
-            print("No request object available")
         if response is None or not MULTI_TENANT:
             return
 
@@ -324,7 +313,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         token = None
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = current_tenant_id.set(tenant_id)
-            # Print a list of tables in the current database session
+
             verify_email_in_whitelist(account_email, tenant_id)
             verify_email_domain(account_email)
             if MULTI_TENANT:
@@ -448,7 +437,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         email = credentials.username
 
         # Get tenant_id from mapping table
-        print("zzzzzzz1", email)
         tenant_id = get_tenant_id_for_email(email)
         if not tenant_id:
             # User not found in mapping
@@ -704,7 +692,7 @@ def create_danswer_oauth_router(
     redirect_url: Optional[str] = None,
     associate_by_email: bool = False,
     is_verified_by_default: bool = False,
-):
+) -> APIRouter:
     return get_oauth_router(
         oauth_client,
         backend,
@@ -795,7 +783,7 @@ def get_oauth_router(
         ),
         user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
         strategy: Strategy[models.UP, models.ID] = Depends(backend.get_strategy),
-    ):
+    ) -> RedirectResponse:
         token, state = access_token_state
         account_id, account_email = await oauth_client.get_id_email(
             token["access_token"]

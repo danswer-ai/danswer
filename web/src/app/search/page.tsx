@@ -41,7 +41,7 @@ import { headers } from "next/headers";
 export default async function Home({
   searchParams,
 }: {
-  [key: string]: string | string[] | undefined;
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
   // Disable caching so we always get the up to date connector / document set / persona info
   // importantly, this prevents users from adding a connector, going back to the main page,
