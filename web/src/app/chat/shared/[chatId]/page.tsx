@@ -60,7 +60,6 @@ export default async function Page({ params }: { params: { chatId: string } }) {
       null)
     : (availableAssistants?.[0] ?? defaultPersona);
 
-  console.log(persona);
   return (
     <div>
       <div className="absolute top-0 z-40 w-full">
