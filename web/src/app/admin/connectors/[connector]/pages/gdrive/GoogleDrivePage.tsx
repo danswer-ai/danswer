@@ -34,7 +34,7 @@ const GDriveMain = ({}: {}) => {
   );
 
   const {
-    data: serviceAccountKeyData,
+    data: serviceAccountCredentialData,
     isLoading: isServiceAccountKeyLoading,
     error: isServiceAccountKeyError,
   } = useSWR<{ service_account_email: string }, FetchError>(
@@ -60,7 +60,7 @@ const GDriveMain = ({}: {}) => {
     appCredentialData ||
     (isAppCredentialError && isAppCredentialError.status === 404);
   const serviceAccountKeySuccessfullyFetched =
-    serviceAccountKeyData ||
+    serviceAccountCredentialData ||
     (isServiceAccountKeyError && isServiceAccountKeyError.status === 404);
 
   if (isLoadingUser) {
@@ -126,7 +126,7 @@ const GDriveMain = ({}: {}) => {
       <DriveJsonUploadSection
         setPopup={setPopup}
         appCredentialData={appCredentialData}
-        serviceAccountCredentialData={serviceAccountKeyData}
+        serviceAccountCredentialData={serviceAccountCredentialData}
         isAdmin={isAdmin}
       />
 
@@ -143,7 +143,7 @@ const GDriveMain = ({}: {}) => {
               googleDriveServiceAccountCredential
             }
             appCredentialData={appCredentialData}
-            serviceAccountKeyData={serviceAccountKeyData}
+            serviceAccountCredentialData={serviceAccountCredentialData}
             connectorExists={googleDriveConnectorIndexingStatuses.length > 0}
           />
         </>
