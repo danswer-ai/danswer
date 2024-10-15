@@ -112,10 +112,8 @@ export function CustomEmbeddingModelForm({
               disabled={isSubmitting}
               className="w-64 mx-auto"
             >
-              Configure
-              {embeddingType === EmbeddingProvider.AZURE
-                ? "Azure"
-                : "LiteLLM"}{" "}
+              Configure{" "}
+              {embeddingType === EmbeddingProvider.AZURE ? "Azure" : "LiteLLM"}{" "}
               Model
             </Button>
           </Form>
