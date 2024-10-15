@@ -46,15 +46,6 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   const chatSession = results[2] as BackendChatSession | null;
   const availableAssistants = results[3] as Persona[] | null;
 
-  let persona: Persona | null = null;
-  if (chatSession && chatSession.persona_id) {
-    try {
-      persona = await fetchAssistantSS(chatSession.persona_id);
-    } catch (e) {
-      console.log(`Failed to fetch persona - ${e}`);
-    }
-  }
-
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
     return redirect("/auth/login");
@@ -63,9 +54,11 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
     return redirect("/auth/waiting-on-verification");
   }
-  if (!persona) {
-    persona = availableAssistants?.[0] ?? null;
-  }
+  const persona = chatSession?.persona_id
+    ? (availableAssistants?.find((p) => p.id === chatSession.persona_id) ??
+      availableAssistants?.[0] ??
+      null)
+    : (availableAssistants?.[0] ?? null);
 
   return (
     <div>

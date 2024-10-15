@@ -239,14 +239,11 @@ def get_persona(
     persona_id: int,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-    include_non_owned: bool = Query(
-        False, description="If true, return persona even if user doesn't own it."
-    ),
 ) -> PersonaSnapshot:
     return PersonaSnapshot.from_model(
         get_persona_by_id(
             persona_id=persona_id,
-            user=user if not include_non_owned else None,
+            user=user,
             db_session=db_session,
             is_for_edit=False,
         )
