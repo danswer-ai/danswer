@@ -525,7 +525,7 @@ export const AIMessage = ({
                           </CustomTooltip>
                           {regenerate && (
                             <CustomTooltip
-                              hide={isRegenerateDropdownVisible}
+                              disabled={isRegenerateDropdownVisible}
                               showTick
                               line
                               content="Regenerate!"
@@ -600,7 +600,7 @@ export const AIMessage = ({
                           </CustomTooltip>
                           {regenerate && (
                             <CustomTooltip
-                              hide={isRegenerateDropdownVisible}
+                              disabled={isRegenerateDropdownVisible}
                               showTick
                               line
                               content="Regenerate!"
