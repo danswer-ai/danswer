@@ -13,6 +13,7 @@ def create_notification(
     user_id: UUID | None,
     notif_type: NotificationType,
     db_session: Session,
+    additional_data: dict | None = None,
 ) -> Notification:
     notification = Notification(
         user_id=user_id,
@@ -20,6 +21,7 @@ def create_notification(
         dismissed=False,
         last_shown=func.now(),
         first_shown=func.now(),
+        additional_data=additional_data,
     )
     db_session.add(notification)
     db_session.commit()
