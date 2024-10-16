@@ -66,6 +66,10 @@ LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
 # Only used for OpenAI
 OPENAI_EMBEDDING_TIMEOUT = int(os.environ.get("OPENAI_EMBEDDING_TIMEOUT", "600"))
 
+# Whether or not to strictly enforce token limit for chunking.
+STRICT_CHUNK_TOKEN_LIMIT = (
+    os.environ.get("STRICT_CHUNK_TOKEN_LIMIT", "").lower() == "true"
+)
 
 # Fields which should only be set on new search setting
 PRESERVED_SEARCH_FIELDS = [
