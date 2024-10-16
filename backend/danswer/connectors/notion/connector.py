@@ -217,11 +217,18 @@ class NotionConnector(LoadConnector, PollConnector):
         """Converts Notion properties to a string"""
 
         def _recurse_properties(inner_dict: dict[str, Any]) -> str:
+            if not inner_dict:
+                # Edge case handling, should not happen
+                return "N/A"
+
             while "type" in inner_dict:
                 type_name = inner_dict["type"]
                 inner_dict = inner_dict[type_name]
                 if isinstance(inner_dict, list):
-                    return ", ".join([_recurse_properties(item) for item in inner_dict])
+                    return ", ".join(
+                        [_recurse_properties(item) for item in inner_dict if item]
+                    )
+
             # TODO there may be more types to handle here
             if "name" in inner_dict:
                 return inner_dict["name"]
@@ -245,6 +252,9 @@ class NotionConnector(LoadConnector, PollConnector):
 
         result = ""
         for prop_name, prop in properties.items():
+            if not prop:
+                continue
+
             inner_value = _recurse_properties(prop)
             # Not a perfect way to format Notion database tables but there's no perfect representation
             # since this must be represented as plaintext
@@ -268,19 +278,20 @@ class NotionConnector(LoadConnector, PollConnector):
                 text = self._properties_to_str(result.get("properties", {}))
                 if text:
                     result_blocks.append(NotionBlock(id=obj_id, text=text, prefix="\n"))
-                if obj_type == "page":
-                    logger.debug(
-                        f"Found page with ID '{obj_id}' in database '{database_id}'"
-                    )
-                    result_pages.append(result["id"])
-                elif obj_type == "database":
-                    # TODO add block for database
-                    logger.debug(
-                        f"Found database with ID '{obj_id}' in database '{database_id}'"
-                    )
-                    # The inner contents are ignored at this level
-                    _, child_pages = self._read_pages_from_database(obj_id)
-                    result_pages.extend(child_pages)
+
+                if self.recursive_index_enabled:
+                    if obj_type == "page":
+                        logger.debug(
+                            f"Found page with ID '{obj_id}' in database '{database_id}'"
+                        )
+                        result_pages.append(result["id"])
+                    elif obj_type == "database":
+                        logger.debug(
+                            f"Found database with ID '{obj_id}' in database '{database_id}'"
+                        )
+                        # The inner contents are ignored at this level
+                        _, child_pages = self._read_pages_from_database(obj_id)
+                        result_pages.extend(child_pages)
 
             if data["next_cursor"] is None:
                 break
@@ -354,12 +365,16 @@ class NotionConnector(LoadConnector, PollConnector):
                         result_blocks.extend(subblocks)
                         child_pages.extend(subblock_child_pages)
 
-                if result_type == "child_database" and self.recursive_index_enabled:
+                if result_type == "child_database":
                     inner_blocks, inner_child_pages = self._read_pages_from_database(
                         result_block_id
                     )
+                    # A database on a page often looks like a table, we need to include it for the contents
+                    # of the page but the children (cells) should be processed as other Documents
                     result_blocks.extend(inner_blocks)
-                    child_pages.extend(inner_child_pages)
+
+                    if self.recursive_index_enabled:
+                        child_pages.extend(inner_child_pages)
 
                 if cur_result_text_arr:
                     new_block = NotionBlock(
@@ -392,7 +407,17 @@ class NotionConnector(LoadConnector, PollConnector):
         self,
         pages: list[NotionPage],
     ) -> Generator[Document, None, None]:
-        """Reads pages for rich text content and generates Documents"""
+        """Reads pages for rich text content and generates Documents
+
+        Note that a page which is turned into a "wiki" becomes a database but both top level pages and top level databases
+        do not seem to have any properties associated with them.
+
+        Pages that are part of a database can have properties which are like the values of the row in the "database" table
+        in which they exist
+
+        This is not clearly outlined in the Notion API docs but it is observable empirically.
+        https://developers.notion.com/docs/working-with-page-content
+        """
         all_child_page_ids: list[str] = []
         for page in pages:
             if page.id in self.indexed_pages:
