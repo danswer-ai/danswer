@@ -27,7 +27,7 @@ from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
-from danswer.background.update import get_all_tenant_ids
+from danswer.background.celery.celery_utils import get_all_tenant_ids
 from danswer.configs.constants import CELERY_PRIMARY_WORKER_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerRedisLocks
