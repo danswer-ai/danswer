@@ -1,6 +1,12 @@
 "use client";
 
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  use,
+  useEffect,
+  useState,
+} from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button, Divider } from "@tremor/react";
@@ -62,6 +68,7 @@ import {
 } from "@/lib/assistants/utils";
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 import { useAssistants } from "@/components/context/AssisantsContext";
+import { useUser } from "@/components/user/UserProvider";
 
 function DraggableAssistantListItem(props: any) {
   const {
@@ -285,27 +292,20 @@ function AssistantListItem({
     </>
   );
 }
-export function AssistantsList({ user }: { user: User | null }) {
-  const { assistants } = useAssistants();
-  // Define the distinct groups of assistants
-  const { visibleAssistants, hiddenAssistants } = classifyAssistants(
-    user,
-    assistants
-  );
+export function AssistantsList() {
+  const {
+    assistants,
+    ownedButHiddenAssistants,
+    finalAssistants,
+    refreshAssistants,
+  } = useAssistants();
 
-  const [currentlyVisibleAssistants, setCurrentlyVisibleAssistants] = useState<
-    Persona[]
-  >([]);
+  const [currentlyVisibleAssistants, setCurrentlyVisibleAssistants] =
+    useState(finalAssistants);
 
   useEffect(() => {
-    const orderedAssistants = orderAssistantsForUser(visibleAssistants, user);
-    setCurrentlyVisibleAssistants(orderedAssistants);
-  }, [assistants, user]);
-
-  const ownedButHiddenAssistants = getUserCreatedAssistants(
-    user,
-    hiddenAssistants
-  );
+    setCurrentlyVisibleAssistants(finalAssistants);
+  }, [finalAssistants]);
 
   const allAssistantIds = assistants.map((assistant) =>
     assistant.id.toString()
@@ -315,6 +315,8 @@ export function AssistantsList({ user }: { user: User | null }) {
   const [makePublicPersona, setMakePublicPersona] = useState<Persona | null>(
     null
   );
+
+  const { refreshUser, user } = useUser();
 
   const { popup, setPopup } = usePopup();
   const router = useRouter();
@@ -334,18 +336,22 @@ export function AssistantsList({ user }: { user: User | null }) {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setCurrentlyVisibleAssistants((assistants) => {
-        const oldIndex = assistants.findIndex(
-          (a) => a.id.toString() === active.id
-        );
-        const newIndex = assistants.findIndex(
-          (a) => a.id.toString() === over.id
-        );
-        const newAssistants = arrayMove(assistants, oldIndex, newIndex);
+      const oldIndex = currentlyVisibleAssistants.findIndex(
+        (item) => item.id.toString() === active.id
+      );
+      const newIndex = currentlyVisibleAssistants.findIndex(
+        (item) => item.id.toString() === over.id
+      );
+      const updatedAssistants = arrayMove(
+        currentlyVisibleAssistants,
+        oldIndex,
+        newIndex
+      );
 
-        updateUserAssistantList(newAssistants.map((a) => a.id));
-        return newAssistants;
-      });
+      setCurrentlyVisibleAssistants(updatedAssistants);
+      await updateUserAssistantList(updatedAssistants.map((a) => a.id));
+      await refreshUser();
+      await refreshAssistants();
     }
   }
 

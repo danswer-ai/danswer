@@ -8,7 +8,6 @@ import {
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
-import { useChatContext } from "../context/ChatContext";
 import { useAssistants } from "../context/AssisantsContext";
 import { useUser } from "../user/UserProvider";
 

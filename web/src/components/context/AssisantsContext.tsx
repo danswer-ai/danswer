@@ -1,22 +1,19 @@
 "use client";
-import React, {
-  createContext,
-  useState,
-  useEffect,
-  useContext,
-  useMemo,
-} from "react";
+import React, { createContext, useState, useContext, useMemo } from "react";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { User } from "@/lib/types";
 import {
   classifyAssistants,
   orderAssistantsForUser,
+  getUserCreatedAssistants,
 } from "@/lib/assistants/utils";
 import { useUser } from "../user/UserProvider";
 
 interface AssistantsContextProps {
   assistants: Persona[];
+  visibleAssistants: Persona[];
+  hiddenAssistants: Persona[];
   finalAssistants: Persona[];
+  ownedButHiddenAssistants: Persona[];
   refreshAssistants: () => Promise<void>;
 }
 
@@ -43,27 +40,48 @@ export const AssistantsProvider: React.FC<{
       });
       if (!response.ok) throw new Error("Failed to fetch assistants");
       const assistants = await response.json();
-      console.log("ASSISTANTS ARE", assistants);
       setAssistants(assistants);
     } catch (error) {
       console.error("Error refreshing assistants:", error);
     }
   };
 
-  const { finalAssistants } = useMemo(() => {
-    const { visibleAssistants } = classifyAssistants(user, assistants);
-    console.log("VISIBLE ASSISTANTS", visibleAssistants);
-
+  const {
+    visibleAssistants,
+    hiddenAssistants,
+    finalAssistants,
+    ownedButHiddenAssistants,
+  } = useMemo(() => {
+    const { visibleAssistants, hiddenAssistants } = classifyAssistants(
+      user,
+      assistants
+    );
     const finalAssistants = user
       ? orderAssistantsForUser(visibleAssistants, user)
       : visibleAssistants;
-    console.log("FINAL ASSISTANTS", finalAssistants);
-    return { finalAssistants };
+    const ownedButHiddenAssistants = getUserCreatedAssistants(
+      user,
+      hiddenAssistants
+    );
+
+    return {
+      visibleAssistants,
+      hiddenAssistants,
+      finalAssistants,
+      ownedButHiddenAssistants,
+    };
   }, [user, assistants]);
 
   return (
     <AssistantsContext.Provider
-      value={{ assistants, finalAssistants, refreshAssistants }}
+      value={{
+        assistants,
+        visibleAssistants,
+        hiddenAssistants,
+        finalAssistants,
+        ownedButHiddenAssistants,
+        refreshAssistants,
+      }}
     >
       {children}
     </AssistantsContext.Provider>

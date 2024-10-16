@@ -24,7 +24,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     try {
       const user = await getCurrentUser();
       setUser(user);
-      console.log("user has been updated");
       setIsAdmin(user?.role === UserRole.ADMIN);
       setIsCurator(
         user?.role === UserRole.CURATOR || user?.role == UserRole.GLOBAL_CURATOR

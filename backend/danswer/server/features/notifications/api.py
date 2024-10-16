@@ -26,8 +26,6 @@ def get_notifications_api(
         NotificationModel.from_model(notif)
         for notif in get_notifications(user, db_session, include_dismissed=False)
     ]
-    print(user)
-    print(len(notificatinos))
     return notificatinos
 
 

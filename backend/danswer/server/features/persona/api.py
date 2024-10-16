@@ -232,8 +232,6 @@ def list_personas(
     include_deleted: bool = False,
     persona_ids: list[int] = Query(None),
 ) -> list[PersonaSnapshot]:
-    print("LISTING PERSONAS")
-    print("user", user)
     personas = get_personas(
         user=user,
         include_deleted=include_deleted,
@@ -254,7 +252,6 @@ def list_personas(
             and not is_image_generation_available(db_session=db_session)
         )
     ]
-    print(len(personas))
 
     return [PersonaSnapshot.from_model(p) for p in personas]
 
