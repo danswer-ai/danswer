@@ -11,7 +11,7 @@ import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
 import LogoType from "../header/LogoType";
-import { NotificationCard } from "./Notification";
+import { Notifications } from "./Notifications";
 import { useUser } from "../user/UserProvider";
 
 export default function FunctionalHeader({
@@ -110,7 +110,7 @@ export default function FunctionalHeader({
             </div>
           )}
 
-          <NotificationCard />
+          <Notifications />
           <div className="mobile:hidden flex my-auto">
             <UserDropdown user={user} />
           </div>

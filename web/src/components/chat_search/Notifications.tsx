@@ -12,7 +12,7 @@ import { useAssistants } from "../context/AssisantsContext";
 import { useUser } from "../user/UserProvider";
 import { Bell } from "@phosphor-icons/react";
 
-export const NotificationCard = () => {
+export const Notifications = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const {
     data: notifications,
