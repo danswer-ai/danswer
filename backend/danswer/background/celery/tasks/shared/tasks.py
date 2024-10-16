@@ -1,9 +1,11 @@
 from datetime import datetime
+from typing import Tuple
 
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_app import task_logger
@@ -28,6 +30,86 @@ class RedisFenceData(BaseModel):
     task_id: str
 
 
+def document_by_cc_pair_cleanup(
+    document_id: str,
+    connector_id: int,
+    credential_id: int,
+    time_cutoff: datetime | None,
+    connector_count: int,
+    db_session: Session,
+) -> Tuple[str, int]:
+    # typically used by pruning to avoid pruning a document that changed
+    # between the time we started pruning and the time this task ran
+    action = "skip"
+    chunks_affected = 0
+
+    while True:
+        if connector_count <= 0:
+            break
+
+        doc = get_document(document_id, db_session)
+        if not doc:
+            break
+
+        if time_cutoff:
+            if doc.last_modified > time_cutoff:
+                break
+
+        curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+        document_index = get_default_document_index(
+            primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+        )
+
+        if connector_count == 1:
+            # count == 1 means this is the only remaining cc_pair reference to the doc
+            # delete it from vespa and the db
+            action = "delete"
+
+            chunks_affected = document_index.delete_single(document_id)
+            delete_documents_complete__no_commit(
+                db_session=db_session,
+                document_ids=[document_id],
+            )
+            break
+
+        # connector_count > 1
+        action = "update"
+
+        # the below functions do not include cc_pairs being deleted.
+        # i.e. they will correctly omit access for the current cc_pair
+        doc_access = get_access_for_document(
+            document_id=document_id, db_session=db_session
+        )
+
+        doc_sets = fetch_document_sets_for_document(document_id, db_session)
+        update_doc_sets: set[str] = set(doc_sets)
+
+        fields = VespaDocumentFields(
+            document_sets=update_doc_sets,
+            access=doc_access,
+            boost=doc.boost,
+            hidden=doc.hidden,
+        )
+
+        # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
+        chunks_affected = document_index.update_single(document_id, fields=fields)
+
+        # there are still other cc_pair references to the doc, so just resync to Vespa
+        delete_document_by_connector_credential_pair__no_commit(
+            db_session=db_session,
+            document_id=document_id,
+            connector_credential_pair_identifier=ConnectorCredentialPairIdentifier(
+                connector_id=connector_id,
+                credential_id=credential_id,
+            ),
+        )
+
+        mark_document_as_synced(document_id, db_session)
+        break
+
+    return (action, chunks_affected)
+
+
 @shared_task(
     name="document_by_cc_pair_cleanup_task",
     bind=True,
@@ -41,9 +123,15 @@ def document_by_cc_pair_cleanup_task(
     connector_id: int,
     credential_id: int,
     tenant_id: str | None,
+    time_cutoff: datetime | None = None,
 ) -> bool:
     """A lightweight subtask used to clean up document to cc pair relationships.
-    Created by connection deletion and connector pruning parent tasks."""
+    Created by connector deletion and connector pruning parent tasks.
+
+    time_cutoff: if the document last_modified is after this time, no action will be
+    taken. Pruning will typically set this to the start of a long running pruning task.
+    It prevents race conditions with indexing.
+    """
 
     """
     To delete a connector / credential pair:
@@ -61,73 +149,21 @@ def document_by_cc_pair_cleanup_task(
 
     try:
         with get_session_with_tenant(tenant_id) as db_session:
-            action = "skip"
-            chunks_affected = 0
-
-            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
-                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            connector_count = get_document_connector_count(db_session, document_id)
+            action, chunks_affected = document_by_cc_pair_cleanup(
+                document_id,
+                connector_id,
+                credential_id,
+                time_cutoff,
+                connector_count,
+                db_session,
             )
-
-            count = get_document_connector_count(db_session, document_id)
-            if count == 1:
-                # count == 1 means this is the only remaining cc_pair reference to the doc
-                # delete it from vespa and the db
-                action = "delete"
-
-                chunks_affected = document_index.delete_single(document_id)
-                delete_documents_complete__no_commit(
-                    db_session=db_session,
-                    document_ids=[document_id],
-                )
-            elif count > 1:
-                action = "update"
-
-                # count > 1 means the document still has cc_pair references
-                doc = get_document(document_id, db_session)
-                if not doc:
-                    return False
-
-                # the below functions do not include cc_pairs being deleted.
-                # i.e. they will correctly omit access for the current cc_pair
-                doc_access = get_access_for_document(
-                    document_id=document_id, db_session=db_session
-                )
-
-                doc_sets = fetch_document_sets_for_document(document_id, db_session)
-                update_doc_sets: set[str] = set(doc_sets)
-
-                fields = VespaDocumentFields(
-                    document_sets=update_doc_sets,
-                    access=doc_access,
-                    boost=doc.boost,
-                    hidden=doc.hidden,
-                )
-
-                # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
-                chunks_affected = document_index.update_single(
-                    document_id, fields=fields
-                )
-
-                # there are still other cc_pair references to the doc, so just resync to Vespa
-                delete_document_by_connector_credential_pair__no_commit(
-                    db_session=db_session,
-                    document_id=document_id,
-                    connector_credential_pair_identifier=ConnectorCredentialPairIdentifier(
-                        connector_id=connector_id,
-                        credential_id=credential_id,
-                    ),
-                )
-
-                mark_document_as_synced(document_id, db_session)
-            else:
-                pass
 
             task_logger.info(
                 f"tenant_id={tenant_id} "
                 f"document_id={document_id} "
-                f"refcount={count} "
                 f"action={action} "
+                f"refcount={connector_count} "
                 f"chunks={chunks_affected}"
             )
             db_session.commit()

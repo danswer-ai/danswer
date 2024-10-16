@@ -2,6 +2,7 @@
 import time
 from abc import ABC
 from abc import abstractmethod
+from datetime import datetime
 from typing import cast
 from uuid import uuid4
 
@@ -395,6 +396,7 @@ class RedisConnectorPruning(RedisObjectHelper):
     def __init__(self, id: int) -> None:
         super().__init__(str(id))
         self.documents_to_prune: set[str] = set()
+        self.time_started: datetime | None = None
 
     @property
     def generator_task_id_prefix(self) -> str:
@@ -455,6 +457,7 @@ class RedisConnectorPruning(RedisObjectHelper):
                     connector_id=cc_pair.connector_id,
                     credential_id=cc_pair.credential_id,
                     tenant_id=tenant_id,
+                    time_cutoff=self.time_started,
                 ),
                 queue=DanswerCeleryQueues.CONNECTOR_DELETION,
                 task_id=custom_task_id,

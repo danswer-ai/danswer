@@ -234,6 +234,8 @@ def connector_pruning_generator_task(
                 )
                 return
 
+            rcp.time_started = datetime.now(timezone.utc)
+
             # Define the callback function
             def redis_increment_callback(amount: int) -> None:
                 lock.reacquire()
