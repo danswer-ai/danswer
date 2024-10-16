@@ -6,6 +6,9 @@ import { ChatSessionSharedStatus } from "../interfaces";
 import { FiCopy } from "react-icons/fi";
 import { CopyButton } from "@/components/CopyButton";
 import { SEARCH_PARAM_NAMES } from "../searchParams";
+import { usePopup } from "@/components/admin/connectors/Popup";
+import { destructureValue, structureValue } from "@/lib/llm/utils";
+import { LlmOverride } from "@/lib/hooks";
 
 function buildShareLink(chatSessionId: number) {
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
@@ -30,9 +33,16 @@ async function generateShareLink(chatSessionId: number) {
 async function generateCloneLink(
   message?: string,
   assistantId?: number,
-  modelVersion?: string
+  modelOverride?: LlmOverride
 ) {
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
+  const model = modelOverride
+    ? structureValue(
+        modelOverride.name,
+        modelOverride.provider,
+        modelOverride.modelName
+      )
+    : null;
   return `${baseUrl}/chat${
     message
       ? `?${SEARCH_PARAM_NAMES.USER_PROMPT}=${encodeURIComponent(message)}`
@@ -42,8 +52,8 @@ async function generateCloneLink(
       ? `${message ? "&" : "?"}${SEARCH_PARAM_NAMES.PERSONA_ID}=${assistantId}`
       : ""
   }${
-    modelVersion
-      ? `${message || assistantId ? "&" : "?"}${SEARCH_PARAM_NAMES.MODEL_VERSION}=${encodeURIComponent(modelVersion)}`
+    model
+      ? `${message || assistantId ? "&" : "?"}${SEARCH_PARAM_NAMES.SRUCTURED_MODEL}=${encodeURIComponent(model)}`
       : ""
   }${message ? `&${SEARCH_PARAM_NAMES.SEND_ON_LOAD}=true` : ""}`;
 }
@@ -67,7 +77,7 @@ export function ShareChatSessionModal({
   onClose,
   message,
   assistantId,
-  modelVersion,
+  modelOverride,
 }: {
   chatSessionId: number;
   existingSharedStatus: ChatSessionSharedStatus;
@@ -75,16 +85,18 @@ export function ShareChatSessionModal({
   onClose: () => void;
   message?: string;
   assistantId?: number;
-  modelVersion?: string;
+  modelOverride?: LlmOverride;
 }) {
   const [shareLink, setShareLink] = useState<string>(
     existingSharedStatus === ChatSessionSharedStatus.Public
       ? buildShareLink(chatSessionId)
       : ""
   );
+  const { popup, setPopup } = usePopup();
 
   return (
     <>
+      {popup}
       <ModalWrapper onClose={onClose} modalClassName="max-w-3xl">
         <>
           <div className="flex mb-4">
@@ -169,32 +181,53 @@ export function ShareChatSessionModal({
                   >
                     Generate and Copy Share Link
                   </Button>
-                  <Button
-                    icon={FiCopy}
-                    onClick={async () => {
-                      // NOTE: for "inescure" non-https setup, the `navigator.clipboard.writeText` may fail
-                      // as the browser may not allow the clipboard to be accessed.
-                      try {
-                        const shareLink = await generateCloneLink(
-                          message,
-                          assistantId,
-                          modelVersion
-                        );
-                        console.log(shareLink);
-                        console.log(message, assistantId, modelVersion);
-                        navigator.clipboard.writeText(shareLink);
-                      } catch (e) {
-                        console.error(e);
-                      }
-                    }}
-                    size="xs"
-                    color="green"
-                  >
-                    Generate and Copy Link to Current Query
-                  </Button>
                 </div>
               </div>
             )}
+          </div>
+
+          <Divider className="my-4" />
+          <div className="mb-4">
+            <Callout title="Clone Chat" color="blue">
+              Generate a link to clone this chat session with the current query.
+              This allows others to start a new chat with the same initial
+              message and settings.
+            </Callout>
+          </div>
+          <div className="flex w-full justify-between">
+            <Button
+              icon={FiCopy}
+              onClick={async () => {
+                // NOTE: for "insecure" non-https setup, the `navigator.clipboard.writeText` may fail
+                // as the browser may not allow the clipboard to be accessed.
+                try {
+                  const cloneLink = await generateCloneLink(
+                    message,
+                    assistantId,
+                    modelOverride
+                  );
+                  if (!cloneLink) {
+                    setPopup({
+                      message: "Failed to generate clone link",
+                      type: "error",
+                    });
+                  } else {
+                    navigator.clipboard.writeText(cloneLink);
+                    setPopup({
+                      message: "Link copied to clipboard!",
+                      type: "success",
+                    });
+                  }
+                } catch (e) {
+                  console.error(e);
+                  alert("Failed to generate or copy link.");
+                }
+              }}
+              size="xs"
+              color="blue"
+            >
+              Generate and Copy Clone Link
+            </Button>
           </div>
         </>
       </ModalWrapper>

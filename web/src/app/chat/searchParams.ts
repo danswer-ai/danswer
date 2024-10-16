@@ -9,6 +9,7 @@ export const SEARCH_PARAM_NAMES = {
   TEMPERATURE: "temperature",
   MODEL_VERSION: "model-version",
   SYSTEM_PROMPT: "system-prompt",
+  SRUCTURED_MODEL: "structured-model",
   // user message
   USER_PROMPT: "user-prompt",
   SUBMIT_ON_LOAD: "submit-on-load",

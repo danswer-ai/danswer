@@ -148,6 +148,10 @@ export function ChatPage({
   );
 
   const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
+  const modelVersionFromSearchParams = searchParams.get(
+    SEARCH_PARAM_NAMES.SRUCTURED_MODEL
+  );
+
   // Effect to handle sendOnLoad
   useEffect(() => {
     if (sendOnLoad) {
@@ -235,7 +239,7 @@ export function ChatPage({
   };
 
   const llmOverrideManager = useLlmOverride(
-    user?.preferences.default_model ?? null,
+    modelVersionFromSearchParams || (user?.preferences.default_model ?? null),
     selectedChatSession,
     defaultTemperature
   );
@@ -1896,12 +1900,7 @@ export function ChatPage({
         <ShareChatSessionModal
           assistantId={liveAssistant?.id}
           message={message}
-          modelVersion={
-            llmOverrideManager.llmOverride.modelName ||
-            searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
-            llmOverrideManager.globalDefault.modelName ||
-            undefined
-          }
+          modelOverride={llmOverrideManager.llmOverride}
           chatSessionId={sharedChatSession.id}
           existingSharedStatus={sharedChatSession.shared_status}
           onClose={() => setSharedChatSession(null)}
@@ -1918,12 +1917,7 @@ export function ChatPage({
         <ShareChatSessionModal
           message={message}
           assistantId={liveAssistant?.id}
-          modelVersion={
-            llmOverrideManager.llmOverride.modelName ||
-            searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
-            llmOverrideManager.globalDefault.modelName ||
-            undefined
-          }
+          modelOverride={llmOverrideManager.llmOverride}
           chatSessionId={chatSessionIdRef.current}
           existingSharedStatus={chatSessionSharedStatus}
           onClose={() => setSharingModalVisible(false)}
