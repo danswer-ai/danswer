@@ -472,7 +472,7 @@ class Document(Base):
 
     # last time any vespa relevant row metadata or the doc changed.
     # does not include last_synced
-    last_modified: Mapped[datetime.datetime | None] = mapped_column(
+    last_modified: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True, default=func.now()
     )
 
