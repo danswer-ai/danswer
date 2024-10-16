@@ -348,6 +348,7 @@ export function getCitedDocumentsFromMessage(message: Message) {
 }
 
 export function groupSessionsByDateRange(chatSessions: ChatSession[]) {
+  console.log(chatSessions);
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Set to start of today for accurate comparison
 

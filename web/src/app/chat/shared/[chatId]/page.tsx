@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   const user = results[1] as User | null;
   const chatSession = results[2] as BackendChatSession | null;
   const assistantsResponse = results[3] as FetchAssistantsResponse | null;
-  const [availableAssistants, _] = assistantsResponse ?? [[], null];
+  const [availableAssistants, error] = assistantsResponse ?? [[], null];
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -58,7 +58,6 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
     return redirect("/auth/waiting-on-verification");
   }
-
   const persona: Persona =
     chatSession?.persona_id && availableAssistants?.length
       ? (availableAssistants.find((p) => p.id === chatSession.persona_id) ??
@@ -72,7 +71,7 @@ export default async function Page({ params }: { params: { chatId: string } }) {
       </div>
 
       <div className="flex relative bg-background text-default overflow-hidden pt-16 h-screen">
-        <SharedChatDisplay chatSession={chatSession} persona={persona!} />
+        <SharedChatDisplay chatSession={chatSession} persona={persona} />
       </div>
     </div>
   );
