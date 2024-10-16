@@ -16,6 +16,7 @@ export const SEARCH_PARAM_NAMES = {
   TITLE: "title",
   // for seeding chats
   SEEDED: "seeded",
+  SEND_ON_LOAD: "send-on-load",
 };
 
 export function shouldSubmitOnLoad(searchParams: ReadonlyURLSearchParams) {

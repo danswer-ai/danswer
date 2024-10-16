@@ -143,7 +143,29 @@ export function ChatPage({
   const { user, refreshUser, isAdmin, isLoadingUser } = useUser();
 
   const existingChatIdRaw = searchParams.get("chatId");
+  const [sendOnLoad, setSendOnLoad] = useState<string | null>(
+    searchParams.get(SEARCH_PARAM_NAMES.SEND_ON_LOAD)
+  );
+
   const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
+  // Effect to handle sendOnLoad
+  useEffect(() => {
+    if (sendOnLoad) {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete(SEARCH_PARAM_NAMES.SEND_ON_LOAD);
+
+      // Update the URL without the send-on-load parameter
+      router.replace(`?${newSearchParams.toString()}`, { scroll: false });
+
+      // Update our local state to reflect the change
+      setSendOnLoad(null);
+
+      // If there's a message, submit it
+      if (message) {
+        onSubmit({ messageOverride: message });
+      }
+    }
+  }, [sendOnLoad, searchParams, router]);
 
   const existingChatSessionId = existingChatIdRaw
     ? parseInt(existingChatIdRaw)
@@ -1872,6 +1894,14 @@ export function ChatPage({
 
       {sharedChatSession && (
         <ShareChatSessionModal
+          assistantId={liveAssistant?.id}
+          message={message}
+          modelVersion={
+            llmOverrideManager.llmOverride.modelName ||
+            searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+            llmOverrideManager.globalDefault.modelName ||
+            undefined
+          }
           chatSessionId={sharedChatSession.id}
           existingSharedStatus={sharedChatSession.shared_status}
           onClose={() => setSharedChatSession(null)}
@@ -1886,6 +1916,14 @@ export function ChatPage({
       )}
       {sharingModalVisible && chatSessionIdRef.current !== null && (
         <ShareChatSessionModal
+          message={message}
+          assistantId={liveAssistant?.id}
+          modelVersion={
+            llmOverrideManager.llmOverride.modelName ||
+            searchParams.get(SEARCH_PARAM_NAMES.MODEL_VERSION) ||
+            llmOverrideManager.globalDefault.modelName ||
+            undefined
+          }
           chatSessionId={chatSessionIdRef.current}
           existingSharedStatus={chatSessionSharedStatus}
           onClose={() => setSharingModalVisible(false)}
