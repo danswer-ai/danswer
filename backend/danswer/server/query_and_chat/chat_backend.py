@@ -25,7 +25,6 @@ from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import LITELLM_PASS_THROUGH_HEADERS
-from danswer.configs.model_configs import TOOL_PASS_THROUGH_HEADERS
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
@@ -74,6 +73,7 @@ from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
+from danswer.utils.headers import get_custom_tool_additional_request_headers
 from danswer.utils.logger import setup_logger
 
 
@@ -338,8 +338,8 @@ def handle_new_chat_message(
                 litellm_additional_headers=extract_headers(
                     request.headers, LITELLM_PASS_THROUGH_HEADERS
                 ),
-                tool_additional_headers=extract_headers(
-                    request.headers, TOOL_PASS_THROUGH_HEADERS
+                custom_tool_additional_headers=get_custom_tool_additional_request_headers(
+                    request.headers
                 ),
                 is_connected=is_disconnected_func,
             ):

@@ -60,6 +60,7 @@ from danswer.llm.override_models import PromptOverride
 from danswer.search.enums import RecencyBiasSetting
 from danswer.utils.encryption import decrypt_bytes_to_string
 from danswer.utils.encryption import encrypt_string_to_bytes
+from danswer.utils.headers import HeaderItemDict
 from shared_configs.enums import EmbeddingProvider
 from shared_configs.enums import RerankerProvider
 
@@ -1288,7 +1289,7 @@ class Tool(Base):
     openapi_schema: Mapped[dict[str, Any] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
-    custom_headers: Mapped[list[dict[str, str]] | None] = mapped_column(
+    custom_headers: Mapped[list[HeaderItemDict] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
     # user who created / owns the tool. Will be None for built-in tools.

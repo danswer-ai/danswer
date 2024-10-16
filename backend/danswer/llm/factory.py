@@ -7,9 +7,9 @@ from danswer.db.llm import fetch_provider
 from danswer.db.models import Persona
 from danswer.llm.chat_llm import DefaultMultiLLM
 from danswer.llm.exceptions import GenAIDisabledException
-from danswer.llm.headers import build_llm_extra_headers
 from danswer.llm.interfaces import LLM
 from danswer.llm.override_models import LLMOverride
+from danswer.utils.headers import build_llm_extra_headers
 
 
 def get_main_llm_from_tuple(
