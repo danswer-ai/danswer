@@ -18,10 +18,13 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
+from danswer.chat.chat_utils import extract_headers
 from danswer.chat.process_message import stream_chat_message
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
+from danswer.configs.model_configs import LITELLM_PASS_THROUGH_HEADERS
+from danswer.configs.model_configs import TOOL_PASS_THROUGH_HEADERS
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
@@ -50,7 +53,6 @@ from danswer.llm.answering.prompts.citations_prompt import (
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_llms_for_persona
-from danswer.llm.headers import get_litellm_additional_request_headers
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
@@ -229,7 +231,9 @@ def rename_chat_session(
 
     try:
         llm, _ = get_default_llms(
-            additional_headers=get_litellm_additional_request_headers(request.headers)
+            additional_headers=extract_headers(
+                request.headers, LITELLM_PASS_THROUGH_HEADERS
+            )
         )
     except GenAIDisabledException:
         # This may be longer than what the LLM tends to produce but is the most
@@ -330,8 +334,11 @@ def handle_new_chat_message(
                 new_msg_req=chat_message_req,
                 user=user,
                 use_existing_user_message=chat_message_req.use_existing_user_message,
-                litellm_additional_headers=get_litellm_additional_request_headers(
-                    request.headers
+                litellm_additional_headers=extract_headers(
+                    request.headers, LITELLM_PASS_THROUGH_HEADERS
+                ),
+                tool_additional_headers=extract_headers(
+                    request.headers, TOOL_PASS_THROUGH_HEADERS
                 ),
                 is_connected=is_disconnected_func,
             ):

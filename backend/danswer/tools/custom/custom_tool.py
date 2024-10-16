@@ -47,6 +47,7 @@ class CustomTool(Tool):
         method_spec: MethodSpec,
         base_url: str,
         custom_headers: list[dict[str, str]] | None = [],
+        tool_additional_headers: dict[str, str] | None = None,
     ) -> None:
         self._base_url = base_url
         self._method_spec = method_spec
@@ -54,11 +55,9 @@ class CustomTool(Tool):
 
         self._name = self._method_spec.name
         self._description = self._method_spec.summary
-        self.headers = (
-            {header["key"]: header["value"] for header in custom_headers}
-            if custom_headers
-            else {}
-        )
+        self.headers = {
+            header["key"]: header["value"] for header in (custom_headers or [])
+        } | (tool_additional_headers or {})
 
     @property
     def name(self) -> str:
@@ -185,6 +184,7 @@ class CustomTool(Tool):
 
 def build_custom_tools_from_openapi_schema_and_headers(
     openapi_schema: dict[str, Any],
+    tool_additional_headers: dict[str, str] | None = None,
     custom_headers: list[dict[str, str]] | None = [],
     dynamic_schema_info: DynamicSchemaInfo | None = None,
 ) -> list[CustomTool]:
@@ -205,7 +205,8 @@ def build_custom_tools_from_openapi_schema_and_headers(
     url = openapi_to_url(openapi_schema)
     method_specs = openapi_to_method_specs(openapi_schema)
     return [
-        CustomTool(method_spec, url, custom_headers) for method_spec in method_specs
+        CustomTool(method_spec, url, custom_headers, tool_additional_headers)
+        for method_spec in method_specs
     ]
 
 
