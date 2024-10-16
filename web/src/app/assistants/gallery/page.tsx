@@ -41,7 +41,6 @@ export default async function GalleryPage({
           chatSessions={chatSessions}
           folders={folders}
           openedFolders={openedFolders}
-          user={user}
         />
       </AssistantsProvider>
     </>

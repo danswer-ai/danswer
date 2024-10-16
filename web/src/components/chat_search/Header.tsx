@@ -2,23 +2,19 @@
 import { User } from "@/lib/types";
 import { UserDropdown } from "../UserDropdown";
 import { FiShare2 } from "react-icons/fi";
-import { SetStateAction, useContext, useEffect, useState } from "react";
+import { SetStateAction, useEffect } from "react";
 import { NewChatIcon } from "../icons/icons";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 import { ChatSession } from "@/app/chat/interfaces";
-import { Notification } from "@/app/admin/settings/interfaces";
-import { Persona } from "@/app/admin/assistants/interfaces";
 import Link from "next/link";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
 import LogoType from "../header/LogoType";
-import useSWR from "swr";
-import { errorHandlingFetcher } from "@/lib/fetcher";
 import { NotificationCard } from "./Notification";
+import { useUser } from "../user/UserProvider";
 
 export default function FunctionalHeader({
-  user,
   page,
   currentChatSession,
   setSharingModalVisible,
@@ -28,12 +24,12 @@ export default function FunctionalHeader({
 }: {
   reset?: () => void;
   page: pageType;
-  user: User | null;
   sidebarToggled?: boolean;
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
   toggleSidebar?: () => void;
 }) {
+  const { user } = useUser();
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {

@@ -13,13 +13,11 @@ export default function WrappedPrompts({
   initiallyToggled,
   folders,
   openedFolders,
-  user,
 }: {
   chatSessions: ChatSession[];
   folders: Folder[];
   initiallyToggled: boolean;
   openedFolders?: { [key: number]: boolean };
-  user: User | null;
 }) {
   const {
     data: promptLibrary,
@@ -36,23 +34,18 @@ export default function WrappedPrompts({
       chatSessions={chatSessions}
       folders={folders}
       openedFolders={openedFolders}
-      headerProps={{ user, page: "chat" }}
-      contentProps={{
-        user: user,
-      }}
-      content={(_) => (
-        <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-          <AssistantsPageTitle>Prompt Gallery</AssistantsPageTitle>
-          <PromptSection
-            promptLibrary={promptLibrary || []}
-            isLoading={promptLibraryIsLoading}
-            error={promptLibraryError}
-            refreshPrompts={refreshPrompts}
-            isPublic={false}
-            centering
-          />
-        </div>
-      )}
-    />
+    >
+      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+        <AssistantsPageTitle>Prompt Gallery</AssistantsPageTitle>
+        <PromptSection
+          promptLibrary={promptLibrary || []}
+          isLoading={promptLibraryIsLoading}
+          error={promptLibraryError}
+          refreshPrompts={refreshPrompts}
+          isPublic={false}
+          centering
+        />
+      </div>
+    </SidebarWrapper>
   );
 }

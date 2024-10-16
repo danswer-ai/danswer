@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { AssistantTools } from "../ToolsDisplay";
 import { classifyAssistants } from "@/lib/assistants/utils";
 import { useAssistants } from "@/components/context/AssisantsContext";
+import { useUser } from "@/components/user/UserProvider";
 export function AssistantGalleryCard({
   assistant,
   user,
@@ -137,8 +138,9 @@ export function AssistantGalleryCard({
     </div>
   );
 }
-export function AssistantsGallery({ user }: { user: User | null }) {
+export function AssistantsGallery() {
   const { assistants } = useAssistants();
+  const { user } = useUser();
 
   const router = useRouter();
 

@@ -12,13 +12,11 @@ export default function WrappedAssistantsGallery({
   initiallyToggled,
   folders,
   openedFolders,
-  user,
 }: {
   chatSessions: ChatSession[];
   folders: Folder[];
   initiallyToggled: boolean;
   openedFolders?: { [key: number]: boolean };
-  user: User | null;
 }) {
   return (
     <SidebarWrapper
@@ -27,11 +25,8 @@ export default function WrappedAssistantsGallery({
       chatSessions={chatSessions}
       folders={folders}
       openedFolders={openedFolders}
-      headerProps={{ user, page: "chat" }}
-      contentProps={{
-        user: user,
-      }}
-      content={(contentProps) => <AssistantsGallery user={contentProps.user} />}
-    />
+    >
+      <AssistantsGallery />
+    </SidebarWrapper>
   );
 }
