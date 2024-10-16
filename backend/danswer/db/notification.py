@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
@@ -8,12 +10,12 @@ from danswer.db.models import User
 
 
 def create_notification(
-    user: User | None,
+    user_id: UUID | None,
     notif_type: NotificationType,
     db_session: Session,
 ) -> Notification:
     notification = Notification(
-        user_id=user.id if user else None,
+        user_id=user_id,
         notif_type=notif_type,
         dismissed=False,
         last_shown=func.now(),

@@ -5,12 +5,15 @@ import { FiShare2 } from "react-icons/fi";
 import { SetStateAction, useContext, useEffect } from "react";
 import { NewChatIcon } from "../icons/icons";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
-import { ChatSession } from "@/app/chat/interfaces";
+import { ChatSession, Notification } from "@/app/chat/interfaces";
 import Link from "next/link";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
 import LogoType from "../header/LogoType";
+import useSWR from "swr";
+import { errorHandlingFetcher } from "@/lib/fetcher";
+import { NotificationCard } from "./Notification";
 
 export default function FunctionalHeader({
   user,
@@ -53,6 +56,18 @@ export default function FunctionalHeader({
     };
   }, [page, currentChatSession]);
   const router = useRouter();
+
+  const {
+    data: notifications,
+    error,
+    mutate: refreshNotifications,
+  } = useSWR<Notification[]>("/api/notifications", errorHandlingFetcher);
+
+  useEffect(() => {
+    if (error) {
+      console.error("Failed to fetch notificat  ions:", error);
+    }
+  }, [error]);
 
   const handleNewChat = () => {
     reset();
@@ -108,6 +123,10 @@ export default function FunctionalHeader({
             </div>
           )}
 
+          <NotificationCard
+            notifications={notifications}
+            refreshNotifications={refreshNotifications}
+          />
           <div className="mobile:hidden flex my-auto">
             <UserDropdown user={user} />
           </div>

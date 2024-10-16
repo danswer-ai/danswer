@@ -13,8 +13,10 @@ from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import FileOrigin
+from danswer.configs.constants import NotificationType
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.db.notification import create_notification
 from danswer.db.persona import create_update_persona
 from danswer.db.persona import get_persona_by_id
 from danswer.db.persona import get_personas
@@ -28,6 +30,7 @@ from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
 from danswer.llm.answering.prompts.utils import build_dummy_prompt
 from danswer.server.features.persona.models import CreatePersonaRequest
+from danswer.server.features.persona.models import PersonaSharedNotificationData
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.features.persona.models import PromptTemplateResponse
 from danswer.server.models import DisplayPriorityRequest
@@ -183,6 +186,7 @@ class PersonaShareRequest(BaseModel):
     user_ids: list[UUID]
 
 
+# We notify each user when a user is shared with them
 @basic_router.patch("/{persona_id}/share")
 def share_persona(
     persona_id: int,
@@ -196,6 +200,16 @@ def share_persona(
         user=user,
         db_session=db_session,
     )
+
+    for user_id in persona_share_request.user_ids:
+        create_notification(
+            user_id=user_id,
+            notif_type=NotificationType.PERSONA_SHARED,
+            db_session=db_session,
+            additional_data=PersonaSharedNotificationData(
+                persona_id=persona_id,
+            ).model_dump(),
+        )
 
 
 @basic_router.delete("/{persona_id}")

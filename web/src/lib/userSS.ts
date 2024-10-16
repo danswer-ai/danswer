@@ -155,3 +155,12 @@ export const processCookies = (cookies: ReadonlyRequestCookies): string => {
     .map((cookie) => `${cookie.name}=${cookie.value}`)
     .join("; ");
 };
+
+export const getNotificationsSS = async (): Promise<Notification[]> => {
+  const response = await fetch(buildUrl("/notifications"));
+  if (!response.ok) {
+    throw new Error("Failed to fetch notifications");
+  }
+  const notifications = await response.json();
+  return notifications;
+};

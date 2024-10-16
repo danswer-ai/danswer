@@ -59,6 +59,15 @@ export interface ToolCallFinalResult {
   tool_result: Record<string, any>;
 }
 
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  time_created: string;
+  dismissed: boolean;
+  additional_data?: Record<string, any>;
+}
+
 export interface ChatSession {
   id: string;
   name: string;

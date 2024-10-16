@@ -9,11 +9,7 @@ import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { Popover } from "./popover/Popover";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { SettingsContext } from "./settings/SettingsProvider";
-import {
-  AssistantsIconSkeleton,
-  LightSettingsIcon,
-  UsersIcon,
-} from "./icons/icons";
+import { LightSettingsIcon } from "./icons/icons";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { NavigationItem } from "@/app/admin/settings/interfaces";
 import DynamicFaIcon, { preloadIcons } from "./icons/DynamicFaIcon";
