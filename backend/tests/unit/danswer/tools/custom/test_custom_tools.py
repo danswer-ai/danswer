@@ -12,6 +12,7 @@ from danswer.tools.custom.custom_tool import CustomToolCallSummary
 from danswer.tools.custom.custom_tool import validate_openapi_schema
 from danswer.tools.models import DynamicSchemaInfo
 from danswer.tools.tool import ToolResponse
+from danswer.utils.headers import HeaderItemDict
 
 
 class TestCustomTool(unittest.TestCase):
@@ -142,7 +143,7 @@ class TestCustomTool(unittest.TestCase):
         Test the custom tool with custom headers.
         Verifies that the tool correctly includes the custom headers in the request.
         """
-        custom_headers: list[dict[str, str]] = [
+        custom_headers: list[HeaderItemDict] = [
             {"key": "Authorization", "value": "Bearer token123"},
             {"key": "Custom-Header", "value": "CustomValue"},
         ]
@@ -170,7 +171,7 @@ class TestCustomTool(unittest.TestCase):
         Test the custom tool with an empty list of custom headers.
         Verifies that the tool correctly handles an empty list of headers.
         """
-        custom_headers: list[dict[str, str]] = []
+        custom_headers: list[HeaderItemDict] = []
         tools = build_custom_tools_from_openapi_schema_and_headers(
             self.openapi_schema,
             custom_headers=custom_headers,

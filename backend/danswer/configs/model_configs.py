@@ -119,19 +119,3 @@ if _LITELLM_PASS_THROUGH_HEADERS_RAW:
         logger.error(
             "Failed to parse LITELLM_PASS_THROUGH_HEADERS, must be a valid JSON object"
         )
-
-
-# List of headers to pass through to tool calls (e.g., API requests made by tools)
-# This allows for dynamic configuration of tool behavior based on incoming request headers
-TOOL_PASS_THROUGH_HEADERS: list[str] | None = None
-_TOOL_PASS_THROUGH_HEADERS_RAW = os.environ.get("TOOL_PASS_THROUGH_HEADERS")
-if _TOOL_PASS_THROUGH_HEADERS_RAW:
-    try:
-        TOOL_PASS_THROUGH_HEADERS = json.loads(_TOOL_PASS_THROUGH_HEADERS_RAW)
-    except Exception:
-        from danswer.utils.logger import setup_logger
-
-        logger = setup_logger()
-        logger.error(
-            "Failed to parse TOOL_PASS_THROUGH_HEADERS, must be a valid JSON object"
-        )
