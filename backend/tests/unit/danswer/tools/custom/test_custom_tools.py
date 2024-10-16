@@ -1,4 +1,5 @@
 import unittest
+import uuid
 from typing import Any
 from unittest.mock import patch
 
@@ -73,7 +74,7 @@ class TestCustomTool(unittest.TestCase):
         }
         validate_openapi_schema(self.openapi_schema)
         self.dynamic_schema_info: DynamicSchemaInfo = DynamicSchemaInfo(
-            chat_session_id=10, message_id=20
+            chat_session_id=uuid.uuid4(), message_id=20
         )
 
     @patch("danswer.tools.custom.custom_tool.requests.request")

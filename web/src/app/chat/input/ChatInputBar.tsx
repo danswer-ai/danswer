@@ -86,7 +86,7 @@ export function ChatInputBar({
   setFiles: (files: FileDescriptor[]) => void;
   handleFileUpload: (files: File[]) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
-  chatSessionId?: number;
+  chatSessionId?: string;
   refreshUser: () => void;
 }) {
   useEffect(() => {

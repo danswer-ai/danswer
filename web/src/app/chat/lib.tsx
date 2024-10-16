@@ -55,7 +55,7 @@ export function getChatRetentionInfo(
 }
 
 export async function updateModelOverrideForChatSession(
-  chatSessionId: number,
+  chatSessionId: string,
   newAlternateModel: string
 ) {
   const response = await fetch("/api/chat/update-chat-session-model", {
@@ -74,7 +74,7 @@ export async function updateModelOverrideForChatSession(
 export async function createChatSession(
   personaId: number,
   description: string | null
-): Promise<number> {
+): Promise<string> {
   const createChatSessionResponse = await fetch(
     "/api/chat/create-chat-session",
     {
@@ -131,7 +131,7 @@ export async function* sendMessage({
   message: string;
   fileDescriptors: FileDescriptor[];
   parentMessageId: number | null;
-  chatSessionId: number;
+  chatSessionId: string;
   promptId: number | null | undefined;
   filters: Filters | null;
   selectedDocumentIds: number[] | null;
@@ -203,7 +203,7 @@ export async function* sendMessage({
   yield* handleSSEStream<PacketType>(response);
 }
 
-export async function nameChatSession(chatSessionId: number, message: string) {
+export async function nameChatSession(chatSessionId: string, message: string) {
   const response = await fetch("/api/chat/rename-chat-session", {
     method: "PUT",
     headers: {
@@ -252,7 +252,7 @@ export async function handleChatFeedback(
   return response;
 }
 export async function renameChatSession(
-  chatSessionId: number,
+  chatSessionId: string,
   newName: string
 ) {
   const response = await fetch(`/api/chat/rename-chat-session`, {
@@ -269,7 +269,7 @@ export async function renameChatSession(
   return response;
 }
 
-export async function deleteChatSession(chatSessionId: number) {
+export async function deleteChatSession(chatSessionId: string) {
   const response = await fetch(
     `/api/chat/delete-chat-session/${chatSessionId}`,
     {
@@ -348,6 +348,7 @@ export function getCitedDocumentsFromMessage(message: Message) {
 }
 
 export function groupSessionsByDateRange(chatSessions: ChatSession[]) {
+  console.log(chatSessions);
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Set to start of today for accurate comparison
 
@@ -584,7 +585,7 @@ const PARAMS_TO_SKIP = [
 
 export function buildChatUrl(
   existingSearchParams: ReadonlyURLSearchParams,
-  chatSessionId: number | null,
+  chatSessionId: string | null,
   personaId: number | null,
   search?: boolean
 ) {

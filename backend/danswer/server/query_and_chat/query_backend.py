@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -186,7 +188,7 @@ def get_user_search_sessions(
 
 @basic_router.get("/search-session/{session_id}")
 def get_search_session(
-    session_id: int,
+    session_id: UUID,
     is_shared: bool = False,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
