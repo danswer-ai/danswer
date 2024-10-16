@@ -133,6 +133,6 @@ def downgrade() -> None:
     op.drop_column("chat_session", "id")
     op.alter_column("chat_session", "old_id", new_column_name="id")
 
-    op.alter_column("chat_session", "id", server_default=None, nullable=False)
+    op.alter_column("chat_session", "id", server_default=None)
 
     op.execute("DROP SEQUENCE IF EXISTS chat_session_old_id_seq;")
