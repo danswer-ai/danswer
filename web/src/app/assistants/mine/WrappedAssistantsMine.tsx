@@ -12,14 +12,12 @@ export default function WrappedAssistantsMine({
   folders,
   openedFolders,
   user,
-  assistants,
 }: {
   chatSessions: ChatSession[];
   folders: Folder[];
   initiallyToggled: boolean;
   openedFolders?: { [key: number]: boolean };
   user: User | null;
-  assistants: Persona[];
 }) {
   return (
     <SidebarWrapper
@@ -30,15 +28,9 @@ export default function WrappedAssistantsMine({
       openedFolders={openedFolders}
       headerProps={{ user, page: "chat" }}
       contentProps={{
-        assistants: assistants,
         user: user,
       }}
-      content={(contentProps) => (
-        <AssistantsList
-          assistants={contentProps.assistants}
-          user={contentProps.user}
-        />
-      )}
+      content={(contentProps) => <AssistantsList user={contentProps.user} />}
     />
   );
 }

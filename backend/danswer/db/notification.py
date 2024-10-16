@@ -15,6 +15,25 @@ def create_notification(
     db_session: Session,
     additional_data: dict | None = None,
 ) -> Notification:
+    # Check if an undismissed notification of the same type and data exists
+    existing_notification = (
+        db_session.query(Notification)
+        .filter_by(
+            user_id=user_id,
+            notif_type=notif_type,
+            dismissed=False,
+        )
+        .filter(Notification.additional_data == additional_data)
+        .first()
+    )
+
+    if existing_notification:
+        # Update the last_shown timestamp
+        existing_notification.last_shown = func.now()
+        db_session.commit()
+        return existing_notification
+
+    # Create a new notification if none exists
     notification = Notification(
         user_id=user_id,
         notif_type=notif_type,

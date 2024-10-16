@@ -61,6 +61,7 @@ import {
   orderAssistantsForUser,
 } from "@/lib/assistants/utils";
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
+import { useAssistants } from "@/components/context/AssisantsContext";
 
 function DraggableAssistantListItem(props: any) {
   const {
@@ -284,13 +285,8 @@ function AssistantListItem({
     </>
   );
 }
-export function AssistantsList({
-  user,
-  assistants,
-}: {
-  user: User | null;
-  assistants: Persona[];
-}) {
+export function AssistantsList({ user }: { user: User | null }) {
+  const { assistants } = useAssistants();
   // Define the distinct groups of assistants
   const { visibleAssistants, hiddenAssistants } = classifyAssistants(
     user,

@@ -230,22 +230,33 @@ def list_personas(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
+    persona_ids: list[int] = Query(None),
 ) -> list[PersonaSnapshot]:
-    return [
-        PersonaSnapshot.from_model(persona)
-        for persona in get_personas(
-            user=user,
-            include_deleted=include_deleted,
-            db_session=db_session,
-            get_editable=False,
-            joinedload_all=True,
-        )
-        # If the persona has an image generation tool and it's not available, don't include it
+    print("LISTING PERSONAS")
+    print("user", user)
+    personas = get_personas(
+        user=user,
+        include_deleted=include_deleted,
+        db_session=db_session,
+        get_editable=False,
+        joinedload_all=True,
+    )
+
+    if persona_ids:
+        personas = [p for p in personas if p.id in persona_ids]
+
+    # Filter out personas with unavailable tools
+    personas = [
+        p
+        for p in personas
         if not (
-            any(tool.in_code_tool_id == "ImageGenerationTool" for tool in persona.tools)
+            any(tool.in_code_tool_id == "ImageGenerationTool" for tool in p.tools)
             and not is_image_generation_available(db_session=db_session)
         )
     ]
+    print(len(personas))
+
+    return [PersonaSnapshot.from_model(p) for p in personas]
 
 
 @basic_router.get("/{persona_id}")

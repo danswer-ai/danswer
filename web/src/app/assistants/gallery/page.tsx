@@ -4,6 +4,7 @@ import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import WrappedAssistantsGallery from "./WrappedAssistantsGallery";
+import { AssistantsProvider } from "@/components/context/AssisantsContext";
 
 export default async function GalleryPage({
   searchParams,
@@ -30,18 +31,19 @@ export default async function GalleryPage({
 
   return (
     <>
-      {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+      <AssistantsProvider initialAssistants={assistants}>
+        {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
-      <InstantSSRAutoRefresh />
+        <InstantSSRAutoRefresh />
 
-      <WrappedAssistantsGallery
-        initiallyToggled={toggleSidebar}
-        chatSessions={chatSessions}
-        folders={folders}
-        openedFolders={openedFolders}
-        user={user}
-        assistants={assistants}
-      />
+        <WrappedAssistantsGallery
+          initiallyToggled={toggleSidebar}
+          chatSessions={chatSessions}
+          folders={folders}
+          openedFolders={openedFolders}
+          user={user}
+        />
+      </AssistantsProvider>
     </>
   );
 }

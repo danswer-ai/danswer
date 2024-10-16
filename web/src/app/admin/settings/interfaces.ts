@@ -15,12 +15,20 @@ export interface Settings {
   product_gating: GatingType;
 }
 
+export enum NotificationType {
+  PERSONA_SHARED = "persona_shared",
+  REINDEX_NEEDED = "reindex_needed",
+}
+
 export interface Notification {
   id: number;
   notif_type: string;
+  time_created: string;
   dismissed: boolean;
-  last_shown: string;
-  first_shown: string;
+  additional_data?: {
+    persona_id?: number;
+    [key: string]: any;
+  };
 }
 
 export interface NavigationItem {

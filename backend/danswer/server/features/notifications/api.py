@@ -17,15 +17,18 @@ logger = setup_logger()
 router = APIRouter(prefix="/notifications")
 
 
-@router.get("/")
+@router.get("")
 def get_notifications_api(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> list[NotificationModel]:
-    return [
+    notificatinos = [
         NotificationModel.from_model(notif)
         for notif in get_notifications(user, db_session, include_dismissed=False)
     ]
+    print(user)
+    print(len(notificatinos))
+    return notificatinos
 
 
 @router.post("/{notification_id}/dismiss")

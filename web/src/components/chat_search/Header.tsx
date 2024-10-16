@@ -2,10 +2,12 @@
 import { User } from "@/lib/types";
 import { UserDropdown } from "../UserDropdown";
 import { FiShare2 } from "react-icons/fi";
-import { SetStateAction, useContext, useEffect } from "react";
+import { SetStateAction, useContext, useEffect, useState } from "react";
 import { NewChatIcon } from "../icons/icons";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
-import { ChatSession, Notification } from "@/app/chat/interfaces";
+import { ChatSession } from "@/app/chat/interfaces";
+import { Notification } from "@/app/admin/settings/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import Link from "next/link";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
@@ -57,18 +59,6 @@ export default function FunctionalHeader({
   }, [page, currentChatSession]);
   const router = useRouter();
 
-  const {
-    data: notifications,
-    error,
-    mutate: refreshNotifications,
-  } = useSWR<Notification[]>("/api/notifications", errorHandlingFetcher);
-
-  useEffect(() => {
-    if (error) {
-      console.error("Failed to fetch notificat  ions:", error);
-    }
-  }, [error]);
-
   const handleNewChat = () => {
     reset();
     const newChatUrl =
@@ -78,6 +68,7 @@ export default function FunctionalHeader({
         : "");
     router.push(newChatUrl);
   };
+
   return (
     <div className="left-0 bg-transparent sticky top-0 z-20 w-full relative flex">
       <div className="mt-2 mx-2.5 cursor-pointer text-text-700 relative flex w-full">
@@ -123,10 +114,7 @@ export default function FunctionalHeader({
             </div>
           )}
 
-          <NotificationCard
-            notifications={notifications}
-            refreshNotifications={refreshNotifications}
-          />
+          <NotificationCard />
           <div className="mobile:hidden flex my-auto">
             <UserDropdown user={user} />
           </div>

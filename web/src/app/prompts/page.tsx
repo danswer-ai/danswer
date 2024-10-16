@@ -16,14 +16,7 @@ export default async function GalleryPage({
     redirect(data.redirect);
   }
 
-  const {
-    user,
-    chatSessions,
-    assistants,
-    folders,
-    openedFolders,
-    toggleSidebar,
-  } = data;
+  const { user, chatSessions, folders, openedFolders, toggleSidebar } = data;
 
   return (
     <WrappedPrompts
@@ -32,7 +25,6 @@ export default async function GalleryPage({
       folders={folders}
       openedFolders={openedFolders}
       user={user}
-      assistants={assistants}
     />
   );
 }

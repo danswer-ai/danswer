@@ -15,6 +15,7 @@ import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { AssistantTools } from "../ToolsDisplay";
 import { classifyAssistants } from "@/lib/assistants/utils";
+import { useAssistants } from "@/components/context/AssisantsContext";
 export function AssistantGalleryCard({
   assistant,
   user,
@@ -136,14 +137,9 @@ export function AssistantGalleryCard({
     </div>
   );
 }
-export function AssistantsGallery({
-  assistants,
-  user,
-}: {
-  assistants: Persona[];
+export function AssistantsGallery({ user }: { user: User | null }) {
+  const { assistants } = useAssistants();
 
-  user: User | null;
-}) {
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useState("");
