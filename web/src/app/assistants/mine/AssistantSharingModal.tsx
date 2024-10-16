@@ -138,7 +138,6 @@ export function AssistantSharingModal({
         onOutsideClick={onClose}
       >
         <div>
-          {isUpdating && <Spinner />}
           <p className="text-text-600 text-lg mb-6">
             Manage access to this assistant by sharing it with other users.
           </p>
@@ -225,6 +224,7 @@ export function AssistantSharingModal({
           )}
         </div>
       </Modal>
+      {isUpdating && <Spinner />}
     </>
   );
 }

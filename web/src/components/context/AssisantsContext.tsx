@@ -24,7 +24,14 @@ const AssistantsContext = createContext<AssistantsContextProps | undefined>(
 export const AssistantsProvider: React.FC<{
   children: React.ReactNode;
   initialAssistants: Persona[];
-}> = ({ children, initialAssistants }) => {
+  hasAnyConnectors: boolean;
+  hasImageCompatibleModel: boolean;
+}> = ({
+  children,
+  initialAssistants,
+  hasAnyConnectors,
+  hasImageCompatibleModel,
+}) => {
   const [assistants, setAssistants] = useState<Persona[]>(
     initialAssistants || []
   );
@@ -39,7 +46,20 @@ export const AssistantsProvider: React.FC<{
         },
       });
       if (!response.ok) throw new Error("Failed to fetch assistants");
-      const assistants = await response.json();
+      let assistants: Persona[] = await response.json();
+      if (!hasImageCompatibleModel) {
+        assistants = assistants.filter(
+          (assistant) =>
+            !assistant.tools.some(
+              (tool) => tool.in_code_tool_id === "ImageGenerationTool"
+            )
+        );
+      }
+      if (!hasAnyConnectors) {
+        assistants = assistants.filter(
+          (assistant) => assistant.num_chunks === 0
+        );
+      }
       setAssistants(assistants);
     } catch (error) {
       console.error("Error refreshing assistants:", error);
@@ -56,9 +76,11 @@ export const AssistantsProvider: React.FC<{
       user,
       assistants
     );
+
     const finalAssistants = user
       ? orderAssistantsForUser(visibleAssistants, user)
       : visibleAssistants;
+
     const ownedButHiddenAssistants = getUserCreatedAssistants(
       user,
       hiddenAssistants

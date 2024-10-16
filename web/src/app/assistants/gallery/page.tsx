@@ -27,11 +27,17 @@ export default async function GalleryPage({
     openedFolders,
     shouldShowWelcomeModal,
     toggleSidebar,
+    hasAnyConnectors,
+    hasImageCompatibleModel,
   } = data;
 
   return (
     <>
-      <AssistantsProvider initialAssistants={assistants}>
+      <AssistantsProvider
+        initialAssistants={assistants}
+        hasAnyConnectors={hasAnyConnectors}
+        hasImageCompatibleModel={hasImageCompatibleModel}
+      >
         {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
         <InstantSSRAutoRefresh />

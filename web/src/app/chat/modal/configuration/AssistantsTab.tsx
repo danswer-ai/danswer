@@ -35,6 +35,7 @@ export function AssistantsTab({
   const [_, llmName] = getFinalLLM(llmProviders, null, null);
   const { finalAssistants, refreshAssistants } = useAssistants();
   const [assistants, setAssistants] = useState(finalAssistants);
+  console.log(finalAssistants);
 
   useEffect(() => {
     setAssistants(finalAssistants);

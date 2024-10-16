@@ -28,6 +28,7 @@ export function AssistantGalleryCard({
   setPopup: (popup: PopupSpec) => void;
   selectedAssistant: boolean;
 }) {
+  const { refreshUser } = useUser();
   const router = useRouter();
   return (
     <div
@@ -82,7 +83,7 @@ export function AssistantGalleryCard({
                       message: `"${assistant.name}" has been removed from your list.`,
                       type: "success",
                     });
-                    router.refresh();
+                    await refreshUser();
                   } else {
                     setPopup({
                       message: `"${assistant.name}" could not be removed from your list.`,
@@ -110,7 +111,7 @@ export function AssistantGalleryCard({
                       message: `"${assistant.name}" has been added to your list.`,
                       type: "success",
                     });
-                    router.refresh();
+                    await refreshUser();
                   } else {
                     setPopup({
                       message: `"${assistant.name}" could not be added to your list.`,

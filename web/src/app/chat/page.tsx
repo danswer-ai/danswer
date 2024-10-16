@@ -34,13 +34,19 @@ export default async function Page({
     shouldShowWelcomeModal,
     assistants,
     userInputPrompts,
+    hasAnyConnectors,
+    hasImageCompatibleModel,
   } = data;
 
   return (
     <>
       <InstantSSRAutoRefresh />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-      <AssistantsProvider initialAssistants={assistants}>
+      <AssistantsProvider
+        initialAssistants={assistants}
+        hasAnyConnectors={hasAnyConnectors}
+        hasImageCompatibleModel={hasImageCompatibleModel}
+      >
         <ChatProvider
           value={{
             chatSessions,

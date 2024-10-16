@@ -109,6 +109,7 @@ function AssistantListItem({
   setPopup: (popupSpec: PopupSpec | null) => void;
   isDragging?: boolean;
 }) {
+  const { refreshUser } = useUser();
   const router = useRouter();
   const [showSharingModal, setShowSharingModal] = useState(false);
 
@@ -203,7 +204,7 @@ function AssistantListItem({
                           message: `"${assistant.name}" has been removed from your list.`,
                           type: "success",
                         });
-                        router.refresh();
+                        await refreshUser();
                       } else {
                         setPopup({
                           message: `"${assistant.name}" could not be removed from your list.`,
@@ -226,7 +227,7 @@ function AssistantListItem({
                           message: `"${assistant.name}" has been added to your list.`,
                           type: "success",
                         });
-                        router.refresh();
+                        await refreshUser();
                       } else {
                         setPopup({
                           message: `"${assistant.name}" could not be added to your list.`,
@@ -359,7 +360,7 @@ export function AssistantsList() {
                 message: `"${deletingPersona.name}" has been deleted.`,
                 type: "success",
               });
-              router.refresh();
+              await refreshUser();
             } else {
               setPopup({
                 message: `"${deletingPersona.name}" could not be deleted.`,
@@ -380,7 +381,7 @@ export function AssistantsList() {
               makePublicPersona.id,
               newPublicStatus
             );
-            router.refresh();
+            await refreshAssistants();
           }}
         />
       )}
