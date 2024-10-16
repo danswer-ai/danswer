@@ -294,10 +294,7 @@ class CCPairManager:
         try:
             return datetime.fromisoformat(response_str)
         except ValueError:
-            # Handle invalid datetime format
-            pass
-
-        return None
+            return None
 
     @staticmethod
     def wait_for_prune(
