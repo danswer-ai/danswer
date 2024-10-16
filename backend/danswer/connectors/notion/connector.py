@@ -217,11 +217,18 @@ class NotionConnector(LoadConnector, PollConnector):
         """Converts Notion properties to a string"""
 
         def _recurse_properties(inner_dict: dict[str, Any]) -> str:
+            if not inner_dict:
+                # Edge case handling, should not happen
+                return "N/A"
+
             while "type" in inner_dict:
                 type_name = inner_dict["type"]
                 inner_dict = inner_dict[type_name]
                 if isinstance(inner_dict, list):
-                    return ", ".join([_recurse_properties(item) for item in inner_dict])
+                    return ", ".join(
+                        [_recurse_properties(item) for item in inner_dict if item]
+                    )
+
             # TODO there may be more types to handle here
             if "name" in inner_dict:
                 return inner_dict["name"]
@@ -245,6 +252,9 @@ class NotionConnector(LoadConnector, PollConnector):
 
         result = ""
         for prop_name, prop in properties.items():
+            if not prop:
+                continue
+
             inner_value = _recurse_properties(prop)
             # Not a perfect way to format Notion database tables but there's no perfect representation
             # since this must be represented as plaintext
@@ -268,13 +278,14 @@ class NotionConnector(LoadConnector, PollConnector):
                 text = self._properties_to_str(result.get("properties", {}))
                 if text:
                     result_blocks.append(NotionBlock(id=obj_id, text=text, prefix="\n"))
+
+                # Add nested pages/databases for further processing as separate documents
                 if obj_type == "page":
                     logger.debug(
                         f"Found page with ID '{obj_id}' in database '{database_id}'"
                     )
                     result_pages.append(result["id"])
                 elif obj_type == "database":
-                    # TODO add block for database
                     logger.debug(
                         f"Found database with ID '{obj_id}' in database '{database_id}'"
                     )
