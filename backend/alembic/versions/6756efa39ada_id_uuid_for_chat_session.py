@@ -11,6 +11,18 @@ down_revision = "5d12a446f5c0"
 branch_labels = None
 depends_on = None
 
+"""
+Migrate chat_session and chat_message tables to use UUID primary keys.
+
+This script:
+1. Adds UUID columns to chat_session and chat_message
+2. Populates new columns with UUIDs
+3. Updates foreign key relationships
+4. Removes old integer ID columns
+
+Note: Downgrade will assign new integer IDs, not restore original ones.
+"""
+
 
 def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
