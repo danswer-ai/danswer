@@ -40,8 +40,12 @@ export const getAuthDisabledSS = async (): Promise<boolean> => {
   return (await getAuthTypeMetadataSS()).authType === "disabled";
 };
 
-const geOIDCAuthUrlSS = async (): Promise<string> => {
-  const res = await fetch(buildUrl("/auth/oidc/authorize"));
+const getOIDCAuthUrlSS = async (nextUrl: string | null): Promise<string> => {
+  const res = await fetch(
+    buildUrl(
+      `/auth/oidc/authorize${nextUrl ? `?next=${encodeURIComponent(nextUrl)}` : ""}`
+    )
+  );
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }
@@ -51,7 +55,7 @@ const geOIDCAuthUrlSS = async (): Promise<string> => {
 };
 
 const getGoogleOAuthUrlSS = async (): Promise<string> => {
-  const res = await fetch(buildUrl("/auth/oauth/authorize"));
+  const res = await fetch(buildUrl(`/auth/oauth/authorize`));
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }
@@ -70,7 +74,10 @@ const getSAMLAuthUrlSS = async (): Promise<string> => {
   return data.authorization_url;
 };
 
-export const getAuthUrlSS = async (authType: AuthType): Promise<string> => {
+export const getAuthUrlSS = async (
+  authType: AuthType,
+  nextUrl: string | null
+): Promise<string> => {
   // Returns the auth url for the given auth type
   switch (authType) {
     case "disabled":
@@ -84,7 +91,7 @@ export const getAuthUrlSS = async (authType: AuthType): Promise<string> => {
       return await getSAMLAuthUrlSS();
     }
     case "oidc": {
-      return await geOIDCAuthUrlSS();
+      return await getOIDCAuthUrlSS(nextUrl);
     }
   }
 };

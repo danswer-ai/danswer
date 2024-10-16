@@ -3,7 +3,7 @@
 import { useState, useRef, useContext, useEffect, useMemo } from "react";
 import { FiLogOut } from "react-icons/fi";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { User, UserRole } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { Popover } from "./popover/Popover";
@@ -65,6 +65,8 @@ export function UserDropdown({
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const combinedSettings = useContext(SettingsContext);
   const customNavItems: NavigationItem[] = useMemo(
@@ -87,8 +89,17 @@ export function UserDropdown({
     logout().then((isSuccess) => {
       if (!isSuccess) {
         alert("Failed to logout");
+        return;
       }
-      router.push("/auth/login");
+
+      // Construct the current URL
+      const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+
+      // Encode the current URL to use as a redirect parameter
+      const encodedRedirect = encodeURIComponent(currentUrl);
+
+      // Redirect to login page with the current page as a redirect parameter
+      router.push(`/auth/login?next=${encodedRedirect}`);
     });
   };
 

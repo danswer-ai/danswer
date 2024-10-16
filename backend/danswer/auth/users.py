@@ -5,6 +5,8 @@ from datetime import datetime
 from datetime import timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Tuple
 
@@ -15,9 +17,11 @@ from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 from fastapi import Request
 from fastapi import Response
 from fastapi import status
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import BaseUserManager
 from fastapi_users import exceptions
@@ -31,8 +35,19 @@ from fastapi_users.authentication import JWTStrategy
 from fastapi_users.authentication import Strategy
 from fastapi_users.authentication.strategy.db import AccessTokenDatabase
 from fastapi_users.authentication.strategy.db import DatabaseStrategy
+from fastapi_users.exceptions import UserAlreadyExists
+from fastapi_users.jwt import decode_jwt
+from fastapi_users.jwt import generate_jwt
+from fastapi_users.jwt import SecretType
+from fastapi_users.manager import UserManagerDependency
 from fastapi_users.openapi import OpenAPIResponseType
+from fastapi_users.router.common import ErrorCode
+from fastapi_users.router.common import ErrorModel
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+from httpx_oauth.integrations.fastapi import OAuth2AuthorizeCallback
+from httpx_oauth.oauth2 import BaseOAuth2
+from httpx_oauth.oauth2 import OAuth2Token
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
@@ -298,7 +313,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         token = None
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = current_tenant_id.set(tenant_id)
-            # Print a list of tables in the current database session
+
             verify_email_in_whitelist(account_email, tenant_id)
             verify_email_domain(account_email)
             if MULTI_TENANT:
@@ -422,7 +437,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         email = credentials.username
 
         # Get tenant_id from mapping table
-
         tenant_id = get_tenant_id_for_email(email)
         if not tenant_id:
             # User not found in mapping
@@ -654,3 +668,186 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
 def get_default_admin_user_emails_() -> list[str]:
     # No default seeding available for Danswer MIT
     return []
+
+
+STATE_TOKEN_AUDIENCE = "fastapi-users:oauth-state"
+
+
+class OAuth2AuthorizeResponse(BaseModel):
+    authorization_url: str
+
+
+def generate_state_token(
+    data: Dict[str, str], secret: SecretType, lifetime_seconds: int = 3600
+) -> str:
+    data["aud"] = STATE_TOKEN_AUDIENCE
+
+    return generate_jwt(data, secret, lifetime_seconds)
+
+
+# refer to https://github.com/fastapi-users/fastapi-users/blob/42ddc241b965475390e2bce887b084152ae1a2cd/fastapi_users/fastapi_users.py#L91
+
+
+def create_danswer_oauth_router(
+    oauth_client: BaseOAuth2,
+    backend: AuthenticationBackend,
+    state_secret: SecretType,
+    redirect_url: Optional[str] = None,
+    associate_by_email: bool = False,
+    is_verified_by_default: bool = False,
+) -> APIRouter:
+    return get_oauth_router(
+        oauth_client,
+        backend,
+        get_user_manager,
+        state_secret,
+        redirect_url,
+        associate_by_email,
+        is_verified_by_default,
+    )
+
+
+def get_oauth_router(
+    oauth_client: BaseOAuth2,
+    backend: AuthenticationBackend,
+    get_user_manager: UserManagerDependency[models.UP, models.ID],
+    state_secret: SecretType,
+    redirect_url: Optional[str] = None,
+    associate_by_email: bool = False,
+    is_verified_by_default: bool = False,
+) -> APIRouter:
+    """Generate a router with the OAuth routes."""
+    router = APIRouter()
+    callback_route_name = f"oauth:{oauth_client.name}.{backend.name}.callback"
+
+    if redirect_url is not None:
+        oauth2_authorize_callback = OAuth2AuthorizeCallback(
+            oauth_client,
+            redirect_url=redirect_url,
+        )
+    else:
+        oauth2_authorize_callback = OAuth2AuthorizeCallback(
+            oauth_client,
+            route_name=callback_route_name,
+        )
+
+    @router.get(
+        "/authorize",
+        name=f"oauth:{oauth_client.name}.{backend.name}.authorize",
+        response_model=OAuth2AuthorizeResponse,
+    )
+    async def authorize(
+        request: Request, scopes: List[str] = Query(None)
+    ) -> OAuth2AuthorizeResponse:
+        if redirect_url is not None:
+            authorize_redirect_url = redirect_url
+        else:
+            authorize_redirect_url = str(request.url_for(callback_route_name))
+
+        next_url = request.query_params.get("next", "/")
+        state_data: Dict[str, str] = {"next_url": next_url}
+        state = generate_state_token(state_data, state_secret)
+        authorization_url = await oauth_client.get_authorization_url(
+            authorize_redirect_url,
+            state,
+            scopes,
+        )
+
+        return OAuth2AuthorizeResponse(authorization_url=authorization_url)
+
+    @router.get(
+        "/callback",
+        name=callback_route_name,
+        description="The response varies based on the authentication backend used.",
+        responses={
+            status.HTTP_400_BAD_REQUEST: {
+                "model": ErrorModel,
+                "content": {
+                    "application/json": {
+                        "examples": {
+                            "INVALID_STATE_TOKEN": {
+                                "summary": "Invalid state token.",
+                                "value": None,
+                            },
+                            ErrorCode.LOGIN_BAD_CREDENTIALS: {
+                                "summary": "User is inactive.",
+                                "value": {"detail": ErrorCode.LOGIN_BAD_CREDENTIALS},
+                            },
+                        }
+                    }
+                },
+            },
+        },
+    )
+    async def callback(
+        request: Request,
+        access_token_state: Tuple[OAuth2Token, str] = Depends(
+            oauth2_authorize_callback
+        ),
+        user_manager: BaseUserManager[models.UP, models.ID] = Depends(get_user_manager),
+        strategy: Strategy[models.UP, models.ID] = Depends(backend.get_strategy),
+    ) -> RedirectResponse:
+        token, state = access_token_state
+        account_id, account_email = await oauth_client.get_id_email(
+            token["access_token"]
+        )
+
+        if account_email is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ErrorCode.OAUTH_NOT_AVAILABLE_EMAIL,
+            )
+
+        try:
+            state_data = decode_jwt(state, state_secret, [STATE_TOKEN_AUDIENCE])
+        except jwt.DecodeError:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+
+        next_url = state_data.get("next_url", "/")
+
+        # Authenticate user
+        try:
+            user = await user_manager.oauth_callback(
+                oauth_client.name,
+                token["access_token"],
+                account_id,
+                account_email,
+                token.get("expires_at"),
+                token.get("refresh_token"),
+                request,
+                associate_by_email=associate_by_email,
+                is_verified_by_default=is_verified_by_default,
+            )
+        except UserAlreadyExists:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ErrorCode.OAUTH_USER_ALREADY_EXISTS,
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=ErrorCode.LOGIN_BAD_CREDENTIALS,
+            )
+
+        # Login user
+        response = await backend.login(strategy, user)
+        await user_manager.on_after_login(user, request, response)
+
+        # Prepare redirect response
+        redirect_response = RedirectResponse(next_url, status_code=302)
+
+        # Copy headers and other attributes from 'response' to 'redirect_response'
+        for header_name, header_value in response.headers.items():
+            redirect_response.headers[header_name] = header_value
+
+        if hasattr(response, "body"):
+            redirect_response.body = response.body
+        if hasattr(response, "status_code"):
+            redirect_response.status_code = response.status_code
+        if hasattr(response, "media_type"):
+            redirect_response.media_type = response.media_type
+
+        return redirect_response
+
+    return router
