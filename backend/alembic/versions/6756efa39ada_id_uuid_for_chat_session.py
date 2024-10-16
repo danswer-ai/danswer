@@ -133,6 +133,21 @@ def downgrade() -> None:
     op.drop_column("chat_session", "id")
     op.alter_column("chat_session", "old_id", new_column_name="id")
 
-    op.alter_column("chat_session", "id", server_default=None)
+    op.alter_column(
+        "chat_session",
+        "id",
+        type_=sa.Integer(),
+        existing_type=sa.Integer(),
+        existing_nullable=False,
+        existing_server_default=False,
+    )
 
-    op.execute("DROP SEQUENCE IF EXISTS chat_session_old_id_seq;")
+    # Rename the sequence
+    op.execute("ALTER SEQUENCE chat_session_old_id_seq RENAME TO chat_session_id_seq;")
+
+    # Update the default value to use the renamed sequence
+    op.alter_column(
+        "chat_session",
+        "id",
+        server_default=sa.text("nextval('chat_session_id_seq'::regclass)"),
+    )
