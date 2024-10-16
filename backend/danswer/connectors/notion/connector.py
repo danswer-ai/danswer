@@ -216,17 +216,28 @@ class NotionConnector(LoadConnector, PollConnector):
     def _properties_to_str(properties: dict[str, Any]) -> str:
         """Converts Notion properties to a string"""
 
-        def _recurse_properties(inner_dict: dict[str, Any]) -> str:
-            if not inner_dict:
-                # Edge case handling, should not happen
-                return "N/A"
-
+        def _recurse_properties(inner_dict: dict[str, Any]) -> str | None:
             while "type" in inner_dict:
                 type_name = inner_dict["type"]
                 inner_dict = inner_dict[type_name]
+
+                # If the innermost layer is None, the value is not set
+                if not inner_dict:
+                    return None
+
                 if isinstance(inner_dict, list):
-                    return ", ".join(
-                        [_recurse_properties(item) for item in inner_dict if item]
+                    list_properties = [
+                        _recurse_properties(item) for item in inner_dict if item
+                    ]
+                    return (
+                        ", ".join(
+                            [
+                                list_property
+                                for list_property in list_properties
+                                if list_property
+                            ]
+                        )
+                        or None
                     )
 
             # TODO there may be more types to handle here
@@ -244,11 +255,13 @@ class NotionConnector(LoadConnector, PollConnector):
                 return f"Until {end}"
 
             if "id" in inner_dict:
-                logger.debug("Skipping Notion Id field")
-                return "Unreadable Property"
+                # This is not useful to index, it's a reference to another Notion object
+                # and this ID value in plaintext is useless outside of the Notion context
+                logger.debug("Skipping Notion object id field property")
+                return None
 
             logger.debug(f"Unreadable property from innermost prop: {inner_dict}")
-            return "Unreadable Property"
+            return None
 
         result = ""
         for prop_name, prop in properties.items():
@@ -258,7 +271,8 @@ class NotionConnector(LoadConnector, PollConnector):
             inner_value = _recurse_properties(prop)
             # Not a perfect way to format Notion database tables but there's no perfect representation
             # since this must be represented as plaintext
-            result += f"{prop_name}: {inner_value}\t"
+            if inner_value:
+                result += f"{prop_name}: {inner_value}\t"
 
         return result
 
