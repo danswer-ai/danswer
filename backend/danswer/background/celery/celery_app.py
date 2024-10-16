@@ -19,7 +19,6 @@ from celery.signals import worker_ready
 from celery.signals import worker_shutdown
 from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
-from sqlalchemy.orm import Session
 
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
@@ -38,6 +37,7 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_INDEXING_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_INDEXING_CHILD_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_LIGHT_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import SqlEngine
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.swap_index import check_index_swap
@@ -173,8 +173,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
 
         # TODO: why is this necessary for the indexer to do?
-        engine = SqlEngine.get_engine()
-        with Session(engine) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             check_index_swap(db_session=db_session)
             search_settings = get_current_search_settings(db_session)
 
