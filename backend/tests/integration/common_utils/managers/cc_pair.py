@@ -274,31 +274,40 @@ class CCPairManager:
         result.raise_for_status()
 
     @staticmethod
-    def is_pruning(
+    def last_pruned(
         cc_pair: DATestCCPair,
         user_performing_action: DATestUser | None = None,
-    ) -> bool:
+    ) -> datetime | None:
         response = requests.get(
-            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/prune",
+            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/last_pruned",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
-        response_bool = response.json()
-        return response_bool
+        response_str = response.json()
+
+        # If the response itself is a datetime string, parse it
+        if not isinstance(response_str, str):
+            return None
+
+        try:
+            return datetime.fromisoformat(response_str)
+        except ValueError:
+            return None
 
     @staticmethod
     def wait_for_prune(
         cc_pair: DATestCCPair,
+        after: datetime,
         timeout: float = MAX_DELAY,
         user_performing_action: DATestUser | None = None,
     ) -> None:
         """after: The task register time must be after this time."""
         start = time.monotonic()
         while True:
-            result = CCPairManager.is_pruning(cc_pair, user_performing_action)
-            if not result:
+            last_pruned = CCPairManager.last_pruned(cc_pair, user_performing_action)
+            if last_pruned and last_pruned > after:
                 break
 
             elapsed = time.monotonic() - start
