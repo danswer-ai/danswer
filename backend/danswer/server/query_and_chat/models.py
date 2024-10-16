@@ -116,6 +116,11 @@ class CreateChatMessageRequest(ChunkContext):
             )
         return self
 
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        data = super().model_dump(*args, **kwargs)
+        data["chat_session_id"] = str(data["chat_session_id"])
+        return data
+
 
 class ChatMessageIdentifier(BaseModel):
     message_id: int
