@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import Literal
+from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -83,7 +84,7 @@ class MessageSnapshot(BaseModel):
 
 
 class ChatSessionMinimal(BaseModel):
-    id: int
+    id: UUID
     user_email: str
     name: str | None
     first_user_message: str
@@ -95,7 +96,7 @@ class ChatSessionMinimal(BaseModel):
 
 
 class ChatSessionSnapshot(BaseModel):
-    id: int
+    id: UUID
     user_email: str
     name: str | None
     messages: list[MessageSnapshot]
@@ -105,7 +106,7 @@ class ChatSessionSnapshot(BaseModel):
 
 
 class QuestionAnswerPairSnapshot(BaseModel):
-    chat_session_id: int
+    chat_session_id: UUID
     # 1-indexed message number in the chat_session
     # e.g. the first message pair in the chat_session is 1, the second is 2, etc.
     message_pair_num: int
@@ -350,7 +351,7 @@ def get_chat_session_history(
 
 @router.get("/admin/chat-session-history/{chat_session_id}")
 def get_chat_session_admin(
-    chat_session_id: int,
+    chat_session_id: UUID,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionSnapshot:

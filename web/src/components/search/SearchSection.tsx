@@ -328,7 +328,7 @@ export const SearchSection = ({
   };
   const updateMessageAndThreadId = (
     messageId: number,
-    chat_session_id: number
+    chat_session_id: string
   ) => {
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),

@@ -5,8 +5,11 @@ from typing import Any
 from typing import Literal
 from typing import NotRequired
 from typing import Optional
+from uuid import uuid4
 from typing_extensions import TypedDict  # noreorder
 from uuid import UUID
+
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTableUUID
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTableUUID
@@ -920,7 +923,9 @@ class ToolCall(Base):
 class ChatSession(Base):
     __tablename__ = "chat_session"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid4
+    )
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE"), nullable=True
     )
@@ -990,7 +995,9 @@ class ChatMessage(Base):
     __tablename__ = "chat_message"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    chat_session_id: Mapped[int] = mapped_column(ForeignKey("chat_session.id"))
+    chat_session_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("chat_session.id")
+    )
 
     alternate_assistant_id = mapped_column(
         Integer, ForeignKey("persona.id"), nullable=True

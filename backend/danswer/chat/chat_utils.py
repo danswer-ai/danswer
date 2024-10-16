@@ -1,5 +1,6 @@
 import re
 from typing import cast
+from uuid import UUID
 
 from fastapi.datastructures import Headers
 from sqlalchemy.orm import Session
@@ -34,7 +35,7 @@ def llm_doc_from_inference_section(inference_section: InferenceSection) -> LlmDo
 
 
 def create_chat_chain(
-    chat_session_id: int,
+    chat_session_id: UUID,
     db_session: Session,
     prefetch_tool_calls: bool = True,
     # Optional id at which we finish processing

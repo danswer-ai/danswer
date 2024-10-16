@@ -4,6 +4,7 @@ import uuid
 from collections.abc import Callable
 from collections.abc import Generator
 from typing import Tuple
+from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -131,7 +132,7 @@ def update_chat_session_model(
 
 @router.get("/get-chat-session/{session_id}")
 def get_chat_session(
-    session_id: int,
+    session_id: UUID,
     is_shared: bool = False,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -254,7 +255,7 @@ def rename_chat_session(
 
 @router.patch("/chat-session/{session_id}")
 def patch_chat_session(
-    session_id: int,
+    session_id: UUID,
     chat_session_update_req: ChatSessionUpdateRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -271,7 +272,7 @@ def patch_chat_session(
 
 @router.delete("/delete-chat-session/{session_id}")
 def delete_chat_session_by_id(
-    session_id: int,
+    session_id: UUID,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:

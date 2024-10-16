@@ -145,19 +145,17 @@ export function ChatPage({
   const existingChatIdRaw = searchParams.get("chatId");
   const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
 
-  const existingChatSessionId = existingChatIdRaw
-    ? parseInt(existingChatIdRaw)
-    : null;
+  const existingChatSessionId = existingChatIdRaw ? existingChatIdRaw : null;
 
   const selectedChatSession = chatSessions.find(
     (chatSession) => chatSession.id === existingChatSessionId
   );
 
-  const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
+  const chatSessionIdRef = useRef<string | null>(existingChatSessionId);
 
   // Only updates on session load (ie. rename / switching chat session)
   // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
-  const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
+  const loadedIdSessionRef = useRef<string | null>(existingChatSessionId);
 
   // Assistants in order
   const { finalAssistants } = useMemo(() => {
@@ -448,11 +446,11 @@ export function ChatPage({
   );
 
   const [completeMessageDetail, setCompleteMessageDetail] = useState<
-    Map<number | null, Map<number, Message>>
+    Map<string | null, Map<number, Message>>
   >(new Map());
 
   const updateCompleteMessageDetail = (
-    sessionId: number | null,
+    sessionId: string | null,
     messageMap: Map<number, Message>
   ) => {
     setCompleteMessageDetail((prevState) => {
@@ -463,13 +461,13 @@ export function ChatPage({
   };
 
   const currentMessageMap = (
-    messageDetail: Map<number | null, Map<number, Message>>
+    messageDetail: Map<string | null, Map<number, Message>>
   ) => {
     return (
       messageDetail.get(chatSessionIdRef.current) || new Map<number, Message>()
     );
   };
-  const currentSessionId = (): number => {
+  const currentSessionId = (): string => {
     return chatSessionIdRef.current!;
   };
 
@@ -484,7 +482,7 @@ export function ChatPage({
     // if calling this function repeatedly with short delay, stay may not update in time
     // and result in weird behavipr
     completeMessageMapOverride?: Map<number, Message> | null;
-    chatSessionId?: number;
+    chatSessionId?: string;
     replacementsMap?: Map<number, number> | null;
     makeLatestChildMessage?: boolean;
   }) => {
@@ -559,23 +557,23 @@ export function ChatPage({
 
   const [submittedMessage, setSubmittedMessage] = useState("");
 
-  const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
+  const [chatState, setChatState] = useState<Map<string | null, ChatState>>(
     new Map([[chatSessionIdRef.current, "input"]])
   );
 
   const [regenerationState, setRegenerationState] = useState<
-    Map<number | null, RegenerationState | null>
+    Map<string | null, RegenerationState | null>
   >(new Map([[null, null]]));
 
   const [abortControllers, setAbortControllers] = useState<
-    Map<number | null, AbortController>
+    Map<string | null, AbortController>
   >(new Map());
 
   // Updates "null" session values to new session id for
   // regeneration, chat, and abort controller state, messagehistory
-  const updateStatesWithNewSessionId = (newSessionId: number) => {
+  const updateStatesWithNewSessionId = (newSessionId: string) => {
     const updateState = (
-      setState: Dispatch<SetStateAction<Map<number | null, any>>>,
+      setState: Dispatch<SetStateAction<Map<string | null, any>>>,
       defaultValue?: any
     ) => {
       setState((prevState) => {
@@ -610,7 +608,7 @@ export function ChatPage({
     chatSessionIdRef.current = newSessionId;
   };
 
-  const updateChatState = (newState: ChatState, sessionId?: number | null) => {
+  const updateChatState = (newState: ChatState, sessionId?: string | null) => {
     setChatState((prevState) => {
       const newChatState = new Map(prevState);
       newChatState.set(
@@ -635,7 +633,7 @@ export function ChatPage({
 
   const updateRegenerationState = (
     newState: RegenerationState | null,
-    sessionId?: number | null
+    sessionId?: string | null
   ) => {
     setRegenerationState((prevState) => {
       const newRegenerationState = new Map(prevState);
@@ -647,18 +645,18 @@ export function ChatPage({
     });
   };
 
-  const resetRegenerationState = (sessionId?: number | null) => {
+  const resetRegenerationState = (sessionId?: string | null) => {
     updateRegenerationState(null, sessionId);
   };
 
   const currentRegenerationState = (): RegenerationState | null => {
     return regenerationState.get(currentSessionId()) || null;
   };
-  const [canContinue, setCanContinue] = useState<Map<number | null, boolean>>(
+  const [canContinue, setCanContinue] = useState<Map<string | null, boolean>>(
     new Map([[null, false]])
   );
 
-  const updateCanContinue = (newState: boolean, sessionId?: number | null) => {
+  const updateCanContinue = (newState: boolean, sessionId?: string | null) => {
     setCanContinue((prevState) => {
       const newCanContinueState = new Map(prevState);
       newCanContinueState.set(
@@ -1003,7 +1001,7 @@ export function ChatPage({
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
-    let currChatSessionId: number;
+    let currChatSessionId: string;
     const isNewSession = chatSessionIdRef.current === null;
     const searchParamBasedChatSessionName =
       searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
@@ -1014,7 +1012,7 @@ export function ChatPage({
         searchParamBasedChatSessionName
       );
     } else {
-      currChatSessionId = chatSessionIdRef.current as number;
+      currChatSessionId = chatSessionIdRef.current as string;
     }
     frozenSessionId = currChatSessionId;
 
@@ -1598,7 +1596,7 @@ export function ChatPage({
   }
 
   const [visibleRange, setVisibleRange] = useState<
-    Map<number | null, VisibleRange>
+    Map<string | null, VisibleRange>
   >(() => {
     const initialRange: VisibleRange = {
       start: 0,
