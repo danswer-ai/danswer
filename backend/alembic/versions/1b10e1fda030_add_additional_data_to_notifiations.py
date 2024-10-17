@@ -1,7 +1,7 @@
 """add additional data to notifiations
 
 Revision ID: 1b10e1fda030
-Revises: 5d12a446f5c0
+Revises: 6756efa39ada
 Create Date: 2024-10-15 19:26:44.071259
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "1b10e1fda030"
-down_revision = "5d12a446f5c0"
+down_revision = "6756efa39ada"
 branch_labels = None
 depends_on = None
 
