@@ -413,7 +413,7 @@ def handle_regular_answer(
 
     # If called with the DanswerBot slash command, the question is lost so we have to reshow it
     restate_question_block = get_restate_blocks(messages[-1].message, is_bot_msg)
-    formatted_answer = format_slack_message(answer.answer)
+    formatted_answer = format_slack_message(answer.answer) if answer.answer else None
 
     answer_blocks = build_qa_response_blocks(
         message_id=answer.chat_message_id,
