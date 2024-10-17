@@ -45,7 +45,7 @@ from danswer.db.models import DocumentSet
 from danswer.db.models import UserGroup
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
-from danswer.document_index.interfaces import UpdateRequest
+from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import (
@@ -609,20 +609,24 @@ def vespa_metadata_sync_task(
             doc_access = get_access_for_document(
                 document_id=document_id, db_session=db_session
             )
-            update_request = UpdateRequest(
-                document_ids=[document_id],
+
+            fields = VespaDocumentFields(
                 document_sets=update_doc_sets,
                 access=doc_access,
                 boost=doc.boost,
                 hidden=doc.hidden,
             )
 
-            # update Vespa
-            document_index.update(update_requests=[update_request])
+            # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
+            chunks_affected = document_index.update_single(document_id, fields=fields)
 
             # update db last. Worst case = we crash right before this and
             # the sync might repeat again later
             mark_document_as_synced(document_id, db_session)
+
+            task_logger.info(
+                f"document_id={document_id} action=sync chunks={chunks_affected}"
+            )
     except SoftTimeLimitExceeded:
         task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
     except Exception as e:
