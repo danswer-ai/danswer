@@ -144,8 +144,8 @@ def _vespa_hit_to_inference_chunk(
         large_chunk_reference_ids=fields.get(LARGE_CHUNK_REFERENCE_IDS, []),
         metadata=metadata,
         metadata_suffix=fields.get(METADATA_SUFFIX),
-        doc_summary=fields.get(DOC_SUMMARY),
-        chunk_context=fields.get(CHUNK_CONTEXT),
+        doc_summary=fields[DOC_SUMMARY],
+        chunk_context=fields[CHUNK_CONTEXT],
         match_highlights=match_highlights,
         updated_at=updated_at,
     )
