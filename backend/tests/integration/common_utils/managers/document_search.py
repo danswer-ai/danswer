@@ -6,6 +6,7 @@ from danswer.search.models import RetrievalDetails
 from danswer.search.models import SavedSearchDocWithContent
 from ee.danswer.server.query_and_chat.models import DocumentSearchRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
+from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.test_models import DATestUser
 
 
@@ -25,7 +26,9 @@ class DocumentSearchManager:
         result = requests.post(
             url=f"{API_SERVER_URL}/query/document-search",
             json=search_request.model_dump(),
-            headers=user_performing_action.headers,
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
         )
         result.raise_for_status()
         result_json = result.json()
