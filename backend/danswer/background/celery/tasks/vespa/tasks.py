@@ -381,7 +381,7 @@ def monitor_connector_deletion_taskset(
             # index attempts
             delete_index_attempts(
                 db_session=db_session,
-                cc_pair_id=cc_pair.id,
+                cc_pair_id=cc_pair_id,
             )
 
             # document sets
@@ -398,7 +398,7 @@ def monitor_connector_deletion_taskset(
                 noop_fallback,
             )
             cleanup_user_groups(
-                cc_pair_id=cc_pair.id,
+                cc_pair_id=cc_pair_id,
                 db_session=db_session,
             )
 
@@ -420,9 +420,10 @@ def monitor_connector_deletion_taskset(
                 db_session.delete(connector)
             db_session.commit()
         except Exception as e:
+            db_session.rollback()
             stack_trace = traceback.format_exc()
             error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
-            add_deletion_failure_message(db_session, cc_pair.id, error_message)
+            add_deletion_failure_message(db_session, cc_pair_id, error_message)
             task_logger.exception(
                 f"Failed to run connector_deletion. "
                 f"cc_pair_id={cc_pair_id} connector_id={cc_pair.connector_id} credential_id={cc_pair.credential_id}"
