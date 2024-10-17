@@ -30,7 +30,6 @@ from danswer.configs.danswerbot_configs import (
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import SlackTextCleaner
 from danswer.danswerbot.slack.constants import FeedbackVisibility
-from danswer.danswerbot.slack.formatting import format_slack_message
 from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.users import get_user_by_email
@@ -166,7 +165,6 @@ def respond_in_thread(
     if not text and not blocks:
         raise ValueError("One of `text` or `blocks` must be provided")
 
-    text = format_slack_message(text)
     message_ids: list[str] = []
     if not receiver_ids:
         slack_call = make_slack_api_rate_limited(client.chat_postMessage)
