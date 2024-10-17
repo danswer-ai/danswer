@@ -202,14 +202,16 @@ def share_persona(
     )
 
     for user_id in persona_share_request.user_ids:
-        create_notification(
-            user_id=user_id,
-            notif_type=NotificationType.PERSONA_SHARED,
-            db_session=db_session,
-            additional_data=PersonaSharedNotificationData(
-                persona_id=persona_id,
-            ).model_dump(),
-        )
+        # Don't notify the user that they have access to their own persona
+        if user_id != user.id:
+            create_notification(
+                user_id=user_id,
+                notif_type=NotificationType.PERSONA_SHARED,
+                db_session=db_session,
+                additional_data=PersonaSharedNotificationData(
+                    persona_id=persona_id,
+                ).model_dump(),
+            )
 
 
 @basic_router.delete("/{persona_id}")

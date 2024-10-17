@@ -10,20 +10,26 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useAssistants } from "../context/AssisantsContext";
 import { useUser } from "../user/UserProvider";
+import { XIcon } from "../icons/icons";
+import { Spinner } from "@phosphor-icons/react";
 
 export const Notifications = ({
   notifications,
   refreshNotifications,
+  navigateToDropdown,
 }: {
   notifications: Notification[];
   refreshNotifications: () => void;
+  navigateToDropdown: () => void;
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const { refreshAssistants } = useAssistants();
 
   const { refreshUser } = useUser();
-  const [personas, setPersonas] = useState<Record<number, Persona>>({});
+  const [personas, setPersonas] = useState<Record<number, Persona> | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     const fetchPersonas = async () => {
@@ -94,7 +100,11 @@ export const Notifications = ({
     ? notifications
         .filter((notification) => {
           const personaId = notification.additional_data?.persona_id;
-          return personaId !== undefined && personas[personaId] !== undefined;
+          return (
+            personaId !== undefined &&
+            personas &&
+            personas[personaId] !== undefined
+          );
         })
         .sort(
           (a, b) =>
@@ -118,11 +128,18 @@ export const Notifications = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showDropdown]);
-
   return (
-    <div className="my-auto relative">
-      <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-20 max-h-[80vh] overflow-y-auto notification-dropdown">
-        {sortedNotifications.length > 0 ? (
+    <div className="w-full">
+      <button
+        onClick={navigateToDropdown}
+        className="absolute right-2 text-background-600 hover:text-background-900 transition-colors duration-150 ease-in-out rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+        aria-label="Back"
+      >
+        <XIcon className="w-5 h-5" />
+      </button>
+
+      {notifications && notifications.length > 0 ? (
+        sortedNotifications.length > 0 && personas ? (
           sortedNotifications
             .filter(
               (notification) =>
@@ -136,7 +153,7 @@ export const Notifications = ({
               return (
                 <div
                   key={notification.id}
-                  className="px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 transition duration-150 ease-in-out"
+                  className="w-72 px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 transition duration-150 ease-in-out"
                 >
                   <div className="flex items-start">
                     {persona && (
@@ -146,16 +163,37 @@ export const Notifications = ({
                     )}
                     <div className="flex-grow">
                       <p className="font-semibold text-sm text-gray-800">
-                        New Assistant Shared With You
+                        New Assistant Shared: {persona?.name}
                       </p>
-
-                      <p className="text-sm text-gray-600 mt-1">
-                        Do you want to accept this assistant?
-                      </p>
-                      {persona && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Assistant: {persona.name}
+                      {persona?.description && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          {persona.description}
                         </p>
+                      )}
+                      {persona && (
+                        <div className="mt-2">
+                          {persona.tools.length > 0 && (
+                            <p className="text-xs text-gray-500">
+                              Tools:{" "}
+                              {persona.tools
+                                .map((tool) => tool.name)
+                                .join(", ")}
+                            </p>
+                          )}
+                          {persona.document_sets.length > 0 && (
+                            <p className="text-xs text-gray-500">
+                              Document Sets:{" "}
+                              {persona.document_sets
+                                .map((set) => set.name)
+                                .join(", ")}
+                            </p>
+                          )}
+                          {persona.llm_model_version_override && (
+                            <p className="text-xs text-gray-500">
+                              Model: {persona.llm_model_version_override}
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -179,11 +217,15 @@ export const Notifications = ({
               );
             })
         ) : (
-          <div className="px-4 py-3 text-center text-gray-600">
-            No new notifications
+          <div className="flex h-20 justify-center items-center w-72">
+            <Spinner size={20} />
           </div>
-        )}
-      </div>
+        )
+      ) : (
+        <div className="px-4 py-3 text-center text-gray-600">
+          No new notifications
+        </div>
+      )}
     </div>
   );
 };

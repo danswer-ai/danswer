@@ -11,6 +11,7 @@ import { LOGOUT_DISABLED } from "@/lib/constants";
 import { SettingsContext } from "./settings/SettingsProvider";
 import {
   AssistantsIconSkeleton,
+  BellIcon,
   LightSettingsIcon,
   UsersIcon,
 } from "./icons/icons";
@@ -26,7 +27,7 @@ import { Bell } from "@phosphor-icons/react";
 
 interface DropdownOptionProps {
   href?: string;
-  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onClick?: () => void;
   icon: React.ReactNode;
   label: string;
   openInNewTab?: boolean;
@@ -118,15 +119,20 @@ export function UserDropdown({ page }: { page?: pageType }) {
   const showLogout =
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
+  const onOpenChange = (open: boolean) => {
+    setUserInfoVisible(open);
+    setShowNotifications(false);
+  };
+
   return (
     <div className="group relative" ref={userInfoRef}>
       <Popover
         open={userInfoVisible}
-        onOpenChange={setUserInfoVisible}
+        onOpenChange={onOpenChange}
         content={
           <div
             onClick={() => setUserInfoVisible(!userInfoVisible)}
-            className="flex cursor-pointer"
+            className="flex relative cursor-pointer"
           >
             <div
               className="
@@ -146,18 +152,14 @@ export function UserDropdown({ page }: { page?: pageType }) {
             >
               {user && user.email ? user.email[0].toUpperCase() : "A"}
             </div>
+            {notifications && notifications.length > 0 && (
+              <div className="absolute right-0 top-0 w-2 h-2 bg-red-500 rounded-full"></div>
+            )}
           </div>
         }
         popover={
-          <>
-            {showNotifications ? (
-              <Notifications
-                notifications={notifications || []}
-                refreshNotifications={refreshNotifications}
-              />
-            ) : (
-              <div
-                className={`
+          <div
+            className={`
                 p-2
                 min-w-[200px]
                 text-strong 
@@ -175,7 +177,15 @@ export function UserDropdown({ page }: { page?: pageType }) {
                 p-1
                 overscroll-contain
               `}
-              >
+          >
+            {page != "admin" && showNotifications ? (
+              <Notifications
+                navigateToDropdown={() => setShowNotifications(false)}
+                notifications={notifications || []}
+                refreshNotifications={refreshNotifications}
+              />
+            ) : (
+              <>
                 {customNavItems.map((item, i) => (
                   <DropdownOption
                     key={i}
@@ -237,13 +247,12 @@ export function UserDropdown({ page }: { page?: pageType }) {
 
                 {isPaidEnterpriseFeaturesEnabled && (
                   <DropdownOption
-                    onClick={(e) => {
+                    onClick={() => {
                       console.log("CLICKKK");
-                      e.stopPropagation();
                       setUserInfoVisible(true);
                       setShowNotifications(true);
                     }}
-                    icon={<Bell className="h-5 w-5 my-auto mr-2" />}
+                    icon={<BellIcon className="h-5 w-5 my-auto mr-2" />}
                     label={`Notifications ${notifications && notifications.length > 0 ? `(${notifications.length})` : ""}`}
                   />
                 )}
@@ -262,9 +271,9 @@ export function UserDropdown({ page }: { page?: pageType }) {
                     label="Log out"
                   />
                 )}
-              </div>
+              </>
             )}
-          </>
+          </div>
         }
         side="bottom"
         align="end"
