@@ -306,7 +306,7 @@ class DefaultMultiLLM(LLM):
                 messages=prompt,
                 tools=tools,
                 tool_choice=tool_choice if tools else None,
-                max_output_tokens=max_tokens,
+                max_tokens=max_tokens,
                 # streaming choice
                 stream=stream,
                 # model params
