@@ -15,6 +15,9 @@ from danswer.indexing.models import DocAwareChunk
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_to_string
 from danswer.natural_language_processing.utils import BaseTokenizer
+from danswer.prompts.chat_prompts import CONTEXTUAL_RAG_PROMPT1
+from danswer.prompts.chat_prompts import CONTEXTUAL_RAG_PROMPT2
+from danswer.prompts.chat_prompts import DOCUMENT_SUMMARY_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
 from shared_configs.configs import STRICT_CHUNK_TOKEN_LIMIT
@@ -30,29 +33,6 @@ MAX_METADATA_PERCENTAGE = 0.25
 CHUNK_MIN_CONTENT = 256
 MAX_CONTEXT_TOKENS = 50
 
-
-# TODO: store this in prompts file
-# NOTE: the prompt separation is partially done for efficiency; previously I tried
-# to do it all in one prompt with sequential format() calls but this will cause a backend
-# error when the document contains any {} as python will expect the {} to be filled by
-# format() arguments
-CONTEXTUAL_RAG_PROMPT1 = """<document>
-{document}
-</document>
-Here is the chunk we want to situate within the whole document"""
-
-CONTEXTUAL_RAG_PROMPT2 = """<chunk>
-{chunk}
-</chunk>
-Please give a short succinct context to situate this chunk within the overall document
-for the purposes of improving search retrieval of the chunk. Answer only with the succinct
-context and nothing else. """
-
-DOCUMENT_SUMMARY_PROMPT = """<document>
-{document}
-</document>
-Please give a short succinct summary of the entire document. Answer only with the succinct
-summary and nothing else. """
 
 logger = setup_logger()
 
