@@ -59,7 +59,7 @@ export function linkCredential(
       body: JSON.stringify({
         name: name || null,
         access_type: accessType !== undefined ? accessType : "public",
-        groups: groups || [],
+        groups: groups || null,
         auto_sync_options: autoSyncOptions || null,
       }),
     }

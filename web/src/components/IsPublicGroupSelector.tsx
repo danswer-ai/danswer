@@ -55,7 +55,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
     return <div>Loading...</div>;
   }
   if (!isPaidEnterpriseFeaturesEnabled) {
-    return <p>not enabled</p>;
+    return null;
   }
 
   if (shouldHideContent && enforceGroupSelection) {
