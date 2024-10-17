@@ -7,7 +7,7 @@ import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik, FormikHelpers } from "formik";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
-import GDriveMain from "@/app/admin/connectors/[connector]/pages/gdrive/GoogleDrivePage";
+import GDriveMain from "@/app/[locale]/admin/connectors/[connector]/pages/gdrive/GoogleDrivePage";
 import { Connector } from "@/lib/connectors/connectors";
 import {
   Credential,
@@ -17,7 +17,7 @@ import {
 import { getCurrentUser } from "@/lib/user";
 import { User, UserRole } from "@/lib/types";
 import { PlusCircleIcon } from "../../icons/icons";
-import { GmailMain } from "@/app/admin/connectors/[connector]/pages/gmail/GmailPage";
+import { GmailMain } from "@/app/[locale]/admin/connectors/[connector]/pages/gmail/GmailPage";
 import { ActionType, dictionaryType } from "../types";
 import { createValidationSchema } from "../lib";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";

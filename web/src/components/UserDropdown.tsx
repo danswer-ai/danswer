@@ -14,8 +14,8 @@ import {
   LightSettingsIcon,
   UsersIcon,
 } from "./icons/icons";
-import { pageType } from "@/app/chat/sessionSidebar/types";
-import { NavigationItem } from "@/app/admin/settings/interfaces";
+import { pageType } from "@/app/[locale]/chat/sessionSidebar/types";
+import { NavigationItem } from "@/app/[locale]/admin/settings/interfaces";
 import DynamicFaIcon, { preloadIcons } from "./icons/DynamicFaIcon";
 
 interface DropdownOptionProps {

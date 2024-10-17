@@ -11,7 +11,7 @@ import { useContext, useEffect, useState } from "react";
 import { DateRangePickerValue } from "@tremor/react";
 import { SourceMetadata } from "./search/interfaces";
 import { destructureValue } from "./llm/utils";
-import { ChatSession } from "@/app/chat/interfaces";
+import { ChatSession } from "@/app/[locale]/chat/interfaces";
 import { UsersResponse } from "./users/interfaces";
 import { Credential } from "./connectors/credentials";
 import { SettingsContext } from "@/components/settings/SettingsProvider";

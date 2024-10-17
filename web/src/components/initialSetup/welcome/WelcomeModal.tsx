@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { COMPLETED_WELCOME_FLOW_COOKIE } from "./constants";
 import { useEffect, useState } from "react";
 import { ApiKeyForm } from "@/components/llm/ApiKeyForm";
-import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
+import { WellKnownLLMProviderDescriptor } from "@/app/[locale]/admin/configuration/llm/interfaces";
 import { checkLlmProvider } from "./lib";
 import { User } from "@/lib/types";
 import { useProviderStatus } from "@/components/chat_search/ProviderContext";

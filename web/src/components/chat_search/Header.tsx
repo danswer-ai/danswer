@@ -5,11 +5,11 @@ import { FiShare2 } from "react-icons/fi";
 import { SetStateAction, useContext, useEffect } from "react";
 import { NewChatIcon } from "../icons/icons";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
-import { ChatSession } from "@/app/chat/interfaces";
+import { ChatSession } from "@/app/[locale]/chat/interfaces";
 import Link from "next/link";
-import { pageType } from "@/app/chat/sessionSidebar/types";
+import { pageType } from "@/app/[locale]/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
-import { ChatBanner } from "@/app/chat/ChatBanner";
+import { ChatBanner } from "@/app/[locale]/chat/ChatBanner";
 import LogoType from "../header/LogoType";
 
 export default function FunctionalHeader({

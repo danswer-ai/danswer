@@ -4,7 +4,7 @@ import { checkLLMSupportsImageInput, structureValue } from "@/lib/llm/utils";
 import {
   getProviderIcon,
   LLMProviderDescriptor,
-} from "@/app/admin/configuration/llm/interfaces";
+} from "@/app/[locale]/admin/configuration/llm/interfaces";
 
 interface LlmListProps {
   llmProviders: LLMProviderDescriptor[];

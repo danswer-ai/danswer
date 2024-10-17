@@ -2,11 +2,11 @@
 
 import React, { createContext, useContext, useState } from "react";
 import { DocumentSet, Tag, User, ValidSources } from "@/lib/types";
-import { ChatSession } from "@/app/chat/interfaces";
-import { Persona } from "@/app/admin/assistants/interfaces";
-import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
-import { Folder } from "@/app/chat/folders/interfaces";
-import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
+import { ChatSession } from "@/app/[locale]/chat/interfaces";
+import { Persona } from "@/app/[locale]/admin/assistants/interfaces";
+import { LLMProviderDescriptor } from "@/app/[locale]/admin/configuration/llm/interfaces";
+import { Folder } from "@/app/[locale]/chat/folders/interfaces";
+import { InputPrompt } from "@/app/[locale]/admin/prompt-library/interfaces";
 
 interface ChatContextProps {
   chatSessions: ChatSession[];

@@ -1,0 +1,8 @@
+{
+    "Add Connector": "Add Connector",
+    "Description 1": "Connect Danswer to your organization&apos;s knowledge sources. We&apos;ll automatically sync your data into Danswer, so you can find exactly what you&apos;re looking for in one place.",
+    "Import Knowledge": "Import Knowledge",
+    "Import Knowledge - Description": "Connect to pieces of knowledge that live outside your apps. Upload files, scrape websites, or connect to your organization&apos;s Google Site.",
+    "Setup Auto-Syncing from Apps": "Setup Auto-Syncing from Apps",
+    "Setup Auto-Syncing from Apps - Description": "Setup auto-syncing from your organization&apos;s most used apps and services. Unless otherwise specified during the connector setup, we will pull in the latest updates from the source every 10 minutes."
+}

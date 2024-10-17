@@ -8,7 +8,7 @@ import {
 } from "@/lib/constants";
 import { LeftToLineIcon, NewChatIcon, RightToLineIcon } from "../icons/icons";
 import { Tooltip } from "../tooltip/Tooltip";
-import { pageType } from "@/app/chat/sessionSidebar/types";
+import { pageType } from "@/app/[locale]/chat/sessionSidebar/types";
 import { Logo } from "../Logo";
 import { HeaderTitle } from "./HeaderTitle";
 import Link from "next/link";

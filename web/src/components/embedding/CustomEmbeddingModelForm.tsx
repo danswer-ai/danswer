@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import { TextFormField, BooleanFormField } from "../admin/connectors/Field";
 import { Dispatch, SetStateAction } from "react";
 import { Button, Text } from "@tremor/react";
-import { EmbeddingDetails } from "@/app/admin/embeddings/EmbeddingModelSelectionForm";
+import { EmbeddingDetails } from "@/app/[locale]/admin/embeddings/EmbeddingModelSelectionForm";
 
 export function CustomEmbeddingModelForm({
   setShowTentativeModel,

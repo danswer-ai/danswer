@@ -1,4 +1,4 @@
-import { getCurrentModelCopy } from "@/app/admin/embeddings/interfaces";
+import { getCurrentModelCopy } from "@/app/[locale]/admin/embeddings/interfaces";
 import {
   AVAILABLE_CLOUD_PROVIDERS,
   AVAILABLE_MODELS,

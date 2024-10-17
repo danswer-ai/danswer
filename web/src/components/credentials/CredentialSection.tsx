@@ -14,13 +14,13 @@ import {
 } from "@/lib/credential";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import CreateCredential from "./actions/CreateCredential";
-import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
+import { CCPairFullInfo } from "@/app/[locale]/admin/connector/[ccPairId]/types";
 import ModifyCredential from "./actions/ModifyCredential";
 import { Text } from "@tremor/react";
 import {
   buildCCPairInfoUrl,
   buildSimilarCredentialInfoURL,
-} from "@/app/admin/connector/[ccPairId]/lib";
+} from "@/app/[locale]/admin/connector/[ccPairId]/lib";
 import { Modal } from "../Modal";
 import EditCredential from "./actions/EditCredential";
 import { getSourceDisplayName } from "@/lib/sources";

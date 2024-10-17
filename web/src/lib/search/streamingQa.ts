@@ -1,7 +1,7 @@
 import {
   BackendMessage,
   LLMRelevanceFilterPacket,
-} from "@/app/chat/interfaces";
+} from "@/app/[locale]/chat/interfaces";
 import {
   AnswerPiecePacket,
   DanswerDocument,

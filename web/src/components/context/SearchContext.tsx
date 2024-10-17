@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext } from "react";
 import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
-import { Persona } from "@/app/admin/assistants/interfaces";
-import { ChatSession } from "@/app/chat/interfaces";
+import { Persona } from "@/app/[locale]/admin/assistants/interfaces";
+import { ChatSession } from "@/app/[locale]/chat/interfaces";
 
 interface SearchContextProps {
   querySessions: ChatSession[];
