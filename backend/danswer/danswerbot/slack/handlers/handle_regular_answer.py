@@ -27,6 +27,7 @@ from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
 from danswer.danswerbot.slack.blocks import build_sources_blocks
 from danswer.danswerbot.slack.blocks import get_restate_blocks
+from danswer.danswerbot.slack.formatting import format_slack_message
 from danswer.danswerbot.slack.handlers.utils import send_team_member_message
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import respond_in_thread
@@ -412,10 +413,11 @@ def handle_regular_answer(
 
     # If called with the DanswerBot slash command, the question is lost so we have to reshow it
     restate_question_block = get_restate_blocks(messages[-1].message, is_bot_msg)
+    formatted_answer = format_slack_message(answer.answer) if answer.answer else None
 
     answer_blocks = build_qa_response_blocks(
         message_id=answer.chat_message_id,
-        answer=answer.answer,
+        answer=formatted_answer,
         quotes=answer.quotes.quotes if answer.quotes else None,
         source_filters=retrieval_info.applied_source_filters,
         time_cutoff=retrieval_info.applied_time_cutoff,
