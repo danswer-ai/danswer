@@ -97,7 +97,7 @@ SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 
-# If set, Arnold AI will listen to the `expires_at` returned by the identity
+# If set, enMedD AI will listen to the `expires_at` returned by the identity
 # provider (e.g. Okta, Google, etc.) and force the user to re-authenticate
 # after this time has elapsed. Disabled since by default many auth providers
 # have very short expiry times (e.g. 1 hour) which provide a poor user experience
@@ -235,7 +235,7 @@ CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES = (
     os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES", "").lower() == "true"
 )
 
-# Save pages labels as Danswer metadata tags
+# Save pages labels as enMedD AI metadata tags
 # The reason to skip this would be to reduce the number of calls to Confluence due to rate limit concerns
 CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
     os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
@@ -354,7 +354,7 @@ CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
 )
-# Logs Danswer only model interactions like prompts, responses, messages etc.
+# Logs enMedD AI only model interactions like prompts, responses, messages etc.
 LOG_DANSWER_MODEL_INTERACTIONS = (
     os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
 )

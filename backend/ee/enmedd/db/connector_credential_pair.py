@@ -12,7 +12,7 @@ from enmedd.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def _delete_connector_credential_pair_user_groups_relationship__no_commit(
+def _delete_connector_credential_pair_teamspaces_relationship__no_commit(
     db_session: Session, connector_id: int, credential_id: int
 ) -> None:
     cc_pair = get_connector_credential_pair(

@@ -71,7 +71,7 @@ from enmedd.db.index_attempt import delete_index_attempts
 from enmedd.db.index_attempt import get_last_attempt
 from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.models import DocumentSet
-from enmedd.db.models import UserGroup
+from enmedd.db.models import Teamspace
 from enmedd.db.search_settings import get_current_search_settings
 from enmedd.document_index.document_index_utils import get_both_index_names
 from enmedd.document_index.factory import get_default_document_index
@@ -280,8 +280,8 @@ def try_generate_document_set_sync_tasks(
     return tasks_generated
 
 
-def try_generate_user_group_sync_tasks(
-    usergroup: UserGroup, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
+def try_generate_teamspace_sync_tasks(
+    teamspace: Teamspace, db_session: Session, r: Redis, lock_beat: redis.lock.Lock
 ) -> int | None:
     """Returns an int if syncing is needed. The int represents the number of sync tasks generated.
     Note that syncing can still be required even if the number of sync tasks generated is zero.
@@ -289,15 +289,15 @@ def try_generate_user_group_sync_tasks(
     """
     lock_beat.reacquire()
 
-    rug = RedisTeamspace(usergroup.id)
+    rug = RedisTeamspace(teamspace.id)
 
     # don't generate sync tasks if tasks are still pending
     if r.exists(rug.fence_key):
         return None
 
     # race condition with the monitor/cleanup function if we use a cached result!
-    db_session.refresh(usergroup)
-    if usergroup.is_up_to_date:
+    db_session.refresh(teamspace)
+    if teamspace.is_up_to_date:
         return None
 
     # add tasks to celery and build up the task set to monitor in redis
@@ -305,7 +305,7 @@ def try_generate_user_group_sync_tasks(
 
     # Add all documents that need to be updated into the queue
     task_logger.info(
-        f"RedisTeamspace.generate_tasks starting. usergroup_id={usergroup.id}"
+        f"RedisTeamspace.generate_tasks starting. teamspace_id={teamspace.id}"
     )
     tasks_generated = rug.generate_tasks(celery_app, db_session, r, lock_beat)
     if tasks_generated is None:
@@ -319,7 +319,7 @@ def try_generate_user_group_sync_tasks(
 
     task_logger.info(
         f"RedisTeamspace.generate_tasks finished. "
-        f"usergroup_id={usergroup.id} tasks_generated={tasks_generated}"
+        f"teamspace_id={teamspace.id} tasks_generated={tasks_generated}"
     )
 
     # set this only after all tasks have been added
@@ -436,16 +436,16 @@ def check_for_vespa_sync_task() -> None:
 
             # check if any user groups are not synced
             try:
-                fetch_user_groups = fetch_versioned_implementation(
-                    "enmedd.db.user_group", "fetch_user_groups"
+                fetch_teamspaces = fetch_versioned_implementation(
+                    "enmedd.db.teamspace", "fetch_teamspaces"
                 )
 
-                user_groups = fetch_user_groups(
+                teamspaces = fetch_teamspaces(
                     db_session=db_session, only_up_to_date=False
                 )
-                for usergroup in user_groups:
-                    try_generate_user_group_sync_tasks(
-                        usergroup, db_session, r, lock_beat
+                for teamspace in teamspaces:
+                    try_generate_teamspace_sync_tasks(
+                        teamspace, db_session, r, lock_beat
                     )
             except ModuleNotFoundError:
                 # Always exceptions on the MIT version, which is expected
@@ -829,9 +829,9 @@ def celery_task_postrun(
 
     if task_id.startswith(RedisTeamspace.PREFIX):
         r = redis_pool.get_client()
-        usergroup_id = RedisTeamspace.get_id_from_task_id(task_id)
-        if usergroup_id is not None:
-            rug = RedisTeamspace(usergroup_id)
+        teamspace_id = RedisTeamspace.get_id_from_task_id(task_id)
+        if teamspace_id is not None:
+            rug = RedisTeamspace(teamspace_id)
             r.srem(rug.taskset_key, task_id)
         return
 
@@ -962,12 +962,12 @@ def monitor_connector_deletion_taskset(key_bytes: bytes, r: Redis) -> None:
             )
 
             # user groups
-            cleanup_user_groups = fetch_versioned_implementation_with_fallback(
-                "enmedd.db.user_group",
-                "delete_user_group_cc_pair_relationship__no_commit",
+            cleanup_teamspaces = fetch_versioned_implementation_with_fallback(
+                "enmedd.db.teamspace",
+                "delete_teamspace_cc_pair_relationship__no_commit",
                 noop_fallback,
             )
-            cleanup_user_groups(
+            cleanup_teamspaces(
                 cc_pair_id=cc_pair.id,
                 db_session=db_session,
             )
@@ -1037,13 +1037,13 @@ def monitor_vespa_sync() -> None:
             monitor_document_set_taskset(key_bytes, r)
 
         for key_bytes in r.scan_iter(RedisTeamspace.FENCE_PREFIX + "*"):
-            monitor_usergroup_taskset = fetch_versioned_implementation_with_fallback(
+            monitor_teamspace_taskset = fetch_versioned_implementation_with_fallback(
                 "enmedd.background.celery_utils",
-                "monitor_usergroup_taskset",
+                "monitor_teamspace_taskset",
                 noop_fallback,
             )
 
-            monitor_usergroup_taskset(key_bytes, r)
+            monitor_teamspace_taskset(key_bytes, r)
 
         for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
             monitor_connector_deletion_taskset(key_bytes, r)

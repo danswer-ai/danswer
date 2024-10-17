@@ -1,4 +1,4 @@
-"""Introduce Danswer APIs
+"""Introduce enMedD AI APIs
 
 Revision ID: 15326fcec57e
 Revises: 77d07dffae64

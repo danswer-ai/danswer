@@ -162,7 +162,7 @@ class PostgresAdvisoryLocks(Enum):
 
 class EnmeddCeleryQueues:
     VESPA_DOCSET_SYNC_GENERATOR = "vespa_docset_sync_generator"
-    VESPA_USERGROUP_SYNC_GENERATOR = "vespa_usergroup_sync_generator"
+    VESPA_USERGROUP_SYNC_GENERATOR = "vespa_teamspace_sync_generator"
     VESPA_METADATA_SYNC = "vespa_metadata_sync"
     CONNECTOR_DELETION = "connector_deletion"
 

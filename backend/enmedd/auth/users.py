@@ -420,5 +420,5 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
 
 
 def get_default_admin_user_emails_() -> list[str]:
-    # No default seeding available for Danswer MIT
+    # No default seeding available for enMedD AI MIT
     return []

@@ -95,24 +95,24 @@ def load_vespa(filename: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Danswer checkpoint saving and loading."
+        description="enMedD AI checkpoint saving and loading."
     )
     parser.add_argument(
-        "--save", action="store_true", help="Save Danswer state to directory."
+        "--save", action="store_true", help="Save enMedD AI state to directory."
     )
     parser.add_argument(
-        "--load", action="store_true", help="Load Danswer state from save directory."
+        "--load", action="store_true", help="Load enMedD AI state from save directory."
     )
     parser.add_argument(
         "--postgres_container_name",
         type=str,
-        default="danswer-stack-relational_db-1",
+        default="enmedd-stack-relational_db-1",
         help="Name of the postgres container to dump",
     )
     parser.add_argument(
         "--checkpoint_dir",
         type=str,
-        default=os.path.join("..", "danswer_checkpoint"),
+        default=os.path.join("..", "enmedd_checkpoint"),
         help="A directory to store temporary files to.",
     )
 

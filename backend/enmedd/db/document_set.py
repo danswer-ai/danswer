@@ -53,9 +53,9 @@ def _add_user_filters(
     )
     """
     Filter DocumentSets by:
-    - if the user is in the user_group that owns the DocumentSet
+    - if the user is in the teamspace that owns the DocumentSet
     - if the user is not a global_curator, they must also have a curator relationship
-    to the user_group
+    to the teamspace
     - if editing is being done, we also filter out DocumentSets that are owned by groups
     that the user isn't a curator for
     - if we are not editing, we show all DocumentSets in the groups the user is a curator
@@ -106,7 +106,7 @@ def _mark_document_set_cc_pairs_as_outdated__no_commit(
 def delete_document_set_privacy__no_commit(
     document_set_id: int, db_session: Session
 ) -> None:
-    """No private document sets in Danswer MIT"""
+    """No private document sets in enMedD AI MIT"""
 
 
 def get_document_set_by_id(
@@ -147,7 +147,9 @@ def make_doc_set_private(
 ) -> None:
     # May cause error if someone switches down to MIT from EE
     if user_ids or group_ids:
-        raise NotImplementedError("Danswer MIT does not support private Document Sets")
+        raise NotImplementedError(
+            "enMedD AI MIT does not support private Document Sets"
+        )
 
 
 def _check_if_cc_pairs_are_owned_by_groups(
@@ -226,7 +228,7 @@ def insert_document_set(
         db_session.add_all(ds_cc_pairs)
 
         versioned_private_doc_set_fn = fetch_versioned_implementation(
-            "danswer.db.document_set", "make_doc_set_private"
+            "enmedd.db.document_set", "make_doc_set_private"
         )
 
         # Private Document Sets
@@ -288,7 +290,7 @@ def update_document_set(
         document_set_row.is_public = document_set_update_request.is_public
 
         versioned_private_doc_set_fn = fetch_versioned_implementation(
-            "danswer.db.document_set", "make_doc_set_private"
+            "enmedd.db.document_set", "make_doc_set_private"
         )
 
         # Private Document Sets
@@ -382,7 +384,7 @@ def mark_document_set_as_to_be_deleted(
 
         # delete all private document set information
         versioned_delete_private_fn = fetch_versioned_implementation(
-            "danswer.db.document_set", "delete_document_set_privacy__no_commit"
+            "enmedd.db.document_set", "delete_document_set_privacy__no_commit"
         )
         versioned_delete_private_fn(
             document_set_id=document_set_id, db_session=db_session
@@ -665,7 +667,7 @@ def get_or_create_document_set_by_name(
     document_set_description: str = "Default Persona created Document-Set, "
     "please update description",
 ) -> DocumentSetDBModel:
-    """This is used by the default personas which need to attach to document sets
+    """This is used by the default assistants which need to attach to document sets
     on server startup"""
     doc_set = get_document_set_by_name(db_session, document_set_name)
     if doc_set is not None:

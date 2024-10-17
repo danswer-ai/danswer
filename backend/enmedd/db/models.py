@@ -477,7 +477,7 @@ class ConnectorCredentialPair(Base):
 
     # source type (defined in the connector's `source` field)
     # E.g. for google_drive perm sync:
-    # {"customer_id": "123567", "company_domain": "@danswer.ai"}
+    # {"customer_id": "123567", "company_domain": "@enmedd.ai"}
     auto_sync_options: Mapped[dict[str, Any] | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
@@ -1546,11 +1546,11 @@ class PGFileStore(Base):
 Enterprise Edition Models
 ************************************************************************
 
-These models are only used in Enterprise Edition only features in Danswer.
+These models are only used in Enterprise Edition only features in enMedD AI.
 They are kept here to simplify the codebase and avoid having different assumptions
-on the shape of data being passed around between the MIT and EE versions of Danswer.
+on the shape of data being passed around between the MIT and EE versions of enMedD AI.
 
-In the MIT version of Danswer, assume these tables are always empty.
+In the MIT version of enMedD AI, assume these tables are always empty.
 """
 
 
@@ -1581,7 +1581,7 @@ class User__Teamspace(Base):
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE"), primary_key=True, nullable=True
     )
-    # TODO: modify this into either using our own approach or danswer's approach
+    # TODO: modify this into either using our own approach or enmedd's approach
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False, default=UserRole.BASIC)
     )
@@ -1807,7 +1807,7 @@ class User__ExternalTeamspaceId(Base):
     """Maps user info both internal and external to the name of the external group
     This maps the user to all of their external groups so that the external group name can be
     attached to the ACL list matching during query time. User level permissions can be handled by
-    directly adding the Danswer user to the doc ACL list"""
+    directly adding the enMedD AI user to the doc ACL list"""
 
     __tablename__ = "user__external_teamspace_id"
 

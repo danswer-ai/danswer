@@ -12,7 +12,7 @@ RUN apt-get remove -y --allow-remove-essential perl-base && \
     apt-get autoremove -y
 
 # Pre-downloading models for setups with limited egress
-# Download tokenizers, distilbert for the Danswer model
+# Download tokenizers, distilbert for the enMedD AI model
 # Download model weights
 # Run Nomic to pull in the custom architecture and have it cached locally
 RUN python -c "from transformers import AutoTokenizer; \
@@ -26,7 +26,7 @@ from sentence_transformers import SentenceTransformer; \
 SentenceTransformer(model_name_or_path='nomic-ai/nomic-embed-text-v1', trust_remote_code=True);"
 
 # In case the user has volumes mounted to /root/.cache/huggingface that they've downloaded while
-# running Danswer, don't overwrite it with the built in cache folder
+# running enMedD AI, don't overwrite it with the built in cache folder
 RUN mv /root/.cache/huggingface /root/.cache/temp_huggingface
 
 WORKDIR /app

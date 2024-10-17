@@ -123,9 +123,9 @@ class VespaIndex(DocumentIndex):
         logger.info(f"Deploying Vespa application package to {deploy_url}")
 
         vespa_schema_path = os.path.join(
-            os.getcwd(), "danswer", "document_index", "vespa", "app_config"
+            os.getcwd(), "enmedd", "document_index", "vespa", "app_config"
         )
-        schema_file = os.path.join(vespa_schema_path, "schemas", "danswer_chunk.sd")
+        schema_file = os.path.join(vespa_schema_path, "schemas", "enmedd_chunk.sd")
         services_file = os.path.join(vespa_schema_path, "services.xml")
         overrides_file = os.path.join(vespa_schema_path, "validation-overrides.xml")
 
@@ -184,7 +184,7 @@ class VespaIndex(DocumentIndex):
         response = requests.post(deploy_url, headers=headers, data=zip_file)
         if response.status_code != 200:
             raise RuntimeError(
-                f"Failed to prepare Vespa Danswer Index. Response: {response.text}"
+                f"Failed to prepare Vespa enMedD AI Index. Response: {response.text}"
             )
 
     def index(

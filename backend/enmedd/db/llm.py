@@ -33,7 +33,7 @@ def update_group_llm_provider_relationships__no_commit(
         new_relationships = [
             LLMProvider__Teamspace(
                 llm_provider_id=llm_provider_id,
-                user_group_id=group_id,
+                teamspace_id=group_id,
             )
             for group_id in group_ids
         ]

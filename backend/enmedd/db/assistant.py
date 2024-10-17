@@ -592,7 +592,7 @@ def validate_assistant_tools(tools: list[Tool]) -> None:
     for tool in tools:
         if tool.name == "InternetSearchTool" and not BING_API_KEY:
             raise ValueError(
-                "Bing API key not found, please contact your Danswer admin to get it added!"
+                "Bing API key not found, please contact your enMedD AI admin to get it added!"
             )
 
 

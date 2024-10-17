@@ -90,7 +90,7 @@ def is_macos_resource_fork_file(file_name: str) -> bool:
     )
 
 
-# To include additional metadata in the search index, add a .danswer_metadata.json file
+# To include additional metadata in the search index, add a .enmedd_metadata.json file
 # to the zip file. This file should contain a list of objects with the following format:
 # [{ "filename": "file1.txt", "link": "https://example.com/file1.txt" }]
 def load_files_from_zip(
@@ -150,7 +150,7 @@ def read_text_file(
     file: IO,
     encoding: str = "utf-8",
     errors: str = "replace",
-    ignore_danswer_metadata: bool = True,
+    ignore_enmedd_metadata: bool = True,
 ) -> tuple[str, dict]:
     metadata = {}
     file_content_raw = ""
@@ -166,7 +166,7 @@ def read_text_file(
 
         if ind == 0:
             metadata_or_none = (
-                None if ignore_danswer_metadata else _extract_enmedd_metadata(line)
+                None if ignore_enmedd_metadata else _extract_enmedd_metadata(line)
             )
             if metadata_or_none is not None:
                 metadata = metadata_or_none

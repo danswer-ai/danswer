@@ -17,8 +17,8 @@ INDEXING_MODEL_SERVER_PORT = int(
     os.environ.get("INDEXING_MODEL_SERVER_PORT") or MODEL_SERVER_PORT
 )
 
-# Danswer custom Deep Learning Models
-CONNECTOR_CLASSIFIER_MODEL_REPO = "Danswer/filter-extraction-model"
+# enMedD AI custom Deep Learning Models
+CONNECTOR_CLASSIFIER_MODEL_REPO = "enMedD AI/filter-extraction-model"
 CONNECTOR_CLASSIFIER_MODEL_TAG = "1.0.0"
 INTENT_MODEL_VERSION = "danswer/hybrid-intent-token-classifier"
 INTENT_MODEL_TAG = "v1.0.3"
@@ -28,7 +28,7 @@ INTENT_MODEL_TAG = "v1.0.3"
 DOC_EMBEDDING_CONTEXT_SIZE = 512
 
 # Used to distinguish alternative indices
-ALT_INDEX_SUFFIX = "__danswer_alt_index"
+ALT_INDEX_SUFFIX = "__enmedd_alt_index"
 
 # Used for loading defaults for automatic deployments and dev flows
 # For local, use: mixedbread-ai/mxbai-rerank-xsmall-v1

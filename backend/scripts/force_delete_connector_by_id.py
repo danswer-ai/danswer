@@ -15,10 +15,10 @@ sys.path.append(parent_dir)
 # pylint: disable=E402
 # flake8: noqa: E402
 
-# Now import Danswer modules
+# Now import enMedD AI modules
 from enmedd.db.models import (
     DocumentSet__ConnectorCredentialPair,
-    UserGroup__ConnectorCredentialPair,
+    Teamspace__ConnectorCredentialPair,
 )
 from enmedd.db.connector import fetch_connector_by_id
 from enmedd.db.document import get_documents_for_connector_credential_pair
@@ -93,8 +93,8 @@ def _unsafe_deletion(
     db_session.execute(stmt)
 
     # delete user group associations
-    stmt = delete(UserGroup__ConnectorCredentialPair).where(
-        UserGroup__ConnectorCredentialPair.cc_pair_id == pair_id
+    stmt = delete(Teamspace__ConnectorCredentialPair).where(
+        Teamspace__ConnectorCredentialPair.cc_pair_id == pair_id
     )
     db_session.execute(stmt)
 
@@ -128,7 +128,7 @@ def _unsafe_deletion(
 def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
     user_input = input(
         "DO NOT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. \
-        IT MAY CAUSE ISSUES with your Danswer instance! \
+        IT MAY CAUSE ISSUES with your enMedD AI instance! \
         Are you SURE you want to continue? (enter 'Y' to continue): "
     )
     if user_input != "Y":
