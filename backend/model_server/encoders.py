@@ -61,13 +61,11 @@ class CloudEmbedding:
         provider: EmbeddingProvider,
         api_url: str | None = None,
         api_version: str | None = None,
-        model: str | None = None,
     ) -> None:
         self.provider = provider
         self.api_key = api_key
         self.api_url = api_url
         self.api_version = api_version
-        self.model = model
 
     def _embed_openai(self, texts: list[str], model: str | None) -> list[Embedding]:
         if not model:
@@ -230,12 +228,11 @@ class CloudEmbedding:
     def create(
         api_key: str,
         provider: EmbeddingProvider,
-        model: str | None = None,
         api_url: str | None = None,
         api_version: str | None = None,
     ) -> "CloudEmbedding":
         logger.debug(f"Creating Embedding instance for provider: {provider}")
-        return CloudEmbedding(api_key, provider, model, api_url, api_version)
+        return CloudEmbedding(api_key, provider, api_url, api_version)
 
 
 def get_embedding_model(
@@ -318,7 +315,6 @@ def embed_text(
         cloud_model = CloudEmbedding(
             api_key=api_key,
             provider=provider_type,
-            model=model_name,
             api_url=api_url,
             api_version=api_version,
         )

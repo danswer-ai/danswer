@@ -70,9 +70,9 @@ def litellm_embedding_model() -> EmbeddingModel:
         normalize=True,
         query_prefix=None,
         passage_prefix=None,
-        api_key="sk-7bHx9F2pL4mK3nQ8rT5vZ1yA6cE0wS",
+        api_key=os.getenv("LITE_LLM_API_KEY"),
         provider_type=EmbeddingProvider.LITELLM,
-        api_url="http://ec2-3-21-37-122.us-east-2.compute.amazonaws.com:8000/embeddings",
+        api_url=os.getenv("LITE_LLM_API_URL"),
     )
 
 
