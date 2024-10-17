@@ -27,7 +27,7 @@ from tests.integration.common_utils.vespa import vespa_fixture
 from tests.integration.connector_job_tests.slack.slack_api_utils import SlackManager
 
 
-@pytest.mark.skip(reason="flaky - see DAN-789 for example")
+@pytest.mark.xfail(reason="flaky - see DAN-789 for example", strict=False)
 def test_slack_permission_sync(
     reset: None,
     vespa_client: vespa_fixture,
@@ -251,3 +251,4 @@ def test_slack_permission_sync(
     # Ensure test_user_1 can only see messages from the public channel
     assert public_message in danswer_doc_message_strings
     assert private_message not in danswer_doc_message_strings
+    assert 1 == 2
