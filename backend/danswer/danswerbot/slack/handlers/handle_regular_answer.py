@@ -150,7 +150,6 @@ def handle_regular_answer(
         max_document_tokens: int | None = None
         max_history_tokens: int | None = None
 
-        print(f"GETTING SESSION WITH {tenant_id}")
         with get_session_with_tenant(tenant_id) as db_session:
             if len(new_message_request.messages) > 1:
                 if new_message_request.persona_config:
