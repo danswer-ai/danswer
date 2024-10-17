@@ -418,6 +418,8 @@ def _prepare_index_attempt(
         db_session.commit()
     except Exception:
         db_session.rollback()
+        logger.exception("_prepare_index_attempt exceptioned.")
+        raise
 
     return attempt
 
