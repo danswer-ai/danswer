@@ -410,7 +410,7 @@ def delete_document_set_cc_pair_relationship__no_commit(
         )
     )
     result = db_session.execute(delete_stmt)
-    return result.rowcount
+    return result.rowcount  # type: ignore
 
 
 def fetch_document_sets(
