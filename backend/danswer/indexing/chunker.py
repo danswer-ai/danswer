@@ -229,7 +229,7 @@ class Chunker:
         metadata_suffix_semantic: str,
         metadata_suffix_keyword: str,
         content_token_limit: int,
-        num_chunks: int,
+        num_chunks: float,
     ) -> list[DocAwareChunk]:
         """
         Loops through sections of the document, adds metadata and converts them into chunks.
@@ -239,7 +239,7 @@ class Chunker:
         chunk_text = ""
         summary = ""
 
-        if self.enable_contextual_rag and num_chunks > 1:
+        if self.enable_contextual_rag and num_chunks > 1 and self.llm is not None:
             doc_prompt = CONTEXTUAL_RAG_PROMPT1.format(document=document.get_content())
             summary_prompt = DOCUMENT_SUMMARY_PROMPT.format(
                 document=document.get_content()
@@ -254,7 +254,7 @@ class Chunker:
             is_continuation: bool = False,
         ) -> DocAwareChunk:
             context = ""
-            if self.enable_contextual_rag and num_chunks > 1:
+            if self.enable_contextual_rag and num_chunks > 1 and self.llm is not None:
                 context_prompt = CONTEXTUAL_RAG_PROMPT2.format(chunk=text)
                 context = message_to_string(
                     self.llm.invoke(
@@ -416,7 +416,7 @@ class Chunker:
 
         if self.enable_multipass and self.enable_large_chunks:
             large_chunks = generate_large_chunks(normal_chunks)
-            if self.enable_contextual_rag:
+            if self.enable_contextual_rag and self.llm is not None:
                 doc_prompt = CONTEXTUAL_RAG_PROMPT1.format(
                     document=document.get_content()
                 )
