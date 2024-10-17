@@ -9,7 +9,6 @@ from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.models.blocks import DividerBlock
 from slack_sdk.models.blocks import SectionBlock
-from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.danswerbot_configs import DANSWER_BOT_ANSWER_GENERATION_TIMEOUT
@@ -32,7 +31,7 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import SlackRateLimiter
 from danswer.danswerbot.slack.utils import update_emote_react
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.models import Persona
 from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
@@ -87,6 +86,7 @@ def handle_regular_answer(
     channel: str,
     logger: DanswerLoggingAdapter,
     feedback_reminder_id: str | None,
+    tenant_id: str | None,
     num_retries: int = DANSWER_BOT_NUM_RETRIES,
     answer_generation_timeout: int = DANSWER_BOT_ANSWER_GENERATION_TIMEOUT,
     thread_context_percent: float = DANSWER_BOT_TARGET_CHUNK_PERCENTAGE,
@@ -103,8 +103,7 @@ def handle_regular_answer(
     user = None
     if message_info.is_bot_dm:
         if message_info.email:
-            engine = get_sqlalchemy_engine()
-            with Session(engine) as db_session:
+            with get_session_with_tenant(tenant_id) as db_session:
                 user = get_user_by_email(message_info.email, db_session)
 
     document_set_names: list[str] | None = None
@@ -151,7 +150,7 @@ def handle_regular_answer(
         max_document_tokens: int | None = None
         max_history_tokens: int | None = None
 
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             if len(new_message_request.messages) > 1:
                 if new_message_request.persona_config:
                     raise RuntimeError("Slack bot does not support persona config")
@@ -245,7 +244,7 @@ def handle_regular_answer(
         )
 
         # Always apply reranking settings if it exists, this is the non-streaming flow
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             saved_search_settings = get_current_search_settings(db_session)
 
         # This includes throwing out answer via reflexion
