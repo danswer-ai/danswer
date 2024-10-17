@@ -77,6 +77,9 @@ def _get_group_members_email_paginated(
                 email = get_user_email_from_username__server(
                     confluence_client, user_name
                 )
+            else:
+                logger.warning(f"Member has no email or username: {member}")
+                email = None
 
             if email:
                 group_member_emails.add(email)

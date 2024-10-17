@@ -111,7 +111,7 @@ def document_by_cc_pair_cleanup_task(
                 pass
 
             task_logger.info(
-                f"document_id={document_id} refcount={count} action={action} chunks={chunks_affected}"
+                f"document_id={document_id} action={action} refcount={count} chunks={chunks_affected}"
             )
             db_session.commit()
     except SoftTimeLimitExceeded:
