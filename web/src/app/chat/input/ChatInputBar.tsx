@@ -85,7 +85,6 @@ export function ChatInputBar({
   handleFileUpload: (files: File[]) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   chatSessionId?: string;
-  refreshUser: () => void;
 }) {
   useEffect(() => {
     const textarea = textAreaRef.current;
