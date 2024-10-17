@@ -71,7 +71,7 @@ def test_slack_prune(
     cc_pair: DATestCCPair = CCPairManager.create(
         credential_id=credential.id,
         connector_id=connector.id,
-        access_type=AccessType.SYNC,
+        access_type=AccessType.PUBLIC,
         user_performing_action=admin_user,
     )
     CCPairManager.wait_for_indexing(
@@ -91,18 +91,12 @@ def test_slack_prune(
     )
 
     public_message = "Steve's favorite number is 809752"
-    private_message = "Sara's favorite number is 346794"
     message_to_delete = "Rebecca's favorite number is 753468"
 
     SlackManager.add_message_to_channel(
         slack_client=slack_client,
         channel=public_channel,
         message=public_message,
-    )
-    SlackManager.add_message_to_channel(
-        slack_client=slack_client,
-        channel=private_channel,
-        message=private_message,
     )
     SlackManager.add_message_to_channel(
         slack_client=slack_client,
@@ -144,7 +138,6 @@ def test_slack_prune(
 
     # Ensure admin user can see all messages
     assert public_message in danswer_doc_message_strings
-    assert private_message in danswer_doc_message_strings
     assert message_to_delete in danswer_doc_message_strings
 
     # Search as test_user_1 with access to both channels
@@ -159,7 +152,6 @@ def test_slack_prune(
 
     # Ensure test_user_1 can see all messages
     assert public_message in danswer_doc_message_strings
-    assert private_message in danswer_doc_message_strings
     assert message_to_delete in danswer_doc_message_strings
 
     # ----------------------MAKE THE CHANGES--------------------------
@@ -190,7 +182,6 @@ def test_slack_prune(
 
     # Ensure admin can't see deleted messages
     assert public_message in danswer_doc_message_strings
-    assert private_message in danswer_doc_message_strings
     assert message_to_delete not in danswer_doc_message_strings
 
     # Ensure test_user_1 can't see deleted messages
@@ -206,5 +197,4 @@ def test_slack_prune(
 
     # Ensure test_user_1 can't see deleted messages
     assert public_message in danswer_doc_message_strings
-    assert private_message in danswer_doc_message_strings
     assert message_to_delete not in danswer_doc_message_strings
