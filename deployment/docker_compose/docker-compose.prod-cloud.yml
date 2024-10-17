@@ -3,32 +3,25 @@ services:
     image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.cloud
     command: >
-      /bin/sh -c "alembic upgrade head &&
+      /bin/sh -c "alembic -n schema_private upgrade head &&
       echo \"Starting Danswer Api Server\" &&
       uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
       - index
       - cache
+      - inference_model_server
     restart: always
-    ports:
-      - "8080"
     env_file:
-      - .env_eval
+      - .env
     environment:
-      - AUTH_TYPE=disabled
+      - AUTH_TYPE=${AUTH_TYPE:-oidc}
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
       - REDIS_HOST=cache
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
-      - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
-      - ENV_SEED_CONFIGURATION=${ENV_SEED_CONFIGURATION:-}
-      - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=True
-      # To enable the LLM for testing, update the value below
-      # NOTE: this is disabled by default since this is a high volume eval that can be costly
-      - DISABLE_GENERATIVE_AI=${DISABLE_GENERATIVE_AI:-true}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -48,19 +41,18 @@ services:
       - relational_db
       - index
       - cache
+      - inference_model_server
+      - indexing_model_server
     restart: always
     env_file:
-      - .env_eval
+      - .env
     environment:
-      - AUTH_TYPE=disabled
+      - AUTH_TYPE=${AUTH_TYPE:-oidc}
       - POSTGRES_HOST=relational_db
       - VESPA_HOST=index
       - REDIS_HOST=cache
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
-      - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-indexing_model_server}
-      - ENV_SEED_CONFIGURATION=${ENV_SEED_CONFIGURATION:-}
-      - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=True
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -68,7 +60,6 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
-
 
   web_server:
     image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
@@ -81,22 +72,35 @@ services:
         - NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS:-}
         - NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS=${NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS:-}
         - NEXT_PUBLIC_DISABLE_LOGOUT=${NEXT_PUBLIC_DISABLE_LOGOUT:-}
-        - NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN=${NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN:-}
-
-        # Enterprise Edition only
         - NEXT_PUBLIC_THEME=${NEXT_PUBLIC_THEME:-}
-        # DO NOT TURN ON unless you have EXPLICIT PERMISSION from Danswer.
-        - NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED=${NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED:-false}
     depends_on:
       - api_server
     restart: always
+    env_file:
+      - .env
     environment:
       - INTERNAL_URL=http://api_server:8080
-      - WEB_DOMAIN=${WEB_DOMAIN:-}
-      - THEME_IS_DARK=${THEME_IS_DARK:-}
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
 
-      # Enterprise Edition only
-      - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+
+  relational_db:
+    image: postgres:15.2-alpine
+    command: -c 'max_connections=250'
+    restart: always
+    # POSTGRES_USER and POSTGRES_PASSWORD should be set in .env file
+    env_file:
+      - .env
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
 
 
   inference_model_server:
@@ -114,8 +118,11 @@ services:
     restart: on-failure
     environment:
       - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
-      - LOG_LEVEL=${LOG_LEVEL:-debug}
-      - inference_model_cache_huggingface:/root/.cache/huggingface/
+      # Set to debug to get more fine-grained logs
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      # Not necessary, this is just to reduce download time during startup
+      - model_cache_huggingface:/root/.cache/huggingface/
     logging:
       driver: json-file
       options:
@@ -139,9 +146,12 @@ services:
     environment:
       - MIN_THREADS_ML_MODELS=${MIN_THREADS_ML_MODELS:-}
       - INDEXING_ONLY=True
-      - LOG_LEVEL=${LOG_LEVEL:-debug}
-      - index_model_cache_huggingface:/root/.cache/huggingface/
+      # Set to debug to get more fine-grained logs
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - VESPA_SEARCHER_THREADS=${VESPA_SEARCHER_THREADS:-1}
+    volumes:
+      # Not necessary, this is just to reduce download time during startup
+      - indexing_huggingface_model_cache:/root/.cache/huggingface/
     logging:
       driver: json-file
       options:
@@ -149,26 +159,13 @@ services:
         max-file: "6"
 
 
-  relational_db:
-    image: postgres:15.2-alpine
-    command: -c 'max_connections=250'
-    restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
-    ports:
-      - "5432"
-    volumes:
-      - db_volume:/var/lib/postgresql/data
-
-
   # This container name cannot have an underscore in it due to Vespa expectations of the URL
   index:
     image: vespaengine/vespa:8.277.17
     restart: always
     ports:
-      - "19071"
-      - "8081"
+      - "19071:19071"
+      - "8081:8081"
     volumes:
       - vespa_volume:/opt/vespa/var
     logging:
@@ -186,12 +183,16 @@ services:
     depends_on:
       - api_server
       - web_server
-    environment:
-      - DOMAIN=localhost
-    ports: 
-      - "${NGINX_PORT:-3000}:80"  # allow for localhost:3000 usage, since that is the norm
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
       - ../data/nginx:/etc/nginx/conf.d
+      - ../data/certbot/conf:/etc/letsencrypt
+      - ../data/certbot/www:/var/www/certbot
+    # sleep a little bit to allow the web_server / api_server to start up. 
+    # Without this we've seen issues where nginx shows no error logs but 
+    # does not recieve any traffic
     logging:
       driver: json-file
       options:
@@ -199,12 +200,29 @@ services:
         max-file: "6"
     # The specified script waits for the api_server to start up. 
     # Without this we've seen issues where nginx shows no error logs but 
-    # does not recieve any traffic
+    # does not recieve any traffic  
     # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
     # in order to make this work on both Unix-like systems and windows
     command: > 
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
-      && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
+      && /etc/nginx/conf.d/run-nginx.sh app.conf.template"
+    env_file:
+      - .env.nginx
+
+
+  # follows https://pentacent.medium.com/nginx-and-lets-encrypt-with-docker-in-less-than-5-minutes-b4b8a60d3a71
+  certbot:
+    image: certbot/certbot
+    restart: always
+    volumes:
+      - ../data/certbot/conf:/etc/letsencrypt
+      - ../data/certbot/www:/var/www/certbot
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "6"
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 
   cache:
@@ -219,14 +237,7 @@ services:
 
 volumes:
   db_volume:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DANSWER_POSTGRES_DATA_DIR:-./postgres_data}
   vespa_volume:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${DANSWER_VESPA_DATA_DIR:-./vespa_data}
+  # Created by the container itself
+  model_cache_huggingface:
+  indexing_huggingface_model_cache:

@@ -92,6 +92,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY ./danswer /app/danswer
 COPY ./shared_configs /app/shared_configs
 COPY ./alembic /app/alembic
+COPY ./alembic_tenants /app/alembic_tenants
 COPY ./alembic.ini /app/alembic.ini
 COPY supervisord.conf /usr/etc/supervisord.conf
 
@@ -101,7 +102,7 @@ COPY ./scripts/force_delete_connector_by_id.py /app/scripts/force_delete_connect
 # Put logo in assets
 COPY ./assets /app/assets
 
-ENV PYTHONPATH /app
+ENV PYTHONPATH=/app
 
 # Default command which does nothing
 # This container is used by api server and background which specify their own CMD
