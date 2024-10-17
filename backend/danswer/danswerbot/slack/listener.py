@@ -523,7 +523,10 @@ if __name__ == "__main__":
 
                             slack_bot_tokens[tenant_id] = latest_slack_bot_tokens
 
-                            # Close existing WebClient if any
+                            # potentially may cause a message to be dropped, but it is complicated
+                            # to avoid + (1) if the user is changing tokens, they are likely okay with some
+                            # "migration downtime" and (2) if a single message is lost it is okay
+                            # as this should be a very rare occurrence
                             if tenant_id in socket_clients:
                                 socket_clients[tenant_id].close()
 
@@ -544,6 +547,6 @@ if __name__ == "__main__":
             # Wait before checking for updates
             Event().wait(timeout=60)
 
-        except Exception as e:
-            logger.exception(f"An error occurred: {e}")
+        except Exception:
+            logger.exception("An error occurred outside of main event loop")
             time.sleep(60)
