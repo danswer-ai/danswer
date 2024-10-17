@@ -24,7 +24,6 @@ from danswer.danswerbot.slack.handlers.handle_message import (
 from danswer.danswerbot.slack.handlers.handle_regular_answer import (
     handle_regular_answer,
 )
-from danswer.danswerbot.slack.listener import TenantSocketModeClient
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import decompose_action_id
@@ -34,6 +33,7 @@ from danswer.danswerbot.slack.utils import get_channel_name_from_id
 from danswer.danswerbot.slack.utils import get_feedback_visibility
 from danswer.danswerbot.slack.utils import read_slack_thread
 from danswer.danswerbot.slack.utils import respond_in_thread
+from danswer.danswerbot.slack.utils import TenantSocketModeClient
 from danswer.danswerbot.slack.utils import update_emote_react
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.feedback import create_chat_message_feedback
@@ -41,6 +41,7 @@ from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.utils.logger import setup_logger
+
 
 logger = setup_logger()
 

@@ -12,6 +12,7 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.models.blocks import Block
 from slack_sdk.models.metadata import Metadata
+from slack_sdk.socket_mode import SocketModeClient
 
 from danswer.configs.app_configs import DISABLE_TELEMETRY
 from danswer.configs.constants import ID_SEPARATOR
@@ -578,3 +579,9 @@ def get_feedback_visibility() -> FeedbackVisibility:
         return FeedbackVisibility(DANSWER_BOT_FEEDBACK_VISIBILITY.lower())
     except ValueError:
         return FeedbackVisibility.PRIVATE
+
+
+class TenantSocketModeClient(SocketModeClient):
+    def __init__(self, tenant_id: str | None, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.tenant_id = tenant_id

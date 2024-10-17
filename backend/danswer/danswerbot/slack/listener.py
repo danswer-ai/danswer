@@ -4,7 +4,6 @@ from typing import Any
 from typing import cast
 
 from slack_sdk import WebClient
-from slack_sdk.socket_mode import SocketModeClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
@@ -47,6 +46,7 @@ from danswer.danswerbot.slack.utils import read_slack_thread
 from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import rephrase_slack_message
 from danswer.danswerbot.slack.utils import respond_in_thread
+from danswer.danswerbot.slack.utils import TenantSocketModeClient
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.search_settings import get_current_search_settings
 from danswer.key_value_store.interface import KvKeyNotFoundError
@@ -78,12 +78,6 @@ _SLACK_GREETINGS_TO_IGNORE = {
 
 # this is always (currently) the user id of Slack's official slackbot
 _OFFICIAL_SLACKBOT_USER_ID = "USLACKBOT"
-
-
-class TenantSocketModeClient(SocketModeClient):
-    def __init__(self, tenant_id: str | None, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
-        self.tenant_id = tenant_id
 
 
 def prefilter_requests(req: SocketModeRequest, client: TenantSocketModeClient) -> bool:
@@ -476,7 +470,7 @@ def _initialize_socket_client(socket_client: TenantSocketModeClient) -> None:
     socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 
     # Establish a WebSocket connection to the Socket Mode servers
-    logger.notice("Listening for messages from Slack...")
+    logger.notice(f"Listening for messages from Slack {socket_client.tenant_id }...")
     socket_client.connect()
 
 
