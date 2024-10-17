@@ -4,17 +4,12 @@ import { useState, useRef, useContext, useEffect, useMemo } from "react";
 import { FiLogOut } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { User, UserRole } from "@/lib/types";
+import { UserRole } from "@/lib/types";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { Popover } from "./popover/Popover";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { SettingsContext } from "./settings/SettingsProvider";
-import {
-  AssistantsIconSkeleton,
-  BellIcon,
-  LightSettingsIcon,
-  UsersIcon,
-} from "./icons/icons";
+import { BellIcon, LightSettingsIcon } from "./icons/icons";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { NavigationItem, Notification } from "@/app/admin/settings/interfaces";
 import DynamicFaIcon, { preloadIcons } from "./icons/DynamicFaIcon";
@@ -23,7 +18,6 @@ import { usePaidEnterpriseFeaturesEnabled } from "./settings/usePaidEnterpriseFe
 import { Notifications } from "./chat_search/Notifications";
 import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Bell } from "@phosphor-icons/react";
 
 interface DropdownOptionProps {
   href?: string;
@@ -69,7 +63,6 @@ export function UserDropdown({ page }: { page?: pageType }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const [showNotifications, setShowNotifications] = useState(false);
 
   const combinedSettings = useContext(SettingsContext);
@@ -245,17 +238,14 @@ export function UserDropdown({ page }: { page?: pageType }) {
                   )
                 )}
 
-                {isPaidEnterpriseFeaturesEnabled && (
-                  <DropdownOption
-                    onClick={() => {
-                      console.log("CLICKKK");
-                      setUserInfoVisible(true);
-                      setShowNotifications(true);
-                    }}
-                    icon={<BellIcon className="h-5 w-5 my-auto mr-2" />}
-                    label={`Notifications ${notifications && notifications.length > 0 ? `(${notifications.length})` : ""}`}
-                  />
-                )}
+                <DropdownOption
+                  onClick={() => {
+                    setUserInfoVisible(true);
+                    setShowNotifications(true);
+                  }}
+                  icon={<BellIcon className="h-5 w-5 my-auto mr-2" />}
+                  label={`Notifications ${notifications && notifications.length > 0 ? `(${notifications.length})` : ""}`}
+                />
 
                 {showLogout &&
                   (showCuratorPanel ||
