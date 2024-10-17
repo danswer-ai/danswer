@@ -1,3 +1,4 @@
+import socket
 from enum import auto
 from enum import Enum
 
@@ -179,3 +180,8 @@ class EnmeddCeleryPriority(int, Enum):
     MEDIUM = auto()
     LOW = auto()
     LOWEST = auto()
+
+
+REDIS_SOCKET_KEEPALIVE_OPTIONS = {}
+REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPINTVL] = 15
+REDIS_SOCKET_KEEPALIVE_OPTIONS[socket.TCP_KEEPCNT] = 3

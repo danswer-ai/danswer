@@ -382,9 +382,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # fill up Postgres connection pools
     await warm_up_connections()
 
-    # We cache this at the beginning so there is no delay in the first telemetry
-    get_or_generate_uuid()
-
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)
         search_settings = get_current_search_settings(db_session)
@@ -429,6 +426,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         # setup Postgres with default credential, llm providers, etc.
         setup_postgres(db_session)
+
+        # We cache this at the beginning so there is no delay in the first telemetry
+        get_or_generate_uuid()
 
         translate_saved_search_settings(db_session)
 
