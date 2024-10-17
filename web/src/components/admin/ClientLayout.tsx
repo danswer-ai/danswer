@@ -418,7 +418,7 @@ export function ClientLayout({
         </div>
         <div className="pb-8 relative h-full overflow-y-auto w-full">
           <div className="fixed bg-background left-0 gap-x-4 mb-8 px-4 py-2 w-full items-center flex justify-end">
-            <UserDropdown user={user} />
+            <UserDropdown />
           </div>
           <div className="pt-20 flex overflow-y-auto h-full px-4 md:px-12">
             {children}

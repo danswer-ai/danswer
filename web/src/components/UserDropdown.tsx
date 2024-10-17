@@ -9,14 +9,24 @@ import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { Popover } from "./popover/Popover";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { SettingsContext } from "./settings/SettingsProvider";
-import { LightSettingsIcon } from "./icons/icons";
+import {
+  AssistantsIconSkeleton,
+  LightSettingsIcon,
+  UsersIcon,
+} from "./icons/icons";
 import { pageType } from "@/app/chat/sessionSidebar/types";
-import { NavigationItem } from "@/app/admin/settings/interfaces";
+import { NavigationItem, Notification } from "@/app/admin/settings/interfaces";
 import DynamicFaIcon, { preloadIcons } from "./icons/DynamicFaIcon";
+import { useUser } from "./user/UserProvider";
+import { usePaidEnterpriseFeaturesEnabled } from "./settings/usePaidEnterpriseFeaturesEnabled";
+import { Notifications } from "./chat_search/Notifications";
+import useSWR from "swr";
+import { errorHandlingFetcher } from "@/lib/fetcher";
+import { Bell } from "@phosphor-icons/react";
 
 interface DropdownOptionProps {
   href?: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
   icon: React.ReactNode;
   label: string;
   openInNewTab?: boolean;
@@ -51,24 +61,26 @@ const DropdownOption: React.FC<DropdownOptionProps> = ({
   }
 };
 
-export function UserDropdown({
-  user,
-  page,
-}: {
-  user: User | null;
-  page?: pageType;
-}) {
+export function UserDropdown({ page }: { page?: pageType }) {
+  const { user } = useUser();
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const combinedSettings = useContext(SettingsContext);
   const customNavItems: NavigationItem[] = useMemo(
     () => combinedSettings?.enterpriseSettings?.custom_nav_items || [],
     [combinedSettings]
   );
+  const {
+    data: notifications,
+    error,
+    mutate: refreshNotifications,
+  } = useSWR<Notification[]>("/api/notifications", errorHandlingFetcher);
 
   useEffect(() => {
     const iconNames = customNavItems
@@ -137,8 +149,15 @@ export function UserDropdown({
           </div>
         }
         popover={
-          <div
-            className={`
+          <>
+            {showNotifications ? (
+              <Notifications
+                notifications={notifications || []}
+                refreshNotifications={refreshNotifications}
+              />
+            ) : (
+              <div
+                className={`
                 p-2
                 min-w-[200px]
                 text-strong 
@@ -156,15 +175,15 @@ export function UserDropdown({
                 p-1
                 overscroll-contain
               `}
-          >
-            {customNavItems.map((item, i) => (
-              <DropdownOption
-                key={i}
-                href={item.link}
-                icon={
-                  item.svg_logo ? (
-                    <div
-                      className="
+              >
+                {customNavItems.map((item, i) => (
+                  <DropdownOption
+                    key={i}
+                    href={item.link}
+                    icon={
+                      item.svg_logo ? (
+                        <div
+                          className="
                         h-4
                         w-4
                         my-auto
@@ -174,59 +193,78 @@ export function UserDropdown({
                         items-center
                         justify-center
                       "
-                      aria-label={item.title}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="100%"
-                        height="100%"
-                        preserveAspectRatio="xMidYMid meet"
-                        dangerouslySetInnerHTML={{ __html: item.svg_logo }}
-                      />
-                    </div>
-                  ) : (
-                    <DynamicFaIcon
-                      name={item.icon!}
-                      className="h-4 w-4 my-auto mr-2"
+                          aria-label={item.title}
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="100%"
+                            height="100%"
+                            preserveAspectRatio="xMidYMid meet"
+                            dangerouslySetInnerHTML={{ __html: item.svg_logo }}
+                          />
+                        </div>
+                      ) : (
+                        <DynamicFaIcon
+                          name={item.icon!}
+                          className="h-4 w-4 my-auto mr-2"
+                        />
+                      )
+                    }
+                    label={item.title}
+                    openInNewTab
+                  />
+                ))}
+
+                {showAdminPanel ? (
+                  <DropdownOption
+                    href="/admin/indexing/status"
+                    icon={
+                      <LightSettingsIcon className="h-5 w-5 my-auto mr-2" />
+                    }
+                    label="Admin Panel"
+                  />
+                ) : (
+                  showCuratorPanel && (
+                    <DropdownOption
+                      href="/admin/indexing/status"
+                      icon={
+                        <LightSettingsIcon className="h-5 w-5 my-auto mr-2" />
+                      }
+                      label="Curator Panel"
                     />
                   )
-                }
-                label={item.title}
-                openInNewTab
-              />
-            ))}
+                )}
 
-            {showAdminPanel ? (
-              <DropdownOption
-                href="/admin/indexing/status"
-                icon={<LightSettingsIcon className="h-5 w-5 my-auto mr-2" />}
-                label="Admin Panel"
-              />
-            ) : (
-              showCuratorPanel && (
-                <DropdownOption
-                  href="/admin/indexing/status"
-                  icon={<LightSettingsIcon className="h-5 w-5 my-auto mr-2" />}
-                  label="Curator Panel"
-                />
-              )
+                {isPaidEnterpriseFeaturesEnabled && (
+                  <DropdownOption
+                    onClick={(e) => {
+                      console.log("CLICKKK");
+                      e.stopPropagation();
+                      setUserInfoVisible(true);
+                      setShowNotifications(true);
+                    }}
+                    icon={<Bell className="h-5 w-5 my-auto mr-2" />}
+                    label={`Notifications ${notifications && notifications.length > 0 ? `(${notifications.length})` : ""}`}
+                  />
+                )}
+
+                {showLogout &&
+                  (showCuratorPanel ||
+                    showAdminPanel ||
+                    customNavItems.length > 0) && (
+                    <div className="border-t border-border my-1" />
+                  )}
+
+                {showLogout && (
+                  <DropdownOption
+                    onClick={handleLogout}
+                    icon={<FiLogOut className="my-auto mr-2 text-lg" />}
+                    label="Log out"
+                  />
+                )}
+              </div>
             )}
-
-            {showLogout &&
-              (showCuratorPanel ||
-                showAdminPanel ||
-                customNavItems.length > 0) && (
-                <div className="border-t border-border my-1" />
-              )}
-
-            {showLogout && (
-              <DropdownOption
-                onClick={handleLogout}
-                icon={<FiLogOut className="my-auto mr-2 text-lg" />}
-                label="Log out"
-              />
-            )}
-          </div>
+          </>
         }
         side="bottom"
         align="end"

@@ -2,7 +2,7 @@
 import { User } from "@/lib/types";
 import { UserDropdown } from "../UserDropdown";
 import { FiShare2 } from "react-icons/fi";
-import { SetStateAction, useEffect } from "react";
+import { SetStateAction, useContext, useEffect } from "react";
 import { NewChatIcon } from "../icons/icons";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 import { ChatSession } from "@/app/chat/interfaces";
@@ -11,10 +11,9 @@ import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
 import LogoType from "../header/LogoType";
-import { Notifications } from "./Notifications";
-import { useUser } from "../user/UserProvider";
 
 export default function FunctionalHeader({
+  user,
   page,
   currentChatSession,
   setSharingModalVisible,
@@ -24,12 +23,12 @@ export default function FunctionalHeader({
 }: {
   reset?: () => void;
   page: pageType;
+  user: User | null;
   sidebarToggled?: boolean;
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
   toggleSidebar?: () => void;
 }) {
-  const { user } = useUser();
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -64,7 +63,6 @@ export default function FunctionalHeader({
         : "");
     router.push(newChatUrl);
   };
-
   return (
     <div className="left-0 bg-transparent sticky top-0 z-20 w-full relative flex">
       <div className="mt-2 mx-2.5 cursor-pointer text-text-700 relative flex w-full">
@@ -110,9 +108,8 @@ export default function FunctionalHeader({
             </div>
           )}
 
-          <Notifications />
           <div className="mobile:hidden flex my-auto">
-            <UserDropdown user={user} />
+            <UserDropdown />
           </div>
           <Link
             className="desktop:hidden my-auto"

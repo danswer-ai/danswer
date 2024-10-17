@@ -10,15 +10,16 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { useAssistants } from "../context/AssisantsContext";
 import { useUser } from "../user/UserProvider";
-import { Bell } from "@phosphor-icons/react";
 
-export const Notifications = () => {
+export const Notifications = ({
+  notifications,
+  refreshNotifications,
+}: {
+  notifications: Notification[];
+  refreshNotifications: () => void;
+}) => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const {
-    data: notifications,
-    error,
-    mutate: refreshNotifications,
-  } = useSWR<Notification[]>("/api/notifications", errorHandlingFetcher);
+
   const { refreshAssistants } = useAssistants();
 
   const { refreshUser } = useUser();
@@ -120,80 +121,69 @@ export const Notifications = () => {
 
   return (
     <div className="my-auto relative">
-      <div
-        onClick={() => setShowDropdown(!showDropdown)}
-        className="cursor-pointer relative notification-dropdown"
-      >
-        <Bell size={20} />
-        {sortedNotifications.length > 0 && (
-          <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-        )}
-      </div>
-      {showDropdown && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-20 max-h-[80vh] overflow-y-auto notification-dropdown">
-          {sortedNotifications.length > 0 ? (
-            sortedNotifications
-              .filter(
-                (notification) =>
-                  notification.notif_type === NotificationType.PERSONA_SHARED
-              )
-              .map((notification) => {
-                const persona = notification.additional_data?.persona_id
-                  ? personas[notification.additional_data.persona_id]
-                  : null;
+      <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-20 max-h-[80vh] overflow-y-auto notification-dropdown">
+        {sortedNotifications.length > 0 ? (
+          sortedNotifications
+            .filter(
+              (notification) =>
+                notification.notif_type === NotificationType.PERSONA_SHARED
+            )
+            .map((notification) => {
+              const persona = notification.additional_data?.persona_id
+                ? personas[notification.additional_data.persona_id]
+                : null;
 
-                return (
-                  <div
-                    key={notification.id}
-                    className="px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 transition duration-150 ease-in-out"
-                  >
-                    <div className="flex items-start">
-                      {persona && (
-                        <div className="mt-2 flex-shrink-0 mr-3">
-                          <AssistantIcon assistant={persona} size="small" />
-                        </div>
-                      )}
-                      <div className="flex-grow">
-                        <p className="font-semibold text-sm text-gray-800">
-                          New Assistant Shared With You
-                        </p>
-
-                        <p className="text-sm text-gray-600 mt-1">
-                          Do you want to accept this assistant?
-                        </p>
-                        {persona && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            Assistant: {persona.name}
-                          </p>
-                        )}
+              return (
+                <div
+                  key={notification.id}
+                  className="px-4 py-3 border-b last:border-b-0 hover:bg-gray-50 transition duration-150 ease-in-out"
+                >
+                  <div className="flex items-start">
+                    {persona && (
+                      <div className="mt-2 flex-shrink-0 mr-3">
+                        <AssistantIcon assistant={persona} size="small" />
                       </div>
-                    </div>
-                    <div className="flex justify-end mt-2 space-x-2">
-                      <button
-                        onClick={() =>
-                          handleAssistantShareAcceptance(notification, persona!)
-                        }
-                        className="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => dismissNotification(notification.id)}
-                        className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition duration-150 ease-in-out"
-                      >
-                        Dismiss
-                      </button>
+                    )}
+                    <div className="flex-grow">
+                      <p className="font-semibold text-sm text-gray-800">
+                        New Assistant Shared With You
+                      </p>
+
+                      <p className="text-sm text-gray-600 mt-1">
+                        Do you want to accept this assistant?
+                      </p>
+                      {persona && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Assistant: {persona.name}
+                        </p>
+                      )}
                     </div>
                   </div>
-                );
-              })
-          ) : (
-            <div className="px-4 py-3 text-center text-gray-600">
-              No new notifications
-            </div>
-          )}
-        </div>
-      )}
+                  <div className="flex justify-end mt-2 space-x-2">
+                    <button
+                      onClick={() =>
+                        handleAssistantShareAcceptance(notification, persona!)
+                      }
+                      className="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => dismissNotification(notification.id)}
+                      className="px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 transition duration-150 ease-in-out"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+        ) : (
+          <div className="px-4 py-3 text-center text-gray-600">
+            No new notifications
+          </div>
+        )}
+      </div>
     </div>
   );
 };
