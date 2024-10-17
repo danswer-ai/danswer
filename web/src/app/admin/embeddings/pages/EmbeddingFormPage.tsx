@@ -164,51 +164,55 @@ export default function EmbeddingForm() {
     searchSettings?.multipass_indexing !=
       advancedEmbeddingDetails.multipass_indexing;
 
-  const ReIndexingButton = useMemo(
-    () =>
-      ({ needsReIndex }: { needsReIndex: boolean }) => {
-        return needsReIndex ? (
-          <div className="flex mx-auto gap-x-1 ml-auto items-center">
-            <button
-              className="enabled:cursor-pointer disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-              onClick={handleReindex}
-            >
-              Re-index
-            </button>
-            <div className="relative group">
-              <WarningCircle
-                className="text-text-800 cursor-help"
-                size={20}
-                weight="fill"
-              />
-              <div className="absolute z-10 invisible group-hover:visible bg-background-800 text-text-200 text-sm rounded-md shadow-md p-2 right-0 mt-1 w-64">
-                <p className="font-semibold mb-2">Needs re-indexing due to:</p>
-                <ul className="list-disc pl-5">
-                  {currentEmbeddingModel != selectedProvider && (
-                    <li>Changed embedding provider</li>
-                  )}
-                  {searchSettings?.multipass_indexing !=
-                    advancedEmbeddingDetails.multipass_indexing && (
-                    <li>Multipass indexing modification</li>
-                  )}
-                </ul>
-              </div>
+  const ReIndexingButton = useMemo(() => {
+    const ReIndexingButtonComponent = ({
+      needsReIndex,
+    }: {
+      needsReIndex: boolean;
+    }) => {
+      return needsReIndex ? (
+        <div className="flex mx-auto gap-x-1 ml-auto items-center">
+          <button
+            className="enabled:cursor-pointer disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+            onClick={handleReindex}
+          >
+            Re-index
+          </button>
+          <div className="relative group">
+            <WarningCircle
+              className="text-text-800 cursor-help"
+              size={20}
+              weight="fill"
+            />
+            <div className="absolute z-10 invisible group-hover:visible bg-background-800 text-text-200 text-sm rounded-md shadow-md p-2 right-0 mt-1 w-64">
+              <p className="font-semibold mb-2">Needs re-indexing due to:</p>
+              <ul className="list-disc pl-5">
+                {currentEmbeddingModel != selectedProvider && (
+                  <li>Changed embedding provider</li>
+                )}
+                {searchSettings?.multipass_indexing !=
+                  advancedEmbeddingDetails.multipass_indexing && (
+                  <li>Multipass indexing modification</li>
+                )}
+              </ul>
             </div>
           </div>
-        ) : (
-          <button
-            className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-            onClick={async () => {
-              updateSearch();
-              navigateToEmbeddingPage("search settings");
-            }}
-          >
-            Update Search
-          </button>
-        );
-      },
-    [needsReIndex]
-  );
+        </div>
+      ) : (
+        <button
+          className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+          onClick={async () => {
+            updateSearch();
+            navigateToEmbeddingPage("search settings");
+          }}
+        >
+          Update Search
+        </button>
+      );
+    };
+    ReIndexingButtonComponent.displayName = "ReIndexingButton";
+    return ReIndexingButtonComponent;
+  }, [needsReIndex]);
 
   if (!selectedProvider) {
     return <ThreeDotsLoader />;
