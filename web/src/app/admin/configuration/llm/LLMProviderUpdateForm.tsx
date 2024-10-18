@@ -25,6 +25,7 @@ export function LLMProviderUpdateForm({
   shouldMarkAsDefault,
   setPopup,
   hideAdvanced,
+  hideSuccess,
 }: {
   llmProviderDescriptor: WellKnownLLMProviderDescriptor;
   onClose: () => void;
@@ -32,6 +33,7 @@ export function LLMProviderUpdateForm({
   shouldMarkAsDefault?: boolean;
   hideAdvanced?: boolean;
   setPopup?: (popup: PopupSpec) => void;
+  hideSuccess?: boolean;
 }) {
   const { mutate } = useSWRConfig();
 
@@ -202,7 +204,7 @@ export function LLMProviderUpdateForm({
         const successMsg = existingLlmProvider
           ? "Provider updated successfully!"
           : "Provider enabled successfully!";
-        if (setPopup) {
+        if (!hideSuccess && setPopup) {
           setPopup({
             type: "success",
             message: successMsg,
