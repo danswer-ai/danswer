@@ -3,7 +3,7 @@ from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 
 from danswer.access.access import get_access_for_document
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.db.document import delete_document_by_connector_credential_pair__no_commit
 from danswer.db.document import delete_documents_complete__no_commit
 from danswer.db.document import get_document
@@ -46,6 +46,8 @@ def document_by_cc_pair_cleanup_task(
     connector / credential pair from the access list
     (6) delete all relevant entries from postgres
     """
+    task_logger.info(f"document_id={document_id}")
+
     try:
         with get_session_with_tenant(tenant_id) as db_session:
             action = "skip"
@@ -111,11 +113,17 @@ def document_by_cc_pair_cleanup_task(
                 pass
 
             task_logger.info(
-                f"document_id={document_id} action={action} refcount={count} chunks={chunks_affected}"
+                f"tenant_id={tenant_id} "
+                f"document_id={document_id} "
+                f"action={action} "
+                f"refcount={count} "
+                f"chunks={chunks_affected}"
             )
             db_session.commit()
     except SoftTimeLimitExceeded:
-        task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
+        task_logger.info(
+            f"SoftTimeLimitExceeded exception. tenant_id={tenant_id} doc_id={document_id}"
+        )
     except Exception as e:
         task_logger.exception("Unexpected exception")
 

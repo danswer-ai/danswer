@@ -16,6 +16,7 @@ from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.background.celery.tasks.pruning.tasks import (
     try_creating_prune_generator_task,
 )
+from danswer.background.celery.versioned_apps.primary import app as primary_app
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import remove_credential_from_connector
@@ -48,6 +49,7 @@ from ee.danswer.background.task_name_builders import (
     name_sync_external_doc_permissions_task,
 )
 from ee.danswer.db.user_group import validate_user_creation_permissions
+
 
 logger = setup_logger()
 router = APIRouter(prefix="/manage")
@@ -261,7 +263,7 @@ def prune_cc_pair(
         f"{cc_pair.connector.name} connector."
     )
     tasks_created = try_creating_prune_generator_task(
-        cc_pair, db_session, r, current_tenant_id.get()
+        primary_app, cc_pair, db_session, r, current_tenant_id.get()
     )
     if not tasks_created:
         raise HTTPException(
@@ -318,7 +320,7 @@ def sync_cc_pair(
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[list[int]]:
     # avoiding circular refs
-    from ee.danswer.background.celery.celery_app import (
+    from ee.danswer.background.celery.apps.primary import (
         sync_external_doc_permissions_task,
     )
 

@@ -1,22 +1,31 @@
 import traceback
+from datetime import datetime
+from datetime import timezone
+from http import HTTPStatus
 from typing import cast
 
 import redis
+from celery import Celery
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
+from celery.result import AsyncResult
+from celery.states import READY_STATES
 from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
-from danswer.background.celery.celery_app import celery_app
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import celery_get_queue_length
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
+from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
+from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
+    RedisConnectorIndexingFenceData,
+)
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
@@ -40,8 +49,13 @@ from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
 from danswer.db.engine import get_session_with_tenant
+from danswer.db.enums import IndexingStatus
 from danswer.db.index_attempt import delete_index_attempts
+from danswer.db.index_attempt import get_all_index_attempts_by_status
+from danswer.db.index_attempt import get_index_attempt
+from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import DocumentSet
+from danswer.db.models import IndexAttempt
 from danswer.db.models import UserGroup
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
@@ -61,8 +75,9 @@ from danswer.utils.variable_functionality import noop_fallback
     name="check_for_vespa_sync_task",
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
+    bind=True,
 )
-def check_for_vespa_sync_task(tenant_id: str | None) -> None:
+def check_for_vespa_sync_task(self: Task, tenant_id: str | None) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
 
@@ -79,7 +94,9 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
             return
 
         with get_session_with_tenant(tenant_id) as db_session:
-            try_generate_stale_document_sync_tasks(db_session, r, lock_beat, tenant_id)
+            try_generate_stale_document_sync_tasks(
+                self.app, db_session, r, lock_beat, tenant_id
+            )
 
             # check if any document sets are not synced
             document_set_info = fetch_document_sets(
@@ -87,7 +104,7 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
             )
             for document_set, _ in document_set_info:
                 try_generate_document_set_sync_tasks(
-                    document_set, db_session, r, lock_beat, tenant_id
+                    self.app, document_set, db_session, r, lock_beat, tenant_id
                 )
 
             # check if any user groups are not synced
@@ -102,7 +119,7 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
                     )
                     for usergroup in user_groups:
                         try_generate_user_group_sync_tasks(
-                            usergroup, db_session, r, lock_beat, tenant_id
+                            self.app, usergroup, db_session, r, lock_beat, tenant_id
                         )
                 except ModuleNotFoundError:
                     # Always exceptions on the MIT version, which is expected
@@ -121,7 +138,11 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
 
 
 def try_generate_stale_document_sync_tasks(
-    db_session: Session, r: Redis, lock_beat: redis.lock.Lock, tenant_id: str | None
+    celery_app: Celery,
+    db_session: Session,
+    r: Redis,
+    lock_beat: redis.lock.Lock,
+    tenant_id: str | None,
 ) -> int | None:
     # the fence is up, do nothing
     if r.exists(RedisConnectorCredentialPair.get_fence_key()):
@@ -172,6 +193,7 @@ def try_generate_stale_document_sync_tasks(
 
 
 def try_generate_document_set_sync_tasks(
+    celery_app: Celery,
     document_set: DocumentSet,
     db_session: Session,
     r: Redis,
@@ -223,6 +245,7 @@ def try_generate_document_set_sync_tasks(
 
 
 def try_generate_user_group_sync_tasks(
+    celery_app: Celery,
     usergroup: UserGroup,
     db_session: Session,
     r: Redis,
@@ -296,10 +319,12 @@ def monitor_document_set_taskset(
     key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    document_set_id = RedisDocumentSet.get_id_from_fence_key(fence_key)
-    if document_set_id is None:
+    document_set_id_str = RedisDocumentSet.get_id_from_fence_key(fence_key)
+    if document_set_id_str is None:
         task_logger.warning(f"could not parse document set id from {fence_key}")
         return
+
+    document_set_id = int(document_set_id_str)
 
     rds = RedisDocumentSet(document_set_id)
 
@@ -315,7 +340,8 @@ def monitor_document_set_taskset(
 
     count = cast(int, r.scard(rds.taskset_key))
     task_logger.info(
-        f"Document set sync progress: document_set_id={document_set_id} remaining={count} initial={initial_count}"
+        f"Document set sync progress: document_set_id={document_set_id} "
+        f"remaining={count} initial={initial_count}"
     )
     if count > 0:
         return
@@ -345,10 +371,12 @@ def monitor_connector_deletion_taskset(
     key_bytes: bytes, r: Redis, tenant_id: str | None
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    cc_pair_id = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
-    if cc_pair_id is None:
+    cc_pair_id_str = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
+    if cc_pair_id_str is None:
         task_logger.warning(f"could not parse cc_pair_id from {fence_key}")
         return
+
+    cc_pair_id = int(cc_pair_id_str)
 
     rcd = RedisConnectorDeletion(cc_pair_id)
 
@@ -458,12 +486,14 @@ def monitor_ccpair_pruning_taskset(
     key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    cc_pair_id = RedisConnectorPruning.get_id_from_fence_key(fence_key)
-    if cc_pair_id is None:
+    cc_pair_id_str = RedisConnectorPruning.get_id_from_fence_key(fence_key)
+    if cc_pair_id_str is None:
         task_logger.warning(
-            f"monitor_connector_pruning_taskset: could not parse cc_pair_id from {fence_key}"
+            f"monitor_ccpair_pruning_taskset: could not parse cc_pair_id from {fence_key}"
         )
         return
+
+    cc_pair_id = int(cc_pair_id_str)
 
     rcp = RedisConnectorPruning(cc_pair_id)
 
@@ -488,7 +518,7 @@ def monitor_ccpair_pruning_taskset(
     if count > 0:
         return
 
-    mark_ccpair_as_pruned(cc_pair_id, db_session)
+    mark_ccpair_as_pruned(int(cc_pair_id), db_session)
     task_logger.info(
         f"Successfully pruned connector credential pair. cc_pair_id={cc_pair_id}"
     )
@@ -499,14 +529,127 @@ def monitor_ccpair_pruning_taskset(
     r.delete(rcp.fence_key)
 
 
+def monitor_ccpair_indexing_taskset(
+    key_bytes: bytes, r: Redis, db_session: Session
+) -> None:
+    # if the fence doesn't exist, there's nothing to do
+    fence_key = key_bytes.decode("utf-8")
+    composite_id = RedisConnectorIndexing.get_id_from_fence_key(fence_key)
+    if composite_id is None:
+        task_logger.warning(
+            f"monitor_ccpair_indexing_taskset: could not parse composite_id from {fence_key}"
+        )
+        return
+
+    # parse out metadata and initialize the helper class with it
+    parts = composite_id.split("/")
+    if len(parts) != 2:
+        return
+
+    cc_pair_id = int(parts[0])
+    search_settings_id = int(parts[1])
+
+    rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
+
+    # read related data and evaluate/print task progress
+    fence_value = cast(bytes, r.get(rci.fence_key))
+    if fence_value is None:
+        return
+
+    try:
+        fence_json = fence_value.decode("utf-8")
+        fence_data = RedisConnectorIndexingFenceData.model_validate_json(
+            cast(str, fence_json)
+        )
+    except ValueError:
+        task_logger.exception(
+            "monitor_ccpair_indexing_taskset: fence_data not decodeable."
+        )
+        raise
+
+    elapsed_submitted = datetime.now(timezone.utc) - fence_data.submitted
+
+    generator_progress_value = r.get(rci.generator_progress_key)
+    if generator_progress_value is not None:
+        try:
+            progress_count = int(cast(int, generator_progress_value))
+
+            task_logger.info(
+                f"Connector indexing progress: cc_pair_id={cc_pair_id} "
+                f"search_settings_id={search_settings_id} "
+                f"progress={progress_count} "
+                f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
+            )
+        except ValueError:
+            task_logger.error(
+                "monitor_ccpair_indexing_taskset: generator_progress_value is not an integer."
+            )
+
+    # Read result state BEFORE generator_complete_key to avoid a race condition
+    result: AsyncResult = AsyncResult(fence_data.celery_task_id)
+    result_state = result.state
+
+    generator_complete_value = r.get(rci.generator_complete_key)
+    if generator_complete_value is None:
+        if result_state in READY_STATES:
+            # IF the task state is READY, THEN generator_complete should be set
+            # if it isn't, then the worker crashed
+            task_logger.info(
+                f"Connector indexing aborted: "
+                f"cc_pair_id={cc_pair_id} "
+                f"search_settings_id={search_settings_id} "
+                f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
+            )
+
+            index_attempt = get_index_attempt(db_session, fence_data.index_attempt_id)
+            if index_attempt:
+                mark_attempt_failed(
+                    index_attempt=index_attempt,
+                    db_session=db_session,
+                    failure_reason="Connector indexing aborted or exceptioned.",
+                )
+
+            r.delete(rci.generator_lock_key)
+            r.delete(rci.taskset_key)
+            r.delete(rci.generator_progress_key)
+            r.delete(rci.generator_complete_key)
+            r.delete(rci.fence_key)
+        return
+
+    status_enum = HTTPStatus.INTERNAL_SERVER_ERROR
+    try:
+        status_value = int(cast(int, generator_complete_value))
+        status_enum = HTTPStatus(status_value)
+    except ValueError:
+        task_logger.error(
+            f"monitor_ccpair_indexing_taskset: "
+            f"generator_complete_value=f{generator_complete_value} could not be parsed."
+        )
+
+    task_logger.info(
+        f"Connector indexing finished: cc_pair_id={cc_pair_id} "
+        f"search_settings_id={search_settings_id} "
+        f"status={status_enum.name} "
+        f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
+    )
+
+    r.delete(rci.generator_lock_key)
+    r.delete(rci.taskset_key)
+    r.delete(rci.generator_progress_key)
+    r.delete(rci.generator_complete_key)
+    r.delete(rci.fence_key)
+
+
 @shared_task(name="monitor_vespa_sync", soft_time_limit=300, bind=True)
-def monitor_vespa_sync(self: Task, tenant_id: str | None) -> None:
+def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
     """This is a celery beat task that monitors and finalizes metadata sync tasksets.
     It scans for fence values and then gets the counts of any associated tasksets.
     If the count is 0, that means all tasks finished and we should clean up.
 
     This task lock timeout is CELERY_METADATA_SYNC_BEAT_LOCK_TIMEOUT seconds, so don't
     do anything too expensive in this function!
+
+    Returns True if the task actually did work, False
     """
     r = get_redis_client()
 
@@ -518,11 +661,14 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> None:
     try:
         # prevent overlapping tasks
         if not lock_beat.acquire(blocking=False):
-            return
+            return False
 
         # print current queue lengths
         r_celery = self.app.broker_connection().channel().client  # type: ignore
         n_celery = celery_get_queue_length("celery", r)
+        n_indexing = celery_get_queue_length(
+            DanswerCeleryQueues.CONNECTOR_INDEXING, r_celery
+        )
         n_sync = celery_get_queue_length(
             DanswerCeleryQueues.VESPA_METADATA_SYNC, r_celery
         )
@@ -534,7 +680,11 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> None:
         )
 
         task_logger.info(
-            f"Queue lengths: celery={n_celery} sync={n_sync} deletion={n_deletion} pruning={n_pruning}"
+            f"Queue lengths: celery={n_celery} "
+            f"indexing={n_indexing} "
+            f"sync={n_sync} "
+            f"deletion={n_deletion} "
+            f"pruning={n_pruning}"
         )
 
         lock_beat.reacquire()
@@ -565,6 +715,29 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> None:
             for key_bytes in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
                 monitor_ccpair_pruning_taskset(key_bytes, r, db_session)
 
+            # do some cleanup before clearing fences
+            # check the db for any outstanding index attempts
+            attempts: list[IndexAttempt] = []
+            attempts.extend(
+                get_all_index_attempts_by_status(IndexingStatus.NOT_STARTED, db_session)
+            )
+            attempts.extend(
+                get_all_index_attempts_by_status(IndexingStatus.IN_PROGRESS, db_session)
+            )
+
+            for a in attempts:
+                # if attempts exist in the db but we don't detect them in redis, mark them as failed
+                rci = RedisConnectorIndexing(
+                    a.connector_credential_pair_id, a.search_settings_id
+                )
+                failure_reason = f"Unknown index attempt {a.id}. Might be left over from a process restart."
+                if not r.exists(rci.fence_key):
+                    mark_attempt_failed(a, db_session, failure_reason=failure_reason)
+
+            lock_beat.reacquire()
+            for key_bytes in r.scan_iter(RedisConnectorIndexing.FENCE_PREFIX + "*"):
+                monitor_ccpair_indexing_taskset(key_bytes, r, db_session)
+
         # uncomment for debugging if needed
         # r_celery = celery_app.broker_connection().channel().client
         # length = celery_get_queue_length(DanswerCeleryQueues.VESPA_METADATA_SYNC, r_celery)
@@ -576,6 +749,8 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> None:
     finally:
         if lock_beat.owned():
             lock_beat.release()
+
+    return True
 
 
 @shared_task(

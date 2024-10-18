@@ -13,7 +13,7 @@ from danswer.configs.app_configs import MULTI_TENANT
 from danswer.db.engine import build_connection_string
 from danswer.db.models import Base
 from celery.backends.database.session import ResultModelBase  # type: ignore
-from danswer.background.celery.celery_app import get_all_tenant_ids
+from danswer.background.celery.celery_utils import get_all_tenant_ids
 
 # Alembic Config object
 config = context.config

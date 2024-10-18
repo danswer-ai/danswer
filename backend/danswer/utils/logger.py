@@ -182,3 +182,24 @@ def setup_logger(
     logger.notice = lambda msg, *args, **kwargs: logger.log(logging.getLevelName("NOTICE"), msg, *args, **kwargs)  # type: ignore
 
     return DanswerLoggingAdapter(logger, extra=extra)
+
+
+def print_loggers() -> None:
+    root_logger = logging.getLogger()
+    loggers: list[logging.Logger | logging.PlaceHolder] = [root_logger]
+    loggers.extend(logging.Logger.manager.loggerDict.values())
+
+    for logger in loggers:
+        if isinstance(logger, logging.PlaceHolder):
+            # Skip placeholders that aren't actual loggers
+            continue
+
+        print(f"Logger: '{logger.name}' (Level: {logging.getLevelName(logger.level)})")
+        if logger.handlers:
+            for handler in logger.handlers:
+                print(f"  Handler: {handler}")
+        else:
+            print("  No handlers")
+
+        print(f"  Propagate: {logger.propagate}")
+        print()
