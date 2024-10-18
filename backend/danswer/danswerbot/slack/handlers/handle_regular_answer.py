@@ -211,6 +211,7 @@ def handle_regular_answer(
                 use_citations=use_citations,
                 danswerbot_flow=True,
             )
+
             if not answer.error_msg:
                 return answer
             else:
