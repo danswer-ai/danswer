@@ -8,13 +8,12 @@ interface ListInputProps {
 }
 
 const ListInput: React.FC<ListInputProps> = ({ field }) => {
-  const { values } = useFormikContext();
-
+  const { values } = useFormikContext<any>();
   return (
     <TextArrayField
       name={field.name}
       label={field.label}
-      values={Array.isArray(values) ? values : []}
+      values={values}
       subtext={field.description}
       placeholder={`Enter ${field.label.toLowerCase()}`}
     />

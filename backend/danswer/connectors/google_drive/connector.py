@@ -462,8 +462,34 @@ class GoogleDriveConnector(LoadConnector, PollConnector):
                             for permission in file["permissions"]
                         ):
                             continue
+                    try:
+                        text_contents = extract_text(file, service) or ""
+                    except HttpError as e:
+                        reason = (
+                            e.error_details[0]["reason"]
+                            if e.error_details
+                            else e.reason
+                        )
+                        message = (
+                            e.error_details[0]["message"]
+                            if e.error_details
+                            else e.reason
+                        )
 
-                    text_contents = extract_text(file, service) or ""
+                        # these errors don't represent a failure in the connector, but simply files
+                        # that can't / shouldn't be indexed
+                        ERRORS_TO_CONTINUE_ON = [
+                            "cannotExportFile",
+                            "exportSizeLimitExceeded",
+                            "cannotDownloadFile",
+                        ]
+                        if e.status_code == 403 and reason in ERRORS_TO_CONTINUE_ON:
+                            logger.warning(
+                                f"Could not export file '{file['name']}' due to '{message}', skipping..."
+                            )
+                            continue
+
+                        raise
 
                     doc_batch.append(
                         Document(

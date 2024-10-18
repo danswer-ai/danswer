@@ -16,6 +16,7 @@
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-tooltip": "^1.0.7",
+    "@sentry/nextjs": "^8.34.0",
     "@stripe/stripe-js": "^4.6.0",
     "@tremor/react": "^3.9.2",
     "@types/js-cookie": "^3.0.3",

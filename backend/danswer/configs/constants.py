@@ -130,6 +130,9 @@ class DocumentSource(str, Enum):
     NOT_APPLICABLE = "not_applicable"
 
 
+DocumentSourceRequiringTenantContext: list[DocumentSource] = [DocumentSource.FILE]
+
+
 class NotificationType(str, Enum):
     REINDEX = "reindex"
 

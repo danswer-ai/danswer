@@ -1,4 +1,5 @@
 import math
+from datetime import datetime
 from http import HTTPStatus
 
 from fastapi import APIRouter
@@ -154,6 +155,7 @@ def update_cc_pair_status(
         user=user,
         get_editable=True,
     )
+
     if not cc_pair:
         raise HTTPException(
             status_code=400,
@@ -163,7 +165,6 @@ def update_cc_pair_status(
     if status_update_request.status == ConnectorCredentialPairStatus.PAUSED:
         cancel_indexing_attempts_for_ccpair(cc_pair_id, db_session)
 
-        # Just for good measure
         cancel_indexing_attempts_past_model(db_session)
 
     update_connector_credential_pair_from_id(
@@ -171,6 +172,8 @@ def update_cc_pair_status(
         cc_pair_id=cc_pair_id,
         status=status_update_request.status,
     )
+
+    db_session.commit()
 
 
 @router.put("/admin/cc-pair/{cc_pair_id}/name")
@@ -202,12 +205,12 @@ def update_cc_pair_name(
         raise HTTPException(status_code=400, detail="Name must be unique")
 
 
-@router.get("/admin/cc-pair/{cc_pair_id}/prune")
-def get_cc_pair_latest_prune(
+@router.get("/admin/cc-pair/{cc_pair_id}/last_pruned")
+def get_cc_pair_last_pruned(
     cc_pair_id: int,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
-) -> bool:
+) -> datetime | None:
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id=cc_pair_id,
         db_session=db_session,
@@ -217,11 +220,10 @@ def get_cc_pair_latest_prune(
     if not cc_pair:
         raise HTTPException(
             status_code=400,
-            detail="Connection not found for current user's permissions",
+            detail="cc_pair not found for current user's permissions",
         )
 
-    rcp = RedisConnectorPruning(cc_pair.id)
-    return rcp.is_pruning(db_session, get_redis_client())
+    return cc_pair.last_pruned
 
 
 @router.post("/admin/cc-pair/{cc_pair_id}/prune")

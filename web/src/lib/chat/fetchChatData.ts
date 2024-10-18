@@ -20,7 +20,7 @@ import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
 import { personaComparator } from "@/app/admin/assistants/lib";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import {
   SIDEBAR_TOGGLED_COOKIE_NAME,
   DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME,
@@ -29,6 +29,7 @@ import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/Wel
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
 import { NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN } from "../constants";
 import { checkLLMSupportsImageInput } from "../llm/utils";
+import { redirect } from "next/navigation";
 
 interface FetchChatDataResult {
   user: User | null;
@@ -98,7 +99,15 @@ export async function fetchChatData(searchParams: {
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
-    return { redirect: "/auth/login" };
+    const headersList = headers();
+    const fullUrl = headersList.get("x-url") || "/chat";
+    const searchParamsString = new URLSearchParams(
+      searchParams as unknown as Record<string, string>
+    ).toString();
+    const redirectUrl = searchParamsString
+      ? `${fullUrl}?${searchParamsString}`
+      : fullUrl;
+    return redirect(`/auth/login?next=${encodeURIComponent(redirectUrl)}`);
   }
 
   if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
@@ -127,8 +136,10 @@ export async function fetchChatData(searchParams: {
     );
   }
 
-  // Larger ID -> created later
-  chatSessions.sort((a, b) => (a.id > b.id ? -1 : 1));
+  chatSessions.sort(
+    (a, b) =>
+      new Date(b.time_created).getTime() - new Date(a.time_created).getTime()
+  );
 
   let documentSets: DocumentSet[] = [];
   if (documentSetsResponse?.ok) {

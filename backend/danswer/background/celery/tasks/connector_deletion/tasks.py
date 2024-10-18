@@ -12,7 +12,7 @@ from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
-from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.redis.redis_pool import get_redis_client
@@ -36,7 +36,7 @@ def check_for_connector_deletion_task(tenant_id: str | None) -> None:
         if not lock_beat.acquire(blocking=False):
             return
 
-        with Session(get_sqlalchemy_engine()) as db_session:
+        with get_session_with_tenant(tenant_id) as db_session:
             cc_pairs = get_connector_credential_pairs(db_session)
             for cc_pair in cc_pairs:
                 try_generate_document_cc_pair_cleanup_tasks(
