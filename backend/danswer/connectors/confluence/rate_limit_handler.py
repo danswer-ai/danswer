@@ -133,6 +133,7 @@ class ConfluenceRateLimitError(Exception):
 
 
 def _handle_http_error(e: HTTPError, attempt: int) -> int:
+    MIN_DELAY = 2
     MAX_DELAY = 60
     STARTING_DELAY = 5
     BACKOFF = 2
@@ -159,6 +160,8 @@ def _handle_http_error(e: HTTPError, attempt: int) -> int:
                     f"Clamping retry_after from {retry_after} to {MAX_DELAY} seconds..."
                 )
                 retry_after = MAX_DELAY
+            if retry_after < MIN_DELAY:
+                retry_after = MIN_DELAY
         except ValueError:
             pass
 
