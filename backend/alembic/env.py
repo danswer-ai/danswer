@@ -129,18 +129,16 @@ async def run_async_migrations() -> None:
                 logger.error(f"Error migrating schema {schema}: {e}")
                 raise
     else:
-        # Run migrations for a single schema (public if MULTI_TENANT is True)
-        schema_to_use = "public" if MULTI_TENANT else schema_name
         try:
-            logger.info(f"Migrating schema: {schema_to_use}")
+            logger.info(f"Migrating schema: {schema_name}")
             async with engine.connect() as connection:
                 await connection.run_sync(
                     do_run_migrations,
-                    schema_name=schema_to_use,
+                    schema_name=schema_name,
                     create_schema=create_schema,
                 )
         except Exception as e:
-            logger.error(f"Error migrating schema {schema_to_use}: {e}")
+            logger.error(f"Error migrating schema {schema_name}: {e}")
             raise
 
     await engine.dispose()
@@ -175,7 +173,6 @@ def run_migrations_offline() -> None:
             with context.begin_transaction():
                 context.run_migrations()
     else:
-        # Run migrations for a single schema (public if MULTI_TENANT is True)
         logger.info(f"Migrating schema: {schema_name}")
         context.configure(
             url=url,
