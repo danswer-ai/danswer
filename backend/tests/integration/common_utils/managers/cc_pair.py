@@ -239,24 +239,24 @@ class CCPairManager:
                 if fetched_cc_pair.cc_pair_id != cc_pair.id:
                     continue
 
+                if fetched_cc_pair.in_progress:
+                    continue
+
                 if (
                     fetched_cc_pair.last_success
                     and fetched_cc_pair.last_success > after
                 ):
-                    print(f"cc_pair {cc_pair.id} indexing complete.")
+                    print(f"CC pair {cc_pair.id} indexing complete.")
                     return
-                else:
-                    print("cc_pair found but not finished:")
-                    # print(fetched_cc_pair.__dict__)
 
             elapsed = time.monotonic() - start
             if elapsed > timeout:
                 raise TimeoutError(
-                    f"CC pair indexing was not completed within {timeout} seconds"
+                    f"CC pair {cc_pair.id} indexing was not completed within {timeout} seconds"
                 )
 
             print(
-                f"Waiting for CC indexing to complete. elapsed={elapsed:.2f} timeout={timeout}"
+                f"CC pair {cc_pair.id} indexing to complete. elapsed={elapsed:.2f} timeout={timeout}"
             )
             time.sleep(5)
 

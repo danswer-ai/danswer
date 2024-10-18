@@ -307,6 +307,10 @@ class ConnectorIndexingStatus(BaseModel):
     deletion_attempt: DeletionAttemptSnapshot | None
     is_deletable: bool
 
+    # index attempt in db can be marked successful while celery/redis
+    # is stil running/cleaning up
+    in_progress: bool
+
 
 class ConnectorCredentialPairIdentifier(BaseModel):
     connector_id: int
