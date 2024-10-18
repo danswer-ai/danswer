@@ -24,6 +24,7 @@ class Notification(BaseModel):
     dismissed: bool
     last_shown: datetime
     first_shown: datetime
+    additional_data: dict | None = None
 
     @classmethod
     def from_model(cls, notif: NotificationDBModel) -> "Notification":
@@ -33,6 +34,7 @@ class Notification(BaseModel):
             dismissed=notif.dismissed,
             last_shown=notif.last_shown,
             first_shown=notif.first_shown,
+            additional_data=notif.additional_data,
         )
 
 
