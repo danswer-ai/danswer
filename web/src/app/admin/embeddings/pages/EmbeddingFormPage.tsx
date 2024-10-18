@@ -3,7 +3,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 import { EmbeddingModelSelection } from "../EmbeddingModelSelectionForm";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Card, Text } from "@tremor/react";
 import { ArrowLeft, ArrowRight, WarningCircle } from "@phosphor-icons/react";
 import {
@@ -152,6 +152,68 @@ export default function EmbeddingForm() {
     }
   }, [currentEmbeddingModel]);
 
+  const handleReindex = async () => {
+    const update = await updateSearch();
+    if (update) {
+      await onConfirm();
+    }
+  };
+
+  const needsReIndex =
+    currentEmbeddingModel != selectedProvider ||
+    searchSettings?.multipass_indexing !=
+      advancedEmbeddingDetails.multipass_indexing;
+
+  const ReIndexingButton = useMemo(() => {
+    const ReIndexingButtonComponent = ({
+      needsReIndex,
+    }: {
+      needsReIndex: boolean;
+    }) => {
+      return needsReIndex ? (
+        <div className="flex mx-auto gap-x-1 ml-auto items-center">
+          <button
+            className="enabled:cursor-pointer disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+            onClick={handleReindex}
+          >
+            Re-index
+          </button>
+          <div className="relative group">
+            <WarningCircle
+              className="text-text-800 cursor-help"
+              size={20}
+              weight="fill"
+            />
+            <div className="absolute z-10 invisible group-hover:visible bg-background-800 text-text-200 text-sm rounded-md shadow-md p-2 right-0 mt-1 w-64">
+              <p className="font-semibold mb-2">Needs re-indexing due to:</p>
+              <ul className="list-disc pl-5">
+                {currentEmbeddingModel != selectedProvider && (
+                  <li>Changed embedding provider</li>
+                )}
+                {searchSettings?.multipass_indexing !=
+                  advancedEmbeddingDetails.multipass_indexing && (
+                  <li>Multipass indexing modification</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <button
+          className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+          onClick={async () => {
+            updateSearch();
+            navigateToEmbeddingPage("search settings");
+          }}
+        >
+          Update Search
+        </button>
+      );
+    };
+    ReIndexingButtonComponent.displayName = "ReIndexingButton";
+    return ReIndexingButtonComponent;
+  }, [needsReIndex]);
+
   if (!selectedProvider) {
     return <ThreeDotsLoader />;
   }
@@ -196,12 +258,13 @@ export default function EmbeddingForm() {
 
     // We use a spread operation to merge properties from multiple objects into a single object.
     // Advanced embedding details may update default values.
+    // Do NOT modify the order unless you are positive the new hierarchy is correct.
     if (selectedProvider.provider_type != null) {
       // This is a cloud model
       newModel = {
+        ...selectedProvider,
         ...rerankingDetails,
         ...advancedEmbeddingDetails,
-        ...selectedProvider,
         provider_type:
           (selectedProvider.provider_type
             ?.toLowerCase()
@@ -213,10 +276,10 @@ export default function EmbeddingForm() {
         ...selectedProvider,
         ...rerankingDetails,
         ...advancedEmbeddingDetails,
-        ...selectedProvider,
         provider_type: null,
       };
     }
+
     newModel.index_name = null;
 
     const response = await fetch(
@@ -237,58 +300,6 @@ export default function EmbeddingForm() {
 
       alert(`Failed to update embedding model - ${await response.text()}`);
     }
-  };
-
-  const needsReIndex =
-    currentEmbeddingModel != selectedProvider ||
-    searchSettings?.multipass_indexing !=
-      advancedEmbeddingDetails.multipass_indexing;
-
-  const ReIndexingButton = ({ needsReIndex }: { needsReIndex: boolean }) => {
-    return needsReIndex ? (
-      <div className="flex mx-auto gap-x-1 ml-auto items-center">
-        <button
-          className="enabled:cursor-pointer disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-          onClick={async () => {
-            const update = await updateSearch();
-            if (update) {
-              await onConfirm();
-            }
-          }}
-        >
-          Re-index
-        </button>
-        <div className="relative group">
-          <WarningCircle
-            className="text-text-800 cursor-help"
-            size={20}
-            weight="fill"
-          />
-          <div className="absolute z-10 invisible group-hover:visible bg-background-800 text-text-200 text-sm rounded-md shadow-md p-2 right-0 mt-1 w-64">
-            <p className="font-semibold mb-2">Needs re-indexing due to:</p>
-            <ul className="list-disc pl-5">
-              {currentEmbeddingModel != selectedProvider && (
-                <li>Changed embedding provider</li>
-              )}
-              {searchSettings?.multipass_indexing !=
-                advancedEmbeddingDetails.multipass_indexing && (
-                <li>Multipass indexing modification</li>
-              )}
-            </ul>
-          </div>
-        </div>
-      </div>
-    ) : (
-      <button
-        className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-        onClick={async () => {
-          updateSearch();
-          navigateToEmbeddingPage("search settings");
-        }}
-      >
-        Update Search
-      </button>
-    );
   };
 
   return (
@@ -391,7 +402,7 @@ export default function EmbeddingForm() {
               />
             </Card>
 
-            <div className={` mt-4 w-full grid grid-cols-3`}>
+            <div className={`mt-4 w-full grid grid-cols-3`}>
               <button
                 className="border-border-dark mr-auto border flex gap-x-1 items-center text-text p-2.5 text-sm font-regular rounded-sm "
                 onClick={() => prevFormStep()}
