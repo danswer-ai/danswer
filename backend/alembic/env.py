@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict, List
 import asyncio
 from logging.config import fileConfig
 
@@ -23,24 +23,7 @@ if config.config_file_name is not None and config.attributes.get(
     fileConfig(config.config_file_name)
 
 # Add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
 target_metadata = [Base.metadata, ResultModelBase.metadata]
-
-
-def get_schema_options() -> tuple[str, bool]:
-    x_args_raw = context.get_x_argument()
-    x_args = {}
-    for arg in x_args_raw:
-        for pair in arg.split(","):
-            if "=" in pair:
-                key, value = pair.split("=", 1)
-                x_args[key.strip()] = value.strip()
-    schema_name = x_args.get("schema", "public")
-    create_schema = x_args.get("create_schema", "true").lower() == "true"
-    return schema_name, create_schema
-
 
 EXCLUDE_TABLES = {"kombu_queue", "kombu_message"}
 
@@ -53,36 +36,49 @@ def include_object(
     return True
 
 
-def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-    Calls to context.execute() here emit the given string to the
-    script output.
+def get_schema_options() -> Dict[str, Any]:
     """
-    schema_name, _ = get_schema_options()
-    url = build_connection_string()
+    Parses command-line options passed via '-x' in Alembic commands.
+    Recognizes 'schema' and 'create_schema' options.
+    """
+    x_args_raw = context.get_x_argument()
+    x_args = {}
+    for arg in x_args_raw:
+        for pair in arg.split(","):
+            if "=" in pair:
+                key, value = pair.split("=", 1)
+                x_args[key.strip()] = value.strip()
+    schema_name = x_args.get("schema", "public")
+    create_schema = x_args.get("create_schema", "true").lower() == "true"
+    return {"schema_name": schema_name, "create_schema": create_schema}
 
-    context.configure(
-        url=url,
-        target_metadata=target_metadata,  # type: ignore
-        literal_binds=True,
-        include_object=include_object,
-        version_table_schema=schema_name,
-        include_schemas=True,
-        script_location=config.get_main_option("script_location"),
-        dialect_opts={"paramstyle": "named"},
+
+async def get_all_tenant_schemas(connection) -> List[str]:
+    """
+    Retrieves all tenant schemas from the database,
+    excluding system schemas and any non-tenant schemas.
+    Modify the query if you have specific schema naming conventions.
+    """
+    result = await connection.execute(
+        text(
+            """
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('information_schema', 'public', 'pg_catalog')
+            ORDER BY schema_name
+        """
+        )
     )
+    schemas = [row[0] for row in result]
+    return schemas
 
-    with context.begin_transaction():
-        context.run_migrations()
 
-
-def do_run_migrations(connection: Connection) -> None:
-    schema_name, create_schema = get_schema_options()
-
+def do_run_migrations(
+    connection: Connection, schema_name: str, create_schema: bool
+) -> None:
+    """
+    Executes migrations in the specified schema.
+    """
     if MULTI_TENANT and schema_name == "public":
         raise ValueError(
             "Cannot run default migrations in public schema when multi-tenancy is enabled. "
@@ -111,14 +107,43 @@ def do_run_migrations(connection: Connection) -> None:
         context.run_migrations()
 
 
-async def run_async_migrations() -> None:
+async def run_async_migrations():
+    """
+    Determines whether to run migrations for a single schema or all schemas,
+    and executes migrations accordingly.
+    """
+    options = get_schema_options()
+    schema_name = options["schema_name"]
+    create_schema = options["create_schema"]
+
     connectable = create_async_engine(
         build_connection_string(),
         poolclass=pool.NullPool,
     )
 
     async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
+        if schema_name == "all":
+            # Run migrations for all tenant schemas
+            tenant_schemas = await get_all_tenant_schemas(connection)
+            # Limit the number of concurrent migrations
+            semaphore = asyncio.Semaphore(10)
+
+            async def migrate_schema(schema):
+                async with semaphore:
+                    await connection.run_sync(
+                        do_run_migrations,
+                        schema_name=schema,
+                        create_schema=create_schema,
+                    )
+                    print(f"Migrations applied for schema: {schema}")
+
+            await asyncio.gather(*(migrate_schema(schema) for schema in tenant_schemas))
+        else:
+            # Run migrations for a single schema
+            await connection.run_sync(
+                do_run_migrations, schema_name=schema_name, create_schema=create_schema
+            )
+            print(f"Migrations applied for schema: {schema_name}")
 
     await connectable.dispose()
 
@@ -128,6 +153,7 @@ def run_migrations_online() -> None:
 
 
 if context.is_offline_mode():
-    run_migrations_offline()
+    # Implement offline migrations if necessary
+    raise NotImplementedError("Offline mode is not supported in this configuration.")
 else:
     run_migrations_online()
