@@ -4,7 +4,6 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
@@ -378,20 +377,6 @@ def _run_indexing(
         )
 
 
-def _prepare_index_attempt(
-    db_session: Session, index_attempt_id: int, tenant_id: str | None
-) -> IndexAttempt:
-    if tenant_id is not None:
-        # Explicitly set the search path for the given tenant
-        db_session.execute(text(f'SET search_path TO "{tenant_id}"'))
-        # Verify the search path was set correctly
-        result = db_session.execute(text("SHOW search_path"))
-        current_search_path = result.scalar()
-        logger.info(f"Current search path set to: {current_search_path}")
-
-    return transition_attempt_to_in_progress(index_attempt_id, db_session)
-
-
 def run_indexing_entrypoint(
     index_attempt_id: int,
     tenant_id: str | None,
@@ -408,7 +393,7 @@ def run_indexing_entrypoint(
             index_attempt_id, connector_credential_pair_id
         )
         with get_session_with_tenant(tenant_id) as db_session:
-            attempt = _prepare_index_attempt(db_session, index_attempt_id, tenant_id)
+            attempt = transition_attempt_to_in_progress(index_attempt_id, db_session)
 
             logger.info(
                 f"Indexing starting for tenant {tenant_id}: "
