@@ -38,6 +38,7 @@ from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.app_configs import SECRET_JWT_KEY
 from danswer.configs.constants import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
+from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import current_tenant_id
 
@@ -186,6 +187,29 @@ class SqlEngine:
         if not cls._app_name:
             return ""
         return cls._app_name
+
+
+def get_all_tenant_ids() -> list[str] | list[None]:
+    if not MULTI_TENANT:
+        return [None]
+    with get_session_with_tenant(tenant_id="public") as session:
+        result = session.execute(
+            text(
+                """
+            SELECT schema_name
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'public')"""
+            )
+        )
+        tenant_ids = [row[0] for row in result]
+
+    valid_tenants = [
+        tenant
+        for tenant in tenant_ids
+        if tenant is None or tenant.startswith(TENANT_ID_PREFIX)
+    ]
+
+    return valid_tenants
 
 
 def build_connection_string(
