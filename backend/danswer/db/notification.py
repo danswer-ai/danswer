@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
@@ -8,16 +10,37 @@ from danswer.db.models import User
 
 
 def create_notification(
-    user: User | None,
+    user_id: UUID | None,
     notif_type: NotificationType,
     db_session: Session,
+    additional_data: dict | None = None,
 ) -> Notification:
+    # Check if an undismissed notification of the same type and data exists
+    existing_notification = (
+        db_session.query(Notification)
+        .filter_by(
+            user_id=user_id,
+            notif_type=notif_type,
+            dismissed=False,
+        )
+        .filter(Notification.additional_data == additional_data)
+        .first()
+    )
+
+    if existing_notification:
+        # Update the last_shown timestamp
+        existing_notification.last_shown = func.now()
+        db_session.commit()
+        return existing_notification
+
+    # Create a new notification if none exists
     notification = Notification(
-        user_id=user.id if user else None,
+        user_id=user_id,
         notif_type=notif_type,
         dismissed=False,
         last_shown=func.now(),
         first_shown=func.now(),
+        additional_data=additional_data,
     )
     db_session.add(notification)
     db_session.commit()

@@ -235,6 +235,9 @@ class Notification(Base):
     first_shown: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True))
 
     user: Mapped[User] = relationship("User", back_populates="notifications")
+    additional_data: Mapped[dict | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
 
 
 """

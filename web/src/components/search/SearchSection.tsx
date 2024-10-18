@@ -709,7 +709,6 @@ export const SearchSection = ({
             reset={() => setQuery("")}
             toggleSidebar={toggleSidebar}
             page="search"
-            user={user}
           />
           <div className="w-full flex">
             <div
