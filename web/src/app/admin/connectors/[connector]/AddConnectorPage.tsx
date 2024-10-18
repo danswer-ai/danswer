@@ -431,10 +431,8 @@ export default function AddConnector({
                   config={configuration}
                   setSelectedFiles={setSelectedFiles}
                   selectedFiles={selectedFiles}
+                  connector={connector}
                 />
-
-                <AccessTypeForm connector={connector} />
-                <AccessTypeGroupSelector />
               </Card>
             )}
 

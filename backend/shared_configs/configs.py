@@ -63,8 +63,15 @@ DEV_LOGGING_ENABLED = os.environ.get("DEV_LOGGING_ENABLED", "").lower() == "true
 # notset, debug, info, notice, warning, error, or critical
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "notice")
 
+# Timeout for API-based embedding models
+# NOTE: does not apply for Google VertexAI, since the python client doesn't
+# allow us to specify a custom timeout
+API_BASED_EMBEDDING_TIMEOUT = int(os.environ.get("API_BASED_EMBEDDING_TIMEOUT", "600"))
+
 # Only used for OpenAI
-OPENAI_EMBEDDING_TIMEOUT = int(os.environ.get("OPENAI_EMBEDDING_TIMEOUT", "600"))
+OPENAI_EMBEDDING_TIMEOUT = int(
+    os.environ.get("OPENAI_EMBEDDING_TIMEOUT", API_BASED_EMBEDDING_TIMEOUT)
+)
 
 # Whether or not to strictly enforce token limit for chunking.
 STRICT_CHUNK_TOKEN_LIMIT = (
