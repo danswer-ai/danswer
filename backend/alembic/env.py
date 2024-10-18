@@ -1,3 +1,4 @@
+from sqlalchemy.engine.base import Connection
 from typing import Any
 import asyncio
 from logging.config import fileConfig
@@ -59,20 +60,23 @@ def get_schema_options() -> tuple[str, bool, bool]:
     schema_name = x_args.get("schema", "public")
     create_schema = x_args.get("create_schema", "true").lower() == "true"
     upgrade_all_tenants = x_args.get("upgrade_all_tenants", "false").lower() == "true"
-    return schema_name, create_schema, upgrade_all_tenants
-
-
-def do_run_migrations(connection, schema_name: str, create_schema: bool) -> None:
-    """
-    Executes migrations in the specified schema.
-    """
-    logger.info(f"About to migrate schema: {schema_name}")
 
     if MULTI_TENANT and schema_name == "public":
         raise ValueError(
             "Cannot run default migrations in public schema when multi-tenancy is enabled. "
             "Please specify a tenant-specific schema."
         )
+
+    return schema_name, create_schema, upgrade_all_tenants
+
+
+def do_run_migrations(
+    connection: Connection, schema_name: str, create_schema: bool
+) -> None:
+    """
+    Executes migrations in the specified schema.
+    """
+    logger.info(f"About to migrate schema: {schema_name}")
 
     if create_schema:
         connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"'))
@@ -96,7 +100,7 @@ def do_run_migrations(connection, schema_name: str, create_schema: bool) -> None
         context.run_migrations()
 
 
-async def run_async_migrations():
+async def run_async_migrations() -> None:
     """
     Determines whether to run migrations for a single schema or all schemas,
     and executes migrations accordingly.
@@ -108,7 +112,7 @@ async def run_async_migrations():
         poolclass=pool.NullPool,
     )
 
-    if upgrade_all_tenants and MULTI_TENANT:
+    if upgrade_all_tenants:
         # Run migrations for all tenant schemas sequentially
         tenant_schemas = get_all_tenant_ids()
 
@@ -148,10 +152,10 @@ def run_migrations_offline() -> None:
     """
     Run migrations in 'offline' mode.
     """
-    schema_name, create_schema, upgrade_all_tenants = get_schema_options()
+    schema_name, _, upgrade_all_tenants = get_schema_options()
     url = build_connection_string()
 
-    if upgrade_all_tenants and MULTI_TENANT:
+    if upgrade_all_tenants:
         # Run offline migrations for all tenant schemas
         engine = create_async_engine(url)
         tenant_schemas = get_all_tenant_ids()
