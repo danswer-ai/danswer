@@ -323,11 +323,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         username = credentials["confluence_username"]
         access_token = credentials["confluence_access_token"]
+
+        # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
+        # for a list of other hidden constructor args
         self.confluence_client = DanswerConfluence(
             url=self.wiki_base,
             username=username if self.is_cloud else None,
             password=access_token if self.is_cloud else None,
             token=access_token if not self.is_cloud else None,
+            backoff_and_retry=True,
+            max_backoff_retries=60,
+            max_backoff_seconds=60,
         )
         return None
 

@@ -20,6 +20,9 @@ def build_confluence_client(
         username=credentials_json["confluence_username"] if is_cloud else None,
         password=credentials_json["confluence_access_token"] if is_cloud else None,
         token=credentials_json["confluence_access_token"] if not is_cloud else None,
+        backoff_and_retry=True,
+        max_backoff_retries=60,
+        max_backoff_seconds=60,
     )
 
 
