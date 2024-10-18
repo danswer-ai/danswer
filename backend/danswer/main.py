@@ -84,6 +84,7 @@ from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
 from danswer.setup import setup_danswer
+from danswer.setup import setup_multitenant_danswer
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import get_or_generate_uuid
 from danswer.utils.telemetry import optional_telemetry
@@ -182,6 +183,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         # If we are multi-tenant, we need to only set up initial public tables
         with Session(engine) as db_session:
             setup_danswer(db_session)
+    else:
+        setup_multitenant_danswer()
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
     yield
@@ -312,6 +315,7 @@ def get_application() -> FastAPI:
             prefix="/auth/oauth",
             tags=["auth"],
         )
+
         # Need basic auth router for `logout` endpoint
         include_router_with_global_prefix_prepended(
             application,
