@@ -10,12 +10,16 @@ import { TextFormField } from "@/components/admin/connectors/Field";
 import ListInput from "./ConnectorInput/ListInput";
 import FileInput from "./ConnectorInput/FileInput";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
+import { AccessTypeForm } from "@/components/admin/connectors/AccessTypeForm";
+import { AccessTypeGroupSelector } from "@/components/admin/connectors/AccessTypeGroupSelector";
+import { ConfigurableSources } from "@/lib/types";
 
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;
   selectedFiles: File[];
   setSelectedFiles: Dispatch<SetStateAction<File[]>>;
   values: any;
+  connector: ConfigurableSources;
 }
 
 const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
@@ -23,6 +27,7 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
   selectedFiles,
   setSelectedFiles,
   values,
+  connector,
 }) => {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
@@ -95,6 +100,9 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
       />
 
       {config.values.map((field) => !field.hidden && renderField(field))}
+
+      <AccessTypeForm connector={connector} />
+      <AccessTypeGroupSelector />
 
       {config.advanced_values.length > 0 && (
         <>
