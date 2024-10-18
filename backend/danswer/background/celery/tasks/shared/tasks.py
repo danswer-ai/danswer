@@ -20,7 +20,7 @@ from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 
 
-class RedisFenceData(BaseModel):
+class RedisConnectorIndexingFenceData(BaseModel):
     index_attempt_id: int
     num_tasks: int
     started: datetime | None

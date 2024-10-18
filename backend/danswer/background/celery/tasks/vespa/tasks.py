@@ -23,7 +23,7 @@ from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
-from danswer.background.celery.tasks.shared.tasks import RedisFenceData
+from danswer.background.celery.tasks.shared.tasks import RedisConnectorIndexingFenceData
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
@@ -547,7 +547,9 @@ def monitor_ccpair_indexing_taskset(
 
     try:
         fence_json = fence_value.decode("utf-8")
-        fence_data = RedisFenceData.model_validate_json(cast(str, fence_json))
+        fence_data = RedisConnectorIndexingFenceData.model_validate_json(
+            cast(str, fence_json)
+        )
     except ValueError:
         task_logger.exception(
             "monitor_ccpair_indexing_taskset: fence_data not decodeable."
