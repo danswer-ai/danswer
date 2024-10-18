@@ -38,6 +38,7 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_INDEXING_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_LIGHT_APP_NAME
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
 from danswer.db.engine import get_session_with_tenant
+from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import SqlEngine
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.swap_index import check_index_swap
