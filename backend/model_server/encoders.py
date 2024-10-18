@@ -1,4 +1,5 @@
 import json
+from typing import cast
 from typing import Optional
 
 import httpx
@@ -109,7 +110,7 @@ class CloudEmbedding:
                 input_type=embedding_type,
                 truncate="END",
             )
-            final_embeddings.extend(response.embeddings)
+            final_embeddings.extend(cast(list[Embedding], response.embeddings))
         return final_embeddings
 
     def _embed_voyage(
@@ -169,8 +170,11 @@ class CloudEmbedding:
         return [embedding.values for embedding in embeddings]
 
     def _embed_litellm_proxy(
-        self, texts: list[str], model_name: str
+        self, texts: list[str], model_name: str | None
     ) -> list[Embedding]:
+        if not model_name:
+            raise ValueError("Model name is required for LiteLLM proxy embedding.")
+
         if not self.api_url:
             raise ValueError("API URL is required for LiteLLM proxy embedding.")
 
