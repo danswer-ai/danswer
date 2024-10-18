@@ -61,7 +61,7 @@ def get_schema_options() -> tuple[str, bool, bool]:
     create_schema = x_args.get("create_schema", "true").lower() == "true"
     upgrade_all_tenants = x_args.get("upgrade_all_tenants", "false").lower() == "true"
 
-    if MULTI_TENANT and schema_name == "public":
+    if MULTI_TENANT and schema_name == "public" and not upgrade_all_tenants:
         raise ValueError(
             "Cannot run default migrations in public schema when multi-tenancy is enabled. "
             "Please specify a tenant-specific schema."
