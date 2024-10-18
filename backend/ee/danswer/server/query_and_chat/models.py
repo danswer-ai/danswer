@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -36,7 +38,7 @@ class BasicCreateChatMessageRequest(ChunkContext):
     Note, for simplicity this option only allows for a single linear chain of messages
     """
 
-    chat_session_id: int
+    chat_session_id: UUID
     # New message contents
     message: str
     # Defaults to using retrieval with no additional filters

@@ -105,6 +105,7 @@ def _get_user(user_id: str, confluence_client: DanswerConfluence) -> str:
         confluence_client.get_user_details_by_accountid
     )
     try:
+        logger.info(f"_get_user - get_user_details_by_accountid: id={user_id}")
         return get_user_details_by_accountid(user_id).get("displayName", user_not_found)
     except Exception as e:
         logger.warning(
@@ -156,6 +157,9 @@ def _comment_dfs(
             comment_html, confluence_client
         )
         try:
+            logger.info(
+                f"_comment_dfs - get_page_by_child_type: id={comment_page['id']}"
+            )
             child_comment_pages = get_page_child_by_type(
                 comment_page["id"],
                 type="comment",
@@ -212,13 +216,16 @@ class RecursiveIndexer:
             self.confluence_client.get_page_by_id
         )
         try:
+            logger.info(
+                f"_fetch_origin_page - get_page_by_id: id={self.origin_page_id}"
+            )
             origin_page = get_page_by_id(
                 self.origin_page_id, expand="body.storage.value,version,space"
             )
             return origin_page
-        except Exception as e:
-            logger.warning(
-                f"Appending origin page with id {self.origin_page_id} failed: {e}"
+        except Exception:
+            logger.exception(
+                f"Appending origin page with id {self.origin_page_id} failed."
             )
             return {}
 
@@ -229,6 +236,10 @@ class RecursiveIndexer:
         pages: list[dict[str, Any]] = []
         queue: list[str] = [page_id]
         visited_pages: set[str] = set()
+
+        get_page_by_id = make_confluence_call_handle_rate_limit(
+            self.confluence_client.get_page_by_id
+        )
 
         get_page_child_by_type = make_confluence_call_handle_rate_limit(
             self.confluence_client.get_page_child_by_type
@@ -242,12 +253,15 @@ class RecursiveIndexer:
 
             try:
                 # Fetch the page itself
-                page = self.confluence_client.get_page_by_id(
+                logger.info(
+                    f"recurse_children_pages - get_page_by_id: id={current_page_id}"
+                )
+                page = get_page_by_id(
                     current_page_id, expand="body.storage.value,version,space"
                 )
                 pages.append(page)
-            except Exception as e:
-                logger.warning(f"Failed to fetch page {current_page_id}: {e}")
+            except Exception:
+                logger.exception(f"Failed to fetch page {current_page_id}.")
                 continue
 
             if not self.index_recursively:
@@ -256,6 +270,9 @@ class RecursiveIndexer:
             # Fetch child pages
             start = 0
             while True:
+                logger.info(
+                    f"recurse_children_pages - get_page_by_child_type: id={current_page_id}"
+                )
                 child_pages_response = get_page_child_by_type(
                     current_page_id,
                     type="page",
@@ -323,11 +340,17 @@ class ConfluenceConnector(LoadConnector, PollConnector):
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         username = credentials["confluence_username"]
         access_token = credentials["confluence_access_token"]
+
+        # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
+        # for a list of other hidden constructor args
         self.confluence_client = DanswerConfluence(
             url=self.wiki_base,
             username=username if self.is_cloud else None,
             password=access_token if self.is_cloud else None,
             token=access_token if not self.is_cloud else None,
+            backoff_and_retry=True,
+            max_backoff_retries=60,
+            max_backoff_seconds=60,
         )
         return None
 
@@ -354,6 +377,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             )
 
             try:
+                logger.info(
+                    f"_fetch_space - get_all_pages: cursor={cursor} limit={batch_size}"
+                )
                 response = get_all_pages(
                     cql=self.cql_query,
                     cursor=cursor,
@@ -380,6 +406,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 view_pages: list[dict[str, Any]] = []
                 for _ in range(self.batch_size):
                     try:
+                        logger.info(
+                            f"_fetch_space - get_all_pages: cursor={cursor} limit=1"
+                        )
                         response = get_all_pages(
                             cql=self.cql_query,
                             cursor=cursor,
@@ -405,6 +434,9 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                         logger.warning(
                             f"Page failed with cql {self.cql_query} with cursor {cursor}, "
                             f"trying alternative expand option: {e}"
+                        )
+                        logger.info(
+                            f"_fetch_space - get_all_pages - trying alternative expand: cursor={cursor} limit=1"
                         )
                         response = get_all_pages(
                             cql=self.cql_query,
@@ -464,6 +496,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
         )
 
         try:
+            logger.info(f"_fetch_comments - get_page_child_by_type: id={page_id}")
             comment_pages = list(
                 get_page_child_by_type(
                     page_id,
@@ -478,9 +511,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             if not self.continue_on_failure:
                 raise e
 
-            logger.exception(
-                "Ran into exception when fetching comments from Confluence"
-            )
+            logger.exception("Fetching comments from Confluence exceptioned")
             return ""
 
     def _fetch_labels(self, confluence_client: Confluence, page_id: str) -> list[str]:
@@ -488,13 +519,14 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             confluence_client.get_page_labels
         )
         try:
+            logger.info(f"_fetch_labels - get_page_labels: id={page_id}")
             labels_response = get_page_labels(page_id)
             return [label["name"] for label in labels_response["results"]]
         except Exception as e:
             if not self.continue_on_failure:
                 raise e
 
-            logger.exception("Ran into exception when fetching labels from Confluence")
+            logger.exception("Fetching labels from Confluence exceptioned")
             return []
 
     @classmethod
@@ -531,6 +563,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
             )
             return None
 
+        logger.info(f"_attachment_to_content - _session.get: link={download_link}")
         response = confluence_client._session.get(download_link)
         if response.status_code != 200:
             logger.warning(
@@ -589,9 +622,7 @@ class ConfluenceConnector(LoadConnector, PollConnector):
                 return "", []
             if not self.continue_on_failure:
                 raise e
-            logger.exception(
-                f"Ran into exception when fetching attachments from Confluence: {e}"
-            )
+            logger.exception("Fetching attachments from Confluence exceptioned.")
 
         return "\n".join(files_attachment_content), unused_attachments
 

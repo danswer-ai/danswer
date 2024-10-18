@@ -168,13 +168,10 @@ export const SearchSection = ({
     });
 
   const searchParams = useSearchParams();
-  const existingSearchIdRaw = searchParams.get("searchId");
-  const existingSearchessionId = existingSearchIdRaw
-    ? parseInt(existingSearchIdRaw)
-    : null;
+  const existingSearchessionId = searchParams.get("searchId");
 
   useEffect(() => {
-    if (existingSearchIdRaw == null) {
+    if (existingSearchessionId == null) {
       return;
     }
     function extractFirstMessageByType(
@@ -207,7 +204,7 @@ export const SearchSection = ({
           quotes: null,
           selectedDocIndices: null,
           error: null,
-          messageId: existingSearchIdRaw ? parseInt(existingSearchIdRaw) : null,
+          messageId: searchSession.messages[0].message_id,
           suggestedFlowType: null,
           additional_relevance: undefined,
         };
@@ -219,7 +216,7 @@ export const SearchSection = ({
       }
     }
     initialSessionFetch();
-  }, [existingSearchessionId, existingSearchIdRaw]);
+  }, [existingSearchessionId]);
 
   // Overrides for default behavior that only last a single query
   const [defaultOverrides, setDefaultOverrides] =
@@ -328,7 +325,7 @@ export const SearchSection = ({
   };
   const updateMessageAndThreadId = (
     messageId: number,
-    chat_session_id: number
+    chat_session_id: string
   ) => {
     setSearchResponse((prevState) => ({
       ...(prevState || initialSearchResponse),

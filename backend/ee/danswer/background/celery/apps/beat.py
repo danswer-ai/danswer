@@ -4,7 +4,7 @@
 from datetime import timedelta
 
 from danswer.background.celery.apps.beat import celery_app
-from danswer.background.update import get_all_tenant_ids
+from danswer.background.celery.celery_utils import get_all_tenant_ids
 
 
 tenant_ids = get_all_tenant_ids()

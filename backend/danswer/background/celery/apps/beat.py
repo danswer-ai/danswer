@@ -6,7 +6,7 @@ from celery import signals
 from celery.signals import beat_init
 
 import danswer.background.celery.apps.app_base as app_base
-from danswer.background.update import get_all_tenant_ids
+from danswer.background.celery.celery_utils import get_all_tenant_ids
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import POSTGRES_CELERY_BEAT_APP_NAME
 from danswer.db.engine import SqlEngine

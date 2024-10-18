@@ -3,9 +3,8 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class RedisFenceData(BaseModel):
+class RedisConnectorIndexingFenceData(BaseModel):
     index_attempt_id: int
-    num_tasks: int
     started: datetime | None
     submitted: datetime
-    task_id: str
+    celery_task_id: str

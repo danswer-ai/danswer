@@ -3,10 +3,12 @@ import multiprocessing
 import time
 from typing import Any
 
+import sentry_sdk
 from celery import Task
 from celery.exceptions import WorkerShutdown
 from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
+from sentry_sdk.integrations.celery import CeleryIntegration
 
 from danswer.background.celery.apps.task_formatters import CeleryTaskColoredFormatter
 from danswer.background.celery.apps.task_formatters import CeleryTaskPlainFormatter
@@ -21,10 +23,21 @@ from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import SENTRY_DSN
 
 logger = setup_logger()
 
 task_logger = get_task_logger(__name__)
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[CeleryIntegration()],
+        traces_sample_rate=0.5,
+    )
+    logger.info("Sentry initialized")
+else:
+    logger.debug("Sentry DSN not provided, skipping Sentry initialization")
 
 
 def on_task_prerun(

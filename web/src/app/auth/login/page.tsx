@@ -11,7 +11,6 @@ import { SignInButton } from "./SignInButton";
 import { EmailPasswordForm } from "./EmailPasswordForm";
 import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
 import { LoginText } from "./LoginText";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import AuthFlowContainer from "@/components/auth/AuthFlowContainer";
@@ -37,6 +36,10 @@ const Page = async ({
     console.log(`Some fetch failed for the login page - ${e}`);
   }
 
+  const nextUrl = Array.isArray(searchParams?.next)
+    ? searchParams?.next[0]
+    : searchParams?.next || null;
+
   // simply take the user to the home page if Auth is disabled
   if (authTypeMetadata?.authType === "disabled") {
     return redirect("/");
@@ -59,7 +62,7 @@ const Page = async ({
   let authUrl: string | null = null;
   if (authTypeMetadata) {
     try {
-      authUrl = await getAuthUrlSS(authTypeMetadata.authType);
+      authUrl = await getAuthUrlSS(authTypeMetadata.authType, nextUrl!);
     } catch (e) {
       console.log(`Some fetch failed for the login page - ${e}`);
     }
@@ -88,6 +91,7 @@ const Page = async ({
             />
           </>
         )}
+
         {authTypeMetadata?.authType === "basic" && (
           <Card className="mt-4 w-96">
             <div className="flex">

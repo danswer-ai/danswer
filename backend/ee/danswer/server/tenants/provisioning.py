@@ -31,6 +31,9 @@ def run_alembic_migrations(schema_name: str) -> None:
             "script_location", os.path.join(root_dir, "alembic")
         )
 
+        # Ensure that logging isn't broken
+        alembic_cfg.attributes["configure_logger"] = False
+
         # Mimic command-line options by adding 'cmd_opts' to the config
         alembic_cfg.cmd_opts = SimpleNamespace()  # type: ignore
         alembic_cfg.cmd_opts.x = [f"schema={schema_name}"]  # type: ignore

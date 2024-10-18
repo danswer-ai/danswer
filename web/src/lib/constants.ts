@@ -58,8 +58,9 @@ export const DISABLE_LLM_DOC_RELEVANCE =
 
 export const CLOUD_ENABLED =
   process.env.NEXT_PUBLIC_CLOUD_ENABLED?.toLowerCase() === "true";
+
 export const REGISTRATION_URL =
   process.env.INTERNAL_URL || "http://127.0.0.1:3001";
 
-export const SERVER_SIDE_ONLY__CLOUD_ENABLED = true;
-// process.env.NEXT_PUBLIC_CLOUD_ENABLED?.toLowerCase() === "true";
+export const SERVER_SIDE_ONLY__CLOUD_ENABLED =
+  process.env.NEXT_PUBLIC_CLOUD_ENABLED?.toLowerCase() === "true";

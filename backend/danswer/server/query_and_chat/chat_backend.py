@@ -4,6 +4,7 @@ import uuid
 from collections.abc import Callable
 from collections.abc import Generator
 from typing import Tuple
+from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -18,10 +19,12 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
+from danswer.chat.chat_utils import extract_headers
 from danswer.chat.process_message import stream_chat_message
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
+from danswer.configs.model_configs import LITELLM_PASS_THROUGH_HEADERS
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
@@ -50,7 +53,6 @@ from danswer.llm.answering.prompts.citations_prompt import (
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_llms_for_persona
-from danswer.llm.headers import get_litellm_additional_request_headers
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.secondary_llm_flows.chat_session_naming import (
     get_renamed_conversation_name,
@@ -71,6 +73,7 @@ from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
+from danswer.utils.headers import get_custom_tool_additional_request_headers
 from danswer.utils.logger import setup_logger
 
 
@@ -129,7 +132,7 @@ def update_chat_session_model(
 
 @router.get("/get-chat-session/{session_id}")
 def get_chat_session(
-    session_id: int,
+    session_id: UUID,
     is_shared: bool = False,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -229,7 +232,9 @@ def rename_chat_session(
 
     try:
         llm, _ = get_default_llms(
-            additional_headers=get_litellm_additional_request_headers(request.headers)
+            additional_headers=extract_headers(
+                request.headers, LITELLM_PASS_THROUGH_HEADERS
+            )
         )
     except GenAIDisabledException:
         # This may be longer than what the LLM tends to produce but is the most
@@ -250,7 +255,7 @@ def rename_chat_session(
 
 @router.patch("/chat-session/{session_id}")
 def patch_chat_session(
-    session_id: int,
+    session_id: UUID,
     chat_session_update_req: ChatSessionUpdateRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -267,7 +272,7 @@ def patch_chat_session(
 
 @router.delete("/delete-chat-session/{session_id}")
 def delete_chat_session_by_id(
-    session_id: int,
+    session_id: UUID,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
@@ -330,7 +335,10 @@ def handle_new_chat_message(
                 new_msg_req=chat_message_req,
                 user=user,
                 use_existing_user_message=chat_message_req.use_existing_user_message,
-                litellm_additional_headers=get_litellm_additional_request_headers(
+                litellm_additional_headers=extract_headers(
+                    request.headers, LITELLM_PASS_THROUGH_HEADERS
+                ),
+                custom_tool_additional_headers=get_custom_tool_additional_request_headers(
                     request.headers
                 ),
                 is_connected=is_disconnected_func,

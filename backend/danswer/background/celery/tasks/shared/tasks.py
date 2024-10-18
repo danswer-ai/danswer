@@ -115,8 +115,8 @@ def document_by_cc_pair_cleanup_task(
             task_logger.info(
                 f"tenant_id={tenant_id} "
                 f"document_id={document_id} "
-                f"refcount={count} "
                 f"action={action} "
+                f"refcount={count} "
                 f"chunks={chunks_affected}"
             )
             db_session.commit()

@@ -14,7 +14,9 @@ from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
-from danswer.background.celery.tasks.shared.RedisFenceData import RedisFenceData
+from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
+    RedisConnectorIndexingFenceData,
+)
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
@@ -283,12 +285,11 @@ def try_creating_indexing_task(
             return None
 
         # set this only after all tasks have been added
-        fence_value = RedisFenceData(
+        fence_value = RedisConnectorIndexingFenceData(
             index_attempt_id=index_attempt_id,
-            num_tasks=1,
             started=None,
             submitted=datetime.now(timezone.utc),
-            task_id=result.id,
+            celery_task_id=result.id,
         )
         r.set(rci.fence_key, fence_value.model_dump_json())
     except Exception:
