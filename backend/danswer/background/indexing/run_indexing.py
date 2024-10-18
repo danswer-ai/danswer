@@ -387,30 +387,39 @@ def _prepare_index_attempt(
     # after the next commit:
     # https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#setting-isolation-for-individual-transactions
     db_session.connection(execution_options={"isolation_level": "SERIALIZABLE"})  # type: ignore
-    if tenant_id is not None:
-        # Explicitly set the search path for the given tenant
-        db_session.execute(text(f'SET search_path TO "{tenant_id}"'))
-        # Verify the search path was set correctly
-        result = db_session.execute(text("SHOW search_path"))
-        current_search_path = result.scalar()
-        logger.info(f"Current search path set to: {current_search_path}")
+    try:
+        if tenant_id is not None:
+            # Explicitly set the search path for the given tenant
+            db_session.execute(text(f'SET search_path TO "{tenant_id}"'))
+            # Verify the search path was set correctly
+            result = db_session.execute(text("SHOW search_path"))
+            current_search_path = result.scalar()
+            logger.info(f"Current search path set to: {current_search_path}")
 
-    attempt = get_index_attempt(
-        db_session=db_session,
-        index_attempt_id=index_attempt_id,
-    )
-
-    if attempt is None:
-        raise RuntimeError(f"Unable to find IndexAttempt for ID '{index_attempt_id}'")
-
-    if attempt.status != IndexingStatus.NOT_STARTED:
-        raise RuntimeError(
-            f"Indexing attempt with ID '{index_attempt_id}' is not in NOT_STARTED status. "
-            f"Current status is '{attempt.status}'."
+        attempt = get_index_attempt(
+            db_session=db_session,
+            index_attempt_id=index_attempt_id,
         )
 
-    # only commit once, to make sure this all happens in a single transaction
-    mark_attempt_in_progress(attempt, db_session)
+        if attempt is None:
+            raise RuntimeError(
+                f"Unable to find IndexAttempt for ID '{index_attempt_id}'"
+            )
+
+        if attempt.status != IndexingStatus.NOT_STARTED:
+            raise RuntimeError(
+                f"Indexing attempt with ID '{index_attempt_id}' is not in NOT_STARTED status. "
+                f"Current status is '{attempt.status}'."
+            )
+
+        mark_attempt_in_progress(attempt, db_session)
+
+        # only commit once, to make sure this all happens in a single transaction
+        db_session.commit()
+    except Exception:
+        db_session.rollback()
+        logger.exception("_prepare_index_attempt exceptioned.")
+        raise
 
     return attempt
 

@@ -71,6 +71,10 @@ STRICT_CHUNK_TOKEN_LIMIT = (
     os.environ.get("STRICT_CHUNK_TOKEN_LIMIT", "").lower() == "true"
 )
 
+# Set up Sentry integration (for error logging)
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
+
+
 # Fields which should only be set on new search setting
 PRESERVED_SEARCH_FIELDS = [
     "id",
