@@ -359,7 +359,8 @@ def process_message(
     )
 
     # Set the current tenant ID at the beginning for all DB calls within this thread
-    token = current_tenant_id.set(client.tenant_id)
+    if client.tenant_id:
+        token = current_tenant_id.set(client.tenant_id)
     try:
         with get_session_with_tenant(client.tenant_id) as db_session:
             slack_bot_config = get_slack_bot_config_for_channel(
@@ -407,7 +408,8 @@ def process_message(
                 if notify_no_answer:
                     apologize_for_fail(details, client)
     finally:
-        current_tenant_id.reset(token)
+        if client.tenant_id:
+            current_tenant_id.reset(token)
 
 
 def acknowledge_message(req: SocketModeRequest, client: TenantSocketModeClient) -> None:
