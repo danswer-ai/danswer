@@ -22,10 +22,9 @@ from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 
 class RedisConnectorIndexingFenceData(BaseModel):
     index_attempt_id: int
-    num_tasks: int
     started: datetime | None
     submitted: datetime
-    task_id: str
+    celery_task_id: str
 
 
 @shared_task(

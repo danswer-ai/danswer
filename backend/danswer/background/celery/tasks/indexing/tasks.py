@@ -281,10 +281,9 @@ def try_creating_indexing_task(
         # set this only after all tasks have been added
         fence_value = RedisConnectorIndexingFenceData(
             index_attempt_id=index_attempt_id,
-            num_tasks=1,
             started=None,
             submitted=datetime.now(timezone.utc),
-            task_id=result.id,
+            celery_task_id=result.id,
         )
         r.set(rci.fence_key, fence_value.model_dump_json())
     except Exception:

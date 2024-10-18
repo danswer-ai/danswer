@@ -575,7 +575,7 @@ def monitor_ccpair_indexing_taskset(
             )
 
     # Read result state BEFORE generator_complete_key to avoid a race condition
-    result: AsyncResult = AsyncResult(fence_data.task_id)
+    result: AsyncResult = AsyncResult(fence_data.celery_task_id)
     result_state = result.state
 
     generator_complete_value = r.get(rci.generator_complete_key)
