@@ -346,7 +346,9 @@ def process_message(
     respond_every_channel: bool = DANSWER_BOT_RESPOND_EVERY_CHANNEL,
     notify_no_answer: bool = NOTIFY_SLACKBOT_NO_ANSWER,
 ) -> None:
-    logger.debug(f"Received Slack request of type: '{req.type}'")
+    logger.debug(
+        f"Received Slack request of type: '{req.type}' for tenant, {client.tenant_id}"
+    )
 
     # Throw out requests that can't or shouldn't be handled
     if not prefilter_requests(req, client):
@@ -360,6 +362,7 @@ def process_message(
 
     # Set the current tenant ID at the beginning for all DB calls within this thread
     if client.tenant_id:
+        logger.info(f"Setting tenant ID to {client.tenant_id}")
         token = current_tenant_id.set(client.tenant_id)
     try:
         with get_session_with_tenant(client.tenant_id) as db_session:
@@ -507,7 +510,9 @@ if __name__ == "__main__":
             for tenant_id in tenant_ids:
                 with get_session_with_tenant(tenant_id) as db_session:
                     try:
+                        token = current_tenant_id.set(tenant_id)
                         latest_slack_bot_tokens = fetch_tokens()
+                        current_tenant_id.reset(token)
 
                         if (
                             tenant_id not in slack_bot_tokens
@@ -541,6 +546,7 @@ if __name__ == "__main__":
                             socket_client = _get_socket_client(
                                 latest_slack_bot_tokens, tenant_id
                             )
+
                             _initialize_socket_client(socket_client)
 
                             socket_clients[tenant_id] = socket_client

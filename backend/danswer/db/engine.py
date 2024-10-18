@@ -356,9 +356,9 @@ def get_session_with_tenant(
                         cursor.close()
 
 
-def get_session_generator_with_tenant(
-    tenant_id: str | None = None,
-) -> Generator[Session, None, None]:
+def get_session_generator_with_tenant() -> Generator[Session, None, None]:
+    tenant_id = current_tenant_id.get()
+    logger.info(f"Using Tenant ID: {tenant_id}")
     with get_session_with_tenant(tenant_id) as session:
         yield session
 
