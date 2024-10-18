@@ -73,16 +73,6 @@ OPENAI_EMBEDDING_TIMEOUT = int(
     os.environ.get("OPENAI_EMBEDDING_TIMEOUT", API_BASED_EMBEDDING_TIMEOUT)
 )
 
-_API_BASED_EMBEDDING_MAX_BATCH_SIZE_RAW = os.environ.get(
-    "API_BASED_EMBEDDING_MAX_BATCH_SIZE"
-)
-API_BASED_EMBEDDING_MAX_BATCH_SIZE = (
-    int(_API_BASED_EMBEDDING_MAX_BATCH_SIZE_RAW)
-    if _API_BASED_EMBEDDING_MAX_BATCH_SIZE_RAW
-    else None
-)
-
-
 # Whether or not to strictly enforce token limit for chunking.
 STRICT_CHUNK_TOKEN_LIMIT = (
     os.environ.get("STRICT_CHUNK_TOKEN_LIMIT", "").lower() == "true"
