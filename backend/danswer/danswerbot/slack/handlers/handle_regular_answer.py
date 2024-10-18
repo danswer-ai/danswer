@@ -96,7 +96,6 @@ def handle_regular_answer(
     disable_cot: bool = DANSWER_BOT_DISABLE_COT,
     reflexion: bool = ENABLE_DANSWERBOT_REFLEXION,
 ) -> bool:
-    logger.info(f"Handling regular answer for tenant, {tenant_id}")
     channel_conf = slack_bot_config.channel_config if slack_bot_config else None
 
     messages = message_info.thread_messages

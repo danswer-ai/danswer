@@ -75,13 +75,10 @@ class PgRedisKVStore(KeyValueStore):
 
     def load(self, key: str) -> JSON_ro:
         tenant_id = current_tenant_id.get()
-        logger.info(f"Loading key: {key} for tenant: {tenant_id}")
         try:
             redis_value = self.redis_client.get(
                 REDIS_KEY_PREFIX + key + ":" + tenant_id
             )
-            logger.info(f"Redis value: {redis_value}")
-            logger.info(f"Tenant ID: {current_tenant_id.get()}")
             if redis_value:
                 assert isinstance(redis_value, bytes)
                 return json.loads(redis_value.decode("utf-8"))
