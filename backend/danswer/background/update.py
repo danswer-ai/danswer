@@ -6,7 +6,6 @@ import dask
 from dask.distributed import Client
 from dask.distributed import Future
 from distributed import LocalCluster
-from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm import Session
 
@@ -22,9 +21,9 @@ from danswer.configs.app_configs import NUM_INDEXING_WORKERS
 from danswer.configs.app_configs import NUM_SECONDARY_INDEXING_WORKERS
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import POSTGRES_INDEXER_APP_NAME
-from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.db.connector import fetch_connectors
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
+from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
@@ -412,29 +411,6 @@ def kickoff_indexing_jobs(
         )
 
     return existing_jobs_copy
-
-
-def get_all_tenant_ids() -> list[str] | list[None]:
-    if not MULTI_TENANT:
-        return [None]
-    with get_session_with_tenant(tenant_id="public") as session:
-        result = session.execute(
-            text(
-                """
-            SELECT schema_name
-            FROM information_schema.schemata
-            WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'public')"""
-            )
-        )
-        tenant_ids = [row[0] for row in result]
-
-    valid_tenants = [
-        tenant
-        for tenant in tenant_ids
-        if tenant is None or tenant.startswith(TENANT_ID_PREFIX)
-    ]
-
-    return valid_tenants
 
 
 def update_loop(
