@@ -137,6 +137,7 @@ def user_needs_to_be_verified() -> bool:
 
 def verify_email_is_invited(email: str) -> None:
     whitelist = get_invited_users()
+    logger.info(f"Whitelist: {whitelist}")
     if not whitelist:
         return
 
@@ -316,6 +317,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
             verify_email_in_whitelist(account_email, tenant_id)
             verify_email_domain(account_email)
+
             if MULTI_TENANT:
                 tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
                 self.user_db = tenant_user_db
