@@ -19,7 +19,7 @@ export interface DynamicConnectionFormProps {
   selectedFiles: File[];
   setSelectedFiles: Dispatch<SetStateAction<File[]>>;
   values: any;
-  connector: string;
+  connector: ConfigurableSources;
 }
 
 const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
@@ -101,7 +101,7 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
 
       {config.values.map((field) => !field.hidden && renderField(field))}
 
-      <AccessTypeForm connector={connector as ConfigurableSources} />
+      <AccessTypeForm connector={connector} />
       <AccessTypeGroupSelector />
 
       {config.advanced_values.length > 0 && (
