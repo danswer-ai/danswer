@@ -118,14 +118,13 @@ async def run_async_migrations() -> None:
 
         for schema in tenant_schemas:
             try:
-                logger.info(f"Starting migrations for schema: {schema}")
+                logger.info(f"Migrating schema: {schema}")
                 async with engine.connect() as connection:
                     await connection.run_sync(
                         do_run_migrations,
                         schema_name=schema,
                         create_schema=create_schema,
                     )
-                logger.info(f"Migrations applied for schema: {schema}")
             except Exception as e:
                 logger.error(f"Error migrating schema {schema}: {e}")
                 raise
@@ -133,14 +132,13 @@ async def run_async_migrations() -> None:
         # Run migrations for a single schema (public if MULTI_TENANT is True)
         schema_to_use = "public" if MULTI_TENANT else schema_name
         try:
-            logger.info(f"Starting migrations for schema: {schema_to_use}")
+            logger.info(f"Migrating schema: {schema_to_use}")
             async with engine.connect() as connection:
                 await connection.run_sync(
                     do_run_migrations,
                     schema_name=schema_to_use,
                     create_schema=create_schema,
                 )
-            logger.info(f"Migrations applied for schema: {schema_to_use}")
         except Exception as e:
             logger.error(f"Error migrating schema {schema_to_use}: {e}")
             raise
@@ -162,7 +160,7 @@ def run_migrations_offline() -> None:
         engine.sync_engine.dispose()
 
         for schema in tenant_schemas:
-            logger.info(f"About to migrate schema: {schema}")
+            logger.info(f"Migrating schema: {schema}")
             context.configure(
                 url=url,
                 target_metadata=target_metadata,  # type: ignore
@@ -178,7 +176,7 @@ def run_migrations_offline() -> None:
                 context.run_migrations()
     else:
         # Run migrations for a single schema (public if MULTI_TENANT is True)
-        logger.info(f"About to migrate schema: {schema_name}")
+        logger.info(f"Migrating schema: {schema_name}")
         context.configure(
             url=url,
             target_metadata=target_metadata,  # type: ignore
