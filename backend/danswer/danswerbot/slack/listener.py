@@ -57,6 +57,7 @@ from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
+from shared_configs.configs import current_tenant_id
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import SLACK_CHANNEL_ID
@@ -357,51 +358,56 @@ def process_message(
         client=client.web_client, channel_id=channel
     )
 
-    with get_session_with_tenant(client.tenant_id) as db_session:
-        slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name, db_session=db_session
-        )
+    # Set the current tenant ID at the beginning for all DB calls within this thread
+    token = current_tenant_id.set(client.tenant_id)
+    try:
+        with get_session_with_tenant(client.tenant_id) as db_session:
+            slack_bot_config = get_slack_bot_config_for_channel(
+                channel_name=channel_name, db_session=db_session
+            )
 
-        # Be careful about this default, don't want to accidentally spam every channel
-        # Users should be able to DM slack bot in their private channels though
-        if (
-            slack_bot_config is None
-            and not respond_every_channel
-            # Can't have configs for DMs so don't toss them out
-            and not is_dm
-            # If /DanswerBot (is_bot_msg) or @DanswerBot (bypass_filters)
-            # always respond with the default configs
-            and not (details.is_bot_msg or details.bypass_filters)
-        ):
-            return
+            # Be careful about this default, don't want to accidentally spam every channel
+            # Users should be able to DM slack bot in their private channels though
+            if (
+                slack_bot_config is None
+                and not respond_every_channel
+                # Can't have configs for DMs so don't toss them out
+                and not is_dm
+                # If /DanswerBot (is_bot_msg) or @DanswerBot (bypass_filters)
+                # always respond with the default configs
+                and not (details.is_bot_msg or details.bypass_filters)
+            ):
+                return
 
-        follow_up = bool(
-            slack_bot_config
-            and slack_bot_config.channel_config
-            and slack_bot_config.channel_config.get("follow_up_tags") is not None
-        )
-        feedback_reminder_id = schedule_feedback_reminder(
-            details=details, client=client.web_client, include_followup=follow_up
-        )
+            follow_up = bool(
+                slack_bot_config
+                and slack_bot_config.channel_config
+                and slack_bot_config.channel_config.get("follow_up_tags") is not None
+            )
+            feedback_reminder_id = schedule_feedback_reminder(
+                details=details, client=client.web_client, include_followup=follow_up
+            )
 
-        failed = handle_message(
-            message_info=details,
-            slack_bot_config=slack_bot_config,
-            client=client.web_client,
-            feedback_reminder_id=feedback_reminder_id,
-            tenant_id=client.tenant_id,
-        )
+            failed = handle_message(
+                message_info=details,
+                slack_bot_config=slack_bot_config,
+                client=client.web_client,
+                feedback_reminder_id=feedback_reminder_id,
+                tenant_id=client.tenant_id,
+            )
 
-        if failed:
-            if feedback_reminder_id:
-                remove_scheduled_feedback_reminder(
-                    client=client.web_client,
-                    channel=details.sender,
-                    msg_id=feedback_reminder_id,
-                )
-            # Skipping answering due to pre-filtering is not considered a failure
-            if notify_no_answer:
-                apologize_for_fail(details, client)
+            if failed:
+                if feedback_reminder_id:
+                    remove_scheduled_feedback_reminder(
+                        client=client.web_client,
+                        channel=details.sender,
+                        msg_id=feedback_reminder_id,
+                    )
+                # Skipping answering due to pre-filtering is not considered a failure
+                if notify_no_answer:
+                    apologize_for_fail(details, client)
+    finally:
+        current_tenant_id.reset(token)
 
 
 def acknowledge_message(req: SocketModeRequest, client: TenantSocketModeClient) -> None:
