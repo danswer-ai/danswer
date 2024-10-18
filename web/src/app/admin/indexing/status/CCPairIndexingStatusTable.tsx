@@ -439,6 +439,7 @@ export function CCPairIndexingStatusTable({
             error_msg: "",
             deletion_attempt: null,
             is_deletable: true,
+            in_progress: false,
             groups: [], // Add this line
           }}
           isEditable={false}

@@ -3,7 +3,6 @@ from datetime import timedelta
 from datetime import timezone
 from uuid import uuid4
 
-import redis
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
@@ -15,7 +14,9 @@ from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
 from danswer.configs.app_configs import ALLOW_SIMULTANEOUS_PRUNING
 from danswer.configs.app_configs import JOB_TIMEOUT
+from danswer.configs.constants import CELERY_PRUNING_LOCK_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
+from danswer.configs.constants import DANSWER_REDIS_FUNCTION_LOCK_PREFIX
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.configs.constants import DanswerRedisLocks
@@ -30,15 +31,14 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 
-
 logger = setup_logger()
 
 
 @shared_task(
-    name="check_for_prune_task_2",
+    name="check_for_pruning",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_prune_task_2(tenant_id: str | None) -> None:
+def check_for_pruning(tenant_id: str | None) -> None:
     r = get_redis_client()
 
     lock_beat = r.lock(
@@ -54,13 +54,17 @@ def check_for_prune_task_2(tenant_id: str | None) -> None:
         with get_session_with_tenant(tenant_id) as db_session:
             cc_pairs = get_connector_credential_pairs(db_session)
             for cc_pair in cc_pairs:
-                tasks_created = ccpair_pruning_generator_task_creation_helper(
-                    cc_pair, db_session, tenant_id, r, lock_beat
+                lock_beat.reacquire()
+                if not is_pruning_due(cc_pair, db_session, r):
+                    continue
+
+                tasks_created = try_creating_prune_generator_task(
+                    cc_pair, db_session, r, tenant_id
                 )
                 if not tasks_created:
                     continue
 
-                task_logger.info(f"Pruning started: cc_pair_id={cc_pair.id}")
+                task_logger.info(f"Pruning queued: cc_pair_id={cc_pair.id}")
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."
@@ -72,13 +76,11 @@ def check_for_prune_task_2(tenant_id: str | None) -> None:
             lock_beat.release()
 
 
-def ccpair_pruning_generator_task_creation_helper(
+def is_pruning_due(
     cc_pair: ConnectorCredentialPair,
     db_session: Session,
-    tenant_id: str | None,
     r: Redis,
-    lock_beat: redis.lock.Lock,
-) -> int | None:
+) -> bool:
     """Returns an int if pruning is triggered.
     The int represents the number of prune tasks generated (in this case, only one
     because the task is a long running generator task.)
@@ -89,24 +91,30 @@ def ccpair_pruning_generator_task_creation_helper(
     try_creating_prune_generator_task.
     """
 
-    lock_beat.reacquire()
-
     # skip pruning if no prune frequency is set
     # pruning can still be forced via the API which will run a pruning task directly
     if not cc_pair.connector.prune_freq:
-        return None
+        return False
+
+    # skip pruning if not active
+    if cc_pair.status != ConnectorCredentialPairStatus.ACTIVE:
+        return False
 
     # skip pruning if the next scheduled prune time hasn't been reached yet
     last_pruned = cc_pair.last_pruned
     if not last_pruned:
-        # if never pruned, use the connector time created as the last_pruned time
-        last_pruned = cc_pair.connector.time_created
+        if not cc_pair.last_successful_index_time:
+            # if we've never indexed, we can't prune
+            return False
+
+        # if never pruned, use the last time the connector indexed successfully
+        last_pruned = cc_pair.last_successful_index_time
 
     next_prune = last_pruned + timedelta(seconds=cc_pair.connector.prune_freq)
     if datetime.now(timezone.utc) < next_prune:
-        return None
+        return False
 
-    return try_creating_prune_generator_task(cc_pair, db_session, r, tenant_id)
+    return True
 
 
 def try_creating_prune_generator_task(
@@ -119,50 +127,78 @@ def try_creating_prune_generator_task(
     created, then creates the task.
 
     Does not check for scheduling related conditions as this function
-    is used to trigger prunes immediately.
+    is used to trigger prunes immediately, e.g. via the web ui.
     """
 
     if not ALLOW_SIMULTANEOUS_PRUNING:
         for key in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
             return None
 
-    rcp = RedisConnectorPruning(cc_pair.id)
+    LOCK_TIMEOUT = 30
 
-    # skip pruning if already pruning
-    if r.exists(rcp.fence_key):
-        return None
-
-    # skip pruning if the cc_pair is deleting
-    db_session.refresh(cc_pair)
-    if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
-        return None
-
-    # add a long running generator task to the queue
-    r.delete(rcp.generator_complete_key)
-    r.delete(rcp.taskset_key)
-
-    custom_task_id = f"{rcp.generator_task_id_prefix}_{uuid4()}"
-
-    celery_app.send_task(
-        "connector_pruning_generator_task",
-        kwargs=dict(
-            connector_id=cc_pair.connector_id,
-            credential_id=cc_pair.credential_id,
-            tenant_id=tenant_id,
-        ),
-        queue=DanswerCeleryQueues.CONNECTOR_PRUNING,
-        task_id=custom_task_id,
-        priority=DanswerCeleryPriority.LOW,
+    # we need to serialize starting pruning since it can be triggered either via
+    # celery beat or manually (API call)
+    lock = r.lock(
+        DANSWER_REDIS_FUNCTION_LOCK_PREFIX + "try_creating_prune_generator_task",
+        timeout=LOCK_TIMEOUT,
     )
 
-    # set this only after all tasks have been added
-    r.set(rcp.fence_key, 1)
+    acquired = lock.acquire(blocking_timeout=LOCK_TIMEOUT / 2)
+    if not acquired:
+        return None
+
+    try:
+        rcp = RedisConnectorPruning(cc_pair.id)
+
+        # skip pruning if already pruning
+        if r.exists(rcp.fence_key):
+            return None
+
+        # skip pruning if the cc_pair is deleting
+        db_session.refresh(cc_pair)
+        if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
+            return None
+
+        # add a long running generator task to the queue
+        r.delete(rcp.generator_complete_key)
+        r.delete(rcp.taskset_key)
+
+        custom_task_id = f"{rcp.generator_task_id_prefix}_{uuid4()}"
+
+        celery_app.send_task(
+            "connector_pruning_generator_task",
+            kwargs=dict(
+                cc_pair_id=cc_pair.id,
+                connector_id=cc_pair.connector_id,
+                credential_id=cc_pair.credential_id,
+                tenant_id=tenant_id,
+            ),
+            queue=DanswerCeleryQueues.CONNECTOR_PRUNING,
+            task_id=custom_task_id,
+            priority=DanswerCeleryPriority.LOW,
+        )
+
+        # set this only after all tasks have been added
+        r.set(rcp.fence_key, 1)
+    except Exception:
+        task_logger.exception("Unexpected exception")
+        return None
+    finally:
+        if lock.owned():
+            lock.release()
+
     return 1
 
 
-@shared_task(name="connector_pruning_generator_task", soft_time_limit=JOB_TIMEOUT)
+@shared_task(
+    name="connector_pruning_generator_task",
+    acks_late=False,
+    soft_time_limit=JOB_TIMEOUT,
+    track_started=True,
+    trail=False,
+)
 def connector_pruning_generator_task(
-    connector_id: int, credential_id: int, tenant_id: str | None
+    cc_pair_id: int, connector_id: int, credential_id: int, tenant_id: str | None
 ) -> None:
     """connector pruning task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
@@ -170,8 +206,22 @@ def connector_pruning_generator_task(
 
     r = get_redis_client()
 
-    with get_session_with_tenant(tenant_id) as db_session:
-        try:
+    rcp = RedisConnectorPruning(cc_pair_id)
+
+    lock = r.lock(
+        DanswerRedisLocks.PRUNING_LOCK_PREFIX + f"_{rcp._id}",
+        timeout=CELERY_PRUNING_LOCK_TIMEOUT,
+    )
+
+    acquired = lock.acquire(blocking=False)
+    if not acquired:
+        task_logger.warning(
+            f"Pruning task already running, exiting...: cc_pair_id={cc_pair_id}"
+        )
+        return None
+
+    try:
+        with get_session_with_tenant(tenant_id) as db_session:
             cc_pair = get_connector_credential_pair(
                 db_session=db_session,
                 connector_id=connector_id,
@@ -180,14 +230,13 @@ def connector_pruning_generator_task(
 
             if not cc_pair:
                 task_logger.warning(
-                    f"ccpair not found for {connector_id} {credential_id}"
+                    f"cc_pair not found for {connector_id} {credential_id}"
                 )
                 return
 
-            rcp = RedisConnectorPruning(cc_pair.id)
-
             # Define the callback function
             def redis_increment_callback(amount: int) -> None:
+                lock.reacquire()
                 r.incrby(rcp.generator_progress_key, amount)
 
             runnable_connector = instantiate_connector(
@@ -240,12 +289,13 @@ def connector_pruning_generator_task(
             )
 
             r.set(rcp.generator_complete_key, tasks_generated)
-        except Exception as e:
-            task_logger.exception(
-                f"Failed to run pruning for connector id {connector_id}."
-            )
+    except Exception as e:
+        task_logger.exception(f"Failed to run pruning for connector id {connector_id}.")
 
-            r.delete(rcp.generator_progress_key)
-            r.delete(rcp.taskset_key)
-            r.delete(rcp.fence_key)
-            raise e
+        r.delete(rcp.generator_progress_key)
+        r.delete(rcp.taskset_key)
+        r.delete(rcp.fence_key)
+        raise e
+    finally:
+        if lock.owned():
+            lock.release()

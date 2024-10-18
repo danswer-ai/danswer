@@ -41,6 +41,11 @@ result_backend = f"{REDIS_SCHEME}://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PO
 # can stall other tasks.
 worker_prefetch_multiplier = 4
 
+# Leaving this to the default of True may cause double logging since both our own app
+# and celery think they are controlling the logger.
+# TODO: Configure celery's logger entirely manually and set this to False
+# worker_hijack_root_logger = False
+
 broker_connection_retry_on_startup = True
 broker_pool_limit = CELERY_BROKER_POOL_LIMIT
 

@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
+from pydantic import BaseModel
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_app import task_logger
@@ -15,6 +18,13 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
+
+
+class RedisConnectorIndexingFenceData(BaseModel):
+    index_attempt_id: int
+    started: datetime | None
+    submitted: datetime
+    celery_task_id: str
 
 
 @shared_task(
@@ -46,6 +56,8 @@ def document_by_cc_pair_cleanup_task(
     connector / credential pair from the access list
     (6) delete all relevant entries from postgres
     """
+    task_logger.info(f"document_id={document_id}")
+
     try:
         with get_session_with_tenant(tenant_id) as db_session:
             action = "skip"
@@ -111,11 +123,17 @@ def document_by_cc_pair_cleanup_task(
                 pass
 
             task_logger.info(
-                f"document_id={document_id} action={action} refcount={count} chunks={chunks_affected}"
+                f"tenant_id={tenant_id} "
+                f"document_id={document_id} "
+                f"action={action} "
+                f"refcount={count} "
+                f"chunks={chunks_affected}"
             )
             db_session.commit()
     except SoftTimeLimitExceeded:
-        task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
+        task_logger.info(
+            f"SoftTimeLimitExceeded exception. tenant_id={tenant_id} doc_id={document_id}"
+        )
     except Exception as e:
         task_logger.exception("Unexpected exception")
 

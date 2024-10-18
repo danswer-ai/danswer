@@ -29,8 +29,8 @@ class RedisObjectHelper(ABC):
     FENCE_PREFIX = PREFIX + "_fence"
     TASKSET_PREFIX = PREFIX + "_taskset"
 
-    def __init__(self, id: int):
-        self._id: int = id
+    def __init__(self, id: str):
+        self._id: str = id
 
     @property
     def task_id_prefix(self) -> str:
@@ -47,7 +47,7 @@ class RedisObjectHelper(ABC):
         return f"{self.TASKSET_PREFIX}_{self._id}"
 
     @staticmethod
-    def get_id_from_fence_key(key: str) -> int | None:
+    def get_id_from_fence_key(key: str) -> str | None:
         """
         Extracts the object ID from a fence key in the format `PREFIX_fence_X`.
 
@@ -61,15 +61,11 @@ class RedisObjectHelper(ABC):
         if len(parts) != 3:
             return None
 
-        try:
-            object_id = int(parts[2])
-        except ValueError:
-            return None
-
+        object_id = parts[2]
         return object_id
 
     @staticmethod
-    def get_id_from_task_id(task_id: str) -> int | None:
+    def get_id_from_task_id(task_id: str) -> str | None:
         """
         Extracts the object ID from a task ID string.
 
@@ -93,11 +89,7 @@ class RedisObjectHelper(ABC):
         if len(parts) != 3:
             return None
 
-        try:
-            object_id = int(parts[1])
-        except ValueError:
-            return None
-
+        object_id = parts[1]
         return object_id
 
     @abstractmethod
@@ -117,6 +109,9 @@ class RedisDocumentSet(RedisObjectHelper):
     FENCE_PREFIX = PREFIX + "_fence"
     TASKSET_PREFIX = PREFIX + "_taskset"
 
+    def __init__(self, id: int) -> None:
+        super().__init__(str(id))
+
     def generate_tasks(
         self,
         celery_app: Celery,
@@ -128,7 +123,7 @@ class RedisDocumentSet(RedisObjectHelper):
         last_lock_time = time.monotonic()
 
         async_results = []
-        stmt = construct_document_select_by_docset(self._id, current_only=False)
+        stmt = construct_document_select_by_docset(int(self._id), current_only=False)
         for doc in db_session.scalars(stmt).yield_per(1):
             current_time = time.monotonic()
             if current_time - last_lock_time >= (
@@ -164,6 +159,9 @@ class RedisUserGroup(RedisObjectHelper):
     FENCE_PREFIX = PREFIX + "_fence"
     TASKSET_PREFIX = PREFIX + "_taskset"
 
+    def __init__(self, id: int) -> None:
+        super().__init__(str(id))
+
     def generate_tasks(
         self,
         celery_app: Celery,
@@ -187,7 +185,7 @@ class RedisUserGroup(RedisObjectHelper):
         except ModuleNotFoundError:
             return 0
 
-        stmt = construct_document_select_by_usergroup(self._id)
+        stmt = construct_document_select_by_usergroup(int(self._id))
         for doc in db_session.scalars(stmt).yield_per(1):
             current_time = time.monotonic()
             if current_time - last_lock_time >= (
@@ -219,12 +217,18 @@ class RedisUserGroup(RedisObjectHelper):
 
 
 class RedisConnectorCredentialPair(RedisObjectHelper):
-    """This class differs from the default in that the taskset used spans
+    """This class is used to scan documents by cc_pair in the db and collect them into
+    a unified set for syncing.
+
+    It differs from the other redis helpers in that the taskset used spans
     all connectors and is not per connector."""
 
     PREFIX = "connectorsync"
     FENCE_PREFIX = PREFIX + "_fence"
     TASKSET_PREFIX = PREFIX + "_taskset"
+
+    def __init__(self, id: int) -> None:
+        super().__init__(str(id))
 
     @classmethod
     def get_fence_key(cls) -> str:
@@ -252,7 +256,7 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
         last_lock_time = time.monotonic()
 
         async_results = []
-        cc_pair = get_connector_credential_pair_from_id(self._id, db_session)
+        cc_pair = get_connector_credential_pair_from_id(int(self._id), db_session)
         if not cc_pair:
             return None
 
@@ -298,6 +302,9 @@ class RedisConnectorDeletion(RedisObjectHelper):
     FENCE_PREFIX = PREFIX + "_fence"
     TASKSET_PREFIX = PREFIX + "_taskset"
 
+    def __init__(self, id: int) -> None:
+        super().__init__(str(id))
+
     def generate_tasks(
         self,
         celery_app: Celery,
@@ -309,7 +316,7 @@ class RedisConnectorDeletion(RedisObjectHelper):
         last_lock_time = time.monotonic()
 
         async_results = []
-        cc_pair = get_connector_credential_pair_from_id(self._id, db_session)
+        cc_pair = get_connector_credential_pair_from_id(int(self._id), db_session)
         if not cc_pair:
             return None
 
@@ -386,9 +393,7 @@ class RedisConnectorPruning(RedisObjectHelper):
     )  # a signal that the generator has finished
 
     def __init__(self, id: int) -> None:
-        """id: the cc_pair_id of the connector credential pair"""
-
-        super().__init__(id)
+        super().__init__(str(id))
         self.documents_to_prune: set[str] = set()
 
     @property
@@ -420,7 +425,7 @@ class RedisConnectorPruning(RedisObjectHelper):
         last_lock_time = time.monotonic()
 
         async_results = []
-        cc_pair = get_connector_credential_pair_from_id(self._id, db_session)
+        cc_pair = get_connector_credential_pair_from_id(int(self._id), db_session)
         if not cc_pair:
             return None
 
@@ -463,7 +468,7 @@ class RedisConnectorPruning(RedisObjectHelper):
     def is_pruning(self, db_session: Session, redis_client: Redis) -> bool:
         """A single example of a helper method being refactored into the redis helper"""
         cc_pair = get_connector_credential_pair_from_id(
-            cc_pair_id=self._id, db_session=db_session
+            cc_pair_id=int(self._id), db_session=db_session
         )
         if not cc_pair:
             raise ValueError(f"cc_pair_id {self._id} does not exist.")
@@ -472,6 +477,66 @@ class RedisConnectorPruning(RedisObjectHelper):
             return True
 
         return False
+
+
+class RedisConnectorIndexing(RedisObjectHelper):
+    """Celery will kick off a long running indexing task to crawl the connector and
+    find any new or updated docs docs, which will each then get a new sync task or be
+    indexed inline.
+
+    ID should be a concatenation of cc_pair_id and search_setting_id, delimited by "/".
+    e.g. "2/5"
+    """
+
+    PREFIX = "connectorindexing"
+    FENCE_PREFIX = PREFIX + "_fence"  # a fence for the entire indexing process
+    GENERATOR_TASK_PREFIX = PREFIX + "+generator"
+
+    TASKSET_PREFIX = PREFIX + "_taskset"  # stores a list of prune tasks id's
+    SUBTASK_PREFIX = PREFIX + "+sub"
+
+    GENERATOR_LOCK_PREFIX = "da_lock:indexing"
+    GENERATOR_PROGRESS_PREFIX = (
+        PREFIX + "_generator_progress"
+    )  # a signal that contains generator progress
+    GENERATOR_COMPLETE_PREFIX = (
+        PREFIX + "_generator_complete"
+    )  # a signal that the generator has finished
+
+    def __init__(self, cc_pair_id: int, search_settings_id: int) -> None:
+        super().__init__(f"{cc_pair_id}/{search_settings_id}")
+
+    @property
+    def generator_lock_key(self) -> str:
+        return f"{self.GENERATOR_LOCK_PREFIX}_{self._id}"
+
+    @property
+    def generator_task_id_prefix(self) -> str:
+        return f"{self.GENERATOR_TASK_PREFIX}_{self._id}"
+
+    @property
+    def generator_progress_key(self) -> str:
+        # example: connectorpruning_generator_progress_1
+        return f"{self.GENERATOR_PROGRESS_PREFIX}_{self._id}"
+
+    @property
+    def generator_complete_key(self) -> str:
+        # example: connectorpruning_generator_complete_1
+        return f"{self.GENERATOR_COMPLETE_PREFIX}_{self._id}"
+
+    @property
+    def subtask_id_prefix(self) -> str:
+        return f"{self.SUBTASK_PREFIX}_{self._id}"
+
+    def generate_tasks(
+        self,
+        celery_app: Celery,
+        db_session: Session,
+        redis_client: Redis,
+        lock: redis.lock.Lock | None,
+        tenant_id: str | None,
+    ) -> int | None:
+        return None
 
 
 def celery_get_queue_length(queue: str, r: Redis) -> int:

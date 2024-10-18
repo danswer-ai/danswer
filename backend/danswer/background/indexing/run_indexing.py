@@ -1,5 +1,6 @@
 import time
 import traceback
+from collections.abc import Callable
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -88,12 +89,18 @@ def _get_connector_runner(
 
 
 def _run_indexing(
-    db_session: Session, index_attempt: IndexAttempt, tenant_id: str | None
+    db_session: Session,
+    index_attempt: IndexAttempt,
+    tenant_id: str | None,
+    progress_callback: Callable[[int], None] | None = None,
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
     2. Embed and index these documents into the chosen datastore (vespa)
     3. Updates Postgres to record the indexed documents + the outcome of this run
+
+    TODO: do not change index attempt statuses here ... instead, set signals in redis
+    and allow the monitor function to clean them up
     """
     start_time = time.time()
 
@@ -236,6 +243,8 @@ def _run_indexing(
                 logger.debug(f"Indexing batch of documents: {batch_description}")
 
                 index_attempt_md.batch_num = batch_num + 1  # use 1-index for this
+
+                # real work happens here!
                 new_docs, total_batch_chunks = indexing_pipeline(
                     document_batch=doc_batch,
                     index_attempt_metadata=index_attempt_md,
@@ -253,6 +262,9 @@ def _run_indexing(
                 # a long running transaction, the `time_updated` field will
                 # be inaccurate
                 db_session.commit()
+
+                if progress_callback:
+                    progress_callback(len(doc_batch))
 
                 # This new value is updated every batch, so UI can refresh per batch update
                 update_docs_indexed(
@@ -382,6 +394,7 @@ def run_indexing_entrypoint(
     tenant_id: str | None,
     connector_credential_pair_id: int,
     is_ee: bool = False,
+    progress_callback: Callable[[int], None] | None = None,
 ) -> None:
     try:
         if is_ee:
@@ -404,7 +417,7 @@ def run_indexing_entrypoint(
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
 
-            _run_indexing(db_session, attempt, tenant_id)
+            _run_indexing(db_session, attempt, tenant_id, progress_callback)
 
             logger.info(
                 f"Indexing finished for tenant {tenant_id}: "
