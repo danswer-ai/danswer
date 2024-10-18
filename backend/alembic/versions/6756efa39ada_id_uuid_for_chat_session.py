@@ -88,7 +88,7 @@ def downgrade() -> None:
         sa.Column("old_id", sa.Integer, autoincrement=True, nullable=True),
     )
 
-    op.execute(" CREATE SEQUENCE chat_session_old_id_seq OWNED BY chat_session.old_id;")
+    op.execute("CREATE SEQUENCE chat_session_old_id_seq OWNED BY chat_session.old_id;")
     op.execute(
         "ALTER TABLE chat_session ALTER COLUMN old_id SET DEFAULT nextval('chat_session_old_id_seq');"
     )
