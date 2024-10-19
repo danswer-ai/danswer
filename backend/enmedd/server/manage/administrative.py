@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_curator_or_admin_user
+from enmedd.background.celery.celery_app import celery_app
 from enmedd.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from enmedd.configs.constants import DocumentSource
 from enmedd.configs.constants import EnmeddCeleryPriority
@@ -28,9 +29,9 @@ from enmedd.db.index_attempt import cancel_indexing_attempts_for_ccpair
 from enmedd.db.models import User
 from enmedd.document_index.document_index_utils import get_both_index_names
 from enmedd.document_index.factory import get_default_document_index
-from enmedd.dynamic_configs.factory import get_dynamic_config_store
-from enmedd.dynamic_configs.interface import ConfigNotFoundError
 from enmedd.file_store.file_store import get_default_file_store
+from enmedd.key_value_store.factory import get_kv_store
+from enmedd.key_value_store.interface import KvKeyNotFoundError
 from enmedd.llm.factory import get_default_llms
 from enmedd.llm.utils import test_llm
 from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
@@ -113,7 +114,7 @@ def validate_existing_genai_api_key(
     _: User = Depends(current_admin_user),
 ) -> None:
     # Only validate every so often
-    kv_store = get_dynamic_config_store()
+    kv_store = get_kv_store()
     curr_time = datetime.now(tz=timezone.utc)
     try:
         last_check = datetime.fromtimestamp(
@@ -122,7 +123,7 @@ def validate_existing_genai_api_key(
         check_freq_sec = timedelta(seconds=GENERATIVE_MODEL_ACCESS_CHECK_FREQ)
         if curr_time - last_check < check_freq_sec:
             return
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         # First time checking the key, nothing unusual
         pass
 
@@ -146,10 +147,6 @@ def create_deletion_attempt_for_connector_id(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    from enmedd.background.celery.celery_app import (
-        check_for_connector_deletion_task,
-    )
-
     connector_id = connector_credential_pair_identifier.connector_id
     credential_id = connector_credential_pair_identifier.credential_id
 
@@ -193,8 +190,11 @@ def create_deletion_attempt_for_connector_id(
         status=ConnectorCredentialPairStatus.DELETING,
     )
 
-    # run the beat task to pick up this deletion early
-    check_for_connector_deletion_task.apply_async(
+    db_session.commit()
+
+    # run the beat task to pick up this deletion from the db immediately
+    celery_app.send_task(
+        "check_for_connector_deletion_task",
         priority=EnmeddCeleryPriority.HIGH,
     )
 

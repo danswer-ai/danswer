@@ -1,20 +1,27 @@
 import React from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { CredentialBase } from "@/lib/types";
+import { CredentialBase, ValidSources } from "@/lib/types";
 import { createCredential } from "@/lib/credential";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 export async function submitCredential<T>(
   credential: CredentialBase<T>
-): Promise<{ message: string; isSuccess: boolean }> {
+): Promise<{
+  credential?: Credential<any>;
+  message: string;
+  isSuccess: boolean;
+}> {
   let isSuccess = false;
   try {
     const response = await createCredential(credential);
+
     if (response.ok) {
+      const parsed_response = await response.json();
+      const credential = parsed_response.credential;
       isSuccess = true;
-      return { message: "Success!", isSuccess: true };
+      return { credential, message: "Success!", isSuccess: true };
     } else {
       const errorData = await response.json();
       return { message: `Error: ${errorData.detail}`, isSuccess: false };
@@ -29,12 +36,14 @@ interface Props<YupObjectType extends Yup.AnyObject> {
   validationSchema: Yup.ObjectSchema<YupObjectType>;
   initialValues: YupObjectType;
   onSubmit: (isSuccess: boolean) => void;
+  source: ValidSources;
 }
 
 export function CredentialForm<T extends Yup.AnyObject>({
   formBody,
   validationSchema,
   initialValues,
+  source,
   onSubmit,
 }: Props<T>): JSX.Element {
   const { toast } = useToast();

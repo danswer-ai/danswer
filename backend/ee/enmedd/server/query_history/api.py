@@ -13,19 +13,19 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import enmedd.db.models as db_models
 from ee.enmedd.db.query_history import fetch_chat_sessions_eagerly_by_time
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import get_display_email
 from enmedd.chat.chat_utils import create_chat_chain
 from enmedd.configs.constants import MessageType
 from enmedd.configs.constants import QAFeedbackType
+from enmedd.configs.constants import SessionType
 from enmedd.db.chat import get_chat_session_by_id
 from enmedd.db.engine import get_session
 from enmedd.db.models import ChatMessage
 from enmedd.db.models import ChatSession
+from enmedd.db.models import User
 from enmedd.server.models import MinimalTeamspaceSnapshot
-
 
 router = APIRouter()
 
@@ -107,6 +107,10 @@ class ChatSessionSnapshot(BaseModel):
 
 
 class QuestionAnswerPairSnapshot(BaseModel):
+    chat_session_id: int
+    # 1-indexed message number in the chat_session
+    # e.g. the first message pair in the chat_session is 1, the second is 2, etc.
+    message_pair_num: int
     user_message: str
     ai_response: str
     retrieved_documents: list[AbridgedSearchDoc]
@@ -115,6 +119,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
     assistant_name: str
     user_email: str
     time_created: datetime
+    flow_type: SessionType
 
     @classmethod
     def from_chat_session_snapshot(
@@ -132,6 +137,8 @@ class QuestionAnswerPairSnapshot(BaseModel):
 
         return [
             cls(
+                chat_session_id=chat_session_snapshot.id,
+                message_pair_num=ind + 1,
                 user_message=user_message.message,
                 ai_response=ai_message.message,
                 retrieved_documents=ai_message.documents,
@@ -140,12 +147,15 @@ class QuestionAnswerPairSnapshot(BaseModel):
                 assistant_name=chat_session_snapshot.assistant_name,
                 user_email=get_display_email(chat_session_snapshot.user_email),
                 time_created=user_message.time_created,
+                flow_type=chat_session_snapshot.flow_type,
             )
-            for user_message, ai_message in message_pairs
+            for ind, (user_message, ai_message) in enumerate(message_pairs)
         ]
 
-    def to_json(self) -> dict[str, str]:
+    def to_json(self) -> dict[str, str | None]:
         return {
+            "chat_session_id": str(self.chat_session_id),
+            "message_pair_num": str(self.message_pair_num),
             "user_message": self.user_message,
             "ai_response": self.ai_response,
             "retrieved_documents": "|".join(
@@ -159,7 +169,18 @@ class QuestionAnswerPairSnapshot(BaseModel):
             "assistant_name": self.assistant_name,
             "user_email": self.user_email,
             "time_created": str(self.time_created),
+            "flow_type": self.flow_type,
         }
+
+
+def determine_flow_type(chat_session: ChatSession) -> SessionType:
+    return (
+        SessionType.SLACK
+        if chat_session.danswerbot_flow
+        else SessionType.SEARCH
+        if chat_session.one_shot
+        else SessionType.CHAT
+    )
 
 
 def fetch_and_process_chat_session_history_minimal(
@@ -223,6 +244,8 @@ def fetch_and_process_chat_session_history_minimal(
             if feedback_filter == QAFeedbackType.DISLIKE and not has_negative_feedback:
                 continue
 
+        flow_type = determine_flow_type(chat_session)
+
         minimal_sessions.append(
             ChatSessionMinimal(
                 id=chat_session.id,
@@ -232,9 +255,12 @@ def fetch_and_process_chat_session_history_minimal(
                 name=chat_session.description,
                 first_user_message=first_user_message,
                 first_ai_message=first_ai_message,
-                assistant_name=chat_session.assistant.name,
+                assistant_name=chat_session.assistant.name
+                if chat_session.assistant
+                else None,
                 time_created=chat_session.time_created,
                 feedback_type=feedback_type,
+                flow_type=flow_type,
             )
         )
 
@@ -286,6 +312,8 @@ def snapshot_from_chat_session(
     except RuntimeError:
         return None
 
+    flow_type = determine_flow_type(chat_session)
+
     return ChatSessionSnapshot(
         id=chat_session.id,
         user_email=get_display_email(
@@ -297,8 +325,9 @@ def snapshot_from_chat_session(
             for message in messages
             if message.message_type != MessageType.SYSTEM
         ],
-        assistant_name=chat_session.assistant.name,
+        assistant_name=chat_session.assistant.name if chat_session.assistant else None,
         time_created=chat_session.time_created,
+        flow_type=flow_type,
     )
 
 
@@ -307,7 +336,7 @@ def get_chat_session_history(
     feedback_type: QAFeedbackType | None = None,
     start: datetime | None = None,
     end: datetime | None = None,
-    _: db_models.User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[ChatSessionMinimal]:
     return fetch_and_process_chat_session_history_minimal(
@@ -324,7 +353,7 @@ def get_chat_session_history(
 @router.get("/admin/chat-session-history/{chat_session_id}")
 def get_chat_session_admin(
     chat_session_id: int,
-    _: db_models.User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionSnapshot:
     try:
@@ -353,7 +382,7 @@ def get_chat_session_admin(
 
 @router.get("/admin/query-history-csv")
 def get_query_history_as_csv(
-    _: db_models.User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
     complete_chat_session_history = fetch_and_process_chat_session_history(

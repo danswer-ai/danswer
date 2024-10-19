@@ -11,9 +11,9 @@ from sqlalchemy.orm import Session
 
 from ee.enmedd.server.workspace.models import AnalyticsScriptUpload
 from enmedd.configs.constants import FileOrigin
-from enmedd.dynamic_configs.factory import get_dynamic_config_store
-from enmedd.dynamic_configs.interface import ConfigNotFoundError
 from enmedd.file_store.file_store import get_default_file_store
+from enmedd.key_value_store.factory import get_dynamic_config_store
+from enmedd.key_value_store.interface import ConfigNotFoundError
 from enmedd.utils.logger import setup_logger
 
 load_dotenv()

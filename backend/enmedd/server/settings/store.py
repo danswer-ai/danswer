@@ -1,23 +1,21 @@
 from typing import cast
 
-from enmedd.dynamic_configs.factory import get_dynamic_config_store
-from enmedd.dynamic_configs.interface import ConfigNotFoundError
+from enmedd.configs.constants import KV_SETTINGS_KEY
+from enmedd.key_value_store.factory import get_kv_store
+from enmedd.key_value_store.interface import KvKeyNotFoundError
 from enmedd.server.settings.models import Settings
-
-# TODO: replace the name here
-_SETTINGS_KEY = "enmedd_settings"
 
 
 def load_settings() -> Settings:
-    dynamic_config_store = get_dynamic_config_store()
+    dynamic_config_store = get_kv_store()
     try:
-        settings = Settings(**cast(dict, dynamic_config_store.load(_SETTINGS_KEY)))
-    except ConfigNotFoundError:
+        settings = Settings(**cast(dict, dynamic_config_store.load(KV_SETTINGS_KEY)))
+    except KvKeyNotFoundError:
         settings = Settings()
-        dynamic_config_store.store(_SETTINGS_KEY, settings.model_dump())
+        dynamic_config_store.store(KV_SETTINGS_KEY, settings.model_dump())
 
     return settings
 
 
 def store_settings(settings: Settings) -> None:
-    get_dynamic_config_store().store(_SETTINGS_KEY, settings.model_dump())
+    get_kv_store().store(KV_SETTINGS_KEY, settings.model_dump())

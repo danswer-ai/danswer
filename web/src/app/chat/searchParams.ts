@@ -3,13 +3,14 @@ import { ReadonlyURLSearchParams } from "next/navigation";
 // search params
 export const SEARCH_PARAM_NAMES = {
   CHAT_ID: "chatId",
+  SEARCH_ID: "searchId",
   ASSISTANT_ID: "assistantId",
   // overrides
   TEMPERATURE: "temperature",
   MODEL_VERSION: "model-version",
   SYSTEM_PROMPT: "system-prompt",
   // user message
-  USER_MESSAGE: "user-message",
+  USER_PROMPT: "user-prompt",
   SUBMIT_ON_LOAD: "submit-on-load",
   // chat title
   TITLE: "title",

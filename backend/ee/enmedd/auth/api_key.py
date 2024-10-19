@@ -7,6 +7,7 @@ from passlib.hash import sha256_crypt
 from pydantic import BaseModel
 
 from ee.enmedd.configs.app_configs import API_KEY_HASH_ROUNDS
+from enmedd.auth.schemas import UserRole
 
 
 _API_KEY_HEADER_NAME = "Authorization"
@@ -20,6 +21,7 @@ class ApiKeyDescriptor(BaseModel):
     api_key_display: str
     api_key: Optional[str] = None  # only present on initial creation
     api_key_name: Optional[str] = None
+    api_key_role: UserRole
 
     user_id: uuid.UUID
 

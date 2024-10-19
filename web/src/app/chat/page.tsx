@@ -35,6 +35,7 @@ export default async function Page({
     defaultAssistantId,
     finalDocumentSidebarInitialWidth,
     shouldShowWelcomeModal,
+    userInputPrompts,
     shouldDisplaySourcesIncompleteModal,
   } = data;
 
@@ -52,7 +53,6 @@ export default async function Page({
 
       <ChatProvider
         value={{
-          user,
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
@@ -61,11 +61,13 @@ export default async function Page({
           llmProviders,
           folders,
           openedFolders,
+          userInputPrompts,
+          shouldShowWelcomeModal,
+          defaultAssistantId,
         }}
       >
         <div className="h-full overflow-hidden">
           <ChatPage
-            defaultSelectedAssistantsId={defaultAssistantId}
             documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
           />
         </div>

@@ -22,6 +22,7 @@ export const GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME =
   "google_drive_auth_is_admin";
 
 export const SEARCH_TYPE_COOKIE_NAME = "search_type";
+export const AGENTIC_SEARCH_TYPE_COOKIE_NAME = "agentic_type";
 
 export const SIDEBAR_WIDTH_CONST = "350px";
 export const SIDEBAR_WIDTH = `w-[350px]`;
@@ -29,7 +30,13 @@ export const SIDEBAR_WIDTH = `w-[350px]`;
 export const LOGOUT_DISABLED =
   process.env.NEXT_PUBLIC_DISABLE_LOGOUT?.toLowerCase() === "true";
 
+export const NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN =
+  process.env.NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN?.toLowerCase() === "true";
+
+export const TOGGLED_CONNECTORS_COOKIE_NAME = "toggled_connectors";
+
 /* Enterprise-only settings */
+export const CUSTOM_REFRESH_URL = process.env.NEXT_PUBLIC_CUSTOM_REFRESH_URL;
 
 // NOTE: this should ONLY be used on the server-side. If used client side,
 // it will not be accurate (will always be false).
@@ -45,3 +52,6 @@ export const EE_ENABLED =
 export const CUSTOM_ANALYTICS_ENABLED = process.env.CUSTOM_ANALYTICS_SECRET_KEY
   ? true
   : false;
+
+export const DISABLE_LLM_DOC_RELEVANCE =
+  process.env.DISABLE_LLM_DOC_RELEVANCE?.toLowerCase() === "true";

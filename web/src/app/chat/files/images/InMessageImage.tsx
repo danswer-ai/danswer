@@ -1,11 +1,11 @@
-"use client";
-
 import { useState } from "react";
 import { FullImageModal } from "./FullImageModal";
 import { buildImgUrl } from "./utils";
+import Image from "next/image";
 
 export function InMessageImage({ fileId }: { fileId: string }) {
   const [fullImageShowing, setFullImageShowing] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <>
@@ -15,7 +15,8 @@ export function InMessageImage({ fileId }: { fileId: string }) {
         onOpenChange={(open) => setFullImageShowing(open)}
       />
 
-      <img
+      <Image
+        alt={fileId}
         className={`
           max-w-lg 
           rounded-regular 

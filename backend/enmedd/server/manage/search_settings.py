@@ -21,6 +21,9 @@ from enmedd.db.search_settings import get_secondary_search_settings
 from enmedd.db.search_settings import update_current_search_settings
 from enmedd.db.search_settings import update_search_settings_status
 from enmedd.document_index.factory import get_default_document_index
+from enmedd.file_processing.unstructured import delete_unstructured_api_key
+from enmedd.file_processing.unstructured import get_unstructured_api_key
+from enmedd.file_processing.unstructured import update_unstructured_api_key
 from enmedd.natural_language_processing.search_nlp_models import clean_model_name
 from enmedd.search.models import SavedSearchSettings
 from enmedd.search.models import SearchSettingsCreationRequest
@@ -29,7 +32,6 @@ from enmedd.server.manage.models import FullModelVersionResponse
 from enmedd.server.models import IdReturn
 from enmedd.utils.logger import setup_logger
 from shared_configs.configs import ALT_INDEX_SUFFIX
-
 
 router = APIRouter(prefix="/search-settings")
 logger = setup_logger()
@@ -196,3 +198,27 @@ def update_saved_search_settings(
     update_current_search_settings(
         search_settings=search_settings, db_session=db_session
     )
+
+
+@router.get("/unstructured-api-key-set")
+def unstructured_api_key_set(
+    _: User | None = Depends(current_admin_user),
+) -> bool:
+    api_key = get_unstructured_api_key()
+    print(api_key)
+    return api_key is not None
+
+
+@router.put("/upsert-unstructured-api-key")
+def upsert_unstructured_api_key(
+    unstructured_api_key: str,
+    _: User | None = Depends(current_admin_user),
+) -> None:
+    update_unstructured_api_key(unstructured_api_key)
+
+
+@router.delete("/delete-unstructured-api-key")
+def delete_unstructured_api_key_endpoint(
+    _: User | None = Depends(current_admin_user),
+) -> None:
+    delete_unstructured_api_key()

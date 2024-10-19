@@ -7,6 +7,7 @@ import Link from "next/link";
 interface Item {
   name: string | JSX.Element;
   link: string;
+  error?: boolean;
 }
 
 interface Collection {

@@ -1,6 +1,6 @@
-import { WellKnownLLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
-import { LLMProviderUpdateForm } from "@/app/admin/models/llm/LLMProviderUpdateForm";
-import { CustomLLMProviderUpdateForm } from "@/app/admin/models/llm/CustomLLMProviderUpdateForm";
+import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
+import { LLMProviderUpdateForm } from "@/app/admin/configuration/llm/LLMProviderUpdateForm";
+import { CustomLLMProviderUpdateForm } from "@/app/admin/configuration/llm/CustomLLMProviderUpdateForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 export const ApiKeyForm = ({

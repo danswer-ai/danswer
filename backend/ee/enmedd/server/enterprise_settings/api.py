@@ -32,8 +32,8 @@ from enmedd.file_store.file_store import get_default_file_store
 from enmedd.utils.logger import setup_logger
 
 # TODO: remove this and be replaced with workspace settings
-admin_router = APIRouter(prefix="/admin/enterprise-settings")
-basic_router = APIRouter(prefix="/enterprise-settings")
+admin_router = APIRouter(prefix="/admin/workspace")
+basic_router = APIRouter(prefix="/workspace")
 
 logger = setup_logger()
 

@@ -10,9 +10,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
 from ee.enmedd.db.external_perm import delete_user__ext_teamspace_for_cc_pair__no_commit
-from ee.enmedd.external_permissions.permission_sync_function_map import (
-    check_if_valid_sync_source,
-)
+from ee.enmedd.external_permissions.sync_params import check_if_valid_sync_source
 from enmedd.configs.constants import DocumentSource
 from enmedd.db.connector import fetch_connector_by_id
 from enmedd.db.credentials import fetch_credential_by_id

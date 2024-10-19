@@ -273,6 +273,14 @@ class CCPairFullInfo(BaseModel):
         )
 
 
+class CeleryTaskStatus(BaseModel):
+    id: str
+    name: str
+    status: TaskStatus
+    start_time: datetime | None
+    register_time: datetime | None
+
+
 class FailedConnectorIndexingStatus(BaseModel):
     """Simplified version of ConnectorIndexingStatus for failed indexing attempts"""
 

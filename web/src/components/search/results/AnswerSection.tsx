@@ -1,7 +1,6 @@
 import { Quote } from "@/lib/search/interfaces";
 import { ResponseSection, StatusOptions } from "./ResponseSection";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 
 const TEMP_STRING = "__$%^TEMP$%^__";
 
@@ -26,31 +25,21 @@ interface AnswerSectionProps {
   answer: string | null;
   quotes: Quote[] | null;
   error: string | null;
-  nonAnswerableReason: string | null;
   isFetching: boolean;
 }
 
 export const AnswerSection = (props: AnswerSectionProps) => {
   let status = "in-progress" as StatusOptions;
-  let header = <>Building answer...</>;
+  let header = <></>;
   let body = null;
 
   // finished answer
   if (props.quotes !== null || !props.isFetching) {
     status = "success";
-    header = <>AI answer</>;
-    if (props.answer) {
-      body = (
-        <ReactMarkdown
-          className="prose text-sm max-w-full"
-          remarkPlugins={[remarkGfm]}
-        >
-          {replaceNewlines(props.answer)}
-        </ReactMarkdown>
-      );
-    } else {
-      body = <div>Information not found</div>;
-    }
+    header = <></>;
+
+    body = <MinimalMarkdown content={replaceNewlines(props.answer || "")} />;
+
     // error while building answer (NOTE: if error occurs during quote generation
     // the above if statement will hit and the error will not be displayed)
   } else if (props.error) {
@@ -64,19 +53,8 @@ export const AnswerSection = (props: AnswerSectionProps) => {
     // answer is streaming
   } else if (props.answer) {
     status = "success";
-    header = <>AI answer</>;
-    body = (
-      <ReactMarkdown
-        className="prose text-sm max-w-full"
-        remarkPlugins={[remarkGfm]}
-      >
-        {replaceNewlines(props.answer)}
-      </ReactMarkdown>
-    );
-  }
-  if (props.nonAnswerableReason) {
-    status = "warning";
-    header = <>Building best effort AI answer...</>;
+    header = <></>;
+    body = <MinimalMarkdown content={replaceNewlines(props.answer)} />;
   }
 
   return (
@@ -87,20 +65,7 @@ export const AnswerSection = (props: AnswerSectionProps) => {
           <div className="ml-2 text-strong">{header}</div>
         </div>
       }
-      body={
-        <div className="">
-          {body}
-          {props.nonAnswerableReason && !props.isFetching && (
-            <div className="mt-4 text-sm">
-              <b className="font-medium">Warning:</b> the AI did not think this
-              question was answerable.{" "}
-              <div className="italic mt-1 ml-2">
-                {props.nonAnswerableReason}
-              </div>
-            </div>
-          )}
-        </div>
-      }
+      body={<div className="">{body}</div>}
       desiredOpenStatus={true}
       isNotControllable={true}
     />

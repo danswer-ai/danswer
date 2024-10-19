@@ -41,7 +41,7 @@ from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
 from enmedd.db.users import get_user_by_email
 from enmedd.db.users import list_users
-from enmedd.dynamic_configs.factory import get_dynamic_config_store
+from enmedd.key_value_store.factory import get_kv_store
 from enmedd.server.manage.models import AllUsersResponse
 from enmedd.server.manage.models import UserByEmail
 from enmedd.server.manage.models import UserInfo
@@ -367,7 +367,7 @@ def verify_user_logged_in(
         # if auth type is disabled, return a dummy user with preferences from
         # the key-value store
         if AUTH_TYPE == AuthType.DISABLED:
-            store = get_dynamic_config_store()
+            store = get_kv_store()
             return fetch_no_auth_user(store)
 
         raise HTTPException(
@@ -405,7 +405,7 @@ def update_user_default_model(
 ) -> None:
     if user is None:
         if AUTH_TYPE == AuthType.DISABLED:
-            store = get_dynamic_config_store()
+            store = get_kv_store()
             no_auth_user = fetch_no_auth_user(store)
             no_auth_user.preferences.default_model = request.default_model
             set_no_auth_user_preferences(store, no_auth_user.preferences)
@@ -433,7 +433,7 @@ def update_user_assistant_list(
 ) -> None:
     if user is None:
         if AUTH_TYPE == AuthType.DISABLED:
-            store = get_dynamic_config_store()
+            store = get_kv_store()
 
             no_auth_user = fetch_no_auth_user(store)
             no_auth_user.preferences.chosen_assistants = request.chosen_assistants
@@ -487,7 +487,7 @@ def update_user_assistant_visibility(
 ) -> None:
     if user is None:
         if AUTH_TYPE == AuthType.DISABLED:
-            store = get_dynamic_config_store()
+            store = get_kv_store()
             no_auth_user = fetch_no_auth_user(store)
             preferences = no_auth_user.preferences
             updated_preferences = update_assistant_list(preferences, assistant_id, show)

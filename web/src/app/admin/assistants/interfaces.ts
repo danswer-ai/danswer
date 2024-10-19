@@ -21,6 +21,7 @@ export interface Prompt {
 export interface Assistant {
   id: number;
   name: string;
+  search_start_date: Date | null;
   owner: MinimalUserSnapshot | null;
   is_visible: boolean;
   is_public: boolean;
@@ -35,7 +36,11 @@ export interface Assistant {
   llm_model_provider_override?: string;
   llm_model_version_override?: string;
   starter_messages: StarterMessage[] | null;
-  default_assistant: boolean;
+  builtin_assistant: boolean;
+  is_default_assistant: boolean;
   users: MinimalUserSnapshot[];
   teamspace: number[];
+  icon_shape?: number;
+  icon_color?: string;
+  uploaded_image_id?: string;
 }

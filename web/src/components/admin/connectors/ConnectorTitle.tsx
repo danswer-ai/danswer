@@ -1,5 +1,4 @@
 import { CustomTooltip } from "@/components/CustomTooltip";
-import { getSourceMetadata } from "@/lib/sources";
 import {
   ConfluenceConfig,
   Connector,
@@ -7,7 +6,8 @@ import {
   GitlabConfig,
   GoogleDriveConfig,
   JiraConfig,
-} from "@/lib/types";
+} from "@/lib/connectors/connectors";
+import { getSourceMetadata } from "@/lib/sources";
 import Link from "next/link";
 
 interface ConnectorTitleProps {
@@ -46,10 +46,16 @@ export const ConnectorTitle = ({
     );
   } else if (connector.source === "confluence") {
     const typedConnector = connector as Connector<ConfluenceConfig>;
-    additionalMetadata.set(
-      "Wiki URL",
-      typedConnector.connector_specific_config.wiki_page_url
-    );
+    const wikiUrl = typedConnector.connector_specific_config.is_cloud
+      ? `${typedConnector.connector_specific_config.wiki_base}/wiki/spaces/${typedConnector.connector_specific_config.space}`
+      : `${typedConnector.connector_specific_config.wiki_base}/spaces/${typedConnector.connector_specific_config.space}`;
+    additionalMetadata.set("Wiki URL", wikiUrl);
+    if (typedConnector.connector_specific_config.page_id) {
+      additionalMetadata.set(
+        "Page ID",
+        typedConnector.connector_specific_config.page_id
+      );
+    }
   } else if (connector.source === "jira") {
     const typedConnector = connector as Connector<JiraConfig>;
     additionalMetadata.set(

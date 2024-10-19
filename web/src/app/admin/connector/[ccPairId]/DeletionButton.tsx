@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CCPairFullInfo } from "./types";
+import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
 import { deleteCCPair } from "@/lib/documentDeletion";
 import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
@@ -19,7 +19,7 @@ export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
     ccPair?.latest_deletion_attempt?.status === "STARTED";
 
   let tooltip: string;
-  if (ccPair.connector.disabled) {
+  if (ccPair.status !== ConnectorCredentialPairStatus.ACTIVE) {
     if (isDeleting) {
       tooltip = "This connector is currently being deleted";
     } else {
@@ -39,7 +39,10 @@ export function DeletionButton({ ccPair }: { ccPair: CCPairFullInfo }) {
                 mutate(buildCCPairInfoUrl(ccPair.id))
               )
             }
-            disabled={!ccPair.connector.disabled || isDeleting}
+            disabled={
+              ccPair.status === ConnectorCredentialPairStatus.ACTIVE ||
+              isDeleting
+            }
             variant="destructive"
           >
             <Trash size={16} /> Delete

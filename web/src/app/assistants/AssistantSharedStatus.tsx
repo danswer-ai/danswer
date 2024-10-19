@@ -6,9 +6,11 @@ import { Lock, Unlock } from "lucide-react";
 export function AssistantSharedStatusDisplay({
   assistant,
   user,
+  size = "sm",
 }: {
   assistant: Assistant;
   user: User | null;
+  size?: "sm" | "md" | "lg";
 }) {
   const isOwnedByUser = checkUserOwnsAssistant(user, assistant);
 

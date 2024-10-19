@@ -97,7 +97,7 @@ SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 
-# If set, enMedD AI will listen to the `expires_at` returned by the identity
+# If set, Danswer will listen to the `expires_at` returned by the identity
 # provider (e.g. Okta, Google, etc.) and force the user to re-authenticate
 # after this time has elapsed. Disabled since by default many auth providers
 # have very short expiry times (e.g. 1 hour) which provide a poor user experience
@@ -130,6 +130,7 @@ try:
     INDEX_BATCH_SIZE = int(os.environ.get("INDEX_BATCH_SIZE", 16))
 except ValueError:
     INDEX_BATCH_SIZE = 16
+
 
 # Below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
@@ -181,6 +182,15 @@ REDIS_SSL_CA_CERTS = os.getenv("REDIS_SSL_CA_CERTS", None)
 
 CELERY_RESULT_EXPIRES = int(os.environ.get("CELERY_RESULT_EXPIRES", 86400))  # seconds
 
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#broker-pool-limit
+# Setting to None may help when there is a proxy in the way closing idle connections
+CELERY_BROKER_POOL_LIMIT_DEFAULT = 10
+try:
+    CELERY_BROKER_POOL_LIMIT = int(
+        os.environ.get("CELERY_BROKER_POOL_LIMIT", CELERY_BROKER_POOL_LIMIT_DEFAULT)
+    )
+except ValueError:
+    CELERY_BROKER_POOL_LIMIT = CELERY_BROKER_POOL_LIMIT_DEFAULT
 
 #####
 # Connector Configs
@@ -256,6 +266,10 @@ JIRA_CONNECTOR_LABELS_TO_SKIP = [
     for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")
     if ignored_tag
 ]
+# Maximum size for Jira tickets in bytes (default: 100KB)
+JIRA_CONNECTOR_MAX_TICKET_SIZE = int(
+    os.environ.get("JIRA_CONNECTOR_MAX_TICKET_SIZE", 100 * 1024)
+)
 
 GONG_CONNECTOR_START_TIME = os.environ.get("GONG_CONNECTOR_START_TIME")
 
@@ -279,10 +293,15 @@ ALLOW_SIMULTANEOUS_PRUNING = (
     os.environ.get("ALLOW_SIMULTANEOUS_PRUNING", "").lower() == "true"
 )
 
-# This is the maxiumum rate at which documents are queried for a pruning job. 0 disables the limitation.
+# This is the maximum rate at which documents are queried for a pruning job. 0 disables the limitation.
 MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE = int(
     os.environ.get("MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE", 0)
 )
+
+# comma delimited list of zendesk article labels to skip indexing for
+ZENDESK_CONNECTOR_SKIP_ARTICLE_LABELS = os.environ.get(
+    "ZENDESK_CONNECTOR_SKIP_ARTICLE_LABELS", ""
+).split(",")
 
 
 #####
@@ -341,9 +360,6 @@ INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
 #####
 # Miscellaneous
 #####
-# File based Key Value store no longer used
-DYNAMIC_CONFIG_STORE = "PostgresBackedDynamicConfigStore"
-
 JOB_TIMEOUT = 60 * 60 * 6  # 6 hours default
 # used to allow the background indexing jobs to use a different embedding
 # model server than the API server
@@ -354,7 +370,7 @@ CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
 )
-# Logs enMedD AI only model interactions like prompts, responses, messages etc.
+# Logs Danswer only model interactions like prompts, responses, messages etc.
 LOG_DANSWER_MODEL_INTERACTIONS = (
     os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
 )

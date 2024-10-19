@@ -2,15 +2,26 @@ import abc
 from collections.abc import Generator
 from typing import Any
 
-from enmedd.dynamic_configs.interface import JSON_ro
+from enmedd.key_value_store.interface import JSON_ro
 from enmedd.llm.answering.models import PreviousMessage
 from enmedd.llm.interfaces import LLM
 from enmedd.tools.models import ToolResponse
 
 
 class Tool(abc.ABC):
+    @property
     @abc.abstractmethod
     def name(self) -> str:
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def description(self) -> str:
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def display_name(self) -> str:
         raise NotImplementedError
 
     """For LLMs which support explicit tool calling"""

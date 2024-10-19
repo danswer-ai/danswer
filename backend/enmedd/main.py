@@ -67,9 +67,9 @@ from enmedd.db.search_settings import update_secondary_search_settings
 from enmedd.db.swap_index import check_index_swap
 from enmedd.document_index.factory import get_default_document_index
 from enmedd.document_index.interfaces import DocumentIndex
-from enmedd.dynamic_configs.factory import get_dynamic_config_store
-from enmedd.dynamic_configs.interface import ConfigNotFoundError
 from enmedd.indexing.models import IndexingSetting
+from enmedd.key_value_store.factory import get_kv_store
+from enmedd.key_value_store.interface import KvKeyNotFoundError
 from enmedd.natural_language_processing.search_nlp_models import EmbeddingModel
 from enmedd.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from enmedd.natural_language_processing.search_nlp_models import warm_up_cross_encoder
@@ -267,7 +267,7 @@ def update_default_multipass_indexing(db_session: Session) -> None:
 
 
 def translate_saved_search_settings(db_session: Session) -> None:
-    kv_store = get_dynamic_config_store()
+    kv_store = get_kv_store()
 
     try:
         search_settings_dict = kv_store.load(KV_SEARCH_SETTINGS)
@@ -305,17 +305,17 @@ def translate_saved_search_settings(db_session: Session) -> None:
             logger.notice("Search settings updated and KV store entry deleted.")
         else:
             logger.notice("KV store search settings is empty.")
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         logger.notice("No search config found in KV store.")
 
 
 def mark_reindex_flag(db_session: Session) -> None:
-    kv_store = get_dynamic_config_store()
+    kv_store = get_kv_store()
     try:
         value = kv_store.load(KV_REINDEX_KEY)
         logger.debug(f"Re-indexing flag has value {value}")
         return
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         # Only need to update the flag if it hasn't been set
         pass
 
@@ -382,6 +382,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # fill up Postgres connection pools
     await warm_up_connections()
 
+    # We cache this at the beginning so there is no delay in the first telemetry
+    get_or_generate_uuid()
+
     with Session(engine) as db_session:
         check_index_swap(db_session=db_session)
         search_settings = get_current_search_settings(db_session)
@@ -426,9 +429,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         # setup Postgres with default credential, llm providers, etc.
         setup_postgres(db_session)
-
-        # We cache this at the beginning so there is no delay in the first telemetry
-        get_or_generate_uuid()
 
         translate_saved_search_settings(db_session)
 

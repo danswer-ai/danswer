@@ -4,18 +4,103 @@ import { errorHandlingFetcher, RedirectError } from "@/lib/fetcher";
 import useSWR from "swr";
 import { CustomModal } from "../CustomModal";
 import { Button } from "../ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CircleAlert } from "lucide-react";
+import { User } from "@/lib/types";
+import { getSecondsUntilExpiration } from "@/lib/time";
+import { CUSTOM_REFRESH_URL } from "@/lib/constants";
+import { refreshToken } from "./refreshUtils";
 
 export const HealthCheckBanner = () => {
   const { error } = useSWR("/api/health", errorHandlingFetcher);
+  const [expired, setExpired] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(true);
 
-  if (!error) {
+  const [secondsUntilExpiration, setSecondsUntilExpiration] = useState<
+    number | null
+  >(null);
+  const { data: user, mutate: mutateUser } = useSWR<User>(
+    "/api/me",
+    errorHandlingFetcher
+  );
+
+  const updateExpirationTime = async () => {
+    const updatedUser = await mutateUser();
+
+    if (updatedUser) {
+      const seconds = getSecondsUntilExpiration(updatedUser);
+      setSecondsUntilExpiration(seconds);
+      console.debug(`Updated seconds until expiration:! ${seconds}`);
+    }
+  };
+
+  useEffect(() => {
+    updateExpirationTime();
+  }, [user]);
+
+  useEffect(() => {
+    if (CUSTOM_REFRESH_URL) {
+      const refreshUrl = CUSTOM_REFRESH_URL;
+      let refreshTimeoutId: NodeJS.Timeout;
+      let expireTimeoutId: NodeJS.Timeout;
+
+      const attemptTokenRefresh = async () => {
+        try {
+          // NOTE: This is a mocked refresh token for testing purposes.
+          // const refreshTokenData = mockedRefreshToken();
+
+          const refreshTokenData = await refreshToken(refreshUrl);
+
+          const response = await fetch("/api/workspace/refresh-token", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(refreshTokenData),
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+
+          await mutateUser(undefined, { revalidate: true });
+          updateExpirationTime();
+        } catch (error) {
+          console.error("Error refreshing token:", error);
+        }
+      };
+
+      const scheduleRefreshAndExpire = () => {
+        if (secondsUntilExpiration !== null) {
+          const timeUntilRefresh = (secondsUntilExpiration + 0.5) * 1000;
+          refreshTimeoutId = setTimeout(attemptTokenRefresh, timeUntilRefresh);
+
+          const timeUntilExpire = (secondsUntilExpiration + 10) * 1000;
+          expireTimeoutId = setTimeout(() => {
+            console.debug("Session expired. Setting expired state to true.");
+            setExpired(true);
+          }, timeUntilExpire);
+        }
+      };
+
+      scheduleRefreshAndExpire();
+
+      return () => {
+        clearTimeout(refreshTimeoutId);
+        clearTimeout(expireTimeoutId);
+      };
+    }
+  }, [secondsUntilExpiration, user]);
+
+  if (!error && !expired) {
     return null;
   }
 
-  if (error instanceof RedirectError) {
+  console.debug(
+    `Rendering HealthCheckBanner. Error: ${error}, Expired: ${expired}`
+  );
+
+  if (error instanceof RedirectError || expired) {
     return (
       <CustomModal
         open={isModalOpen}

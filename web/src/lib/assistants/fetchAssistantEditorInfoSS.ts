@@ -2,7 +2,10 @@ import { Assistant } from "@/app/admin/assistants/interfaces";
 import { CCPairBasicInfo, DocumentSet, User } from "../types";
 import { getCurrentUserSS } from "../userSS";
 import { fetchSS } from "../utilsSS";
-import { FullLLMProvider } from "@/app/admin/models/llm/interfaces";
+import {
+  FullLLMProvider,
+  getProviderIcon,
+} from "@/app/admin/configuration/llm/interfaces";
 import { ToolSnapshot } from "../tools/interfaces";
 import { fetchToolsSS } from "../tools/fetchTools";
 
@@ -79,6 +82,7 @@ export async function fetchAssistantEditorInfoSS(
       `Failed to fetch LLM providers - ${await llmProvidersResponse.text()}`,
     ];
   }
+
   const llmProviders = (await llmProvidersResponse.json()) as FullLLMProvider[];
 
   if (assistantId && assistantResponse && !assistantResponse.ok) {
@@ -87,6 +91,11 @@ export async function fetchAssistantEditorInfoSS(
       `Failed to fetch Assistant - ${await assistantResponse.text()}`,
     ];
   }
+
+  for (const provider of llmProviders) {
+    provider.icon = getProviderIcon(provider.provider);
+  }
+
   const existingAssistant = assistantResponse
     ? ((await assistantResponse.json()) as Assistant)
     : null;

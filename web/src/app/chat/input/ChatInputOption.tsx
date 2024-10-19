@@ -1,118 +1,103 @@
-import React, { useState } from "react";
-import { IconType } from "react-icons";
-import { DefaultDropdownElement } from "../../../components/Dropdown";
-import { Popover } from "../../../components/popover/Popover";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  IconProps,
+} from "@/components/icons/icons";
 
 interface ChatInputOptionProps {
-  name: string;
-  icon: IconType;
-  onClick: () => void;
+  name?: string;
+  Icon: ({ size, className }: IconProps) => JSX.Element;
+  onClick?: () => void;
   size?: number;
-
-  options?: { name: string; value: number; onClick?: () => void }[];
+  tooltipContent?: React.ReactNode;
   flexPriority?: "shrink" | "stiff" | "second";
+  toggle?: boolean;
 }
 
-const ChatInputOption = ({
+export const ChatInputOption: React.FC<ChatInputOptionProps> = ({
   name,
-  icon: Icon,
-  onClick,
+  Icon,
+  // icon: Icon,
   size = 16,
-  options,
   flexPriority,
-}: ChatInputOptionProps) => {
+  tooltipContent,
+  toggle,
+  onClick,
+}) => {
   const [isDropupVisible, setDropupVisible] = useState(false);
+  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const componentRef = useRef<HTMLDivElement>(null);
 
-  const handleClick = () => {
-    setDropupVisible(!isDropupVisible);
-    // onClick();
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        componentRef.current &&
+        !componentRef.current.contains(event.target as Node)
+      ) {
+        setIsTooltipVisible(false);
+        setDropupVisible(false);
+      }
+    };
 
-  const dropdownContent = options ? (
-    <div
-      className={`
-        border 
-        rounded-regular 
-        flex 
-        flex-col 
-        bg-background
-        overflow-y-auto 
-        overscroll-contain`}
-    >
-      {options.map((option) => (
-        <DefaultDropdownElement
-          key={option.value}
-          name={option.name}
-          onSelect={() => {
-            if (option.onClick) {
-              option.onClick();
-              setDropupVisible(false);
-            }
-          }}
-          isSelected={false}
-        />
-      ))}
-    </div>
-  ) : null;
-
-  const option = (
-    <div className="relative w-fit">
-      <div
-        className="
-          cursor-pointer 
-          flex 
-          items-center 
-          space-x-2 
-          text-subtle
-          hover:bg-hover
-          hover:
-          p-1.5
-          rounded-xs
-        "
-        onClick={handleClick}
-        title={name}
-      >
-        <Icon size={size} className="flex-none" />
-        <span className="text-sm break-all line-clamp-1">{name}</span>
-      </div>
-    </div>
-  );
-
-  if (!dropdownContent) {
-    return (
-      <div
-        onClick={onClick}
-        className={`text-ellipsis
-          ${
-            flexPriority == "shrink" &&
-            "flex-shrink-[10000] flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"
-          }
-          ${
-            flexPriority == "second" &&
-            "flex-shrink flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden"
-          }
-          ${
-            flexPriority == "stiff" &&
-            "flex-none whitespace-nowrap overflow-hidden"
-          }
-          `}
-      >
-        {option}
-      </div>
-    );
-  }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
-    <Popover
-      open={isDropupVisible}
-      onOpenChange={setDropupVisible}
-      content={option}
-      popover={dropdownContent}
-      side="top"
-      align="start"
-      sideOffset={5}
-    />
+    <div
+      ref={componentRef}
+      className={`
+        relative 
+        cursor-pointer 
+        flex 
+        items-center 
+        space-x-2 
+        text-text-700
+        hover:bg-hover
+        hover:text-emphasis
+        p-1.5
+        rounded-md
+        ${
+          flexPriority === "shrink" &&
+          "flex-shrink-100 flex-grow-0 flex-basis-auto min-w-[30px] whitespace-nowrap overflow-hidden"
+        }
+        ${
+          flexPriority === "second" &&
+          "flex-shrink flex-basis-0 min-w-[30px] whitespace-nowrap overflow-hidden"
+        }
+        ${
+          flexPriority === "stiff" &&
+          "flex-none whitespace-nowrap overflow-hidden"
+        }
+      `}
+      title={name}
+      onClick={onClick}
+    >
+      <Icon size={size} className="flex-none" />
+      <div className="flex items-center gap-x-.5">
+        {name && <span className="text-sm break-all line-clamp-1">{name}</span>}
+        {toggle && (
+          <ChevronDownIcon className="flex-none ml-1" size={size - 4} />
+        )}
+      </div>
+
+      {isTooltipVisible && tooltipContent && (
+        <div
+          className="absolute z-10 p-2 text-sm text-white bg-black rounded shadow-lg"
+          style={{
+            top: "100%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            marginTop: "0.5rem",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {tooltipContent}
+        </div>
+      )}
+    </div>
   );
 };
-
-export default ChatInputOption;

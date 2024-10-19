@@ -8,23 +8,23 @@ from enmedd.configs.app_configs import SMTP_PASS
 from enmedd.configs.app_configs import SMTP_PORT
 from enmedd.configs.app_configs import SMTP_SERVER
 from enmedd.configs.app_configs import SMTP_USER
-from enmedd.dynamic_configs.factory import get_dynamic_config_store
-from enmedd.dynamic_configs.interface import ConfigNotFoundError
-from enmedd.dynamic_configs.interface import JSON_ro
+from enmedd.key_value_store.factory import get_kv_store
+from enmedd.key_value_store.interface import JSON_ro
+from enmedd.key_value_store.interface import KvKeyNotFoundError
 
 USER_STORE_KEY = "INVITED_USERS"
 
 
 def get_invited_users() -> list[str]:
     try:
-        store = get_dynamic_config_store()
+        store = get_kv_store()
         return cast(list, store.load(USER_STORE_KEY))
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         return list()
 
 
 def write_invited_users(emails: list[str]) -> int:
-    store = get_dynamic_config_store()
+    store = get_kv_store()
     store.store(USER_STORE_KEY, cast(JSON_ro, emails))
     return len(emails)
 

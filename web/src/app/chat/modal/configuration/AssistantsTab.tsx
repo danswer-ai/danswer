@@ -1,79 +1,91 @@
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { Assistant } from "@/app/admin/assistants/interfaces";
-import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
-import { Bubble } from "@/components/Bubble";
-import { AssistantIcon } from "@/components/assistants/AssistantIcon";
+import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { getFinalLLM } from "@/lib/llm/utils";
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Bookmark } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-
-interface AssistantsTabProps {
-  selectedAssistant: Assistant;
-  availableAssistants: Assistant[];
-  llmProviders: LLMProviderDescriptor[];
-  onSelect: (assistant: Assistant) => void;
-}
+import React, { useState } from "react";
+import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
+import { DraggableAssistantCard } from "@/components/assistants/AssistantCards";
 
 export function AssistantsTab({
   selectedAssistant,
   availableAssistants,
   llmProviders,
   onSelect,
-}: AssistantsTabProps) {
+  refreshUser,
+}: {
+  selectedAssistant: Assistant;
+  availableAssistants: Assistant[];
+  llmProviders: LLMProviderDescriptor[];
+  onSelect: (assistant: Assistant) => void;
+  refreshUser: () => void;
+}) {
   const [_, llmName] = getFinalLLM(llmProviders, null, null);
+  const [assistants, setAssistants] = useState(availableAssistants);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = assistants.findIndex(
+        (item) => item.id.toString() === active.id
+      );
+      const newIndex = assistants.findIndex(
+        (item) => item.id.toString() === over.id
+      );
+      const updatedAssistants = arrayMove(assistants, oldIndex, newIndex);
+
+      setAssistants(updatedAssistants);
+      await updateUserAssistantList(updatedAssistants.map((a) => a.id));
+      refreshUser();
+    }
+  }
 
   return (
-    <>
-      <div className="my-3 grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {availableAssistants.map((assistant) => (
-          <Card
-            key={assistant.id}
-            className={`
-              cursor-pointer
-              p-4 
-              ${
-                selectedAssistant.id === assistant.id
-                  ? "border-accent"
-                  : "border-border"
-              }
-            `}
-            onClick={() => onSelect(assistant)}
-          >
-            <CardContent className="p-0 w-full flex gap-3">
-              <AssistantIcon assistant={assistant} size="small" />
-              <div>
-                <div className="text-sm font-semibold text-dark-900 pt-1 pb-2">
-                  {assistant.name}
-                </div>
-
-                <div className="text-xs text-subtle mb-2 line-clamp">
-                  {assistant.description}
-                </div>
-                <div className="mt-2 flex flex-col gap-y-2">
-                  {assistant.document_sets.length > 0 && (
-                    <div className="text-xs text-subtle flex flex-col gap-2">
-                      <p className="my-auto font-medium">Document Sets:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {assistant.document_sets.map((set) => (
-                          <Badge variant="secondary" key={set.id}>
-                            <Bookmark size={16} />
-                            {set.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <div className="text-xs text-subtle">
-                    <span>Default Model:</span>{" "}
-                    <i>{assistant.llm_model_version_override || llmName}</i>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </>
+    <div className="py-4">
+      <h3 className="px-4 text-lg font-semibold">Change Assistant</h3>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={assistants.map((a) => a.id.toString())}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="px-4 pb-2  max-h-[500px] include-scrollbar overflow-y-scroll my-3 grid grid-cols-1 gap-4">
+            {assistants.map((assistant) => (
+              <DraggableAssistantCard
+                key={assistant.id.toString()}
+                assistant={assistant}
+                isSelected={selectedAssistant.id === assistant.id}
+                onSelect={onSelect}
+                llmName={llmName}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
   );
 }

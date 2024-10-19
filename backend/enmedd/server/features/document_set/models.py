@@ -3,6 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from enmedd.db.models import DocumentSet as DocumentSetDBModel
 from enmedd.server.documents.models import ConnectorCredentialPairDescriptor
@@ -18,8 +19,8 @@ class DocumentSetCreationRequest(BaseModel):
     cc_pair_ids: List[int]
     is_public: bool
     # For Private Document Sets, who should be able to access these
-    users: Optional[List[UUID]] = None
-    teamspace: Optional[List[int]] = None
+    users: list[UUID] = Field(default_factory=list)
+    teamspace: list[int] = Field(default_factory=list)
 
 
 class DocumentSetUpdateRequest(BaseModel):
@@ -50,7 +51,6 @@ class DocumentSet(BaseModel):
     description: str
     cc_pair_descriptors: List[ConnectorCredentialPairDescriptor]
     is_up_to_date: bool
-    contains_non_public: bool
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: List[UUID]
@@ -62,12 +62,6 @@ class DocumentSet(BaseModel):
             id=document_set_model.id,
             name=document_set_model.name,
             description=document_set_model.description,
-            contains_non_public=any(
-                [
-                    not cc_pair.is_public
-                    for cc_pair in document_set_model.connector_credential_pairs
-                ]
-            ),
             cc_pair_descriptors=[
                 ConnectorCredentialPairDescriptor(
                     id=cc_pair.id,
@@ -90,7 +84,7 @@ class DocumentSet(BaseModel):
                                 for workspace in teams.workspace
                             ],
                         )
-                        for teams in cc_pair.teamspace
+                        for teams in cc_pair.groups
                     ],
                 )
                 for cc_pair in document_set_model.connector_credential_pairs
@@ -109,6 +103,6 @@ class DocumentSet(BaseModel):
                         for workspace in teamspace.workspace
                     ],
                 )
-                for teamspace in document_set_model.teamspace
+                for teamspace in document_set_model.groups
             ],
         )

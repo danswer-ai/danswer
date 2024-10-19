@@ -21,6 +21,7 @@ import {
   OCIStorageIcon,
   SalesforceIcon,
   GoogleSheetsIcon,
+  XenforoIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import { SourceCategory, SourceMetadata } from "./search/interfaces";
@@ -30,6 +31,7 @@ interface PartialSourceMetadata {
   icon: React.FC<{ size?: number; className?: string }>;
   displayName: string;
   category: SourceCategory;
+  docs?: string;
 }
 
 type SourceMap = {
@@ -41,56 +43,67 @@ const SOURCE_METADATA_MAP: SourceMap = {
     icon: GlobeIcon,
     displayName: "Web",
     category: SourceCategory.ImportedKnowledge,
+    docs: "https://docs.danswer.dev/connectors/web",
   },
   gmail: {
     icon: GmailIcon,
     displayName: "Gmail",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/gmail/overview",
   },
   google_drive: {
     icon: GoogleDriveIcon,
     displayName: "Google Drive",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/google_drive/overview",
   },
   github: {
     icon: GithubIcon,
     displayName: "Github",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/github",
   },
   gitlab: {
     icon: GitlabIcon,
     displayName: "Gitlab",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/gitlab",
   },
   confluence: {
     icon: ConfluenceIcon,
     displayName: "Confluence",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/confluence",
   },
   jira: {
     icon: JiraIcon,
     displayName: "Jira",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/jira",
   },
   notion: {
     icon: NotionIcon,
     displayName: "Notion",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/notion",
   },
   zendesk: {
     icon: ZendeskIcon,
     displayName: "Zendesk",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/zendesk",
   },
   productboard: {
     icon: ProductboardIcon,
     displayName: "Productboard",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/productboard",
   },
   hubspot: {
     icon: HubSpotIcon,
     displayName: "HubSpot",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/hubspot",
   },
   google_sites: {
     icon: GoogleSitesIcon,
@@ -101,16 +114,19 @@ const SOURCE_METADATA_MAP: SourceMap = {
     icon: DropboxIcon,
     displayName: "Dropbox",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/dropbox",
   },
   sharepoint: {
     icon: SharepointIcon,
     displayName: "Sharepoint",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/sharepoint",
   },
   teams: {
     icon: TeamsIcon,
     displayName: "Teams",
     category: SourceCategory.AppConnection,
+    docs: "https://docs.danswer.dev/connectors/teams",
   },
   salesforce: {
     icon: SalesforceIcon,
@@ -147,7 +163,24 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Google Sheets",
     category: SourceCategory.ComingSoon,
   },
-};
+  xenforo: {
+    icon: XenforoIcon,
+    displayName: "Xenforo",
+    category: SourceCategory.AppConnection,
+  },
+  ingestion_api: {
+    icon: GlobeIcon,
+    displayName: "Ingestion",
+    category: SourceCategory.ImportedKnowledge,
+  },
+  // currently used for the Internet Search tool docs, which is why
+  // a globe is used
+  not_applicable: {
+    icon: GlobeIcon,
+    displayName: "Not Applicable",
+    category: SourceCategory.ImportedKnowledge,
+  },
+} as SourceMap;
 
 function fillSourceMetadata(
   partialMetadata: PartialSourceMetadata,
@@ -156,9 +189,7 @@ function fillSourceMetadata(
   return {
     internalName: internalName,
     ...partialMetadata,
-    adminUrl: `/admin/connectors/${partialMetadata.displayName
-      .toLowerCase()
-      .replaceAll(" ", "-")}`,
+    adminUrl: `/admin/connectors/${internalName}`,
   };
 }
 
@@ -172,13 +203,24 @@ export function getSourceMetadata(sourceType: ValidSources): SourceMetadata {
 }
 
 export function listSourceMetadata(): SourceMetadata[] {
-  const entries = Object.entries(SOURCE_METADATA_MAP).map(
-    ([source, metadata]) => {
+  /* This gives back all the viewable / common sources, primarily for 
+  display in the Add Connector page */
+  const entries = Object.entries(SOURCE_METADATA_MAP)
+    .filter(
+      ([source, _]) => source !== "not_applicable" && source != "ingestion_api"
+    )
+    .map(([source, metadata]) => {
       return fillSourceMetadata(metadata, source as ValidSources);
-    }
-  );
+    });
   return entries;
 }
+
+export function getSourceDocLink(sourceType: ValidSources): string | null {
+  return SOURCE_METADATA_MAP[sourceType].docs || null;
+}
+export const isValidSource = (sourceType: string) => {
+  return Object.keys(SOURCE_METADATA_MAP).includes(sourceType);
+};
 
 export function getSourceDisplayName(sourceType: ValidSources): string | null {
   return getSourceMetadata(sourceType).displayName;

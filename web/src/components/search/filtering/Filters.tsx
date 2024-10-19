@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
 import { listSourceMetadata } from "@/lib/sources";
@@ -22,6 +22,8 @@ const SectionTitle = ({ children }: { children: string }) => (
 );
 
 import { DateRange as BaseDateRange } from "react-day-picker";
+import { FiBook, FiMap, FiTag } from "react-icons/fi";
+import { FilterDropdown } from "./FilterDropdown";
 
 interface CustomDateRange extends BaseDateRange {
   selectValue?: string;
@@ -74,6 +76,19 @@ export function SourceSelector({
         return [...prev, documentSetName];
       }
     });
+  };
+
+  let allSourcesSelected = selectedSources.length > 0;
+
+  const toggleAllSources = () => {
+    if (allSourcesSelected) {
+      setSelectedSources([]);
+    } else {
+      const allSources = listSourceMetadata().filter((source) =>
+        existingSources.includes(source.internalName)
+      );
+      setSelectedSources(allSources);
+    }
   };
 
   return (
@@ -179,7 +194,7 @@ export function SourceSelector({
   );
 }
 
-function SelectedBubble({
+export function SelectedBubble({
   children,
   onClick,
 }: {
@@ -328,6 +343,157 @@ export function HorizontalFilters({
             ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+export function HorizontalSourceSelector({
+  timeRange,
+  setTimeRange,
+  selectedSources,
+  setSelectedSources,
+  selectedDocumentSets,
+  setSelectedDocumentSets,
+  selectedTags,
+  setSelectedTags,
+  availableDocumentSets,
+  existingSources,
+  availableTags,
+}: SourceSelectorProps) {
+  const handleSourceSelect = (source: SourceMetadata) => {
+    setSelectedSources((prev: SourceMetadata[]) => {
+      if (prev.map((s) => s.internalName).includes(source.internalName)) {
+        return prev.filter((s) => s.internalName !== source.internalName);
+      } else {
+        return [...prev, source];
+      }
+    });
+  };
+
+  const handleDocumentSetSelect = (documentSetName: string) => {
+    setSelectedDocumentSets((prev: string[]) => {
+      if (prev.includes(documentSetName)) {
+        return prev.filter((s) => s !== documentSetName);
+      } else {
+        return [...prev, documentSetName];
+      }
+    });
+  };
+
+  const handleTagSelect = (tag: Tag) => {
+    setSelectedTags((prev: Tag[]) => {
+      if (
+        prev.some(
+          (t) => t.tag_key === tag.tag_key && t.tag_value === tag.tag_value
+        )
+      ) {
+        return prev.filter(
+          (t) => !(t.tag_key === tag.tag_key && t.tag_value === tag.tag_value)
+        );
+      } else {
+        return [...prev, tag];
+      }
+    });
+  };
+
+  const resetSources = () => {
+    setSelectedSources([]);
+  };
+  const resetDocuments = () => {
+    setSelectedDocumentSets([]);
+  };
+
+  const resetTags = () => {
+    setSelectedTags([]);
+  };
+
+  return (
+    <div className="flex flex-nowrap  space-x-2">
+      <div className="flex flex-col gap-3 md:flex-row">
+        <DateRangeSearchSelector
+          value={timeRange}
+          onValueChange={setTimeRange}
+          fullWidth
+        />
+      </div>
+
+      {existingSources.length > 0 && (
+        <FilterDropdown
+          options={listSourceMetadata()
+            .filter((source) => existingSources.includes(source.internalName))
+            .map((source) => ({
+              key: source.internalName,
+              display: (
+                <>
+                  <SourceIcon sourceType={source.internalName} iconSize={16} />
+                  <span className="ml-2 text-sm">{source.displayName}</span>
+                </>
+              ),
+            }))}
+          selected={selectedSources.map((source) => source.internalName)}
+          handleSelect={(option) =>
+            handleSourceSelect(
+              listSourceMetadata().find((s) => s.internalName === option.key)!
+            )
+          }
+          icon={<FiMap size={16} />}
+          defaultDisplay="Sources"
+          width="w-fit ellipsis truncate"
+          resetValues={resetSources}
+          dropdownWidth="w-40"
+          optionClassName="truncate w-full break-all ellipsis"
+        />
+      )}
+
+      {availableDocumentSets.length > 0 && (
+        <FilterDropdown
+          options={availableDocumentSets.map((documentSet) => ({
+            key: documentSet.name,
+            display: <>{documentSet.name}</>,
+          }))}
+          selected={selectedDocumentSets}
+          handleSelect={(option) => handleDocumentSetSelect(option.key)}
+          icon={<FiBook size={16} />}
+          defaultDisplay="Sets"
+          resetValues={resetDocuments}
+          width="w-fit max-w-24 ellipsis truncate"
+          dropdownWidth="max-w-36 w-fit"
+          optionClassName="truncate break-all ellipsis"
+        />
+      )}
+
+      {availableTags.length > 0 && (
+        <FilterDropdown
+          options={availableTags.map((tag) => ({
+            key: `${tag.tag_key}=${tag.tag_value}`,
+            display: (
+              <span className="text-sm">
+                {tag.tag_key}
+                <b>=</b>
+                {tag.tag_value}
+              </span>
+            ),
+          }))}
+          selected={selectedTags.map(
+            (tag) => `${tag.tag_key}=${tag.tag_value}`
+          )}
+          handleSelect={(option) => {
+            const [tag_key, tag_value] = option.key.split("=");
+            const selectedTag = availableTags.find(
+              (tag) => tag.tag_key === tag_key && tag.tag_value === tag_value
+            );
+            if (selectedTag) {
+              handleTagSelect(selectedTag);
+            }
+          }}
+          icon={<FiTag size={16} />}
+          defaultDisplay="Tags"
+          resetValues={resetTags}
+          width="w-fit max-w-24 ellipsis truncate"
+          dropdownWidth="max-w-80 w-fit"
+          optionClassName="truncate break-all ellipsis"
+        />
+      )}
     </div>
   );
 }

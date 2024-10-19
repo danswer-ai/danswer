@@ -2,8 +2,12 @@
 
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
-import { createDocumentSet, updateDocumentSet } from "./lib";
 import { ConnectorIndexingStatus, DocumentSet, Teamspace } from "@/lib/types";
+import {
+  createDocumentSet,
+  updateDocumentSet,
+  DocumentSetCreationRequest,
+} from "./lib";
 import {
   BooleanFormField,
   TextFormField,
@@ -13,10 +17,11 @@ import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidE
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Users } from "lucide-react";
 import { Divider } from "@/components/Divider";
+import { useUser } from "@/components/user/UserProvider";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -33,8 +38,15 @@ export const DocumentSetCreationForm = ({
 }: SetCreationPopupProps) => {
   const { toast } = useToast();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
-
   const isUpdate = existingDocumentSet !== undefined;
+  const [localCcPairs, setLocalCcPairs] = useState(ccPairs);
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (existingDocumentSet?.is_public) {
+      return;
+    }
+  }, [existingDocumentSet?.is_public]);
 
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -44,22 +56,17 @@ export const DocumentSetCreationForm = ({
 
   return (
     <div>
-      <Formik
+      <Formik<DocumentSetCreationRequest>
         initialValues={{
-          name: existingDocumentSet ? existingDocumentSet.name : "",
-          description: existingDocumentSet
-            ? existingDocumentSet.description
-            : "",
-          cc_pair_ids: existingDocumentSet
-            ? existingDocumentSet.cc_pair_descriptors.map(
-                (ccPairDescriptor) => {
-                  return ccPairDescriptor.id;
-                }
-              )
-            : ([] as number[]),
-          is_public: existingDocumentSet ? existingDocumentSet.is_public : true,
-          users: existingDocumentSet ? existingDocumentSet.users : [],
-          teamspace: existingDocumentSet ? existingDocumentSet.teamspace : [],
+          name: existingDocumentSet?.name ?? "",
+          description: existingDocumentSet?.description ?? "",
+          cc_pair_ids:
+            existingDocumentSet?.cc_pair_descriptors.map(
+              (ccPairDescriptor) => ccPairDescriptor.id
+            ) ?? [],
+          is_public: existingDocumentSet?.is_public ?? true,
+          users: existingDocumentSet?.users ?? [],
+          teamspace: existingDocumentSet?.teamspace ?? [],
         }}
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Please enter a name for the set"),
@@ -83,6 +90,7 @@ export const DocumentSetCreationForm = ({
             response = await updateDocumentSet({
               id: existingDocumentSet.id,
               ...processedValues,
+              users: processedValues.users,
             });
           } else {
             response = await createDocumentSet(processedValues);

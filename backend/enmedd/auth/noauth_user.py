@@ -3,32 +3,30 @@ from typing import Any
 from typing import cast
 
 from enmedd.auth.schemas import UserRole
-from enmedd.dynamic_configs.store import ConfigNotFoundError
-from enmedd.dynamic_configs.store import DynamicConfigStore
+from enmedd.configs.constants import KV_NO_AUTH_USER_PREFERENCES_KEY
+from enmedd.key_value_store.store import KeyValueStore
+from enmedd.key_value_store.store import KvKeyNotFoundError
 from enmedd.server.manage.models import UserInfo
 from enmedd.server.manage.models import UserPreferences
 
 
-NO_AUTH_USER_PREFERENCES_KEY = "no_auth_user_preferences"
-
-
 def set_no_auth_user_preferences(
-    store: DynamicConfigStore, preferences: UserPreferences
+    store: KeyValueStore, preferences: UserPreferences
 ) -> None:
-    store.store(NO_AUTH_USER_PREFERENCES_KEY, preferences.model_dump())
+    store.store(KV_NO_AUTH_USER_PREFERENCES_KEY, preferences.model_dump())
 
 
-def load_no_auth_user_preferences(store: DynamicConfigStore) -> UserPreferences:
+def load_no_auth_user_preferences(store: KeyValueStore) -> UserPreferences:
     try:
         preferences_data = cast(
-            Mapping[str, Any], store.load(NO_AUTH_USER_PREFERENCES_KEY)
+            Mapping[str, Any], store.load(KV_NO_AUTH_USER_PREFERENCES_KEY)
         )
         return UserPreferences(**preferences_data)
-    except ConfigNotFoundError:
-        return UserPreferences(chosen_assistants=None)
+    except KvKeyNotFoundError:
+        return UserPreferences(chosen_assistants=None, default_model=None)
 
 
-def fetch_no_auth_user(store: DynamicConfigStore) -> UserInfo:
+def fetch_no_auth_user(store: KeyValueStore) -> UserInfo:
     return UserInfo(
         id="__no_auth_user__",
         email="anonymous@enmedd.ai",

@@ -1,6 +1,10 @@
 import { X } from "lucide-react";
+import { isEventWithinRef } from "@/lib/contains";
+import { IconProps, XIcon } from "./icons/icons";
+import { useRef } from "react";
 
 interface ModalProps {
+  icon?: ({ size, className }: IconProps) => JSX.Element;
   children: JSX.Element | string;
   title?: JSX.Element | string;
   onOutsideClick?: () => void;
@@ -20,9 +24,27 @@ export function Modal({
   titleSize,
   hideDividerForTitle,
   noPadding,
+  icon,
 }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (
+      onOutsideClick &&
+      modalRef.current &&
+      !modalRef.current.contains(e.target as Node) &&
+      !isEventWithinRef(e.nativeEvent, modalRef)
+    ) {
+      onOutsideClick();
+    }
+  };
+
   return (
-    <div>
+    <div
+      onMouseDown={handleMouseDown}
+      className={`fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm h-full
+        flex items-center justify-center z-50 transition-opacity duration-300 ease-in-out`}
+    >
       <div
         className={`
         fixed inset-0 bg-background-inverted bg-opacity-30 backdrop-blur-sm
@@ -51,9 +73,12 @@ export function Modal({
             {title && (
               <div className="pb-4">
                 <h2
-                  className={"my-auto font-bold " + (titleSize || "text-2xl")}
+                  className={`my-auto flex content-start gap-x-4 font-bold ${
+                    titleSize || "text-2xl"
+                  }`}
                 >
                   {title}
+                  {icon && icon({ size: 30 })}
                 </h2>
               </div>
             )}

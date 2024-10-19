@@ -1,7 +1,7 @@
 "use client";
 
 import { CombinedSettings } from "@/app/admin/settings/interfaces";
-import { createContext } from "react";
+import { createContext, useEffect, useState } from "react";
 
 export const SettingsContext = createContext<CombinedSettings | null>(null);
 
@@ -13,7 +13,7 @@ export function SettingsProvider({
   settings: CombinedSettings;
 }) {
   return (
-    <SettingsContext.Provider value={settings}>
+    <SettingsContext.Provider value={{ ...settings }}>
       {children}
     </SettingsContext.Provider>
   );

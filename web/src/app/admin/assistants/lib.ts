@@ -1,4 +1,5 @@
 import { Assistant, Prompt, StarterMessage } from "./interfaces";
+import { FullLLMProvider } from "../configuration/llm/interfaces";
 
 interface AssistantCreationRequest {
   name: string;
@@ -15,7 +16,13 @@ interface AssistantCreationRequest {
   starter_messages: StarterMessage[] | null;
   users?: string[];
   teamspace: number[];
-  tool_ids: number[]; // Added tool_ids to the interface
+  tool_ids: number[];
+  icon_color: string | null;
+  icon_shape: number | null;
+  remove_image?: boolean;
+  uploaded_image: File | null;
+  search_start_date: Date | null;
+  is_default_assistant: boolean;
 }
 
 interface AssistantUpdateRequest {
@@ -35,7 +42,12 @@ interface AssistantUpdateRequest {
   starter_messages: StarterMessage[] | null;
   users?: string[];
   teamspace: number[];
-  tool_ids: number[]; // Added tool_ids to the interface
+  tool_ids: number[];
+  icon_color: string | null;
+  icon_shape: number | null;
+  remove_image: boolean;
+  uploaded_image: File | null;
+  search_start_date: Date | null;
 }
 
 function promptNameFromAssistantName(assistantName: string) {
@@ -98,7 +110,8 @@ function updatePrompt({
 
 function buildAssistantAPIBody(
   creationRequest: AssistantCreationRequest | AssistantUpdateRequest,
-  promptId: number
+  promptId: number,
+  uploaded_image_id: string | null
 ) {
   const {
     name,
@@ -109,8 +122,17 @@ function buildAssistantAPIBody(
     is_public,
     teamspace,
     users,
-    tool_ids, // Added tool_ids to the destructuring
+    tool_ids,
+    icon_color,
+    icon_shape,
+    remove_image,
+    search_start_date,
   } = creationRequest;
+
+  const is_default_assistant =
+    "is_default_assistant" in creationRequest
+      ? creationRequest.is_default_assistant
+      : false;
 
   return {
     name,
@@ -127,8 +149,31 @@ function buildAssistantAPIBody(
     starter_messages: creationRequest.starter_messages,
     users,
     teamspace,
-    tool_ids, // Added tool_ids to the return object
+    tool_ids,
+    icon_color,
+    icon_shape,
+    uploaded_image_id,
+    remove_image,
+    search_start_date,
+    is_default_assistant,
   };
+}
+
+export async function uploadFile(file: File): Promise<string | null> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("/api/admin/assistant/upload-image", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    console.error("Failed to upload file");
+    return null;
+  }
+
+  const responseJson = await response.json();
+  return responseJson.file_id;
 }
 
 export async function createAssistant(
@@ -145,6 +190,14 @@ export async function createAssistant(
     ? (await createPromptResponse.json()).id
     : null;
 
+  let fileId = null;
+  if (assistantCreationRequest.uploaded_image) {
+    fileId = await uploadFile(assistantCreationRequest.uploaded_image);
+    if (!fileId) {
+      return [createPromptResponse, null];
+    }
+  }
+
   const createAssistantResponse =
     promptId !== null
       ? await fetch("/api/assistant", {
@@ -153,7 +206,7 @@ export async function createAssistant(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildAssistantAPIBody(assistantCreationRequest, promptId)
+            buildAssistantAPIBody(assistantCreationRequest, promptId, fileId)
           ),
         })
       : null;
@@ -188,6 +241,14 @@ export async function updateAssistant(
     promptId = promptResponse.ok ? (await promptResponse.json()).id : null;
   }
 
+  let fileId = null;
+  if (assistantUpdateRequest.uploaded_image) {
+    fileId = await uploadFile(assistantUpdateRequest.uploaded_image);
+    if (!fileId) {
+      return [promptResponse, null];
+    }
+  }
+
   const updateAssistantResponse =
     promptResponse.ok && promptId
       ? await fetch(`/api/assistant/${id}`, {
@@ -196,7 +257,7 @@ export async function updateAssistant(
             "Content-Type": "application/json",
           },
           body: JSON.stringify(
-            buildAssistantAPIBody(assistantUpdateRequest, promptId)
+            buildAssistantAPIBody(assistantUpdateRequest, promptId, fileId)
           ),
         })
       : null;
@@ -268,4 +329,51 @@ export function assistantComparator(a: Assistant, b: Assistant) {
   }
 
   return closerToZeroNegativesFirstComparator(a.id, b.id);
+}
+
+export const toggleAssistantVisibility = async (
+  assistantId: number,
+  isVisible: boolean
+) => {
+  const response = await fetch(`/api/admin/assistant/${assistantId}/visible`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      is_visible: !isVisible,
+    }),
+  });
+  return response;
+};
+
+export const toggleAssistantPublicStatus = async (
+  assistantId: number,
+  isPublic: boolean
+) => {
+  const response = await fetch(`/api/assistant/${assistantId}/public`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      is_public: isPublic,
+    }),
+  });
+  return response;
+};
+
+export function checkAssistantRequiresImageGeneration(assistant: Assistant) {
+  for (const tool of assistant.tools) {
+    if (tool.name === "ImageGenerationTool") {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function providersContainImageGeneratingSupport(
+  providers: FullLLMProvider[]
+) {
+  return providers.some((provider) => provider.provider === "openai");
 }

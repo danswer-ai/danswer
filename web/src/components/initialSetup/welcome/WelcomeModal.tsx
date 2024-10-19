@@ -8,7 +8,7 @@ import { COMPLETED_WELCOME_FLOW_COOKIE } from "./constants";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/BackButton";
 import { ApiKeyForm } from "@/components/llm/ApiKeyForm";
-import { WellKnownLLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
+import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { checkLlmProvider } from "./lib";
 import { User } from "@/lib/types";
 import { CustomModal } from "@/components/CustomModal";

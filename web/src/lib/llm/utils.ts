@@ -1,5 +1,5 @@
 import { Assistant } from "@/app/admin/assistants/interfaces";
-import { LLMProviderDescriptor } from "@/app/admin/models/llm/interfaces";
+import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { LlmOverride } from "@/lib/hooks";
 
 export function getFinalLLM(
@@ -15,7 +15,14 @@ export function getFinalLLM(
   let model = defaultProvider?.default_model_name || "";
 
   if (assistant) {
-    provider = assistant.llm_model_provider_override || provider;
+    // Map "provider override" to actual LLLMProvider
+    if (assistant.llm_model_provider_override) {
+      const underlyingProvider = llmProviders.find(
+        (item: LLMProviderDescriptor) =>
+          item.name === assistant.llm_model_provider_override
+      );
+      provider = underlyingProvider?.provider || provider;
+    }
     model = assistant.llm_model_version_override || model;
   }
 
@@ -27,20 +34,78 @@ export function getFinalLLM(
   return [provider, model];
 }
 
-const MODELS_SUPPORTING_IMAGES = [
+export function getLLMProviderOverrideForAssistant(
+  liveAssistant: Assistant,
+  llmProviders: LLMProviderDescriptor[]
+): LlmOverride | null {
+  const overrideProvider = liveAssistant.llm_model_provider_override;
+  const overrideModel = liveAssistant.llm_model_version_override;
+
+  if (!overrideModel) {
+    return null;
+  }
+
+  const matchingProvider = llmProviders.find(
+    (provider) =>
+      (overrideProvider ? provider.name === overrideProvider : true) &&
+      provider.model_names.includes(overrideModel)
+  );
+
+  if (matchingProvider) {
+    return {
+      name: matchingProvider.name,
+      provider: matchingProvider.provider,
+      modelName: overrideModel,
+    };
+  }
+
+  return null;
+}
+
+const MODEL_NAMES_SUPPORTING_IMAGE_INPUT = [
+  "gpt-4o",
+  "gpt-4o-mini",
+  "gpt-4-vision-preview",
+  "gpt-4-turbo",
+  "gpt-4-1106-vision-preview",
+  "gpt-4o",
+  "gpt-4o-mini",
+  "gpt-4-vision-preview",
+  "gpt-4-turbo",
+  "gpt-4-1106-vision-preview",
+  "claude-3-5-sonnet-20240620",
+  "claude-3-opus-20240229",
+  "claude-3-sonnet-20240229",
+  "claude-3-haiku-20240307",
+  "anthropic.claude-3-opus-20240229-v1:0",
+  "anthropic.claude-3-sonnet-20240229-v1:0",
+  "anthropic.claude-3-haiku-20240307-v1:0",
+  "anthropic.claude-3-5-sonnet-20240620-v1:0",
+];
+
+export function checkLLMSupportsImageInput(model: string) {
+  return MODEL_NAMES_SUPPORTING_IMAGE_INPUT.some(
+    (modelName) => modelName === model
+  );
+}
+
+const MODEL_PROVIDER_PAIRS_SUPPORTING_IMAGE_OUTPUT = [
   ["openai", "gpt-4o"],
+  ["openai", "gpt-4o-mini"],
   ["openai", "gpt-4-vision-preview"],
   ["openai", "gpt-4-turbo"],
   ["openai", "gpt-4-1106-vision-preview"],
   ["azure", "gpt-4o"],
+  ["azure", "gpt-4o-mini"],
   ["azure", "gpt-4-vision-preview"],
   ["azure", "gpt-4-turbo"],
   ["azure", "gpt-4-1106-vision-preview"],
 ];
 
-export function checkLLMSupportsImageInput(provider: string, model: string) {
-  return MODELS_SUPPORTING_IMAGES.some(
-    ([p, m]) => p === provider && m === model
+export function checkLLMSupportsImageOutput(provider: string, model: string) {
+  return MODEL_PROVIDER_PAIRS_SUPPORTING_IMAGE_OUTPUT.some(
+    (modelProvider) =>
+      modelProvider[0] === provider && modelProvider[1] === model
   );
 }
 

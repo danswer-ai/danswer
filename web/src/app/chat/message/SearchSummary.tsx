@@ -1,7 +1,13 @@
-import { Search } from "lucide-react";
+import {
+  BasicClickable,
+  EmphasizedClickable,
+} from "@/components/BasicClickable";
+import { HoverPopup } from "@/components/HoverPopup";
+import { Hoverable } from "@/components/Hoverable";
+import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { X, Check, Pencil } from "lucide-react";
+import { X, Check, Pencil, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
 
@@ -50,16 +56,16 @@ export function ShowHideDocsButton({
 export function SearchSummary({
   query,
   hasDocs,
+  finished,
   messageId,
-  isCurrentlyShowingRetrieved,
   handleShowRetrieved,
   handleSearchQueryEdit,
   handleToggleSideBar,
 }: {
+  finished: boolean;
   query: string;
   hasDocs: boolean;
   messageId: number | null;
-  isCurrentlyShowingRetrieved: boolean;
   handleShowRetrieved: (messageId: number | null) => void;
   handleSearchQueryEdit?: (query: string) => void;
   handleToggleSideBar?: () => void;
@@ -107,7 +113,7 @@ export function SearchSummary({
     >
       <Search size={16} className="shrink-0 mr-2" />
       <div className="line-clamp-1 break-all px-0.5" ref={searchingForRef}>
-        Searching for: <i>{finalQuery}</i>
+        {finished ? "Searched" : "Searching"} for: <i> {finalQuery}</i>
       </div>
     </div>
   );
@@ -202,14 +208,6 @@ export function SearchSummary({
             </div>
           )}
         </>
-      )}
-      {hasDocs && (
-        <ShowHideDocsButton
-          messageId={messageId}
-          isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
-          handleShowRetrieved={handleShowRetrieved}
-          handleToggleSideBar={handleToggleSideBar}
-        />
       )}
     </div>
   );

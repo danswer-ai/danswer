@@ -2,7 +2,7 @@
 
 import { Assistant } from "./interfaces";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
 import { deleteAssistant, assistantComparator } from "./lib";
@@ -14,9 +14,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { useUser } from "@/components/user/UserProvider";
 
 function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
-  if (assistant.default_assistant) {
+  if (assistant.builtin_assistant) {
     return <p className="whitespace-nowrap">Built-In</p>;
   }
 
@@ -27,21 +28,34 @@ function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
   return <p>Assistant {assistant.owner && <>({assistant.owner.email})</>}</p>;
 }
 
-export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
+export function AssistantsTable({
+  allAssistants,
+  editableAssistants,
+}: {
+  allAssistants: Assistant[];
+  editableAssistants: Assistant[];
+}) {
   const router = useRouter();
   const { toast } = useToast();
+  const { isLoadingUser, isAdmin } = useUser();
 
-  const availableAssistantIds = new Set(
-    assistants.map((assistant) => assistant.id.toString())
-  );
-  const sortedAssistants = [...assistants];
-  sortedAssistants.sort(assistantComparator);
+  const editableAssistantIds = useMemo(() => {
+    return new Set(editableAssistants.map((p) => p.id.toString()));
+  }, [editableAssistants]);
+
+  const sortedAssistants = useMemo(() => {
+    const editable = editableAssistants.sort(assistantComparator);
+    const nonEditable = allAssistants
+      .filter((p) => !editableAssistantIds.has(p.id.toString()))
+      .sort(assistantComparator);
+    return [...editable, ...nonEditable];
+  }, [allAssistants, editableAssistantIds, editableAssistants]);
 
   const [finalAssistants, setFinalAssistants] = useState<string[]>(
     sortedAssistants.map((assistant) => assistant.id.toString())
   );
   const finalAssistantValues = finalAssistants
-    .filter((id) => availableAssistantIds.has(id))
+    .filter((id) => new Set(allAssistants.map((p) => p.id.toString())).has(id))
     .map((id) => {
       return sortedAssistants.find(
         (assistant) => assistant.id.toString() === id
@@ -77,6 +91,10 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
     }
   };
 
+  if (isLoadingUser) {
+    return <></>;
+  }
+
   return (
     <div>
       <p className="pb-4 text-sm">
@@ -89,6 +107,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
         <CardContent className="p-0">
           <DraggableTable
             headers={["Name", "Description", "Type", "Is Visible", "Delete"]}
+            isAdmin={isAdmin}
             rows={finalAssistantValues.map((assistant) => {
               return {
                 id: assistant.id.toString(),
@@ -102,7 +121,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                       )
                     }
                   >
-                    {!assistant.default_assistant && <Pencil size={16} />}
+                    {!assistant.builtin_assistant && <Pencil size={16} />}
                     <p className="text font-medium whitespace-normal break-none">
                       {assistant.name}
                     </p>
@@ -158,7 +177,7 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                   </Badge>,
                   <div key="edit" className="flex">
                     <div className="mx-auto my-auto">
-                      {!assistant.default_assistant ? (
+                      {!assistant.builtin_assistant ? (
                         <CustomTooltip
                           trigger={
                             <Button

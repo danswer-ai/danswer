@@ -34,7 +34,7 @@ def llm_eval_section(
                 "content": SECTION_FILTER_PROMPT.format(
                     title=title.replace("\n", " "),
                     chunk_text=section_content,
-                    query=query,
+                    user_query=query,
                     optional_metadata=metadata_str,
                 ),
             },

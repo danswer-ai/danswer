@@ -13,7 +13,9 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 from fastapi import status
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_users import BaseUserManager
+from fastapi_users import exceptions
 from fastapi_users import FastAPIUsers
 from fastapi_users import models
 from fastapi_users import schemas
@@ -30,6 +32,7 @@ from sqlalchemy.orm import Session
 from enmedd.auth.invited_users import get_invited_users
 from enmedd.auth.schemas import UserCreate
 from enmedd.auth.schemas import UserRole
+from enmedd.auth.schemas import UserUpdate
 from enmedd.auth.utils import generate_password_reset_email
 from enmedd.auth.utils import generate_user_verification_email
 from enmedd.auth.utils import send_reset_password_email
@@ -165,7 +168,27 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 user_create.role = UserRole.ADMIN
             else:
                 user_create.role = UserRole.BASIC
-        return await super().create(user_create, safe=safe, request=request)  # type: ignore
+        user = None
+        try:
+            user = await super().create(user_create, safe=safe, request=request)  # type: ignore
+        except exceptions.UserAlreadyExists:
+            user = await self.get_by_email(user_create.email)
+            # Handle case where user has used product outside of web and is now creating an account through web
+            if (
+                not user.has_web_login
+                and hasattr(user_create, "has_web_login")
+                and user_create.has_web_login
+            ):
+                user_update = UserUpdate(
+                    password=user_create.password,
+                    has_web_login=True,
+                    role=user_create.role,
+                    is_verified=user_create.is_verified,
+                )
+                user = await self.update(user_update, user)
+            else:
+                raise exceptions.UserAlreadyExists()
+        return user
 
     async def oauth_callback(
         self: "BaseUserManager[models.UOAP, models.ID]",
@@ -239,6 +262,32 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         subject, body = generate_user_verification_email(user.full_name, link)
         send_user_verification_email(user.email, subject, body)
 
+    async def authenticate(
+        self, credentials: OAuth2PasswordRequestForm
+    ) -> Optional[User]:
+        try:
+            user = await self.get_by_email(credentials.username)
+        except exceptions.UserNotExists:
+            self.password_helper.hash(credentials.password)
+            return None
+
+        if not user.has_web_login:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
+            )
+
+        verified, updated_password_hash = self.password_helper.verify_and_update(
+            credentials.password, user.hashed_password
+        )
+        if not verified:
+            return None
+
+        if updated_password_hash is not None:
+            await self.user_db.update(user, {"hashed_password": updated_password_hash})
+
+        return user
+
 
 async def get_user_manager(
     user_db: SQLAlchemyUserDatabase = Depends(get_user_db),
@@ -258,6 +307,7 @@ def get_database_strategy(
     strategy = DatabaseStrategy(
         access_token_db, lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS  # type: ignore
     )
+    return strategy
 
     return strategy
 
@@ -383,7 +433,6 @@ async def current_user(
     return await double_check_user(user)
 
 
-# TODO:  remove the curator role
 async def current_curator_or_admin_user(
     user: User | None = Depends(current_user),
 ) -> User | None:

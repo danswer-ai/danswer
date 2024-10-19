@@ -9,6 +9,7 @@ from jira.resources import Issue
 
 from enmedd.configs.app_configs import INDEX_BATCH_SIZE
 from enmedd.configs.app_configs import JIRA_CONNECTOR_LABELS_TO_SKIP
+from enmedd.configs.app_configs import JIRA_CONNECTOR_MAX_TICKET_SIZE
 from enmedd.configs.constants import DocumentSource
 from enmedd.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from enmedd.connectors.interfaces import GenerateDocumentsOutput
@@ -45,15 +46,30 @@ def extract_jira_project(url: str) -> tuple[str, str]:
     return jira_base, jira_project
 
 
-def extract_text_from_content(content: dict) -> str:
+def extract_text_from_adf(adf: dict | None) -> str:
+    """Extracts plain text from Atlassian Document Format:
+    https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/
+
+    WARNING: This function is incomplete and will e.g. skip lists!
+    """
     texts = []
-    if "content" in content:
-        for block in content["content"]:
+    if adf is not None and "content" in adf:
+        for block in adf["content"]:
             if "content" in block:
                 for item in block["content"]:
                     if item["type"] == "text":
                         texts.append(item["text"])
     return " ".join(texts)
+
+
+def best_effort_get_field_from_issue(jira_issue: Issue, field: str) -> Any:
+    if hasattr(jira_issue.fields, field):
+        return getattr(jira_issue.fields, field)
+
+    try:
+        return jira_issue.raw["fields"][field]
+    except Exception:
+        return None
 
 
 def _get_comment_strs(
@@ -62,18 +78,15 @@ def _get_comment_strs(
     comment_strs = []
     for comment in jira.fields.comment.comments:
         try:
-            if hasattr(comment, "body"):
-                body_text = extract_text_from_content(comment.raw["body"])
-            elif hasattr(comment, "raw"):
-                body = comment.raw.get("body", "No body content available")
-                body_text = (
-                    extract_text_from_content(body) if isinstance(body, dict) else body
-                )
-            else:
-                body_text = "No body attribute found"
+            body_text = (
+                comment.body
+                if JIRA_API_VERSION == "2"
+                else extract_text_from_adf(comment.raw["body"])
+            )
 
             if (
                 hasattr(comment, "author")
+                and hasattr(comment.author, "emailAddress")
                 and comment.author.emailAddress in comment_email_blacklist
             ):
                 continue  # Skip adding comment if author's email is in blacklist
@@ -116,10 +129,23 @@ def fetch_jira_issues_batch(
             )
             continue
 
-        comments = _get_comment_strs(jira, comment_email_blacklist)
-        semantic_rep = f"{jira.fields.description}\n" + "\n".join(
-            [f"Comment: {comment}" for comment in comments]
+        description = (
+            jira.fields.description
+            if JIRA_API_VERSION == "2"
+            else extract_text_from_adf(jira.raw["fields"]["description"])
         )
+        comments = _get_comment_strs(jira, comment_email_blacklist)
+        ticket_content = f"{description}\n" + "\n".join(
+            [f"Comment: {comment}" for comment in comments if comment]
+        )
+
+        # Check ticket size
+        if len(ticket_content.encode("utf-8")) > JIRA_CONNECTOR_MAX_TICKET_SIZE:
+            logger.info(
+                f"Skipping {jira.key} because it exceeds the maximum size of "
+                f"{JIRA_CONNECTOR_MAX_TICKET_SIZE} bytes."
+            )
+            continue
 
         page_url = f"{jira_client.client_info()}/browse/{jira.key}"
 
@@ -147,19 +173,23 @@ def fetch_jira_issues_batch(
             pass
 
         metadata_dict = {}
-        if jira.fields.priority:
-            metadata_dict["priority"] = jira.fields.priority.name
-        if jira.fields.status:
-            metadata_dict["status"] = jira.fields.status.name
-        if jira.fields.resolution:
-            metadata_dict["resolution"] = jira.fields.resolution.name
-        if jira.fields.labels:
-            metadata_dict["label"] = jira.fields.labels
+        priority = best_effort_get_field_from_issue(jira, "priority")
+        if priority:
+            metadata_dict["priority"] = priority.name
+        status = best_effort_get_field_from_issue(jira, "status")
+        if status:
+            metadata_dict["status"] = status.name
+        resolution = best_effort_get_field_from_issue(jira, "resolution")
+        if resolution:
+            metadata_dict["resolution"] = resolution.name
+        labels = best_effort_get_field_from_issue(jira, "labels")
+        if labels:
+            metadata_dict["label"] = labels
 
         doc_batch.append(
             Document(
                 id=page_url,
-                sections=[Section(link=page_url, text=semantic_rep)],
+                sections=[Section(link=page_url, text=ticket_content)],
                 source=DocumentSource.JIRA,
                 semantic_identifier=jira.fields.summary,
                 doc_updated_at=time_str_to_utc(jira.fields.updated),
@@ -215,10 +245,12 @@ class JiraConnector(LoadConnector, PollConnector):
         if self.jira_client is None:
             raise ConnectorMissingCredentialError("Jira")
 
+        # Quote the project name to handle reserved words
+        quoted_project = f'"{self.jira_project}"'
         start_ind = 0
         while True:
             doc_batch, fetched_batch_size = fetch_jira_issues_batch(
-                jql=f"project = {self.jira_project}",
+                jql=f"project = {quoted_project}",
                 start_index=start_ind,
                 jira_client=self.jira_client,
                 batch_size=self.batch_size,
@@ -246,8 +278,10 @@ class JiraConnector(LoadConnector, PollConnector):
             "%Y-%m-%d %H:%M"
         )
 
+        # Quote the project name to handle reserved words
+        quoted_project = f'"{self.jira_project}"'
         jql = (
-            f"project = {self.jira_project} AND "
+            f"project = {quoted_project} AND "
             f"updated >= '{start_date_str}' AND "
             f"updated <= '{end_date_str}'"
         )

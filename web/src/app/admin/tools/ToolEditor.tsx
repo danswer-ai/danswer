@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Formik, Form, ErrorMessage } from "formik";
+import {
+  Formik,
+  Form,
+  ErrorMessage,
+  FieldArray,
+  ArrayHelpers,
+  Field,
+} from "formik";
 import * as Yup from "yup";
 import { MethodSpec, ToolSnapshot } from "@/lib/tools/interfaces";
 import { TextFormField } from "@/components/admin/connectors/Field";
@@ -24,6 +31,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
+import Link from "next/link";
 
 function parseJsonWithTrailingCommas(jsonString: string) {
   // Regular expression to remove trailing commas before } or ]
@@ -64,29 +73,33 @@ function ToolForm({
 }) {
   const [definitionError, setDefinitionError] = definitionErrorState;
   const [methodSpecs, setMethodSpecs] = methodSpecsState;
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   const debouncedValidateDefinition = useCallback(
-    debounce(async (definition: string) => {
-      try {
-        const parsedDefinition = parseJsonWithTrailingCommas(definition);
-        const response = await validateToolDefinition({
-          definition: parsedDefinition,
-        });
-        if (response.error) {
+    (definition: string) => {
+      const validateDefinition = async () => {
+        try {
+          const parsedDefinition = parseJsonWithTrailingCommas(definition);
+          const response = await validateToolDefinition({
+            definition: parsedDefinition,
+          });
+          if (response.error) {
+            setMethodSpecs(null);
+            setDefinitionError(response.error);
+          } else {
+            setMethodSpecs(response.data);
+            setDefinitionError(null);
+          }
+        } catch (error) {
+          console.log(error);
           setMethodSpecs(null);
-          setDefinitionError(response.error);
-        } else {
-          setMethodSpecs(response.data);
-          setDefinitionError(null);
+          setDefinitionError("Invalid JSON format");
         }
-      } catch (error) {
-        // TODO: Take a look into this more
-        console.log(error);
-        setMethodSpecs(null);
-        setDefinitionError("Invalid JSON format");
-      }
-    }, 300),
-    []
+      };
+
+      debounce(validateDefinition, 300)();
+    },
+    [setMethodSpecs, setDefinitionError]
   );
 
   useEffect(() => {
@@ -96,8 +109,8 @@ function ToolForm({
   }, [values.definition, debouncedValidateDefinition]);
 
   return (
-    <Form>
-      <div className="relative">
+    <Form className="max-w-4xl">
+      <div className="relative w-full">
         <TextFormField
           name="definition"
           label="Definition"
@@ -138,6 +151,28 @@ function ToolForm({
         component="div"
         className="text-sm text-error"
       />
+      <div className="mt-4 text-sm bg-blue-50 p-4 rounded-md border border-blue-200">
+        <Link
+          href="https://docs.danswer.dev/tools/custom"
+          className="text-link hover:underline flex items-center"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 mr-2"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Learn more about tool calling in our documentation
+        </Link>
+      </div>
 
       {methodSpecs && methodSpecs.length > 0 && (
         <div className="pt-4">
@@ -169,6 +204,72 @@ function ToolForm({
         </div>
       )}
 
+      <AdvancedOptionsToggle
+        showAdvancedOptions={showAdvancedOptions}
+        setShowAdvancedOptions={setShowAdvancedOptions}
+      />
+      {showAdvancedOptions && (
+        <div>
+          <h3 className="text-xl font-bold mb-2 text-primary-600">
+            Custom Headers
+          </h3>
+          <p className="text-sm mb-6 text-gray-600 italic">
+            Specify custom headers for each request to this tool&apos;s API.
+          </p>
+          <FieldArray
+            name="customHeaders"
+            render={(arrayHelpers: ArrayHelpers) => (
+              <div className="space-y-4">
+                {values.customHeaders && values.customHeaders.length > 0 && (
+                  <div className="space-y-3">
+                    {values.customHeaders.map(
+                      (
+                        header: { key: string; value: string },
+                        index: number
+                      ) => (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg shadow-sm"
+                        >
+                          <Field
+                            name={`customHeaders.${index}.key`}
+                            placeholder="Header Key"
+                            className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          <Field
+                            name={`customHeaders.${index}.value`}
+                            placeholder="Header Value"
+                            className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          />
+                          <Button
+                            type="button"
+                            onClick={() => arrayHelpers.remove(index)}
+                            color="red"
+                            size="sm"
+                            className="transition-colors duration-200 hover:bg-red-600"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+                <Button
+                  type="button"
+                  onClick={() => arrayHelpers.push({ key: "", value: "" })}
+                  color="blue"
+                  className="transition-colors duration-200"
+                >
+                  Add New Header
+                </Button>
+              </div>
+            )}
+          />
+        </div>
+      )}
+
       <div className="flex pt-4">
         <Button
           className="mx-auto"
@@ -184,10 +285,19 @@ function ToolForm({
 
 interface ToolFormValues {
   definition: string;
+  customHeaders: { key: string; value: string }[];
 }
 
 const ToolSchema = Yup.object().shape({
   definition: Yup.string().required("Tool definition is required"),
+  customHeaders: Yup.array()
+    .of(
+      Yup.object().shape({
+        key: Yup.string().required("Header key is required"),
+        value: Yup.string().required("Header value is required"),
+      })
+    )
+    .default([]),
 });
 
 export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
@@ -204,6 +314,10 @@ export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
     <Formik
       initialValues={{
         definition: prettifiedDefinition,
+        customHeaders: tool?.custom_headers?.map((header) => ({
+          key: header.key,
+          value: header.value,
+        })) ?? [{ key: "test", value: "value" }],
       }}
       validationSchema={ToolSchema}
       onSubmit={async (values: ToolFormValues) => {
@@ -221,6 +335,7 @@ export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
           name: name,
           description: description || "",
           definition: definition,
+          custom_headers: values.customHeaders,
         };
         let response;
         if (tool) {

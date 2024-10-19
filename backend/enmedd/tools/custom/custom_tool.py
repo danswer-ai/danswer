@@ -8,7 +8,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 
-from enmedd.dynamic_configs.interface import JSON_ro
+from enmedd.key_value_store.interface import JSON_ro
 from enmedd.llm.answering.models import PreviousMessage
 from enmedd.llm.interfaces import LLM
 from enmedd.tools.custom.base_tool_types import ToolResultType

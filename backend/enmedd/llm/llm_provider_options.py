@@ -24,15 +24,17 @@ class WellKnownLLMProviderDescriptor(BaseModel):
 
 OPENAI_PROVIDER_NAME = "openai"
 OPEN_AI_MODEL_NAMES = [
+    "o1-mini",
+    "o1-preview",
     "gpt-4",
     "gpt-4o",
+    "gpt-4o-mini",
     "gpt-4-turbo",
     "gpt-4-turbo-preview",
     "gpt-4-1106-preview",
     "gpt-4-vision-preview",
-    # "gpt-4-32k", # not EOL but still doesnt work
     "gpt-4-0613",
-    # "gpt-4-32k-0613", # not EOL but still doesnt work
+    "gpt-4o-2024-08-06",
     "gpt-4-0314",
     "gpt-4-32k-0314",
     "gpt-3.5-turbo",
@@ -47,9 +49,11 @@ OPEN_AI_MODEL_NAMES = [
 BEDROCK_PROVIDER_NAME = "bedrock"
 # need to remove all the weird "bedrock/eu-central-1/anthropic.claude-v1" named
 # models
-BEDROCK_MODEL_NAMES = [model for model in litellm.bedrock_models if "/" not in model][
-    ::-1
-]
+BEDROCK_MODEL_NAMES = [
+    model
+    for model in litellm.bedrock_models
+    if "/" not in model and "embed" not in model
+][::-1]
 
 IGNORABLE_ANTHROPIC_MODELS = [
     "claude-2",
@@ -83,7 +87,7 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
             custom_config_keys=[],
             llm_names=fetch_models_for_provider(OPENAI_PROVIDER_NAME),
             default_model="gpt-4",
-            default_fast_model="gpt-3.5-turbo",
+            default_fast_model="gpt-4o-mini",
         ),
         WellKnownLLMProviderDescriptor(
             name=ANTHROPIC_PROVIDER_NAME,
@@ -93,8 +97,8 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
             api_version_required=False,
             custom_config_keys=[],
             llm_names=fetch_models_for_provider(ANTHROPIC_PROVIDER_NAME),
-            default_model="claude-3-opus-20240229",
-            default_fast_model="claude-3-sonnet-20240229",
+            default_model="claude-3-5-sonnet-20240620",
+            default_fast_model="claude-3-5-sonnet-20240620",
         ),
         WellKnownLLMProviderDescriptor(
             name=AZURE_PROVIDER_NAME,
@@ -126,8 +130,8 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
                 ),
             ],
             llm_names=fetch_models_for_provider(BEDROCK_PROVIDER_NAME),
-            default_model="anthropic.claude-3-sonnet-20240229-v1:0",
-            default_fast_model="anthropic.claude-3-haiku-20240307-v1:0",
+            default_model="anthropic.claude-3-5-sonnet-20240620-v1:0",
+            default_fast_model="anthropic.claude-3-5-sonnet-20240620-v1:0",
         ),
     ]
 

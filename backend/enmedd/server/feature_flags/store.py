@@ -4,8 +4,8 @@ from fastapi import Depends
 
 from enmedd.auth.users import current_admin_user
 from enmedd.db.models import User
-from enmedd.dynamic_configs.factory import get_dynamic_config_store
-from enmedd.dynamic_configs.interface import ConfigNotFoundError
+from enmedd.key_value_store.factory import get_dynamic_config_store
+from enmedd.key_value_store.interface import ConfigNotFoundError
 from enmedd.server.feature_flags.models import FeatureFlags
 from enmedd.utils.logger import setup_logger
 

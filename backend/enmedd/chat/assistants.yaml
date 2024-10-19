@@ -4,7 +4,7 @@ assistants:
   # This id field can be left blank for other default assistants, however an id 0 assistant must exist
   # Careful setting specific IDs, this won't autoincrement the next ID value for postgres
   - id: 0
-    name: "enMedD AI"
+    name: "Knowledge"
     description: >
       Assistant with access to documents from your Connected Sources.
     # Default Prompt objects attached to the assistant, see prompts.yaml
@@ -36,34 +36,15 @@ assistants:
     #   - "Engineer Onboarding"
     #   - "Benefits"
     document_sets: []
-    starter_messages:
-      [
-        {
-          "name": "Business Advice",
-          "description": "Ask me anything about starting, running, or growing a business.",
-          "message": "What business advice do you need?",
-        },
-        {
-          "name": "Marketing Strategy",
-          "description": "Let's discuss your target audience, messaging, and channels.",
-          "message": "How can I improve my marketing strategy?",
-        },
-        {
-          "name": "Financial Planning",
-          "description": "Ask me about budgeting, cash flow, or investment.",
-          "message": "Do you have any questions about business finance?",
-        },
-        {
-          "name": "Employee Management",
-          "description": "Let's discuss hiring, onboarding, performance reviews, or team building.",
-          "message": "How can I improve my employee management skills?",
-        },
-      ]
+    icon_shape: 23013
+    icon_color: "#6FB1FF"
+    display_priority: 1
+    is_visible: true
 
   - id: 1
-    name: "GPT"
+    name: "General"
     description: >
-      Assistant with no access to documents. Chat with just the Language Model.
+      Assistant with no access to documents. Chat with just the Large Language Model.
     prompts:
       - "OnlyLLM"
     num_chunks: 0
@@ -71,6 +52,10 @@ assistants:
     llm_filter_extraction: true
     recency_bias: "auto"
     document_sets: []
+    icon_shape: 50910
+    icon_color: "#FF6F6F"
+    display_priority: 0
+    is_visible: true
 
   - id: 2
     name: "Paraphrase"
@@ -83,3 +68,25 @@ assistants:
     llm_filter_extraction: true
     recency_bias: "auto"
     document_sets: []
+    icon_shape: 45519
+    icon_color: "#6FFF8D"
+    display_priority: 2
+    is_visible: false
+
+
+  - id: 3
+    name: "Art"
+    description: >
+      Assistant for generating images based on descriptions.
+    prompts:
+      - "ImageGeneration"
+    num_chunks: 0
+    llm_relevance_filter: false
+    llm_filter_extraction: false
+    recency_bias: "no_decay"
+    document_sets: []
+    icon_shape: 234124 
+    icon_color: "#9B59B6"
+    image_generation: true 
+    display_priority: 3
+    is_visible: true

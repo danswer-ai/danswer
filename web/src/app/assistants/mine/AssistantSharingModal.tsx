@@ -80,7 +80,11 @@ export function AssistantSharingModal({
   let sharedStatus = null;
   if (assistant.is_public || !sharedUsersWithoutOwner.length) {
     sharedStatus = (
-      <AssistantSharedStatusDisplay assistant={assistant} user={user} />
+      <AssistantSharedStatusDisplay
+        size="md"
+        assistant={assistant}
+        user={user}
+      />
     );
   } else {
     sharedStatus = (

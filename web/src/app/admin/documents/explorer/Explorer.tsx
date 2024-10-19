@@ -14,12 +14,13 @@ import { HorizontalFilters } from "@/components/search/filtering/Filters";
 import { useFilters } from "@/lib/hooks";
 import { buildFilters } from "@/lib/search/utils";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
-import { Connector, DocumentSet } from "@/lib/types";
+import { DocumentSet } from "@/lib/types";
 import { SourceIcon } from "@/components/SourceIcon";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { Connector } from "@/lib/connectors/connectors";
 
 const DocumentDisplay = ({
   document,
@@ -181,7 +182,11 @@ export function Explorer({
               setQuery(event.target.value);
             }}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
+              if (
+                event.key === "Enter" &&
+                !event.shiftKey &&
+                !(event.nativeEvent as any).isComposing
+              ) {
                 onSearch(query);
                 event.preventDefault();
               }
@@ -212,8 +217,8 @@ export function Explorer({
         </div>
       )}
       {!query && (
-        <p className="flex mt-3 text-sm">
-          Search for a document above to modify it&apos;s boost or hide it from
+        <p className="flex text-emphasis mt-3">
+          Search for a document above to modify its boost or hide it from
           searches.
         </p>
       )}

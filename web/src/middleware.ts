@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "./lib/constants";
 
+// NOTE: have to have the "/:path*" here since NextJS doesn't allow any real JS to
+// be run before the config is defined e.g. if we try and do a .map it will complain
 const eePaths = [
   "/admin/teams",
   "/admin/api-key",
@@ -9,15 +11,20 @@ const eePaths = [
   "/admin/performance/query-history",
   "/admin/whitelabeling",
   "/admin/performance/custom-analytics",
+  "/admin/standard-answer/:path*",
 ];
-const eePathsForMatcher = eePaths.map((path) => `${path}/:path*`);
+
+// removes the "/:path*" from the end
+const strippedEEPaths = eePaths.map((path) =>
+  path.replace(/(.*):\path\*$/, "$1").replace(/\/$/, "")
+);
 
 export async function middleware(request: NextRequest) {
   if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
     const pathname = request.nextUrl.pathname;
 
     // Check if the current path is in the eePaths list
-    if (eePaths.some((path) => pathname.startsWith(path))) {
+    if (strippedEEPaths.some((path) => pathname.startsWith(path))) {
       // Add '/ee' to the beginning of the pathname
       const newPathname = `/ee${pathname}`;
 
@@ -35,5 +42,5 @@ export async function middleware(request: NextRequest) {
 
 // Specify the paths that the middleware should run for
 export const config = {
-  matcher: eePathsForMatcher,
+  matcher: eePaths,
 };

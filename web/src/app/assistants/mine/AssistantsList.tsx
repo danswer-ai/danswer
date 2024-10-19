@@ -4,7 +4,6 @@ import { useState } from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import Link from "next/link";
-import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import {
   addAssistantToList,
   moveAssistantDown,
@@ -21,7 +20,6 @@ import { AssistantSharingModal } from "./AssistantSharingModal";
 import { AssistantSharedStatusDisplay } from "../AssistantSharedStatus";
 import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { ToolsDisplay } from "../ToolsDisplay";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -42,6 +40,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Divider } from "@/components/Divider";
+import { orderAssistantsForUser } from "@/lib/assistants/utils";
+import { AssistantTools } from "../ToolsDisplay";
 
 function AssistantListItem({
   assistant,
@@ -99,7 +99,7 @@ function AssistantListItem({
             </h2>
           </div>
           {assistant.tools.length > 0 && (
-            <ToolsDisplay tools={assistant.tools} />
+            <AssistantTools assistant={assistant} />
           )}
           <div className="text-sm mt-2">{assistant.description}</div>
           <div className="mt-2">
@@ -212,10 +212,7 @@ function AssistantListItem({
                     return;
                   }
 
-                  const success = await removeAssistantFromList(
-                    assistant.id,
-                    currentChosenAssistants || allAssistantIds
-                  );
+                  const success = await removeAssistantFromList(assistant.id);
                   if (success) {
                     toast({
                       title: "Removal Successful",
@@ -237,10 +234,7 @@ function AssistantListItem({
             ) : (
               <DropdownMenuItem
                 onClick={async () => {
-                  const success = await addAssistantToList(
-                    assistant.id,
-                    currentChosenAssistants || allAssistantIds
-                  );
+                  const success = await addAssistantToList(assistant.id);
                   if (success) {
                     toast({
                       title: "Addition Successful",
@@ -328,7 +322,7 @@ export function AssistantsList({ user, assistants }: AssistantsListProps) {
       </p>
 
       <div className="w-full py-4 mt-3">
-        {filteredAssistants.map((assistant, index) => (
+        {filteredAssistants.map((assistant: Assistant, index: number) => (
           <AssistantListItem
             key={assistant.id}
             assistant={assistant}

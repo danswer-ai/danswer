@@ -10,33 +10,37 @@ are multiple connector / credential pairs that have indexed it
 connector / credential pair from the access list
 (6) delete all relevant entries from postgres
 """
-import time
-
+from celery import shared_task
+from celery import Task
+from celery.exceptions import SoftTimeLimitExceeded
+from celery.utils.log import get_task_logger
 from sqlalchemy.orm import Session
 
+from enmedd.access.access import get_access_for_document
 from enmedd.access.access import get_access_for_documents
-from enmedd.db.connector import fetch_connector_by_id
-from enmedd.db.connector_credential_pair import (
-    delete_connector_credential_pair__no_commit,
-)
 from enmedd.db.document import delete_document_by_connector_credential_pair__no_commit
+from enmedd.db.document import delete_documents_by_connector_credential_pair__no_commit
 from enmedd.db.document import delete_documents_complete__no_commit
+from enmedd.db.document import get_document
+from enmedd.db.document import get_document_connector_count
 from enmedd.db.document import get_document_connector_counts
-from enmedd.db.document import get_documents_for_connector_credential_pair
+from enmedd.db.document import mark_document_as_synced
 from enmedd.db.document import prepare_to_modify_documents
-from enmedd.db.document_set import get_document_sets_by_ids
-from enmedd.db.document_set import (
-    mark_cc_pair__document_set_relationships_to_be_deleted__no_commit,
-)
+from enmedd.db.document_set import fetch_document_sets_for_document
+from enmedd.db.document_set import fetch_document_sets_for_documents
 from enmedd.db.engine import get_sqlalchemy_engine
-from enmedd.db.index_attempt import delete_index_attempts
-from enmedd.db.models import ConnectorCredentialPair
+from enmedd.document_index.document_index_utils import get_both_index_names
+from enmedd.document_index.factory import get_default_document_index
 from enmedd.document_index.interfaces import DocumentIndex
 from enmedd.document_index.interfaces import UpdateRequest
+from enmedd.document_index.interfaces import VespaDocumentFields
 from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
 from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
+
+# use this within celery tasks to get celery task specific logging
+task_logger = get_task_logger(__name__)
 
 _DELETION_BATCH_SIZE = 1000
 
@@ -57,13 +61,15 @@ def delete_connector_credential_pair_batch(
         with prepare_to_modify_documents(
             db_session=db_session, document_ids=document_ids
         ):
-            document_connector_cnts = get_document_connector_counts(
+            document_connector_counts = get_document_connector_counts(
                 db_session=db_session, document_ids=document_ids
             )
 
             # figure out which docs need to be completely deleted
             document_ids_to_delete = [
-                document_id for document_id, cnt in document_connector_cnts if cnt == 1
+                document_id
+                for document_id, cnt in document_connector_counts
+                if cnt == 1
             ]
             logger.debug(f"Deleting documents: {document_ids_to_delete}")
 
@@ -76,28 +82,40 @@ def delete_connector_credential_pair_batch(
 
             # figure out which docs need to be updated
             document_ids_to_update = [
-                document_id for document_id, cnt in document_connector_cnts if cnt > 1
+                document_id for document_id, cnt in document_connector_counts if cnt > 1
             ]
+
+            # maps document id to list of document set names
+            new_doc_sets_for_documents: dict[str, set[str]] = {
+                document_id_and_document_set_names_tuple[0]: set(
+                    document_id_and_document_set_names_tuple[1]
+                )
+                for document_id_and_document_set_names_tuple in fetch_document_sets_for_documents(
+                    db_session=db_session,
+                    document_ids=document_ids_to_update,
+                )
+            }
+
+            # determine future ACLs for documents in batch
             access_for_documents = get_access_for_documents(
                 document_ids=document_ids_to_update,
                 db_session=db_session,
-                cc_pair_to_delete=ConnectorCredentialPairIdentifier(
-                    connector_id=connector_id,
-                    credential_id=credential_id,
-                ),
             )
+
+            # update Vespa
+            logger.debug(f"Updating documents: {document_ids_to_update}")
             update_requests = [
                 UpdateRequest(
                     document_ids=[document_id],
                     access=access,
+                    document_sets=new_doc_sets_for_documents[document_id],
                 )
                 for document_id, access in access_for_documents.items()
             ]
-            logger.debug(f"Updating documents: {document_ids_to_update}")
-
             document_index.update(update_requests=update_requests)
 
-            delete_document_by_connector_credential_pair__no_commit(
+            # clean up Postgres
+            delete_documents_by_connector_credential_pair__no_commit(
                 db_session=db_session,
                 document_ids=document_ids_to_update,
                 connector_credential_pair_identifier=ConnectorCredentialPairIdentifier(
@@ -108,103 +126,86 @@ def delete_connector_credential_pair_batch(
             db_session.commit()
 
 
-def cleanup_synced_entities(
-    cc_pair: ConnectorCredentialPair, db_session: Session
-) -> None:
-    """Updates the document sets associated with the connector / credential pair,
-    then relies on the document set sync script to kick off Celery jobs which will
-    sync these updates to Vespa.
+@shared_task(
+    name="document_by_cc_pair_cleanup_task",
+    bind=True,
+    soft_time_limit=45,
+    time_limit=60,
+    max_retries=3,
+)
+def document_by_cc_pair_cleanup_task(
+    self: Task, document_id: str, connector_id: int, credential_id: int
+) -> bool:
+    task_logger.info(f"document_id={document_id}")
 
-    Waits until the document sets are synced before returning."""
-    logger.info(f"Cleaning up Document Sets for CC Pair with ID: '{cc_pair.id}'")
-    document_sets_ids_to_sync = list(
-        mark_cc_pair__document_set_relationships_to_be_deleted__no_commit(
-            cc_pair_id=cc_pair.id,
-            db_session=db_session,
-        )
-    )
-    db_session.commit()
+    try:
+        with Session(get_sqlalchemy_engine()) as db_session:
+            curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+            document_index = get_default_document_index(
+                primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
+            )
 
-    # wait till all document sets are synced before continuing
-    while True:
-        all_synced = True
-        document_sets = get_document_sets_by_ids(
-            db_session=db_session, document_set_ids=document_sets_ids_to_sync
-        )
-        for document_set in document_sets:
-            if not document_set.is_up_to_date:
-                all_synced = False
+            count = get_document_connector_count(db_session, document_id)
+            if count == 1:
+                # count == 1 means this is the only remaining cc_pair reference to the doc
+                # delete it from vespa and the db
+                document_index.delete_single(doc_id=document_id)
+                delete_documents_complete__no_commit(
+                    db_session=db_session,
+                    document_ids=[document_id],
+                )
+            elif count > 1:
+                # count > 1 means the document still has cc_pair references
+                doc = get_document(document_id, db_session)
+                if not doc:
+                    return False
 
-        if all_synced:
-            break
+                # the below functions do not include cc_pairs being deleted.
+                # i.e. they will correctly omit access for the current cc_pair
+                doc_access = get_access_for_document(
+                    document_id=document_id, db_session=db_session
+                )
 
-        # wait for 30 seconds before checking again
-        db_session.commit()  # end transaction
-        logger.info(
-            f"Document sets '{document_sets_ids_to_sync}' not synced yet, waiting 30s"
-        )
-        time.sleep(30)
+                doc_sets = fetch_document_sets_for_document(document_id, db_session)
+                update_doc_sets: set[str] = set(doc_sets)
 
-    logger.info(
-        f"Finished cleaning up Document Sets for CC Pair with ID: '{cc_pair.id}'"
-    )
+                fields = VespaDocumentFields(
+                    document_sets=update_doc_sets,
+                    access=doc_access,
+                    boost=doc.boost,
+                    hidden=doc.hidden,
+                )
 
+                # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
+                document_index.update_single(document_id, fields=fields)
 
-def delete_connector_credential_pair(
-    db_session: Session,
-    document_index: DocumentIndex,
-    cc_pair: ConnectorCredentialPair,
-) -> int:
-    connector_id = cc_pair.connector_id
-    credential_id = cc_pair.credential_id
+                # there are still other cc_pair references to the doc, so just resync to Vespa
+                delete_document_by_connector_credential_pair__no_commit(
+                    db_session=db_session,
+                    document_id=document_id,
+                    connector_credential_pair_identifier=ConnectorCredentialPairIdentifier(
+                        connector_id=connector_id,
+                        credential_id=credential_id,
+                    ),
+                )
 
-    num_docs_deleted = 0
-    while True:
-        documents = get_documents_for_connector_credential_pair(
-            db_session=db_session,
-            connector_id=connector_id,
-            credential_id=credential_id,
-            limit=_DELETION_BATCH_SIZE,
-        )
-        if not documents:
-            break
+                mark_document_as_synced(document_id, db_session)
+            else:
+                pass
 
-        delete_connector_credential_pair_batch(
-            document_ids=[document.id for document in documents],
-            connector_id=connector_id,
-            credential_id=credential_id,
-            document_index=document_index,
-        )
-        num_docs_deleted += len(documents)
+            # update_docs_last_modified__no_commit(
+            #     db_session=db_session,
+            #     document_ids=[document_id],
+            # )
 
-    # Clean up document sets / access information from Postgres
-    # and sync these updates to Vespa
-    # TODO: add teamspace cleanup with `fetch_versioned_implementation`
-    cleanup_synced_entities(cc_pair, db_session)
+            db_session.commit()
+    except SoftTimeLimitExceeded:
+        task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
+    except Exception as e:
+        task_logger.exception("Unexpected exception")
 
-    # clean up the rest of the related Postgres entities
-    delete_index_attempts(
-        db_session=db_session,
-        connector_id=connector_id,
-        credential_id=credential_id,
-    )
-    delete_connector_credential_pair__no_commit(
-        db_session=db_session,
-        connector_id=connector_id,
-        credential_id=credential_id,
-    )
-    # if there are no credentials left, delete the connector
-    connector = fetch_connector_by_id(
-        db_session=db_session,
-        connector_id=connector_id,
-    )
-    if not connector or not len(connector.credentials):
-        logger.debug("Found no credentials left for connector, deleting connector")
-        db_session.delete(connector)
-    db_session.commit()
+        # Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
+        countdown = 2 ** (self.request.retries + 4)
+        self.retry(exc=e, countdown=countdown)
 
-    logger.info(
-        "Successfully deleted connector_credential_pair with connector_id:"
-        f" '{connector_id}' and credential_id: '{credential_id}'. Deleted {num_docs_deleted} docs."
-    )
-    return num_docs_deleted
+    return True

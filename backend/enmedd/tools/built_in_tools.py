@@ -1,3 +1,4 @@
+import os
 from typing import Type
 from typing_extensions import TypedDict  # noreorder
 
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session
 from enmedd.db.models import Assistant
 from enmedd.db.models import Tool as ToolDBModel
 from enmedd.tools.images.image_generation_tool import ImageGenerationTool
+from enmedd.tools.internet_search.internet_search_tool import InternetSearchTool
 from enmedd.tools.search.search_tool import SearchTool
 from enmedd.tools.tool import Tool
 from enmedd.utils.logger import setup_logger
@@ -20,22 +22,41 @@ class InCodeToolInfo(TypedDict):
     cls: Type[Tool]
     description: str
     in_code_tool_id: str
+    display_name: str
 
 
 BUILT_IN_TOOLS: list[InCodeToolInfo] = [
-    {
-        "cls": SearchTool,
-        "description": "The Search Tool allows the Assistant to search through connected knowledge to help build an answer.",
-        "in_code_tool_id": SearchTool.__name__,
-    },
-    {
-        "cls": ImageGenerationTool,
-        "description": (
+    InCodeToolInfo(
+        cls=SearchTool,
+        description="The Search Tool allows the Assistant to search through connected knowledge to help build an answer.",
+        in_code_tool_id=SearchTool.__name__,
+        display_name=SearchTool._DISPLAY_NAME,
+    ),
+    InCodeToolInfo(
+        cls=ImageGenerationTool,
+        description=(
             "The Image Generation Tool allows the assistant to use DALL-E 3 to generate images. "
             "The tool will be used when the user asks the assistant to generate an image."
         ),
-        "in_code_tool_id": ImageGenerationTool.__name__,
-    },
+        in_code_tool_id=ImageGenerationTool.__name__,
+        display_name=ImageGenerationTool._DISPLAY_NAME,
+    ),
+    # don't show the InternetSearchTool as an option if BING_API_KEY is not available
+    *(
+        [
+            InCodeToolInfo(
+                cls=InternetSearchTool,
+                description=(
+                    "The Internet Search Tool allows the assistant "
+                    "to perform internet searches for up-to-date information."
+                ),
+                in_code_tool_id=InternetSearchTool.__name__,
+                display_name=InternetSearchTool._DISPLAY_NAME,
+            )
+        ]
+        if os.environ.get("BING_API_KEY")
+        else []
+    ),
 ]
 
 
@@ -55,26 +76,28 @@ def load_builtin_tools(db_session: Session) -> None:
             # Update existing tool
             tool.name = tool_name
             tool.description = tool_info["description"]
-            logger.info(f"Updated tool: {tool_name}")
+            tool.display_name = tool_info["display_name"]
+            logger.notice(f"Updated tool: {tool_name}")
         else:
             # Add new tool
             new_tool = ToolDBModel(
                 name=tool_name,
                 description=tool_info["description"],
+                display_name=tool_info["display_name"],
                 in_code_tool_id=tool_info["in_code_tool_id"],
             )
             db_session.add(new_tool)
-            logger.info(f"Added new tool: {tool_name}")
+            logger.notice(f"Added new tool: {tool_name}")
 
     # Remove tools that are no longer in BUILT_IN_TOOLS
     built_in_ids = {tool_info["in_code_tool_id"] for tool_info in BUILT_IN_TOOLS}
     for tool_id, tool in list(in_code_tool_id_to_tool.items()):
         if tool_id not in built_in_ids:
             db_session.delete(tool)
-            logger.info(f"Removed tool no longer in built-in list: {tool.name}")
+            logger.notice(f"Removed tool no longer in built-in list: {tool.name}")
 
     db_session.commit()
-    logger.info("All built-in tools are loaded/verified.")
+    logger.notice("All built-in tools are loaded/verified.")
 
 
 def auto_add_search_tool_to_assistants(db_session: Session) -> None:

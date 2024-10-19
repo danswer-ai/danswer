@@ -235,6 +235,14 @@ class NotionConnector(LoadConnector, PollConnector):
                     )
                     continue
 
+                if result_type == "external_object_instance_page":
+                    logger.warning(
+                        f"Skipping 'external_object_instance_page' ('{result_block_id}') for base block '{base_block_id}': "
+                        f"Notion API does not currently support reading external blocks (as of 24/07/03) "
+                        f"(discussion: https://github.com/danswer-ai/danswer/issues/1761)"
+                    )
+                    continue
+
                 cur_result_text_arr = []
                 if "rich_text" in result_obj:
                     for rich_text in result_obj["rich_text"]:
@@ -366,7 +374,7 @@ class NotionConnector(LoadConnector, PollConnector):
             compare_time = time.mktime(
                 time.strptime(page[filter_field], "%Y-%m-%dT%H:%M:%S.000Z")
             )
-            if compare_time <= end or compare_time > start:
+            if compare_time > start and compare_time <= end:
                 filtered_pages += [NotionPage(**page)]
         return filtered_pages
 

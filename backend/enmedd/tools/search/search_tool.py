@@ -14,9 +14,9 @@ from enmedd.chat.models import SectionRelevancePiece
 from enmedd.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from enmedd.configs.chat_configs import CONTEXT_CHUNKS_BELOW
 from enmedd.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
-from enmedd.db.models import Teamspace
+from enmedd.db.models import Assistant
 from enmedd.db.models import User
-from enmedd.dynamic_configs.interface import JSON_ro
+from enmedd.key_value_store.interface import JSON_ro
 from enmedd.llm.answering.models import ContextualPruningConfig
 from enmedd.llm.answering.models import DocumentPruningConfig
 from enmedd.llm.answering.models import PreviousMessage
@@ -79,7 +79,7 @@ class SearchTool(Tool):
         self,
         db_session: Session,
         user: User | None,
-        teamspace: Teamspace,
+        assistant: Assistant,
         retrieval_options: RetrievalDetails | None,
         prompt_config: PromptConfig,
         llm: LLM,
@@ -95,7 +95,7 @@ class SearchTool(Tool):
         bypass_acl: bool = False,
     ) -> None:
         self.user = user
-        self.teamspace = teamspace
+        self.assistant = assistant
         self.retrieval_options = retrieval_options
         self.prompt_config = prompt_config
         self.llm = llm
@@ -112,8 +112,8 @@ class SearchTool(Tool):
             chunks_above
             if chunks_above is not None
             else (
-                teamspace.chunks_above
-                if teamspace.chunks_above is not None
+                assistant.chunks_above
+                if assistant.chunks_above is not None
                 else CONTEXT_CHUNKS_ABOVE
             )
         )
@@ -121,8 +121,8 @@ class SearchTool(Tool):
             chunks_below
             if chunks_below is not None
             else (
-                teamspace.chunks_below
-                if teamspace.chunks_below is not None
+                assistant.chunks_below
+                if assistant.chunks_below is not None
                 else CONTEXT_CHUNKS_BELOW
             )
         )
@@ -276,7 +276,7 @@ class SearchTool(Tool):
                 human_selected_filters=(
                     self.retrieval_options.filters if self.retrieval_options else None
                 ),
-                teamspace=self.teamspace,
+                assistant=self.assistant,
                 offset=(
                     self.retrieval_options.offset if self.retrieval_options else None
                 ),

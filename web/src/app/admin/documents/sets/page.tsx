@@ -6,7 +6,7 @@ import { InfoIcon } from "@/components/icons/icons";
 
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDocumentSets } from "./hooks";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { deleteDocumentSet } from "./lib";
@@ -15,13 +15,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Bookmark,
-  CircleCheckBig,
-  Clock,
-  Pencil,
-  TriangleAlert,
-} from "lucide-react";
+import { Bookmark, CircleCheckBig, Clock, TriangleAlert } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,38 +28,64 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { FiEdit2 } from "react-icons/fi";
+import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
+import { TableHeaderCell } from "@tremor/react";
 
 const numToDisplay = 50;
 
-const EditRow = ({ documentSet }: { documentSet: DocumentSet }) => {
+const EditRow = ({
+  documentSet,
+  isEditable,
+}: {
+  documentSet: DocumentSet;
+  isEditable: boolean;
+}) => {
   const router = useRouter();
+
+  const [isSyncingTooltipOpen, setIsSyncingTooltipOpen] = useState(false);
+
+  if (!isEditable) {
+    return (
+      <div className="text-emphasis font-medium my-auto p-1">
+        {documentSet.name}
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex">
-      <CustomTooltip
-        trigger={
-          <Button
-            variant="ghost"
-            className={
-              documentSet.is_up_to_date ? "cursor-pointer" : " cursor-default"
-            }
-            onClick={() => {
-              if (documentSet.is_up_to_date) {
-                router.push(`/admin/documents/sets/${documentSet.id}`);
-              }
-            }}
-          >
-            <Pencil size={16} className="my-auto mr-1 " />
-            {documentSet.name}
-          </Button>
-        }
-        asChild
-      >
-        <div className="flex gap-1">
-          <InfoIcon /> Cannot update while syncing! Wait for the sync to finish,
-          then try again.
+      {isSyncingTooltipOpen && (
+        <div className="flex flex-nowrap absolute w-64 top-0 left-0 mt-8 border border-border bg-background px-3 py-2 rounded shadow-lg break-words z-40">
+          <InfoIcon className="mt-1 flex flex-shrink-0 mr-2" /> Cannot update
+          while syncing! Wait for the sync to finish, then try again.
         </div>
-      </CustomTooltip>
+      )}
+      <div
+        className={`
+          text-emphasis font-medium my-auto p-1 hover:bg-hover-light flex items-center select-none
+          ${documentSet.is_up_to_date ? "cursor-pointer" : "cursor-default"}
+        `}
+        style={{ wordBreak: "normal", overflowWrap: "break-word" }}
+        onClick={() => {
+          if (documentSet.is_up_to_date) {
+            router.push(`/admin/documents/sets/${documentSet.id}`);
+          }
+        }}
+        onMouseEnter={() => {
+          if (!documentSet.is_up_to_date) {
+            setIsSyncingTooltipOpen(true);
+          }
+        }}
+        onMouseLeave={() => {
+          if (!documentSet.is_up_to_date) {
+            setIsSyncingTooltipOpen(false);
+          }
+        }}
+      >
+        <FiEdit2 className="mr-2 flex-shrink-0" />
+        <span className="font-medium">{documentSet.name}</span>
+      </div>
     </div>
   );
 };
@@ -74,11 +94,17 @@ interface DocumentFeedbackTableProps {
   documentSets: DocumentSet[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
   refresh: () => void;
+  refreshEditable: () => void;
+  setPopup: (popupSpec: PopupSpec | null) => void;
+  editableDocumentSets: DocumentSet[];
 }
 
 const DocumentSetTable = ({
   documentSets,
+  editableDocumentSets,
   refresh,
+  refreshEditable,
+  setPopup,
 }: DocumentFeedbackTableProps) => {
   const [page, setPage] = useState(1);
   const { toast } = useToast();
@@ -94,30 +120,43 @@ const DocumentSetTable = ({
     }
   });
 
+  const sortedDocumentSets = [
+    ...editableDocumentSets,
+    ...documentSets.filter(
+      (ds) => !editableDocumentSets.some((eds) => eds.id === ds.id)
+    ),
+  ];
+
   return (
     <div>
       <h3 className="pb-4">Existing Document Sets</h3>
       <Card>
         <CardContent className="p-0">
-          <Table>
+          <Table className="overflow-visible mt-2">
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-8">Name</TableHead>
-                <TableHead>Connectors</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Visibility</TableHead>
-                <TableHead>Delete</TableHead>
+                <TableHeaderCell>Name</TableHeaderCell>
+                <TableHeaderCell>Connectors</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell>Public</TableHeaderCell>
+                <TableHeaderCell>Delete</TableHeaderCell>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {documentSets
+              {sortedDocumentSets
                 .slice((page - 1) * numToDisplay, page * numToDisplay)
                 .map((documentSet) => {
+                  const isEditable = editableDocumentSets.some(
+                    (eds) => eds.id === documentSet.id
+                  );
                   return (
                     <TableRow key={documentSet.id}>
-                      <TableCell className="break-all whitespace-normal">
-                        <div className="flex gap-x-1 ">
-                          <EditRow documentSet={documentSet} />
+                      <TableCell className="whitespace-normal break-all">
+                        <div className="flex gap-x-1 text-emphasis">
+                          <EditRow
+                            documentSet={documentSet}
+                            isEditable={isEditable}
+                          />
                         </div>
                       </TableCell>
                       <TableCell>
@@ -172,28 +211,31 @@ const DocumentSetTable = ({
                         )}
                       </TableCell>
                       <TableCell>
-                        <DeleteButton
-                          onClick={async () => {
-                            const response = await deleteDocumentSet(
-                              documentSet.id
-                            );
-                            if (response.ok) {
-                              toast({
-                                title: "Deletion Scheduled",
-                                description: `The document set "${documentSet.name}" has been successfully scheduled for deletion.`,
-                                variant: "success",
-                              });
-                            } else {
-                              const errorMsg = (await response.json()).detail;
-                              toast({
-                                title: "Deletion Failed",
-                                description: `Unable to schedule deletion for "${documentSet.name}": ${errorMsg}`,
-                                variant: "destructive",
-                              });
-                            }
-                            refresh();
-                          }}
-                        />
+                        {isEditable ? (
+                          <DeleteButton
+                            onClick={async () => {
+                              const response = await deleteDocumentSet(
+                                documentSet.id
+                              );
+                              if (response.ok) {
+                                setPopup({
+                                  message: `Document set "${documentSet.name}" scheduled for deletion`,
+                                  type: "success",
+                                });
+                              } else {
+                                const errorMsg = (await response.json()).detail;
+                                setPopup({
+                                  message: `Failed to schedule document set for deletion - ${errorMsg}`,
+                                  type: "error",
+                                });
+                              }
+                              refresh();
+                              refreshEditable();
+                            }}
+                          />
+                        ) : (
+                          "-"
+                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -202,11 +244,10 @@ const DocumentSetTable = ({
           </Table>
         </CardContent>
       </Card>
-
       <div className="flex pt-6">
         <div className="mx-auto">
           <PageSelector
-            totalPages={Math.ceil(documentSets.length / numToDisplay)}
+            totalPages={Math.ceil(sortedDocumentSets.length / numToDisplay)}
             currentPage={page}
             onPageChange={(newPage) => setPage(newPage)}
           />
@@ -217,12 +258,19 @@ const DocumentSetTable = ({
 };
 
 const Main = () => {
+  const { popup, setPopup } = usePopup();
   const {
     data: documentSets,
     isLoading: isDocumentSetsLoading,
     error: documentSetsError,
     refreshDocumentSets,
   } = useDocumentSets();
+  const {
+    data: editableDocumentSets,
+    isLoading: isEditableDocumentSetsLoading,
+    error: editableDocumentSetsError,
+    refreshDocumentSets: refreshEditableDocumentSets,
+  } = useDocumentSets(true);
 
   const {
     data: ccPairs,
@@ -230,12 +278,20 @@ const Main = () => {
     error: ccPairsError,
   } = useConnectorCredentialIndexingStatus();
 
-  if (isDocumentSetsLoading || isCCPairsLoading) {
+  if (
+    isDocumentSetsLoading ||
+    isCCPairsLoading ||
+    isEditableDocumentSetsLoading
+  ) {
     return <ThreeDotsLoader />;
   }
 
   if (documentSetsError || !documentSets) {
     return <div>Error: {documentSetsError}</div>;
+  }
+
+  if (editableDocumentSetsError || !editableDocumentSets) {
+    return <div>Error: {editableDocumentSetsError}</div>;
   }
 
   if (ccPairsError || !ccPairs) {
@@ -262,8 +318,11 @@ const Main = () => {
         <>
           <DocumentSetTable
             documentSets={documentSets}
+            editableDocumentSets={editableDocumentSets}
             ccPairs={ccPairs}
             refresh={refreshDocumentSets}
+            refreshEditable={refreshEditableDocumentSets}
+            setPopup={setPopup}
           />
         </>
       )}

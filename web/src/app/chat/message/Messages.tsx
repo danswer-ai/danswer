@@ -1,13 +1,15 @@
 "use client";
 
 import { FeedbackType } from "../types";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import ReactMarkdown from "react-markdown";
-import { EnmeddDocument } from "@/lib/search/interfaces";
+import {
+  EnmeddDocument,
+  FilteredEnmeddDocument,
+} from "@/lib/search/interfaces";
 import { SearchSummary, ShowHideDocsButton } from "./SearchSummary";
 import { SourceIcon } from "@/components/SourceIcon";
-import { ThreeDots } from "react-loader-spinner";
 import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
@@ -15,15 +17,13 @@ import { ChatFileType, FileDescriptor, ToolCallMetadata } from "../interfaces";
 import {
   IMAGE_GENERATION_TOOL_NAME,
   SEARCH_TOOL_NAME,
+  INTERNET_SEARCH_TOOL_NAME,
 } from "../tools/constants";
 import { ToolRunDisplay } from "../tools/ToolRunningAnimation";
 import { DocumentPreview } from "../files/documents/DocumentPreview";
 import { InMessageImage } from "../files/images/InMessageImage";
 import { CodeBlock } from "./CodeBlock";
 import rehypePrism from "rehype-prism-plus";
-
-// Prism stuff
-import Prism from "prismjs";
 
 import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
@@ -33,20 +33,47 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LlmOverride } from "@/lib/hooks";
+import { extractCodeText } from "./codeUtils";
+import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
+import { Badge } from "@/components/ui/badge";
+import { CustomTooltip } from "@/components/CustomTooltip";
+import { CustomModal } from "@/components/CustomModal";
+import {
+  ThumbsDown,
+  ThumbsDownIcon,
+  ThumbsUp,
+  ThumbsUpIcon,
+  Wrench,
+} from "lucide-react";
+import { FeedbackModal } from "../modal/FeedbackModal";
+import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
+import { FiChevronLeft, FiChevronRight, FiGlobe } from "react-icons/fi";
+import { ContinueGenerating } from "./ContinueMessage";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
+  INTERNET_SEARCH_TOOL_NAME,
   IMAGE_GENERATION_TOOL_NAME,
 ];
 
-function FileDisplay({ files }: { files: FileDescriptor[] }) {
+function FileDisplay({
+  files,
+  alignBubble,
+}: {
+  files: FileDescriptor[];
+  alignBubble?: boolean;
+}) {
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
   const nonImgFiles = files.filter((file) => file.type !== ChatFileType.IMAGE);
 
   return (
     <>
       {nonImgFiles && nonImgFiles.length > 0 && (
-        <div className="mt-2 mb-4">
+        <div
+          id="enmedd-file"
+          className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
+        >
           <div className="flex flex-col gap-2">
             {nonImgFiles.map((file) => {
               return (
@@ -54,6 +81,7 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
                   <DocumentPreview
                     fileName={file.name || file.id}
                     maxWidth="max-w-64"
+                    alignBubble={alignBubble}
                   />
                 </div>
               );
@@ -62,8 +90,11 @@ function FileDisplay({ files }: { files: FileDescriptor[] }) {
         </div>
       )}
       {imageFiles && imageFiles.length > 0 && (
-        <div className="mt-2 mb-4">
-          <div className="flex flex-wrap gap-2">
+        <div
+          id="enmedd-image"
+          className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}
+        >
+          <div className="flex flex-col gap-2">
             {imageFiles.map((file) => {
               return <InMessageImage key={file.id} fileId={file.id} />;
             })}
@@ -80,10 +111,17 @@ interface FeedbackDetails {
 }
 
 export const AIMessage = ({
+  regenerate,
+  overriddenModel,
+  continueGenerating,
+  isActive,
+  toggleDocumentSelection,
   alternativeAssistant,
+  docs,
   messageId,
   content,
   files,
+  selectedDocuments,
   query,
   assistantName,
   citedDocuments,
@@ -102,9 +140,16 @@ export const AIMessage = ({
   onClose,
   onSubmit,
   isStreaming,
+  otherMessagesCanSwitchTo,
+  onMessageSelection,
 }: {
   alternativeAssistant?: Assistant | null;
   currentAssistant: Assistant;
+  isActive?: boolean;
+  continueGenerating?: () => void;
+  selectedDocuments?: EnmeddDocument[] | null;
+  toggleDocumentSelection?: () => void;
+  docs?: EnmeddDocument[] | null;
   messageId: number | null;
   content: string | JSX.Element;
   files?: FileDescriptor[];
@@ -120,6 +165,11 @@ export const AIMessage = ({
   handleSearchQueryEdit?: (query: string) => void;
   handleForceSearch?: () => void;
   retrievalDisabled?: boolean;
+  overriddenModel?: string;
+  regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
+  otherMessagesCanSwitchTo?: number[];
+  onMessageSelection?: (messageId: number) => void;
+
   handleToggleSideBar?: () => void;
   currentFeedback?: [FeedbackType, number] | null;
   onClose?: () => void;
@@ -129,7 +179,6 @@ export const AIMessage = ({
   }) => void;
   isStreaming?: boolean;
 }) => {
-  const [isReady, setIsReady] = useState(false);
   const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
   const [isDislikeModalOpen, setIsDislikeModalOpen] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
@@ -152,15 +201,40 @@ export const AIMessage = ({
     }
   };
 
-  useEffect(() => {
-    Prism.highlightAll();
-    setIsReady(true);
-  }, []);
+  const toolCallGenerating = toolCall && !toolCall.tool_result;
+  const processContent = (content: string | JSX.Element) => {
+    if (typeof content !== "string") {
+      return content;
+    }
 
-  // this is needed to give Prism a chance to load
-  if (!isReady) {
-    return <div />;
-  }
+    const codeBlockRegex = /```(\w*)\n[\s\S]*?```|```[\s\S]*?$/g;
+    const matches = content.match(codeBlockRegex);
+
+    if (matches) {
+      content = matches.reduce((acc, match) => {
+        if (!match.match(/```\w+/)) {
+          return acc.replace(match, match.replace("```", "```plaintext"));
+        }
+        return acc;
+      }, content);
+
+      const lastMatch = matches[matches.length - 1];
+      if (!lastMatch.endsWith("```")) {
+        return content;
+      }
+    }
+
+    return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
+  };
+  const finalContent = processContent(content as string);
+
+  const selectedDocumentIds =
+    selectedDocuments?.map((document) => document.document_id) || [];
+  let citedDocumentIds: string[] = [];
+
+  citedDocuments?.forEach((doc) => {
+    citedDocumentIds.push(doc[1].document_id);
+  });
 
   if (!isComplete) {
     const trimIncompleteCodeSection = (
@@ -177,9 +251,73 @@ export const AIMessage = ({
       }
       return content;
     };
-
     content = trimIncompleteCodeSection(content);
   }
+
+  let filteredDocs: FilteredEnmeddDocument[] = [];
+
+  if (docs) {
+    filteredDocs = docs
+      .filter(
+        (doc, index, self) =>
+          doc.document_id &&
+          doc.document_id !== "" &&
+          index === self.findIndex((d) => d.document_id === doc.document_id)
+      )
+      .filter((doc) => {
+        return citedDocumentIds.includes(doc.document_id);
+      })
+      .map((doc: EnmeddDocument, ind: number) => {
+        return {
+          ...doc,
+          included: selectedDocumentIds.includes(doc.document_id),
+        };
+      });
+  }
+
+  const currentMessageInd = messageId
+    ? otherMessagesCanSwitchTo?.indexOf(messageId)
+    : undefined;
+
+  const markdownComponents = useMemo(
+    () => ({
+      a: MemoizedLink,
+      p: MemoizedParagraph,
+      code: ({ node, inline, className, children, ...props }: any) => {
+        const codeText = extractCodeText(
+          node,
+          finalContent as string,
+          children
+        );
+
+        return (
+          <CodeBlock className={className} codeText={codeText}>
+            {children}
+          </CodeBlock>
+        );
+      },
+    }),
+    [finalContent]
+  );
+
+  const renderedMarkdown = useMemo(() => {
+    return (
+      <ReactMarkdown
+        className="prose max-w-full text-base"
+        components={markdownComponents}
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+      >
+        {finalContent as string}
+      </ReactMarkdown>
+    );
+  }, [finalContent, markdownComponents]);
+
+  const includeMessageSwitcher =
+    currentMessageInd !== undefined &&
+    onMessageSelection &&
+    otherMessagesCanSwitchTo &&
+    otherMessagesCanSwitchTo.length > 1;
 
   const shouldShowLoader =
     !toolCall || (toolCall.tool_name === SEARCH_TOOL_NAME && !content);
@@ -224,23 +362,19 @@ export const AIMessage = ({
           </div>
 
           <div className="pl-1.5 md:pl-12 break-words w-full">
-            {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) && (
+            {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
               <>
                 {query !== undefined &&
                   handleShowRetrieved !== undefined &&
-                  isCurrentlyShowingRetrieved !== undefined &&
                   !retrievalDisabled && (
-                    <div>
+                    <div className="mb-1">
                       <SearchSummary
                         query={query}
+                        finished={toolCall?.tool_result != undefined}
                         hasDocs={hasDocs || false}
                         messageId={messageId}
-                        isCurrentlyShowingRetrieved={
-                          isCurrentlyShowingRetrieved
-                        }
                         handleShowRetrieved={handleShowRetrieved}
                         handleSearchQueryEdit={handleSearchQueryEdit}
-                        handleToggleSideBar={handleToggleSideBar}
                       />
                     </div>
                   )}
@@ -249,12 +383,12 @@ export const AIMessage = ({
                   query === undefined &&
                   !hasDocs &&
                   !retrievalDisabled && (
-                    <div className="pt-2">
+                    <div className="mb-1">
                       <SkippedSearch handleForceSearch={handleForceSearch} />
                     </div>
                   )}
               </>
-            )}
+            ) : null}
 
             {toolCall &&
               !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
@@ -272,64 +406,27 @@ export const AIMessage = ({
               )}
 
             {toolCall &&
+              (!files || files.length == 0) &&
               toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-              !toolCall.tool_result && (
-                <div className="my-2">
-                  <ToolRunDisplay
-                    toolName={`Generating images`}
-                    toolLogo={<ImageIcon size={15} className="my-auto mr-1" />}
-                    isRunning={!toolCall.tool_result}
-                  />
-                </div>
-              )}
+              !toolCall.tool_result && <GeneratingImageDisplay />}
 
-            {content ? (
+            {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
+              <ToolRunDisplay
+                toolName={
+                  toolCall.tool_result
+                    ? `Searched the internet`
+                    : `Searching the internet`
+                }
+                toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
+                isRunning={!toolCall.tool_result}
+              />
+            )}
+
+            {content || files ? (
               <>
                 <FileDisplay files={files || []} />
 
-                {typeof content === "string" ? (
-                  <ReactMarkdown
-                    key={messageId}
-                    className="max-w-full prose markdown"
-                    components={{
-                      a: (props) => {
-                        const { node, ...rest } = props;
-                        // for some reason <a> tags cause the onClick to not apply
-                        // and the links are unclickable
-                        // TODO: fix the fact that you have to double click to follow link
-                        // for the first link
-                        return (
-                          <a
-                            key={node?.position?.start?.offset}
-                            onClick={() =>
-                              rest.href
-                                ? window.open(rest.href, "_blank")
-                                : undefined
-                            }
-                            className="cursor-pointer text-primary hover:text-primary-foreground"
-                            // href={rest.href}
-                            // target="_blank"
-                            // rel="noopener noreferrer"
-                          >
-                            {rest.children}
-                          </a>
-                        );
-                      },
-                      code: (props) => (
-                        <CodeBlock {...props} content={content as string} />
-                      ),
-                      p: ({ node, ...props }) => (
-                        <p {...props} className="ault mt-2.5" />
-                      ),
-                    }}
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-                  >
-                    {content}
-                  </ReactMarkdown>
-                ) : (
-                  content
-                )}
+                {typeof content === "string" ? { renderedMarkdown } : content}
               </>
             ) : isComplete ? null : (
               defaultLoader
@@ -386,8 +483,27 @@ export const AIMessage = ({
           </div>
           {handleFeedback && (
             <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
+              <div className="flex justify-start w-full gap-x-0.5">
+                {includeMessageSwitcher && (
+                  <div className="-mx-1 mr-auto">
+                    <MessageSwitcher
+                      currentPage={currentMessageInd + 1}
+                      totalPages={otherMessagesCanSwitchTo.length}
+                      handlePrevious={() => {
+                        onMessageSelection(
+                          otherMessagesCanSwitchTo[currentMessageInd - 1]
+                        );
+                      }}
+                      handleNext={() => {
+                        onMessageSelection(
+                          otherMessagesCanSwitchTo[currentMessageInd + 1]
+                        );
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
               <CopyButton content={content.toString()} smallIcon />
-
               {showLikeButton && (
                 <CustomTooltip
                   trigger={
@@ -492,6 +608,11 @@ export const AIMessage = ({
             </div>
           )}
         </div>
+        {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
+          !query &&
+          continueGenerating && (
+            <ContinueGenerating handleContinueGenerating={continueGenerating} />
+          )}
       </div>
     </div>
   );
@@ -509,60 +630,28 @@ function MessageSwitcher({
   handleNext: () => void;
 }) {
   return (
-    <div className="flex items-center text-sm space-x-2 pt-2">
-      <CustomTooltip
-        trigger={
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={currentPage === 1 ? undefined : handlePrevious}
-          >
-            <ChevronLeft />
-          </Button>
-        }
-        asChild
-      >
-        Previous
-      </CustomTooltip>
-      <span className="select-none  text-medium min-w-8 text-center">
+    <div className="flex items-center text-sm space-x-0.5">
+      <Hoverable
+        icon={FiChevronLeft}
+        onClick={currentPage === 1 ? undefined : handlePrevious}
+      />
+
+      <span className="text-emphasis select-none">
         {currentPage} / {totalPages}
       </span>
-      <CustomTooltip
-        trigger={
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={currentPage === totalPages ? undefined : handleNext}
-          >
-            <ChevronRight />
-          </Button>
-        }
-        asChild
-      >
-        Next
-      </CustomTooltip>
+
+      <Hoverable
+        icon={FiChevronRight}
+        onClick={currentPage === totalPages ? undefined : handleNext}
+      />
     </div>
   );
 }
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Pencil,
-  ThumbsDown,
-  ThumbsUp,
-  Wrench,
-  Image as ImageIcon,
-  ChevronLeft,
-  ChevronRight,
-  User,
-  ThumbsDownIcon,
-  ThumbsUpIcon,
-} from "lucide-react";
+import { Pencil, Image as ImageIcon } from "lucide-react";
 import { User as UserTypes } from "@/lib/types";
-import { FeedbackModal } from "../modal/FeedbackModal";
-import { CustomModal } from "@/components/CustomModal";
 import { UserProfile } from "@/components/UserProfile";
-import { CustomTooltip } from "@/components/CustomTooltip";
+import { Hoverable } from "@/components/Hoverable";
 
 export const HumanMessage = ({
   content,
@@ -572,6 +661,7 @@ export const HumanMessage = ({
   onEdit,
   onMessageSelection,
   user,
+  stopGenerating = () => null,
 }: {
   content: string;
   files?: FileDescriptor[];
@@ -580,6 +670,7 @@ export const HumanMessage = ({
   onEdit?: (editedContent: string) => void;
   onMessageSelection?: (messageId: number) => void;
   user?: UserTypes | null;
+  stopGenerating?: () => void;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -600,6 +691,7 @@ export const HumanMessage = ({
       // Move the cursor to the end of the text
       textareaRef.current.selectionStart = textareaRef.current.value.length;
       textareaRef.current.selectionEnd = textareaRef.current.value.length;
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [isEditing]);
 
@@ -745,20 +837,22 @@ export const HumanMessage = ({
               onMessageSelection &&
               otherMessagesCanSwitchTo &&
               otherMessagesCanSwitchTo.length > 1 && (
-                <div className="mr-2">
+                <div className="ml-auto mr-3">
                   <MessageSwitcher
                     currentPage={currentMessageInd + 1}
                     totalPages={otherMessagesCanSwitchTo.length}
-                    handlePrevious={() =>
+                    handlePrevious={() => {
+                      stopGenerating();
                       onMessageSelection(
                         otherMessagesCanSwitchTo[currentMessageInd - 1]
-                      )
-                    }
-                    handleNext={() =>
+                      );
+                    }}
+                    handleNext={() => {
+                      stopGenerating();
                       onMessageSelection(
                         otherMessagesCanSwitchTo[currentMessageInd + 1]
-                      )
-                    }
+                      );
+                    }}
                   />
                 </div>
               )}

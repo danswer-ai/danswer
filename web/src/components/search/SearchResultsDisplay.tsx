@@ -1,28 +1,22 @@
 "use client";
 
-import React from "react";
 import {
-  EnmeddDocument,
-  SearchResponse,
-  Quote,
-  FlowType,
+  DocumentRelevance,
+  SearchEnmeddDocument,
   SearchDefaultOverrides,
-  ValidQuestionResponse,
+  SearchResponse,
 } from "@/lib/search/interfaces";
-import { QAFeedbackBlock } from "./QAFeedback";
-import { DocumentDisplay } from "./DocumentDisplay";
-import { QuotesSection } from "./results/QuotesSection";
-import { AnswerSection } from "./results/AnswerSection";
-import { ThreeDots } from "react-loader-spinner";
-import { AlertIcon } from "../icons/icons";
-import { removeDuplicateDocs } from "@/lib/documentUtils";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import useSWR from "swr";
-import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
-import { errorHandlingFetcher } from "@/lib/fetcher";
+import { usePopup } from "../admin/connectors/Popup";
+import { AlertIcon, MagnifyingIcon, UndoIcon } from "../icons/icons";
+import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
+import { searchState } from "./SearchSection";
+import { useEffect, useState } from "react";
+import { Tooltip } from "../tooltip/Tooltip";
+import KeyboardSymbol from "@/lib/browserUtilities";
+import { DISABLE_LLM_DOC_RELEVANCE } from "@/lib/constants";
 
 const getSelectedDocumentIds = (
-  documents: EnmeddDocument[],
+  documents: SearchEnmeddDocument[],
   selectedIndices: number[]
 ) => {
   const selectedDocumentIds = new Set<string>();
@@ -33,52 +27,82 @@ const getSelectedDocumentIds = (
 };
 
 export const SearchResultsDisplay = ({
+  agenticResults,
   searchResponse,
-  validQuestionResponse,
+  contentEnriched,
+  disabledAgentic,
   isFetching,
+  performSweep,
+  searchState,
+  sweep,
   defaultOverrides,
-  assistantName = null,
-  availableDocumentSets,
 }: {
+  searchState: searchState;
+  disabledAgentic?: boolean;
+  contentEnriched?: boolean;
+  agenticResults?: boolean | null;
+  performSweep: () => void;
+  sweep?: boolean;
   searchResponse: SearchResponse | null;
-  validQuestionResponse: ValidQuestionResponse;
   isFetching: boolean;
+  comments: any;
   defaultOverrides: SearchDefaultOverrides;
-  assistantName?: string | null;
-  availableDocumentSets: DocumentSet[];
 }) => {
-  const {
-    data: indexAttemptData,
-    isLoading: indexAttemptIsLoading,
-    error: indexAttemptError,
-  } = useSWR<ConnectorIndexingStatus<any, any>[]>(
-    "/api/manage/admin/connector/indexing-status",
-    errorHandlingFetcher,
-    { refreshInterval: 10000 } // 10 seconds
-  );
+  const commandSymbol = KeyboardSymbol();
+  const { popup, setPopup } = usePopup();
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case "o":
+            event.preventDefault();
+
+            performSweep();
+            if (agenticResults) {
+              setShowAll((showAll) => !showAll);
+            }
+            break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   if (!searchResponse) {
     return null;
   }
 
-  const isAssistant = assistantName !== null;
   const { answer, quotes, documents, error, messageId } = searchResponse;
 
-  if (isFetching && !answer && !documents) {
+  if (isFetching && disabledAgentic) {
     return (
-      <div className="flex">
-        <div className="mx-auto">
-          <ThreeDots
-            height="30"
-            width="40"
-            color="#3b82f6"
-            ariaLabel="grid-loading"
-            radius="12.5"
-            wrapperStyle={{}}
-            wrapperClass=""
-            visible={true}
-          />
+      <div className="mt-4">
+        <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
+          <p>Results</p>
         </div>
+      </div>
+    );
+  }
+
+  if (isFetching && !answer && !documents) {
+    return null;
+  }
+  if (documents != null && documents.length == 0 && searchState == "input") {
+    return (
+      <div className="text-base gap-x-1.5 flex flex-col">
+        <div className="flex gap-x-2 items-center font-semibold">
+          <AlertIcon size={16} />
+          No documents were found!
+        </div>
+        <p>
+          Have you set up a connector? Your data may not have loaded properly.
+        </p>
       </div>
     );
   }
@@ -86,114 +110,176 @@ export const SearchResultsDisplay = ({
   if (
     answer === null &&
     (documents === null || documents.length === 0) &&
-    quotes === null &&
     !isFetching
   ) {
     return (
       <div className="mt-4">
-        {error ? (
+        {error && (
           <div className="text-error text-sm">
             <div className="flex">
               <AlertIcon size={16} className="text-error my-auto mr-1" />
-              <p className="italic">{error}</p>
+              <p className="italic">{error || "No documents were found!"}</p>
             </div>
           </div>
-        ) : (
-          <div className="text-subtle">No matching documents found.</div>
         )}
       </div>
     );
-  }
-
-  const dedupedQuotes: Quote[] = [];
-  const seen = new Set<string>();
-  if (quotes) {
-    quotes.forEach((quote) => {
-      if (!seen.has(quote.document_id)) {
-        dedupedQuotes.push(quote);
-        seen.add(quote.document_id);
-      }
-    });
   }
 
   const selectedDocumentIds = getSelectedDocumentIds(
     documents || [],
     searchResponse.selectedDocIndices || []
   );
+  const relevantDocs = documents
+    ? documents.filter((doc) => {
+        return (
+          showAll ||
+          (searchResponse &&
+            searchResponse.additional_relevance &&
+            searchResponse.additional_relevance[doc.document_id] &&
+            searchResponse.additional_relevance[doc.document_id].relevant) ||
+          doc.is_relevant
+        );
+      })
+    : [];
 
-  const shouldDisplayQA =
-    searchResponse.suggestedFlowType === FlowType.QUESTION_ANSWER ||
-    defaultOverrides.forceDisplayQA;
+  const getUniqueDocuments = (
+    documents: SearchEnmeddDocument[]
+  ): SearchEnmeddDocument[] => {
+    const seenIds = new Set<string>();
+    return documents.filter((doc) => {
+      if (!seenIds.has(doc.document_id)) {
+        seenIds.add(doc.document_id);
+        return true;
+      }
+      return false;
+    });
+  };
+
+  const uniqueDocuments = getUniqueDocuments(documents || []);
 
   console.log(selectedDocumentIds);
 
   return (
-    <div className="px-2 overflow-y-auto h-full">
-      {shouldDisplayQA && (
-        <Card className="p-4 relative">
-          <CardHeader className="border-b p-0 pb-4">
-            <h2 className="text-dark-900 font-bold">AI Answer</h2>
-          </CardHeader>
-
-          <CardContent className="px-0 py-2">
-            <AnswerSection
-              answer={answer}
-              quotes={quotes}
-              error={error}
-              nonAnswerableReason={
-                validQuestionResponse.answerable === false && !isAssistant
-                  ? validQuestionResponse.reasoning
-                  : ""
-              }
-              isFetching={isFetching}
-            />
-          </CardContent>
-
-          {quotes !== null && answer && !isAssistant && (
-            <CardFooter className="p-0 border-t pt-2 flex flex-col items-start">
-              <QuotesSection
-                quotes={dedupedQuotes}
-                isFetching={isFetching}
-                isAnswerable={validQuestionResponse.answerable}
-              />
-
-              {searchResponse.messageId !== null && (
-                <div className="ml-auto">
-                  <QAFeedbackBlock messageId={searchResponse.messageId} />
-                </div>
-              )}
-            </CardFooter>
-          )}
-        </Card>
-      )}
+    <>
+      {popup}
 
       {documents && documents.length > 0 && (
-        <div className="h-full">
-          <div className="font-bold text-dark-900 border-b py-2.5 px-4 border-border text-lg">
-            Results
+        <div className="mt-4">
+          <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
+            <p>Results</p>
+            {!DISABLE_LLM_DOC_RELEVANCE &&
+              (contentEnriched || searchResponse.additional_relevance) && (
+                <Tooltip
+                  delayDuration={1000}
+                  content={<div className="flex">{commandSymbol}O</div>}
+                >
+                  <button
+                    onClick={() => {
+                      performSweep();
+                      if (agenticResults) {
+                        setShowAll((showAll) => !showAll);
+                      }
+                    }}
+                    className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-20 h-8 ${
+                      !sweep
+                        ? "bg-background-agentic-toggled text-text-agentic-toggled"
+                        : "bg-background-agentic-untoggled text-text-agentic-untoggled"
+                    }`}
+                  >
+                    <div className={`flex items-center`}>
+                      <span></span>
+                      {!sweep
+                        ? agenticResults
+                          ? "Show All"
+                          : "Focus"
+                        : agenticResults
+                          ? "Focus"
+                          : "Show All"}
+
+                      <span className="ml-1">
+                        {!sweep ? (
+                          <MagnifyingIcon className="h-4 w-4" />
+                        ) : (
+                          <UndoIcon className="h-4 w-4" />
+                        )}
+                      </span>
+                    </div>
+                  </button>
+                </Tooltip>
+              )}
           </div>
-          <div className="h-full">
-            {removeDuplicateDocs(documents).map((document, ind) => (
-              <div
-                key={document.document_id}
-                className={
-                  ind === removeDuplicateDocs(documents).length - 1
-                    ? "pb-20"
-                    : ""
-                }
-              >
-                <DocumentDisplay
-                  document={document}
-                  documentRank={ind + 1}
-                  messageId={messageId}
-                  isSelected={selectedDocumentIds.has(document.document_id)}
-                  availableDocumentSets={availableDocumentSets}
-                />
-              </div>
-            ))}
-          </div>
+
+          {agenticResults &&
+            relevantDocs &&
+            contentEnriched &&
+            relevantDocs.length == 0 &&
+            !showAll && (
+              <p className="flex text-lg font-bold">
+                No high quality results found by agentic search.
+              </p>
+            )}
+
+          {uniqueDocuments.map((document, ind) => {
+            const relevance: DocumentRelevance | null =
+              searchResponse.additional_relevance
+                ? searchResponse.additional_relevance[document.document_id]
+                : null;
+
+            return agenticResults ? (
+              <AgenticDocumentDisplay
+                additional_relevance={relevance}
+                contentEnriched={contentEnriched}
+                index={ind}
+                hide={showAll || relevance?.relevant || document.is_relevant}
+                key={`${document.document_id}-${ind}`}
+                document={document}
+                documentRank={ind + 1}
+                messageId={messageId}
+                isSelected={selectedDocumentIds.has(document.document_id)}
+                setPopup={setPopup}
+              />
+            ) : (
+              <DocumentDisplay
+                additional_relevance={relevance}
+                contentEnriched={contentEnriched}
+                index={ind}
+                hide={sweep && !document.is_relevant && !relevance?.relevant}
+                key={`${document.document_id}-${ind}`}
+                document={document}
+                documentRank={ind + 1}
+                messageId={messageId}
+                isSelected={selectedDocumentIds.has(document.document_id)}
+                setPopup={setPopup}
+              />
+            );
+          })}
         </div>
       )}
-    </div>
+
+      <div className="h-[100px]" />
+    </>
   );
 };
+
+export function AgenticDisclaimer({
+  forceNonAgentic,
+}: {
+  forceNonAgentic: () => void;
+}) {
+  return (
+    <div className="ml-auto mx-12 flex transition-all duration-300 animate-fade-in flex-col gap-y-2">
+      <p className="text-sm">
+        Please note that agentic quries can take substantially longer than
+        non-agentic queries. You can click <i>non-agentic</i> to re-submit your
+        query without agentic capabilities.
+      </p>
+      <button
+        onClick={forceNonAgentic}
+        className="p-2 bg-background-900 mr-auto text-text-200 rounded-lg text-xs my-auto"
+      >
+        Non-agentic
+      </button>
+    </div>
+  );
+}

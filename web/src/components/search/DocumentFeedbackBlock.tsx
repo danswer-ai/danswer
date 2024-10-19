@@ -1,6 +1,14 @@
-import { useToast } from "@/hooks/use-toast";
+import { Lightbulb } from "@phosphor-icons/react/dist/ssr";
 import { PopupSpec } from "../admin/connectors/Popup";
-import { ChevronsDownIcon, ChevronsUpIcon } from "../icons/icons";
+import {
+  BookmarkIcon,
+  ChevronsDownIcon,
+  ChevronsUpIcon,
+  LightBulbIcon,
+  LightSettingsIcon,
+} from "../icons/icons";
+import { CustomTooltip } from "../tooltip/CustomTooltip";
+import { useToast } from "@/hooks/use-toast";
 
 type DocumentFeedbackType = "endorse" | "reject" | "hide" | "unhide";
 
@@ -33,6 +41,7 @@ interface DocumentFeedbackIconProps {
   messageId: number;
   documentRank: number;
   feedbackType: DocumentFeedbackType;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 const DocumentFeedback = ({
@@ -40,6 +49,7 @@ const DocumentFeedback = ({
   messageId,
   documentRank,
   feedbackType,
+  setPopup,
 }: DocumentFeedbackIconProps) => {
   const { toast } = useToast();
   let icon = null;
@@ -75,17 +85,14 @@ const DocumentFeedback = ({
           feedbackType
         );
         if (!errorMsg) {
-          toast({
-            title: "Feedback Submitted!",
-            description:
-              "Thank you for your feedback! We appreciate your input.",
-            variant: "success",
+          setPopup({
+            message: "Thanks for your feedback!",
+            type: "success",
           });
         } else {
-          toast({
-            title: "Feedback Submission Failed",
-            description: `Unable to submit feedback: ${errorMsg}. Please try again.`,
-            variant: "destructive",
+          setPopup({
+            message: `Error giving feedback - ${errorMsg}`,
+            type: "error",
           });
         }
       }}
@@ -100,29 +107,35 @@ interface DocumentFeedbackBlockProps {
   documentId: string;
   messageId: number;
   documentRank: number;
+  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const DocumentFeedbackBlock = ({
   documentId,
   messageId,
   documentRank,
+  setPopup,
 }: DocumentFeedbackBlockProps) => {
   return (
-    <div className="flex">
-      <DocumentFeedback
-        documentId={documentId}
-        messageId={messageId}
-        documentRank={documentRank}
-        feedbackType="endorse"
-      />
-      <div className="ml-2">
+    <div className="flex items-center gap-x-2">
+      <CustomTooltip showTick line content="Good response">
+        <DocumentFeedback
+          documentId={documentId}
+          messageId={messageId}
+          documentRank={documentRank}
+          setPopup={setPopup}
+          feedbackType="endorse"
+        />
+      </CustomTooltip>
+      <CustomTooltip showTick line content="Bad response">
         <DocumentFeedback
           documentId={documentId}
           messageId={messageId}
           documentRank={documentRank}
           feedbackType="reject"
+          setPopup={setPopup}
         />
-      </div>
+      </CustomTooltip>
     </div>
   );
 };

@@ -54,7 +54,9 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
         <div className="mt-6 space-y-2">
           <h3>Feedback</h3>
           {message.feedback_text && <Text>{message.feedback_text}</Text>}
-          <FeedbackBadge feedback={message.feedback_type} />
+          <div className="mt-1">
+            <FeedbackBadge feedback={message.feedback_type} />
+          </div>
         </div>
       )}
     </div>

@@ -9,7 +9,7 @@ import {
 
 export function DefaultPopover(props: {
   content: JSX.Element;
-  children: JSX.Element[];
+  children: (JSX.Element | null)[];
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
   sideOffset?: number;

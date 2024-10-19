@@ -1,10 +1,8 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 from enmedd.auth.schemas import UserRole
 
 
 class APIKeyArgs(BaseModel):
-    name: Optional[str] = None
+    name: str | None = None
     role: UserRole = UserRole.BASIC

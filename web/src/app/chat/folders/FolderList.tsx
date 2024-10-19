@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Folder } from "./interfaces";
 import { ChatSessionDisplay } from "../sessionSidebar/ChatSessionDisplay";
 import { BasicSelectable } from "@/components/BasicClickable";
@@ -20,6 +20,7 @@ import {
   Trash,
   Check,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,13 +28,15 @@ const FolderItem = ({
   folder,
   currentChatId,
   isInitiallyExpanded,
+  initiallySelected,
 }: {
   folder: Folder;
   currentChatId?: number;
   isInitiallyExpanded: boolean;
+  initiallySelected: boolean;
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(isInitiallyExpanded);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(initiallySelected);
   const [editedFolderName, setEditedFolderName] = useState<string>(
     folder.folder_name
   );
@@ -54,6 +57,8 @@ const FolderItem = ({
       if (newIsExpanded) {
         openedFolders[folder.folder_id] = true;
       } else {
+        setShowDeleteConfirm(false);
+
         delete openedFolders[folder.folder_id];
       }
       Cookies.set("openedFolders", JSON.stringify(openedFolders));
@@ -77,10 +82,12 @@ const FolderItem = ({
     }
   };
 
-  const saveFolderName = async () => {
+  const saveFolderName = async (continueEditing?: boolean) => {
     try {
       await updateFolderName(folder.folder_id, editedFolderName);
-      setIsEditing(false);
+      if (!continueEditing) {
+        setIsEditing(false);
+      }
       router.refresh(); // Refresh values to update the sidebar
     } catch (error) {
       toast({
@@ -91,13 +98,19 @@ const FolderItem = ({
     }
   };
 
-  const deleteFolderHandler = async (
-    event: React.MouseEvent<HTMLDivElement>
-  ) => {
-    event.stopPropagation(); // Prevent the event from bubbling up to the toggle expansion
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const deleteConfirmRef = useRef<HTMLDivElement>(null);
+
+  const handleDeleteClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
     try {
       await deleteFolder(folder.folder_id);
-      router.refresh(); // Refresh values to update the sidebar
+      router.refresh();
     } catch (error) {
       toast({
         title: "Chat Session Addition Failed",
@@ -107,6 +120,35 @@ const FolderItem = ({
       });
     }
   };
+
+  const cancelDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setShowDeleteConfirm(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        deleteConfirmRef.current &&
+        !deleteConfirmRef.current.contains(event.target as Node)
+      ) {
+        setShowDeleteConfirm(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initiallySelected && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [initiallySelected]);
 
   const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -167,10 +209,12 @@ const FolderItem = ({
               </div>
               {isEditing ? (
                 <input
+                  ref={inputRef}
                   type="text"
                   value={editedFolderName}
                   onChange={handleFolderNameChange}
                   onKeyDown={handleKeyDown}
+                  onBlur={() => saveFolderName(true)}
                   className="text-sm px-1 flex-1 min-w-0 -my-px mr-2"
                 />
               ) : (
@@ -187,17 +231,18 @@ const FolderItem = ({
                     <Pencil size={16} />
                   </div>
                   <div
-                    onClick={deleteFolderHandler}
+                    onClick={handleDeleteClick}
                     className="hover:bg-background-inverted/10 p-1 -m-1 rounded ml-2"
                   >
                     <Trash size={16} />
                   </div>
                 </div>
               )}
+
               {isEditing && (
                 <div className="flex ml-auto my-auto">
                   <div
-                    onClick={saveFolderName}
+                    onClick={() => saveFolderName()}
                     className="hover:bg-background-inverted/10 p-1 -m-1 rounded"
                   >
                     <Check size={16} />
@@ -234,25 +279,36 @@ export const FolderList = ({
   folders,
   currentChatId,
   openedFolders,
+  newFolderId,
 }: {
   folders: Folder[];
   currentChatId?: number;
-  openedFolders: { [key: number]: boolean };
+  openedFolders?: { [key: number]: boolean };
+  newFolderId: number | null;
 }) => {
   if (folders.length === 0) {
     return null;
   }
 
   return (
-    <div className="mt-1 mb-1 overflow-y-auto">
+    <div className="mt-1 mb-1 overflow-visible">
       {folders.map((folder) => (
         <FolderItem
           key={folder.folder_id}
           folder={folder}
           currentChatId={currentChatId}
-          isInitiallyExpanded={openedFolders[folder.folder_id] || false}
+          initiallySelected={newFolderId == folder.folder_id}
+          isInitiallyExpanded={
+            openedFolders ? openedFolders[folder.folder_id] || false : false
+          }
         />
       ))}
+      {folders.length == 1 && folders[0].chat_sessions.length == 0 && (
+        <p className="text-sm font-normal text-subtle mt-2">
+          {" "}
+          Drag a chat into a folder to save for later{" "}
+        </p>
+      )}
     </div>
   );
 };

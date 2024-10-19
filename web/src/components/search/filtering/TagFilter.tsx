@@ -1,6 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { containsObject, objectsAreEquivalent } from "@/lib/contains";
+import { getValidTags } from "@/lib/tags/tagUtils";
 import { Tag } from "@/lib/types";
+import { debounce } from "lodash";
 import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -15,6 +17,7 @@ export function TagFilter({
 }) {
   const [filterValue, setFilterValue] = useState("");
   const [tagOptionsAreVisible, setTagOptionsAreVisible] = useState(false);
+  const [filteredTags, setFilteredTags] = useState<Tag[]>(tags);
   const inputRef = useRef<HTMLInputElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -46,14 +49,28 @@ export function TagFilter({
     };
   }, []);
 
-  const filterValueLower = filterValue.toLowerCase();
-  const filteredTags = filterValueLower
-    ? tags.filter(
-        (tags) =>
-          tags.tag_value.toLowerCase().startsWith(filterValueLower) ||
-          tags.tag_key.toLowerCase().startsWith(filterValueLower)
-      )
-    : tags;
+  const debouncedFetchTags = useRef(
+    debounce(async (value: string) => {
+      if (value) {
+        const fetchedTags = await getValidTags(value);
+        setFilteredTags(fetchedTags);
+      } else {
+        setFilteredTags(tags);
+      }
+    }, 50)
+  ).current;
+
+  useEffect(() => {
+    debouncedFetchTags(filterValue);
+
+    return () => {
+      debouncedFetchTags.cancel();
+    };
+  }, [filterValue, tags, debouncedFetchTags]);
+
+  const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterValue(event.target.value);
+  };
 
   return (
     <div className="relative">
@@ -73,7 +90,7 @@ export function TagFilter({
       </div>
       {selectedTags.length > 0 && (
         <div className="mt-2">
-          <div className="mt-1 flex flex-wrap gap-x-1 gap-y-1">
+          <div className="mt-1 flex bg-black flex-wrap gap-x-1 gap-y-1">
             {selectedTags.map((tag) => (
               <div
                 key={tag.tag_key + tag.tag_value}

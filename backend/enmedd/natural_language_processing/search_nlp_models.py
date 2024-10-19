@@ -16,6 +16,7 @@ from enmedd.configs.model_configs import (
 )
 from enmedd.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from enmedd.db.models import SearchSettings
+from enmedd.indexing.indexing_heartbeat import Heartbeat
 from enmedd.natural_language_processing.utils import get_tokenizer
 from enmedd.natural_language_processing.utils import tokenizer_trim_content
 from enmedd.utils.logger import setup_logger
@@ -41,7 +42,7 @@ logger = setup_logger()
 WARM_UP_STRINGS = [
     "enMedD AI is amazing!",
     "Check out our easy deployment guide at",
-    "https://docs.danswer.dev/quickstart",
+    "https://docs.enmedd.dev/quickstart",
 ]
 
 
@@ -95,6 +96,7 @@ class EmbeddingModel:
         api_url: str | None,
         provider_type: EmbeddingProvider | None,
         retrim_content: bool = False,
+        heartbeat: Heartbeat | None = None,
     ) -> None:
         self.api_key = api_key
         self.provider_type = provider_type
@@ -107,6 +109,7 @@ class EmbeddingModel:
         self.tokenizer = get_tokenizer(
             model_name=model_name, provider_type=provider_type
         )
+        self.heartbeat = heartbeat
 
         model_server_url = build_model_server_url(server_host, server_port)
         self.embed_server_endpoint = f"{model_server_url}/encoder/bi-encoder-embed"
@@ -166,6 +169,9 @@ class EmbeddingModel:
 
             response = self._make_model_server_request(embed_request)
             embeddings.extend(response.embeddings)
+
+            if self.heartbeat:
+                self.heartbeat.heartbeat()
         return embeddings
 
     def encode(

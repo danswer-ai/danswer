@@ -19,7 +19,7 @@ services:
     environment:
       # Auth Settings
       - AUTH_TYPE=${AUTH_TYPE:-disabled}
-      - SESSION_EXPIRE_TIME_SECONDS=${SESSION_EXPIRE_TIME_SECONDS:-86400}
+      - SESSION_EXPIRE_TIME_SECONDS=${SESSION_EXPIRE_TIME_SECONDS:-}
       - ENCRYPTION_KEY_SECRET=${ENCRYPTION_KEY_SECRET:-}
       - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
       - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
@@ -29,6 +29,7 @@ services:
       - SMTP_PORT=${SMTP_PORT:-587} # For sending verification emails, if unspecified then defaults to '587'
       - SMTP_USER=${SMTP_USER:-}
       - SMTP_PASS=${SMTP_PASS:-}
+      - ENABLE_EMAIL_INVITES=${ENABLE_EMAIL_INVITES:-} # If enabled, will send users (using SMTP settings) an email to join the workspace
       - EMAIL_FROM=${EMAIL_FROM:-}
       - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID:-}
       - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET:-}
@@ -87,6 +88,7 @@ services:
       - LOG_ENDPOINT_LATENCY=${LOG_ENDPOINT_LATENCY:-}
       - LOG_POSTGRES_LATENCY=${LOG_POSTGRES_LATENCY:-}
       - LOG_POSTGRES_CONN_COUNTS=${LOG_POSTGRES_CONN_COUNTS:-}
+      - CELERY_BROKER_POOL_LIMIT=${CELERY_BROKER_POOL_LIMIT:-}
 
       # Chat Configs
       - HARD_DELETE_CHATS=${HARD_DELETE_CHATS:-}
@@ -168,6 +170,10 @@ services:
       - JIRA_API_VERSION=${JIRA_API_VERSION:-}
       - NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP=${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP:-}
       - GITHUB_CONNECTOR_BASE_URL=${GITHUB_CONNECTOR_BASE_URL:-}
+      # Celery Configs (defaults are set in the supervisord.conf file, prefer doing that to have on source
+      # of defaults)
+      - CELERY_WORKER_LIGHT_CONCURRENCY=${CELERY_WORKER_LIGHT_CONCURRENCY:-}
+      - CELERY_WORKER_LIGHT_PREFETCH_MULTIPLIER=${CELERY_WORKER_LIGHT_PREFETCH_MULTIPLIER:-}
       # Logging
       # Leave this on pretty please? Nothing sensitive is collected!
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
@@ -262,6 +268,7 @@ services:
       - INDEXING_ONLY=True
       # Set to debug to get more fine-grained logs
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - CLIENT_EMBEDDING_TIMEOUT=${CLIENT_EMBEDDING_TIMEOUT:-}
     volumes:
       # Not necessary, this is just to reduce download time during startup
       - indexing_huggingface_model_cache:/root/.cache/huggingface/
@@ -273,7 +280,7 @@ services:
 
   relational_db:
     image: postgres:15.2-alpine
-    command: -c 'max_connections=150'
+    command: -c 'max_connections=250'
     restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
@@ -318,14 +325,14 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
-    # the specified script waits for the api_server to start up.
-    # Without this we've seen issues where nginx shows no error logs but
+    # The specified script waits for the api_server to start up. 
+    # Without this we've seen issues where nginx shows no error logs but 
     # does not recieve any traffic
     # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
     # in order to make this work on both Unix-like systems and windows
     command: >
       /bin/sh -c "dos2unix /etc/nginx/conf.d/run-nginx.sh 
-      && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"
+      && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"  
 
   cache:
     image: redis:7.4-alpine
@@ -338,7 +345,7 @@ services:
 
 volumes:
   db_volume:
-  vespa_volume:
-  # Created by the container itself
+  vespa_volume: # Created by the container itself
+
   model_cache_huggingface:
   indexing_huggingface_model_cache:

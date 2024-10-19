@@ -142,7 +142,7 @@ services:
 
   relational_db:
     image: postgres:15.2-alpine
-    command: -c 'max_connections=150'
+    command: -c 'max_connections=250'
     restart: always
     # POSTGRES_USER and POSTGRES_PASSWORD should be set in .env file
     env_file:
@@ -189,8 +189,8 @@ services:
       options:
         max-size: "50m"
         max-file: "6"
-    # the specified script waits for the api_server to start up.
-    # Without this we've seen issues where nginx shows no error logs but
+    # The specified script waits for the api_server to start up. 
+    # Without this we've seen issues where nginx shows no error logs but 
     # does not recieve any traffic
     # NOTE: we have to use dos2unix to remove Carriage Return chars from the file
     # in order to make this work on both Unix-like systems and windows

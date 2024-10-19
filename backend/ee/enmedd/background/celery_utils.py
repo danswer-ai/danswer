@@ -1,16 +1,16 @@
-from typing import cast
+from datetime import datetime
+from datetime import timezone
 
-from redis import Redis
 from sqlalchemy.orm import Session
 
 from ee.enmedd.background.task_name_builders import name_chat_ttl_task
-from ee.enmedd.background.task_name_builders import name_sync_external_permissions_task
-from ee.enmedd.db.teamspace import delete_teamspace
-from ee.enmedd.db.teamspace import fetch_teamspace
-from ee.enmedd.db.teamspace import mark_teamspace_as_synced
-from enmedd.background.celery.celery_app import task_logger
-from enmedd.background.celery.celery_redis import RedisTeamspace
-from enmedd.db.engine import get_sqlalchemy_engine
+from ee.enmedd.background.task_name_builders import (
+    name_sync_external_doc_permissions_task,
+)
+from ee.enmedd.background.task_name_builders import (
+    name_sync_external_teamspace_permissions_task,
+)
+from ee.enmedd.external_permissions.sync_params import PERMISSION_SYNC_PERIODS
 from enmedd.db.enums import AccessType
 from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.tasks import check_task_is_live_and_not_timed_out
@@ -18,6 +18,27 @@ from enmedd.db.tasks import get_latest_task
 from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+def _is_time_to_run_sync(cc_pair: ConnectorCredentialPair) -> bool:
+    source_sync_period = PERMISSION_SYNC_PERIODS.get(cc_pair.connector.source)
+
+    # If RESTRICTED_FETCH_PERIOD[source] is None, we always run the sync.
+    if not source_sync_period:
+        return True
+
+    # If the last sync is None, it has never been run so we run the sync
+    if cc_pair.last_time_perm_sync is None:
+        return True
+
+    last_sync = cc_pair.last_time_perm_sync.replace(tzinfo=timezone.utc)
+    current_time = datetime.now(timezone.utc)
+
+    # If the last sync is greater than the full fetch period, we run the sync
+    if (current_time - last_sync).total_seconds() > source_sync_period:
+        return True
+
+    return False
 
 
 def should_perform_chat_ttl_check(
@@ -32,19 +53,19 @@ def should_perform_chat_ttl_check(
     if not latest_task:
         return True
 
-    if latest_task and check_task_is_live_and_not_timed_out(latest_task, db_session):
+    if check_task_is_live_and_not_timed_out(latest_task, db_session):
         logger.debug(f"{task_name} is already being performed. Skipping.")
         return False
     return True
 
 
-def should_perform_external_permissions_check(
+def should_perform_external_doc_permissions_check(
     cc_pair: ConnectorCredentialPair, db_session: Session
 ) -> bool:
     if cc_pair.access_type != AccessType.SYNC:
         return False
 
-    task_name = name_sync_external_permissions_task(cc_pair_id=cc_pair.id)
+    task_name = name_sync_external_doc_permissions_task(cc_pair_id=cc_pair.id)
 
     latest_task = get_latest_task(task_name, db_session)
     if not latest_task:
@@ -54,44 +75,29 @@ def should_perform_external_permissions_check(
         logger.debug(f"{task_name} is already being performed. Skipping.")
         return False
 
+    if not _is_time_to_run_sync(cc_pair):
+        return False
+
     return True
 
 
-def monitor_teamspace_taskset(key_bytes: bytes, r: Redis) -> None:
-    """This function is likely to move in the worker refactor happening next."""
-    key = key_bytes.decode("utf-8")
-    teamspace_id = RedisTeamspace.get_id_from_fence_key(key)
-    if not teamspace_id:
-        task_logger.warning("Could not parse teamspace id from {key}")
-        return
+def should_perform_external_teamspace_permissions_check(
+    cc_pair: ConnectorCredentialPair, db_session: Session
+) -> bool:
+    if cc_pair.access_type != AccessType.SYNC:
+        return False
 
-    rug = RedisTeamspace(teamspace_id)
-    fence_value = r.get(rug.fence_key)
-    if fence_value is None:
-        return
+    task_name = name_sync_external_teamspace_permissions_task(cc_pair_id=cc_pair.id)
 
-    try:
-        initial_count = int(cast(int, fence_value))
-    except ValueError:
-        task_logger.error("The value is not an integer.")
-        return
+    latest_task = get_latest_task(task_name, db_session)
+    if not latest_task:
+        return True
 
-    count = cast(int, r.scard(rug.taskset_key))
-    task_logger.info(
-        f"User group sync: teamspace_id={teamspace_id} remaining={count} initial={initial_count}"
-    )
-    if count > 0:
-        return
+    if check_task_is_live_and_not_timed_out(latest_task, db_session):
+        logger.debug(f"{task_name} is already being performed. Skipping.")
+        return False
 
-    with Session(get_sqlalchemy_engine()) as db_session:
-        teamspace = fetch_teamspace(db_session=db_session, teamspace_id=teamspace_id)
-        if teamspace:
-            if teamspace.is_up_for_deletion:
-                delete_teamspace(db_session=db_session, teamspace=teamspace)
-                task_logger.info(f"Deleted teamspace. id='{teamspace_id}'")
-            else:
-                mark_teamspace_as_synced(db_session=db_session, teamspace=teamspace)
-                task_logger.info(f"Synced teamspace. id='{teamspace_id}'")
+    if not _is_time_to_run_sync(cc_pair):
+        return False
 
-    r.delete(rug.taskset_key)
-    r.delete(rug.fence_key)
+    return True

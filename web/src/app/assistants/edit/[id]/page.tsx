@@ -37,7 +37,6 @@ export default async function Page({ params }: { params: { id: string } }) {
     llmProviders,
     folders,
     openedFolders,
-    shouldShowWelcomeModal,
   } = data;
 
   let body;
@@ -57,6 +56,7 @@ export default async function Page({ params }: { params: { id: string } }) {
               <CardContent>
                 <AssistantEditor
                   {...values}
+                  admin
                   defaultPublic={false}
                   redirectType={SuccessfulAssistantUpdateRedirectType.CHAT}
                 />
@@ -85,7 +85,6 @@ export default async function Page({ params }: { params: { id: string } }) {
 
       <ChatProvider
         value={{
-          user,
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,

@@ -1,18 +1,12 @@
 "use client";
 
-import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { runConnector } from "@/lib/connector";
 import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
+import { Button } from "@tremor/react";
 import { useToast } from "@/hooks/use-toast";
 import { Divider } from "@/components/Divider";
 
@@ -99,14 +93,16 @@ export function ReIndexButton({
   connectorId,
   credentialId,
   isDisabled,
+  isDeleting,
 }: {
   ccPairId: number;
   connectorId: number;
   credentialId: number;
   isDisabled: boolean;
+  isDeleting: boolean;
 }) {
   const [reIndexPopupVisible, setReIndexPopupVisible] = useState(false);
-
+  const { popup, setPopup } = usePopup();
   return (
     <>
       {reIndexPopupVisible && (
@@ -117,25 +113,25 @@ export function ReIndexButton({
           hide={() => setReIndexPopupVisible(false)}
         />
       )}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={() => {
-                setReIndexPopupVisible(true);
-              }}
-              disabled={isDisabled}
-            >
-              Run Indexing
-            </Button>
-          </TooltipTrigger>
-          {isDisabled ? (
-            <TooltipContent>
-              Connector must be active in order to run indexing
-            </TooltipContent>
-          ) : undefined}
-        </Tooltip>
-      </TooltipProvider>
+      {popup}
+      <Button
+        className="ml-auto"
+        color="green"
+        size="xs"
+        onClick={() => {
+          setReIndexPopupVisible(true);
+        }}
+        disabled={isDisabled || isDeleting}
+        tooltip={
+          isDeleting
+            ? "Cannot index while connector is deleting"
+            : isDisabled
+              ? "Connector must be re-enabled before indexing"
+              : undefined
+        }
+      >
+        Index
+      </Button>
     </>
   );
 }

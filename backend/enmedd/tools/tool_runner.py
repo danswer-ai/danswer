@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from collections.abc import Generator
 from typing import Any
 
@@ -18,11 +19,12 @@ class ToolRunner:
         self._tool_responses: list[ToolResponse] | None = None
 
     def kickoff(self) -> ToolCallKickoff:
-        return ToolCallKickoff(tool_name=self.tool.name(), tool_args=self.args)
+        return ToolCallKickoff(tool_name=self.tool.name, tool_args=self.args)
 
     def tool_responses(self) -> Generator[ToolResponse, None, None]:
         if self._tool_responses is not None:
             yield from self._tool_responses
+            return
 
         tool_responses: list[ToolResponse] = []
         for tool_response in self.tool.run(**self.args):
@@ -37,7 +39,7 @@ class ToolRunner:
 
     def tool_final_result(self) -> ToolCallFinalResult:
         return ToolCallFinalResult(
-            tool_name=self.tool.name(),
+            tool_name=self.tool.name,
             tool_args=self.args,
             tool_result=self.tool.final_result(*self.tool_responses()),
         )
@@ -46,7 +48,7 @@ class ToolRunner:
 def check_which_tools_should_run_for_non_tool_calling_llm(
     tools: list[Tool], query: str, history: list[PreviousMessage], llm: LLM
 ) -> list[dict[str, Any] | None]:
-    tool_args_list = [
+    tool_args_list: list[tuple[Callable[..., Any], tuple[Any, ...]]] = [
         (tool.get_args_for_non_tool_calling_llm, (query, history, llm))
         for tool in tools
     ]

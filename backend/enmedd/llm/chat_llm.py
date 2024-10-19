@@ -290,10 +290,12 @@ class DefaultMultiLLM(LLM):
             return litellm.completion(
                 # model choice
                 model=f"{self.config.model_provider}/{self.config.model_name}",
-                api_key=self._api_key,
-                base_url=self._api_base,
-                api_version=self._api_version,
-                custom_llm_provider=self._custom_llm_provider,
+                # NOTE: have to pass in None instead of empty string for these
+                # otherwise litellm can have some issues with bedrock
+                api_key=self._api_key or None,
+                base_url=self._api_base or None,
+                api_version=self._api_version or None,
+                custom_llm_provider=self._custom_llm_provider or None,
                 # actual input
                 messages=prompt,
                 tools=tools,

@@ -11,11 +11,21 @@ export const SearchType = {
   SEMANTIC: "semantic",
   KEYWORD: "keyword",
   AUTOMATIC: "automatic",
+  INTERNET: "internet",
 };
 export type SearchType = (typeof SearchType)[keyof typeof SearchType];
 
 export interface AnswerPiecePacket {
   answer_piece: string;
+}
+
+export enum StreamStopReason {
+  CONTEXT_LENGTH = "CONTEXT_LENGTH",
+  CANCELLED = "CANCELLED",
+}
+
+export interface StreamStopInfo {
+  stop_reason: StreamStopReason;
 }
 
 export interface ErrorMessagePacket {
@@ -45,12 +55,23 @@ export interface EnmeddDocument {
   boost: number;
   hidden: boolean;
   score: number;
+  chunk_ind: number;
   match_highlights: string[];
   metadata: { [key: string]: string };
   updated_at: string | null;
   db_doc_id?: number;
+  is_internet: boolean;
+  validationState?: null | "good" | "bad";
 }
 
+export interface SearchEnmeddDocument extends EnmeddDocument {
+  is_relevant: boolean;
+  relevance_explanation: string;
+}
+
+export interface FilteredEnmeddDocument extends EnmeddDocument {
+  included: boolean;
+}
 export interface DocumentInfoPacket {
   top_documents: EnmeddDocument[];
   predicted_flow: FlowType | null;
@@ -59,8 +80,17 @@ export interface DocumentInfoPacket {
   favor_recent: boolean;
 }
 
-export interface LLMRelevanceFilterPacket {
-  relevant_chunk_indices: number[];
+export interface DocumentRelevance {
+  relevant: boolean;
+  content: string;
+}
+
+export interface Relevance {
+  [url: string]: DocumentRelevance;
+}
+
+export interface RelevanceChunk {
+  relevance_summaries: Relevance;
 }
 
 export interface SearchResponse {
@@ -68,10 +98,11 @@ export interface SearchResponse {
   suggestedFlowType: FlowType | null;
   answer: string | null;
   quotes: Quote[] | null;
-  documents: EnmeddDocument[] | null;
+  documents: SearchEnmeddDocument[] | null;
   selectedDocIndices: number[] | null;
   error: string | null;
   messageId: number | null;
+  additional_relevance?: Relevance;
 }
 
 export enum SourceCategory {
@@ -79,6 +110,7 @@ export enum SourceCategory {
   ImportedKnowledge = "Import Knowledge",
   ComingSoon = "Coming Soon",
   Disabled = "Disabled",
+  Other = "Other",
 }
 
 export interface SourceMetadata {
@@ -103,11 +135,13 @@ export interface Filters {
 
 export interface SearchRequestArgs {
   query: string;
+  agentic?: boolean;
   sources: SourceMetadata[];
   documentSets: string[];
   timeRange: DateRangePickerValue | null;
   tags: Tag[];
   assistant: Assistant;
+  updateDocumentRelevance: (relevance: any) => void;
   updateCurrentAnswer: (val: string) => void;
   updateQuotes: (quotes: Quote[]) => void;
   updateDocs: (documents: EnmeddDocument[]) => void;
@@ -115,17 +149,23 @@ export interface SearchRequestArgs {
   updateSuggestedSearchType: (searchType: SearchType) => void;
   updateSuggestedFlowType: (flowType: FlowType) => void;
   updateError: (error: string) => void;
-  updateMessageId: (messageId: number) => void;
+  updateMessageAndThreadId: (
+    messageId: number,
+    chat_session_id: number
+  ) => void;
+  finishedSearching: () => void;
+  updateComments: (comments: any) => void;
   selectedSearchType: SearchType | null;
 }
 
 export interface SearchRequestOverrides {
   searchType?: SearchType;
   offset?: number;
+  overrideMessage?: string;
+  agentic?: boolean;
 }
 
 export interface ValidQuestionResponse {
-  answerable: boolean | null;
   reasoning: string | null;
   error: string | null;
 }

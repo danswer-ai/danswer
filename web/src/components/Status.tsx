@@ -9,15 +9,15 @@ import {
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { CustomTooltip } from "./CustomTooltip";
+import { HoverPopup } from "./HoverPopup";
+import { FiAlertTriangle, FiMinus } from "react-icons/fi";
 
 export function IndexAttemptStatus({
   status,
   errorMsg,
-  size = "md",
 }: {
-  status: ValidStatuses;
+  status: ValidStatuses | null;
   errorMsg?: string | null;
-  size?: "xs" | "sm" | "md" | "lg";
 }) {
   let badge;
 
@@ -32,6 +32,27 @@ export function IndexAttemptStatus({
     } else {
       badge = icon;
     }
+  } else if (status === "completed_with_errors") {
+    const icon = (
+      <Badge variant="warning">
+        <FiAlertTriangle />
+        Completed with errors
+      </Badge>
+    );
+    badge = (
+      <HoverPopup
+        mainContent={<div className="cursor-pointer">{icon}</div>}
+        popupContent={
+          <div className="w-64 p-2 break-words overflow-hidden whitespace-normal">
+            The indexing attempt completed, but some errors were encountered
+            during the run.
+            <br />
+            <br />
+            Click View Errors for more details.
+          </div>
+        }
+      />
+    );
   } else if (status === "success") {
     badge = (
       <Badge variant="success">
@@ -48,6 +69,13 @@ export function IndexAttemptStatus({
     badge = (
       <Badge variant="outline">
         <Clock size={14} className="mr-0.5" /> Scheduled
+      </Badge>
+    );
+  } else {
+    badge = (
+      <Badge variant="secondary">
+        <FiMinus />
+        None
       </Badge>
     );
   }

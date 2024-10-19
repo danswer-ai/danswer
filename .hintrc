@@ -1,0 +1,20 @@
+{
+  "extends": [
+    "development"
+  ],
+  "hints": {
+    "axe/name-role-value": [
+      "default",
+      {
+        "button-name": "off"
+      }
+    ],
+    "axe/aria": [
+      "default",
+      {
+        "aria-roles": "off"
+      }
+    ],
+    "no-inline-styles": "off"
+  }
+}

@@ -2,16 +2,18 @@ export function BasicClickable({
   children,
   onClick,
   fullWidth = false,
+  inset,
 }: {
   children: string | JSX.Element;
   onClick?: () => void;
+  inset?: boolean;
   fullWidth?: boolean;
   isExpanded?: boolean;
 }) {
   return (
     <div
       onClick={onClick}
-      className={`transition-all ease-in-out duration-300 h-full w-full shadow-sm rounded-regular bg-background p-3`}
+      className={`transition-all ease-in-out duration-300 h-full w-full shadow-sm rounded-regular bg-background p-3  ${fullWidth ? "w-full" : ""}`}
     >
       {children}
     </div>
@@ -22,10 +24,12 @@ export function EmphasizedClickable({
   children,
   onClick,
   fullWidth = false,
+  size = "md",
 }: {
   children: string | JSX.Element;
   onClick?: () => void;
   fullWidth?: boolean;
+  size?: "sm" | "md" | "lg";
 }) {
   return (
     <button
@@ -52,13 +56,13 @@ export function BasicSelectable({
   selected,
   hasBorder,
   fullWidth = false,
-  padding = true,
+  padding = "normal",
 }: {
   children: string | JSX.Element;
   selected: boolean;
   hasBorder?: boolean;
   fullWidth?: boolean;
-  padding?: boolean;
+  padding?: "none" | "normal" | "extra";
 }) {
   return (
     <div

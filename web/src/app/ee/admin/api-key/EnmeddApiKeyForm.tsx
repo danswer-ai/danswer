@@ -1,92 +1,120 @@
 import { Form, Formik } from "formik";
-import { TextFormField } from "@/components/admin/connectors/Field";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
+import {
+  BooleanFormField,
+  TextFormField,
+} from "@/components/admin/connectors/Field";
 import { createApiKey, updateApiKey } from "./lib";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Modal } from "@/components/Modal";
+import { Button, Divider, Text } from "@tremor/react";
+import { UserRole } from "@/lib/types";
+import { APIKey } from "./types";
 
-interface ApiKeyFormProps {
+interface EnmeddApiKeyFormProps {
   onClose: () => void;
+  setPopup: (popupSpec: PopupSpec | null) => void;
   onCreateApiKey: (apiKey: APIKey) => void;
   apiKey?: APIKey;
 }
 
 export const EnmeddApiKeyForm = ({
   onClose,
+  setPopup,
   onCreateApiKey,
   apiKey,
-}: ApiKeyFormProps) => {
+}: EnmeddApiKeyFormProps) => {
   const isUpdate = apiKey !== undefined;
-  const { toast } = useToast();
 
   return (
-    <div>
-      {/*  <h2 className="text-xl font-bold flex pb-6">
-        {isUpdate ? "Update API Key" : "Create a new API Key"}
-      </h2> */}
+    <Modal onOutsideClick={onClose} width="w-2/6">
+      <>
+        <h2 className="text-xl font-bold flex">
+          {isUpdate ? "Update API Key" : "Create a new API Key"}
+        </h2>
 
-      <Formik
-        initialValues={{
-          name: apiKey?.api_key_name || "",
-        }}
-        onSubmit={async (values, formikHelpers) => {
-          formikHelpers.setSubmitting(true);
-          let response;
-          if (isUpdate) {
-            response = await updateApiKey(apiKey.api_key_id, values);
-          } else {
-            response = await createApiKey(values);
-          }
-          formikHelpers.setSubmitting(false);
-          if (response.ok) {
-            toast({
-              title: "API Key Operation Successful",
-              description: isUpdate
-                ? "API key updated successfully!"
-                : "API key created successfully!",
-              variant: "success",
-            });
-            if (!isUpdate) {
-              onCreateApiKey(await response.json());
+        <Divider />
+
+        <Formik
+          initialValues={{
+            name: apiKey?.api_key_name || "",
+            is_admin: apiKey?.api_key_role === "admin",
+          }}
+          onSubmit={async (values, formikHelpers) => {
+            formikHelpers.setSubmitting(true);
+
+            // Map the boolean to a UserRole string
+            const role: UserRole = values.is_admin
+              ? UserRole.ADMIN
+              : UserRole.BASIC;
+
+            // Prepare the payload with the UserRole
+            const payload = {
+              ...values,
+              role, // Assign the role directly as a UserRole type
+            };
+
+            let response;
+            if (isUpdate) {
+              response = await updateApiKey(apiKey.api_key_id, payload);
+            } else {
+              response = await createApiKey(payload);
             }
-            onClose();
-          } else {
-            const responseJson = await response.json();
-            const errorMsg = responseJson.detail || responseJson.message;
-            toast({
-              title: "API Key Operation Failed",
-              description: isUpdate
-                ? `Error updating API key: ${errorMsg}`
-                : `Error creating API key: ${errorMsg}`,
-              variant: "destructive",
-            });
-          }
-        }}
-      >
-        {({ isSubmitting, values, setFieldValue }) => (
-          <Form>
-            <p className="mb-4">
-              Choose a memorable name for your API key. This is optional and can
-              be added or changed later!
-            </p>
+            formikHelpers.setSubmitting(false);
+            if (response.ok) {
+              setPopup({
+                message: isUpdate
+                  ? "Successfully updated API key!"
+                  : "Successfully created API key!",
+                type: "success",
+              });
+              if (!isUpdate) {
+                onCreateApiKey(await response.json());
+              }
+              onClose();
+            } else {
+              const responseJson = await response.json();
+              const errorMsg = responseJson.detail || responseJson.message;
+              setPopup({
+                message: isUpdate
+                  ? `Error updating API key - ${errorMsg}`
+                  : `Error creating API key - ${errorMsg}`,
+                type: "error",
+              });
+            }
+          }}
+        >
+          {({ isSubmitting, values, setFieldValue }) => (
+            <Form>
+              <Text className="mb-4 text-lg">
+                Choose a memorable name for your API key. This is optional and
+                can be added or changed later!
+              </Text>
 
-            <TextFormField
-              name="name"
-              label="Name (optional):"
-              autoCompleteDisabled={true}
-            />
+              <TextFormField
+                name="name"
+                label="Name (optional):"
+                autoCompleteDisabled={true}
+              />
 
-            <div className="flex">
+              <BooleanFormField
+                alignTop
+                name="is_admin"
+                label="Is Admin?"
+                subtext="If set, this API key will have access to admin level server API's."
+              />
+
               <Button
                 type="submit"
+                size="xs"
+                color="green"
                 disabled={isSubmitting}
-                className="mx-auto w-64"
               >
                 {isUpdate ? "Update!" : "Create!"}
               </Button>
-            </div>
-          </Form>
-        )}
-      </Formik>
-    </div>
+            </Form>
+          )}
+        </Formik>
+      </>
+    </Modal>
   );
 };

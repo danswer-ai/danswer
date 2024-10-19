@@ -1,7 +1,5 @@
-import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { Connector, ConnectorBase, ValidSources } from "./types";
-import { toast, useToast } from "@/hooks/use-toast";
-
+import { ValidSources } from "./types";
+import { Connector, ConnectorBase } from "./connectors/connectors";
 async function handleResponse(
   response: Response
 ): Promise<[string | null, any]> {
@@ -25,6 +23,21 @@ export async function createConnector<T>(
   return handleResponse(response);
 }
 
+export async function updateConnectorCredentialPairName(
+  ccPairId: number,
+  newName: string
+): Promise<Response> {
+  return fetch(
+    `/api/manage/admin/cc-pair/${ccPairId}/name?new_name=${encodeURIComponent(newName)}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+}
+
 export async function updateConnector<T>(
   connector: Connector<T>
 ): Promise<Connector<T>> {
@@ -36,25 +49,6 @@ export async function updateConnector<T>(
     body: JSON.stringify(connector),
   });
   return await response.json();
-}
-
-export async function disableConnector(
-  connector: Connector<any>,
-  onUpdate: () => void
-) {
-  updateConnector({
-    ...connector,
-    disabled: !connector.disabled,
-  }).then(() => {
-    toast({
-      title: "Success",
-      description: connector.disabled
-        ? "Enabled connector!"
-        : "Paused connector!",
-      variant: "success",
-    });
-    onUpdate && onUpdate();
-  });
 }
 
 export async function deleteConnector(

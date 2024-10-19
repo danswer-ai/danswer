@@ -1,15 +1,14 @@
-import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { UserDropdown } from "@/components/UserDropdown";
 import { ChatProvider } from "@/context/ChatContext";
 import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
-import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import { AssistantsList } from "./AssistantsList";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { AssistantsBars } from "./AssistantsBars";
+import { ChatSidebar } from "@/app/chat/sessionSidebar/ChatSidebar";
 
 export default async function GalleryPage({
   searchParams,
@@ -39,13 +38,10 @@ export default async function GalleryPage({
 
   return (
     <>
-      <InstantSSRAutoRefresh />
-
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
       <ChatProvider
         value={{
-          user,
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,

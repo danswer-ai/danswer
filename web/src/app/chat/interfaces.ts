@@ -1,4 +1,9 @@
-import { EnmeddDocument, Filters } from "@/lib/search/interfaces";
+import {
+  EnmeddDocument,
+  Filters,
+  SearchEnmeddDocument,
+  StreamStopReason,
+} from "@/lib/search/interfaces";
 
 export enum RetrievalType {
   None = "none",
@@ -10,6 +15,9 @@ export enum ChatSessionSharedStatus {
   Private = "private",
   Public = "public",
 }
+
+// The number of messages to buffer on the client side.
+export const BUFFER_COUNT = 35;
 
 export interface RetrievalDetails {
   run_search: "always" | "never" | "auto";
@@ -30,8 +38,13 @@ export interface FileDescriptor {
   id: string;
   type: ChatFileType;
   name?: string | null;
+
   // FE only
   isUploading?: boolean;
+}
+
+export interface LLMRelevanceFilterPacket {
+  relevant_chunk_indices: number[];
 }
 
 export interface ToolCallMetadata {
@@ -56,6 +69,13 @@ export interface ChatSession {
   current_alternate_model: string;
 }
 
+export interface SearchSession {
+  search_session_id: number;
+  documents: SearchEnmeddDocument[];
+  messages: BackendMessage[];
+  description: string;
+}
+
 export interface Message {
   messageId: number;
   message: string;
@@ -71,6 +91,9 @@ export interface Message {
   childrenMessageIds?: number[];
   latestChildMessageId?: number | null;
   alternateAssistantID?: number | null;
+  stackTrace?: string | null;
+  overridden_model?: string;
+  stopReason?: StreamStopReason | null;
 }
 
 export interface BackendChatSession {
@@ -86,6 +109,8 @@ export interface BackendChatSession {
 
 export interface BackendMessage {
   message_id: number;
+  comments: any;
+  chat_session_id: number;
   parent_message: number | null;
   latest_child_message: number | null;
   message: string;
@@ -97,6 +122,12 @@ export interface BackendMessage {
   files: FileDescriptor[];
   tool_calls: ToolCallFinalResult[];
   alternate_assistant_id?: number | null;
+  overridden_model?: string;
+}
+
+export interface MessageResponseIDInfo {
+  user_message_id: number | null;
+  reserved_assistant_message_id: number;
 }
 
 export interface DocumentsResponse {
@@ -110,4 +141,5 @@ export interface ImageGenerationDisplay {
 
 export interface StreamingError {
   error: string;
+  stack_trace: string;
 }

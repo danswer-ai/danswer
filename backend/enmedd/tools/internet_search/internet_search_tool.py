@@ -10,7 +10,7 @@ from enmedd.chat.chat_utils import combine_message_chain
 from enmedd.chat.models import LlmDoc
 from enmedd.configs.constants import DocumentSource
 from enmedd.configs.model_configs import GEN_AI_HISTORY_CUTOFF
-from enmedd.dynamic_configs.interface import JSON_ro
+from enmedd.key_value_store.interface import JSON_ro
 from enmedd.llm.answering.models import PreviousMessage
 from enmedd.llm.interfaces import LLM
 from enmedd.llm.utils import message_to_string

@@ -1,7 +1,9 @@
 # docs: https://docs.celeryq.dev/en/stable/userguide/configuration.html
+from enmedd.configs.app_configs import CELERY_BROKER_POOL_LIMIT
 from enmedd.configs.app_configs import CELERY_RESULT_EXPIRES
 from enmedd.configs.app_configs import REDIS_DB_NUMBER_CELERY
 from enmedd.configs.app_configs import REDIS_DB_NUMBER_CELERY_RESULT_BACKEND
+from enmedd.configs.app_configs import REDIS_HEALTH_CHECK_INTERVAL
 from enmedd.configs.app_configs import REDIS_HOST
 from enmedd.configs.app_configs import REDIS_PASSWORD
 from enmedd.configs.app_configs import REDIS_PORT
@@ -9,6 +11,7 @@ from enmedd.configs.app_configs import REDIS_SSL
 from enmedd.configs.app_configs import REDIS_SSL_CA_CERTS
 from enmedd.configs.app_configs import REDIS_SSL_CERT_REQS
 from enmedd.configs.constants import EnmeddCeleryPriority
+from enmedd.configs.constants import REDIS_SOCKET_KEEPALIVE_OPTIONS
 
 CELERY_SEPARATOR = ":"
 
@@ -36,11 +39,29 @@ result_backend = f"{REDIS_SCHEME}://{CELERY_PASSWORD_PART}{REDIS_HOST}:{REDIS_PO
 # can stall other tasks.
 worker_prefetch_multiplier = 4
 
+broker_connection_retry_on_startup = True
+broker_pool_limit = CELERY_BROKER_POOL_LIMIT
+
+# redis broker settings
+# https://docs.celeryq.dev/projects/kombu/en/stable/reference/kombu.transport.redis.html
 broker_transport_options = {
     "priority_steps": list(range(len(EnmeddCeleryPriority))),
     "sep": CELERY_SEPARATOR,
     "queue_order_strategy": "priority",
+    "retry_on_timeout": True,
+    "health_check_interval": REDIS_HEALTH_CHECK_INTERVAL,
+    "socket_keepalive": True,
+    "socket_keepalive_options": REDIS_SOCKET_KEEPALIVE_OPTIONS,
 }
+
+# redis backend settings
+# https://docs.celeryq.dev/en/stable/userguide/configuration.html#redis-backend-settings
+
+# there doesn't appear to be a way to set socket_keepalive_options on the redis result backend
+redis_socket_keepalive = True
+redis_retry_on_timeout = True
+redis_backend_health_check_interval = REDIS_HEALTH_CHECK_INTERVAL
+
 
 task_default_priority = EnmeddCeleryPriority.MEDIUM
 task_acks_late = True

@@ -43,7 +43,7 @@ COPY ./shared_configs /app/shared_configs
 # Model Server main code
 COPY ./model_server /app/model_server
 
-ENV PYTHONPATH /app
+ENV PYTHONPATH=/app
 
 EXPOSE 9000
 

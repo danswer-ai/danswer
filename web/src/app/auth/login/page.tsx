@@ -17,6 +17,7 @@ import Image from "next/image";
 import LoginImage from "../../../../public/LoginImage.png";
 import DefaultUserChart from "../../../../public/default-user-chart.png";
 import { WelcomeTopBar } from "@/components/TopBar";
+import { getSecondsUntilExpiration } from "@/lib/time";
 
 const Page = async ({
   searchParams,
@@ -45,7 +46,12 @@ const Page = async ({
   }
 
   // if user is already logged in, take them to the main app page
-  if (currentUser && currentUser.is_active) {
+  const secondsTillExpiration = getSecondsUntilExpiration(currentUser);
+  if (
+    currentUser &&
+    currentUser.is_active &&
+    (secondsTillExpiration === null || secondsTillExpiration > 0)
+  ) {
     if (authTypeMetadata?.requiresVerification && !currentUser.is_verified) {
       return redirect("/auth/waiting-on-verification");
     }

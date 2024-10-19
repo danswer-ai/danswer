@@ -49,7 +49,7 @@ from enmedd.db.enums import IndexingStatus
 from enmedd.db.enums import IndexModelStatus
 from enmedd.db.enums import TaskStatus
 from enmedd.db.pydantic_type import PydanticType
-from enmedd.dynamic_configs.interface import JSON_ro
+from enmedd.key_value_store.interface import JSON_ro
 from enmedd.file_store.models import FileDescriptor
 from enmedd.llm.override_models import LLMOverride
 from enmedd.llm.override_models import PromptOverride
@@ -159,6 +159,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     chat_folders: Mapped[list["ChatFolder"]] = relationship(
         "ChatFolder", back_populates="user"
     )
+
     prompts: Mapped[list["Prompt"]] = relationship("Prompt", back_populates="user")
     # Assistants owned by this user
     assistants: Mapped[list["Assistant"]] = relationship(
@@ -169,18 +170,12 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     # Custom tools created by this user
     custom_tools: Mapped[list["Tool"]] = relationship("Tool", back_populates="user")
-
-    workspace: Mapped[list["Workspace"]] = relationship(
-        "Workspace", secondary="workspace__users", back_populates="users", lazy="joined"
-    )
     # Notifications for the UI
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", back_populates="user"
     )
-
-    groups: Mapped[list["Teamspace"]] = relationship(
-        "Teamspace", secondary="user__teamspace", back_populates="users", lazy="joined"
-    )
+    # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
+    has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class InputPrompt(Base):
@@ -205,6 +200,18 @@ class InputPrompt__User(Base):
     )
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("inputprompt.id"), primary_key=True
+    )
+
+    workspace: Mapped[list["Workspace"]] = relationship(
+        "Workspace", secondary="workspace__users", back_populates="users", lazy="joined"
+    )
+    # Notifications for the UI
+    notifications: Mapped[list["Notification"]] = relationship(
+        "Notification", back_populates="user"
+    )
+
+    groups: Mapped[list["Teamspace"]] = relationship(
+        "Teamspace", secondary="user__teamspace", back_populates="users", lazy="joined"
     )
 
 
@@ -1001,6 +1008,10 @@ class ChatSession(Base):
 
     current_alternate_model: Mapped[str | None] = mapped_column(String, default=None)
 
+    slack_thread_id: Mapped[str | None] = mapped_column(
+        String, nullable=True, default=None
+    )
+
     # the latest "overrides" specified by the user. These take precedence over
     # the attached assistant. However, overrides specified directly in the
     # `send-message` call will take precedence over these.
@@ -1013,7 +1024,6 @@ class ChatSession(Base):
     prompt_override: Mapped[PromptOverride | None] = mapped_column(
         PydanticType(PromptOverride), nullable=True
     )
-
     time_updated: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -1022,7 +1032,6 @@ class ChatSession(Base):
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-
     user: Mapped[User] = relationship("User", back_populates="chat_sessions")
     folder: Mapped["ChatFolder"] = relationship(
         "ChatFolder", back_populates="chat_sessions"
@@ -1192,11 +1201,6 @@ class ChatMessageFeedback(Base):
         back_populates="chat_message_feedbacks",
         foreign_keys=[chat_message_id],
     )
-
-
-"""
-Structures, Organizational, Configurations Tables
-"""
 
 
 class LLMProvider(Base):
@@ -1676,6 +1680,10 @@ class Teamspace(Base):
     users: Mapped[list[User]] = relationship(
         "User", secondary=User__Teamspace.__table__, viewonly=True
     )
+    teamspace_relationships: Mapped[list[User__Teamspace]] = relationship(
+        "User__Teamspace",
+        viewonly=True,
+    )
     cc_pairs: Mapped[list[ConnectorCredentialPair]] = relationship(
         "ConnectorCredentialPair",
         secondary=Teamspace__ConnectorCredentialPair.__table__,
@@ -1696,6 +1704,10 @@ class Teamspace(Base):
         "DocumentSet",
         secondary=DocumentSet__Teamspace.__table__,
         viewonly=True,
+    )
+    credentials: Mapped[list[Credential]] = relationship(
+        "Credential",
+        secondary=Credential__Teamspace.__table__,
     )
 
     workspace: Mapped[list["Workspace"]] = relationship(

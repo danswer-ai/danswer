@@ -17,6 +17,6 @@ export function checkUserIdOwnsAssistant(
     (!userId ||
       checkUserIsNoAuthUser(userId) ||
       assistant.owner?.id === userId) &&
-    !assistant.default_assistant
+    !assistant.builtin_assistant
   );
 }
