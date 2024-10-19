@@ -133,14 +133,6 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             chunk.source_document.get_title_for_document_index() for chunk in chunks
         }
 
-        # Print each chunk and its title
-        for chunk in chunks:
-            title = chunk.source_document.get_title_for_document_index()
-            print(f"\nChunk: {chunk.to_short_descriptor()}")
-            print(f"Title: {title}")
-            print(chunk.model_dump())
-            print("\n\n\n\n")
-
         # Drop any None or empty strings
         # If there is no title or the title is empty, the title embedding field will be null
         # which is ok, it just won't contribute at all to the scoring.
@@ -149,10 +141,6 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         # Cache the Title embeddings to only have to do it once
         title_embed_dict: dict[str, Embedding] = {}
         if chunk_titles_list:
-            print(
-                "\n\n\n\n\n---------------------------\n\nTHIS IS THE TITLE LIST: ",
-                chunk_titles_list,
-            )
             title_embeddings = self.embedding_model.encode(
                 chunk_titles_list, text_type=EmbedTextType.PASSAGE
             )
