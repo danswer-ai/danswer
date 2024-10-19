@@ -1,5 +1,4 @@
 import json
-import os
 import string
 from collections.abc import Callable
 from collections.abc import Mapping
@@ -8,11 +7,13 @@ from datetime import timezone
 from typing import Any
 from typing import cast
 
+import httpx
 import requests
 from retry import retry
 
 from danswer.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
 from danswer.document_index.interfaces import VespaChunkRequest
+from danswer.document_index.vespa.shared_utils.utils import get_vespa_http_client
 from danswer.document_index.vespa.shared_utils.vespa_request_builders import (
     build_vespa_filters,
 )
@@ -295,25 +296,11 @@ def query_vespa(
         else {},
     )
 
-    # Get the certificate and key paths from environment variables
-    VESPA_CLOUD_CERT_PATH = os.environ.get("VESPA_CLOUD_CERT_PATH")
-    VESPA_CLOUD_KEY_PATH = os.environ.get("VESPA_CLOUD_KEY_PATH")
-
-    # Prepare the request kwargs
-    request_kwargs = {
-        "json": params,
-        # "timeout": VESPA_REQUEST_TIMEOUT,
-    }
-
-    # Add certificate and key if available
-    if VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH:
-        request_kwargs["cert"] = (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH)
-        request_kwargs["verify"] = True
-
     try:
-        response = requests.post(SEARCH_ENDPOINT, **request_kwargs)
-        response.raise_for_status()
-    except requests.HTTPError as e:
+        with get_vespa_http_client() as http_client:
+            response = http_client.post(SEARCH_ENDPOINT, json=params)
+            response.raise_for_status()
+    except httpx.HTTPError as e:
         request_info = f"Headers: {response.request.headers}\nPayload: {params}"
         response_info = (
             f"Status Code: {response.status_code}\n"
@@ -326,9 +313,10 @@ def query_vespa(
             f"{response_info}\n"
             f"Exception: {e}"
         )
-        raise requests.HTTPError(error_base) from e
+        raise httpx.HTTPError(error_base) from e
 
     response_json: dict[str, Any] = response.json()
+
     if LOG_VESPA_TIMING_INFORMATION:
         logger.debug("Vespa timing info: %s", response_json.get("timing"))
     hits = response_json["root"].get("children", [])
