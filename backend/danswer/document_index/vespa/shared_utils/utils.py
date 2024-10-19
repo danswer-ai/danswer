@@ -2,6 +2,7 @@ import re
 
 import httpx
 
+from danswer.configs.app_configs import MANAGED_VESPA
 from danswer.configs.app_configs import VESPA_CLOUD_CERT_PATH
 from danswer.configs.app_configs import VESPA_CLOUD_KEY_PATH
 from danswer.configs.app_configs import VESPA_REQUEST_TIMEOUT
@@ -65,7 +66,7 @@ def get_vespa_http_client(**additional_kwargs) -> httpx.Client:
         "verify": True,  # For secure connections
     }
 
-    if VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH:
+    if MANAGED_VESPA:
         client_kwargs["cert"] = (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH)
     else:
         client_kwargs["verify"] = False

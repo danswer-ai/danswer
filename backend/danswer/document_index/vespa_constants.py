@@ -1,6 +1,7 @@
-import os
-
+from danswer.configs.app_configs import VESPA_CLOUD_URL
 from danswer.configs.app_configs import VESPA_CONFIG_SERVER_HOST
+from danswer.configs.app_configs import VESPA_HOST
+from danswer.configs.app_configs import VESPA_PORT
 from danswer.configs.app_configs import VESPA_TENANT_PORT
 from danswer.configs.constants import SOURCE_TYPE
 
@@ -20,13 +21,16 @@ TENANT_ID_REPLACEMENT = """field tenant_id type string {
 # config server
 
 
-VESPA_CONFIG_SERVER_URL = f"http://{VESPA_CONFIG_SERVER_HOST}:{VESPA_TENANT_PORT}"
+VESPA_CONFIG_SERVER_URL = (
+    VESPA_CLOUD_URL or f"http://{VESPA_CONFIG_SERVER_HOST}:{VESPA_TENANT_PORT}"
+)
 VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
 
 # main search application
-VESPA_APP_CONTAINER_URL = os.environ.get("VESPA_APP_CONTAINER_URL")
+VESPA_APP_CONTAINER_URL = VESPA_CLOUD_URL or f"http://{VESPA_HOST}:{VESPA_PORT}"
+
 VESPA_APPLICATION_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/application/v2"
-# f"http://{VESPA_HOST}:{VESPA_PORT}"
+
 # danswer_chunk below is defined in vespa/app_configs/schemas/danswer_chunk.sd
 DOCUMENT_ID_ENDPOINT = (
     f"{VESPA_APP_CONTAINER_URL}/document/v1/default/{{index_name}}/docid"
@@ -46,7 +50,6 @@ MAX_OR_CONDITIONS = 10
 # so that we can bring this back to default
 VESPA_TIMEOUT = "3s"
 BATCH_SIZE = 128  # Specific to Vespa
-
 
 TENANT_ID = "tenant_id"
 DOCUMENT_ID = "document_id"

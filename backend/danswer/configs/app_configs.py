@@ -115,6 +115,9 @@ VESPA_HOST = os.environ.get("VESPA_HOST") or "localhost"
 VESPA_CONFIG_SERVER_HOST = os.environ.get("VESPA_CONFIG_SERVER_HOST") or VESPA_HOST
 VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
 VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
+
+VESPA_CLOUD_URL = os.environ.get("VESPA_CLOUD_URL", "")
+
 # The default below is for dockerized deployment
 VESPA_DEPLOYMENT_ZIP = (
     os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
