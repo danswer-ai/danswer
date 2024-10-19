@@ -4,7 +4,6 @@ import time
 from datetime import timedelta
 from typing import Any
 
-import redis
 import sentry_sdk
 from celery import bootsteps  # type: ignore
 from celery import Celery
@@ -79,6 +78,7 @@ def on_task_prerun(
     task_id: str | None = None,
     task: Task | None = None,
     args: tuple | None = None,
+    tenant_id: str | None = None,
     kwargs: dict | None = None,
     **kwds: Any,
 ) -> None:
@@ -118,7 +118,7 @@ def on_task_postrun(
     if not task_id:
         return
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     if task_id.startswith(RedisConnectorCredentialPair.PREFIX):
         r.srem(RedisConnectorCredentialPair.get_taskset_key(), task_id)
@@ -171,7 +171,9 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     logger.info(f"Multiprocessing start method: {multiprocessing.get_start_method()}")
 
     # decide some initial startup settings based on the celery worker's hostname
-    # (set at the command line)
+    # (set at the command line)'
+    tenant_id = kwargs.get("tenant_id")
+
     hostname = sender.hostname
     if hostname.startswith("light"):
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_LIGHT_APP_NAME)
@@ -207,7 +209,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
@@ -267,7 +269,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     # This is singleton work that should be done on startup exactly once
     # by the primary worker
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     # For the moment, we're assuming that we are the only primary worker
     # that should be running.
@@ -449,17 +451,18 @@ def on_setup_logging(
 
 
 class HubPeriodicTask(bootsteps.StartStopStep):
-    """Regularly reacquires the primary worker lock outside of the task queue.
+    """Regularly reacquires the primary worker locks for all tenants outside of the task queue.
     Use the task_logger in this class to avoid double logging.
 
     This cannot be done inside a regular beat task because it must run on schedule and
     a queue of existing work would starve the task from running.
     """
 
-    # it's unclear to me whether using the hub's timer or the bootstep timer is better
+    # Requires the Hub component
     requires = {"celery.worker.components:Hub"}
 
     def __init__(self, worker: Any, **kwargs: Any) -> None:
+        super().__init__(worker, **kwargs)
         self.interval = CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 8  # Interval in seconds
         self.task_tref = None
 
@@ -478,42 +481,58 @@ class HubPeriodicTask(bootsteps.StartStopStep):
 
     def run_periodic_task(self, worker: Any) -> None:
         try:
-            if not worker.primary_worker_lock:
+            if not celery_is_worker_primary(worker):
                 return
 
-            if not hasattr(worker, "primary_worker_lock"):
+            if not hasattr(worker, "primary_worker_locks"):
                 return
 
-            r = get_redis_client()
+            # Retrieve all tenant IDs
+            tenant_ids = get_all_tenant_ids()
 
-            lock: redis.lock.Lock = worker.primary_worker_lock
+            for tenant_id in tenant_ids:
+                lock = worker.primary_worker_locks.get(tenant_id)
+                if not lock:
+                    continue  # Skip if no lock for this tenant
 
-            if lock.owned():
-                task_logger.debug("Reacquiring primary worker lock.")
-                lock.reacquire()
-            else:
-                task_logger.warning(
-                    "Full acquisition of primary worker lock. "
-                    "Reasons could be computer sleep or a clock change."
-                )
-                lock = r.lock(
-                    DanswerRedisLocks.PRIMARY_WORKER,
-                    timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
-                )
+                r = get_redis_client(tenant_id=tenant_id)
 
-                task_logger.info("Primary worker lock: Acquire starting.")
-                acquired = lock.acquire(
-                    blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2
-                )
-                if acquired:
-                    task_logger.info("Primary worker lock: Acquire succeeded.")
+                if lock.owned():
+                    task_logger.debug(
+                        f"Reacquiring primary worker lock for tenant {tenant_id}."
+                    )
+                    lock.reacquire()
                 else:
-                    task_logger.error("Primary worker lock: Acquire failed!")
-                    raise TimeoutError("Primary worker lock could not be acquired!")
+                    task_logger.warning(
+                        f"Full acquisition of primary worker lock for tenant {tenant_id}. "
+                        "Reasons could be worker restart or lock expiration."
+                    )
+                    lock = r.lock(
+                        DanswerRedisLocks.PRIMARY_WORKER,
+                        timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
+                    )
 
-                worker.primary_worker_lock = lock
-        except Exception:
-            task_logger.exception("HubPeriodicTask.run_periodic_task exceptioned.")
+                    task_logger.info(
+                        f"Primary worker lock for tenant {tenant_id}: Acquire starting."
+                    )
+                    acquired = lock.acquire(
+                        blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2
+                    )
+                    if acquired:
+                        task_logger.info(
+                            f"Primary worker lock for tenant {tenant_id}: Acquire succeeded."
+                        )
+                        worker.primary_worker_locks[tenant_id] = lock
+                    else:
+                        task_logger.error(
+                            f"Primary worker lock for tenant {tenant_id}: Acquire failed!"
+                        )
+                        raise TimeoutError(
+                            f"Primary worker lock for tenant {tenant_id} could not be acquired!"
+                        )
+
+        except Exception as e:
+            task_logger.error(f"Error in periodic task: {e}")
 
     def stop(self, worker: Any) -> None:
         # Cancel the scheduled task when the worker stops

@@ -64,7 +64,10 @@ def check_for_indexing(tenant_id: str | None) -> int | None:
     try:
         # these tasks should never overlap
         if not lock_beat.acquire(blocking=False):
+            task_logger.info(f"Lock acquired for tenant (Y): {tenant_id}")
             return None
+        else:
+            task_logger.info(f"Lock acquired for tenant (N): {tenant_id}")
 
         with get_session_with_tenant(tenant_id) as db_session:
             # Get the primary search settings
