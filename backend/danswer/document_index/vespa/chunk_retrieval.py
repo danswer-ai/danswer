@@ -1,4 +1,5 @@
 import json
+import os
 import string
 from collections.abc import Callable
 from collections.abc import Mapping
@@ -293,11 +294,24 @@ def query_vespa(
         if LOG_VESPA_TIMING_INFORMATION
         else {},
     )
+
+    # Get the certificate and key paths from environment variables
+    VESPA_CLOUD_CERT_PATH = os.environ.get("VESPA_CLOUD_CERT_PATH")
+    VESPA_CLOUD_KEY_PATH = os.environ.get("VESPA_CLOUD_KEY_PATH")
+
+    # Prepare the request kwargs
+    request_kwargs = {
+        "json": params,
+        # "timeout": VESPA_REQUEST_TIMEOUT,
+    }
+
+    # Add certificate and key if available
+    if VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH:
+        request_kwargs["cert"] = (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH)
+        request_kwargs["verify"] = True
+
     try:
-        response = requests.post(
-            SEARCH_ENDPOINT,
-            json=params,
-        )
+        response = requests.post(SEARCH_ENDPOINT, **request_kwargs)
         response.raise_for_status()
     except requests.HTTPError as e:
         request_info = f"Headers: {response.request.headers}\nPayload: {params}"

@@ -1,6 +1,6 @@
+import os
+
 from danswer.configs.app_configs import VESPA_CONFIG_SERVER_HOST
-from danswer.configs.app_configs import VESPA_HOST
-from danswer.configs.app_configs import VESPA_PORT
 from danswer.configs.app_configs import VESPA_TENANT_PORT
 from danswer.configs.constants import SOURCE_TYPE
 
@@ -18,15 +18,20 @@ TENANT_ID_REPLACEMENT = """field tenant_id type string {
             attribute: fast-search
         }"""
 # config server
+
+
 VESPA_CONFIG_SERVER_URL = f"http://{VESPA_CONFIG_SERVER_HOST}:{VESPA_TENANT_PORT}"
 VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
 
 # main search application
-VESPA_APP_CONTAINER_URL = f"http://{VESPA_HOST}:{VESPA_PORT}"
+VESPA_APP_CONTAINER_URL = os.environ.get("VESPA_APP_CONTAINER_URL")
+VESPA_APPLICATION_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/application/v2"
+# f"http://{VESPA_HOST}:{VESPA_PORT}"
 # danswer_chunk below is defined in vespa/app_configs/schemas/danswer_chunk.sd
 DOCUMENT_ID_ENDPOINT = (
     f"{VESPA_APP_CONTAINER_URL}/document/v1/default/{{index_name}}/docid"
 )
+
 SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
 
 NUM_THREADS = (
@@ -41,6 +46,15 @@ MAX_OR_CONDITIONS = 10
 # so that we can bring this back to default
 VESPA_TIMEOUT = "3s"
 BATCH_SIZE = 128  # Specific to Vespa
+
+
+# export VESPA_CLOUD_TENANT="testdanswer"
+# export VESPA_CLOUD_APPLICATION="onyx"
+# export VESPA_CLOUD_CERT_PATH="/Users/pablohansen/.vespa/testdanswer.onyx.instance/data-plane-public-cert.pem"
+# export VESPA_CLOUD_KEY_PATH="/Users/pablohansen/.vespa/testdanswer.onyx.instance/data-plane-private-key.pem"
+# export VESPA_CLOUD_ENDPOINT="https://be97a93f.caaeaf88.z.vespa-app.cloud/"
+# export VESPA_APP_CONTAINER_URL="https://be97a93f.caaeaf88.z.vespa-app.cloud/"
+
 
 TENANT_ID = "tenant_id"
 DOCUMENT_ID = "document_id"

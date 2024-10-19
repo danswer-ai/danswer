@@ -1,4 +1,9 @@
+import os
 import re
+
+import httpx
+
+from danswer.configs.app_configs import VESPA_REQUEST_TIMEOUT
 
 # NOTE: This does not seem to be used in reality despite the Vespa Docs pointing to this code
 # See here for reference: https://docs.vespa.ai/en/documents.html
@@ -45,3 +50,29 @@ def remove_invalid_unicode_chars(text: str) -> str:
         "[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]"
     )
     return _illegal_xml_chars_RE.sub("", text)
+
+
+def get_vespa_http_client(**additional_kwargs) -> httpx.Client:
+    """
+    Configure and return an HTTP client for communicating with Vespa,
+    including authentication if needed.
+    """
+    VESPA_CLOUD_CERT_PATH = os.environ.get("VESPA_CLOUD_CERT_PATH")
+    VESPA_CLOUD_KEY_PATH = os.environ.get("VESPA_CLOUD_KEY_PATH")
+
+    client_kwargs = {
+        "http2": True,
+        "timeout": VESPA_REQUEST_TIMEOUT,
+        "verify": True,  # For secure connections
+    }
+
+    if VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH:
+        client_kwargs["cert"] = (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH)
+    else:
+        # Adjust verify parameter for local development if needed
+        client_kwargs["verify"] = False
+
+    # Update with any additional keyword arguments
+    client_kwargs.update(additional_kwargs)
+
+    return httpx.Client(**client_kwargs)

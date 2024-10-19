@@ -50,7 +50,6 @@ from danswer.utils.logger import setup_logger
 from shared_configs.configs import ALT_INDEX_SUFFIX
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
-from shared_configs.configs import SUPPORTED_EMBEDDING_MODELS
 from shared_configs.model_server_models import SupportedEmbeddingModel
 
 logger = setup_logger()
@@ -310,7 +309,8 @@ def update_default_multipass_indexing(db_session: Session) -> None:
 
 
 def setup_multitenant_danswer() -> None:
-    setup_vespa_multitenant(SUPPORTED_EMBEDDING_MODELS)
+    print("setup_multitenant_danswer")
+    # setup_vespa_multitenant(SUPPORTED_EMBEDDING_MODELS)
 
 
 def setup_vespa_multitenant(supported_indices: list[SupportedEmbeddingModel]) -> bool:

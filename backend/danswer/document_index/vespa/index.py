@@ -133,6 +133,32 @@ class VespaIndex(DocumentIndex):
         self.index_name = index_name
         self.secondary_index_name = secondary_index_name
         self.multitenant = multitenant
+        self.http_client = self._get_http_client()
+
+    def _get_http_client(self):
+        # Configuration variables
+        VESPA_CLOUD_ENDPOINT = os.environ.get("VESPA_CLOUD_ENDPOINT")
+        VESPA_CLOUD_CERT_PATH = os.environ.get("VESPA_CLOUD_CERT_PATH")
+        VESPA_CLOUD_KEY_PATH = os.environ.get("VESPA_CLOUD_KEY_PATH")
+        # DEFAULT_LOCAL_ENDPOINT = "http://localhost:8080"
+
+        # Check for Vespa Cloud configurations
+        if all([VESPA_CLOUD_ENDPOINT, VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH]):
+            logger.info("Using Vespa Cloud configurations.")
+            client = httpx.Client(
+                # base_url=VESPA_CLOUD_ENDPOINT,
+                cert=(VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH),
+                verify=True,
+                http2=True,
+                timeout=30.0,
+            )
+        else:
+            logger.info("Using local Vespa instance.")
+            client = httpx.Client(
+                # base_url=DEFAULT_LOCAL_ENDPOINT,
+                timeout=30.0
+            )
+        return client
 
     def ensure_indices_exist(
         self,
@@ -302,6 +328,27 @@ class VespaIndex(DocumentIndex):
                 f"Failed to prepare Vespa Danswer Indexes. Response: {response.text}"
             )
 
+    @staticmethod
+    def _configure_http_client(**additional_kwargs) -> httpx.Client:
+        VESPA_CLOUD_CERT_PATH = os.environ.get("VESPA_CLOUD_CERT_PATH")
+        VESPA_CLOUD_KEY_PATH = os.environ.get("VESPA_CLOUD_KEY_PATH")
+
+        client_kwargs = {
+            "http2": True,
+            "timeout": VESPA_REQUEST_TIMEOUT,
+        }
+
+        if VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH:
+            client_kwargs.update(
+                {
+                    "cert": (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH),
+                    "verify": True,
+                }
+            )
+
+        client_kwargs.update(additional_kwargs)
+        return httpx.Client(**client_kwargs)
+
     def index(
         self,
         chunks: list[DocMetadataAwareIndexChunk],
@@ -314,12 +361,14 @@ class VespaIndex(DocumentIndex):
         cleaned_chunks = [clean_chunk_id_copy(chunk) for chunk in chunks]
 
         existing_docs: set[str] = set()
+        http_client = self.http_client
 
+        print("indexing")
         # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficial for
         # indexing / updates / deletes since we have to make a large volume of requests.
         with (
             concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor,
-            httpx.Client(http2=True, timeout=VESPA_REQUEST_TIMEOUT) as http_client,
+            # httpx.Client(http2=True, timeout=VESPA_REQUEST_TIMEOUT) as http_client,
         ):
             # Check for existing documents, existing documents need to have all of their chunks deleted
             # prior to indexing as the document size (num chunks) may have shrunk
@@ -382,9 +431,10 @@ class VespaIndex(DocumentIndex):
 
         # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficient for
         # indexing / updates / deletes since we have to make a large volume of requests.
+
         with (
             concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor,
-            httpx.Client(http2=True, timeout=VESPA_REQUEST_TIMEOUT) as http_client,
+            VespaIndex._configure_http_client() as http_client,
         ):
             for update_batch in batch_generator(updates, batch_size):
                 future_to_document_id = {
@@ -528,7 +578,7 @@ class VespaIndex(DocumentIndex):
         if self.secondary_index_name:
             index_names.append(self.secondary_index_name)
 
-        with httpx.Client(http2=True, timeout=VESPA_REQUEST_TIMEOUT) as http_client:
+        with VespaIndex._configure_http_client() as http_client:
             for index_name in index_names:
                 params = httpx.QueryParams(
                     {
@@ -584,7 +634,7 @@ class VespaIndex(DocumentIndex):
 
         # NOTE: using `httpx` here since `requests` doesn't support HTTP2. This is beneficial for
         # indexing / updates / deletes since we have to make a large volume of requests.
-        with httpx.Client(http2=True, timeout=VESPA_REQUEST_TIMEOUT) as http_client:
+        with VespaIndex._configure_http_client() as http_client:
             index_names = [self.index_name]
             if self.secondary_index_name:
                 index_names.append(self.secondary_index_name)
@@ -612,7 +662,7 @@ class VespaIndex(DocumentIndex):
         if self.secondary_index_name:
             index_names.append(self.secondary_index_name)
 
-        with httpx.Client(http2=True, timeout=VESPA_REQUEST_TIMEOUT) as http_client:
+        with VespaIndex._configure_http_client() as http_client:
             for index_name in index_names:
                 params = httpx.QueryParams(
                     {
@@ -822,7 +872,7 @@ class VespaIndex(DocumentIndex):
                 f"Querying for document IDs with tenant_id: {tenant_id}, offset: {offset}"
             )
 
-            with httpx.Client(http2=True) as http_client:
+            with VespaIndex._configure_http_client() as http_client:
                 response = http_client.get(url, params=query_params)
                 response.raise_for_status()
 
@@ -871,7 +921,7 @@ class VespaIndex(DocumentIndex):
         logger.debug(f"Starting batch deletion for {len(delete_requests)} documents")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-            with httpx.Client(http2=True) as http_client:
+            with VespaIndex._configure_http_client() as http_client:
                 for batch_start in range(0, len(delete_requests), batch_size):
                     batch = delete_requests[batch_start : batch_start + batch_size]
 
