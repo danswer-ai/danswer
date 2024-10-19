@@ -291,45 +291,57 @@ async def get_async_session_with_tenant(
             yield session
 
 
+class TenantSession(Session):
+    def __init__(self, *args, **kwargs):
+        self.tenant_id = kwargs.pop("tenant_id", None)
+        super().__init__(*args, **kwargs)
+
+    def __enter__(self):
+        super().__enter__()
+        if self.tenant_id:
+            self.execute(text(f'SET search_path TO "{self.tenant_id}"'))
+        return self
+
+
 @contextmanager
 def get_session_with_tenant(
     tenant_id: str | None = None,
 ) -> Generator[Session, None, None]:
     """Generate a database session with the appropriate tenant schema set."""
-    engine = get_sqlalchemy_engine()
     if tenant_id is None:
         tenant_id = current_tenant_id.get()
 
     if not is_valid_schema_name(tenant_id):
         raise HTTPException(status_code=400, detail="Invalid tenant ID")
 
-    # Establish a raw connection without starting a transaction
-    with engine.connect() as connection:
-        # Access the raw DBAPI connection
-        dbapi_connection = connection.connection
+    engine = get_sqlalchemy_engine()
+    SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
 
-        # Execute SET search_path outside of any transaction
-        cursor = dbapi_connection.cursor()
+    # Create a session
+    with SessionLocal() as session:
+        # Attach the event listener to set the search_path
+        @event.listens_for(session, "after_begin")
+        def _set_search_path(session, transaction, connection, **kw):
+            connection.execute(text(f'SET search_path TO "{tenant_id}"'))
+
         try:
-            cursor.execute(f'SET search_path TO "{tenant_id}"')
-            # Optionally verify the search_path was set correctly
-            cursor.execute("SHOW search_path")
-            cursor.fetchone()
+            yield session
         finally:
-            cursor.close()
-
-        # Proceed to create a session using the connection
-        with Session(bind=connection, expire_on_commit=False) as session:
-            try:
-                yield session
-            finally:
+            if MULTI_TENANT:
                 # Reset search_path to default after the session is used
-                if MULTI_TENANT:
-                    cursor = dbapi_connection.cursor()
-                    try:
-                        cursor.execute('SET search_path TO "$user", public')
-                    finally:
-                        cursor.close()
+                session.execute(text('SET search_path TO "$user", public'))
+
+
+# Optionally, attach engine-level event listener
+def set_search_path_on_checkout(dbapi_connection, connection_record, connection_proxy):
+    tenant_id = current_tenant_id.get()
+    if tenant_id and is_valid_schema_name(tenant_id):
+        with dbapi_connection.cursor() as cursor:
+            cursor.execute(f'SET search_path TO "{tenant_id}"')
+
+
+engine = get_sqlalchemy_engine()
+event.listen(engine, "checkout", set_search_path_on_checkout)
 
 
 def get_session_generator_with_tenant(

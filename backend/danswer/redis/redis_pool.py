@@ -1,16 +1,9 @@
+import functools
 import threading
-from typing import Any
-from typing import cast
 from typing import Optional
-from typing import Union
 
 import redis
 from redis.client import Redis
-from redis.typing import AbsExpiryT
-from redis.typing import EncodableT
-from redis.typing import ExpiryT
-from redis.typing import KeyT
-from redis.typing import ResponseT
 
 from danswer.configs.app_configs import REDIS_DB_NUMBER
 from danswer.configs.app_configs import REDIS_HEALTH_CHECK_INTERVAL
@@ -24,15 +17,12 @@ from danswer.configs.app_configs import REDIS_SSL_CERT_REQS
 from danswer.configs.constants import REDIS_SOCKET_KEEPALIVE_OPTIONS
 
 
-# TODO: enforce typing strictly
 class TenantRedis(redis.Redis):
-    def __init__(self, tenant_id: str, *args: Any, **kwargs: Any):
+    def __init__(self, tenant_id: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tenant_id = tenant_id
 
-    def _prefixed(
-        self, key: Union[str, bytes, memoryview]
-    ) -> Union[str, bytes, memoryview]:
+    def _prefixed(self, key):
         prefix = f"{self.tenant_id}:"
         if isinstance(key, str):
             return prefix + key
@@ -43,87 +33,32 @@ class TenantRedis(redis.Redis):
         else:
             raise TypeError(f"Unsupported key type: {type(key)}")
 
-    def lock(
-        self,
-        name: str,
-        timeout: Optional[float] = None,
-        sleep: float = 0.1,
-        blocking: bool = True,
-        blocking_timeout: Optional[float] = None,
-        lock_class: Union[None, Any] = None,
-        thread_local: bool = True,
-    ) -> Any:
-        prefixed_name = cast(str, self._prefixed(name))
-        return super().lock(
-            prefixed_name,
-            timeout=timeout,
-            sleep=sleep,
-            blocking=blocking,
-            blocking_timeout=blocking_timeout,
-            lock_class=lock_class,
-            thread_local=thread_local,
-        )
+    def _prefix_method(self, method):
+        @functools.wraps(method)
+        def wrapper(*args, **kwargs):
+            if "name" in kwargs:
+                kwargs["name"] = self._prefixed(kwargs["name"])
+            elif len(args) > 0:
+                args = (self._prefixed(args[0]),) + args[1:]
+            return method(*args, **kwargs)
 
-    def incrby(self, name: KeyT, amount: int = 1) -> ResponseT:
-        """
-        Increments the value of ``key`` by ``amount``.  If no key exists,
-        the value will be initialized as ``amount``
+        return wrapper
 
-        For more information see https://redis.io/commands/incrby
-        """
-        prefixed_name = self._prefixed(name)
-        return super().incrby(prefixed_name, amount)
-
-    def set(
-        self,
-        name: KeyT,
-        value: EncodableT,
-        ex: Union[ExpiryT, None] = None,
-        px: Union[ExpiryT, None] = None,
-        nx: bool = False,
-        xx: bool = False,
-        keepttl: bool = False,
-        get: bool = False,
-        exat: Union[AbsExpiryT, None] = None,
-        pxat: Union[AbsExpiryT, None] = None,
-    ) -> ResponseT:
-        prefixed_name = self._prefixed(name)
-        return super().set(
-            prefixed_name,
-            value,
-            ex=ex,
-            px=px,
-            nx=nx,
-            xx=xx,
-            keepttl=keepttl,
-            get=get,
-            exat=exat,
-            pxat=pxat,
-        )
-
-    def get(self, name: KeyT) -> ResponseT:
-        prefixed_name = self._prefixed(name)
-        return super().get(prefixed_name)
-
-    def delete(self, *names: KeyT) -> ResponseT:
-        prefixed_names = [self._prefixed(name) for name in names]
-        return super().delete(*prefixed_names)
-
-    def exists(self, *names: KeyT) -> ResponseT:
-        prefixed_names = [self._prefixed(name) for name in names]
-        return super().exists(*prefixed_names)
-
-    # def expire(self, name: str, time: int, **kwargs: Any) -> Any:
-    #     prefixed_name = self._prefixed(name)
-    #     return super().expire(prefixed_name, time, **kwargs)
-
-    # def ttl(self, name: str, **kwargs: Any) -> Any:
-    #     prefixed_name = self._prefixed(name)
-    #     return super().ttl(prefixed_name, **kwargs)
-
-    # def type(self, name: str, **kwargs: Any) -> Any:
-    #     prefixed_name = self._prefixed(name)
-    #     return super().type(prefixed_name, **kwargs)
+    def __getattribute__(self, item):
+        original_attr = super().__getattribute__(item)
+        methods_to_wrap = [
+            "get",
+            "set",
+            "delete",
+            "exists",
+            "incrby",
+            "hset",
+            "hget",
+            "getset",
+        ]  # Add all methods that need prefixing
+        if item in methods_to_wrap and callable(original_attr):
+            return self._prefix_method(original_attr)
+        return original_attr
 
 
 class RedisPool:

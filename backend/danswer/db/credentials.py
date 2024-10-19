@@ -232,6 +232,8 @@ def create_credential(
     user: User | None,
     db_session: Session,
 ) -> Credential:
+    all_credentials = db_session.query(Credential).all()
+    print(f"Total number of credentials: {len(all_credentials)}")
     credential = Credential(
         credential_json=credential_data.credential_json,
         user_id=user.id if user else None,
@@ -241,7 +243,12 @@ def create_credential(
         curator_public=credential_data.curator_public,
     )
     db_session.add(credential)
-    db_session.flush()  # This ensures the credential gets an ID
+    # Query and print length of all credentials
+    all_credentials = db_session.query(Credential).all()
+    print(f"Total number of credentials: {len(all_credentials)}")
+    db_session.flush()  # This ensures the credential gets an IDcredentials
+    all_credentials = db_session.query(Credential).all()
+    print(f"Total number of credentials: {len(all_credentials)}")
 
     _relate_credential_to_user_groups__no_commit(
         db_session=db_session,
@@ -249,7 +256,7 @@ def create_credential(
         user_group_ids=credential_data.groups,
     )
 
-    db_session.commit()
+    # db_session.commit()
 
     return credential
 
