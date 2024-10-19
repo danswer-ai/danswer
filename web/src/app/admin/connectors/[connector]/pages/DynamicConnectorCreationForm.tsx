@@ -45,8 +45,6 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
           label={field.label}
           optional={field.optional}
           description={field.description}
-          selectedFiles={selectedFiles}
-          setSelectedFiles={setSelectedFiles}
         />
       ) : field.type === "list" ? (
         <ListInput field={field} />

@@ -270,6 +270,7 @@ export default function AddConnector({
             advancedConfiguration.pruneFreq,
             advancedConfiguration.indexingStart,
             values.access_type == "public",
+            groups,
             name
           );
           if (response) {
