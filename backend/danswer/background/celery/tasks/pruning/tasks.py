@@ -24,6 +24,7 @@ from danswer.configs.constants import DanswerRedisLocks
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import InputType
 from danswer.db.connector_credential_pair import get_connector_credential_pair
+from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.engine import get_session_with_tenant
@@ -53,10 +54,19 @@ def check_for_pruning(self: Task, tenant_id: str | None) -> None:
         if not lock_beat.acquire(blocking=False):
             return
 
+        cc_pair_ids: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
             cc_pairs = get_connector_credential_pairs(db_session)
-            for cc_pair in cc_pairs:
-                lock_beat.reacquire()
+            for cc_pair_entry in cc_pairs:
+                cc_pair_ids.append(cc_pair_entry.id)
+
+        for cc_pair_id in cc_pair_ids:
+            lock_beat.reacquire()
+            with get_session_with_tenant(tenant_id) as db_session:
+                cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
+                if not cc_pair:
+                    continue
+
                 if not is_pruning_due(cc_pair, db_session, r):
                     continue
 

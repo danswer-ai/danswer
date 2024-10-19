@@ -70,24 +70,35 @@ def check_for_indexing(self: Task, tenant_id: str | None) -> int | None:
         if not lock_beat.acquire(blocking=False):
             return None
 
+        cc_pair_ids: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
-            # Get the primary search settings
-            primary_search_settings = get_current_search_settings(db_session)
-            search_settings = [primary_search_settings]
-
-            # Check for secondary search settings
-            secondary_search_settings = get_secondary_search_settings(db_session)
-            if secondary_search_settings is not None:
-                # If secondary settings exist, add them to the list
-                search_settings.append(secondary_search_settings)
-
             cc_pairs = fetch_connector_credential_pairs(db_session)
-            for cc_pair in cc_pairs:
+            for cc_pair_entry in cc_pairs:
+                cc_pair_ids.append(cc_pair_entry.id)
+
+        for cc_pair_id in cc_pair_ids:
+            with get_session_with_tenant(tenant_id) as db_session:
+                # Get the primary search settings
+                primary_search_settings = get_current_search_settings(db_session)
+                search_settings = [primary_search_settings]
+
+                # Check for secondary search settings
+                secondary_search_settings = get_secondary_search_settings(db_session)
+                if secondary_search_settings is not None:
+                    # If secondary settings exist, add them to the list
+                    search_settings.append(secondary_search_settings)
+
                 for search_settings_instance in search_settings:
                     rci = RedisConnectorIndexing(
-                        cc_pair.id, search_settings_instance.id
+                        cc_pair_id, search_settings_instance.id
                     )
                     if r.exists(rci.fence_key):
+                        continue
+
+                    cc_pair = get_connector_credential_pair_from_id(
+                        cc_pair_id, db_session
+                    )
+                    if not cc_pair:
                         continue
 
                     last_attempt = get_last_attempt_for_cc_pair(
