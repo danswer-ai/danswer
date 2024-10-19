@@ -1,8 +1,9 @@
-import os
 import re
 
 import httpx
 
+from danswer.configs.app_configs import VESPA_CLOUD_CERT_PATH
+from danswer.configs.app_configs import VESPA_CLOUD_KEY_PATH
 from danswer.configs.app_configs import VESPA_REQUEST_TIMEOUT
 
 # NOTE: This does not seem to be used in reality despite the Vespa Docs pointing to this code
@@ -57,8 +58,6 @@ def get_vespa_http_client(**additional_kwargs) -> httpx.Client:
     Configure and return an HTTP client for communicating with Vespa,
     including authentication if needed.
     """
-    VESPA_CLOUD_CERT_PATH = os.environ.get("VESPA_CLOUD_CERT_PATH")
-    VESPA_CLOUD_KEY_PATH = os.environ.get("VESPA_CLOUD_KEY_PATH")
 
     client_kwargs = {
         "http2": True,
@@ -69,10 +68,7 @@ def get_vespa_http_client(**additional_kwargs) -> httpx.Client:
     if VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH:
         client_kwargs["cert"] = (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH)
     else:
-        # Adjust verify parameter for local development if needed
         client_kwargs["verify"] = False
 
-    # Update with any additional keyword arguments
     client_kwargs.update(additional_kwargs)
-
     return httpx.Client(**client_kwargs)

@@ -119,6 +119,9 @@ VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
 VESPA_DEPLOYMENT_ZIP = (
     os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
 )
+VESPA_CLOUD_CERT_PATH = os.environ.get("VESPA_CLOUD_CERT_PATH")
+VESPA_CLOUD_KEY_PATH = os.environ.get("VESPA_CLOUD_KEY_PATH")
+
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
 try:
     INDEX_BATCH_SIZE = int(os.environ.get("INDEX_BATCH_SIZE", 16))
