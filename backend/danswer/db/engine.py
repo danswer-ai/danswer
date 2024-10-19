@@ -360,7 +360,6 @@ def get_session_with_tenant(
             finally:
                 # Reset search_path to default after the session is used
                 if MULTI_TENANT:
-                    print("zzzzzz resetting search path")
                     cursor = dbapi_connection.cursor()
                     try:
                         cursor.execute('SET search_path TO "$user", public')

@@ -669,45 +669,34 @@ def create_connector_with_mock_credential(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
-    print("Starting create_connector_with_mock_credential function")
     if user and user.role != UserRole.ADMIN:
-        print(f"User role: {user.role}")
         if connector_data.is_public:
-            print("Non-admin user attempting to create public credential")
             raise HTTPException(
                 status_code=401,
                 detail="User does not have permission to create public credentials",
             )
         if not connector_data.groups:
-            print("Curator attempting to create connector without specifying groups")
             raise HTTPException(
                 status_code=401,
                 detail="Curators must specify 1+ groups",
             )
     try:
-        print(f"Validating connector: {connector_data.source}")
         _validate_connector_allowed(connector_data.source)
-        print("Creating connector")
         connector_response = create_connector(
             db_session=db_session, connector_data=connector_data
         )
-        print(f"Connector created with ID: {connector_response.id}")
 
-        print("Creating mock credential")
         mock_credential = CredentialBase(
             credential_json={}, admin_public=True, source=connector_data.source
         )
         credential = create_credential(
             mock_credential, user=user, db_session=db_session
         )
-        print(f"Mock credential created with ID: {credential.id}")
 
         access_type = (
             AccessType.PUBLIC if connector_data.is_public else AccessType.PRIVATE
         )
-        print(f"Access type: {access_type}")
 
-        print("Adding credential to connector")
         response = add_credential_to_connector(
             db_session=db_session,
             user=user,
@@ -717,11 +706,9 @@ def create_connector_with_mock_credential(
             cc_pair_name=connector_data.name,
             groups=connector_data.groups,
         )
-        print("Credential added to connector successfully")
         return response
 
     except ValueError as e:
-        print(f"ValueError occurred: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 

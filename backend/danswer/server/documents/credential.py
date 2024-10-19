@@ -139,8 +139,7 @@ def create_credential_from_model(
         )
     from danswer.db.models import Credential
 
-    all_credentials = db_session.query(Credential).all()
-    print(f"Total number of credentials: {len(all_credentials)}")
+    db_session.query(Credential).all()
 
     credential = create_credential(credential_info, user, db_session)
     return ObjectCreationIdResponse(
