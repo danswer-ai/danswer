@@ -1,5 +1,7 @@
 import functools
 import threading
+from collections.abc import Callable
+from typing import Any
 from typing import Optional
 
 import redis
@@ -18,12 +20,12 @@ from danswer.configs.constants import REDIS_SOCKET_KEEPALIVE_OPTIONS
 
 
 class TenantRedis(redis.Redis):
-    def __init__(self, tenant_id: str, *args, **kwargs):
+    def __init__(self, tenant_id: str, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.tenant_id = tenant_id
+        self.tenant_id: str = tenant_id
 
-    def _prefixed(self, key):
-        prefix = f"{self.tenant_id}:"
+    def _prefixed(self, key: str | bytes | memoryview) -> str | bytes | memoryview:
+        prefix: str = f"{self.tenant_id}:"
         if isinstance(key, str):
             return prefix + key
         elif isinstance(key, bytes):
@@ -33,9 +35,9 @@ class TenantRedis(redis.Redis):
         else:
             raise TypeError(f"Unsupported key type: {type(key)}")
 
-    def _prefix_method(self, method):
+    def _prefix_method(self, method: Callable) -> Callable:
         @functools.wraps(method)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             if "name" in kwargs:
                 kwargs["name"] = self._prefixed(kwargs["name"])
             elif len(args) > 0:
@@ -44,7 +46,7 @@ class TenantRedis(redis.Redis):
 
         return wrapper
 
-    def __getattribute__(self, item):
+    def __getattribute__(self, item: str) -> Any:
         original_attr = super().__getattribute__(item)
         methods_to_wrap = [
             "get",
