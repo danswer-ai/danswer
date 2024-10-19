@@ -140,7 +140,7 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
     os.environ.get("POSTGRES_PASSWORD") or "password"
 )
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5433"
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
 POSTGRES_API_SERVER_POOL_SIZE = int(
@@ -435,7 +435,7 @@ AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
 # Multi-tenancy configuration
 MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
 
-# Use managed Vespa (Vespa Cloud). If set, must also set VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH
+# Use managed Vespa (Vespa Cloud). If set, must also set VESPA_CLOUD_URL, VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH
 MANAGED_VESPA = os.environ.get("MANAGED_VESPA", "").lower() == "true"
 
 ENABLE_EMAIL_INVITES = os.environ.get("ENABLE_EMAIL_INVITES", "").lower() == "true"
