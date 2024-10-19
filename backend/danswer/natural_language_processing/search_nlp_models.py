@@ -50,23 +50,26 @@ def clean_model_name(model_str: str) -> str:
     return model_str.replace("/", "_").replace("-", "_").replace(".", "_")
 
 
-_WHITELIST = set(
-    " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\n\t"
-)
 _INITIAL_FILTER = re.compile(
     "["
-    "\U00000080-\U0000FFFF"  # All Unicode characters beyond ASCII
-    "\U00010000-\U0010FFFF"  # All Unicode characters in supplementary planes
+    "\U0000FFF0-\U0000FFFF"  # Specials
+    "\U0001F000-\U0001F9FF"  # Emoticons
+    "\U00002000-\U0000206F"  # General Punctuation
+    "\U00002190-\U000021FF"  # Arrows
+    "\U00002700-\U000027BF"  # Dingbats
     "]+",
     flags=re.UNICODE,
 )
 
 
 def clean_openai_text(text: str) -> str:
-    # First, remove all weird characters
+    # Remove specific Unicode ranges that might cause issues
     cleaned = _INITIAL_FILTER.sub("", text)
-    # Then, keep only whitelisted characters
-    return "".join(char for char in cleaned if char in _WHITELIST)
+
+    # Remove any control characters except for newline and tab
+    cleaned = "".join(ch for ch in cleaned if ch >= " " or ch in "\n\t")
+
+    return cleaned
 
 
 def build_model_server_url(

@@ -128,6 +128,9 @@ def get_internal_links(
         if not href:
             continue
 
+        # Account for malformed backslashes in URLs
+        href = href.replace("\\", "/")
+
         if should_ignore_pound and "#" in href:
             href = href.split("#")[0]
 
