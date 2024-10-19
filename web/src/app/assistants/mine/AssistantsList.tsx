@@ -56,7 +56,7 @@ import {
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { MakePublicAssistantModal } from "@/app/chat/modal/MakePublicAssistantModal";
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
-import { useAssistants } from "@/components/context/AssisantsContext";
+import { useAssistants } from "@/components/context/AssistantsContext";
 import { useUser } from "@/components/user/UserProvider";
 
 function DraggableAssistantListItem(props: any) {

@@ -1,4 +1,4 @@
-"""add additional data to notifiations
+"""add additional data to notifications
 
 Revision ID: 1b10e1fda030
 Revises: 6756efa39ada

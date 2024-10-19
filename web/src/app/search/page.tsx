@@ -36,7 +36,7 @@ import WrappedSearch from "./WrappedSearch";
 import { SearchProvider } from "@/components/context/SearchContext";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "../admin/configuration/llm/interfaces";
-import { AssistantsProvider } from "@/components/context/AssisantsContext";
+import { AssistantsProvider } from "@/components/context/AssistantsContext";
 import { headers } from "next/headers";
 
 export default async function Home({

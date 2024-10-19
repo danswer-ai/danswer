@@ -4,7 +4,7 @@ import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import WrappedAssistantsGallery from "./WrappedAssistantsGallery";
-import { AssistantsProvider } from "@/components/context/AssisantsContext";
+import { AssistantsProvider } from "@/components/context/AssistantsContext";
 
 export default async function GalleryPage({
   searchParams,

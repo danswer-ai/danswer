@@ -34,7 +34,7 @@ import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
 import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
-import { useAssistants } from "@/components/context/AssisantsContext";
+import { useAssistants } from "@/components/context/AssistantsContext";
 
 const MAX_INPUT_HEIGHT = 200;
 

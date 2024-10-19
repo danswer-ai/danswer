@@ -15,7 +15,7 @@ import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { AssistantTools } from "../ToolsDisplay";
 import { classifyAssistants } from "@/lib/assistants/utils";
-import { useAssistants } from "@/components/context/AssisantsContext";
+import { useAssistants } from "@/components/context/AssistantsContext";
 import { useUser } from "@/components/user/UserProvider";
 export function AssistantGalleryCard({
   assistant,

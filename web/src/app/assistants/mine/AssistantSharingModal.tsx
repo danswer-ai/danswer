@@ -16,7 +16,7 @@ import { Bubble } from "@/components/Bubble";
 import { useRouter } from "next/navigation";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Spinner } from "@/components/Spinner";
-import { useAssistants } from "@/components/context/AssisantsContext";
+import { useAssistants } from "@/components/context/AssistantsContext";
 
 interface AssistantSharingModalProps {
   assistant: Persona;
