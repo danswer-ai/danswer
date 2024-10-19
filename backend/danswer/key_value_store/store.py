@@ -46,7 +46,6 @@ class PgRedisKVStore(KeyValueStore):
             yield session
 
     def store(self, key: str, val: JSON_ro, encrypt: bool = False) -> None:
-        current_tenant_id.get()
         # Not encrypted in Redis, but encrypted in Postgres
         try:
             self.redis_client.set(
@@ -72,7 +71,6 @@ class PgRedisKVStore(KeyValueStore):
             session.commit()
 
     def load(self, key: str) -> JSON_ro:
-        current_tenant_id.get()
         try:
             redis_value = self.redis_client.get(REDIS_KEY_PREFIX + key)
             if redis_value:
@@ -101,7 +99,6 @@ class PgRedisKVStore(KeyValueStore):
             return cast(JSON_ro, value)
 
     def delete(self, key: str) -> None:
-        current_tenant_id.get()
         try:
             self.redis_client.delete(REDIS_KEY_PREFIX + key)
         except Exception as e:
