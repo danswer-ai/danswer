@@ -431,6 +431,10 @@ AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
 
 # Multi-tenancy configuration
 MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
+
+# Use managed Vespa (Vespa Cloud). If set, must also set VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH
+MANAGED_VESPA = os.environ.get("MANAGED_VESPA", "").lower() == "true"
+
 ENABLE_EMAIL_INVITES = os.environ.get("ENABLE_EMAIL_INVITES", "").lower() == "true"
 
 # Security and authentication

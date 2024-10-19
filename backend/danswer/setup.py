@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from danswer.chat.load_yamls import load_chat_yamls
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from danswer.configs.app_configs import MANAGED_VESPA
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.configs.constants import KV_SEARCH_SETTINGS
@@ -50,6 +51,7 @@ from danswer.utils.logger import setup_logger
 from shared_configs.configs import ALT_INDEX_SUFFIX
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.configs import SUPPORTED_EMBEDDING_MODELS
 from shared_configs.model_server_models import SupportedEmbeddingModel
 
 logger = setup_logger()
@@ -309,8 +311,8 @@ def update_default_multipass_indexing(db_session: Session) -> None:
 
 
 def setup_multitenant_danswer() -> None:
-    print("setup_multitenant_danswer")
-    # setup_vespa_multitenant(SUPPORTED_EMBEDDING_MODELS)
+    if not MANAGED_VESPA:
+        setup_vespa_multitenant(SUPPORTED_EMBEDDING_MODELS)
 
 
 def setup_vespa_multitenant(supported_indices: list[SupportedEmbeddingModel]) -> bool:

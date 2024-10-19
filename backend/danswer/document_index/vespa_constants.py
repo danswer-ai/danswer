@@ -48,14 +48,6 @@ VESPA_TIMEOUT = "3s"
 BATCH_SIZE = 128  # Specific to Vespa
 
 
-# export VESPA_CLOUD_TENANT="testdanswer"
-# export VESPA_CLOUD_APPLICATION="onyx"
-# export VESPA_CLOUD_CERT_PATH="/Users/pablohansen/.vespa/testdanswer.onyx.instance/data-plane-public-cert.pem"
-# export VESPA_CLOUD_KEY_PATH="/Users/pablohansen/.vespa/testdanswer.onyx.instance/data-plane-private-key.pem"
-# export VESPA_CLOUD_ENDPOINT="https://be97a93f.caaeaf88.z.vespa-app.cloud/"
-# export VESPA_APP_CONTAINER_URL="https://be97a93f.caaeaf88.z.vespa-app.cloud/"
-
-
 TENANT_ID = "tenant_id"
 DOCUMENT_ID = "document_id"
 CHUNK_ID = "chunk_id"
