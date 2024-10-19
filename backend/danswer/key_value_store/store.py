@@ -46,13 +46,11 @@ class PgRedisKVStore(KeyValueStore):
             yield session
 
     def store(self, key: str, val: JSON_ro, encrypt: bool = False) -> None:
-        tenant_id = current_tenant_id.get()
+        current_tenant_id.get()
         # Not encrypted in Redis, but encrypted in Postgres
         try:
             self.redis_client.set(
-                REDIS_KEY_PREFIX + key + ":" + tenant_id,
-                json.dumps(val),
-                ex=KV_REDIS_KEY_EXPIRATION,
+                REDIS_KEY_PREFIX + key, json.dumps(val), ex=KV_REDIS_KEY_EXPIRATION
             )
         except Exception as e:
             # Fallback gracefully to Postgres if Redis fails
@@ -74,11 +72,9 @@ class PgRedisKVStore(KeyValueStore):
             session.commit()
 
     def load(self, key: str) -> JSON_ro:
-        tenant_id = current_tenant_id.get()
+        current_tenant_id.get()
         try:
-            redis_value = self.redis_client.get(
-                REDIS_KEY_PREFIX + key + ":" + tenant_id
-            )
+            redis_value = self.redis_client.get(REDIS_KEY_PREFIX + key)
             if redis_value:
                 assert isinstance(redis_value, bytes)
                 return json.loads(redis_value.decode("utf-8"))
@@ -105,9 +101,9 @@ class PgRedisKVStore(KeyValueStore):
             return cast(JSON_ro, value)
 
     def delete(self, key: str) -> None:
-        tenant_id = current_tenant_id.get()
+        current_tenant_id.get()
         try:
-            self.redis_client.delete(REDIS_KEY_PREFIX + key + ":" + tenant_id)
+            self.redis_client.delete(REDIS_KEY_PREFIX + key)
         except Exception as e:
             logger.error(f"Failed to delete value from Redis for key '{key}': {str(e)}")
 
