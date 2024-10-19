@@ -135,6 +135,7 @@ DocumentSourceRequiringTenantContext: list[DocumentSource] = [DocumentSource.FIL
 
 class NotificationType(str, Enum):
     REINDEX = "reindex"
+    PERSONA_SHARED = "persona_shared"
 
 
 class BlobType(str, Enum):

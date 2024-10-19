@@ -36,6 +36,7 @@ import WrappedSearch from "./WrappedSearch";
 import { SearchProvider } from "@/components/context/SearchContext";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "../admin/configuration/llm/interfaces";
+import { AssistantsProvider } from "@/components/context/AssistantsContext";
 import { headers } from "next/headers";
 
 export default async function Home({
@@ -193,36 +194,39 @@ export default async function Home({
       <HealthCheckBanner />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       <InstantSSRAutoRefresh />
-
       {shouldDisplayNoSourcesModal && <NoSourcesModal />}
-
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
-
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       <ChatPopup />
-
-      <SearchProvider
-        value={{
-          querySessions,
-          ccPairs,
-          documentSets,
-          assistants,
-          tags,
-          agenticSearchEnabled,
-          disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
-          initiallyToggled: toggleSidebar,
-          shouldShowWelcomeModal,
-          shouldDisplayNoSources: shouldDisplayNoSourcesModal,
-        }}
+      <AssistantsProvider
+        initialAssistants={assistants}
+        hasAnyConnectors={hasAnyConnectors}
+        hasImageCompatibleModel={false}
       >
-        <WrappedSearch
-          initiallyToggled={toggleSidebar}
-          searchTypeDefault={searchTypeDefault}
-        />
-      </SearchProvider>
+        <SearchProvider
+          value={{
+            querySessions,
+            ccPairs,
+            documentSets,
+            assistants,
+            tags,
+            agenticSearchEnabled,
+            disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
+            initiallyToggled: toggleSidebar,
+            shouldShowWelcomeModal,
+            shouldDisplayNoSources: shouldDisplayNoSourcesModal,
+          }}
+        >
+          <WrappedSearch
+            initiallyToggled={toggleSidebar}
+            searchTypeDefault={searchTypeDefault}
+          />
+        </SearchProvider>
+      </AssistantsProvider>
+      s
     </>
   );
 }

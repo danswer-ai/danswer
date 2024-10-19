@@ -47,6 +47,8 @@ interface FetchChatDataResult {
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
   userInputPrompts: InputPrompt[];
+  hasAnyConnectors: boolean;
+  hasImageCompatibleModel: boolean;
 }
 
 export async function fetchChatData(searchParams: {
@@ -251,5 +253,7 @@ export async function fetchChatData(searchParams: {
     toggleSidebar,
     shouldShowWelcomeModal,
     userInputPrompts,
+    hasAnyConnectors,
+    hasImageCompatibleModel,
   };
 }

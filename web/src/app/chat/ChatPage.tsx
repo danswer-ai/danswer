@@ -101,12 +101,9 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
-import {
-  classifyAssistants,
-  orderAssistantsForUser,
-} from "@/lib/assistants/utils";
 import BlurBackground from "./shared_chat_search/BlurBackground";
 import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
+import { useAssistants } from "@/components/context/AssistantsContext";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -128,7 +125,6 @@ export function ChatPage({
     chatSessions,
     availableSources,
     availableDocumentSets,
-    availableAssistants,
     llmProviders,
     folders,
     openedFolders,
@@ -138,9 +134,11 @@ export function ChatPage({
     refreshChatSessions,
   } = useChatContext();
 
+  const { assistants: availableAssistants, finalAssistants } = useAssistants();
+
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
-  const { user, refreshUser, isAdmin, isLoadingUser } = useUser();
+  const { user, isAdmin, isLoadingUser } = useUser();
 
   const existingChatIdRaw = searchParams.get("chatId");
   const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
@@ -156,18 +154,6 @@ export function ChatPage({
   // Only updates on session load (ie. rename / switching chat session)
   // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
   const loadedIdSessionRef = useRef<string | null>(existingChatSessionId);
-
-  // Assistants in order
-  const { finalAssistants } = useMemo(() => {
-    const { visibleAssistants, hiddenAssistants: _ } = classifyAssistants(
-      user,
-      availableAssistants
-    );
-    const finalAssistants = user
-      ? orderAssistantsForUser(visibleAssistants, user)
-      : visibleAssistants;
-    return { finalAssistants };
-  }, [user, availableAssistants]);
 
   const existingChatSessionAssistantId = selectedChatSession?.persona_id;
   const [selectedAssistant, setSelectedAssistant] = useState<
@@ -1833,7 +1819,6 @@ export function ChatPage({
           setPopup={setPopup}
           setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
-          refreshUser={refreshUser}
           llmProviders={llmProviders}
           onClose={() => setSettingsToggled(false)}
         />
@@ -1953,7 +1938,6 @@ export function ChatPage({
                       : undefined
                   }
                   toggleSidebar={toggleSidebar}
-                  user={user}
                   currentChatSession={selectedChatSession}
                 />
               )}
@@ -2438,7 +2422,6 @@ export function ChatPage({
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}
                               // assistant stuff
-                              assistantOptions={finalAssistants}
                               selectedAssistant={liveAssistant}
                               setSelectedAssistant={onAssistantChange}
                               setAlternativeAssistant={setAlternativeAssistant}
@@ -2454,7 +2437,6 @@ export function ChatPage({
                               handleFileUpload={handleImageUpload}
                               textAreaRef={textAreaRef}
                               chatSessionId={chatSessionIdRef.current!}
-                              refreshUser={refreshUser}
                             />
 
                             {enterpriseSettings &&
