@@ -7,11 +7,13 @@ from datetime import timezone
 from typing import Any
 from typing import cast
 
+import httpx
 import requests
 from retry import retry
 
 from danswer.configs.app_configs import LOG_VESPA_TIMING_INFORMATION
 from danswer.document_index.interfaces import VespaChunkRequest
+from danswer.document_index.vespa.shared_utils.utils import get_vespa_http_client
 from danswer.document_index.vespa.shared_utils.vespa_request_builders import (
     build_vespa_filters,
 )
@@ -293,13 +295,12 @@ def query_vespa(
         if LOG_VESPA_TIMING_INFORMATION
         else {},
     )
+
     try:
-        response = requests.post(
-            SEARCH_ENDPOINT,
-            json=params,
-        )
-        response.raise_for_status()
-    except requests.HTTPError as e:
+        with get_vespa_http_client() as http_client:
+            response = http_client.post(SEARCH_ENDPOINT, json=params)
+            response.raise_for_status()
+    except httpx.HTTPError as e:
         request_info = f"Headers: {response.request.headers}\nPayload: {params}"
         response_info = (
             f"Status Code: {response.status_code}\n"
@@ -312,9 +313,10 @@ def query_vespa(
             f"{response_info}\n"
             f"Exception: {e}"
         )
-        raise requests.HTTPError(error_base) from e
+        raise httpx.HTTPError(error_base) from e
 
     response_json: dict[str, Any] = response.json()
+
     if LOG_VESPA_TIMING_INFORMATION:
         logger.debug("Vespa timing info: %s", response_json.get("timing"))
     hits = response_json["root"].get("children", [])

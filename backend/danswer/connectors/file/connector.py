@@ -28,6 +28,7 @@ from danswer.file_processing.extract_file_text import read_pdf_file
 from danswer.file_processing.extract_file_text import read_text_file
 from danswer.file_store.file_store import get_default_file_store
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import current_tenant_id
 
 logger = setup_logger()
 
@@ -174,6 +175,8 @@ class LocalFileConnector(LoadConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         documents: list[Document] = []
+        token = current_tenant_id.set(self.tenant_id)
+
         with get_session_with_tenant(self.tenant_id) as db_session:
             for file_path in self.file_locations:
                 current_datetime = datetime.now(timezone.utc)
@@ -195,6 +198,8 @@ class LocalFileConnector(LoadConnector):
 
             if documents:
                 yield documents
+
+        current_tenant_id.reset(token)
 
 
 if __name__ == "__main__":
