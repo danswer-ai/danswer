@@ -282,4 +282,4 @@ def get_answer_with_quote(
             logger.exception(f"Error in search answer streaming: {e}")
             yield json.dumps({"error": str(e)})
 
-    return StreamingResponse(stream_generator(), media_type="text/event-stream")
+    return StreamingResponse(stream_generator(), media_type="application/json")
