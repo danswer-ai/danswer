@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from danswer.background.celery.celery_app import celery_app
-from danswer.background.celery.celery_utils import get_all_tenant_ids
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.app_configs import MULTI_TENANT

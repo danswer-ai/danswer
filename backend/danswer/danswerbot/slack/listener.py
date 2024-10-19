@@ -7,7 +7,6 @@ from slack_sdk import WebClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
-from danswer.background.celery.celery_app import get_all_tenant_ids
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
@@ -47,6 +46,7 @@ from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import rephrase_slack_message
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import TenantSocketModeClient
+from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.search_settings import get_current_search_settings
 from danswer.key_value_store.interface import KvKeyNotFoundError
@@ -510,7 +510,7 @@ if __name__ == "__main__":
             for tenant_id in tenant_ids:
                 with get_session_with_tenant(tenant_id) as db_session:
                     try:
-                        token = current_tenant_id.set(tenant_id)
+                        token = current_tenant_id.set(tenant_id or "public")
                         latest_slack_bot_tokens = fetch_tokens()
                         current_tenant_id.reset(token)
 
