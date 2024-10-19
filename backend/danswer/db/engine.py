@@ -331,7 +331,9 @@ def get_session_with_tenant(
                         cursor.close()
 
 
-def set_search_path_on_checkout(dbapi_conn, connection_record, connection_proxy):
+def set_search_path_on_checkout(
+    dbapi_conn: Any, connection_record: Any, connection_proxy: Any
+) -> None:
     tenant_id = current_tenant_id.get()
     if tenant_id and is_valid_schema_name(tenant_id):
         with dbapi_conn.cursor() as cursor:
