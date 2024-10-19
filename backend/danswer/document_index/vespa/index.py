@@ -824,7 +824,7 @@ class VespaIndex(DocumentIndex):
                 f"Querying for document IDs with tenant_id: {tenant_id}, offset: {offset}"
             )
 
-            with get_vespa_http_client() as http_client:
+            with get_vespa_http_client(no_timeout=True) as http_client:
                 response = http_client.get(url, params=query_params)
                 response.raise_for_status()
 
@@ -873,7 +873,7 @@ class VespaIndex(DocumentIndex):
         logger.debug(f"Starting batch deletion for {len(delete_requests)} documents")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-            with get_vespa_http_client() as http_client:
+            with get_vespa_http_client(no_timeout=True) as http_client:
                 for batch_start in range(0, len(delete_requests), batch_size):
                     batch = delete_requests[batch_start : batch_start + batch_size]
 
