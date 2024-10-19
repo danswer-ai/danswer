@@ -59,11 +59,6 @@ const SEARCH_DEFAULT_OVERRIDES_START: SearchDefaultOverrides = {
   offset: 0,
 };
 
-const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
-  reasoning: null,
-  error: null,
-};
-
 interface SearchSectionProps {
   toggle: () => void;
   defaultSearchType: SearchType;
