@@ -172,7 +172,6 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     # decide some initial startup settings based on the celery worker's hostname
     # (set at the command line)'
-    tenant_id = kwargs.get("tenant_id")
 
     hostname = sender.hostname
     if hostname.startswith("light"):

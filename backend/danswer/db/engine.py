@@ -291,42 +291,6 @@ async def get_async_session_with_tenant(
             yield session
 
 
-# @contextmanager
-# def get_session_with_tenant(
-#     tenant_id: str | None = None,
-# ) -> Generator[Session, None, None]:
-#     """Generate a database session with the appropriate tenant schema set."""
-#     if tenant_id is None:
-#         tenant_id = current_tenant_id.get()
-
-#     if not is_valid_schema_name(tenant_id):
-#         raise HTTPException(status_code=400, detail="Invalid tenant ID")
-
-#     engine = get_sqlalchemy_engine()
-#     event.listen(engine, "checkout", set_search_path_on_checkout)
-#     SessionLocal = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
-
-#     # Create a session
-#     with SessionLocal() as session:
-#         # Attach the event listener to set the search_path
-#         @event.listens_for(session, "after_begin")
-#         def _set_search_path(session, transaction, connection, **kw):
-#             connection.execute(text(f'SET search_path TO "{tenant_id}"'))
-
-#         try:
-#             yield session
-#         finally:
-#             if MULTI_TENANT:
-#                 # Reset search_path to default after the session is used
-#                 session.execute(text('SET search_path TO "$user", public'))
-
-
-# # Optionally, attach engine-level event listener
-# def set_search_path_on_checkout(dbapi_connection, connection_record, connection_proxy):
-#     tenant_id = current_tenant_id.get()
-#     if tenant_id and is_valid_schema_name(tenant_id):
-#         with dbapi_connection.cursor() as cursor:
-#             cursor.execute(f'SET search_path TO "{tenant_id}"')
 @contextmanager
 def get_session_with_tenant(
     tenant_id: str | None = None,
