@@ -1,4 +1,5 @@
 import re
+from typing import cast
 
 import httpx
 
@@ -54,22 +55,17 @@ def remove_invalid_unicode_chars(text: str) -> str:
     return _illegal_xml_chars_RE.sub("", text)
 
 
-def get_vespa_http_client(**additional_kwargs) -> httpx.Client:
+def get_vespa_http_client() -> httpx.Client:
     """
     Configure and return an HTTP client for communicating with Vespa,
     including authentication if needed.
     """
 
-    client_kwargs = {
-        "http2": True,
-        "timeout": VESPA_REQUEST_TIMEOUT,
-        "verify": True,  # For secure connections
-    }
-
-    if MANAGED_VESPA:
-        client_kwargs["cert"] = (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH)
-    else:
-        client_kwargs["verify"] = False
-
-    client_kwargs.update(additional_kwargs)
-    return httpx.Client(**client_kwargs)
+    return httpx.Client(
+        cert=cast(tuple[str, str], (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH))
+        if MANAGED_VESPA
+        else None,
+        verify=False if not MANAGED_VESPA else True,
+        timeout=VESPA_REQUEST_TIMEOUT,
+        http2=True,
+    )
