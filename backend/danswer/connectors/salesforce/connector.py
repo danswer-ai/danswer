@@ -10,17 +10,17 @@ from simple_salesforce import SFType
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
-from danswer.connectors.interfaces import DocumentMetadataOutput
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import MetadataConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.interfaces import SlimConnector
+from danswer.connectors.interfaces import SlimDocumentOutput
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
-from danswer.connectors.models import DocumentMetadata
 from danswer.connectors.models import Section
+from danswer.connectors.models import SlimDocument
 from danswer.connectors.salesforce.utils import extract_dict_text
 from danswer.utils.logger import setup_logger
 
@@ -31,7 +31,7 @@ ID_PREFIX = "SALESFORCE_"
 logger = setup_logger()
 
 
-class SalesforceConnector(LoadConnector, PollConnector, MetadataConnector):
+class SalesforceConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
         self,
         batch_size: int = INDEX_BATCH_SIZE,
@@ -245,17 +245,17 @@ class SalesforceConnector(LoadConnector, PollConnector, MetadataConnector):
         end_datetime = datetime.utcfromtimestamp(end)
         return self._fetch_from_salesforce(start=start_datetime, end=end_datetime)
 
-    def retrieve_all_source_doc_metadata(self) -> DocumentMetadataOutput:
+    def retrieve_all_slim_documents(self) -> SlimDocumentOutput:
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
-        doc_metadata_list: list[DocumentMetadata] = []
+        doc_metadata_list: list[SlimDocument] = []
         for parent_object_type in self.parent_object_list:
             query = f"SELECT Id FROM {parent_object_type}"
             query_result = self.sf_client.query_all(query)
             doc_metadata_list.extend(
-                DocumentMetadata(
+                SlimDocument(
                     id=f"{ID_PREFIX}{instance_dict.get('Id', '')}",
-                    metadata={},
+                    perm_sync_data={},
                 )
                 for instance_dict in query_result["records"]
             )

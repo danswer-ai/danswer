@@ -169,9 +169,9 @@ class Document(DocumentBase):
         )
 
 
-class DocumentMetadata(BaseModel):
+class SlimDocument(BaseModel):
     id: str
-    metadata: Any | None = None
+    perm_sync_data: Any | None = None
 
 
 class DocumentErrorSummary(BaseModel):

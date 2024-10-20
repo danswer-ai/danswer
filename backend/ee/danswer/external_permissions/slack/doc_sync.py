@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
 from danswer.connectors.factory import instantiate_connector
-from danswer.connectors.interfaces import MetadataConnector
+from danswer.connectors.interfaces import SlimConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.connector import get_channels
 from danswer.connectors.slack.connector import make_paginated_slack_api_call_w_retries
@@ -15,28 +15,6 @@ from ee.danswer.external_permissions.slack.utils import fetch_user_id_to_email_m
 
 
 logger = setup_logger()
-
-
-def _extract_channel_id_from_doc_id(doc_id: str) -> str:
-    """
-    Extracts the channel ID from a document ID string.
-
-    The document ID is expected to be in the format: "{channel_id}__{message_ts}"
-
-    Args:
-        doc_id (str): The document ID string.
-
-    Returns:
-        str: The extracted channel ID.
-
-    Raises:
-        ValueError: If the doc_id doesn't contain the expected separator.
-    """
-    try:
-        channel_id, _ = doc_id.split("__", 1)
-        return channel_id
-    except ValueError:
-        raise ValueError(f"Invalid doc_id format: {doc_id}")
 
 
 def _get_slack_document_ids_and_channels(
@@ -52,14 +30,14 @@ def _get_slack_document_ids_and_channels(
         credential=cc_pair.credential,
     )
 
-    assert isinstance(runnable_connector, MetadataConnector)
+    assert isinstance(runnable_connector, SlimConnector)
 
     channel_doc_map: dict[str, list[str]] = {}
-    for doc_metadata_batch in runnable_connector.retrieve_all_source_doc_metadata():
+    for doc_metadata_batch in runnable_connector.retrieve_all_slim_documents():
         for doc_metadata in doc_metadata_batch:
-            if doc_metadata.metadata is None:
+            if doc_metadata.perm_sync_data is None:
                 continue
-            channel_id = doc_metadata.metadata["channel_id"]
+            channel_id = doc_metadata.perm_sync_data["channel_id"]
             if channel_id not in channel_doc_map:
                 channel_doc_map[channel_id] = []
             channel_doc_map[channel_id].append(doc_metadata.id)

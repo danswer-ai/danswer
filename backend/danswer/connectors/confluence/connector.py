@@ -11,16 +11,16 @@ from danswer.connectors.confluence.utils import attachment_to_content
 from danswer.connectors.confluence.utils import build_confluence_document_id
 from danswer.connectors.confluence.utils import datetime_from_string
 from danswer.connectors.confluence.utils import extract_text_from_page
-from danswer.connectors.interfaces import DocumentMetadataOutput
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import MetadataConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SlimConnector
+from danswer.connectors.interfaces import SlimDocumentOutput
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
-from danswer.connectors.models import DocumentMetadata
 from danswer.connectors.models import Section
+from danswer.connectors.models import SlimDocument
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -29,12 +29,21 @@ logger = setup_logger()
 # 1. Include attachments, etc
 # 2. Segment into Sections for more accurate linking, can split by headers but make sure no text/ordering is lost
 
-_COMMENT_EXPANSION_STRING = "body.storage.value"
-_PAGE_EXPANSION_FIELDS = "body.storage.value,version,space,metadata.labels"
-_ATTACHMENT_EXPANSION_FIELDS = "version,space,metadata.labels"
+_COMMENT_EXPANSION_FIELDS = ["body.storage.value"]
+_PAGE_EXPANSION_FIELDS = [
+    "body.storage.value",
+    "version",
+    "space",
+    "metadata.labels",
+]
+_ATTACHMENT_EXPANSION_FIELDS = [
+    "version",
+    "space",
+    "metadata.labels",
+]
 
 
-class ConfluenceConnector(LoadConnector, PollConnector, MetadataConnector):
+class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
         self,
         wiki_base: str,
@@ -107,7 +116,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, MetadataConnector):
         comment_cql = f"type=comment and container='{page_id}'"
         comment_cql += self.cql_label_filter
 
-        expand = _COMMENT_EXPANSION_STRING
+        expand = ",".join(_COMMENT_EXPANSION_FIELDS)
         for comments in self.confluence_client.paginated_cql_retrieval(
             cql=comment_cql,
             expand=expand,
@@ -182,7 +191,9 @@ class ConfluenceConnector(LoadConnector, PollConnector, MetadataConnector):
 
         # Fetch pages as Documents
         for pages in self.confluence_client.paginated_cql_retrieval(
-            cql=self.cql_query, expand=_PAGE_EXPANSION_FIELDS, limit=self.batch_size
+            cql=self.cql_query,
+            expand=",".join(_PAGE_EXPANSION_FIELDS),
+            limit=self.batch_size,
         ):
             for page in pages:
                 confluence_page_ids.append(page["id"])
@@ -200,7 +211,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, MetadataConnector):
             # TODO: maybe should add time filter as well?
             for attachments in self.confluence_client.paginated_cql_retrieval(
                 cql=attachment_cql,
-                expand=_ATTACHMENT_EXPANSION_FIELDS,
+                expand=",".join(_ATTACHMENT_EXPANSION_FIELDS),
             ):
                 for attachment in attachments:
                     doc = self._convert_object_to_document(attachment)
@@ -228,12 +239,12 @@ class ConfluenceConnector(LoadConnector, PollConnector, MetadataConnector):
         self.cql_query += f" and lastmodified <= '{formatted_end_time}'"
         return self._fetch_document_batches()
 
-    def retrieve_all_source_doc_metadata(self) -> DocumentMetadataOutput:
+    def retrieve_all_slim_documents(self) -> SlimDocumentOutput:
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
 
         confluence_page_ids: list[str] = []
-        doc_metadata_list: list[DocumentMetadata] = []
+        doc_metadata_list: list[SlimDocument] = []
 
         for pages in self.confluence_client.paginated_cql_retrieval(
             cql=self.cql_query,
@@ -241,11 +252,11 @@ class ConfluenceConnector(LoadConnector, PollConnector, MetadataConnector):
             for page in pages:
                 confluence_page_ids.append(page["id"])
                 doc_metadata_list.append(
-                    DocumentMetadata(
+                    SlimDocument(
                         id=build_confluence_document_id(
                             self.wiki_base, page["_links"]["webui"]
                         ),
-                        metadata={},
+                        perm_sync_data={},
                     )
                 )
             yield doc_metadata_list
@@ -259,11 +270,11 @@ class ConfluenceConnector(LoadConnector, PollConnector, MetadataConnector):
             ):
                 for attachment in attachments:
                     doc_metadata_list.append(
-                        DocumentMetadata(
+                        SlimDocument(
                             id=build_confluence_document_id(
                                 self.wiki_base, attachment["_links"]["webui"]
                             ),
-                            metadata={},
+                            perm_sync_data={},
                         )
                     )
             yield doc_metadata_list

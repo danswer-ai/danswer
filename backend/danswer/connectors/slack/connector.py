@@ -12,16 +12,16 @@ from slack_sdk.errors import SlackApiError
 from danswer.configs.app_configs import ENABLE_EXPENSIVE_EXPERT_CALLS
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import DocumentMetadataOutput
 from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import MetadataConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.interfaces import SlimConnector
+from danswer.connectors.interfaces import SlimDocumentOutput
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
-from danswer.connectors.models import DocumentMetadata
 from danswer.connectors.models import Section
+from danswer.connectors.models import SlimDocument
 from danswer.connectors.slack.utils import expert_info_from_slack_id
 from danswer.connectors.slack.utils import get_message_link
 from danswer.connectors.slack.utils import make_paginated_slack_api_call_w_retries
@@ -328,7 +328,7 @@ def _get_all_doc_ids(
     channels: list[str] | None = None,
     channel_name_regex_enabled: bool = False,
     msg_filter_func: Callable[[MessageType], bool] = default_msg_filter,
-) -> DocumentMetadataOutput:
+) -> SlimDocumentOutput:
     """
     Get all document ids in the workspace, channel by channel
     This is pretty identical to get_all_docs, but it returns a set of ids instead of documents
@@ -358,19 +358,19 @@ def _get_all_doc_ids(
                 # fetch the thread for id retrieval, saving time and API calls
                 message_ts_set.add(message["ts"])
 
-        channel_metadata_list: list[DocumentMetadata] = []
+        channel_metadata_list: list[SlimDocument] = []
         for message_ts in message_ts_set:
             channel_metadata_list.append(
-                DocumentMetadata(
+                SlimDocument(
                     id=f"{channel_id}__{message_ts}",
-                    metadata={"channel_id": channel_id},
+                    perm_sync_data={"channel_id": channel_id},
                 )
             )
 
         yield channel_metadata_list
 
 
-class SlackPollConnector(PollConnector, MetadataConnector):
+class SlackPollConnector(PollConnector, SlimConnector):
     def __init__(
         self,
         workspace: str,
@@ -391,7 +391,7 @@ class SlackPollConnector(PollConnector, MetadataConnector):
         self.client = WebClient(token=bot_token)
         return None
 
-    def retrieve_all_source_doc_metadata(self) -> DocumentMetadataOutput:
+    def retrieve_all_slim_documents(self) -> SlimDocumentOutput:
         if self.client is None:
             raise ConnectorMissingCredentialError("Slack")
 

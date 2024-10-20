@@ -15,10 +15,10 @@ from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
 )
 from danswer.connectors.interfaces import BaseConnector
 from danswer.connectors.interfaces import LoadConnector
-from danswer.connectors.interfaces import MetadataConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SlimConnector
 from danswer.connectors.models import Document
-from danswer.connectors.models import DocumentMetadata
+from danswer.connectors.models import SlimDocument
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import TaskStatus
@@ -69,7 +69,7 @@ def get_deletion_attempt_snapshot(
 
 
 def document_batch_to_ids(
-    doc_batch: list[Document] | list[DocumentMetadata],
+    doc_batch: list[Document] | list[SlimDocument],
 ) -> set[str]:
     return {doc.id for doc in doc_batch}
 
@@ -86,8 +86,8 @@ def extract_ids_from_runnable_connector(
     """
     all_connector_doc_ids: set[str] = set()
 
-    if isinstance(runnable_connector, MetadataConnector):
-        for metadata_batch in runnable_connector.retrieve_all_source_doc_metadata():
+    if isinstance(runnable_connector, SlimConnector):
+        for metadata_batch in runnable_connector.retrieve_all_slim_documents():
             all_connector_doc_ids.update(document_batch_to_ids(metadata_batch))
 
     doc_batch_generator = None
