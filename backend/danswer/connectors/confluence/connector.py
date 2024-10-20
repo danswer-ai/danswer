@@ -6,7 +6,7 @@ from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.confluence.rate_limit_handler import DanswerConfluence
+from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
 from danswer.connectors.confluence.utils import attachment_to_content
 from danswer.connectors.confluence.utils import build_confluence_document_id
 from danswer.connectors.confluence.utils import datetime_from_string
@@ -61,7 +61,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
     ) -> None:
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
-        self.confluence_client: DanswerConfluence | None = None
+        self.confluence_client: OnyxConfluence | None = None
         self.is_cloud = is_cloud
 
         # self.recursive_indexer: RecursiveIndexer | None = None
@@ -96,7 +96,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
         # for a list of other hidden constructor args
-        self.confluence_client = DanswerConfluence(
+        self.confluence_client = OnyxConfluence(
             url=self.wiki_base,
             username=username if self.is_cloud else None,
             password=access_token if self.is_cloud else None,

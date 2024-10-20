@@ -4,7 +4,7 @@ from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 from sqlalchemy.orm import Session
 
-from danswer.connectors.confluence.rate_limit_handler import (
+from danswer.connectors.confluence.onyx_confluence import (
     handle_confluence_rate_limit,
 )
 from danswer.db.models import ConnectorCredentialPair

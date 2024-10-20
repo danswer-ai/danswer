@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
-from danswer.connectors.confluence.connector import DanswerConfluence
+from danswer.connectors.confluence.connector import OnyxConfluence
 from danswer.connectors.confluence.utils import (
     build_confluence_document_id,
 )
@@ -31,7 +31,7 @@ _REQUEST_PAGINATION_LIMIT = 100
 
 
 def _get_server_space_permissions(
-    confluence_client: DanswerConfluence, space_key: str
+    confluence_client: OnyxConfluence, space_key: str
 ) -> ExternalAccess:
     space_permissions_result = confluence_client.get_space(
         space_key=space_key, expand="permissions"
@@ -73,7 +73,7 @@ def _get_server_space_permissions(
 
 
 def _get_cloud_space_permissions(
-    confluence_client: DanswerConfluence, space_key: str
+    confluence_client: OnyxConfluence, space_key: str
 ) -> ExternalAccess:
     space_permissions_result = confluence_client.get_space(
         space_key=space_key, expand="permissions"
@@ -108,7 +108,7 @@ def _get_cloud_space_permissions(
 
 
 def _get_space_permissions(
-    confluence_client: DanswerConfluence,
+    confluence_client: OnyxConfluence,
     is_cloud: bool,
 ) -> dict[str, ExternalAccess]:
     # Gets all the spaces in the Confluence instance
@@ -195,7 +195,7 @@ def _get_page_specific_restrictions(
 
 
 def _fetch_attachment_document_ids_for_page_paginated(
-    confluence_client: DanswerConfluence, page: dict[str, Any]
+    confluence_client: OnyxConfluence, page: dict[str, Any]
 ) -> list[str]:
     """
     Starts by just extracting the first page of attachments from
@@ -233,7 +233,7 @@ def _fetch_attachment_document_ids_for_page_paginated(
 
 
 def _fetch_all_pages_paginated(
-    confluence_client: DanswerConfluence,
+    confluence_client: OnyxConfluence,
     cql_query: str,
 ) -> list[dict[str, Any]]:
     # For each page, this fetches the page's attachments and restrictions.
@@ -268,7 +268,7 @@ def _fetch_all_pages_paginated(
 
 
 def _fetch_all_page_restrictions_for_space(
-    confluence_client: DanswerConfluence,
+    confluence_client: OnyxConfluence,
     cql_query: str,
     space_permissions_by_space_key: dict[str, ExternalAccess],
 ) -> dict[str, ExternalAccess]:

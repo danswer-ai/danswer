@@ -10,8 +10,8 @@ from danswer.configs.app_configs import (
     CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD,
 )
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD
-from danswer.connectors.confluence.rate_limit_handler import (
-    DanswerConfluence,
+from danswer.connectors.confluence.onyx_confluence import (
+    OnyxConfluence,
 )
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_processing.html_utils import format_document_soup
@@ -21,7 +21,7 @@ logger = setup_logger()
 
 
 @lru_cache()
-def _get_user(user_id: str, confluence_client: DanswerConfluence) -> str:
+def _get_user(user_id: str, confluence_client: OnyxConfluence) -> str:
     """Get Confluence Display Name based on the account-id or userkey value
 
     Args:
@@ -46,7 +46,7 @@ def _get_user(user_id: str, confluence_client: DanswerConfluence) -> str:
 
 
 def extract_text_from_page(
-    confluence_client: DanswerConfluence, page: dict[str, Any]
+    confluence_client: OnyxConfluence, page: dict[str, Any]
 ) -> str:
     """Parse a Confluence html page and replace the 'user Id' by the real
         User Display Name
@@ -77,7 +77,7 @@ def extract_text_from_page(
 
 
 def attachment_to_content(
-    confluence_client: DanswerConfluence,
+    confluence_client: OnyxConfluence,
     attachment: dict[str, Any],
 ) -> str | None:
     """If it returns None, assume that we should skip this attachment."""
