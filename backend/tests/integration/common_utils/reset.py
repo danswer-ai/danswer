@@ -1,5 +1,6 @@
 import logging
 import time
+from types import SimpleNamespace
 
 import psycopg2
 import requests
@@ -26,7 +27,10 @@ logger = setup_logger()
 
 
 def _run_migrations(
-    database_url: str, direction: str = "upgrade", revision: str = "head"
+    database_url: str,
+    direction: str = "upgrade",
+    revision: str = "head",
+    schema: str = "public",
 ) -> None:
     # hide info logs emitted during migration
     logging.getLogger("alembic").setLevel(logging.CRITICAL)
@@ -35,6 +39,9 @@ def _run_migrations(
     alembic_cfg = Config("alembic.ini")
     alembic_cfg.set_section_option("logger_alembic", "level", "WARN")
     alembic_cfg.attributes["configure_logger"] = False
+
+    alembic_cfg.cmd_opts = SimpleNamespace()  # type: ignore
+    alembic_cfg.cmd_opts.x = [f"schema={schema}"]  # type: ignore
 
     # Set the SQLAlchemy URL in the Alembic configuration
     alembic_cfg.set_main_option("sqlalchemy.url", database_url)
@@ -52,7 +59,7 @@ def _run_migrations(
     logging.getLogger("alembic").setLevel(logging.INFO)
 
 
-def reset_postgres(database: str = "postgres") -> None:
+def reset_postgres(database: str = "postgres", multitenant: bool = False) -> None:
     """Reset the Postgres database."""
 
     # NOTE: need to delete all rows to allow migrations to be rolled back
@@ -127,6 +134,7 @@ def reset_postgres(database: str = "postgres") -> None:
 
 def reset_vespa() -> None:
     """Wipe all data from the Vespa index."""
+
     with get_session_context_manager() as db_session:
         # swap to the correct default model
         check_index_swap(db_session)
@@ -166,10 +174,10 @@ def reset_vespa() -> None:
             time.sleep(5)
 
 
-def reset_all() -> None:
+def reset_all(multitenant: bool = False) -> None:
     """Reset both Postgres and Vespa."""
     logger.info("Resetting Postgres...")
-    reset_postgres()
+    reset_postgres(multitenant=multitenant)
     logger.info("Resetting Vespa...")
-    reset_vespa()
+    reset_vespa(multitenant=multitenant)
     logger.info("Finished resetting all.")

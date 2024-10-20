@@ -44,3 +44,8 @@ def vespa_client(db_session: Session) -> vespa_fixture:
 @pytest.fixture
 def reset() -> None:
     reset_all()
+
+
+@pytest.fixture
+def reset_multitenant() -> None:
+    reset_all(multitenant=True)
