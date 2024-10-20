@@ -134,7 +134,7 @@ class RedisPool:
 redis_pool = RedisPool()
 
 
-def get_redis_client(tenant_id: str | None = None) -> Redis:
+def get_redis_client(tenant_id: str | None) -> Redis:
     return redis_pool.get_client(tenant_id)
 
 

@@ -137,9 +137,6 @@ def create_credential_from_model(
             target_group_ids=credential_info.groups,
             object_is_public=credential_info.curator_public,
         )
-    from danswer.db.models import Credential
-
-    db_session.query(Credential).all()
 
     credential = create_credential(credential_info, user, db_session)
     return ObjectCreationIdResponse(
