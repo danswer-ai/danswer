@@ -227,14 +227,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = USER_AUTH_SECRET
     verification_token_secret = USER_AUTH_SECRET
 
-    # async def register(
-    #     self,
-    #     user_create: schemas.UC | UserCreate,
-    #     safe: bool = False,
-    #     request: Optional[Request] = None,
-    # ) -> User:
-    #     return await super().register(user_create, safe, request)
-
     async def create(
         self,
         user_create: schemas.UC | UserCreate,
@@ -249,10 +241,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             raise HTTPException(status_code=401, detail="User not found")
 
         if not tenant_id:
-            raise HTTPException(status_code=401, detail="User not found")
+            raise HTTPException(
+                status_code=401, detail="User does not belong to an organization"
+            )
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
-            current_tenant_id.set(tenant_id)
+            token = current_tenant_id.set(tenant_id)
 
             verify_email_is_invited(user_create.email)
             verify_email_domain(user_create.email)
@@ -290,6 +284,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     user = await self.update(user_update, user)
                 else:
                     raise exceptions.UserAlreadyExists()
+
+            current_tenant_id.reset(token)
             return user
 
     async def on_after_login(
