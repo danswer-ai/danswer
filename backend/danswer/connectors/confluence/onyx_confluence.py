@@ -5,8 +5,6 @@ from collections.abc import Iterator
 from typing import Any
 from typing import cast
 from typing import TypeVar
-from urllib.parse import parse_qs
-from urllib.parse import urlparse
 
 from atlassian import Confluence  # type:ignore
 from requests import HTTPError
@@ -140,24 +138,7 @@ class OnyxConfluence(Confluence):
                     handle_confluence_rate_limit(getattr(self, attr_name)),
                 )
 
-    def _danswer_cql(
-        self,
-        url_suffix: str,
-        start_or_cursor: int | str | None = None,
-    ) -> dict[str, Any]:
-        if start_or_cursor:
-            if isinstance(start_or_cursor, int):
-                url_suffix += f"&start={start_or_cursor}"
-            else:
-                url_suffix += f"&cursor={start_or_cursor}"
-        try:
-            response = self.get(url_suffix)
-            return response
-        except Exception as e:
-            logger.exception("Error in danswer_cql")
-            raise e
-
-    def paginated_cql_retrieval(
+    def paginated_cql_page_retrieval(
         self,
         cql: str,
         expand: str | None = None,
@@ -166,32 +147,53 @@ class OnyxConfluence(Confluence):
         url_suffix = f"rest/api/content/search?cql={cql}"
         if expand:
             url_suffix += f"&expand={expand}"
-        if limit:
-            url_suffix += f"&limit={limit}"
-        else:
+        if not limit:
             limit = _PAGINATION_LIMIT
-        start_or_cursor: int | str | None = None
+        url_suffix += f"&limit={limit}"
+
         while True:
-            response = self._danswer_cql(url_suffix, start_or_cursor)
-            results = response["results"]
+            try:
+                response = self.get(url_suffix)
+                results = response["results"]
+            except Exception as e:
+                logger.exception("Error in danswer_cql: \n")
+                raise e
+
             yield results
 
-            if "_links" in response and "next" in response["_links"]:
-                next_link = response["_links"]["next"]
-                parsed_url = urlparse(next_link)
-                query_params = parse_qs(parsed_url.query)
-                cursor_list = query_params.get("cursor", [])
-                if cursor_list:
-                    if cursor_list[0] == start_or_cursor:
-                        break
-                    start_or_cursor = cursor_list[0]
-                else:
-                    start_or_cursor = None
-            else:
-                start_or_cursor = None
-
-            if len(results) < limit or start_or_cursor is None:
+            url_suffix = response.get("_links", {}).get("next")
+            if not url_suffix:
                 break
+
+    def cql_paginate_all_expansions(
+        self,
+        cql: str,
+        expand: str | None = None,
+        limit: int | None = None,
+    ) -> Iterator[list[dict[str, Any]]]:
+        """
+        This function will paginate through the top level query first, then
+        paginate through all of the expansions.
+        """
+
+        def _traverse_and_update(data: dict | list) -> None:
+            if isinstance(data, dict):
+                next_url = data.get("_links", {}).get("next")
+                if next_url and "results" in data:
+                    while next_url:
+                        next_response = self.get(next_url)
+                        data["results"].extend(next_response.get("results", []))
+                        next_url = next_response.get("_links", {}).get("next")
+
+                for value in data.values():
+                    _traverse_and_update(value)
+            elif isinstance(data, list):
+                for item in data:
+                    _traverse_and_update(item)
+
+        for results in self.paginated_cql_page_retrieval(cql, expand, limit):
+            _traverse_and_update(results)
+            yield results
 
 
 # commenting out while we try using confluence's rate limiter instead
