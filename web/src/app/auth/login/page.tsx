@@ -71,8 +71,6 @@ const Page = async ({
   if (authTypeMetadata?.autoRedirect && authUrl && !autoRedirectDisabled) {
     return redirect(authUrl);
   }
-  console.log("authTypeMetadata");
-  console.log(authTypeMetadata);
 
   return (
     <AuthFlowContainer>
@@ -80,7 +78,7 @@ const Page = async ({
         <HealthCheckBanner />
       </div>
 
-      <div className="flex flex-col justify-center">
+      <div className="flex flex-col w-full justify-center">
         {authUrl && authTypeMetadata && (
           <>
             <h2 className="text-center text-xl text-strong font-bold">

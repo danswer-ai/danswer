@@ -42,18 +42,15 @@ const Page = async () => {
     }
     return redirect("/auth/waiting-on-verification");
   }
-
-  // only enable this page if basic login is enabled
-  if (
-    authTypeMetadata?.authType !== "basic" &&
-    authTypeMetadata?.authType !== "cloud"
-  ) {
-    return redirect("/");
-  }
   const cloud = authTypeMetadata?.authType === "cloud";
 
+  // only enable this page if basic login is enabled
+  if (authTypeMetadata?.authType !== "basic" && !cloud) {
+    return redirect("/");
+  }
+
   let authUrl: string | null = null;
-  if (cloud) {
+  if (cloud && authTypeMetadata) {
     authUrl = await getAuthUrlSS(authTypeMetadata.authType, null);
   }
 
@@ -63,21 +60,18 @@ const Page = async () => {
 
       <>
         <div className="absolute top-10x w-full"></div>
-        <div className="flex flex-col justify-center">
+        <div className="flex w-full flex-col justify-center">
           <h2 className="text-center text-xl text-strong font-bold">
             {cloud ? "Complete your sign up" : "Sign Up for Danswer"}
           </h2>
 
           {cloud && authUrl && (
             <div className="w-full justify-center">
-              <SignInButton
-                authorizeUrl={authUrl}
-                authType={authTypeMetadata?.authType}
-              />
+              <SignInButton authorizeUrl={authUrl} authType="cloud" />
               <div className="flex items-center w-full my-4">
-                <div className="flex-grow border-t border-gray-300"></div>
+                <div className="flex-grow border-t border-background-300"></div>
                 <span className="px-4 text-gray-500">or</span>
-                <div className="flex-grow border-t border-gray-300"></div>
+                <div className="flex-grow border-t border-background-300"></div>
               </div>
             </div>
           )}

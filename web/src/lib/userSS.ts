@@ -20,6 +20,8 @@ export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
     await res.json();
 
   let authType: AuthType;
+
+  // Override fasapi users auth so we can use both
   if (SERVER_SIDE_ONLY__CLOUD_ENABLED) {
     authType = "cloud";
   } else {
@@ -84,7 +86,6 @@ export const getAuthUrlSS = async (
   authType: AuthType,
   nextUrl: string | null
 ): Promise<string> => {
-  console.log(authType);
   // Returns the auth url for the given auth type
   switch (authType) {
     case "disabled":
@@ -95,10 +96,7 @@ export const getAuthUrlSS = async (
       return await getGoogleOAuthUrlSS();
     }
     case "cloud": {
-      console.log("returning cloud auth url");
-      const value = await getGoogleOAuthUrlSS();
-      console.log(value);
-      return value;
+      return await getGoogleOAuthUrlSS();
     }
     case "saml": {
       return await getSAMLAuthUrlSS();
