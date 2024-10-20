@@ -59,12 +59,15 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.redis.redis_pool import get_redis_client
+from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,
 )
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import noop_fallback
+
+logger = setup_logger()
 
 
 # celery auto associates tasks created inside another task,
@@ -74,11 +77,11 @@ from danswer.utils.variable_functionality import noop_fallback
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
 )
-def check_for_vespa_sync_task(tenant_id: str | None) -> None:
+def check_for_vespa_sync_task(*, tenant_id: str | None) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK,
@@ -640,7 +643,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 
     Returns True if the task actually did work, False
     """
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat: redis.lock.Lock = r.lock(
         DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK,

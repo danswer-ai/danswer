@@ -41,7 +41,7 @@ class ConfluenceRateLimitError(Exception):
 
 #         # for testing purposes, rate limiting is written to fall back to a simpler
 #         # rate limiting approach when redis is not available
-#         r = get_redis_client()
+#         r = get_redis_client(tenant_id=tenant_id)
 
 #         for attempt in range(max_retries):
 #             try:
