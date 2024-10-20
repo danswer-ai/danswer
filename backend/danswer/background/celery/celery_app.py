@@ -263,59 +263,6 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         WAIT_LIMIT = 60
 
         time_start = time.monotonic()
-        logger.notice("Redis: Readiness check starting.")
-        # while True:
-
-        #     # Log all the locks in Redis
-        #     all_locks = r.keys(f"*")
-        #     logger.notice(f"Current Redis locks: {all_locks}")
-
-        #     if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
-        #         break
-
-        #     time_elapsed = time.monotonic() - time_start
-        #     logger.info(
-        #         f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
-        #     )
-        #     if time_elapsed > WAIT_LIMIT:
-        #         msg = (
-        #             f"Redis: Readiness check did not succeed within the timeout "
-        #             f"({WAIT_LIMIT} seconds). Exiting..."
-        #         )
-        #         logger.error(msg)
-        #         raise WorkerShutdown(msg)
-
-        #     time.sleep(WAIT_INTERVAL)
-
-        # logger.info("Redis: Readiness check succeeded. Continuing...")
-
-        # if not celery_is_worker_primary(sender):
-        #     logger.info("Running as a secondary celery worker.")
-        #     logger.info("Waiting for primary worker to be ready...")
-        #     time_start = time.monotonic()
-        #     while True:
-        #         # Log all the locks in Redis
-        #         if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
-        #             break
-
-        #         time.monotonic()
-        #         time_elapsed = time.monotonic() - time_start
-        #         logger.info(
-        #             f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
-        #         )
-        #         if time_elapsed > WAIT_LIMIT:
-        #             msg = (
-        #                 f"Primary worker was not ready within the timeout. "
-        #                 f"({WAIT_LIMIT} seconds). Exiting..."
-        #             )
-        #             logger.error(msg)
-        #             raise WorkerShutdown(msg)
-
-        #         time.sleep(WAIT_INTERVAL)
-
-        #     logger.info("Wait for primary worker completed successfully. Continuing...")
-        #     return
-
         logger.info("Running as the primary celery worker.")
 
         # This is singleton work that should be done on startup exactly once
@@ -520,7 +467,6 @@ class HubPeriodicTask(bootsteps.StartStopStep):
 
     def start(self, worker: Any) -> None:
         if not celery_is_worker_primary(worker):
-            logger.notice("Not the primary worker. Exiting.")
             return
 
         # Access the worker's event loop (hub)
@@ -535,7 +481,6 @@ class HubPeriodicTask(bootsteps.StartStopStep):
     def run_periodic_task(self, worker: Any) -> None:
         try:
             if not celery_is_worker_primary(worker):
-                logger.notice("Not the primary worker. Exiting.")
                 return
 
             if not hasattr(worker, "primary_worker_locks"):
