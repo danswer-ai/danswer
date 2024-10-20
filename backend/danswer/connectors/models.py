@@ -169,6 +169,11 @@ class Document(DocumentBase):
         )
 
 
+class DocumentMetadata(BaseModel):
+    id: str
+    metadata: Any | None = None
+
+
 class DocumentErrorSummary(BaseModel):
     id: str
     semantic_id: str

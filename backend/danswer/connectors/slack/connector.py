@@ -12,13 +12,15 @@ from slack_sdk.errors import SlackApiError
 from danswer.configs.app_configs import ENABLE_EXPENSIVE_EXPERT_CALLS
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.interfaces import DocumentMetadataOutput
 from danswer.connectors.interfaces import GenerateDocumentsOutput
-from danswer.connectors.interfaces import IdConnector
+from danswer.connectors.interfaces import MetadataConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
+from danswer.connectors.models import DocumentMetadata
 from danswer.connectors.models import Section
 from danswer.connectors.slack.utils import expert_info_from_slack_id
 from danswer.connectors.slack.utils import get_message_link
@@ -326,7 +328,7 @@ def _get_all_doc_ids(
     channels: list[str] | None = None,
     channel_name_regex_enabled: bool = False,
     msg_filter_func: Callable[[MessageType], bool] = default_msg_filter,
-) -> set[str]:
+) -> DocumentMetadataOutput:
     """
     Get all document ids in the workspace, channel by channel
     This is pretty identical to get_all_docs, but it returns a set of ids instead of documents
@@ -338,13 +340,14 @@ def _get_all_doc_ids(
         all_channels, channels, channel_name_regex_enabled
     )
 
-    all_doc_ids = set()
     for channel in filtered_channels:
+        channel_id = channel["id"]
         channel_message_batches = get_channel_messages(
             client=client,
             channel=channel,
         )
 
+        message_ts_set: set[str] = set()
         for message_batch in channel_message_batches:
             for message in message_batch:
                 if msg_filter_func(message):
@@ -353,12 +356,21 @@ def _get_all_doc_ids(
                 # The document id is the channel id and the ts of the first message in the thread
                 # Since we already have the first message of the thread, we dont have to
                 # fetch the thread for id retrieval, saving time and API calls
-                all_doc_ids.add(f"{channel['id']}__{message['ts']}")
+                message_ts_set.add(message["ts"])
 
-    return all_doc_ids
+        channel_metadata_list: list[DocumentMetadata] = []
+        for message_ts in message_ts_set:
+            channel_metadata_list.append(
+                DocumentMetadata(
+                    id=f"{channel_id}__{message_ts}",
+                    metadata={"channel_id": channel_id},
+                )
+            )
+
+        yield channel_metadata_list
 
 
-class SlackPollConnector(PollConnector, IdConnector):
+class SlackPollConnector(PollConnector, MetadataConnector):
     def __init__(
         self,
         workspace: str,
@@ -379,7 +391,7 @@ class SlackPollConnector(PollConnector, IdConnector):
         self.client = WebClient(token=bot_token)
         return None
 
-    def retrieve_all_source_ids(self) -> set[str]:
+    def retrieve_all_source_doc_metadata(self) -> DocumentMetadataOutput:
         if self.client is None:
             raise ConnectorMissingCredentialError("Slack")
 

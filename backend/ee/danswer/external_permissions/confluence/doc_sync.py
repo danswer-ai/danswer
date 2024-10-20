@@ -9,12 +9,9 @@ from urllib.parse import urlparse
 from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
-from danswer.connectors.confluence.confluence_utils import (
-    build_confluence_document_id,
-)
 from danswer.connectors.confluence.connector import DanswerConfluence
-from danswer.connectors.confluence.rate_limit_handler import (
-    make_confluence_call_handle_rate_limit,
+from danswer.connectors.confluence.utils import (
+    build_confluence_document_id,
 )
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
@@ -36,14 +33,13 @@ _REQUEST_PAGINATION_LIMIT = 100
 def _get_server_space_permissions(
     confluence_client: DanswerConfluence, space_key: str
 ) -> ExternalAccess:
-    get_space_permissions = make_confluence_call_handle_rate_limit(
-        confluence_client.get_space_permissions
+    space_permissions_result = confluence_client.get_space(
+        space_key=space_key, expand="permissions"
     )
-
-    permissions = get_space_permissions(space_key)
+    space_permissions = space_permissions_result.get("permissions", [])
 
     viewspace_permissions = []
-    for permission_category in permissions:
+    for permission_category in space_permissions:
         if permission_category.get("type") == _VIEWSPACE_PERMISSION_TYPE:
             viewspace_permissions.extend(
                 permission_category.get("spacePermissions", [])
@@ -79,10 +75,7 @@ def _get_server_space_permissions(
 def _get_cloud_space_permissions(
     confluence_client: DanswerConfluence, space_key: str
 ) -> ExternalAccess:
-    get_space_permissions = make_confluence_call_handle_rate_limit(
-        confluence_client.get_space
-    )
-    space_permissions_result = get_space_permissions(
+    space_permissions_result = confluence_client.get_space(
         space_key=space_key, expand="permissions"
     )
     space_permissions = space_permissions_result.get("permissions", [])
@@ -119,13 +112,12 @@ def _get_space_permissions(
     is_cloud: bool,
 ) -> dict[str, ExternalAccess]:
     # Gets all the spaces in the Confluence instance
-    get_all_spaces = make_confluence_call_handle_rate_limit(
-        confluence_client.get_all_spaces
-    )
     all_space_keys = []
     start = 0
     while True:
-        spaces_batch = get_all_spaces(start=start, limit=_REQUEST_PAGINATION_LIMIT)
+        spaces_batch = confluence_client.get_all_spaces(
+            start=start, limit=_REQUEST_PAGINATION_LIMIT
+        )
         for space in spaces_batch.get("results", []):
             all_space_keys.append(space.get("key"))
 
@@ -210,9 +202,6 @@ def _fetch_attachment_document_ids_for_page_paginated(
     the page. If all attachments are in the first page, then
     no calls to the api are made from this function.
     """
-    get_attachments_from_content = make_confluence_call_handle_rate_limit(
-        confluence_client.get_attachments_from_content
-    )
 
     attachment_doc_ids = []
     attachments_dict = page["children"]["attachment"]
@@ -234,7 +223,7 @@ def _fetch_attachment_document_ids_for_page_paginated(
             break
 
         start += len(attachments_list)
-        attachments_dict = get_attachments_from_content(
+        attachments_dict = confluence_client.get_attachments_from_content(
             page_id=page["id"],
             start=start,
             limit=_REQUEST_PAGINATION_LIMIT,
@@ -247,10 +236,6 @@ def _fetch_all_pages_paginated(
     confluence_client: DanswerConfluence,
     cql_query: str,
 ) -> list[dict[str, Any]]:
-    get_all_pages = make_confluence_call_handle_rate_limit(
-        confluence_client.danswer_cql
-    )
-
     # For each page, this fetches the page's attachments and restrictions.
     expansion_strings = [
         "children.attachment",
@@ -263,7 +248,7 @@ def _fetch_all_pages_paginated(
     all_pages: list[dict[str, Any]] = []
     cursor = None
     while True:
-        response = get_all_pages(
+        response = confluence_client._danswer_cql(
             cql=cql_query,
             expand=expansion_string,
             cursor=cursor,
@@ -298,9 +283,6 @@ def _fetch_all_page_restrictions_for_space(
         This assigns the same permissions to all attachments of a page and
         the page itself.
         This is because the attachments are stored in the same Confluence space as the page.
-        WARNING: We create a dbDocument entry for all attachments, even though attachments
-        may not be their own standalone documents. This is likely fine as we just upsert a
-        document with just permissions.
         """
         document_ids = []
 

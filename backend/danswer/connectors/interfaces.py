@@ -3,11 +3,13 @@ from collections.abc import Iterator
 from typing import Any
 
 from danswer.connectors.models import Document
+from danswer.connectors.models import DocumentMetadata
 
 
 SecondsSinceUnixEpoch = float
 
 GenerateDocumentsOutput = Iterator[list[Document]]
+DocumentMetadataOutput = Iterator[list[DocumentMetadata]]
 
 
 class BaseConnector(abc.ABC):
@@ -52,9 +54,9 @@ class PollConnector(BaseConnector):
         raise NotImplementedError
 
 
-class IdConnector(BaseConnector):
+class MetadataConnector(BaseConnector):
     @abc.abstractmethod
-    def retrieve_all_source_ids(self) -> set[str]:
+    def retrieve_all_source_doc_metadata(self) -> DocumentMetadataOutput:
         raise NotImplementedError
 
 

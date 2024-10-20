@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
 from danswer.connectors.factory import instantiate_connector
-from danswer.connectors.interfaces import IdConnector
+from danswer.connectors.interfaces import MetadataConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.slack.connector import get_channels
 from danswer.connectors.slack.connector import make_paginated_slack_api_call_w_retries
@@ -52,14 +52,17 @@ def _get_slack_document_ids_and_channels(
         credential=cc_pair.credential,
     )
 
-    assert isinstance(runnable_connector, IdConnector)
+    assert isinstance(runnable_connector, MetadataConnector)
 
     channel_doc_map: dict[str, list[str]] = {}
-    for doc_id in runnable_connector.retrieve_all_source_ids():
-        channel_id = _extract_channel_id_from_doc_id(doc_id)
-        if channel_id not in channel_doc_map:
-            channel_doc_map[channel_id] = []
-        channel_doc_map[channel_id].append(doc_id)
+    for doc_metadata_batch in runnable_connector.retrieve_all_source_doc_metadata():
+        for doc_metadata in doc_metadata_batch:
+            if doc_metadata.metadata is None:
+                continue
+            channel_id = doc_metadata.metadata["channel_id"]
+            if channel_id not in channel_doc_map:
+                channel_doc_map[channel_id] = []
+            channel_doc_map[channel_id].append(doc_metadata.id)
 
     return channel_doc_map
 

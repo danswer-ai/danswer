@@ -1,10 +1,14 @@
 import math
 import time
 from collections.abc import Callable
+from collections.abc import Iterator
 from typing import Any
 from typing import cast
 from typing import TypeVar
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
 
+from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 
 from danswer.utils.logger import setup_logger
@@ -183,7 +187,7 @@ def _handle_http_error(e: HTTPError, attempt: int) -> int:
 # https://developer.atlassian.com/cloud/confluence/rate-limiting/
 # this uses the native rate limiting option provided by the
 # confluence client and otherwise applies a simpler set of error handling
-def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
+def handle_confluence_rate_limit(confluence_call: F) -> F:
     def wrapped_call(*args: list[Any], **kwargs: Any) -> Any:
         MAX_RETRIES = 5
 
@@ -217,3 +221,84 @@ def make_confluence_call_handle_rate_limit(confluence_call: F) -> F:
                 time.sleep(5)
 
     return cast(F, wrapped_call)
+
+
+_PAGINATION_LIMIT = 100
+
+
+class DanswerConfluence(Confluence):
+    """
+    This is a custom Confluence class that overrides the default Confluence class to add a custom CQL method.
+    This is necessary because the default Confluence class does not properly support cql expansions.
+    All methods are automatically wrapped with handle_confluence_rate_limit.
+    """
+
+    def __init__(self, url: str, *args: Any, **kwargs: Any) -> None:
+        super(DanswerConfluence, self).__init__(url, *args, **kwargs)
+        self._wrap_methods()
+
+    def _wrap_methods(self) -> None:
+        """
+        For each attribute that is callable (i.e., a method) and doesn't start with an underscore,
+        wrap it with handle_confluence_rate_limit.
+        """
+        for attr_name in dir(self):
+            if callable(getattr(self, attr_name)) and not attr_name.startswith("_"):
+                setattr(
+                    self,
+                    attr_name,
+                    handle_confluence_rate_limit(getattr(self, attr_name)),
+                )
+
+    def _danswer_cql(
+        self,
+        url_suffix: str,
+        start_or_cursor: int | str | None = None,
+    ) -> dict[str, Any]:
+        if start_or_cursor:
+            if isinstance(start_or_cursor, int):
+                url_suffix += f"&start={start_or_cursor}"
+            else:
+                url_suffix += f"&cursor={start_or_cursor}"
+        try:
+            response = self.get(url_suffix)
+            return response
+        except Exception as e:
+            logger.exception("Error in danswer_cql")
+            raise e
+
+    def paginated_cql_retrieval(
+        self,
+        cql: str,
+        expand: str | None = None,
+        limit: int | None = None,
+    ) -> Iterator[list[dict[str, Any]]]:
+        url_suffix = f"rest/api/content/search?cql={cql}"
+        if expand:
+            url_suffix += f"&expand={expand}"
+        if limit:
+            url_suffix += f"&limit={limit}"
+        else:
+            limit = _PAGINATION_LIMIT
+        start_or_cursor: int | str | None = None
+        while True:
+            response = self._danswer_cql(url_suffix, start_or_cursor)
+            results = response["results"]
+            yield results
+
+            if "_links" in response and "next" in response["_links"]:
+                next_link = response["_links"]["next"]
+                parsed_url = urlparse(next_link)
+                query_params = parse_qs(parsed_url.query)
+                cursor_list = query_params.get("cursor", [])
+                if cursor_list:
+                    if cursor_list[0] == start_or_cursor:
+                        break
+                    start_or_cursor = cursor_list[0]
+                else:
+                    start_or_cursor = None
+            else:
+                start_or_cursor = None
+
+            if len(results) < limit or start_or_cursor is None:
+                break
