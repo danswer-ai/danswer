@@ -547,6 +547,10 @@ if __name__ == "__main__":
                                 latest_slack_bot_tokens, tenant_id
                             )
 
+                            # Initialize socket client for this tenant. Each tenant has its own
+                            # socket client, allowing for multiple concurrent connections (one
+                            # per tenant) with the tenant ID wrapped in the socket model client.
+                            # Each `connect` stores websocket connection in a separate thread.
                             _initialize_socket_client(socket_client)
 
                             socket_clients[tenant_id] = socket_client
