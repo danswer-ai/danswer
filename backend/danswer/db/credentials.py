@@ -248,7 +248,7 @@ def create_credential(
         user_group_ids=credential_data.groups,
     )
 
-    # db_session.commit()
+    db_session.commit()
 
     return credential
 
