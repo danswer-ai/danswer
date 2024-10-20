@@ -195,7 +195,7 @@ def _get_chunks_via_visit_api(
     while True:
         try:
             with get_vespa_http_client() as http_client:
-                response = http_client.post(url, json=params)
+                response = http_client.get(url, json=params)
                 response.raise_for_status()
         except httpx.HTTPError as e:
             error_base = "Failed to query Vespa"
