@@ -38,7 +38,7 @@ logger = setup_logger()
     name="check_for_pruning",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_for_pruning(tenant_id: str | None) -> None:
+def check_for_pruning(*, tenant_id: str | None) -> None:
     r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat = r.lock(

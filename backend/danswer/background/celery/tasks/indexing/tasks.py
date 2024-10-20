@@ -51,7 +51,7 @@ logger = setup_logger()
     name="check_for_indexing",
     soft_time_limit=300,
 )
-def check_for_indexing(tenant_id: str | None) -> int | None:
+def check_for_indexing(*, tenant_id: str | None) -> int | None:
     tasks_created = 0
 
     r = get_redis_client(tenant_id=tenant_id)

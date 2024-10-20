@@ -222,7 +222,40 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
 
+    if not hasattr(sender, "primary_worker_locks"):
+        sender.primary_worker_locks = {}
+
     tenant_ids = get_all_tenant_ids()
+
+    if not celery_is_worker_primary(sender):
+        logger.info("Running as a secondary celery worker.")
+        for tenant_id in tenant_ids:
+            r = get_redis_client(tenant_id=tenant_id)
+            WAIT_INTERVAL = 5
+            WAIT_LIMIT = 60
+            time_start = time.monotonic()
+            logger.notice("Redis: Readiness check starting.")
+            while True:
+                # Log all the locks in Redis
+                all_locks = r.keys("*")
+                logger.notice(f"Current Redis locks: {all_locks}")
+                if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+                    break
+                time_elapsed = time.monotonic() - time_start
+                logger.info(
+                    f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+                )
+                if time_elapsed > WAIT_LIMIT:
+                    msg = (
+                        "Redis: Readiness check did not succeed within the timeout "
+                        f"({WAIT_LIMIT} seconds). Exiting..."
+                    )
+                    logger.error(msg)
+                    raise WorkerShutdown(msg)
+                time.sleep(WAIT_INTERVAL)
+            logger.info("Wait for primary worker completed successfully. Continuing...")
+        return  # Exit the function for secondary workers
+
     for tenant_id in tenant_ids:
         r = get_redis_client(tenant_id=tenant_id)
 
@@ -231,52 +264,57 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
         time_start = time.monotonic()
         logger.notice("Redis: Readiness check starting.")
-        while True:
-            if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
-                break
+        # while True:
 
-            time_elapsed = time.monotonic() - time_start
-            logger.info(
-                f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
-            )
-            if time_elapsed > WAIT_LIMIT:
-                msg = (
-                    f"Redis: Readiness check did not succeed within the timeout "
-                    f"({WAIT_LIMIT} seconds). Exiting..."
-                )
-                logger.error(msg)
-                raise WorkerShutdown(msg)
+        #     # Log all the locks in Redis
+        #     all_locks = r.keys(f"*")
+        #     logger.notice(f"Current Redis locks: {all_locks}")
 
-            time.sleep(WAIT_INTERVAL)
+        #     if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+        #         break
 
-        logger.info("Redis: Readiness check succeeded. Continuing...")
+        #     time_elapsed = time.monotonic() - time_start
+        #     logger.info(
+        #         f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        #     )
+        #     if time_elapsed > WAIT_LIMIT:
+        #         msg = (
+        #             f"Redis: Readiness check did not succeed within the timeout "
+        #             f"({WAIT_LIMIT} seconds). Exiting..."
+        #         )
+        #         logger.error(msg)
+        #         raise WorkerShutdown(msg)
 
-        if not celery_is_worker_primary(sender):
-            logger.info("Running as a secondary celery worker.")
-            logger.info("Waiting for primary worker to be ready...")
-            time_start = time.monotonic()
-            while True:
-                # Log all the locks in Redis
-                if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
-                    break
+        #     time.sleep(WAIT_INTERVAL)
 
-                time.monotonic()
-                time_elapsed = time.monotonic() - time_start
-                logger.info(
-                    f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
-                )
-                if time_elapsed > WAIT_LIMIT:
-                    msg = (
-                        f"Primary worker was not ready within the timeout. "
-                        f"({WAIT_LIMIT} seconds). Exiting..."
-                    )
-                    logger.error(msg)
-                    raise WorkerShutdown(msg)
+        # logger.info("Redis: Readiness check succeeded. Continuing...")
 
-                time.sleep(WAIT_INTERVAL)
+        # if not celery_is_worker_primary(sender):
+        #     logger.info("Running as a secondary celery worker.")
+        #     logger.info("Waiting for primary worker to be ready...")
+        #     time_start = time.monotonic()
+        #     while True:
+        #         # Log all the locks in Redis
+        #         if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+        #             break
 
-            logger.info("Wait for primary worker completed successfully. Continuing...")
-            return
+        #         time.monotonic()
+        #         time_elapsed = time.monotonic() - time_start
+        #         logger.info(
+        #             f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        #         )
+        #         if time_elapsed > WAIT_LIMIT:
+        #             msg = (
+        #                 f"Primary worker was not ready within the timeout. "
+        #                 f"({WAIT_LIMIT} seconds). Exiting..."
+        #             )
+        #             logger.error(msg)
+        #             raise WorkerShutdown(msg)
+
+        #         time.sleep(WAIT_INTERVAL)
+
+        #     logger.info("Wait for primary worker completed successfully. Continuing...")
+        #     return
 
         logger.info("Running as the primary celery worker.")
 
@@ -306,7 +344,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
             logger.error("Primary worker lock: Acquire failed!")
             raise WorkerShutdown("Primary worker lock could not be acquired!")
 
-        sender.primary_worker_lock = lock
+        sender.primary_worker_locks[tenant_id] = lock
 
         # As currently designed, when this worker starts as "primary", we reinitialize redis
         # to a clean state (for our purposes, anyway)
@@ -382,14 +420,15 @@ def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
     if not celery_is_worker_primary(sender):
         return
 
-    if not sender.primary_worker_lock:
+    if not hasattr(sender, "primary_worker_locks"):
         return
 
     logger.info("Releasing primary worker lock.")
-    lock = sender.primary_worker_lock
-    if lock.owned():
-        lock.release()
-        sender.primary_worker_lock = None
+    for tenant_id, lock in sender.primary_worker_locks.items():
+        logger.info(f"Releasing primary worker lock for tenant {tenant_id}.")
+        if lock.owned():
+            lock.release()
+    sender.primary_worker_locks = {}
 
 
 class CeleryTaskPlainFormatter(PlainFormatter):
@@ -481,6 +520,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
 
     def start(self, worker: Any) -> None:
         if not celery_is_worker_primary(worker):
+            logger.notice("Not the primary worker. Exiting.")
             return
 
         # Access the worker's event loop (hub)
@@ -495,6 +535,7 @@ class HubPeriodicTask(bootsteps.StartStopStep):
     def run_periodic_task(self, worker: Any) -> None:
         try:
             if not celery_is_worker_primary(worker):
+                logger.notice("Not the primary worker. Exiting.")
                 return
 
             if not hasattr(worker, "primary_worker_locks"):
@@ -622,7 +663,7 @@ for id in tenant_ids:
             "task": task["task"],
             "schedule": task["schedule"],
             "options": task["options"],
-            "args": (id,),  # Must pass tenant_id as an argument
+            "kwargs": {"tenant_id": id},  # Must pass tenant_id as an argument
         }
 
 # Include any existing beat schedules

@@ -6,6 +6,7 @@ from typing import Optional
 
 import redis
 from redis.client import Redis
+from redis.typing import ResponseT
 
 from danswer.configs.app_configs import REDIS_DB_NUMBER
 from danswer.configs.app_configs import REDIS_HEALTH_CHECK_INTERVAL
@@ -17,6 +18,9 @@ from danswer.configs.app_configs import REDIS_SSL
 from danswer.configs.app_configs import REDIS_SSL_CA_CERTS
 from danswer.configs.app_configs import REDIS_SSL_CERT_REQS
 from danswer.configs.constants import REDIS_SOCKET_KEEPALIVE_OPTIONS
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
 
 
 class TenantRedis(redis.Redis):
@@ -46,6 +50,24 @@ class TenantRedis(redis.Redis):
                 return memoryview(prefix_bytes + key_bytes)
         else:
             raise TypeError(f"Unsupported key type: {type(key)}")
+
+    def exists(self, *names: Any) -> ResponseT:
+        logger.notice(f"Checking existence for keys: {names}")
+        prefixed_names = [self._prefixed(name) for name in names]
+
+        # Log the value and existing keys
+        logger.notice(f"Checking existence for keys: {prefixed_names}")
+
+        # Log all existing keys (be cautious with this in production as it can be expensive)
+        all_keys = self.keys("*")
+        logger.notice(f"Existing keys: {all_keys}")
+
+        # Run the basic Redis exists method
+        result = super().exists(*prefixed_names)
+
+        logger.notice(f"Existence check result: {result}")
+
+        return result
 
     def _prefix_method(self, method: Callable) -> Callable:
         @functools.wraps(method)
@@ -99,10 +121,9 @@ class RedisPool:
         self._pool = RedisPool.create_pool(ssl=REDIS_SSL)
 
     def get_client(self, tenant_id: str | None) -> Redis:
-        if tenant_id is not None:
-            return TenantRedis(tenant_id, connection_pool=self._pool)
-        else:
-            return redis.Redis(connection_pool=self._pool)
+        if tenant_id is None:
+            tenant_id = "public"
+        return TenantRedis(tenant_id, connection_pool=self._pool)
 
     @staticmethod
     def create_pool(

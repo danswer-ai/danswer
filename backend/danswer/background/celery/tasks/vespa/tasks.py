@@ -59,12 +59,15 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.redis.redis_pool import get_redis_client
+from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,
 )
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import noop_fallback
+
+logger = setup_logger()
 
 
 # celery auto associates tasks created inside another task,
@@ -74,7 +77,7 @@ from danswer.utils.variable_functionality import noop_fallback
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
 )
-def check_for_vespa_sync_task(tenant_id: str | None) -> None:
+def check_for_vespa_sync_task(*, tenant_id: str | None) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
 
@@ -720,6 +723,20 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                     a.connector_credential_pair_id, a.search_settings_id
                 )
                 failure_reason = f"Unknown index attempt {a.id}. Might be left over from a process restart."
+                # Log all the things that exist in Redis
+                logger.notice("Logging all keys in Redis:")
+                for key in r.scan_iter("*"):
+                    key_str = key.decode("utf-8")
+                    logger.notice(f"Key: {key_str}")
+                    # key_type = r.type(key).decode('utf-8')
+                    # logger.notice(f"Key: {key_str}, Type: {key_type}")
+
+                # Log specific details about the indexing attempt
+                logger.notice(f"Indexing attempt {a.id} details:")
+                logger.notice(f"  fence_key: {rci.fence_key}")
+                logger.notice(f"  generator_complete_key: {rci.generator_complete_key}")
+                logger.notice(f"  generator_progress_key: {rci.generator_progress_key}")
+                logger.notice(f"  taskset_key: {rci.taskset_key}")
                 if not r.exists(rci.fence_key):
                     mark_attempt_failed(a, db_session, failure_reason=failure_reason)
 
