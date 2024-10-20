@@ -103,20 +103,13 @@ const Page = async ({
             </div>
             <EmailPasswordForm shouldVerify={true} />
 
-            <div className="mt-6 w-full text-center">
-              <div className="flex items-center justify-center space-x-4">
-                <div className="flex-grow border-t border-gray-300"></div>
-                <span className="px-4 text-sm text-gray-500 font-medium">
-                  First time?
-                </span>
-                <div className="flex-grow border-t border-gray-300"></div>
-              </div>
-              <Link
-                href="/auth/signup"
-                className="inline-block mt-3 text-blue-600 hover:text-blue-800 transition-colors duration-200 font-semibold"
-              >
-                Verify your email
-              </Link>
+            <div className="flex">
+              <Text className="mt-4 mx-auto">
+                Don&apos;t have an account?{" "}
+                <Link href="/auth/signup" className="text-link font-medium">
+                  Create an account
+                </Link>
+              </Text>
             </div>
           </div>
         )}

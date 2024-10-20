@@ -227,41 +227,70 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = USER_AUTH_SECRET
     verification_token_secret = USER_AUTH_SECRET
 
+    # async def register(
+    #     self,
+    #     user_create: schemas.UC | UserCreate,
+    #     safe: bool = False,
+    #     request: Optional[Request] = None,
+    # ) -> User:
+    #     return await super().register(user_create, safe, request)
+
     async def create(
         self,
         user_create: schemas.UC | UserCreate,
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        verify_email_is_invited(user_create.email)
-        verify_email_domain(user_create.email)
-        if hasattr(user_create, "role"):
-            user_count = await get_user_count()
-            if user_count == 0 or user_create.email in get_default_admin_user_emails():
-                user_create.role = UserRole.ADMIN
-            else:
-                user_create.role = UserRole.BASIC
-        user = None
         try:
-            user = await super().create(user_create, safe=safe, request=request)  # type: ignore
-        except exceptions.UserAlreadyExists:
-            user = await self.get_by_email(user_create.email)
-            # Handle case where user has used product outside of web and is now creating an account through web
-            if (
-                not user.has_web_login
-                and hasattr(user_create, "has_web_login")
-                and user_create.has_web_login
-            ):
-                user_update = UserUpdate(
-                    password=user_create.password,
-                    has_web_login=True,
-                    role=user_create.role,
-                    is_verified=user_create.is_verified,
-                )
-                user = await self.update(user_update, user)
-            else:
-                raise exceptions.UserAlreadyExists()
-        return user
+            tenant_id = (
+                get_tenant_id_for_email(user_create.email) if MULTI_TENANT else "public"
+            )
+        except exceptions.UserNotExists:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        if not tenant_id:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        async with get_async_session_with_tenant(tenant_id) as db_session:
+            current_tenant_id.set(tenant_id)
+
+            verify_email_is_invited(user_create.email)
+            verify_email_domain(user_create.email)
+            if MULTI_TENANT:
+                tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
+                self.user_db = tenant_user_db
+                self.database = tenant_user_db
+
+            if hasattr(user_create, "role"):
+                user_count = await get_user_count()
+                if (
+                    user_count == 0
+                    or user_create.email in get_default_admin_user_emails()
+                ):
+                    user_create.role = UserRole.ADMIN
+                else:
+                    user_create.role = UserRole.BASIC
+            user = None
+            try:
+                user = await super().create(user_create, safe=safe, request=request)  # type: ignore
+            except exceptions.UserAlreadyExists:
+                user = await self.get_by_email(user_create.email)
+                # Handle case where user has used product outside of web and is now creating an account through web
+                if (
+                    not user.has_web_login
+                    and hasattr(user_create, "has_web_login")
+                    and user_create.has_web_login
+                ):
+                    user_update = UserUpdate(
+                        password=user_create.password,
+                        has_web_login=True,
+                        role=user_create.role,
+                        is_verified=user_create.is_verified,
+                    )
+                    user = await self.update(user_update, user)
+                else:
+                    raise exceptions.UserAlreadyExists()
+            return user
 
     async def on_after_login(
         self,
