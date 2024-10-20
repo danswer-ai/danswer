@@ -241,7 +241,7 @@ def create_credential(
         curator_public=credential_data.curator_public,
     )
     db_session.add(credential)
-    db_session.flush()  # This ensures the credential gets an IDcredentials
+    db_session.flush()  # This ensures the credential gets an ID
     _relate_credential_to_user_groups__no_commit(
         db_session=db_session,
         credential_id=credential.id,
