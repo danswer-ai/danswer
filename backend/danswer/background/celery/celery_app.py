@@ -91,7 +91,7 @@ def on_task_postrun(
     task_id: str | None = None,
     task: Task | None = None,
     args: tuple | None = None,
-    kwargs: dict | None = None,
+    kwargs: dict[str, Any] | None = None,
     retval: Any | None = None,
     state: str | None = None,
     **kwds: Any,
@@ -111,10 +111,16 @@ def on_task_postrun(
         return
 
     # Get tenant_id directly from kwargs- each celery task has a tenant_id kwarg
-    if "tenant_id" not in kwargs:
-        logger.error(f"Task {task.name} (ID: {task_id}) is missing tenant_id in kwargs")
+    if not kwargs:
+        logger.error(f"Task {task.name} (ID: {task_id}) is missing kwargs")
+        tenant_id = None
+    else:
+        tenant_id = kwargs.get("tenant_id")
 
-    tenant_id = kwargs.get("tenant_id", None)
+    task_logger.debug(
+        f"Task {task.name} (ID: {task_id}) completed with state: {state} "
+        f"{f'for tenant_id={tenant_id}' if tenant_id else ''}"
+    )
 
     if state not in READY_STATES:
         return
@@ -226,11 +232,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         time_start = time.monotonic()
         logger.notice("Redis: Readiness check starting.")
         while True:
-            try:
-                if r.ping():
-                    break
-            except Exception:
-                logger.noticeinfo("Redis: Ping failed.")
+            if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+                break
 
             time_elapsed = time.monotonic() - time_start
             logger.info(
