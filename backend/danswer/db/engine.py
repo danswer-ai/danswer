@@ -297,10 +297,13 @@ def get_session_with_tenant(
 ) -> Generator[Session, None, None]:
     """Generate a database session bound to a connection with the appropriate tenant schema set."""
     engine = get_sqlalchemy_engine()
-    event.listen(engine, "checkout", set_search_path_on_checkout)
 
     if tenant_id is None:
         tenant_id = current_tenant_id.get()
+    else:
+        current_tenant_id.set(tenant_id)
+
+    event.listen(engine, "checkout", set_search_path_on_checkout)
 
     if not is_valid_schema_name(tenant_id):
         raise HTTPException(status_code=400, detail="Invalid tenant ID")
