@@ -269,7 +269,7 @@ def get_application() -> FastAPI:
         # Server logs this during auth setup verification step
         pass
 
-    elif AUTH_TYPE == AuthType.BASIC:
+    if AUTH_TYPE == AuthType.BASIC or AUTH_TYPE == AuthType.CLOUD:
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_auth_router(auth_backend),
@@ -301,7 +301,7 @@ def get_application() -> FastAPI:
             tags=["users"],
         )
 
-    elif AUTH_TYPE == AuthType.GOOGLE_OAUTH:
+    if AUTH_TYPE == AuthType.GOOGLE_OAUTH or AUTH_TYPE == AuthType.CLOUD:
         oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
         include_router_with_global_prefix_prepended(
             application,
