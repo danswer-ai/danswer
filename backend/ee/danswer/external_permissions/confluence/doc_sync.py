@@ -139,7 +139,7 @@ def _get_space_permissions(
 
 def _extract_read_access_restrictions(
     restrictions: dict[str, Any]
-) -> tuple[list[str], list[str]]:
+) -> ExternalAccess | None:
     """
     WARNING: This function includes no paginated retrieval. So if a page is private
     within the space and has over 200 users or over 200 groups with explicitly read
@@ -188,6 +188,11 @@ def _fetch_all_page_restrictions_for_space(
             If the page has restrictions, then use those restrictions.
             Otherwise, use the space's restrictions.
             """
+            if slim_doc.perm_sync_data is None:
+                raise ValueError(
+                    f"No permission sync data found for document {slim_doc.id}"
+                )
+
             if restrictions := _extract_read_access_restrictions(
                 slim_doc.perm_sync_data.get("restrictions", {})
             ):
@@ -216,6 +221,9 @@ def confluence_doc_sync(
     confluence_connector = ConfluenceConnector(
         **cc_pair.connector.connector_specific_config
     )
+    confluence_connector.load_credentials(cc_pair.credential.credential_json)
+    if confluence_connector.confluence_client is None:
+        raise ValueError("Failed to load credentials")
     confluence_client = confluence_connector.confluence_client
 
     is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
