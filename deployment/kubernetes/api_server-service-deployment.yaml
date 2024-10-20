@@ -48,7 +48,7 @@ spec:
               name: danswer-secrets
               key: google_oauth_client_id
         - name: OAUTH_CLIENT_SECRET
-          valueFrom:
+          valuepFrom:
             secretKeyRef:
               name: danswer-secrets
               key: google_oauth_client_secret
