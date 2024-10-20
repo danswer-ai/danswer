@@ -25,7 +25,7 @@ def _get_slack_document_ids_and_channels(
     runnable_connector = instantiate_connector(
         db_session=db_session,
         source=cc_pair.connector.source,
-        input_type=InputType.PRUNE,
+        input_type=InputType.SLIM_RETRIEVAL,
         connector_specific_config=cc_pair.connector.connector_specific_config,
         credential=cc_pair.credential,
     )

@@ -42,6 +42,12 @@ _ATTACHMENT_EXPANSION_FIELDS = [
     "metadata.labels",
 ]
 
+_RESTRICTIONS_EXPANSION_FIELDS = [
+    "space",
+    "restrictions.read.restrictions.user",
+    "restrictions.read.restrictions.group",
+]
+
 
 class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
@@ -243,39 +249,44 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
 
-        confluence_page_ids: list[str] = []
         doc_metadata_list: list[SlimDocument] = []
+
+        restrictions_expand = ",".join(_RESTRICTIONS_EXPANSION_FIELDS)
 
         for pages in self.confluence_client.paginated_cql_page_retrieval(
             cql=self.cql_page_query,
+            expand=restrictions_expand,
         ):
             for page in pages:
-                confluence_page_ids.append(page["id"])
+                # If the page has restrictions, add them to the perm_sync_data
+                # These will be used by doc_sync.py to sync permissions
+                perm_sync_data = {
+                    "restrictions": page.get("restrictions", {}),
+                    "space_key": page.get("space", {}).get("key"),
+                }
+
                 doc_metadata_list.append(
                     SlimDocument(
                         id=build_confluence_document_id(
                             self.wiki_base, page["_links"]["webui"]
                         ),
-                        perm_sync_data={},
+                        perm_sync_data=perm_sync_data,
                     )
                 )
-            yield doc_metadata_list
-            doc_metadata_list = []
-
-        for confluence_page_id in confluence_page_ids:
-            attachment_cql = f"type=attachment and container='{confluence_page_id}'"
-            attachment_cql += self.cql_label_filter
-            for attachments in self.confluence_client.paginated_cql_page_retrieval(
-                cql=attachment_cql,
-            ):
-                for attachment in attachments:
-                    doc_metadata_list.append(
-                        SlimDocument(
-                            id=build_confluence_document_id(
-                                self.wiki_base, attachment["_links"]["webui"]
-                            ),
-                            perm_sync_data={},
+                attachment_cql = f"type=attachment and container='{page['id']}'"
+                attachment_cql += self.cql_label_filter
+                for attachments in self.confluence_client.paginated_cql_page_retrieval(
+                    cql=attachment_cql,
+                    expand=restrictions_expand,
+                ):
+                    for attachment in attachments:
+                        doc_metadata_list.append(
+                            SlimDocument(
+                                id=build_confluence_document_id(
+                                    self.wiki_base, attachment["_links"]["webui"]
+                                ),
+                                perm_sync_data=perm_sync_data,
+                            )
                         )
-                    )
-            yield doc_metadata_list
-            doc_metadata_list = []
+                yield doc_metadata_list
+                doc_metadata_list = []

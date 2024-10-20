@@ -3,23 +3,16 @@ Rules defined here:
 https://confluence.atlassian.com/conf85/check-who-can-view-a-page-1283360557.html
 """
 from typing import Any
-from urllib.parse import parse_qs
-from urllib.parse import urlparse
 
 from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
+from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.confluence.connector import OnyxConfluence
-from danswer.connectors.confluence.utils import (
-    build_confluence_document_id,
-)
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.document import upsert_document_external_perms__no_commit
-from ee.danswer.external_permissions.confluence.sync_utils import (
-    build_confluence_client,
-)
 from ee.danswer.external_permissions.confluence.sync_utils import (
     get_user_email_from_username__server,
 )
@@ -170,168 +163,44 @@ def _extract_read_access_restrictions(
         group["name"] for group in read_access_group_jsons if group.get("name")
     ]
 
-    return read_access_user_emails, read_access_group_names
-
-
-def _get_page_specific_restrictions(
-    page: dict[str, Any],
-) -> ExternalAccess | None:
-    user_emails, group_names = _extract_read_access_restrictions(
-        restrictions=page.get("restrictions", {})
-    )
-
     # If there are no restrictions found, then the page
     # inherits the space's restrictions so return None
-    is_space_public = user_emails == [] and group_names == []
+    is_space_public = read_access_user_emails == [] and read_access_group_names == []
     if is_space_public:
         return None
 
     return ExternalAccess(
-        external_user_emails=set(user_emails),
-        external_user_group_ids=set(group_names),
+        external_user_emails=set(read_access_user_emails),
+        external_user_group_ids=set(read_access_group_names),
         # there is no way for a page to be individually public if the space isn't public
         is_public=False,
     )
 
 
-def _fetch_attachment_document_ids_for_page_paginated(
-    confluence_client: OnyxConfluence, page: dict[str, Any]
-) -> list[str]:
-    """
-    Starts by just extracting the first page of attachments from
-    the page. If all attachments are in the first page, then
-    no calls to the api are made from this function.
-    """
-
-    attachment_doc_ids = []
-    attachments_dict = page["children"]["attachment"]
-    start = 0
-
-    while True:
-        attachments_list = attachments_dict["results"]
-        attachment_doc_ids.extend(
-            [
-                build_confluence_document_id(
-                    base_url=confluence_client.url,
-                    content_url=attachment["_links"]["download"],
-                )
-                for attachment in attachments_list
-            ]
-        )
-
-        if "next" not in attachments_dict["_links"]:
-            break
-
-        start += len(attachments_list)
-        attachments_dict = confluence_client.get_attachments_from_content(
-            page_id=page["id"],
-            start=start,
-            limit=_REQUEST_PAGINATION_LIMIT,
-        )
-
-    return attachment_doc_ids
-
-
-def _fetch_all_pages_paginated(
-    confluence_client: OnyxConfluence,
-    cql_query: str,
-) -> list[dict[str, Any]]:
-    # For each page, this fetches the page's attachments and restrictions.
-    expansion_strings = [
-        "children.attachment",
-        "restrictions.read.restrictions.user",
-        "restrictions.read.restrictions.group",
-        "space",
-    ]
-    expansion_string = ",".join(expansion_strings)
-
-    all_pages: list[dict[str, Any]] = []
-    cursor = None
-    while True:
-        response = confluence_client._danswer_cql(
-            cql=cql_query,
-            expand=expansion_string,
-            cursor=cursor,
-            limit=_REQUEST_PAGINATION_LIMIT,
-        )
-
-        all_pages.extend(response.get("results", []))
-
-        # Handle pagination
-        next_cursor = response.get("_links", {}).get("next", "")
-        cursor = parse_qs(urlparse(next_cursor).query).get("cursor", [None])[0]
-
-        if not cursor:
-            break
-
-    return all_pages
-
-
 def _fetch_all_page_restrictions_for_space(
-    confluence_client: OnyxConfluence,
-    cql_query: str,
+    confluence_connector: ConfluenceConnector,
     space_permissions_by_space_key: dict[str, ExternalAccess],
 ) -> dict[str, ExternalAccess]:
-    all_pages = _fetch_all_pages_paginated(
-        confluence_client=confluence_client,
-        cql_query=cql_query,
-    )
-
     document_restrictions: dict[str, ExternalAccess] = {}
-    for page in all_pages:
-        """
-        This assigns the same permissions to all attachments of a page and
-        the page itself.
-        This is because the attachments are stored in the same Confluence space as the page.
-        """
-        document_ids = []
-
-        # Add the page's document id
-        document_ids.append(
-            build_confluence_document_id(
-                base_url=confluence_client.url,
-                content_url=page["_links"]["webui"],
-            )
-        )
-
-        # Add the page's attachments document ids
-        document_ids.extend(
-            _fetch_attachment_document_ids_for_page_paginated(
-                confluence_client=confluence_client, page=page
-            )
-        )
-
-        # Get the page's specific restrictions
-        page_permissions = _get_page_specific_restrictions(
-            page=page,
-        )
-
-        if not page_permissions:
-            # If there are no page specific restrictions,
-            # the page inherits the space's restrictions
-            page_permissions = space_permissions_by_space_key.get(page["space"]["key"])
-            if not page_permissions:
-                # If nothing is in the dict, then the space has not been indexed, so we move on
-                continue
-
-        # Apply the page's specific restrictions to the page and its attachments
-        for document_id in document_ids:
-            document_restrictions[document_id] = page_permissions
+    for doc_batch in confluence_connector.retrieve_all_slim_documents():
+        for slim_doc in doc_batch:
+            """
+            If the page has restrictions, then use those restrictions.
+            Otherwise, use the space's restrictions.
+            """
+            if restrictions := _extract_read_access_restrictions(
+                slim_doc.perm_sync_data.get("restrictions", {})
+            ):
+                document_restrictions[slim_doc.id] = restrictions
+            else:
+                if page_permissions := space_permissions_by_space_key.get(
+                    slim_doc.perm_sync_data.get("space", {}).get("key")
+                ):
+                    document_restrictions[slim_doc.id] = page_permissions
+                else:
+                    logger.warning(f"No permissions found for document {slim_doc.id}")
 
     return document_restrictions
-
-
-def _build_cql_query_from_connector_config(
-    cc_pair: ConnectorCredentialPair,
-) -> str:
-    cql_query = cc_pair.connector.connector_specific_config.get("cql_query")
-    if cql_query:
-        return cql_query
-
-    space_id = cc_pair.connector.connector_specific_config.get("space")
-    if space_id:
-        return f"type=page and space='{space_id}'"
-    return "type=page"
 
 
 def confluence_doc_sync(
@@ -344,12 +213,11 @@ def confluence_doc_sync(
     it in postgres so that when it gets created later, the permissions are
     already populated
     """
-    confluence_client = build_confluence_client(
-        connector_specific_config=cc_pair.connector.connector_specific_config,
-        credentials_json=cc_pair.credential.credential_json,
+    confluence_connector = ConfluenceConnector(
+        **cc_pair.connector.connector_specific_config
     )
+    confluence_client = confluence_connector.confluence_client
 
-    cql_query = _build_cql_query_from_connector_config(cc_pair)
     is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
 
     space_permissions_by_space_key = _get_space_permissions(
@@ -358,8 +226,7 @@ def confluence_doc_sync(
     )
 
     permissions_by_doc_id = _fetch_all_page_restrictions_for_space(
-        confluence_client=confluence_client,
-        cql_query=cql_query,
+        confluence_connector=confluence_connector,
         space_permissions_by_space_key=space_permissions_by_space_key,
     )
 
