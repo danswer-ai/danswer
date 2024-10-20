@@ -18,7 +18,6 @@ from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import current_tenant_id
 
-
 logger = setup_logger()
 
 

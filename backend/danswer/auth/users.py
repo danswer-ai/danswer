@@ -316,6 +316,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
             verify_email_in_whitelist(account_email, tenant_id)
             verify_email_domain(account_email)
+
             if MULTI_TENANT:
                 tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
                 self.user_db = tenant_user_db

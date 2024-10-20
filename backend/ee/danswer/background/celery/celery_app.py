@@ -1,11 +1,11 @@
 from datetime import timedelta
 
 from danswer.background.celery.celery_app import celery_app
-from danswer.background.celery.celery_utils import get_all_tenant_ids
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.db.chat import delete_chat_sessions_older_than
+from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import get_session_with_tenant
 from danswer.server.settings.store import load_settings
 from danswer.utils.logger import setup_logger

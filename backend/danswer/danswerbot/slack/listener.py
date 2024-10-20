@@ -7,7 +7,6 @@ from slack_sdk import WebClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
-from danswer.background.celery.celery_app import get_all_tenant_ids
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
@@ -47,6 +46,7 @@ from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import rephrase_slack_message
 from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import TenantSocketModeClient
+from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.search_settings import get_current_search_settings
 from danswer.key_value_store.interface import KvKeyNotFoundError
@@ -57,6 +57,7 @@ from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
+from shared_configs.configs import current_tenant_id
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import SLACK_CHANNEL_ID
@@ -345,7 +346,9 @@ def process_message(
     respond_every_channel: bool = DANSWER_BOT_RESPOND_EVERY_CHANNEL,
     notify_no_answer: bool = NOTIFY_SLACKBOT_NO_ANSWER,
 ) -> None:
-    logger.debug(f"Received Slack request of type: '{req.type}'")
+    logger.debug(
+        f"Received Slack request of type: '{req.type}' for tenant, {client.tenant_id}"
+    )
 
     # Throw out requests that can't or shouldn't be handled
     if not prefilter_requests(req, client):
@@ -357,51 +360,59 @@ def process_message(
         client=client.web_client, channel_id=channel
     )
 
-    with get_session_with_tenant(client.tenant_id) as db_session:
-        slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name, db_session=db_session
-        )
+    # Set the current tenant ID at the beginning for all DB calls within this thread
+    if client.tenant_id:
+        logger.info(f"Setting tenant ID to {client.tenant_id}")
+        token = current_tenant_id.set(client.tenant_id)
+    try:
+        with get_session_with_tenant(client.tenant_id) as db_session:
+            slack_bot_config = get_slack_bot_config_for_channel(
+                channel_name=channel_name, db_session=db_session
+            )
 
-        # Be careful about this default, don't want to accidentally spam every channel
-        # Users should be able to DM slack bot in their private channels though
-        if (
-            slack_bot_config is None
-            and not respond_every_channel
-            # Can't have configs for DMs so don't toss them out
-            and not is_dm
-            # If /DanswerBot (is_bot_msg) or @DanswerBot (bypass_filters)
-            # always respond with the default configs
-            and not (details.is_bot_msg or details.bypass_filters)
-        ):
-            return
+            # Be careful about this default, don't want to accidentally spam every channel
+            # Users should be able to DM slack bot in their private channels though
+            if (
+                slack_bot_config is None
+                and not respond_every_channel
+                # Can't have configs for DMs so don't toss them out
+                and not is_dm
+                # If /DanswerBot (is_bot_msg) or @DanswerBot (bypass_filters)
+                # always respond with the default configs
+                and not (details.is_bot_msg or details.bypass_filters)
+            ):
+                return
 
-        follow_up = bool(
-            slack_bot_config
-            and slack_bot_config.channel_config
-            and slack_bot_config.channel_config.get("follow_up_tags") is not None
-        )
-        feedback_reminder_id = schedule_feedback_reminder(
-            details=details, client=client.web_client, include_followup=follow_up
-        )
+            follow_up = bool(
+                slack_bot_config
+                and slack_bot_config.channel_config
+                and slack_bot_config.channel_config.get("follow_up_tags") is not None
+            )
+            feedback_reminder_id = schedule_feedback_reminder(
+                details=details, client=client.web_client, include_followup=follow_up
+            )
 
-        failed = handle_message(
-            message_info=details,
-            slack_bot_config=slack_bot_config,
-            client=client.web_client,
-            feedback_reminder_id=feedback_reminder_id,
-            tenant_id=client.tenant_id,
-        )
+            failed = handle_message(
+                message_info=details,
+                slack_bot_config=slack_bot_config,
+                client=client.web_client,
+                feedback_reminder_id=feedback_reminder_id,
+                tenant_id=client.tenant_id,
+            )
 
-        if failed:
-            if feedback_reminder_id:
-                remove_scheduled_feedback_reminder(
-                    client=client.web_client,
-                    channel=details.sender,
-                    msg_id=feedback_reminder_id,
-                )
-            # Skipping answering due to pre-filtering is not considered a failure
-            if notify_no_answer:
-                apologize_for_fail(details, client)
+            if failed:
+                if feedback_reminder_id:
+                    remove_scheduled_feedback_reminder(
+                        client=client.web_client,
+                        channel=details.sender,
+                        msg_id=feedback_reminder_id,
+                    )
+                # Skipping answering due to pre-filtering is not considered a failure
+                if notify_no_answer:
+                    apologize_for_fail(details, client)
+    finally:
+        if client.tenant_id:
+            current_tenant_id.reset(token)
 
 
 def acknowledge_message(req: SocketModeRequest, client: TenantSocketModeClient) -> None:
@@ -499,7 +510,9 @@ if __name__ == "__main__":
             for tenant_id in tenant_ids:
                 with get_session_with_tenant(tenant_id) as db_session:
                     try:
+                        token = current_tenant_id.set(tenant_id or "public")
                         latest_slack_bot_tokens = fetch_tokens()
+                        current_tenant_id.reset(token)
 
                         if (
                             tenant_id not in slack_bot_tokens
@@ -533,6 +546,11 @@ if __name__ == "__main__":
                             socket_client = _get_socket_client(
                                 latest_slack_bot_tokens, tenant_id
                             )
+
+                            # Initialize socket client for this tenant. Each tenant has its own
+                            # socket client, allowing for multiple concurrent connections (one
+                            # per tenant) with the tenant ID wrapped in the socket model client.
+                            # Each `connect` stores websocket connection in a separate thread.
                             _initialize_socket_client(socket_client)
 
                             socket_clients[tenant_id] = socket_client
