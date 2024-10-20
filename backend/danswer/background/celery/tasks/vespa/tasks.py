@@ -723,20 +723,6 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                     a.connector_credential_pair_id, a.search_settings_id
                 )
                 failure_reason = f"Unknown index attempt {a.id}. Might be left over from a process restart."
-                # Log all the things that exist in Redis
-                logger.notice("Logging all keys in Redis:")
-                for key in r.scan_iter("*"):
-                    key_str = key.decode("utf-8")
-                    logger.notice(f"Key: {key_str}")
-                    # key_type = r.type(key).decode('utf-8')
-                    # logger.notice(f"Key: {key_str}, Type: {key_type}")
-
-                # Log specific details about the indexing attempt
-                logger.notice(f"Indexing attempt {a.id} details:")
-                logger.notice(f"  fence_key: {rci.fence_key}")
-                logger.notice(f"  generator_complete_key: {rci.generator_complete_key}")
-                logger.notice(f"  generator_progress_key: {rci.generator_progress_key}")
-                logger.notice(f"  taskset_key: {rci.taskset_key}")
                 if not r.exists(rci.fence_key):
                     mark_attempt_failed(a, db_session, failure_reason=failure_reason)
 
