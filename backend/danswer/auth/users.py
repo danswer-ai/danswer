@@ -344,7 +344,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             if MULTI_TENANT:
                 tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
                 self.user_db = tenant_user_db
-                self.database = tenant_user_db
+                self.database = tenant_user_db  # type: ignore
 
             oauth_account_dict = {
                 "oauth_name": oauth_name,
