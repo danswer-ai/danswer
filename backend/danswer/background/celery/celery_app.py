@@ -110,7 +110,11 @@ def on_task_postrun(
     if not task:
         return
 
-    task_logger.debug(f"Task {task.name} (ID: {task_id}) completed with state: {state}")
+    # Get tenant_id directly from kwargs- each celery task has a tenant_id kwarg
+    if "tenant_id" not in kwargs:
+        logger.error(f"Task {task.name} (ID: {task_id}) is missing tenant_id in kwargs")
+
+    tenant_id = kwargs.get("tenant_id", None)
 
     if state not in READY_STATES:
         return
@@ -183,77 +187,58 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     elif hostname.startswith("indexing"):
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_INDEXING_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
+        tenant_ids = get_all_tenant_ids()
 
-        # TODO: why is this necessary for the indexer to do?
-        with get_session_with_tenant(tenant_id) as db_session:
-            check_index_swap(db_session=db_session)
-            search_settings = get_current_search_settings(db_session)
+        for tenant_id in tenant_ids:
+            # TODO: why is this necessary for the indexer to do?
+            with get_session_with_tenant(tenant_id) as db_session:
+                check_index_swap(db_session=db_session)
+                search_settings = get_current_search_settings(db_session)
 
-            # So that the first time users aren't surprised by really slow speed of first
-            # batch of documents indexed
+                # So that the first time users aren't surprised by really slow speed of first
+                # batch of documents indexed
 
-            if search_settings.provider_type is None:
-                logger.notice("Running a first inference to warm up embedding model")
-                embedding_model = EmbeddingModel.from_db_model(
-                    search_settings=search_settings,
-                    server_host=INDEXING_MODEL_SERVER_HOST,
-                    server_port=MODEL_SERVER_PORT,
-                )
+                if search_settings.provider_type is None:
+                    logger.notice(
+                        "Running a first inference to warm up embedding model"
+                    )
+                    embedding_model = EmbeddingModel.from_db_model(
+                        search_settings=search_settings,
+                        server_host=INDEXING_MODEL_SERVER_HOST,
+                        server_port=MODEL_SERVER_PORT,
+                    )
 
-                warm_up_bi_encoder(
-                    embedding_model=embedding_model,
-                )
-                logger.notice("First inference complete.")
+                    warm_up_bi_encoder(
+                        embedding_model=embedding_model,
+                    )
+                    logger.notice("First inference complete.")
     else:
         SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
         SqlEngine.init_engine(pool_size=8, max_overflow=0)
 
-    r = get_redis_client(tenant_id=tenant_id)
+    tenant_ids = get_all_tenant_ids()
+    for tenant_id in tenant_ids:
+        r = get_redis_client(tenant_id=tenant_id)
 
-    WAIT_INTERVAL = 5
-    WAIT_LIMIT = 60
+        WAIT_INTERVAL = 5
+        WAIT_LIMIT = 60
 
-    time_start = time.monotonic()
-    logger.info("Redis: Readiness check starting.")
-    while True:
-        try:
-            if r.ping():
-                break
-        except Exception:
-            pass
-
-        time_elapsed = time.monotonic() - time_start
-        logger.info(
-            f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
-        )
-        if time_elapsed > WAIT_LIMIT:
-            msg = (
-                f"Redis: Readiness check did not succeed within the timeout "
-                f"({WAIT_LIMIT} seconds). Exiting..."
-            )
-            logger.error(msg)
-            raise WorkerShutdown(msg)
-
-        time.sleep(WAIT_INTERVAL)
-
-    logger.info("Redis: Readiness check succeeded. Continuing...")
-
-    if not celery_is_worker_primary(sender):
-        logger.info("Running as a secondary celery worker.")
-        logger.info("Waiting for primary worker to be ready...")
         time_start = time.monotonic()
+        logger.notice("Redis: Readiness check starting.")
         while True:
-            if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
-                break
+            try:
+                if r.ping():
+                    break
+            except Exception:
+                logger.noticeinfo("Redis: Ping failed.")
 
-            time.monotonic()
             time_elapsed = time.monotonic() - time_start
             logger.info(
-                f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+                f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
             )
             if time_elapsed > WAIT_LIMIT:
                 msg = (
-                    f"Primary worker was not ready within the timeout. "
+                    f"Redis: Readiness check did not succeed within the timeout "
                     f"({WAIT_LIMIT} seconds). Exiting..."
                 )
                 logger.error(msg)
@@ -261,88 +246,114 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
             time.sleep(WAIT_INTERVAL)
 
-        logger.info("Wait for primary worker completed successfully. Continuing...")
-        return
+        logger.info("Redis: Readiness check succeeded. Continuing...")
 
-    logger.info("Running as the primary celery worker.")
+        if not celery_is_worker_primary(sender):
+            logger.info("Running as a secondary celery worker.")
+            logger.info("Waiting for primary worker to be ready...")
+            time_start = time.monotonic()
+            while True:
+                # Log all the locks in Redis
+                if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+                    break
 
-    # This is singleton work that should be done on startup exactly once
-    # by the primary worker
-    r = get_redis_client(tenant_id=tenant_id)
+                time.monotonic()
+                time_elapsed = time.monotonic() - time_start
+                logger.info(
+                    f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+                )
+                if time_elapsed > WAIT_LIMIT:
+                    msg = (
+                        f"Primary worker was not ready within the timeout. "
+                        f"({WAIT_LIMIT} seconds). Exiting..."
+                    )
+                    logger.error(msg)
+                    raise WorkerShutdown(msg)
 
-    # For the moment, we're assuming that we are the only primary worker
-    # that should be running.
-    # TODO: maybe check for or clean up another zombie primary worker if we detect it
-    r.delete(DanswerRedisLocks.PRIMARY_WORKER)
+                time.sleep(WAIT_INTERVAL)
 
-    # this process wide lock is taken to help other workers start up in order.
-    # it is planned to use this lock to enforce singleton behavior on the primary
-    # worker, since the primary worker does redis cleanup on startup, but this isn't
-    # implemented yet.
-    lock = r.lock(
-        DanswerRedisLocks.PRIMARY_WORKER,
-        timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
-    )
+            logger.info("Wait for primary worker completed successfully. Continuing...")
+            return
 
-    logger.info("Primary worker lock: Acquire starting.")
-    acquired = lock.acquire(blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2)
-    if acquired:
-        logger.info("Primary worker lock: Acquire succeeded.")
-    else:
-        logger.error("Primary worker lock: Acquire failed!")
-        raise WorkerShutdown("Primary worker lock could not be acquired!")
+        logger.info("Running as the primary celery worker.")
 
-    sender.primary_worker_lock = lock
+        # This is singleton work that should be done on startup exactly once
+        # by the primary worker
+        r = get_redis_client(tenant_id=tenant_id)
 
-    # As currently designed, when this worker starts as "primary", we reinitialize redis
-    # to a clean state (for our purposes, anyway)
-    r.delete(DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK)
-    r.delete(DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK)
+        # For the moment, we're assuming that we are the only primary worker
+        # that should be running.
+        # TODO: maybe check for or clean up another zombie primary worker if we detect it
+        r.delete(DanswerRedisLocks.PRIMARY_WORKER)
 
-    r.delete(RedisConnectorCredentialPair.get_taskset_key())
-    r.delete(RedisConnectorCredentialPair.get_fence_key())
+        # this process wide lock is taken to help other workers start up in order.
+        # it is planned to use this lock to enforce singleton behavior on the primary
+        # worker, since the primary worker does redis cleanup on startup, but this isn't
+        # implemented yet.
+        lock = r.lock(
+            DanswerRedisLocks.PRIMARY_WORKER,
+            timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
+        )
 
-    for key in r.scan_iter(RedisDocumentSet.TASKSET_PREFIX + "*"):
-        r.delete(key)
+        logger.info("Primary worker lock: Acquire starting.")
+        acquired = lock.acquire(blocking_timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT / 2)
+        if acquired:
+            logger.info("Primary worker lock: Acquire succeeded.")
+        else:
+            logger.error("Primary worker lock: Acquire failed!")
+            raise WorkerShutdown("Primary worker lock could not be acquired!")
 
-    for key in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
-        r.delete(key)
+        sender.primary_worker_lock = lock
 
-    for key in r.scan_iter(RedisUserGroup.TASKSET_PREFIX + "*"):
-        r.delete(key)
+        # As currently designed, when this worker starts as "primary", we reinitialize redis
+        # to a clean state (for our purposes, anyway)
+        r.delete(DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK)
+        r.delete(DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK)
 
-    for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
-        r.delete(key)
+        r.delete(RedisConnectorCredentialPair.get_taskset_key())
+        r.delete(RedisConnectorCredentialPair.get_fence_key())
 
-    for key in r.scan_iter(RedisConnectorDeletion.TASKSET_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisDocumentSet.TASKSET_PREFIX + "*"):
+            r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
+            r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorPruning.TASKSET_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisUserGroup.TASKSET_PREFIX + "*"):
+            r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorPruning.GENERATOR_COMPLETE_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
+            r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorPruning.GENERATOR_PROGRESS_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisConnectorDeletion.TASKSET_PREFIX + "*"):
+            r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
+            r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorIndexing.TASKSET_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisConnectorPruning.TASKSET_PREFIX + "*"):
+            r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorIndexing.GENERATOR_COMPLETE_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisConnectorPruning.GENERATOR_COMPLETE_PREFIX + "*"):
+            r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorIndexing.GENERATOR_PROGRESS_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisConnectorPruning.GENERATOR_PROGRESS_PREFIX + "*"):
+            r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorIndexing.FENCE_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
+            r.delete(key)
+
+        for key in r.scan_iter(RedisConnectorIndexing.TASKSET_PREFIX + "*"):
+            r.delete(key)
+
+        for key in r.scan_iter(RedisConnectorIndexing.GENERATOR_COMPLETE_PREFIX + "*"):
+            r.delete(key)
+
+        for key in r.scan_iter(RedisConnectorIndexing.GENERATOR_PROGRESS_PREFIX + "*"):
+            r.delete(key)
+
+        for key in r.scan_iter(RedisConnectorIndexing.FENCE_PREFIX + "*"):
+            r.delete(key)
 
 
 # @worker_process_init.connect
@@ -601,14 +612,14 @@ tasks_to_schedule = [
 # Build the celery beat schedule dynamically
 beat_schedule = {}
 
-for tenant_id in tenant_ids:
+for id in tenant_ids:
     for task in tasks_to_schedule:
-        task_name = f"{task['name']}-{tenant_id}"  # Unique name for each scheduled task
+        task_name = f"{task['name']}-{id}"  # Unique name for each scheduled task
         beat_schedule[task_name] = {
             "task": task["task"],
             "schedule": task["schedule"],
             "options": task["options"],
-            "args": (tenant_id,),  # Must pass tenant_id as an argument
+            "args": (id,),  # Must pass tenant_id as an argument
         }
 
 # Include any existing beat schedules

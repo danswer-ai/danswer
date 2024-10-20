@@ -39,7 +39,7 @@ logger = setup_logger()
     soft_time_limit=JOB_TIMEOUT,
 )
 def check_for_pruning(tenant_id: str | None) -> None:
-    r = get_redis_client(tenant_id)
+    r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_PRUNE_BEAT_LOCK,
@@ -204,7 +204,7 @@ def connector_pruning_generator_task(
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
 
-    r = get_redis_client(tenant_id)
+    r = get_redis_client(tenant_id=tenant_id)
 
     rcp = RedisConnectorPruning(cc_pair_id)
 

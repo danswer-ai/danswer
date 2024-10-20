@@ -27,11 +27,23 @@ class TenantRedis(redis.Redis):
     def _prefixed(self, key: str | bytes | memoryview) -> str | bytes | memoryview:
         prefix: str = f"{self.tenant_id}:"
         if isinstance(key, str):
-            return prefix + key
+            if key.startswith(prefix):
+                return key
+            else:
+                return prefix + key
         elif isinstance(key, bytes):
-            return prefix.encode() + key
+            prefix_bytes = prefix.encode()
+            if key.startswith(prefix_bytes):
+                return key
+            else:
+                return prefix_bytes + key
         elif isinstance(key, memoryview):
-            return memoryview(prefix.encode() + key.tobytes())
+            key_bytes = key.tobytes()
+            prefix_bytes = prefix.encode()
+            if key_bytes.startswith(prefix_bytes):
+                return key
+            else:
+                return memoryview(prefix_bytes + key_bytes)
         else:
             raise TypeError(f"Unsupported key type: {type(key)}")
 
@@ -49,6 +61,8 @@ class TenantRedis(redis.Redis):
     def __getattribute__(self, item: str) -> Any:
         original_attr = super().__getattribute__(item)
         methods_to_wrap = [
+            "lock",
+            "unlock",
             "get",
             "set",
             "delete",
@@ -57,6 +71,11 @@ class TenantRedis(redis.Redis):
             "hset",
             "hget",
             "getset",
+            "scan_iter",
+            "owned",
+            "reacquire",
+            "create_lock",
+            "startswith",
         ]  # Add all methods that need prefixing
         if item in methods_to_wrap and callable(original_attr):
             return self._prefix_method(original_attr)
@@ -134,7 +153,7 @@ class RedisPool:
 redis_pool = RedisPool()
 
 
-def get_redis_client(tenant_id: str | None) -> Redis:
+def get_redis_client(*, tenant_id: str | None) -> Redis:
     return redis_pool.get_client(tenant_id)
 
 

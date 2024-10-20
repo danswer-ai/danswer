@@ -78,7 +78,7 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
 
-    r = get_redis_client(tenant_id)
+    r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK,
@@ -640,7 +640,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 
     Returns True if the task actually did work, False
     """
-    r = get_redis_client(tenant_id)
+    r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat: redis.lock.Lock = r.lock(
         DanswerRedisLocks.MONITOR_VESPA_SYNC_BEAT_LOCK,
