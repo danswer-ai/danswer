@@ -45,7 +45,7 @@ def _get_slack_document_ids_and_channels(
     return channel_doc_map
 
 
-def _fetch_worspace_permissions(
+def _fetch_workspace_permissions(
     db_session: Session,
     user_id_to_email_map: dict[str, str],
 ) -> ExternalAccess:
@@ -148,7 +148,7 @@ def slack_doc_sync(
         db_session=db_session,
         cc_pair=cc_pair,
     )
-    workspace_permissions = _fetch_worspace_permissions(
+    workspace_permissions = _fetch_workspace_permissions(
         db_session=db_session,
         user_id_to_email_map=user_id_to_email_map,
     )
