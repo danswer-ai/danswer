@@ -100,6 +100,8 @@ YQL_BASE = (
     f"{LARGE_CHUNK_REFERENCE_IDS}, "
     f"{METADATA}, "
     f"{METADATA_SUFFIX}, "
+    f"{DOC_SUMMARY}, "
+    f"{CHUNK_CONTEXT}, "
     f"{CONTENT_SUMMARY} "
     f"from {{index_name}} where "
 )
