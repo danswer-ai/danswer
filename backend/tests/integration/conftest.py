@@ -49,6 +49,11 @@ def reset() -> None:
 
 
 @pytest.fixture
+def reset_multitenant() -> None:
+    reset_all(multitenant=True)
+
+
+@pytest.fixture
 def new_admin_user(reset: None) -> DATestUser | None:
     try:
         return UserManager.create(name="admin_user")
