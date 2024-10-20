@@ -71,6 +71,8 @@ const Page = async ({
   if (authTypeMetadata?.autoRedirect && authUrl && !autoRedirectDisabled) {
     return redirect(authUrl);
   }
+  console.log("authTypeMetadata");
+  console.log(authTypeMetadata);
 
   return (
     <AuthFlowContainer>
@@ -78,7 +80,7 @@ const Page = async ({
         <HealthCheckBanner />
       </div>
 
-      <div>
+      <div className="flex flex-col justify-center">
         {authUrl && authTypeMetadata && (
           <>
             <h2 className="text-center text-xl text-strong font-bold">
@@ -90,6 +92,17 @@ const Page = async ({
               authType={authTypeMetadata?.authType}
             />
           </>
+        )}
+
+        {authTypeMetadata?.authType === "cloud" && (
+          <div className="mt-4 w-full justify-center">
+            <div className="flex items-center w-full my-4">
+              <div className="flex-grow border-t border-gray-300"></div>
+              <span className="px-4 text-gray-500">or</span>
+              <div className="flex-grow border-t border-gray-300"></div>
+            </div>
+            <EmailPasswordForm shouldVerify={true} />
+          </div>
         )}
 
         {authTypeMetadata?.authType === "basic" && (

@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { User } from "./types";
 import { buildUrl } from "./utilsSS";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
-import { AuthType } from "./constants";
+import { AuthType, SERVER_SIDE_ONLY__CLOUD_ENABLED } from "./constants";
 
 export interface AuthTypeMetadata {
   authType: AuthType;
@@ -18,7 +18,13 @@ export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
 
   const data: { auth_type: string; requires_verification: boolean } =
     await res.json();
-  const authType = data.auth_type as AuthType;
+
+  let authType: AuthType;
+  if (SERVER_SIDE_ONLY__CLOUD_ENABLED) {
+    authType = "cloud";
+  } else {
+    authType = data.auth_type as AuthType;
+  }
 
   // for SAML / OIDC, we auto-redirect the user to the IdP when the user visits
   // Danswer in an un-authenticated state
@@ -78,6 +84,7 @@ export const getAuthUrlSS = async (
   authType: AuthType,
   nextUrl: string | null
 ): Promise<string> => {
+  console.log(authType);
   // Returns the auth url for the given auth type
   switch (authType) {
     case "disabled":
@@ -86,6 +93,12 @@ export const getAuthUrlSS = async (
       return "";
     case "google_oauth": {
       return await getGoogleOAuthUrlSS();
+    }
+    case "cloud": {
+      console.log("returning cloud auth url");
+      const value = await getGoogleOAuthUrlSS();
+      console.log(value);
+      return value;
     }
     case "saml": {
       return await getSAMLAuthUrlSS();
