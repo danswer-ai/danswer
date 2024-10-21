@@ -75,6 +75,7 @@ result_expires = CELERY_RESULT_EXPIRES  # 86400 seconds is the default
 # TODO: Configure celery's logger entirely manually and set this to False
 # worker_hijack_root_logger = False
 
+# region Notes on serialization performance
 # Option 0: Defaults (json serializer, no compression)
 # about 1.5 KB per queued task. 1KB in queue, 400B for result, 100 as a child entry in generator result
 
@@ -100,3 +101,4 @@ result_expires = CELERY_RESULT_EXPIRES  # 86400 seconds is the default
 # task_serializer = "pickle-bzip2"
 # result_serializer = "pickle-bzip2"
 # accept_content=["pickle", "pickle-bzip2"]
+# endregion

@@ -311,13 +311,26 @@ def handle_new_chat_message(
     _: None = Depends(check_token_rate_limits),
     is_disconnected_func: Callable[[], bool] = Depends(is_disconnected),
 ) -> StreamingResponse:
-    """This endpoint is both used for all the following purposes:
+    """
+    This endpoint is both used for all the following purposes:
     - Sending a new message in the session
     - Regenerating a message in the session (just send the same one again)
     - Editing a message (similar to regenerating but sending a different message)
     - Kicking off a seeded chat session (set `use_existing_user_message`)
-    To avoid extra overhead/latency, this assumes (and checks) that previous messages on the path
-    have already been set as latest"""
+
+    Assumes that previous messages have been set as the latest to minimize overhead.
+
+    Args:
+        chat_message_req (CreateChatMessageRequest): Details about the new chat message.
+        request (Request): The current HTTP request context.
+        user (User | None): The current user, obtained via dependency injection.
+        _ (None): Rate limit check is run if user/group/global rate limits are enabled.
+        is_disconnected_func (Callable[[], bool]): Function to check client disconnection,
+            used to stop the streaming response if the client disconnects.
+
+    Returns:
+        StreamingResponse: Streams the response to the new chat message.
+    """
     logger.debug(f"Received new chat message: {chat_message_req.message}")
 
     if (

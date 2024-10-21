@@ -115,10 +115,16 @@ VESPA_HOST = os.environ.get("VESPA_HOST") or "localhost"
 VESPA_CONFIG_SERVER_HOST = os.environ.get("VESPA_CONFIG_SERVER_HOST") or VESPA_HOST
 VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
 VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
+
+VESPA_CLOUD_URL = os.environ.get("VESPA_CLOUD_URL", "")
+
 # The default below is for dockerized deployment
 VESPA_DEPLOYMENT_ZIP = (
     os.environ.get("VESPA_DEPLOYMENT_ZIP") or "/app/danswer/vespa-app.zip"
 )
+VESPA_CLOUD_CERT_PATH = os.environ.get("VESPA_CLOUD_CERT_PATH")
+VESPA_CLOUD_KEY_PATH = os.environ.get("VESPA_CLOUD_KEY_PATH")
+
 # Number of documents in a batch during indexing (further batching done by chunks before passing to bi-encoder)
 try:
     INDEX_BATCH_SIZE = int(os.environ.get("INDEX_BATCH_SIZE", 16))
@@ -428,6 +434,10 @@ AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
 
 # Multi-tenancy configuration
 MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
+
+# Use managed Vespa (Vespa Cloud). If set, must also set VESPA_CLOUD_URL, VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH
+MANAGED_VESPA = os.environ.get("MANAGED_VESPA", "").lower() == "true"
+
 ENABLE_EMAIL_INVITES = os.environ.get("ENABLE_EMAIL_INVITES", "").lower() == "true"
 
 # Security and authentication

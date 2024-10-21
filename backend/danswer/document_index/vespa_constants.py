@@ -1,3 +1,4 @@
+from danswer.configs.app_configs import VESPA_CLOUD_URL
 from danswer.configs.app_configs import VESPA_CONFIG_SERVER_HOST
 from danswer.configs.app_configs import VESPA_HOST
 from danswer.configs.app_configs import VESPA_PORT
@@ -18,15 +19,21 @@ TENANT_ID_REPLACEMENT = """field tenant_id type string {
             attribute: fast-search
         }"""
 # config server
-VESPA_CONFIG_SERVER_URL = f"http://{VESPA_CONFIG_SERVER_HOST}:{VESPA_TENANT_PORT}"
+
+
+VESPA_CONFIG_SERVER_URL = (
+    VESPA_CLOUD_URL or f"http://{VESPA_CONFIG_SERVER_HOST}:{VESPA_TENANT_PORT}"
+)
 VESPA_APPLICATION_ENDPOINT = f"{VESPA_CONFIG_SERVER_URL}/application/v2"
 
 # main search application
-VESPA_APP_CONTAINER_URL = f"http://{VESPA_HOST}:{VESPA_PORT}"
+VESPA_APP_CONTAINER_URL = VESPA_CLOUD_URL or f"http://{VESPA_HOST}:{VESPA_PORT}"
+
 # danswer_chunk below is defined in vespa/app_configs/schemas/danswer_chunk.sd
 DOCUMENT_ID_ENDPOINT = (
     f"{VESPA_APP_CONTAINER_URL}/document/v1/default/{{index_name}}/docid"
 )
+
 SEARCH_ENDPOINT = f"{VESPA_APP_CONTAINER_URL}/search/"
 
 NUM_THREADS = (

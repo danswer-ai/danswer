@@ -15,8 +15,6 @@ from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.notification import create_notification
 from danswer.db.notification import dismiss_all_notifications
-from danswer.db.notification import dismiss_notification
-from danswer.db.notification import get_notification_by_id
 from danswer.db.notification import get_notifications
 from danswer.db.notification import update_notification_last_shown
 from danswer.key_value_store.factory import get_kv_store
@@ -55,7 +53,7 @@ def fetch_settings(
     """Settings and notifications are stuffed into this single endpoint to reduce number of
     Postgres calls"""
     general_settings = load_settings()
-    user_notifications = get_user_notifications(user, db_session)
+    user_notifications = get_reindex_notification(user, db_session)
 
     try:
         kv_store = get_kv_store()
@@ -70,25 +68,7 @@ def fetch_settings(
     )
 
 
-@basic_router.post("/notifications/{notification_id}/dismiss")
-def dismiss_notification_endpoint(
-    notification_id: int,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    try:
-        notification = get_notification_by_id(notification_id, user, db_session)
-    except PermissionError:
-        raise HTTPException(
-            status_code=403, detail="Not authorized to dismiss this notification"
-        )
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Notification not found")
-
-    dismiss_notification(notification, db_session)
-
-
-def get_user_notifications(
+def get_reindex_notification(
     user: User | None, db_session: Session
 ) -> list[Notification]:
     """Get notifications for the user, currently the logic is very specific to the reindexing flag"""
@@ -121,7 +101,7 @@ def get_user_notifications(
 
         if not reindex_notifs:
             notif = create_notification(
-                user=user,
+                user_id=user.id if user else None,
                 notif_type=NotificationType.REINDEX,
                 db_session=db_session,
             )
