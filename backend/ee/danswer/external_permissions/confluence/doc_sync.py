@@ -26,10 +26,7 @@ _REQUEST_PAGINATION_LIMIT = 100
 def _get_server_space_permissions(
     confluence_client: OnyxConfluence, space_key: str
 ) -> ExternalAccess:
-    space_permissions_result = confluence_client.get_space(
-        space_key=space_key, expand="permissions"
-    )
-    space_permissions = space_permissions_result.get("permissions", [])
+    space_permissions = confluence_client.get_space_permissions(space_key=space_key)
 
     viewspace_permissions = []
     for permission_category in space_permissions:
@@ -138,7 +135,7 @@ def _get_space_permissions(
 
 
 def _extract_read_access_restrictions(
-    restrictions: dict[str, Any]
+    confluence_client: OnyxConfluence, restrictions: dict[str, Any]
 ) -> ExternalAccess | None:
     """
     Converts a page's restrictions dict into an ExternalAccess object.
@@ -150,9 +147,24 @@ def _extract_read_access_restrictions(
     # Extract the users with read access
     read_access_user = read_access_restrictions.get("user", {})
     read_access_user_jsons = read_access_user.get("results", [])
-    read_access_user_emails = [
-        user["email"] for user in read_access_user_jsons if user.get("email")
-    ]
+    read_access_user_emails = []
+    for user in read_access_user_jsons:
+        # If the user has an email, then add it to the list
+        if user.get("email"):
+            read_access_user_emails.append(user["email"])
+        # If the user has a username and not an email, then get the email from Confluence
+        elif user.get("username"):
+            email = get_user_email_from_username__server(
+                confluence_client=confluence_client, user_name=user["username"]
+            )
+            if email:
+                read_access_user_emails.append(email)
+            else:
+                logger.warning(
+                    f"Email for user {user['username']} not found in Confluence"
+                )
+        else:
+            logger.warning(f"User {user} does not have an email or username")
 
     # Extract the groups with read access
     read_access_group = read_access_restrictions.get("group", {})
@@ -196,7 +208,8 @@ def _fetch_all_page_restrictions_for_space(
                 f"No permission sync data found for document {slim_doc.id}"
             )
         restrictions = _extract_read_access_restrictions(
-            slim_doc.perm_sync_data.get("restrictions", {})
+            confluence_client=confluence_connector.confluence_client,
+            restrictions=slim_doc.perm_sync_data.get("restrictions", {}),
         )
         if restrictions:
             document_restrictions[slim_doc.id] = restrictions
