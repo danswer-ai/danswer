@@ -20,7 +20,10 @@ from danswer.prompts.chat_prompts import CONTEXTUAL_RAG_PROMPT2
 from danswer.prompts.chat_prompts import DOCUMENT_SUMMARY_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import shared_precompare_cleanup
+from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
 from shared_configs.configs import STRICT_CHUNK_TOKEN_LIMIT
+
+
 
 # Not supporting overlaps, we need a clean combination of chunks and it is unclear if overlaps
 # actually help quality at all
@@ -92,7 +95,7 @@ def _combine_chunks(chunks: list[DocAwareChunk], index: int) -> DocAwareChunk:
         large_chunk_reference_ids=[chunks[0].chunk_id],
         mini_chunk_texts=None,
         chunk_context="",
-        doc_summary=chunks[0].doc_summary,
+        doc_summary="",
     )
 
     offset = 0
@@ -209,7 +212,6 @@ class Chunker:
         metadata_suffix_semantic: str,
         metadata_suffix_keyword: str,
         content_token_limit: int,
-        num_chunks: float,
     ) -> list[DocAwareChunk]:
         """
         Loops through sections of the document, adds metadata and converts them into chunks.
@@ -217,30 +219,12 @@ class Chunker:
         chunks: list[DocAwareChunk] = []
         link_offsets: dict[int, str] = {}
         chunk_text = ""
-        summary = ""
-
-        if self.enable_contextual_rag and num_chunks > 1 and self.llm is not None:
-            doc_prompt = CONTEXTUAL_RAG_PROMPT1.format(document=document.get_content())
-            summary_prompt = DOCUMENT_SUMMARY_PROMPT.format(
-                document=document.get_content()
-            )
-            summary = message_to_string(
-                self.llm.invoke(summary_prompt, max_tokens=MAX_CONTEXT_TOKENS)
-            )
 
         def _create_chunk(
             text: str,
             links: dict[int, str],
             is_continuation: bool = False,
         ) -> DocAwareChunk:
-            context = ""
-            if self.enable_contextual_rag and num_chunks > 1 and self.llm is not None:
-                context_prompt = CONTEXTUAL_RAG_PROMPT2.format(chunk=text)
-                context = message_to_string(
-                    self.llm.invoke(
-                        doc_prompt + context_prompt, max_tokens=MAX_CONTEXT_TOKENS
-                    )
-                )
             return DocAwareChunk(
                 source_document=document,
                 chunk_id=len(chunks),
@@ -252,8 +236,8 @@ class Chunker:
                 metadata_suffix_semantic=metadata_suffix_semantic,
                 metadata_suffix_keyword=metadata_suffix_keyword,
                 mini_chunk_texts=self._get_mini_chunk_texts(text),
-                chunk_context=context,
-                doc_summary=summary,
+                chunk_context="",
+                doc_summary="",
             )
 
         for section in document.sections:
@@ -370,10 +354,16 @@ class Chunker:
 
         doc_content = document.get_content()
         doc_token_count = len(self.tokenizer.tokenize(doc_content))
-        num_chunks = doc_token_count / self.chunk_token_limit
+
+        # check if doc + title + metadata fits in a single chunk. If so, no need for contextual RAG
+        single_chunk_fits = (
+            doc_token_count + title_tokens + metadata_tokens <= self.chunk_token_limit
+        )
 
         context_size = (
-            MAX_CONTEXT_TOKENS if self.enable_contextual_rag and (num_chunks > 1) else 0
+            MAX_CONTEXT_TOKENS
+            if self.enable_contextual_rag and not single_chunk_fits
+            else 0
         )
 
         content_token_limit = (
@@ -391,7 +381,6 @@ class Chunker:
             metadata_suffix_semantic,
             metadata_suffix_keyword,
             content_token_limit,
-            num_chunks,
         )
 
         if self.enable_multipass and self.enable_large_chunks:
@@ -412,6 +401,29 @@ class Chunker:
                         )
                     )
             normal_chunks.extend(large_chunks)
+
+        if self.enable_contextual_rag:
+            if self.llm is None:
+                raise ValueError("LLM must be available for contextual RAG")
+
+            context_prompt1 = CONTEXTUAL_RAG_PROMPT1.format(document=doc_content)
+            summary_prompt = DOCUMENT_SUMMARY_PROMPT.format(document=doc_content)
+            doc_summary = message_to_string(
+                self.llm.invoke(summary_prompt, max_tokens=MAX_CONTEXT_TOKENS)
+            )
+
+            def assign_context(chunk: DocAwareChunk):
+                context_prompt2 = CONTEXTUAL_RAG_PROMPT2.format(chunk=chunk.content)
+                chunk.chunk_context = message_to_string(
+                    self.llm.invoke(
+                        context_prompt1 + context_prompt2, max_tokens=MAX_CONTEXT_TOKENS
+                    )
+                )
+                chunk.doc_summary = doc_summary
+
+            run_functions_tuples_in_parallel(
+                [(assign_context, [chunk]) for chunk in normal_chunks]
+            )
 
         return normal_chunks
 
