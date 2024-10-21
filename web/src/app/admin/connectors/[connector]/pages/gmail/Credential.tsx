@@ -271,7 +271,7 @@ export const GmailJsonUploadSection = ({
           className="text-link"
           target="_blank"
           href="https://docs.danswer.dev/connectors/gmail#authorization"
-          rel="noreferrer"
+          rel="noopener"
         >
           here
         </a>{" "}

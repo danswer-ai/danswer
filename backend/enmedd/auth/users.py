@@ -32,7 +32,6 @@ from sqlalchemy.orm import Session
 from enmedd.auth.invited_users import get_invited_users
 from enmedd.auth.schemas import UserCreate
 from enmedd.auth.schemas import UserRole
-from enmedd.auth.schemas import UserUpdate
 from enmedd.auth.utils import generate_password_reset_email
 from enmedd.auth.utils import generate_user_verification_email
 from enmedd.auth.utils import send_reset_password_email
@@ -174,20 +173,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         except exceptions.UserAlreadyExists:
             user = await self.get_by_email(user_create.email)
             # Handle case where user has used product outside of web and is now creating an account through web
-            if (
-                not user.has_web_login
-                and hasattr(user_create, "has_web_login")
-                and user_create.has_web_login
-            ):
-                user_update = UserUpdate(
-                    password=user_create.password,
-                    has_web_login=True,
-                    role=user_create.role,
-                    is_verified=user_create.is_verified,
-                )
-                user = await self.update(user_update, user)
-            else:
-                raise exceptions.UserAlreadyExists()
+            raise exceptions.UserAlreadyExists()
         return user
 
     async def oauth_callback(
@@ -270,12 +256,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         except exceptions.UserNotExists:
             self.password_helper.hash(credentials.password)
             return None
-
-        if not user.has_web_login:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
-            )
 
         verified, updated_password_hash = self.password_helper.verify_and_update(
             credentials.password, user.hashed_password

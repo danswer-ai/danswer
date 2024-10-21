@@ -88,13 +88,11 @@ const AdvancedEmbeddingFormPage = forwardRef<
 
             <BooleanFormField
               subtext="Enable multipass indexing for both mini and large chunks."
-              optional
               label="Multipass Indexing"
               name="multipass_indexing"
             />
             <BooleanFormField
               subtext="Disable reranking for streaming to improve response time."
-              optional
               label="Disable Rerank for Streaming"
               name="disable_rerank_for_streaming"
             />

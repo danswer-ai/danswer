@@ -1,10 +1,11 @@
 import React from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { CredentialBase, ValidSources } from "@/lib/types";
+import { ValidSources } from "@/lib/types";
 import { createCredential } from "@/lib/credential";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { CredentialBase, Credential } from "@/lib/connectors/credentials";
 
 export async function submitCredential<T>(
   credential: CredentialBase<T>
@@ -57,6 +58,8 @@ export function CredentialForm<T extends Yup.AnyObject>({
         submitCredential<T>({
           credential_json: values,
           admin_public: true,
+          groups: [],
+          source: source,
         }).then(({ message, isSuccess }) => {
           toast({
             title: isSuccess

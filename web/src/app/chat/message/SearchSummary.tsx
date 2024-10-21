@@ -28,15 +28,9 @@ export function ShowHideDocsButton({
       onClick={() => handleShowRetrieved(messageId)}
     >
       {(() => {
-        const isMobile = window.innerWidth <= 1420;
-
-        const buttonLabel = isMobile
-          ? isCurrentlyShowingRetrieved
-            ? "Show Docs"
-            : "Hide Docs"
-          : isCurrentlyShowingRetrieved
-            ? "Hide Docs"
-            : "Show Docs";
+        const buttonLabel = isCurrentlyShowingRetrieved
+          ? "Hide Docs"
+          : "Show Docs";
 
         return (
           <Button

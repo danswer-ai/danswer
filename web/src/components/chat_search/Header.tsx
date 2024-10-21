@@ -4,7 +4,7 @@ import { UserDropdown } from "../UserDropdown";
 import { FiShare2 } from "react-icons/fi";
 import { SetStateAction, useContext, useEffect } from "react";
 import { NewChatIcon } from "../icons/icons";
-import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
+import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT } from "@/lib/constants";
 import { ChatSession } from "@/app/chat/interfaces";
 import Link from "next/link";
 import { pageType } from "@/app/chat/sessionSidebar/types";
@@ -37,9 +37,9 @@ export default function FunctionalHeader({
             event.preventDefault();
             window.open(
               `/${page}` +
-                (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+                (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT &&
                 currentChatSession
-                  ? `?assistantId=${currentChatSession.persona_id}`
+                  ? `?assistantId=${currentChatSession.assistant_id}`
                   : ""),
               "_self"
             );
@@ -58,8 +58,8 @@ export default function FunctionalHeader({
     reset();
     const newChatUrl =
       `/${page}` +
-      (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA && currentChatSession
-        ? `?assistantId=${currentChatSession.persona_id}`
+      (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT && currentChatSession
+        ? `?assistantId=${currentChatSession.assistant_id}`
         : "");
     router.push(newChatUrl);
   };
@@ -67,7 +67,7 @@ export default function FunctionalHeader({
     <div className="left-0 bg-transparent sticky top-0 z-20 w-full relative flex">
       <div className="mt-2 mx-2.5 cursor-pointer text-text-700 relative flex w-full">
         <LogoType
-          assistantId={currentChatSession?.persona_id}
+          assistantId={currentChatSession?.assistant_id}
           page={page}
           toggleSidebar={toggleSidebar}
           handleNewChat={handleNewChat}
@@ -115,9 +115,9 @@ export default function FunctionalHeader({
             className="desktop:hidden my-auto"
             href={
               `/${page}` +
-              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
+              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT &&
               currentChatSession
-                ? `?assistantId=${currentChatSession.persona_id}`
+                ? `?assistantId=${currentChatSession.assistant_id}`
                 : "")
             }
           >

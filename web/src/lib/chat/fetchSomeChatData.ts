@@ -12,14 +12,14 @@ import {
   ValidSources,
 } from "@/lib/types";
 import { ChatSession } from "@/app/chat/interfaces";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
 import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { Folder } from "@/app/chat/folders/interfaces";
-import { personaComparator } from "@/app/admin/assistants/lib";
+import { assistantComparator } from "@/app/admin/assistants/lib";
 import { cookies } from "next/headers";
 import {
   SIDEBAR_TOGGLED_COOKIE_NAME,
@@ -35,7 +35,7 @@ interface FetchChatDataResult {
   ccPairs?: CCPairBasicInfo[];
   availableSources?: ValidSources[];
   documentSets?: DocumentSet[];
-  assistants?: Persona[];
+  assistants?: Assistant[];
   tags?: Tag[];
   llmProviders?: LLMProviderDescriptor[];
   folders?: Folder[];
@@ -132,12 +132,12 @@ export async function fetchSomeChatData(
         break;
       case "assistants":
         const [rawAssistantsList, assistantsFetchError] = result as [
-          Persona[],
+          Assistant[],
           string | null,
         ];
         result.assistants = rawAssistantsList
           .filter((assistant) => assistant.is_visible)
-          .sort(personaComparator);
+          .sort(assistantComparator);
         break;
       case "tags":
         result.tags = result?.ok

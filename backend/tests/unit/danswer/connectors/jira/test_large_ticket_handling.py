@@ -8,7 +8,7 @@ import pytest
 from jira.resources import Issue
 from pytest_mock import MockFixture
 
-from danswer.connectors.danswer_jira.connector import fetch_jira_issues_batch
+from enmedd.connectors.enmedd_jira.connector import fetch_jira_issues_batch
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ def patched_type() -> Callable[[Any], type]:
 
 @pytest.fixture
 def mock_jira_api_version() -> Generator[Any, Any, Any]:
-    with patch("danswer.connectors.danswer_jira.connector.JIRA_API_VERSION", "2"):
+    with patch("enmedd.connectors.enmedd_jira.connector.JIRA_API_VERSION", "2"):
         yield
 
 
@@ -72,7 +72,7 @@ def patched_environment(
     patched_type: type,
     mock_jira_api_version: MockFixture,
 ) -> Generator[Any, Any, Any]:
-    with patch("danswer.connectors.danswer_jira.connector.type", patched_type):
+    with patch("enmedd.connectors.enmedd_jira.connector.type", patched_type):
         yield
 
 
@@ -121,7 +121,7 @@ def test_fetch_jira_issues_batch_mixed_tickets(
     assert docs[0].id.endswith("/SMALL-1")
 
 
-@patch("danswer.connectors.danswer_jira.connector.JIRA_CONNECTOR_MAX_TICKET_SIZE", 50)
+@patch("enmedd.connectors.enmedd_jira.connector.JIRA_CONNECTOR_MAX_TICKET_SIZE", 50)
 def test_fetch_jira_issues_batch_custom_size_limit(
     mock_jira_client: MagicMock,
     mock_issue_small: MagicMock,

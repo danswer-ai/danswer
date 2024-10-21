@@ -23,7 +23,6 @@ import { AssistantSelector } from "./AssistantSelector";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
-import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { ChatSession, SearchSession } from "@/app/chat/interfaces";
 import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
@@ -39,7 +38,6 @@ import SearchAnswer from "./SearchAnswer";
 import { DeleteEntityModal } from "../modals/DeleteEntityModal";
 import { ApiKeyModal } from "../llm/ApiKeyModal";
 import { useUser } from "../user/UserProvider";
-import UnconfiguredProviderText from "../chat_search/UnconfiguredProviderText";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Filter } from "lucide-react";
 import { Button } from "../ui/button";
@@ -184,7 +182,7 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
 
       if (userMessage) {
         setQuery(userMessage);
-        const danswerDocs: SearchResponse = {
+        const enmeddDocs: SearchResponse = {
           documents: searchSession.documents,
           suggestedSearchType: null,
           answer: assistantMessage || "Search response not found",
@@ -198,7 +196,7 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
 
         setIsFetching(false);
         setFirstSearch(false);
-        setSearchResponse(danswerDocs);
+        setSearchResponse(enmeddDocs);
         setContentEnriched(true);
       }
     }
@@ -458,9 +456,6 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
   if (settings?.settings?.search_page_enabled === false) {
     router.push("/chat");
   }
-  const sidebarElementRef = useRef<HTMLDivElement>(null);
-  const innerSidebarElementRef = useRef<HTMLDivElement>(null);
-  const [showDocSidebar, setShowDocSidebar] = useState(false);
 
   const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
     if (e.propertyName === "opacity" && !firstSearch) {
@@ -579,7 +574,6 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
               value={filterManager.timeRange}
               onValueChange={filterManager.setTimeRange}
             />
-
             <SortSearch />
           </div>
         </div>

@@ -1,9 +1,9 @@
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import { getDisplayNameForModel, LlmOverrideManager } from "@/lib/hooks";
 import React, { forwardRef, useCallback, useState } from "react";
 import { debounce } from "lodash";
 import { Text } from "@tremor/react";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import {
   checkLLMSupportsImageInput,
   destructureValue,
@@ -12,7 +12,7 @@ import {
 import { updateModelOverrideForChatSession } from "../../lib";
 import { GearIcon } from "@/components/icons/icons";
 import { LlmList } from "@/components/llm/LLMList";
-import { checkPersonaRequiresImageGeneration } from "@/app/admin/assistants/lib";
+import { checkAssistantRequiresImageGeneration } from "@/app/admin/assistants/lib";
 
 interface LlmTabProps {
   llmOverrideManager: LlmOverrideManager;
@@ -20,7 +20,7 @@ interface LlmTabProps {
   openModelSettings: () => void;
   chatSessionId?: number;
   close: () => void;
-  currentAssistant: Persona;
+  currentAssistant: Assistant;
 }
 
 export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
@@ -36,7 +36,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     ref
   ) => {
     const requiresImageGeneration =
-      checkPersonaRequiresImageGeneration(currentAssistant);
+      checkAssistantRequiresImageGeneration(currentAssistant);
 
     const { llmProviders } = useChatContext();
     const { setLlmOverride, temperature, setTemperature } = llmOverrideManager;
@@ -46,10 +46,13 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     );
 
     const debouncedSetTemperature = useCallback(
-      debounce((value) => {
-        setTemperature(value);
-      }, 300),
-      []
+      (value: number) => {
+        const debouncedFunction = debounce((value: number) => {
+          setTemperature(value);
+        }, 300);
+        return debouncedFunction(value);
+      },
+      [setTemperature]
     );
 
     const handleTemperatureChange = (value: number) => {

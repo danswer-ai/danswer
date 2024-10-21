@@ -24,8 +24,6 @@ export function DynamicSidebar({
   const [isExpanded, setIsExpanded] = useState(true);
   const [isLgScreen, setIsLgScreen] = useState(false);
 
-  const settings = useContext(SettingsContext);
-
   const toggleWidth = () => {
     setIsExpanded((prevState) => !prevState);
   };

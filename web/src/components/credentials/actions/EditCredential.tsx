@@ -61,7 +61,6 @@ const EditCredential = ({
         {({ isSubmitting, resetForm }) => (
           <Form>
             <TextFormField
-              includeRevert
               name="name"
               placeholder={credential.name || ""}
               label="Name (optional):"
@@ -69,7 +68,6 @@ const EditCredential = ({
 
             {Object.entries(credential.credential_json).map(([key, value]) => (
               <TextFormField
-                includeRevert
                 key={key}
                 name={key}
                 placeholder={value}

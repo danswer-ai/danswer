@@ -210,10 +210,7 @@ export default async function Home() {
               shouldDisplayNoSources: shouldDisplayNoSourcesModal,
             }}
           >
-            <SearchSection
-              toggledSidebar={toggleSidebar}
-              defaultSearchType={searchTypeDefault}
-            />
+            <SearchSection defaultSearchType={searchTypeDefault} />
           </SearchProvider>
         </div>
       </div>

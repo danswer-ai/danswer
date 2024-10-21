@@ -20,7 +20,6 @@ import {
   Trash,
   Check,
   X,
-  ChevronDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,15 +27,13 @@ const FolderItem = ({
   folder,
   currentChatId,
   isInitiallyExpanded,
-  initiallySelected,
 }: {
   folder: Folder;
   currentChatId?: number;
   isInitiallyExpanded: boolean;
-  initiallySelected: boolean;
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(isInitiallyExpanded);
-  const [isEditing, setIsEditing] = useState<boolean>(initiallySelected);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editedFolderName, setEditedFolderName] = useState<string>(
     folder.folder_name
   );
@@ -143,12 +140,6 @@ const FolderItem = ({
   }, []);
 
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (initiallySelected && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [initiallySelected]);
 
   const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -279,12 +270,10 @@ export const FolderList = ({
   folders,
   currentChatId,
   openedFolders,
-  newFolderId,
 }: {
   folders: Folder[];
   currentChatId?: number;
   openedFolders?: { [key: number]: boolean };
-  newFolderId: number | null;
 }) => {
   if (folders.length === 0) {
     return null;
@@ -297,7 +286,6 @@ export const FolderList = ({
           key={folder.folder_id}
           folder={folder}
           currentChatId={currentChatId}
-          initiallySelected={newFolderId == folder.folder_id}
           isInitiallyExpanded={
             openedFolders ? openedFolders[folder.folder_id] || false : false
           }

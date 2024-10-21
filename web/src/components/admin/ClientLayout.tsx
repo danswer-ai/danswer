@@ -16,7 +16,6 @@ import {
   SettingsIconSkeleton,
   PaintingIconSkeleton,
   ZoomInIconSkeleton,
-  SlackIconSkeleton,
   DocumentSetIconSkeleton,
   AssistantsIconSkeleton,
   ClosedBookIcon,
@@ -148,15 +147,6 @@ export function ClientLayout({
                         {
                           name: (
                             <div className="flex">
-                              <SlackIconSkeleton className="text-icon-settings-sidebar" />
-                              <div className="ml-1">Slack Bots</div>
-                            </div>
-                          ),
-                          link: "/admin/bot",
-                        },
-                        {
-                          name: (
-                            <div className="flex">
                               <ToolIconSkeleton
                                 className="text-icon-settings-sidebar"
                                 size={18}
@@ -182,18 +172,18 @@ export function ClientLayout({
                     : []),
                   ...(enableEnterprise
                     ? [
-                        {
-                          name: (
-                            <div className="flex">
-                              <ClipboardIcon
-                                className="text-icon-settings-sidebar"
-                                size={18}
-                              />
-                              <div className="ml-1">Standard Answers</div>
-                            </div>
-                          ),
-                          link: "/admin/standard-answer",
-                        },
+                        // {
+                        //   name: (
+                        //     <div className="flex">
+                        //       <ClipboardIcon
+                        //         className="text-icon-settings-sidebar"
+                        //         size={18}
+                        //       />
+                        //       <div className="ml-1">Standard Answers</div>
+                        //     </div>
+                        //   ),
+                        //   link: "/admin/standard-answer",
+                        // },
                       ]
                     : []),
                 ],

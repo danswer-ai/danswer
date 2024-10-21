@@ -92,7 +92,7 @@ export function Header({ user }: HeaderProps) {
 
         <div className="flex flex-col h-full ml-auto">
           <div className="my-auto">
-            <UserDropdown user={user} hideChatAndSearch />
+            <UserDropdown user={user} />
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useChatContext } from "@/components/context/ChatContext";
+import { useChatContext } from "@/context/ChatContext";
 import {
   getDisplayNameForModel,
   LlmOverride,
@@ -9,7 +9,7 @@ import {
   StringOrNumberOption,
 } from "@/components/Dropdown";
 
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { destructureValue, getFinalLLM, structureValue } from "@/lib/llm/utils";
 import { useState } from "react";
 import { Hoverable } from "@/components/Hoverable";
@@ -39,7 +39,6 @@ export function RegenerateDropdown({
   const Dropdown = (
     <div
       className={`
-                border 
                 border 
                 rounded-lg 
                 flex 
@@ -111,7 +110,7 @@ export default function RegenerateOption({
   overriddenModel,
   onHoverChange,
 }: {
-  selectedAssistant: Persona;
+  selectedAssistant: Assistant;
   regenerate: (modelOverRide: LlmOverride) => Promise<void>;
   overriddenModel?: string;
   onHoverChange: (isHovered: boolean) => void;

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { FileText } from "lucide-react";
+import { FiFileText } from "react-icons/fi";
 
 export function DocumentPreview({
   fileName,

@@ -20,7 +20,7 @@ SyncFuncType = Callable[
 
 # These functions update:
 # - the user_email <-> document mapping
-# - the external_user_group_id <-> document mapping
+# - the external_teamspace_id <-> document mapping
 # in postgres without committing
 # THIS ONE IS NECESSARY FOR AUTO SYNC TO WORK
 DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, SyncFuncType] = {
@@ -29,7 +29,7 @@ DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, SyncFuncType] = {
 }
 
 # These functions update:
-# - the user_email <-> external_user_group_id mapping
+# - the user_email <-> external_teamspace_id mapping
 # in postgres without committing
 # THIS ONE IS OPTIONAL ON AN APP BY APP BASIS
 GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, SyncFuncType] = {

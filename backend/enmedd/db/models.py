@@ -174,8 +174,12 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", back_populates="user"
     )
-    # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
-    has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
+    groups: Mapped[list["Teamspace"]] = relationship(
+        "Teamspace", secondary="user__teamspace", back_populates="users", lazy="joined"
+    )
+    workspace: Mapped[list["Workspace"]] = relationship(
+        "Workspace", secondary="workspace__users", back_populates="users", lazy="joined"
+    )
 
 
 class InputPrompt(Base):
@@ -200,18 +204,6 @@ class InputPrompt__User(Base):
     )
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("inputprompt.id"), primary_key=True
-    )
-
-    workspace: Mapped[list["Workspace"]] = relationship(
-        "Workspace", secondary="workspace__users", back_populates="users", lazy="joined"
-    )
-    # Notifications for the UI
-    notifications: Mapped[list["Notification"]] = relationship(
-        "Notification", back_populates="user"
-    )
-
-    groups: Mapped[list["Teamspace"]] = relationship(
-        "Teamspace", secondary="user__teamspace", back_populates="users", lazy="joined"
     )
 
 
@@ -1008,10 +1000,6 @@ class ChatSession(Base):
 
     current_alternate_model: Mapped[str | None] = mapped_column(String, default=None)
 
-    slack_thread_id: Mapped[str | None] = mapped_column(
-        String, nullable=True, default=None
-    )
-
     # the latest "overrides" specified by the user. These take precedence over
     # the attached assistant. However, overrides specified directly in the
     # `send-message` call will take precedence over these.
@@ -1526,9 +1514,6 @@ class TaskQueueState(Base):
 
 class KVStore(Base):
     __tablename__ = "key_value_store"
-    workspace_id: Mapped[int | None] = mapped_column(
-        ForeignKey("workspace.id"), primary_key=True
-    )
     key: Mapped[str] = mapped_column(String, primary_key=True)
     value: Mapped[JSON_ro] = mapped_column(postgresql.JSONB(), nullable=True)
     encrypted_value: Mapped[JSON_ro] = mapped_column(EncryptedJson(), nullable=True)
@@ -1635,11 +1620,6 @@ class LLMProvider__Teamspace(Base):
     )
     teamspace_id: Mapped[int] = mapped_column(
         ForeignKey("teamspace.id"), primary_key=True
-    )
-    is_current: Mapped[bool] = mapped_column(
-        Boolean,
-        default=True,
-        primary_key=True,
     )
 
 

@@ -11,7 +11,7 @@ def test_send_message_simple_with_history(reset: None) -> None:
     test_chat_session = ChatSessionManager.create(user_performing_action=admin_user)
 
     response = ChatSessionManager.get_answer_with_quote(
-        persona_id=test_chat_session.persona_id,
+        assistant_id=test_chat_session.assistant_id,
         message="Hello, this is a test.",
         user_performing_action=admin_user,
     )

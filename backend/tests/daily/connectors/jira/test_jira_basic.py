@@ -3,8 +3,8 @@ import time
 
 import pytest
 
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.danswer_jira.connector import JiraConnector
+from enmedd.configs.constants import DocumentSource
+from enmedd.connectors.jira.connector import JiraConnector
 
 
 @pytest.fixture

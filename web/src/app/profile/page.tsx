@@ -1,5 +1,4 @@
 import { User } from "@/lib/types";
-import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
@@ -9,13 +8,14 @@ import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
 import Profile from "./profile";
 import { BarLayout } from "@/components/BarLayout";
-import { getCombinedSettings } from "@/components/settings/lib";
+import { fetchSettingsSS } from "@/components/settings/lib";
 import { CombinedSettings } from "../admin/settings/interfaces";
+import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 
 export default async function ProfilePage() {
   const tasks = [
     getAuthTypeMetadataSS(),
-    getCombinedSettings({ forceRetrieval: true }),
+    fetchSettingsSS(),
     getCurrentUserSS(),
     fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),

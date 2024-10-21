@@ -33,7 +33,6 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
-import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -116,8 +115,6 @@ export function ChatInputBar({
       }
     }
   };
-
-  const settings = useContext(SettingsContext);
 
   const { llmProviders } = useChatContext();
   const [_, llmName] = getFinalLLM(llmProviders, selectedAssistant, null);
@@ -278,7 +275,7 @@ export function ChatInputBar({
   };
 
   return (
-    <div id="danswer-chat-input">
+    <div id="enmedd-chat-input">
       <div className="flex justify-center mx-auto">
         <div
           className="
@@ -293,13 +290,13 @@ export function ChatInputBar({
               ref={suggestionsRef}
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
             >
-              <div className="rounded-lg py-1.5 bg-background border border-border-medium shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
+              <div className="rounded-lg py-1.5 bg-background border border-border-medium shadow-lg mx-2 px-1.5 mt-2 z-10">
                 {assistantTagOptions.map((currentAssistant, index) => (
                   <button
                     key={index}
                     className={`px-2 ${
                       tabbingIconIndex == index && "bg-hover-lightish"
-                    } rounded  rounded-lg content-start flex gap-x-1 py-2 w-full  hover:bg-hover-lightish cursor-pointer`}
+                    }  rounded-lg content-start flex gap-x-1 py-2 w-full  hover:bg-hover-lightish cursor-pointer`}
                     onClick={() => {
                       updatedTaggedAssistant(currentAssistant);
                     }}
@@ -318,7 +315,7 @@ export function ChatInputBar({
                   target="_self"
                   className={`${
                     tabbingIconIndex == assistantTagOptions.length && "bg-hover"
-                  } rounded rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
+                  } rounded-lg px-3 flex gap-x-1 py-2 w-full  items-center  hover:bg-hover-lightish cursor-pointer"`}
                   href="/assistants/new"
                 >
                   <FiPlus size={17} />
@@ -333,7 +330,7 @@ export function ChatInputBar({
               ref={suggestionsRef}
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
             >
-              <div className="rounded-lg py-1.5 bg-white border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
+              <div className="rounded-lg py-1.5 bg-white border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 z-10">
                 {filteredPrompts.map((currentPrompt, index) => (
                   <button
                     key={index}
@@ -370,8 +367,6 @@ export function ChatInputBar({
           <div>
             <SelectedFilterDisplay filterManager={filterManager} />
           </div>
-
-          <UnconfiguredProviderText showConfigureAPIKey={showConfigureAPIKey} />
 
           <div
             className="
@@ -617,7 +612,7 @@ export function ChatInputBar({
                 >
                   <StopGeneratingIcon
                     size={10}
-                    className={`text-emphasis m-auto text-white flex-none
+                    className={`m-auto text-white flex-none
                       }`}
                   />
                 </button>
@@ -633,7 +628,7 @@ export function ChatInputBar({
                 >
                   <SendIcon
                     size={28}
-                    className={`text-emphasis text-white p-1 rounded-full  ${chatState == "input" && message ? "bg-submit-background" : "bg-disabled-submit-background"} `}
+                    className={`text-white p-1 rounded-full  ${chatState == "input" && message ? "bg-submit-background" : "bg-disabled-submit-background"} `}
                   />
                 </button>
               )}

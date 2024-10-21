@@ -104,7 +104,7 @@ import {
   orderAssistantsForUser,
 } from "@/lib/assistants/utils";
 import BlurBackground from "./shared_chat_search/BlurBackground";
-import { useChatContext } from "@/context/ChatContext";
+import { ChatContext, useChatContext } from "@/context/ChatContext";
 import Prism from "prismjs";
 import { useToast } from "@/hooks/use-toast";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
@@ -132,6 +132,7 @@ export function ChatPage({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const chatContextData = useContext(ChatContext);
 
   let {
     chatSessions,
@@ -145,7 +146,7 @@ export function ChatPage({
     defaultAssistantId,
     shouldShowWelcomeModal,
     refreshChatSessions,
-  } = useChatContext();
+  } = chatContextData!;
 
   const { toast } = useToast();
   const { user, refreshUser, isLoadingUser } = useUser();
@@ -292,7 +293,7 @@ export function ChatPage({
 
   // this is used to track which assistant is being used to generate the current message
   // for example, this would come into play when:
-  // 1. default assistant is `Danswer`
+  // 1. default assistant is `enMedD`
   // 2. we "@"ed the `GPT` assistant and sent a message
   // 3. while the `GPT` assistant message is generating, we "@" the `Paraphrase` assistant
   const [alternativeGeneratingAssistant, setAlternativeGeneratingAssistant] =
@@ -1551,7 +1552,6 @@ export function ChatPage({
   }
 
   const windowWidth = window.innerWidth;
-  const [isMobile, setIsMobile] = useState(windowWidth <= 1420);
   const [showDocSidebar, setShowDocSidebar] = useState(windowWidth >= 1420);
   const [isWide, setIsWide] = useState(windowWidth >= 1420);
 
@@ -1578,7 +1578,7 @@ export function ChatPage({
   };
   const removeToggle = () => {
     setShowDocSidebar(false);
-    toggle(false);
+    setUntoggled(true);
   };
 
   const sidebarElementRef = useRef<HTMLDivElement>(null);

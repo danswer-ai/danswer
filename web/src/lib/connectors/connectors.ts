@@ -98,8 +98,7 @@ export const connectorConfigs: Record<
     values: [
       {
         type: "text",
-        query:
-          "Enter the website URL to scrape e.g. https://docs.danswer.dev/:",
+        query: "Enter the website URL to scrape e.g. https://docs.enmedd.dev/:",
         label: "Base URL",
         name: "base_url",
         optional: false,
@@ -289,7 +288,7 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
   },
   jira: {
     description: "Configure Jira connector",
-    subtext: `Specify any link to a Jira page below and click "Index" to Index. Based on the provided link, we will index the ENTIRE PROJECT, not just the specified page. For example, entering https://danswer.atlassian.net/jira/software/projects/DAN/boards/1 and clicking the Index button will index the whole DAN Jira project.`,
+    subtext: `Specify any link to a Jira page below and click "Index" to Index. Based on the provided link, we will index the ENTIRE PROJECT, not just the specified page. For example, entering https://enmedd.atlassian.net/jira/software/projects/DAN/boards/1 and clicking the Index button will index the whole DAN Jira project.`,
     values: [
       {
         type: "text",
@@ -318,7 +317,7 @@ Selecting the "Index Recursively" checkbox will index the specified page and all
         label: "Requested Objects",
         name: "requested_objects",
         optional: true,
-        description: `Specify the Salesforce object types you want us to index. If unsure, don't specify any objects and Danswer will default to indexing by 'Account'.
+        description: `Specify the Salesforce object types you want us to index. If unsure, don't specify any objects and enMedD AI will default to indexing by 'Account'.
 
 Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of 'Opportunities').`,
       },
@@ -334,8 +333,8 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
         name: "sites",
         optional: true,
         description: `• If no sites are specified, all sites in your organization will be indexed (Sites.Read.All permission required).
-• Specifying 'https://danswerai.sharepoint.com/sites/support' for example will only index documents within this site.
-• Specifying 'https://danswerai.sharepoint.com/sites/support/subfolder' for example will only index documents within this folder.
+• Specifying 'https://enmeddai.sharepoint.com/sites/support' for example will only index documents within this site.
+• Specifying 'https://enmeddai.sharepoint.com/sites/support/subfolder' for example will only index documents within this folder.
 `,
       },
     ],
@@ -349,7 +348,7 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
         label: "Teams",
         name: "teams",
         optional: true,
-        description: `Specify 0 or more Teams to index. For example, specifying the Team 'Support' for the 'danswerai' Org will cause us to only index messages sent in channels belonging to the 'Support' Team. If no Teams are specified, all Teams in your organization will be indexed.`,
+        description: `Specify 0 or more Teams to index. For example, specifying the Team 'Support' for the 'enmeddai' Org will cause us to only index messages sent in channels belonging to the 'Support' Team. If no Teams are specified, all Teams in your organization will be indexed.`,
       },
     ],
   },
@@ -391,37 +390,6 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
     description: "Configure Productboard connector",
     values: [],
   },
-  slack: {
-    description: "Configure Slack connector",
-    values: [
-      {
-        type: "text",
-        query: "Enter the Slack workspace:",
-        label: "Workspace",
-        name: "workspace",
-        optional: false,
-      },
-      {
-        type: "list",
-        query: "Enter channels to include:",
-        label: "Channels",
-        name: "channels",
-        description: `Specify 0 or more channels to index. For example, specifying the channel "support" will cause us to only index all content within the "#support" channel. If no channels are specified, all channels in your workspace will be indexed.`,
-        optional: true,
-        // Slack channels can only be lowercase
-        transform: (values) => values.map((value) => value.toLowerCase()),
-      },
-      {
-        type: "checkbox",
-        query: "Enable channel regex?",
-        label: "Enable Channel Regex",
-        name: "channel_regex_enabled",
-        description: `If enabled, we will treat the "channels" specified above as regular expressions. A channel's messages will be pulled in by the connector if the name of the channel fully matches any of the specified regular expressions.
-For example, specifying .*-support.* as a "channel" will cause the connector to include any channels with "-support" in the name.`,
-        optional: true,
-      },
-    ],
-  },
   slab: {
     description: "Configure Slab connector",
     values: [
@@ -431,7 +399,7 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
         label: "Base URL",
         name: "base_url",
         optional: false,
-        description: `Specify the base URL for your Slab team. This will look something like: https://danswer.slab.com/`,
+        description: `Specify the base URL for your Slab team. This will look something like: https://enmedd.slab.com/`,
       },
     ],
   },
@@ -1024,12 +992,6 @@ export interface TeamsConfig {
 }
 
 export interface ProductboardConfig {}
-
-export interface SlackConfig {
-  workspace: string;
-  channels?: string[];
-  channel_regex_enabled?: boolean;
-}
 
 export interface SlabConfig {
   base_url: string;

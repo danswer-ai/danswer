@@ -35,7 +35,6 @@ import {
   FiUsers,
   FiBarChart2,
   FiDatabase,
-  FiSlack,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image from "next/image";
@@ -59,7 +58,6 @@ import hubSpotIcon from "../../../public/HubSpot.png";
 import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import dropboxIcon from "../../../public/Dropbox.png";
-import slackIcon from "../../../public/Slack.png";
 
 import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.png";
@@ -283,20 +281,6 @@ export const ConfigureIcon = ({
 
 export const defaultTailwindCSS = "my-auto flex flex-shrink-0 text-default";
 export const defaultTailwindCSSBlue = "my-auto flex flex-shrink-0 text-link";
-
-export const ColorSlackIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => {
-  return (
-    <div
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-    >
-      <Image src={slackIcon} alt="Logo" width="96" height="96" />
-    </div>
-  );
-};
 
 export const LiteLLMIcon = ({
   size = 16,
@@ -1877,53 +1861,6 @@ export const RobotIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <FaRobot size={size} className={className} />;
-};
-
-slackIcon;
-export const SlackIconSkeleton = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 14 14"
-    >
-      <g fill="none" stroke="currentColor">
-        <path d="M5.5 2a.5.5 0 1 0 1 0a.5.5 0 1 0-1 0m6 4a.5.5 0 1 0 1 0a.5.5 0 1 0-1 0m-4 6a.5.5 0 1 0 1 0a.5.5 0 1 0-1 0m-6-4a.5.5 0 1 0 1 0a.5.5 0 1 0-1 0" />
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8.793 1.219v4.937m-3.59 1.692v4.937M1.215 5.207h4.937m1.692 3.59h4.937"
-        />
-      </g>
-    </svg>
-  );
-};
-
-export const SlackIcon = ({
-  size = 16,
-  className = defaultTailwindCSS,
-}: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 24 24"
-    >
-      <path
-        fill="currentColor"
-        d="M16.923 16.52h-2.39a1.984 1.984 0 0 1-1.973-1.195a2.006 2.006 0 0 1 .47-2.263a1.99 1.99 0 0 1 1.502-.53h4.858a1.978 1.978 0 0 1 1.969 1.63a1.951 1.951 0 0 1-1.147 2.173a2.21 2.21 0 0 1-.876.174c-.8.022-1.601.01-2.413.01m-9.435.501v-2.477a2.003 2.003 0 0 1 .56-1.402a1.987 1.987 0 0 1 1.377-.608a1.942 1.942 0 0 1 1.393.522c.377.352.6.84.62 1.357c.043 1.738.043 3.477 0 5.215A1.94 1.94 0 0 1 10.805 21a1.922 1.922 0 0 1-1.423.495a1.954 1.954 0 0 1-1.359-.614a1.97 1.97 0 0 1-.535-1.395c-.01-.815 0-1.64 0-2.466m8.938-9.963v2.434a1.996 1.996 0 0 1-.524 1.5a1.98 1.98 0 0 1-2.242.469a1.981 1.981 0 0 1-1.078-1.165a1.996 1.996 0 0 1-.106-.804V4.46a1.963 1.963 0 0 1 .605-1.386a1.947 1.947 0 0 1 1.408-.537a1.962 1.962 0 0 1 1.383.602a1.979 1.979 0 0 1 .553 1.408c.011.836 0 1.673 0 2.51M6.97 11.511H4.545a1.962 1.962 0 0 1-1.393-.579a1.978 1.978 0 0 1-.427-2.155a1.978 1.978 0 0 1 1.066-1.07a1.97 1.97 0 0 1 .754-.15h4.923a1.962 1.962 0 0 1 1.392.579a1.98 1.98 0 0 1-1.392 3.375zm4.478-6.171v.902c0 .18-.06.261-.216.261H9.165A1.916 1.916 0 0 1 7.9 5.787a1.929 1.929 0 0 1-.4-1.402c.022-.492.227-.958.574-1.306a1.965 1.965 0 0 1 3.342 1.12c.032.38.032.487.032.832v.214zm-5.009 7.204c.06.813.06 1.63 0 2.444a1.902 1.902 0 0 1-.754 1.18a1.887 1.887 0 0 1-1.356.34a1.988 1.988 0 0 1-1.293-.627a2.003 2.003 0 0 1-.536-1.338a1.96 1.96 0 0 1 .497-1.346c.33-.369.786-.599 1.278-.643c.736-.065 1.471-.01 2.164-.01M17.443 11.5V9.329c.052-.509.299-.977.689-1.305c.39-.329.891-.492 1.399-.455c.522 0 1.023.208 1.392.579a1.981 1.981 0 0 1 0 2.796c-.37.371-.87.58-1.392.58c-.671 0-1.363-.022-2.088-.022m-4.967 6.072c.8-.055 1.603-.055 2.402 0c.488.09.92.367 1.208.773c.286.406.405.908.329 1.4a1.99 1.99 0 0 1-.67 1.264a1.98 1.98 0 0 1-1.343.485a1.922 1.922 0 0 1-1.314-.528a1.937 1.937 0 0 1-.6-1.287c-.044-.695-.012-1.401-.012-2.107"
-      />
-    </svg>
-  );
 };
 
 export const ToolIconSkeleton = ({

@@ -10,8 +10,8 @@ from datetime import timezone
 from time import sleep
 from typing import Any
 
-from danswer.server.documents.models import DocumentSource
-from danswer.utils.logger import setup_logger
+from enmedd.server.documents.models import DocumentSource
+from enmedd.utils.logger import setup_logger
 from tests.integration.common_utils.managers.api_key import APIKeyManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.user import UserManager

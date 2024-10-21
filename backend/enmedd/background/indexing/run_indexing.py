@@ -7,7 +7,7 @@ from datetime import timezone
 from sqlalchemy.orm import Session
 
 from enmedd.background.indexing.checkpointing import get_time_windows_for_index_attempt
-from enmedd.background.indexing.tracer import DanswerTracer
+from enmedd.background.indexing.tracer import EnmeddTracer
 from enmedd.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
 from enmedd.configs.app_configs import INDEXING_TRACER_INTERVAL
 from enmedd.configs.app_configs import POLL_CONNECTOR_OFFSET
@@ -152,7 +152,7 @@ def _run_indexing(
 
     if INDEXING_TRACER_INTERVAL > 0:
         logger.debug(f"Memory tracer starting: interval={INDEXING_TRACER_INTERVAL}")
-        tracer = DanswerTracer()
+        tracer = EnmeddTracer()
         tracer.start()
         tracer.snap()
 

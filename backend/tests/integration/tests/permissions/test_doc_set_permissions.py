@@ -1,13 +1,13 @@
 import pytest
 from requests.exceptions import HTTPError
 
-from danswer.db.enums import AccessType
-from danswer.server.documents.models import DocumentSource
+from enmedd.db.enums import AccessType
+from enmedd.server.documents.models import DocumentSource
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.document_set import DocumentSetManager
+from tests.integration.common_utils.managers.teamspace import TeamspaceManager
 from tests.integration.common_utils.managers.user import DATestUser
 from tests.integration.common_utils.managers.user import UserManager
-from tests.integration.common_utils.managers.user_group import UserGroupManager
 
 
 def test_doc_set_permissions_setup(reset: None) -> None:
@@ -18,32 +18,32 @@ def test_doc_set_permissions_setup(reset: None) -> None:
     curator: DATestUser = UserManager.create(name="curator")
 
     # Creating the first user group
-    user_group_1 = UserGroupManager.create(
-        name="curated_user_group",
+    teamspace_1 = TeamspaceManager.create(
+        name="curated_teamspace",
         user_ids=[curator.id],
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
 
     # Setting the curator as a curator for the first user group
-    UserGroupManager.set_curator_status(
-        test_user_group=user_group_1,
+    TeamspaceManager.set_curator_status(
+        test_teamspace=teamspace_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
     )
 
     # Creating a second user group
-    user_group_2 = UserGroupManager.create(
-        name="uncurated_user_group",
+    teamspace_2 = TeamspaceManager.create(
+        name="uncurated_teamspace",
         user_ids=[curator.id],
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
 
     # Admin creates a cc_pair
@@ -68,7 +68,7 @@ def test_doc_set_permissions_setup(reset: None) -> None:
     with pytest.raises(HTTPError):
         DocumentSetManager.create(
             name="Invalid Document Set 1",
-            groups=[user_group_2.id],
+            groups=[teamspace_2.id],
             cc_pair_ids=[public_cc_pair.id],
             user_performing_action=curator,
         )
@@ -79,7 +79,7 @@ def test_doc_set_permissions_setup(reset: None) -> None:
             name="Invalid Document Set 2",
             is_public=False,
             cc_pair_ids=[public_cc_pair.id],
-            groups=[user_group_1.id, user_group_2.id],
+            groups=[teamspace_1.id, teamspace_2.id],
             user_performing_action=curator,
         )
 
@@ -99,7 +99,7 @@ def test_doc_set_permissions_setup(reset: None) -> None:
             name="Invalid Document Set 4",
             is_public=False,
             cc_pair_ids=[],
-            groups=[user_group_1.id],
+            groups=[teamspace_1.id],
             user_performing_action=curator,
         )
 
@@ -109,7 +109,7 @@ def test_doc_set_permissions_setup(reset: None) -> None:
             name="Invalid Document Set 4",
             is_public=False,
             cc_pair_ids=[],
-            groups=[user_group_1.id],
+            groups=[teamspace_1.id],
             user_performing_action=admin_user,
         )
 
@@ -119,7 +119,7 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         name="Valid Document Set",
         is_public=False,
         cc_pair_ids=[public_cc_pair.id],
-        groups=[user_group_1.id],
+        groups=[teamspace_1.id],
         user_performing_action=curator,
     )
 
@@ -161,18 +161,18 @@ def test_doc_set_permissions_setup(reset: None) -> None:
         )
 
     # Add the private_cc_pair to the user group on our end for later comparison
-    user_group_1.cc_pair_ids.append(private_cc_pair.id)
+    teamspace_1.cc_pair_ids.append(private_cc_pair.id)
 
     # Admin adds the cc_pair to the group the curator curates
-    UserGroupManager.edit(
-        user_group=user_group_1,
+    TeamspaceManager.edit(
+        teamspace=teamspace_1,
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
-    UserGroupManager.verify(
-        user_group=user_group_1,
+    TeamspaceManager.verify(
+        teamspace=teamspace_1,
         user_performing_action=admin_user,
     )
 

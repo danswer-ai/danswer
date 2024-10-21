@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session
 from ee.enmedd.server.workspace.models import AnalyticsScriptUpload
 from enmedd.configs.constants import FileOrigin
 from enmedd.file_store.file_store import get_default_file_store
-from enmedd.key_value_store.factory import get_dynamic_config_store
-from enmedd.key_value_store.interface import ConfigNotFoundError
+from enmedd.key_value_store.factory import get_kv_store
+from enmedd.key_value_store.interface import KvKeyNotFoundError
 from enmedd.utils.logger import setup_logger
 
 load_dotenv()
@@ -25,10 +25,10 @@ _CUSTOM_ANALYTICS_SECRET_KEY = os.environ.get("CUSTOM_ANALYTICS_SECRET_KEY")
 
 
 def load_analytics_script() -> str | None:
-    dynamic_config_store = get_dynamic_config_store()
+    dynamic_config_store = get_kv_store()
     try:
         return cast(str, dynamic_config_store.load(_CUSTOM_ANALYTICS_SCRIPT_KEY))
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         return None
 
 
@@ -39,9 +39,7 @@ def store_analytics_script(analytics_script_upload: AnalyticsScriptUpload) -> No
     ):
         raise ValueError("Invalid secret key")
 
-    get_dynamic_config_store().store(
-        _CUSTOM_ANALYTICS_SCRIPT_KEY, analytics_script_upload.script
-    )
+    get_kv_store().store(_CUSTOM_ANALYTICS_SCRIPT_KEY, analytics_script_upload.script)
 
 
 _LOGO_FILENAME = "__logo__"

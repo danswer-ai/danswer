@@ -4,8 +4,8 @@ from collections.abc import Generator
 import pytest
 from sqlalchemy.orm import Session
 
-from danswer.db.engine import get_session_context_manager
-from danswer.db.search_settings import get_current_search_settings
+from enmedd.db.engine import get_session_context_manager
+from enmedd.db.search_settings import get_current_search_settings
 from tests.integration.common_utils.reset import reset_all
 from tests.integration.common_utils.vespa import vespa_fixture
 

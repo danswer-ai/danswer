@@ -114,7 +114,6 @@ export function FailedReIndexAttempts({
                           deleteCCPair(
                             reindexingProgress.connector_id,
                             reindexingProgress.credential_id,
-                            setPopup,
                             () =>
                               mutate(
                                 buildCCPairInfoUrl(

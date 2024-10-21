@@ -6,7 +6,7 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { FaSwatchbook } from "react-icons/fa";
 import { NewChatIcon } from "@/components/icons/icons";
 import { useState } from "react";
-import { useUserGroups } from "@/lib/hooks";
+import { useTeamspaces } from "@/lib/hooks";
 import {
   deleteCredential,
   swapCredential,

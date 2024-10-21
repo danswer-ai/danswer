@@ -42,7 +42,7 @@ task_logger = get_task_logger(__name__)
 
 celery_app = Celery(__name__)
 celery_app.config_from_object(
-    "danswer.background.celery.celeryconfig"
+    "enmedd.background.celery.celeryconfig"
 )  # Load configuration from 'celeryconfig.py'
 
 
@@ -402,10 +402,10 @@ celery_app.steps["worker"].add(HubPeriodicTask)
 
 celery_app.autodiscover_tasks(
     [
-        "danswer.background.celery.tasks.connector_deletion",
-        "danswer.background.celery.tasks.periodic",
-        "danswer.background.celery.tasks.pruning",
-        "danswer.background.celery.tasks.vespa",
+        "enmedd.background.celery.tasks.connector_deletion",
+        "enmedd.background.celery.tasks.periodic",
+        "enmedd.background.celery.tasks.pruning",
+        "enmedd.background.celery.tasks.vespa",
     ]
 )
 

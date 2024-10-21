@@ -66,7 +66,7 @@ export type ValidStatuses =
 export type TaskStatus = "PENDING" | "STARTED" | "SUCCESS" | "FAILURE";
 export type Feedback = "like" | "dislike";
 export type AccessType = "public" | "private" | "sync";
-export type SessionType = "Chat" | "Search" | "Slack";
+export type SessionType = "Chat" | "Search";
 
 export interface DocumentBoostStatus {
   document_id: string;
@@ -190,21 +190,6 @@ export interface StandardAnswer {
   categories: StandardAnswerCategory[];
 }
 
-// SLACK BOT CONFIGS
-
-export type AnswerFilterOption =
-  | "well_answered_postfilter"
-  | "questionmark_prefilter";
-
-export interface ChannelConfig {
-  channel_names: string[];
-  respond_tag_only?: boolean;
-  respond_to_bots?: boolean;
-  respond_member_group_list?: string[];
-  answer_filters?: AnswerFilterOption[];
-  follow_up_tags?: string[];
-}
-
 /* EE Only Types */
 export interface Teamspace {
   id: number;
@@ -222,7 +207,6 @@ const validSources = [
   "web",
   "github",
   "gitlab",
-  "slack",
   "google_drive",
   "gmail",
   "bookstack",
@@ -266,13 +250,9 @@ export type ValidSources = (typeof validSources)[number];
 // The valid sources that are actually valid to select in the UI
 export type ConfigurableSources = Exclude<
   ValidSources,
-  "not_applicable" | "ingestion_api"
+  "not_applicable" | "ingestion_api" | "google_sheets"
 >;
 
 // The sources that have auto-sync support on the backend
-export const validAutoSyncSources = [
-  "confluence",
-  "google_drive",
-  "slack",
-] as const;
+export const validAutoSyncSources = ["confluence", "google_drive"] as const;
 export type ValidAutoSyncSources = (typeof validAutoSyncSources)[number];

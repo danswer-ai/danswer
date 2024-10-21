@@ -1,4 +1,4 @@
-import { useFormContext } from "@/components/context/FormContext";
+import { useFormContext } from "@/context/FormContext";
 import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 import { FiPlus } from "react-icons/fi";
 

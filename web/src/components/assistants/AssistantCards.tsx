@@ -1,6 +1,6 @@
 import { CSS } from "@dnd-kit/utilities";
 
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { AssistantTools } from "@/app/assistants/ToolsDisplay";
 import { Bubble } from "@/components/Bubble";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
@@ -16,9 +16,9 @@ export const AssistantCard = ({
   onSelect,
   llmName,
 }: {
-  assistant: Persona;
+  assistant: Assistant;
   isSelected: boolean;
-  onSelect: (assistant: Persona) => void;
+  onSelect: (assistant: Assistant) => void;
   llmName: string;
 }) => {
   const [hovering, setHovering] = useState(false);
@@ -79,9 +79,9 @@ export const AssistantCard = ({
 };
 
 export function DraggableAssistantCard(props: {
-  assistant: Persona;
+  assistant: Assistant;
   isSelected: boolean;
-  onSelect: (assistant: Persona) => void;
+  onSelect: (assistant: Assistant) => void;
   llmName: string;
 }) {
   const {

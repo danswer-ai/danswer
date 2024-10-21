@@ -1,7 +1,7 @@
 # Integration Tests
 
 ## General Testing Overview
-The integration tests are designed with a "manager" class and a "test" class for each type of object being manipulated (e.g., user, persona, credential):
+The integration tests are designed with a "manager" class and a "test" class for each type of object being manipulated (e.g., user, assistant, credential):
 - **Manager Class**: Contains methods for each type of API call. Responsible for creating, deleting, and verifying the existence of an entity.
 - **Test Class**: Stores data for each entity being tested. This is our "expected state" of the object.
 
@@ -56,7 +56,7 @@ The current testing coverage should be checked by reading the comments at the to
 
 
 ## TODO: Testing Coverage
-- Persona permissions testing
+- Assistant permissions testing
 - Read only (and/or basic) user permissions
     - Ensuring proper permission enforcement using the chat/doc_search endpoints
 - No auth

@@ -69,7 +69,7 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
         `fetchFeatureFlags failed: status=${results[1].status} body=${await results[0].text()}`
       );
     } else {
-      featureFlags = await results[0].json();
+      featureFlags = await results[1].json();
     }
 
     let workspaces: Workspaces | null = null;
@@ -81,7 +81,7 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
           );
         }
       } else {
-        workspaces = await results[1].json();
+        workspaces = await results[2].json();
       }
     }
 
@@ -94,7 +94,7 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
           );
         }
       } else {
-        customAnalyticsScript = await results[2].json();
+        customAnalyticsScript = await results[3].json();
       }
     }
 

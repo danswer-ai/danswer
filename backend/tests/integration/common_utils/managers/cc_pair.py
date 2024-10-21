@@ -5,14 +5,14 @@ from uuid import uuid4
 
 import requests
 
-from danswer.connectors.models import InputType
-from danswer.db.enums import AccessType
-from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.enums import TaskStatus
-from danswer.server.documents.models import CeleryTaskStatus
-from danswer.server.documents.models import ConnectorCredentialPairIdentifier
-from danswer.server.documents.models import ConnectorIndexingStatus
-from danswer.server.documents.models import DocumentSource
+from enmedd.connectors.models import InputType
+from enmedd.db.enums import AccessType
+from enmedd.db.enums import ConnectorCredentialPairStatus
+from enmedd.db.enums import TaskStatus
+from enmedd.server.documents.models import CeleryTaskStatus
+from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
+from enmedd.server.documents.models import ConnectorIndexingStatus
+from enmedd.server.documents.models import DocumentSource
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY

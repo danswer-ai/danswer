@@ -17,7 +17,7 @@ INDEXING_MODEL_SERVER_PORT = int(
     os.environ.get("INDEXING_MODEL_SERVER_PORT") or MODEL_SERVER_PORT
 )
 
-# Danswer custom Deep Learning Models
+# enMedD AI custom Deep Learning Models
 CONNECTOR_CLASSIFIER_MODEL_REPO = "Danswer/filter-extraction-model"
 CONNECTOR_CLASSIFIER_MODEL_TAG = "1.0.0"
 INTENT_MODEL_VERSION = "danswer/hybrid-intent-token-classifier"

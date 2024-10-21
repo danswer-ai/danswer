@@ -208,6 +208,7 @@ export function CustomLLMProviderUpdateForm({
               label="Display Name"
               subtext="A name which you can use to identify this provider when selecting it in the UI."
               placeholder="Display Name"
+              disabled={existingLlmProvider ? true : false}
             />
 
             <TextFormField
@@ -220,6 +221,7 @@ export function CustomLLMProviderUpdateForm({
                     target="_blank"
                     href="https://docs.litellm.ai/docs/providers"
                     className="text-link"
+                    rel="noreferrer"
                   >
                     https://docs.litellm.ai/docs/providers
                   </a>
@@ -238,6 +240,7 @@ export function CustomLLMProviderUpdateForm({
             </SubLabel>
 
             <TextFormField
+              optional
               name="api_key"
               label="[Optional] API Key"
               placeholder="API Key"
@@ -245,12 +248,14 @@ export function CustomLLMProviderUpdateForm({
             />
 
             <TextFormField
+              optional
               name="api_base"
               label="[Optional] API Base"
               placeholder="API Base"
             />
 
             <TextFormField
+              optional
               name="api_version"
               label="[Optional] API Version"
               placeholder="API Version"
@@ -373,6 +378,7 @@ export function CustomLLMProviderUpdateForm({
                     target="_blank"
                     href="https://models.litellm.ai/"
                     className="text-link"
+                    rel="noreferrer"
                   >
                     here
                   </a>

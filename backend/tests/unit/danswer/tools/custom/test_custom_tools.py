@@ -4,14 +4,14 @@ from unittest.mock import patch
 
 import pytest
 
-from danswer.tools.custom.custom_tool import (
+from enmedd.tools.custom.custom_tool import (
     build_custom_tools_from_openapi_schema_and_headers,
 )
-from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
-from danswer.tools.custom.custom_tool import CustomToolCallSummary
-from danswer.tools.custom.custom_tool import validate_openapi_schema
-from danswer.tools.models import DynamicSchemaInfo
-from danswer.tools.tool import ToolResponse
+from enmedd.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
+from enmedd.tools.custom.custom_tool import CustomToolCallSummary
+from enmedd.tools.custom.custom_tool import validate_openapi_schema
+from enmedd.tools.models import DynamicSchemaInfo
+from enmedd.tools.tool import ToolResponse
 
 
 class TestCustomTool(unittest.TestCase):
@@ -76,7 +76,7 @@ class TestCustomTool(unittest.TestCase):
             chat_session_id=10, message_id=20
         )
 
-    @patch("danswer.tools.custom.custom_tool.requests.request")
+    @patch("enmedd.tools.custom.custom_tool.requests.request")
     def test_custom_tool_run_get(self, mock_request: unittest.mock.MagicMock) -> None:
         """
         Test the GET method of a custom tool.
@@ -104,7 +104,7 @@ class TestCustomTool(unittest.TestCase):
             "Tool name in response does not match expected value",
         )
 
-    @patch("danswer.tools.custom.custom_tool.requests.request")
+    @patch("enmedd.tools.custom.custom_tool.requests.request")
     def test_custom_tool_run_post(self, mock_request: unittest.mock.MagicMock) -> None:
         """
         Test the POST method of a custom tool.
@@ -134,7 +134,7 @@ class TestCustomTool(unittest.TestCase):
             "Tool name in response does not match expected value",
         )
 
-    @patch("danswer.tools.custom.custom_tool.requests.request")
+    @patch("enmedd.tools.custom.custom_tool.requests.request")
     def test_custom_tool_with_headers(
         self, mock_request: unittest.mock.MagicMock
     ) -> None:
@@ -162,7 +162,7 @@ class TestCustomTool(unittest.TestCase):
             "GET", expected_url, json=None, headers=expected_headers
         )
 
-    @patch("danswer.tools.custom.custom_tool.requests.request")
+    @patch("enmedd.tools.custom.custom_tool.requests.request")
     def test_custom_tool_with_empty_headers(
         self, mock_request: unittest.mock.MagicMock
     ) -> None:

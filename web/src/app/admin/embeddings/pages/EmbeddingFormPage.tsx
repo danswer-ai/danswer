@@ -22,7 +22,7 @@ import {
   SavedSearchSettings,
 } from "../interfaces";
 import RerankingDetailsForm from "../RerankingFormPage";
-import { useEmbeddingFormContext } from "@/components/context/EmbeddingContext";
+import { useEmbeddingFormContext } from "@/context/EmbeddingContext";
 import { Modal } from "@/components/Modal";
 
 export default function EmbeddingForm() {

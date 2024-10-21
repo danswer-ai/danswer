@@ -135,7 +135,6 @@ export const StandardAnswerCreationForm = ({
               )}
               <BooleanFormField
                 subtext="Match a regex pattern instead of an exact keyword"
-                optional
                 label="Match regex"
                 name="matchRegex"
               />

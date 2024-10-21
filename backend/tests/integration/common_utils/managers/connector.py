@@ -3,9 +3,9 @@ from uuid import uuid4
 
 import requests
 
-from danswer.connectors.models import InputType
-from danswer.server.documents.models import ConnectorUpdateRequest
-from danswer.server.documents.models import DocumentSource
+from enmedd.connectors.models import InputType
+from enmedd.server.documents.models import ConnectorUpdateRequest
+from enmedd.server.documents.models import DocumentSource
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.test_models import DATestConnector

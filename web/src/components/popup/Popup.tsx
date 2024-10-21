@@ -74,9 +74,7 @@ const Popup: React.FC<PopupProps> = ({
       zIndex: 10,
     };
 
-    const currentPosition = settings?.isMobile
-      ? mobilePosition || position
-      : position;
+    const currentPosition = position;
 
     switch (currentPosition) {
       case "bottom":
@@ -131,7 +129,7 @@ const Popup: React.FC<PopupProps> = ({
           ref={popupRef}
           className={`absolute bg-white border border-gray-200  rounded-lg shadow-lg ${
             !removePadding && "p-4"
-          } ${!settings?.isMobile ? (tab ? "w-[400px] " : "min-w-[400px]") : "w-[250px]"}`}
+          } w-[250px]`}
           style={getPopupStyle()}
         >
           {content(closePopup, contentRef)}

@@ -2,8 +2,8 @@ from uuid import uuid4
 
 import requests
 
-from danswer.db.models import UserRole
-from ee.danswer.server.api_key.models import APIKeyArgs
+from ee.enmedd.server.api_key.models import APIKeyArgs
+from enmedd.db.models import UserRole
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.test_models import DATestAPIKey

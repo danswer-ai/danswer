@@ -34,12 +34,18 @@ export default function OpenEmbeddingPage({
 
       <Text className="mt-6">
         Alternatively, (if you know what you&apos;re doing) you can specify a{" "}
-        <a target="_blank" href="https://www.sbert.net/" className="text-link">
+        <a
+          rel="noopener"
+          target="_blank"
+          href="https://www.sbert.net/"
+          className="text-link"
+        >
           SentenceTransformers
         </a>
         -compatible model of your choice below. The rough list of supported
         models can be found{" "}
         <a
+          rel="noopener"
           target="_blank"
           href="https://huggingface.co/models?library=sentence-transformers&sort=trending"
           className="text-link"
@@ -48,9 +54,9 @@ export default function OpenEmbeddingPage({
         </a>
         .
         <br />
-        <b>NOTE:</b> not all models listed will work with Danswer, since some
+        <b>NOTE:</b> not all models listed will work with enMedD AI, since some
         have unique interfaces or special requirements. If in doubt, reach out
-        to the Danswer team.
+        to the enMedD AI team.
       </Text>
       {!configureModel && (
         <Button onClick={() => setConfigureModel(true)} className="mt-4">

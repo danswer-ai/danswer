@@ -3,23 +3,23 @@ from uuid import uuid4
 
 import requests
 
-from ee.danswer.server.user_group.models import UserGroup
+from ee.enmedd.server.teamspace.models import Teamspace
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
+from tests.integration.common_utils.test_models import DATestTeamspace
 from tests.integration.common_utils.test_models import DATestUser
-from tests.integration.common_utils.test_models import DATestUserGroup
 
 
-class UserGroupManager:
+class TeamspaceManager:
     @staticmethod
     def create(
         name: str | None = None,
         user_ids: list[str] | None = None,
         cc_pair_ids: list[int] | None = None,
         user_performing_action: DATestUser | None = None,
-    ) -> DATestUserGroup:
-        name = f"{name}-user-group" if name else f"test-user-group-{uuid4()}"
+    ) -> DATestTeamspace:
+        name = f"{name}-teamspace" if name else f"test-teamspace-{uuid4()}"
 
         request = {
             "name": name,
@@ -27,29 +27,29 @@ class UserGroupManager:
             "cc_pair_ids": cc_pair_ids or [],
         }
         response = requests.post(
-            f"{API_SERVER_URL}/manage/admin/user-group",
+            f"{API_SERVER_URL}/manage/admin/teamspace",
             json=request,
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
-        test_user_group = DATestUserGroup(
+        test_teamspace = DATestTeamspace(
             id=response.json()["id"],
             name=response.json()["name"],
             user_ids=[user["id"] for user in response.json()["users"]],
             cc_pair_ids=[cc_pair["id"] for cc_pair in response.json()["cc_pairs"]],
         )
-        return test_user_group
+        return test_teamspace
 
     @staticmethod
     def edit(
-        user_group: DATestUserGroup,
+        teamspace: DATestTeamspace,
         user_performing_action: DATestUser | None = None,
     ) -> None:
         response = requests.patch(
-            f"{API_SERVER_URL}/manage/admin/user-group/{user_group.id}",
-            json=user_group.model_dump(),
+            f"{API_SERVER_URL}/manage/admin/teamspace/{teamspace.id}",
+            json=teamspace.model_dump(),
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
@@ -58,11 +58,11 @@ class UserGroupManager:
 
     @staticmethod
     def delete(
-        user_group: DATestUserGroup,
+        teamspace: DATestTeamspace,
         user_performing_action: DATestUser | None = None,
     ) -> None:
         response = requests.delete(
-            f"{API_SERVER_URL}/manage/admin/user-group/{user_group.id}",
+            f"{API_SERVER_URL}/manage/admin/teamspace/{teamspace.id}",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
@@ -71,7 +71,7 @@ class UserGroupManager:
 
     @staticmethod
     def set_curator_status(
-        test_user_group: DATestUserGroup,
+        test_teamspace: DATestTeamspace,
         user_to_set_as_curator: DATestUser,
         is_curator: bool = True,
         user_performing_action: DATestUser | None = None,
@@ -81,7 +81,7 @@ class UserGroupManager:
             "is_curator": is_curator,
         }
         response = requests.post(
-            f"{API_SERVER_URL}/manage/admin/user-group/{test_user_group.id}/set-curator",
+            f"{API_SERVER_URL}/manage/admin/teamspace/{test_teamspace.id}/set-curator",
             json=set_curator_request,
             headers=user_performing_action.headers
             if user_performing_action
@@ -92,60 +92,58 @@ class UserGroupManager:
     @staticmethod
     def get_all(
         user_performing_action: DATestUser | None = None,
-    ) -> list[UserGroup]:
+    ) -> list[Teamspace]:
         response = requests.get(
-            f"{API_SERVER_URL}/manage/admin/user-group",
+            f"{API_SERVER_URL}/manage/admin/teamspace",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
-        return [UserGroup(**ug) for ug in response.json()]
+        return [Teamspace(**ug) for ug in response.json()]
 
     @staticmethod
     def verify(
-        user_group: DATestUserGroup,
+        teamspace: DATestTeamspace,
         verify_deleted: bool = False,
         user_performing_action: DATestUser | None = None,
     ) -> None:
-        all_user_groups = UserGroupManager.get_all(user_performing_action)
-        for fetched_user_group in all_user_groups:
-            if user_group.id == fetched_user_group.id:
+        all_teamspaces = TeamspaceManager.get_all(user_performing_action)
+        for fetched_teamspace in all_teamspaces:
+            if teamspace.id == fetched_teamspace.id:
                 if verify_deleted:
                     raise ValueError(
-                        f"User group {user_group.id} found but should be deleted"
+                        f"User group {teamspace.id} found but should be deleted"
                     )
-                fetched_cc_ids = {cc_pair.id for cc_pair in fetched_user_group.cc_pairs}
-                fetched_user_ids = {user.id for user in fetched_user_group.users}
-                user_group_cc_ids = set(user_group.cc_pair_ids)
-                user_group_user_ids = set(user_group.user_ids)
+                fetched_cc_ids = {cc_pair.id for cc_pair in fetched_teamspace.cc_pairs}
+                fetched_user_ids = {user.id for user in fetched_teamspace.users}
+                teamspace_cc_ids = set(teamspace.cc_pair_ids)
+                teamspace_user_ids = set(teamspace.user_ids)
                 if (
-                    fetched_cc_ids == user_group_cc_ids
-                    and fetched_user_ids == user_group_user_ids
+                    fetched_cc_ids == teamspace_cc_ids
+                    and fetched_user_ids == teamspace_user_ids
                 ):
                     return
         if not verify_deleted:
-            raise ValueError(f"User group {user_group.id} not found")
+            raise ValueError(f"User group {teamspace.id} not found")
 
     @staticmethod
     def wait_for_sync(
-        user_groups_to_check: list[DATestUserGroup] | None = None,
+        teamspaces_to_check: list[DATestTeamspace] | None = None,
         user_performing_action: DATestUser | None = None,
     ) -> None:
         start = time.time()
         while True:
-            user_groups = UserGroupManager.get_all(user_performing_action)
-            if user_groups_to_check:
-                check_ids = {user_group.id for user_group in user_groups_to_check}
-                user_group_ids = {user_group.id for user_group in user_groups}
-                if not check_ids.issubset(user_group_ids):
+            teamspaces = TeamspaceManager.get_all(user_performing_action)
+            if teamspaces_to_check:
+                check_ids = {teamspace.id for teamspace in teamspaces_to_check}
+                teamspace_ids = {teamspace.id for teamspace in teamspaces}
+                if not check_ids.issubset(teamspace_ids):
                     raise RuntimeError("User group not found")
-                user_groups = [
-                    user_group
-                    for user_group in user_groups
-                    if user_group.id in check_ids
+                teamspaces = [
+                    teamspace for teamspace in teamspaces if teamspace.id in check_ids
                 ]
-            if all(ug.is_up_to_date for ug in user_groups):
+            if all(ug.is_up_to_date for ug in teamspaces):
                 return
 
             if time.time() - start > MAX_DELAY:
@@ -158,17 +156,15 @@ class UserGroupManager:
 
     @staticmethod
     def wait_for_deletion_completion(
-        user_groups_to_check: list[DATestUserGroup],
+        teamspaces_to_check: list[DATestTeamspace],
         user_performing_action: DATestUser | None = None,
     ) -> None:
         start = time.time()
-        user_group_ids_to_check = {user_group.id for user_group in user_groups_to_check}
+        teamspace_ids_to_check = {teamspace.id for teamspace in teamspaces_to_check}
         while True:
-            fetched_user_groups = UserGroupManager.get_all(user_performing_action)
-            fetched_user_group_ids = {
-                user_group.id for user_group in fetched_user_groups
-            }
-            if not user_group_ids_to_check.intersection(fetched_user_group_ids):
+            fetched_teamspaces = TeamspaceManager.get_all(user_performing_action)
+            fetched_teamspace_ids = {teamspace.id for teamspace in fetched_teamspaces}
+            if not teamspace_ids_to_check.intersection(fetched_teamspace_ids):
                 return
 
             if time.time() - start > MAX_DELAY:

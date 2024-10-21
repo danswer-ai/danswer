@@ -32,7 +32,7 @@ def run_external_teamspace_permission_sync(
 
     try:
         # This function updates:
-        # - the user_email <-> external_user_group_id mapping
+        # - the user_email <-> external_teamspace_id mapping
         # in postgres without committing
         logger.debug(f"Syncing groups for {source_type}")
         if group_sync_func is not None:
@@ -68,7 +68,7 @@ def run_external_doc_permission_sync(
     try:
         # This function updates:
         # - the user_email <-> document mapping
-        # - the external_user_group_id <-> document mapping
+        # - the external_teamspace_id <-> document mapping
         # in postgres without committing
         logger.debug(f"Syncing docs for {source_type}")
         doc_sync_func(

@@ -5,14 +5,14 @@ the permissions of the curator manipulating connector-credential pairs.
 import pytest
 from requests.exceptions import HTTPError
 
-from danswer.db.enums import AccessType
-from danswer.server.documents.models import DocumentSource
+from enmedd.db.enums import AccessType
+from enmedd.server.documents.models import DocumentSource
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.connector import ConnectorManager
 from tests.integration.common_utils.managers.credential import CredentialManager
+from tests.integration.common_utils.managers.teamspace import TeamspaceManager
 from tests.integration.common_utils.managers.user import DATestUser
 from tests.integration.common_utils.managers.user import UserManager
-from tests.integration.common_utils.managers.user_group import UserGroupManager
 
 
 def test_cc_pair_permissions(reset: None) -> None:
@@ -23,38 +23,38 @@ def test_cc_pair_permissions(reset: None) -> None:
     curator: DATestUser = UserManager.create(name="curator")
 
     # Creating a user group
-    user_group_1 = UserGroupManager.create(
-        name="curated_user_group",
+    teamspace_1 = TeamspaceManager.create(
+        name="curated_teamspace",
         user_ids=[curator.id],
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
     # setting the user as a curator for the user group
-    UserGroupManager.set_curator_status(
-        test_user_group=user_group_1,
+    TeamspaceManager.set_curator_status(
+        test_teamspace=teamspace_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
     )
 
     # Creating another user group that the user is not a curator of
-    user_group_2 = UserGroupManager.create(
-        name="uncurated_user_group",
+    teamspace_2 = TeamspaceManager.create(
+        name="uncurated_teamspace",
         user_ids=[curator.id],
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
 
     # Create a credentials that the curator is and is not curator of
     connector_1 = ConnectorManager.create(
         name="curator_owned_connector",
         source=DocumentSource.CONFLUENCE,
-        groups=[user_group_1.id],
+        groups=[teamspace_1.id],
         is_public=False,
         user_performing_action=admin_user,
     )
@@ -63,21 +63,21 @@ def test_cc_pair_permissions(reset: None) -> None:
     # connector_2 = ConnectorManager.create(
     #     name="curator_visible_connector",
     #     source=DocumentSource.CONFLUENCE,
-    #     groups=[user_group_2.id],
+    #     groups=[teamspace_2.id],
     #     is_public=False,
     #     user_performing_action=admin_user,
     # )
     credential_1 = CredentialManager.create(
         name="curator_owned_credential",
         source=DocumentSource.CONFLUENCE,
-        groups=[user_group_1.id],
+        groups=[teamspace_1.id],
         curator_public=False,
         user_performing_action=admin_user,
     )
     credential_2 = CredentialManager.create(
         name="curator_visible_credential",
         source=DocumentSource.CONFLUENCE,
-        groups=[user_group_2.id],
+        groups=[teamspace_2.id],
         curator_public=False,
         user_performing_action=admin_user,
     )
@@ -93,7 +93,7 @@ def test_cc_pair_permissions(reset: None) -> None:
             credential_id=credential_1.id,
             name="invalid_cc_pair_1",
             access_type=AccessType.PUBLIC,
-            groups=[user_group_1.id],
+            groups=[teamspace_1.id],
             user_performing_action=curator,
         )
 
@@ -105,7 +105,7 @@ def test_cc_pair_permissions(reset: None) -> None:
             credential_id=credential_1.id,
             name="invalid_cc_pair_2",
             access_type=AccessType.PRIVATE,
-            groups=[user_group_1.id, user_group_2.id],
+            groups=[teamspace_1.id, teamspace_2.id],
             user_performing_action=curator,
         )
 
@@ -131,7 +131,7 @@ def test_cc_pair_permissions(reset: None) -> None:
     #         credential_id=credential_1.id,
     #         name="invalid_cc_pair_3",
     #         access_type=AccessType.PRIVATE,
-    #         groups=[user_group_1.id],
+    #         groups=[teamspace_1.id],
     #         user_performing_action=curator,
     #     )
 
@@ -143,7 +143,7 @@ def test_cc_pair_permissions(reset: None) -> None:
             credential_id=credential_2.id,
             name="invalid_cc_pair_4",
             access_type=AccessType.PRIVATE,
-            groups=[user_group_1.id],
+            groups=[teamspace_1.id],
             user_performing_action=curator,
         )
 
@@ -156,7 +156,7 @@ def test_cc_pair_permissions(reset: None) -> None:
         connector_id=connector_1.id,
         credential_id=credential_1.id,
         access_type=AccessType.PRIVATE,
-        groups=[user_group_1.id],
+        groups=[teamspace_1.id],
         user_performing_action=curator,
     )
 

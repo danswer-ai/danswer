@@ -2,15 +2,15 @@ from uuid import uuid4
 
 import requests
 
-from danswer.search.enums import RecencyBiasSetting
-from danswer.server.features.persona.models import PersonaSnapshot
+from enmedd.search.enums import RecencyBiasSetting
+from enmedd.server.features.assistant.models import AssistantSnapshot
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.test_models import DATestPersona
+from tests.integration.common_utils.test_models import DATestAssistant
 from tests.integration.common_utils.test_models import DATestUser
 
 
-class PersonaManager:
+class AssistantManager:
     @staticmethod
     def create(
         name: str | None = None,
@@ -28,11 +28,11 @@ class PersonaManager:
         users: list[str] | None = None,
         groups: list[int] | None = None,
         user_performing_action: DATestUser | None = None,
-    ) -> DATestPersona:
-        name = name or f"test-persona-{uuid4()}"
+    ) -> DATestAssistant:
+        name = name or f"test-assistant-{uuid4()}"
         description = description or f"Description for {name}"
 
-        persona_creation_request = {
+        assistant_creation_request = {
             "name": name,
             "description": description,
             "num_chunks": num_chunks,
@@ -50,17 +50,17 @@ class PersonaManager:
         }
 
         response = requests.post(
-            f"{API_SERVER_URL}/persona",
-            json=persona_creation_request,
+            f"{API_SERVER_URL}/assistant",
+            json=assistant_creation_request,
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
-        persona_data = response.json()
+        assistant_data = response.json()
 
-        return DATestPersona(
-            id=persona_data["id"],
+        return DATestAssistant(
+            id=assistant_data["id"],
             name=name,
             description=description,
             num_chunks=num_chunks,
@@ -79,7 +79,7 @@ class PersonaManager:
 
     @staticmethod
     def edit(
-        persona: DATestPersona,
+        assistant: DATestAssistant,
         name: str | None = None,
         description: str | None = None,
         num_chunks: float | None = None,
@@ -95,118 +95,118 @@ class PersonaManager:
         users: list[str] | None = None,
         groups: list[int] | None = None,
         user_performing_action: DATestUser | None = None,
-    ) -> DATestPersona:
-        persona_update_request = {
-            "name": name or persona.name,
-            "description": description or persona.description,
-            "num_chunks": num_chunks or persona.num_chunks,
+    ) -> DATestAssistant:
+        assistant_update_request = {
+            "name": name or assistant.name,
+            "description": description or assistant.description,
+            "num_chunks": num_chunks or assistant.num_chunks,
             "llm_relevance_filter": llm_relevance_filter
-            or persona.llm_relevance_filter,
-            "is_public": is_public or persona.is_public,
+            or assistant.llm_relevance_filter,
+            "is_public": is_public or assistant.is_public,
             "llm_filter_extraction": llm_filter_extraction
-            or persona.llm_filter_extraction,
-            "recency_bias": recency_bias or persona.recency_bias,
-            "prompt_ids": prompt_ids or persona.prompt_ids,
-            "document_set_ids": document_set_ids or persona.document_set_ids,
-            "tool_ids": tool_ids or persona.tool_ids,
+            or assistant.llm_filter_extraction,
+            "recency_bias": recency_bias or assistant.recency_bias,
+            "prompt_ids": prompt_ids or assistant.prompt_ids,
+            "document_set_ids": document_set_ids or assistant.document_set_ids,
+            "tool_ids": tool_ids or assistant.tool_ids,
             "llm_model_provider_override": llm_model_provider_override
-            or persona.llm_model_provider_override,
+            or assistant.llm_model_provider_override,
             "llm_model_version_override": llm_model_version_override
-            or persona.llm_model_version_override,
-            "users": users or persona.users,
-            "groups": groups or persona.groups,
+            or assistant.llm_model_version_override,
+            "users": users or assistant.users,
+            "groups": groups or assistant.groups,
         }
 
         response = requests.patch(
-            f"{API_SERVER_URL}/persona/{persona.id}",
-            json=persona_update_request,
+            f"{API_SERVER_URL}/assistant/{assistant.id}",
+            json=assistant_update_request,
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
-        updated_persona_data = response.json()
+        updated_assistant_data = response.json()
 
-        return DATestPersona(
-            id=updated_persona_data["id"],
-            name=updated_persona_data["name"],
-            description=updated_persona_data["description"],
-            num_chunks=updated_persona_data["num_chunks"],
-            llm_relevance_filter=updated_persona_data["llm_relevance_filter"],
-            is_public=updated_persona_data["is_public"],
-            llm_filter_extraction=updated_persona_data["llm_filter_extraction"],
-            recency_bias=updated_persona_data["recency_bias"],
-            prompt_ids=updated_persona_data["prompts"],
-            document_set_ids=updated_persona_data["document_sets"],
-            tool_ids=updated_persona_data["tools"],
-            llm_model_provider_override=updated_persona_data[
+        return DATestAssistant(
+            id=updated_assistant_data["id"],
+            name=updated_assistant_data["name"],
+            description=updated_assistant_data["description"],
+            num_chunks=updated_assistant_data["num_chunks"],
+            llm_relevance_filter=updated_assistant_data["llm_relevance_filter"],
+            is_public=updated_assistant_data["is_public"],
+            llm_filter_extraction=updated_assistant_data["llm_filter_extraction"],
+            recency_bias=updated_assistant_data["recency_bias"],
+            prompt_ids=updated_assistant_data["prompts"],
+            document_set_ids=updated_assistant_data["document_sets"],
+            tool_ids=updated_assistant_data["tools"],
+            llm_model_provider_override=updated_assistant_data[
                 "llm_model_provider_override"
             ],
-            llm_model_version_override=updated_persona_data[
+            llm_model_version_override=updated_assistant_data[
                 "llm_model_version_override"
             ],
-            users=[user["email"] for user in updated_persona_data["users"]],
-            groups=updated_persona_data["groups"],
+            users=[user["email"] for user in updated_assistant_data["users"]],
+            groups=updated_assistant_data["groups"],
         )
 
     @staticmethod
     def get_all(
         user_performing_action: DATestUser | None = None,
-    ) -> list[PersonaSnapshot]:
+    ) -> list[AssistantSnapshot]:
         response = requests.get(
-            f"{API_SERVER_URL}/admin/persona",
+            f"{API_SERVER_URL}/admin/assistant",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
-        return [PersonaSnapshot(**persona) for persona in response.json()]
+        return [AssistantSnapshot(**assistant) for assistant in response.json()]
 
     @staticmethod
     def verify(
-        persona: DATestPersona,
+        assistant: DATestAssistant,
         user_performing_action: DATestUser | None = None,
     ) -> bool:
-        all_personas = PersonaManager.get_all(user_performing_action)
-        for fetched_persona in all_personas:
-            if fetched_persona.id == persona.id:
+        all_assistants = AssistantManager.get_all(user_performing_action)
+        for fetched_assistant in all_assistants:
+            if fetched_assistant.id == assistant.id:
                 return (
-                    fetched_persona.name == persona.name
-                    and fetched_persona.description == persona.description
-                    and fetched_persona.num_chunks == persona.num_chunks
-                    and fetched_persona.llm_relevance_filter
-                    == persona.llm_relevance_filter
-                    and fetched_persona.is_public == persona.is_public
-                    and fetched_persona.llm_filter_extraction
-                    == persona.llm_filter_extraction
-                    and fetched_persona.llm_model_provider_override
-                    == persona.llm_model_provider_override
-                    and fetched_persona.llm_model_version_override
-                    == persona.llm_model_version_override
-                    and set([prompt.id for prompt in fetched_persona.prompts])
-                    == set(persona.prompt_ids)
+                    fetched_assistant.name == assistant.name
+                    and fetched_assistant.description == assistant.description
+                    and fetched_assistant.num_chunks == assistant.num_chunks
+                    and fetched_assistant.llm_relevance_filter
+                    == assistant.llm_relevance_filter
+                    and fetched_assistant.is_public == assistant.is_public
+                    and fetched_assistant.llm_filter_extraction
+                    == assistant.llm_filter_extraction
+                    and fetched_assistant.llm_model_provider_override
+                    == assistant.llm_model_provider_override
+                    and fetched_assistant.llm_model_version_override
+                    == assistant.llm_model_version_override
+                    and set([prompt.id for prompt in fetched_assistant.prompts])
+                    == set(assistant.prompt_ids)
                     and set(
                         [
                             document_set.id
-                            for document_set in fetched_persona.document_sets
+                            for document_set in fetched_assistant.document_sets
                         ]
                     )
-                    == set(persona.document_set_ids)
-                    and set([tool.id for tool in fetched_persona.tools])
-                    == set(persona.tool_ids)
-                    and set(user.email for user in fetched_persona.users)
-                    == set(persona.users)
-                    and set(fetched_persona.groups) == set(persona.groups)
+                    == set(assistant.document_set_ids)
+                    and set([tool.id for tool in fetched_assistant.tools])
+                    == set(assistant.tool_ids)
+                    and set(user.email for user in fetched_assistant.users)
+                    == set(assistant.users)
+                    and set(fetched_assistant.groups) == set(assistant.groups)
                 )
         return False
 
     @staticmethod
     def delete(
-        persona: DATestPersona,
+        assistant: DATestAssistant,
         user_performing_action: DATestUser | None = None,
     ) -> bool:
         response = requests.delete(
-            f"{API_SERVER_URL}/persona/{persona.id}",
+            f"{API_SERVER_URL}/assistant/{assistant.id}",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,

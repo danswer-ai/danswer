@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { User as UserTypes } from "@/lib/types";
 import { Upload, User } from "lucide-react";
 import { UserProfile } from "@/components/UserProfile";
-import { CombinedSettings } from "@/components/settings/lib";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { CombinedSettings } from "@/app/admin/settings/interfaces";
 
 export default function ProfileTab({
   user,

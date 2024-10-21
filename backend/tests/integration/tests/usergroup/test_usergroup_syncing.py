@@ -1,13 +1,13 @@
-from danswer.server.documents.models import DocumentSource
+from enmedd.server.documents.models import DocumentSource
 from tests.integration.common_utils.constants import NUM_DOCS
 from tests.integration.common_utils.managers.api_key import APIKeyManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.document import DocumentManager
+from tests.integration.common_utils.managers.teamspace import TeamspaceManager
 from tests.integration.common_utils.managers.user import UserManager
-from tests.integration.common_utils.managers.user_group import UserGroupManager
 from tests.integration.common_utils.test_models import DATestAPIKey
+from tests.integration.common_utils.test_models import DATestTeamspace
 from tests.integration.common_utils.test_models import DATestUser
-from tests.integration.common_utils.test_models import DATestUserGroup
 from tests.integration.common_utils.vespa import vespa_fixture
 
 
@@ -44,52 +44,52 @@ def test_removing_connector(reset: None, vespa_client: vespa_fixture) -> None:
     )
 
     # Create user group
-    user_group_1: DATestUserGroup = UserGroupManager.create(
+    teamspace_1: DATestTeamspace = TeamspaceManager.create(
         cc_pair_ids=[cc_pair_1.id, cc_pair_2.id],
         user_performing_action=admin_user,
     )
 
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
 
-    UserGroupManager.verify(
-        user_group=user_group_1,
+    TeamspaceManager.verify(
+        teamspace=teamspace_1,
         user_performing_action=admin_user,
     )
 
-    # make sure cc_pair_1 docs are user_group_1 only
+    # make sure cc_pair_1 docs are teamspace_1 only
     DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_1,
-        group_names=[user_group_1.name],
+        group_names=[teamspace_1.name],
         doc_creating_user=admin_user,
     )
 
-    # make sure cc_pair_2 docs are user_group_1 only
+    # make sure cc_pair_2 docs are teamspace_1 only
     DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_2,
-        group_names=[user_group_1.name],
+        group_names=[teamspace_1.name],
         doc_creating_user=admin_user,
     )
 
     # remove cc_pair_2 from document set
-    user_group_1.cc_pair_ids = [cc_pair_1.id]
-    UserGroupManager.edit(
-        user_group_1,
+    teamspace_1.cc_pair_ids = [cc_pair_1.id]
+    TeamspaceManager.edit(
+        teamspace_1,
         user_performing_action=admin_user,
     )
 
-    UserGroupManager.wait_for_sync(
+    TeamspaceManager.wait_for_sync(
         user_performing_action=admin_user,
     )
 
-    # make sure cc_pair_1 docs are user_group_1 only
+    # make sure cc_pair_1 docs are teamspace_1 only
     DocumentManager.verify(
         vespa_client=vespa_client,
         cc_pair=cc_pair_1,
-        group_names=[user_group_1.name],
+        group_names=[teamspace_1.name],
         doc_creating_user=admin_user,
     )
 

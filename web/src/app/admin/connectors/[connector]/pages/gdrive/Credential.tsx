@@ -283,7 +283,7 @@ export const DriveJsonUploadSection = ({
           className="text-link"
           target="_blank"
           href="https://docs.danswer.dev/connectors/google_drive#authorization"
-          rel="noreferrer"
+          rel="noopener"
         >
           here
         </a>{" "}

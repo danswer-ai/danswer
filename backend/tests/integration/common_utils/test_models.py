@@ -4,11 +4,11 @@ from uuid import UUID
 from pydantic import BaseModel
 from pydantic import Field
 
-from danswer.auth.schemas import UserRole
-from danswer.db.enums import AccessType
-from danswer.search.enums import RecencyBiasSetting
-from danswer.server.documents.models import DocumentSource
-from danswer.server.documents.models import InputType
+from enmedd.auth.schemas import UserRole
+from enmedd.db.enums import AccessType
+from enmedd.search.enums import RecencyBiasSetting
+from enmedd.server.documents.models import DocumentSource
+from enmedd.server.documents.models import InputType
 
 """
 These data models are used to represent the data on the testing side of things.
@@ -73,7 +73,7 @@ class DATestCCPair(BaseModel):
     documents: list[SimpleTestDocument] = Field(default_factory=list)
 
 
-class DATestUserGroup(BaseModel):
+class DATestTeamspace(BaseModel):
     id: int
     name: str
     user_ids: list[str]
@@ -103,7 +103,7 @@ class DATestDocumentSet(BaseModel):
     groups: list[int] = Field(default_factory=list)
 
 
-class DATestPersona(BaseModel):
+class DATestAssistant(BaseModel):
     id: int
     name: str
     description: str
@@ -124,7 +124,7 @@ class DATestPersona(BaseModel):
 #
 class DATestChatSession(BaseModel):
     id: int
-    persona_id: int
+    assistant_id: int
     description: str
 
 

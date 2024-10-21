@@ -14,7 +14,7 @@ export const ConnectorEditor: React.FC<ConnectorEditorProps> = ({
   setSetCCPairIds,
 }) => {
   const items = allCCPairs
-    .filter((ccPair) => ccPair.public_doc)
+    .filter((ccPair) => ccPair.access_type == "public")
     .map((ccPair) => ({
       value: ccPair.cc_pair_id.toString(),
       label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,

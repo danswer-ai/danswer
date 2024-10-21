@@ -105,7 +105,7 @@ async function* sendMessage({
         },
         body: JSON.stringify({
           // or specify an assistant you have defined
-          persona_id: 0,
+          assistant_id: 0,
         }),
       },
     );

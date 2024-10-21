@@ -104,6 +104,7 @@ class ChatSessionSnapshot(BaseModel):
     assistant_name: str
     time_created: datetime
     teamspace: list[MinimalTeamspaceSnapshot] | None
+    flow_type: SessionType
 
 
 class QuestionAnswerPairSnapshot(BaseModel):
@@ -174,13 +175,7 @@ class QuestionAnswerPairSnapshot(BaseModel):
 
 
 def determine_flow_type(chat_session: ChatSession) -> SessionType:
-    return (
-        SessionType.SLACK
-        if chat_session.danswerbot_flow
-        else SessionType.SEARCH
-        if chat_session.one_shot
-        else SessionType.CHAT
-    )
+    return SessionType.SEARCH if chat_session.one_shot else SessionType.CHAT
 
 
 def fetch_and_process_chat_session_history_minimal(
@@ -328,6 +323,7 @@ def snapshot_from_chat_session(
         assistant_name=chat_session.assistant.name if chat_session.assistant else None,
         time_created=chat_session.time_created,
         flow_type=flow_type,
+        teamspace=chat_session.groups if chat_session.groups else None,
     )
 
 

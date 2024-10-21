@@ -48,10 +48,6 @@ export interface ProductboardCredentialJson {
   productboard_access_token: string;
 }
 
-export interface SlackCredentialJson {
-  slack_bot_token: string;
-}
-
 export interface GmailCredentialJson {
   gmail_tokens: string;
 }
@@ -195,7 +191,6 @@ export const credentialTemplates: Record<ValidSources, any> = {
     gitlab_url: "",
     gitlab_access_token: "",
   } as GitlabCredentialJson,
-  slack: { slack_bot_token: "" } as SlackCredentialJson,
   bookstack: {
     bookstack_base_url: "",
     bookstack_api_token_id: "",
@@ -301,6 +296,7 @@ export const credentialTemplates: Record<ValidSources, any> = {
   // NOTE: These are Special Cases
   google_drive: { google_drive_tokens: "" } as GoogleDriveCredentialJson,
   gmail: { gmail_tokens: "" } as GmailCredentialJson,
+  google_sheets: null,
 };
 
 export const credentialDisplayNames: Record<string, string> = {
@@ -326,9 +322,6 @@ export const credentialDisplayNames: Record<string, string> = {
 
   // Productboard
   productboard_access_token: "Productboard Access Token",
-
-  // Slack
-  slack_bot_token: "Slack Bot Token",
 
   // Gmail
   gmail_tokens: "Gmail Tokens",

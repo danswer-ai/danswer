@@ -155,3 +155,7 @@ class AllUsersResponse(BaseModel):
     invited: list[InvitedUserSnapshot]
     accepted_pages: int
     invited_pages: int
+
+
+class OTPVerificationRequest(BaseModel):
+    otp_code: str

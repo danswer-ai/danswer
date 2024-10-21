@@ -206,7 +206,6 @@ def setup_postgres(db_session: Session) -> None:
     load_builtin_tools(db_session)
     refresh_built_in_tools_cache(db_session)
     auto_add_search_tool_to_assistants(db_session)
-
     if GEN_AI_API_KEY and fetch_default_provider(db_session) is None:
         # Only for dev flows
         logger.notice("Setting up default OpenAI LLM for dev.")

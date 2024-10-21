@@ -111,7 +111,7 @@ def get_google_drive_creds(
             scopes=scopes,
         )
 
-        # "Impersonate" a user if one is specified
+        # "Imassistantte" a user if one is specified
         delegated_user_email = cast(
             str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
         )

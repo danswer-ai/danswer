@@ -24,7 +24,7 @@ interface ChatContextProps {
   refreshChatSessions: () => Promise<void>;
 }
 
-const ChatContext = createContext<ChatContextProps | undefined>(undefined);
+export const ChatContext = createContext<ChatContextProps | null>(null);
 
 // We use Omit to exclude 'refreshChatSessions' from the value prop type
 // because we're defining it within the component

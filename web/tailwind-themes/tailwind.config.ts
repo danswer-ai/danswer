@@ -20,7 +20,30 @@ const config = {
       fontFamily: {
         sans: ["var(--font-sans)"],
       },
+      fontWeight: {
+        description: "375",
+        "token-bold": "bold",
+      },
+      fontStyle: {
+        "token-italic": "italic",
+      },
+      fontSize: {
+        "code-sm": "small",
+      },
       colors: {
+        // code styling
+        "code-bg": "var(--black)",
+        "code-text": "var(--code-text)",
+        "token-comment": "var(--token-comment)",
+        "token-punctuation": "var(--token-punctuation)",
+        "token-property": "var(--token-property)",
+        "token-selector": "var(--token-selector)",
+        "token-atrule": "var(--token-atrule)",
+        "token-function": "var(--token-function)",
+        "token-regex": "var(--token-regex)",
+        "token-attr-name": "var(--token-attr-name)",
+        "non-selectable": "var(--non-selectable)",
+
         input: "hsl(var(--input))",
         "input-colored": "#8DBAFF",
         ring: "hsl(var(--ring))",

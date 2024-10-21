@@ -2,7 +2,7 @@
 
 import { ConfigurableSources, ValidSources } from "@/lib/types";
 import AddConnector from "./AddConnectorPage";
-import { FormProvider } from "@/components/context/FormContext";
+import { FormProvider } from "@/context/FormContext";
 import Sidebar from "./Sidebar";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Button } from "@tremor/react";

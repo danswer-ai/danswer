@@ -8,7 +8,7 @@ import { Card, Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { useFormContext } from "@/components/context/FormContext";
+import { useFormContext } from "@/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
 import { useState } from "react";
@@ -353,7 +353,6 @@ export default function AddConnector({
             </div>
 
             <AdminPageTitle
-              includeDivider={false}
               icon={<SourceIcon iconSize={32} sourceType={connector} />}
               title={displayName}
             />

@@ -2,18 +2,18 @@ from datetime import datetime
 
 import pytest
 
-from danswer.chat.models import CitationInfo
-from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import LlmDoc
-from danswer.configs.constants import DocumentSource
-from danswer.llm.answering.stream_processing.citation_processing import (
+from enmedd.chat.models import AnswerPiece
+from enmedd.chat.models import CitationInfo
+from enmedd.chat.models import LlmDoc
+from enmedd.configs.constants import DocumentSource
+from enmedd.llm.answering.stream_processing.citation_processing import (
     extract_citations_from_stream,
 )
-from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
+from enmedd.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 
 
 """
-This module contains tests for the citation extraction functionality in Danswer.
+This module contains tests for the citation extraction functionality in enMedD AI.
 
 The tests focus on the `extract_citations_from_stream` function, which processes
 a stream of tokens and extracts citations, replacing them with properly formatted
@@ -81,7 +81,7 @@ def process_text(
     final_answer_text = ""
     citations = []
     for piece in result:
-        if isinstance(piece, DanswerAnswerPiece):
+        if isinstance(piece, AnswerPiece):
             final_answer_text += piece.answer_piece or ""
         elif isinstance(piece, CitationInfo):
             citations.append(piece)

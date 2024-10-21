@@ -1,16 +1,16 @@
 import requests
 from retry import retry
 
-from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import MessageType
-from danswer.connectors.models import InputType
-from danswer.db.enums import IndexingStatus
-from danswer.one_shot_answer.models import DirectQARequest
-from danswer.one_shot_answer.models import ThreadMessage
-from danswer.search.models import IndexFilters
-from danswer.search.models import OptionalSearchSetting
-from danswer.search.models import RetrievalDetails
-from danswer.server.documents.models import ConnectorBase
+from enmedd.configs.constants import DocumentSource
+from enmedd.configs.constants import MessageType
+from enmedd.connectors.models import InputType
+from enmedd.db.enums import IndexingStatus
+from enmedd.one_shot_answer.models import DirectQARequest
+from enmedd.one_shot_answer.models import ThreadMessage
+from enmedd.search.models import IndexFilters
+from enmedd.search.models import OptionalSearchSetting
+from enmedd.search.models import RetrievalDetails
+from enmedd.server.documents.models import ConnectorBase
 from tests.regression.answer_quality.cli_utils import get_api_server_host_port
 
 GENERAL_HEADERS = {"Content-Type": "application/json"}
@@ -40,7 +40,7 @@ def get_answer_from_query(
     new_message_request = DirectQARequest(
         messages=messages,
         prompt_id=0,
-        persona_id=0,
+        assistant_id=0,
         retrieval_options=RetrievalDetails(
             run_search=OptionalSearchSetting.ALWAYS,
             real_time=True,

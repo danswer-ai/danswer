@@ -2,17 +2,18 @@ import threading
 from typing import Optional
 
 import redis
-from danswer.configs.app_configs import REDIS_DB_NUMBER
-from danswer.configs.app_configs import REDIS_HEALTH_CHECK_INTERVAL
-from danswer.configs.app_configs import REDIS_HOST
-from danswer.configs.app_configs import REDIS_PASSWORD
-from danswer.configs.app_configs import REDIS_POOL_MAX_CONNECTIONS
-from danswer.configs.app_configs import REDIS_PORT
-from danswer.configs.app_configs import REDIS_SSL
-from danswer.configs.app_configs import REDIS_SSL_CA_CERTS
-from danswer.configs.app_configs import REDIS_SSL_CERT_REQS
-from danswer.configs.constants import REDIS_SOCKET_KEEPALIVE_OPTIONS
 from redis.client import Redis
+
+from enmedd.configs.app_configs import REDIS_DB_NUMBER
+from enmedd.configs.app_configs import REDIS_HEALTH_CHECK_INTERVAL
+from enmedd.configs.app_configs import REDIS_HOST
+from enmedd.configs.app_configs import REDIS_PASSWORD
+from enmedd.configs.app_configs import REDIS_POOL_MAX_CONNECTIONS
+from enmedd.configs.app_configs import REDIS_PORT
+from enmedd.configs.app_configs import REDIS_SSL
+from enmedd.configs.app_configs import REDIS_SSL_CA_CERTS
+from enmedd.configs.app_configs import REDIS_SSL_CERT_REQS
+from enmedd.configs.constants import REDIS_SOCKET_KEEPALIVE_OPTIONS
 
 
 class RedisPool:

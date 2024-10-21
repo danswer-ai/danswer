@@ -39,9 +39,9 @@ fi
 # Start the Redis container with optional volume
 echo "Starting Redis container..."
 if [[ -n "$REDIS_VOLUME" ]]; then
-    docker run --detach --name danswer_redis --publish 6379:6379 -v $REDIS_VOLUME:/data redis
+    docker run --detach --name enmedd_redis --publish 6379:6379 -v $REDIS_VOLUME:/data redis
 else
-    docker run --detach --name danswer_redis --publish 6379:6379 redis
+    docker run --detach --name enmedd_redis --publish 6379:6379 redis
 fi
 
 # Ensure alembic runs in the correct directory

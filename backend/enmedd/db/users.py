@@ -60,7 +60,6 @@ def _generate_non_web_user(email: str) -> User:
     return User(
         email=email,
         hashed_password=hashed_pass,
-        has_web_login=False,
         role=UserRole.BASIC,
     )
 

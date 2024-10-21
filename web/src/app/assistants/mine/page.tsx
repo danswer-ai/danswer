@@ -34,6 +34,7 @@ export default async function GalleryPage({
     folders,
     openedFolders,
     shouldShowWelcomeModal,
+    userInputPrompts,
   } = data;
 
   return (
@@ -50,6 +51,7 @@ export default async function GalleryPage({
           llmProviders,
           folders,
           openedFolders,
+          userInputPrompts,
         }}
       >
         <div className="relative flex h-full overflow-x-hidden bg-background">

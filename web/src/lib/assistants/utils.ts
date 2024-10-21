@@ -1,28 +1,31 @@
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 import { User } from "../types";
 import { checkUserIsNoAuthUser } from "../user";
 
-export function checkUserOwnsAssistant(user: User | null, assistant: Persona) {
+export function checkUserOwnsAssistant(
+  user: User | null,
+  assistant: Assistant
+) {
   return checkUserIdOwnsAssistant(user?.id, assistant);
 }
 
 export function checkUserIdOwnsAssistant(
   userId: string | undefined,
-  assistant: Persona
+  assistant: Assistant
 ) {
   return (
     (!userId ||
       checkUserIsNoAuthUser(userId) ||
       assistant.owner?.id === userId) &&
-    !assistant.is_default_persona
+    !assistant.is_default_assistant
   );
 }
 
-export function classifyAssistants(user: User | null, assistants: Persona[]) {
+export function classifyAssistants(user: User | null, assistants: Assistant[]) {
   if (!user) {
     return {
       visibleAssistants: assistants.filter(
-        (assistant) => assistant.is_default_persona
+        (assistant) => assistant.is_default_assistant
       ),
       hiddenAssistants: [],
     };
@@ -38,8 +41,8 @@ export function classifyAssistants(user: User | null, assistants: Persona[]) {
     const isSelected = user.preferences?.chosen_assistants?.includes(
       assistant.id
     );
-    const isBuiltIn = assistant.builtin_persona;
-    const isDefault = assistant.is_default_persona;
+    const isBuiltIn = assistant.builtin_assistant;
+    const isDefault = assistant.is_default_assistant;
 
     const isOwnedByUser = checkUserOwnsAssistant(user, assistant);
 
@@ -60,7 +63,7 @@ export function classifyAssistants(user: User | null, assistants: Persona[]) {
 }
 
 export function orderAssistantsForUser(
-  assistants: Persona[],
+  assistants: Assistant[],
   user: User | null
 ) {
   let orderedAssistants = [...assistants];
@@ -112,7 +115,7 @@ export function orderAssistantsForUser(
 
 export function getUserCreatedAssistants(
   user: User | null,
-  assistants: Persona[]
+  assistants: Assistant[]
 ) {
   return assistants.filter((assistant) =>
     checkUserOwnsAssistant(user, assistant)

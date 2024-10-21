@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pytest
 from requests import HTTPError
 
-from danswer.connectors.confluence.rate_limit_handler import (
+from enmedd.connectors.confluence.rate_limit_handler import (
     make_confluence_call_handle_rate_limit,
 )
 

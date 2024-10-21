@@ -6,26 +6,26 @@ This tests the deletion of a user group with the following foreign key constrain
 - llm_provider
 - document_set
 - token_rate_limit (Not Implemented)
-- persona
+- assistant
 """
-from danswer.server.documents.models import DocumentSource
+from enmedd.server.documents.models import DocumentSource
+from tests.integration.common_utils.managers.assistant import AssistantManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.credential import CredentialManager
 from tests.integration.common_utils.managers.document_set import DocumentSetManager
 from tests.integration.common_utils.managers.llm_provider import LLMProviderManager
-from tests.integration.common_utils.managers.persona import PersonaManager
+from tests.integration.common_utils.managers.teamspace import TeamspaceManager
 from tests.integration.common_utils.managers.user import UserManager
-from tests.integration.common_utils.managers.user_group import UserGroupManager
+from tests.integration.common_utils.test_models import DATestAssistant
 from tests.integration.common_utils.test_models import DATestCredential
 from tests.integration.common_utils.test_models import DATestDocumentSet
 from tests.integration.common_utils.test_models import DATestLLMProvider
-from tests.integration.common_utils.test_models import DATestPersona
+from tests.integration.common_utils.test_models import DATestTeamspace
 from tests.integration.common_utils.test_models import DATestUser
-from tests.integration.common_utils.test_models import DATestUserGroup
 from tests.integration.common_utils.vespa import vespa_fixture
 
 
-def test_user_group_deletion(reset: None, vespa_client: vespa_fixture) -> None:
+def test_teamspace_deletion(reset: None, vespa_client: vespa_fixture) -> None:
     # Creating an admin user (first user created is automatically an admin)
     admin_user: DATestUser = UserManager.create(name="admin_user")
 
@@ -36,18 +36,18 @@ def test_user_group_deletion(reset: None, vespa_client: vespa_fixture) -> None:
     )
 
     # Create user group with a cc_pair and a user
-    user_group: DATestUserGroup = UserGroupManager.create(
+    teamspace: DATestTeamspace = TeamspaceManager.create(
         user_ids=[admin_user.id],
         cc_pair_ids=[cc_pair.id],
         user_performing_action=admin_user,
     )
-    cc_pair.groups = [user_group.id]
+    cc_pair.groups = [teamspace.id]
 
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace], user_performing_action=admin_user
     )
-    UserGroupManager.verify(
-        user_group=user_group,
+    TeamspaceManager.verify(
+        teamspace=teamspace,
         user_performing_action=admin_user,
     )
     CCPairManager.verify(
@@ -57,46 +57,46 @@ def test_user_group_deletion(reset: None, vespa_client: vespa_fixture) -> None:
 
     # Create other objects that are related to the user group
     credential: DATestCredential = CredentialManager.create(
-        groups=[user_group.id],
+        groups=[teamspace.id],
         user_performing_action=admin_user,
     )
     document_set: DATestDocumentSet = DocumentSetManager.create(
         cc_pair_ids=[cc_pair.id],
-        groups=[user_group.id],
+        groups=[teamspace.id],
         user_performing_action=admin_user,
     )
     llm_provider: DATestLLMProvider = LLMProviderManager.create(
-        groups=[user_group.id],
+        groups=[teamspace.id],
         user_performing_action=admin_user,
     )
-    persona: DATestPersona = PersonaManager.create(
-        groups=[user_group.id],
+    assistant: DATestAssistant = AssistantManager.create(
+        groups=[teamspace.id],
         user_performing_action=admin_user,
     )
 
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace], user_performing_action=admin_user
     )
-    UserGroupManager.verify(
-        user_group=user_group,
+    TeamspaceManager.verify(
+        teamspace=teamspace,
         user_performing_action=admin_user,
     )
 
     # Delete the user group
-    UserGroupManager.delete(
-        user_group=user_group,
+    TeamspaceManager.delete(
+        teamspace=teamspace,
         user_performing_action=admin_user,
     )
 
-    UserGroupManager.wait_for_deletion_completion(
-        user_groups_to_check=[user_group], user_performing_action=admin_user
+    TeamspaceManager.wait_for_deletion_completion(
+        teamspaces_to_check=[teamspace], user_performing_action=admin_user
     )
 
     # Set our expected local representations to empty
     credential.groups = []
     document_set.groups = []
     llm_provider.groups = []
-    persona.groups = []
+    assistant.groups = []
 
     # Verify that the local representations were updated
     CredentialManager.verify(
@@ -114,7 +114,7 @@ def test_user_group_deletion(reset: None, vespa_client: vespa_fixture) -> None:
         user_performing_action=admin_user,
     )
 
-    PersonaManager.verify(
-        persona=persona,
+    AssistantManager.verify(
+        assistant=assistant,
         user_performing_action=admin_user,
     )

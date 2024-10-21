@@ -13,15 +13,15 @@ from enmedd.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
+def monitor_teamspace_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
     """This function is likely to move in the worker refactor happening next."""
     key = key_bytes.decode("utf-8")
-    usergroup_id = RedisTeamspace.get_id_from_fence_key(key)
-    if not usergroup_id:
-        task_logger.warning("Could not parse usergroup id from {key}")
+    teamspace_id = RedisTeamspace.get_id_from_fence_key(key)
+    if not teamspace_id:
+        task_logger.warning("Could not parse teamspace id from {key}")
         return
 
-    rug = RedisTeamspace(usergroup_id)
+    rug = RedisTeamspace(teamspace_id)
     fence_value = r.get(rug.fence_key)
     if fence_value is None:
         return
@@ -34,19 +34,19 @@ def monitor_usergroup_taskset(key_bytes: bytes, r: Redis, db_session: Session) -
 
     count = cast(int, r.scard(rug.taskset_key))
     task_logger.info(
-        f"User group sync progress: usergroup_id={usergroup_id} remaining={count} initial={initial_count}"
+        f"User group sync progress: teamspace_id={teamspace_id} remaining={count} initial={initial_count}"
     )
     if count > 0:
         return
 
-    teamspace = fetch_teamspace(db_session=db_session, teamspace_id=usergroup_id)
+    teamspace = fetch_teamspace(db_session=db_session, teamspace_id=teamspace_id)
     if teamspace:
         if teamspace.is_up_for_deletion:
             delete_teamspace(db_session=db_session, teamspace=teamspace)
-            task_logger.info(f"Deleted usergroup. id='{usergroup_id}'")
+            task_logger.info(f"Deleted teamspace. id='{teamspace_id}'")
         else:
             mark_teamspace_as_synced(db_session=db_session, teamspace=teamspace)
-            task_logger.info(f"Synced usergroup. id='{usergroup_id}'")
+            task_logger.info(f"Synced teamspace. id='{teamspace_id}'")
 
     r.delete(rug.taskset_key)
     r.delete(rug.fence_key)

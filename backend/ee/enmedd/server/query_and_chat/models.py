@@ -15,7 +15,6 @@ from enmedd.server.models import MinimalTeamspaceSnapshot
 
 class StandardAnswerRequest(BaseModel):
     message: str
-    slack_bot_categories: list[str]
 
 
 class StandardAnswerResponse(BaseModel):

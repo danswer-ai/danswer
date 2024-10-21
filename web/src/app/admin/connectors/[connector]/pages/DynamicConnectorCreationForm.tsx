@@ -44,7 +44,6 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
             <div key={field.name}>
               {field.type == "file" ? (
                 <FileUpload
-                  name={field.name}
                   selectedFiles={selectedFiles}
                   setSelectedFiles={setSelectedFiles}
                 />

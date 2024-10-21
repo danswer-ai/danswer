@@ -158,7 +158,6 @@ export const FullSearchBar = ({
           overscroll-contain
           outline-none
           placeholder-subtle
-          resize-none
           pl-4
           pr-12
           max-h-[6em]
@@ -179,20 +178,6 @@ export const FullSearchBar = ({
       <div
         className={`flex flex-nowrap overflow-y-hidden "2xl:justify-end" justify-between 4xl:justify-end w-full max-w-full items-center space-x-3 py-3 px-4`}
       >
-        <div
-          className={`-my-1 overflow-x-scroll flex-grow 4xl:hidden "2xl:hidden"`}
-        >
-          {(ccPairs.length > 0 || documentSets.length > 0) && (
-            <HorizontalSourceSelector
-              isHorizontal
-              {...filterManager}
-              showDocSidebar={false}
-              availableDocumentSets={finalAvailableDocumentSets}
-              existingSources={finalAvailableSources}
-              availableTags={tags}
-            />
-          )}
-        </div>
         <div className="flex-shrink-0 flex items-center my-auto gap-x-3">
           {toggleAgentic && (
             <AnimatedToggle isOn={agentic!} handleToggle={toggleAgentic} />

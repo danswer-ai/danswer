@@ -38,7 +38,6 @@ export default async function Page({
     userInputPrompts,
     shouldDisplaySourcesIncompleteModal,
   } = data;
-
   return (
     <>
       <InstantSSRAutoRefresh />

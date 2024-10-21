@@ -10,6 +10,8 @@ import { BackendChatSession } from "../../interfaces";
 import { SharedChatDisplay } from "./SharedChatDisplay";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { ChatProvider } from "@/context/ChatContext";
+import { Assistant } from "@/app/admin/assistants/interfaces";
+import { fetchAssistantsSS } from "@/lib/assistants/fetchAssistantsSS";
 
 async function getSharedChat(chatId: string) {
   const response = await fetchSS(
@@ -38,6 +40,7 @@ export default async function Page({ params }: { params: { chatId: string } }) {
     folders,
     openedFolders,
     shouldShowWelcomeModal,
+    userInputPrompts,
   } = data;
 
   const tasks = [
@@ -50,8 +53,12 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
   // will not render
-  let results: (User | AuthTypeMetadata | [Persona[], string | null] | null)[] =
-    [null, null, null];
+  let results: (
+    | User
+    | AuthTypeMetadata
+    | [Assistant[], string | null]
+    | null
+  )[] = [null, null, null];
   try {
     results = await Promise.all(tasks);
   } catch (e) {
@@ -60,7 +67,7 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
   const user = results[1] as User | null;
   const chatSession = results[2] as BackendChatSession | null;
-  const [availableAssistants, _] = results[3] as [Persona[], string | null];
+  const [availableAssistants, _] = results[3] as [Assistant[], string | null];
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -82,6 +89,7 @@ export default async function Page({ params }: { params: { chatId: string } }) {
         llmProviders,
         folders,
         openedFolders,
+        userInputPrompts,
       }}
     >
       <div className="flex relative bg-background overflow-hidden h-full">

@@ -1,5 +1,8 @@
+import random
 import re
+import string
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 
 from email_validator import validate_email
@@ -8,11 +11,14 @@ from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import status
+from fastapi_users.password import PasswordHelper
 from pydantic import BaseModel
 from sqlalchemy import Column
+from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import select
 from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from ee.enmedd.db.api_key import is_api_key_email_address
@@ -22,27 +28,34 @@ from enmedd.auth.invited_users import get_invited_users
 from enmedd.auth.invited_users import write_invited_users
 from enmedd.auth.noauth_user import fetch_no_auth_user
 from enmedd.auth.noauth_user import set_no_auth_user_preferences
+from enmedd.auth.schemas import ChangePassword
 from enmedd.auth.schemas import UserRole
 from enmedd.auth.schemas import UserStatus
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_curator_or_admin_user
 from enmedd.auth.users import current_user
 from enmedd.auth.users import optional_user
+from enmedd.auth.utils import generate_2fa_email
+from enmedd.auth.utils import send_2fa_email
 from enmedd.configs.app_configs import AUTH_TYPE
 from enmedd.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from enmedd.configs.app_configs import VALID_EMAIL_DOMAINS
 from enmedd.configs.constants import AuthType
+from enmedd.db.engine import get_async_session
 from enmedd.db.engine import get_session
 from enmedd.db.models import AccessToken
 from enmedd.db.models import Assistant__User
 from enmedd.db.models import DocumentSet__User
 from enmedd.db.models import SamlAccount
+from enmedd.db.models import TwofactorAuth
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
+from enmedd.db.users import change_user_password
 from enmedd.db.users import get_user_by_email
 from enmedd.db.users import list_users
 from enmedd.key_value_store.factory import get_kv_store
 from enmedd.server.manage.models import AllUsersResponse
+from enmedd.server.manage.models import OTPVerificationRequest
 from enmedd.server.manage.models import UserByEmail
 from enmedd.server.manage.models import UserInfo
 from enmedd.server.manage.models import UserPreferences
@@ -59,6 +72,90 @@ router = APIRouter()
 
 
 USERS_PAGE_SIZE = 10
+
+
+@router.patch("/users/generate-otp")
+async def generate_otp(
+    current_user: User = Depends(current_user),
+    db: Session = Depends(get_session),
+):
+    otp_code = "".join(random.choices(string.digits, k=6))
+
+    subject, body = generate_2fa_email(current_user.full_name, otp_code)
+    send_2fa_email(current_user.email, subject, body)
+
+    existing_otp = (
+        db.query(TwofactorAuth).filter(TwofactorAuth.user_id == current_user.id).first()
+    )
+
+    if existing_otp:
+        existing_otp.code = otp_code
+        existing_otp.created_at = datetime.now(timezone.utc)
+    else:
+        new_otp = TwofactorAuth(user_id=current_user.id, code=otp_code)
+        db.add(new_otp)
+
+    db.commit()
+
+    return {"message": "OTP code generated and sent!"}
+
+
+@router.post("/users/verify-otp")
+async def verify_otp(
+    otp_code: OTPVerificationRequest,
+    current_user: User = Depends(current_user),
+    db: Session = Depends(get_session),
+):
+    otp_code = otp_code.otp_code
+
+    otp_entry = (
+        db.query(TwofactorAuth)
+        .filter(TwofactorAuth.user_id == current_user.id)
+        .order_by(TwofactorAuth.created_at.desc())
+        .first()
+    )
+
+    if not otp_entry:
+        raise HTTPException(status_code=400, detail="No OTP found for the user.")
+
+    if otp_entry.code != otp_code:
+        raise HTTPException(status_code=400, detail="Invalid OTP code.")
+
+    expiration_time = otp_entry.created_at + timedelta(hours=6)
+    if datetime.now(timezone.utc) > expiration_time:
+        raise HTTPException(status_code=400, detail="OTP code has expired.")
+
+    return {"message": "OTP verified successfully!"}
+
+
+@router.post("/users/change-password", tags=["users"])
+async def change_password(
+    request: ChangePassword,
+    current_user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+    async_session: AsyncSession = Depends(get_async_session),
+):
+    password_helper = PasswordHelper()
+    verified, updated_hashed_password = password_helper.verify_and_update(
+        hashed_password=current_user.hashed_password,
+        plain_password=request.current_password,
+    )
+    if not verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+    hashed_new_password = password_helper.hash(password=request.new_password)
+    change_user_password(
+        user_id=current_user.id, new_password=hashed_new_password, db_session=db_session
+    )
+    # clear all the access token for that user - automatically logging out
+    # the current user on all devices
+    await async_session.execute(
+        delete(AccessToken).where(AccessToken.user_id == current_user.id)
+    )
+    await async_session.commit()
+    logger.info("Password updated and tokens invalidated")
 
 
 @router.patch("/manage/set-user-role")
@@ -133,6 +230,12 @@ def list_all_users(
                     status=(
                         UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED
                     ),
+                    full_name=user.full_name,
+                    billing_email_address=user.billing_email_address,
+                    company_billing=user.company_billing,
+                    company_email=user.company_email,
+                    company_name=user.company_name,
+                    vat=user.vat,
                 )
                 for user in users
             ],
@@ -148,6 +251,12 @@ def list_all_users(
                 id=user.id,
                 email=user.email,
                 role=user.role,
+                full_name=user.full_name,
+                billing_email_address=user.billing_email_address,
+                company_billing=user.company_billing,
+                company_email=user.company_email,
+                company_name=user.company_name,
+                vat=user.vat,
                 status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
             )
             for user in users

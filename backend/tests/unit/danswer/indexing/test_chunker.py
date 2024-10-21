@@ -1,11 +1,11 @@
 import pytest
 
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.models import Document
-from danswer.connectors.models import Section
-from danswer.indexing.chunker import Chunker
-from danswer.indexing.embedder import DefaultIndexingEmbedder
-from tests.unit.danswer.indexing.conftest import MockHeartbeat
+from enmedd.configs.constants import DocumentSource
+from enmedd.connectors.models import Document
+from enmedd.connectors.models import Section
+from enmedd.indexing.chunker import Chunker
+from enmedd.indexing.embedder import DefaultIndexingEmbedder
+from tests.unit.enmedd.indexing.conftest import MockHeartbeat
 
 
 @pytest.fixture

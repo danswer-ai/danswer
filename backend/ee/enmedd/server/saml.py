@@ -64,7 +64,6 @@ async def upsert_saml_user(email: str) -> User:
                         password=hashed_pass,
                         is_verified=True,
                         role=role,
-                        has_web_login=True,
                     )
                 )
 

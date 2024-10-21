@@ -143,7 +143,7 @@ def get_answer_with_quote(
             is_for_edit=False,
         )
     else:
-        raise KeyError("Must provide assistant ID or Persona Config")
+        raise KeyError("Must provide assistant ID or Assistant Config")
 
     llm = get_main_llm_from_tuple(
         get_default_llms() if not assistant else get_llms_for_assistant(assistant)

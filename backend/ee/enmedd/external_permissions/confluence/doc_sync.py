@@ -59,7 +59,7 @@ def _get_space_permissions(
     )
     return ExternalAccess(
         external_user_emails=user_emails,
-        external_user_group_ids=group_names,
+        external_teamspace_ids=group_names,
         is_public=is_externally_public,
     )
 
@@ -93,7 +93,7 @@ def _get_restrictions_for_page(
         )
         external_access = ExternalAccess(
             external_user_emails=set(read_access_user_emails),
-            external_user_group_ids=set(read_access_groups),
+            external_teamspace_ids=set(read_access_groups),
             is_public=False,
         )
     else:

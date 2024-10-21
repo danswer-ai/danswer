@@ -44,7 +44,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const combinedSettings = await fetchSettingsSS();
-
   if (!combinedSettings) {
     // Just display a simple full page error if fetching fails.
 

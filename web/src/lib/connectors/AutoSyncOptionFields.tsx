@@ -20,6 +20,7 @@ export const autoSyncConfigBySource: Record<
           The unique identifier for your Google Workspace account. To find this,
           checkout the{" "}
           <a
+            rel="noopener"
             href="https://support.google.com/cloudidentity/answer/10070793"
             target="_blank"
             className="text-link"
@@ -38,11 +39,10 @@ export const autoSyncConfigBySource: Record<
           <br />
           <br />
           For example, if your email provided through Google Workspace looks
-          something like chris@danswer.ai, then your company domain is{" "}
-          <b>danswer.ai</b>
+          something like marvie@enmedd.ai, then your company domain is{" "}
+          <b>enmedd.ai</b>
         </>
       ),
     },
   },
-  slack: {},
 };

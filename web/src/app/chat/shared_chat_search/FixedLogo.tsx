@@ -3,7 +3,7 @@
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
+import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED } from "@/lib/constants";
 import Link from "next/link";
 import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
@@ -11,7 +11,7 @@ import { FiSidebar } from "react-icons/fi";
 export default function FixedLogo() {
   const combinedSettings = useContext(SettingsContext);
   const settings = combinedSettings?.settings;
-  const enterpriseSettings = combinedSettings?.enterpriseSettings;
+  const enterpriseSettings = combinedSettings?.workspaces;
 
   return (
     <>
@@ -26,15 +26,15 @@ export default function FixedLogo() {
             <Logo height={24} width={24} />
           </div>
           <div className="w-full">
-            {enterpriseSettings && enterpriseSettings.application_name ? (
+            {enterpriseSettings && enterpriseSettings.workspace_name ? (
               <div>
-                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
-                {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                  <p className="text-xs text-subtle">Powered by Danswer</p>
+                <HeaderTitle>{enterpriseSettings.workspace_name}</HeaderTitle>
+                {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED && (
+                  <p className="text-xs text-subtle">Powered by enMedD AI</p>
                 )}
               </div>
             ) : (
-              <HeaderTitle>Danswer</HeaderTitle>
+              <HeaderTitle>enMedD AI</HeaderTitle>
             )}
           </div>
         </div>

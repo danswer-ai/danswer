@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import { FormikProps, FieldArray, ArrayHelpers, ErrorMessage } from "formik";
 import { Text, Divider } from "@tremor/react";
 import { FiUsers } from "react-icons/fi";
-import { UserGroup, UserRole } from "@/lib/types";
-import { useUserGroups } from "@/lib/hooks";
+import { Teamspace, UserRole } from "@/lib/types";
+import { useTeamspaces } from "@/lib/hooks";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
 import { useUser } from "./user/UserProvider";
 
@@ -19,28 +19,26 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   formikProps,
   objectName,
   publicToWhom = "Users",
-  removeIndent = false,
   enforceGroupSelection = true,
 }: {
   formikProps: FormikProps<T>;
   objectName: string;
   publicToWhom?: string;
-  removeIndent?: boolean;
   enforceGroupSelection?: boolean;
 }) => {
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
+  const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
   const { isAdmin, user, isLoadingUser, isCurator } = useUser();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const [shouldHideContent, setShouldHideContent] = useState(false);
 
   useEffect(() => {
-    if (user && userGroups && isPaidEnterpriseFeaturesEnabled) {
+    if (user && teamspaces && isPaidEnterpriseFeaturesEnabled) {
       const isUserAdmin = user.role === UserRole.ADMIN;
       if (!isUserAdmin) {
         formikProps.setFieldValue("is_public", false);
       }
-      if (userGroups.length === 1 && !isUserAdmin) {
-        formikProps.setFieldValue("groups", [userGroups[0].id]);
+      if (teamspaces.length === 1 && !isUserAdmin) {
+        formikProps.setFieldValue("groups", [teamspaces[0].id]);
         setShouldHideContent(true);
       } else if (formikProps.values.is_public) {
         formikProps.setFieldValue("groups", []);
@@ -51,12 +49,12 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
     }
   }, [
     user,
-    userGroups,
+    teamspaces,
     formikProps.setFieldValue,
     formikProps.values.is_public,
   ]);
 
-  if (isLoadingUser || userGroupsIsLoading) {
+  if (isLoadingUser || teamspacesIsLoading) {
     return <div>Loading...</div>;
   }
   if (!isPaidEnterpriseFeaturesEnabled) {
@@ -66,10 +64,10 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   if (shouldHideContent && enforceGroupSelection) {
     return (
       <>
-        {userGroups && (
+        {teamspaces && (
           <div className="mb-1 font-medium text-base">
             This {objectName} will be assigned to group{" "}
-            <b>{userGroups[0].name}</b>.
+            <b>{teamspaces[0].name}</b>.
           </div>
         )}
       </>
@@ -83,7 +81,6 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         <>
           <BooleanFormField
             name="is_public"
-            removeIndent={removeIndent}
             label={
               publicToWhom === "Curators"
                 ? `Make this ${objectName} Curator Accessible?`
@@ -103,15 +100,15 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
       )}
 
       {(!formikProps.values.is_public || isCurator) &&
-        userGroups &&
-        userGroups?.length > 0 && (
+        teamspaces &&
+        teamspaces?.length > 0 && (
           <>
             <div className="flex mt-4 gap-x-2 items-center">
               <div className="block font-medium text-base">
                 Assign group access for this {objectName}
               </div>
             </div>
-            {userGroupsIsLoading ? (
+            {teamspacesIsLoading ? (
               <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
             ) : (
               <Text className="mb-3">
@@ -132,18 +129,18 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
               name="groups"
               render={(arrayHelpers: ArrayHelpers) => (
                 <div className="flex gap-2 flex-wrap mb-4">
-                  {userGroupsIsLoading ? (
+                  {teamspacesIsLoading ? (
                     <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
                   ) : (
-                    userGroups &&
-                    userGroups.map((userGroup: UserGroup) => {
+                    teamspaces &&
+                    teamspaces.map((teamspace: Teamspace) => {
                       const ind = formikProps.values.groups.indexOf(
-                        userGroup.id
+                        teamspace.id
                       );
                       let isSelected = ind !== -1;
                       return (
                         <div
-                          key={userGroup.id}
+                          key={teamspace.id}
                           className={`
                         px-3 
                         py-1
@@ -159,13 +156,13 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                             if (isSelected) {
                               arrayHelpers.remove(ind);
                             } else {
-                              arrayHelpers.push(userGroup.id);
+                              arrayHelpers.push(teamspace.id);
                             }
                           }}
                         >
                           <div className="my-auto flex">
                             <FiUsers className="my-auto mr-2" />{" "}
-                            {userGroup.name}
+                            {teamspace.name}
                           </div>
                         </div>
                       );

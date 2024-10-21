@@ -2,8 +2,11 @@
 
 import {
   BookmarkIcon,
+  ClosedBookIcon,
   ConnectorIcon,
+  CpuIconSkeleton,
   DatabaseIcon,
+  DocumentIcon2,
   GroupsIcon,
   KeyIcon,
   NotebookIcon,
@@ -22,6 +25,7 @@ import {
   Wrench,
   Image as ImageIcon,
   Activity,
+  SearchIcon,
 } from "lucide-react";
 import { useContext } from "react";
 import { SettingsContext } from "./settings/SettingsProvider";
@@ -111,28 +115,53 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                 ),
                 link: "/admin/tools",
               },
+              {
+                name: (
+                  <div className="flex">
+                    <ClosedBookIcon
+                      className="text-icon-settings-sidebar"
+                      size={18}
+                    />
+                    <div className="ml-1">Prompt Library</div>
+                  </div>
+                ),
+                link: "/admin/prompt-library",
+              },
             ],
           },
           {
-            name: "Model Configs",
+            name: "Configuration",
             items: [
               {
                 name: (
-                  <div className="flex items-center gap-2">
-                    <Cpu size={20} />
-                    <div>LLM</div>
+                  <div className="flex">
+                    <CpuIconSkeleton
+                      className="text-icon-settings-sidebar"
+                      size={18}
+                    />
+                    <div className="ml-1">LLM</div>
                   </div>
                 ),
-                link: "/admin/models/llm",
+                link: "/admin/configuration/llm",
+              },
+              {
+                error: dynamicSettings?.settings.needs_reindexing,
+                name: (
+                  <div className="flex">
+                    <SearchIcon className="text-icon-settings-sidebar" />
+                    <div className="ml-1">Search Settings</div>
+                  </div>
+                ),
+                link: "/admin/configuration/search",
               },
               {
                 name: (
-                  <div className="flex items-center gap-2">
-                    <Package size={20} />
-                    <div>Embedding</div>
+                  <div className="flex">
+                    <DocumentIcon2 className="text-icon-settings-sidebar" />
+                    <div className="ml-1">Document Processing</div>
                   </div>
                 ),
-                link: "/admin/models/embedding",
+                link: "/admin/configuration/document-processing",
               },
             ],
           },
@@ -229,19 +258,15 @@ export const SideBar: React.FC<SideBarProps> = ({}) => {
                 ),
                 link: "/admin/settings",
               },
-              ...(dynamicSettings?.featureFlags.whitelabelling
-                ? [
-                    {
-                      name: (
-                        <div className="flex items-center gap-2">
-                          <ImageIcon size={20} />
-                          <div>Whitelabeling</div>
-                        </div>
-                      ),
-                      link: "/admin/whitelabeling",
-                    },
-                  ]
-                : []),
+              {
+                name: (
+                  <div className="flex items-center gap-2">
+                    <ImageIcon size={20} />
+                    <div>Whitelabeling</div>
+                  </div>
+                ),
+                link: "/admin/whitelabeling",
+              },
             ],
           },
         ]}

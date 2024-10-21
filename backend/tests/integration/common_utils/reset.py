@@ -6,21 +6,21 @@ import requests
 
 from alembic import command
 from alembic.config import Config
-from danswer.configs.app_configs import POSTGRES_HOST
-from danswer.configs.app_configs import POSTGRES_PASSWORD
-from danswer.configs.app_configs import POSTGRES_PORT
-from danswer.configs.app_configs import POSTGRES_USER
-from danswer.db.engine import build_connection_string
-from danswer.db.engine import get_session_context_manager
-from danswer.db.engine import SYNC_DB_API
-from danswer.db.search_settings import get_current_search_settings
-from danswer.db.swap_index import check_index_swap
-from danswer.document_index.vespa.index import DOCUMENT_ID_ENDPOINT
-from danswer.document_index.vespa.index import VespaIndex
-from danswer.indexing.models import IndexingSetting
-from danswer.main import setup_postgres
-from danswer.main import setup_vespa
-from danswer.utils.logger import setup_logger
+from enmedd.configs.app_configs import POSTGRES_HOST
+from enmedd.configs.app_configs import POSTGRES_PASSWORD
+from enmedd.configs.app_configs import POSTGRES_PORT
+from enmedd.configs.app_configs import POSTGRES_USER
+from enmedd.db.engine import build_connection_string
+from enmedd.db.engine import get_session_context_manager
+from enmedd.db.engine import SYNC_DB_API
+from enmedd.db.search_settings import get_current_search_settings
+from enmedd.db.swap_index import check_index_swap
+from enmedd.document_index.vespa.index import DOCUMENT_ID_ENDPOINT
+from enmedd.document_index.vespa.index import VespaIndex
+from enmedd.indexing.models import IndexingSetting
+from enmedd.main import setup_postgres
+from enmedd.main import setup_vespa
+from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -147,7 +147,7 @@ def reset_vespa() -> None:
             continuation = None
             should_continue = True
             while should_continue:
-                params = {"selection": "true", "cluster": "danswer_index"}
+                params = {"selection": "true", "cluster": "enmedd_index"}
                 if continuation:
                     params = {**params, "continuation": continuation}
                 response = requests.delete(

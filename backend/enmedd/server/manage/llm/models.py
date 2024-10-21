@@ -99,5 +99,5 @@ class FullLLMProvider(LLMProvider):
                 or [llm_provider_model.default_model_name]
             ),
             is_public=llm_provider_model.is_public,
-            teamspace=[teams.id for teams in llm_provider_model.teamspace],
+            groups=[teams.id for teams in llm_provider_model.groups],
         )

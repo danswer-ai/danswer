@@ -1,12 +1,13 @@
 import { SearchMultiSelectDropdown } from "@/components/Dropdown";
 import { useState } from "react";
 import { updateTeamspace } from "./lib";
-import { Connector, ConnectorIndexingStatus, Teamspace } from "@/lib/types";
+import { ConnectorIndexingStatus, Teamspace } from "@/lib/types";
 import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Connector } from "@/lib/connectors/connectors";
 
 interface AddConnectorFormProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -65,7 +66,7 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
                   .includes(ccPair.cc_pair_id)
             )
             // remove public docs, since they don't make sense as part of a group
-            .filter((ccPair) => !ccPair.public_doc)
+            .filter((ccPair) => !(ccPair.access_type === "public"))
             .map((ccPair) => {
               return {
                 name: ccPair.name?.toString() || "",

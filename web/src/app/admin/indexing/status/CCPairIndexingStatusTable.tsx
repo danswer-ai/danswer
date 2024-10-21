@@ -251,8 +251,9 @@ function ConnectorRow({
       <TableCell>
         <IndexAttemptStatus
           status={ccPairsIndexingStatus.last_finished_status || null}
-          errorMsg={ccPairsIndexingStatus?.latest_index_attempt?.error_msg}
-          size="xs"
+          errorMsg={
+            ccPairsIndexingStatus?.latest_index_attempt?.error_msg || null
+          }
         />
       </TableCell>
       <TableCell>

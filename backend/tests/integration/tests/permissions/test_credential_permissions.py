@@ -5,11 +5,11 @@ the permissions of the curator manipulating credentials.
 import pytest
 from requests.exceptions import HTTPError
 
-from danswer.server.documents.models import DocumentSource
+from enmedd.server.documents.models import DocumentSource
 from tests.integration.common_utils.managers.credential import CredentialManager
+from tests.integration.common_utils.managers.teamspace import TeamspaceManager
 from tests.integration.common_utils.managers.user import DATestUser
 from tests.integration.common_utils.managers.user import UserManager
-from tests.integration.common_utils.managers.user_group import UserGroupManager
 
 
 def test_credential_permissions(reset: None) -> None:
@@ -20,31 +20,31 @@ def test_credential_permissions(reset: None) -> None:
     curator: DATestUser = UserManager.create(name="curator")
 
     # Creating a user group
-    user_group_1 = UserGroupManager.create(
-        name="user_group_1",
+    teamspace_1 = TeamspaceManager.create(
+        name="teamspace_1",
         user_ids=[curator.id],
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
     # setting the user as a curator for the user group
-    UserGroupManager.set_curator_status(
-        test_user_group=user_group_1,
+    TeamspaceManager.set_curator_status(
+        test_teamspace=teamspace_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
     )
 
     # Creating another user group that the user is not a curator of
-    user_group_2 = UserGroupManager.create(
-        name="user_group_2",
+    teamspace_2 = TeamspaceManager.create(
+        name="teamspace_2",
         user_ids=[curator.id],
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
 
     # END OF HAPPY PATH
@@ -56,7 +56,7 @@ def test_credential_permissions(reset: None) -> None:
         CredentialManager.create(
             name="invalid_credential_1",
             source=DocumentSource.CONFLUENCE,
-            groups=[user_group_1.id],
+            groups=[teamspace_1.id],
             curator_public=True,
             user_performing_action=curator,
         )
@@ -66,7 +66,7 @@ def test_credential_permissions(reset: None) -> None:
         CredentialManager.create(
             name="invalid_credential_2",
             source=DocumentSource.CONFLUENCE,
-            groups=[user_group_1.id, user_group_2.id],
+            groups=[teamspace_1.id, teamspace_2.id],
             curator_public=False,
             user_performing_action=curator,
         )
@@ -76,7 +76,7 @@ def test_credential_permissions(reset: None) -> None:
     valid_credential = CredentialManager.create(
         name="valid_credential",
         source=DocumentSource.CONFLUENCE,
-        groups=[user_group_1.id],
+        groups=[teamspace_1.id],
         curator_public=False,
         user_performing_action=curator,
     )

@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import { FieldArray, ArrayHelpers, ErrorMessage, useField } from "formik";
 import { Text, Divider } from "@tremor/react";
 import { FiUsers } from "react-icons/fi";
-import { UserGroup, User, UserRole } from "@/lib/types";
-import { useUserGroups } from "@/lib/hooks";
+import { Teamspace, User, UserRole } from "@/lib/types";
+import { useTeamspaces } from "@/lib/hooks";
 import { AccessType } from "@/lib/types";
 import { useUser } from "@/components/user/UserProvider";
 
@@ -17,7 +17,7 @@ export type AccessTypeGroupSelectorFormType = {
 };
 
 export function AccessTypeGroupSelector({}: {}) {
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
+  const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
   const { isAdmin, user, isLoadingUser, isCurator } = useUser();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const [shouldHideContent, setShouldHideContent] = useState(false);
@@ -27,7 +27,7 @@ export function AccessTypeGroupSelector({}: {}) {
   const [groups, groups_meta, groups_helpers] = useField<number[]>("groups");
 
   useEffect(() => {
-    if (user && userGroups && isPaidEnterpriseFeaturesEnabled) {
+    if (user && teamspaces && isPaidEnterpriseFeaturesEnabled) {
       const isUserAdmin = user.role === UserRole.ADMIN;
       if (!isPaidEnterpriseFeaturesEnabled) {
         access_type_helpers.setValue("public");
@@ -36,8 +36,8 @@ export function AccessTypeGroupSelector({}: {}) {
       if (!isUserAdmin) {
         access_type_helpers.setValue("private");
       }
-      if (userGroups.length === 1 && !isUserAdmin) {
-        groups_helpers.setValue([userGroups[0].id]);
+      if (teamspaces.length === 1 && !isUserAdmin) {
+        groups_helpers.setValue([teamspaces[0].id]);
         setShouldHideContent(true);
       } else if (access_type.value !== "private") {
         groups_helpers.setValue([]);
@@ -46,9 +46,9 @@ export function AccessTypeGroupSelector({}: {}) {
         setShouldHideContent(false);
       }
     }
-  }, [user, userGroups, access_type.value]);
+  }, [user, teamspaces, access_type.value]);
 
-  if (isLoadingUser || userGroupsIsLoading) {
+  if (isLoadingUser || teamspacesIsLoading) {
     return <div>Loading...</div>;
   }
   if (!isPaidEnterpriseFeaturesEnabled) {
@@ -58,9 +58,9 @@ export function AccessTypeGroupSelector({}: {}) {
   if (shouldHideContent) {
     return (
       <>
-        {userGroups && (
+        {teamspaces && (
           <div className="mb-1 font-medium text-base">
-            This Connector will be assigned to group <b>{userGroups[0].name}</b>
+            This Connector will be assigned to group <b>{teamspaces[0].name}</b>
             .
           </div>
         )}
@@ -71,8 +71,8 @@ export function AccessTypeGroupSelector({}: {}) {
   return (
     <div>
       {(access_type.value === "private" || isCurator) &&
-        userGroups &&
-        userGroups?.length > 0 && (
+        teamspaces &&
+        teamspaces?.length > 0 && (
           <>
             <Divider />
             <div className="flex mt-4 gap-x-2 items-center">
@@ -80,7 +80,7 @@ export function AccessTypeGroupSelector({}: {}) {
                 Assign group access for this Connector
               </div>
             </div>
-            {userGroupsIsLoading ? (
+            {teamspacesIsLoading ? (
               <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
             ) : (
               <Text className="mb-3">
@@ -101,16 +101,16 @@ export function AccessTypeGroupSelector({}: {}) {
               name="groups"
               render={(arrayHelpers: ArrayHelpers) => (
                 <div className="flex gap-2 flex-wrap mb-4">
-                  {userGroupsIsLoading ? (
+                  {teamspacesIsLoading ? (
                     <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
                   ) : (
-                    userGroups &&
-                    userGroups.map((userGroup: UserGroup) => {
-                      const ind = groups.value.indexOf(userGroup.id);
+                    teamspaces &&
+                    teamspaces.map((teamspace: Teamspace) => {
+                      const ind = groups.value.indexOf(teamspace.id);
                       let isSelected = ind !== -1;
                       return (
                         <div
-                          key={userGroup.id}
+                          key={teamspace.id}
                           className={`
                             px-3 
                             py-1
@@ -126,13 +126,13 @@ export function AccessTypeGroupSelector({}: {}) {
                             if (isSelected) {
                               arrayHelpers.remove(ind);
                             } else {
-                              arrayHelpers.push(userGroup.id);
+                              arrayHelpers.push(teamspace.id);
                             }
                           }}
                         >
                           <div className="my-auto flex">
                             <FiUsers className="my-auto mr-2" />{" "}
-                            {userGroup.name}
+                            {teamspace.name}
                           </div>
                         </div>
                       );

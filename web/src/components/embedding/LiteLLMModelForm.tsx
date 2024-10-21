@@ -81,7 +81,6 @@ export function LiteLLMModelForm({
             />
 
             <BooleanFormField
-              removeIndent
               name="normalize"
               label="Normalize"
               subtext="Whether to normalize the embeddings"

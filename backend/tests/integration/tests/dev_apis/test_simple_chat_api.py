@@ -1,6 +1,6 @@
 import requests
 
-from danswer.configs.constants import MessageType
+from enmedd.configs.constants import MessageType
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import NUM_DOCS
 from tests.integration.common_utils.managers.api_key import APIKeyManager
@@ -40,7 +40,7 @@ def test_send_message_simple_with_history(reset: None) -> None:
                     "role": MessageType.USER.value,
                 }
             ],
-            "persona_id": 0,
+            "assistant_id": 0,
             "prompt_id": 0,
         },
         headers=admin_user.headers,
@@ -109,7 +109,7 @@ def test_using_reference_docs_with_simple_with_history_api_flow(reset: None) -> 
                     "role": MessageType.USER.value,
                 }
             ],
-            "persona_id": 0,
+            "assistant_id": 0,
             "prompt_id": 0,
         },
         headers=admin_user.headers,
@@ -129,7 +129,7 @@ def test_using_reference_docs_with_simple_with_history_api_flow(reset: None) -> 
                     "role": MessageType.USER.value,
                 }
             ],
-            "persona_id": 0,
+            "assistant_id": 0,
             "prompt_id": 0,
             "search_doc_ids": [first_db_doc_id],
         },

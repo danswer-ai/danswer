@@ -31,8 +31,8 @@ from enmedd.server.features.assistant.models import AssistantSnapshot
 from enmedd.server.features.assistant.models import CreateAssistantRequest
 from enmedd.server.features.assistant.models import PromptTemplateResponse
 from enmedd.server.models import DisplayPriorityRequest
+from enmedd.tools.utils import is_image_generation_available
 from enmedd.utils.logger import setup_logger
-
 
 logger = setup_logger()
 
@@ -65,7 +65,7 @@ def patch_assistant_visibility(
 
 
 @basic_router.patch("/{assistant_id}/public")
-def patch_user_presona_public_status(
+def patch_user_assistant_public_status(
     assistant_id: int,
     is_public_request: IsPublicRequest,
     user: User | None = Depends(current_user),
@@ -227,6 +227,14 @@ def list_assistants(
             db_session=db_session,
             get_editable=False,
             joinedload_all=True,
+        )
+        # If the assistant has an image generation tool and it's not available, don't include it
+        if not (
+            any(
+                tool.in_code_tool_id == "ImageGenerationTool"
+                for tool in assistant.tools
+            )
+            and not is_image_generation_available(db_session=db_session)
         )
     ]
 

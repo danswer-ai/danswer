@@ -5,8 +5,9 @@ from collections.abc import Iterable
 
 import pytest
 import pywikibot  # type: ignore[import-untyped]
-from danswer.connectors.mediawiki import wiki
 from pytest_mock import MockFixture
+
+from enmedd.connectors.mediawiki import wiki
 
 
 @pytest.fixture

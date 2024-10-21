@@ -4,8 +4,8 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy.orm import Session
 
-from danswer.db.index_attempt import IndexAttempt
-from danswer.indexing.indexing_heartbeat import IndexingHeartbeat
+from enmedd.db.index_attempt import IndexAttempt
+from enmedd.indexing.indexing_heartbeat import IndexingHeartbeat
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def test_indexing_heartbeat(
     mock_db_session: MagicMock, mock_index_attempt: MagicMock
 ) -> None:
     with patch(
-        "danswer.indexing.indexing_heartbeat.get_index_attempt"
+        "enmedd.indexing.indexing_heartbeat.get_index_attempt"
     ) as mock_get_index_attempt:
         mock_get_index_attempt.return_value = mock_index_attempt
 
@@ -59,9 +59,9 @@ def test_indexing_heartbeat(
 
 def test_indexing_heartbeat_not_found(mock_db_session: MagicMock) -> None:
     with patch(
-        "danswer.indexing.indexing_heartbeat.get_index_attempt"
+        "enmedd.indexing.indexing_heartbeat.get_index_attempt"
     ) as mock_get_index_attempt, patch(
-        "danswer.indexing.indexing_heartbeat.logger"
+        "enmedd.indexing.indexing_heartbeat.logger"
     ) as mock_logger:
         mock_get_index_attempt.return_value = None
 

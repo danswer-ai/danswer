@@ -209,7 +209,7 @@ def _check_if_cc_pairs_are_owned_by_groups(
     )
 
     group_cc_pair_relationships_set = {
-        (relationship.cc_pair_id, relationship.user_group_id)
+        (relationship.cc_pair_id, relationship.teamspace_id)
         for relationship in group_cc_pair_relationships
     }
 
@@ -706,7 +706,7 @@ def fetch_document_sets_for_documents(
 def get_or_create_document_set_by_name(
     db_session: Session,
     document_set_name: str,
-    document_set_description: str = "Default Persona created Document-Set, "
+    document_set_description: str = "Default Assistant created Document-Set, "
     "please update description",
 ) -> DocumentSetDBModel:
     """This is used by the default assistants which need to attach to document sets

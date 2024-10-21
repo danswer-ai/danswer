@@ -1,6 +1,6 @@
 import requests
 
-from danswer.configs.constants import MessageType
+from enmedd.configs.constants import MessageType
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.managers.api_key import APIKeyManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
@@ -59,7 +59,7 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
                     "role": MessageType.USER.value,
                 }
             ],
-            "persona_id": 0,
+            "assistant_id": 0,
             "prompt_id": 0,
         },
         headers=admin_user.headers,
@@ -105,7 +105,7 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
                     "role": MessageType.USER.value,
                 },
             ],
-            "persona_id": 0,
+            "assistant_id": 0,
             "prompt_id": 0,
         },
         headers=admin_user.headers,
@@ -159,7 +159,7 @@ def test_all_stream_chat_message_objects_outputs(reset: None) -> None:
                     "role": MessageType.USER.value,
                 },
             ],
-            "persona_id": 0,
+            "assistant_id": 0,
             "prompt_id": 0,
         },
         headers=admin_user.headers,

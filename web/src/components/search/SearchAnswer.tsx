@@ -97,7 +97,7 @@ export default function SearchAnswer({
           {searchState == "reading" && (
             <div key={"Reading"} className="relative inline-block">
               <span className="loading-text">
-                Reading{settings?.isMobile ? "" : " Documents"}
+                Reading{" Documents"}
                 ...
               </span>
             </div>
@@ -107,7 +107,7 @@ export default function SearchAnswer({
             <div key={"Generating"} className="relative inline-block">
               <span className="loading-text">
                 Running
-                {settings?.isMobile ? "" : " Analysis"}...
+                {" Analysis"}...
               </span>
             </div>
           )}

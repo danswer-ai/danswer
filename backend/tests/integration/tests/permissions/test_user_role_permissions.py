@@ -4,10 +4,10 @@ This file tests the ability of different user types to set the role of other use
 import pytest
 from requests.exceptions import HTTPError
 
-from danswer.db.models import UserRole
+from enmedd.db.models import UserRole
+from tests.integration.common_utils.managers.teamspace import TeamspaceManager
 from tests.integration.common_utils.managers.user import DATestUser
 from tests.integration.common_utils.managers.user import UserManager
-from tests.integration.common_utils.managers.user_group import UserGroupManager
 
 
 def test_user_role_setting_permissions(reset: None) -> None:
@@ -60,34 +60,34 @@ def test_user_role_setting_permissions(reset: None) -> None:
     assert UserManager.verify_role(global_curator, UserRole.GLOBAL_CURATOR)
 
     # Creating a user group
-    user_group_1 = UserGroupManager.create(
-        name="user_group_1",
+    teamspace_1 = TeamspaceManager.create(
+        name="teamspace_1",
         user_ids=[],
         cc_pair_ids=[],
         user_performing_action=admin_user,
     )
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
 
     # This should fail because the curator is not in the user group
     with pytest.raises(HTTPError):
-        UserGroupManager.set_curator_status(
-            test_user_group=user_group_1,
+        TeamspaceManager.set_curator_status(
+            test_teamspace=teamspace_1,
             user_to_set_as_curator=curator,
             user_performing_action=admin_user,
         )
 
     # Adding the curator to the user group
-    user_group_1.user_ids = [curator.id]
-    UserGroupManager.edit(user_group=user_group_1, user_performing_action=admin_user)
-    UserGroupManager.wait_for_sync(
-        user_groups_to_check=[user_group_1], user_performing_action=admin_user
+    teamspace_1.user_ids = [curator.id]
+    TeamspaceManager.edit(teamspace=teamspace_1, user_performing_action=admin_user)
+    TeamspaceManager.wait_for_sync(
+        teamspaces_to_check=[teamspace_1], user_performing_action=admin_user
     )
 
     # This should work because the curator is in the user group
-    UserGroupManager.set_curator_status(
-        test_user_group=user_group_1,
+    TeamspaceManager.set_curator_status(
+        test_teamspace=teamspace_1,
         user_to_set_as_curator=curator,
         user_performing_action=admin_user,
     )

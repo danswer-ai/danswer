@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from danswer.indexing.indexing_heartbeat import Heartbeat
+from enmedd.indexing.indexing_heartbeat import Heartbeat
 
 
 class MockHeartbeat(Heartbeat):

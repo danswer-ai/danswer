@@ -97,7 +97,7 @@ SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 
-# If set, Danswer will listen to the `expires_at` returned by the identity
+# If set, enMedD AI will listen to the `expires_at` returned by the identity
 # provider (e.g. Okta, Google, etc.) and force the user to re-authenticate
 # after this time has elapsed. Disabled since by default many auth providers
 # have very short expiry times (e.g. 1 hour) which provide a poor user experience
@@ -370,7 +370,7 @@ CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
 )
-# Logs Danswer only model interactions like prompts, responses, messages etc.
+# Logs enMedD AI only model interactions like prompts, responses, messages etc.
 LOG_DANSWER_MODEL_INTERACTIONS = (
     os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
 )
@@ -403,6 +403,13 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
 #####
 # NOTE: this should only be enabled if you have purchased an enterprise license.
 
-ENTERPRISE_EDITION_ENABLED = (
-    os.environ.get("ENABLE_PAID_ENTERPRISE_EDITION_FEATURES", "").lower() == "true"
-)
+ENTERPRISE_EDITION_ENABLED = "true"
+
+# Azure DALL-E Configurations
+AZURE_DALLE_API_VERSION = os.environ.get("AZURE_DALLE_API_VERSION")
+AZURE_DALLE_API_KEY = os.environ.get("AZURE_DALLE_API_KEY")
+AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE")
+AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
+
+DATA_PLANE_SECRET = os.environ.get("DATA_PLANE_SECRET", "")
+EXPECTED_API_KEY = os.environ.get("EXPECTED_API_KEY", "")

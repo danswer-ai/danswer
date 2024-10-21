@@ -37,6 +37,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     llmProviders,
     folders,
     openedFolders,
+    userInputPrompts,
   } = data;
 
   let body;
@@ -93,6 +94,7 @@ export default async function Page({ params }: { params: { id: string } }) {
           llmProviders,
           folders,
           openedFolders,
+          userInputPrompts,
         }}
       >
         <div className="relative flex h-full overflow-x-hidden bg-background">

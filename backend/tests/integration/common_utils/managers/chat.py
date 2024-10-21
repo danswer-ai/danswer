@@ -3,14 +3,14 @@ import json
 import requests
 from requests.models import Response
 
-from danswer.file_store.models import FileDescriptor
-from danswer.llm.override_models import LLMOverride
-from danswer.llm.override_models import PromptOverride
-from danswer.one_shot_answer.models import DirectQARequest
-from danswer.one_shot_answer.models import ThreadMessage
-from danswer.search.models import RetrievalDetails
-from danswer.server.query_and_chat.models import ChatSessionCreationRequest
-from danswer.server.query_and_chat.models import CreateChatMessageRequest
+from enmedd.file_store.models import FileDescriptor
+from enmedd.llm.override_models import LLMOverride
+from enmedd.llm.override_models import PromptOverride
+from enmedd.one_shot_answer.models import DirectQARequest
+from enmedd.one_shot_answer.models import ThreadMessage
+from enmedd.search.models import RetrievalDetails
+from enmedd.server.query_and_chat.models import ChatSessionCreationRequest
+from enmedd.server.query_and_chat.models import CreateChatMessageRequest
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.test_models import DATestChatMessage
@@ -22,12 +22,12 @@ from tests.integration.common_utils.test_models import StreamedResponse
 class ChatSessionManager:
     @staticmethod
     def create(
-        persona_id: int = -1,
+        assistant_id: int = -1,
         description: str = "Test chat session",
         user_performing_action: DATestUser | None = None,
     ) -> DATestChatSession:
         chat_session_creation_req = ChatSessionCreationRequest(
-            persona_id=persona_id, description=description
+            assistant_id=assistant_id, description=description
         )
         response = requests.post(
             f"{API_SERVER_URL}/chat/create-chat-session",
@@ -39,7 +39,7 @@ class ChatSessionManager:
         response.raise_for_status()
         chat_session_id = response.json()["chat_session_id"]
         return DATestChatSession(
-            id=chat_session_id, persona_id=persona_id, description=description
+            id=chat_session_id, assistant_id=assistant_id, description=description
         )
 
     @staticmethod
@@ -88,14 +88,14 @@ class ChatSessionManager:
 
     @staticmethod
     def get_answer_with_quote(
-        persona_id: int,
+        assistant_id: int,
         message: str,
         user_performing_action: DATestUser | None = None,
     ) -> StreamedResponse:
         direct_qa_request = DirectQARequest(
             messages=[ThreadMessage(message=message)],
             prompt_id=None,
-            persona_id=persona_id,
+            assistant_id=assistant_id,
         )
 
         response = requests.post(

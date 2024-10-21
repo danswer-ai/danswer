@@ -1,6 +1,6 @@
 "use client";
 
-import { EmbeddingFormProvider } from "@/components/context/EmbeddingContext";
+import { EmbeddingFormProvider } from "@/context/EmbeddingContext";
 import EmbeddingSidebar from "../../../components/embedding/EmbeddingSidebar";
 import EmbeddingForm from "./pages/EmbeddingFormPage";
 

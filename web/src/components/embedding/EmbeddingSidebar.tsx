@@ -1,4 +1,4 @@
-import { useEmbeddingFormContext } from "@/components/context/EmbeddingContext";
+import { useEmbeddingFormContext } from "@/context/EmbeddingContext";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 
 import { SettingsIcon } from "@/components/icons/icons";
@@ -14,7 +14,7 @@ export default function EmbeddingSidebar() {
   if (!combinedSettings) {
     return null;
   }
-  const enterpriseSettings = combinedSettings.enterpriseSettings;
+  const enterpriseSettings = combinedSettings.workspaces;
 
   const settingSteps = ["Embedding Model", "Reranking Model", "Advanced"];
 
@@ -32,21 +32,21 @@ export default function EmbeddingSidebar() {
                   `}
       >
         <div className="fixed h-full left-0 top-0 w-[250px]">
-          <div className="ml-4 mr-3 flex flex gap-x-1 items-center mt-2 my-auto text-text-700 text-xl">
+          <div className="ml-4 mr-3 flex gap-x-1 items-center mt-2 my-auto text-text-700 text-xl">
             <div className="mr-1 my-auto h-6 w-6">
               <Logo height={24} width={24} />
             </div>
 
             <div>
-              {enterpriseSettings && enterpriseSettings.application_name ? (
-                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
+              {enterpriseSettings && enterpriseSettings.workspace_name ? (
+                <HeaderTitle>{enterpriseSettings.workspace_name}</HeaderTitle>
               ) : (
-                <HeaderTitle>Danswer</HeaderTitle>
+                <HeaderTitle>enMedD AI</HeaderTitle>
               )}
             </div>
           </div>
 
-          <div className="mx-3 mt-6 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
+          <div className="mx-3 mt-6 gap-y-1 flex-col flex gap-x-1.5 items-center">
             <Link
               href={"/admin/configuration/search"}
               className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"

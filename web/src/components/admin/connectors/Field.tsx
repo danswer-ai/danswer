@@ -32,6 +32,10 @@ import { Plus, X } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Tooltip as SchadcnTooltip } from "@/components/tooltip/Tooltip";
 import { FiInfo } from "react-icons/fi";
+import { useState } from "react";
+import { FaMarkdown } from "react-icons/fa";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export function SectionHeader({
   children,
@@ -43,16 +47,16 @@ export function SectionHeader({
 
 export function Label({
   children,
-  classname,
+  className,
   small,
 }: {
   children: string | JSX.Element;
-  classname?: string | JSX.Element;
+  className?: string | JSX.Element;
   small?: boolean;
 }) {
   return (
     <div
-      className={`block font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 block pb-1.5" ${classname} ${small ? "text-sm" : "text-base"}`}
+      className={`block font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 pb-1.5" ${className} ${small ? "text-sm" : "text-base"}`}
     >
       {children}
     </div>
@@ -153,9 +157,7 @@ export function TextFormField({
   label?: string;
   subtext?: string | JSX.Element;
   placeholder?: string;
-  onChange?: (
-    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
-  ) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   type?: string;
   isTextArea?: boolean;
   disabled?: boolean;
@@ -225,7 +227,7 @@ export function TextFormField({
               disabled={disabled}
               placeholder={placeholder}
               autoComplete={autoCompleteDisabled ? "off" : undefined}
-              {...(onChange ? { onChange } : {})}
+              onChange={handleChange}
               onFocus={onFocus}
               onBlur={onBlur}
               className={`
@@ -255,6 +257,75 @@ export function TextFormField({
     </div>
   );
 }
+
+interface MarkdownPreviewProps {
+  name: string;
+  label: string;
+  placeholder?: string;
+  error?: string;
+}
+
+export const MarkdownFormField = ({
+  name,
+  label,
+  error,
+  placeholder = "Enter your markdown here...",
+}: MarkdownPreviewProps) => {
+  const [field, _] = useField(name);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const togglePreview = () => {
+    setIsPreviewOpen(!isPreviewOpen);
+  };
+
+  return (
+    <div className="flex flex-col space-y-4 mb-4">
+      <Label>{label}</Label>
+      <div className="border border-gray-300 rounded-md">
+        <div className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-t-md">
+          <div className="flex items-center space-x-2">
+            <FaMarkdown className="text-gray-500" />
+            <span className="text-sm font-semibold text-gray-600">
+              Markdown
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={togglePreview}
+            className="text-sm font-semibold text-gray-600 hover:text-gray-800 focus:outline-none"
+          >
+            {isPreviewOpen ? "Write" : "Preview"}
+          </button>
+        </div>
+        {isPreviewOpen ? (
+          <div className="p-4 border-t border-gray-300">
+            <ReactMarkdown className="prose" remarkPlugins={[remarkGfm]}>
+              {field.value}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <div className="pt-2 px-2">
+            <textarea
+              {...field}
+              rows={2}
+              placeholder={placeholder}
+              className={`w-full p-2 border border-border rounded-md`}
+            />
+          </div>
+        )}
+      </div>
+      {error ? (
+        <ManualErrorMessage>{error}</ManualErrorMessage>
+      ) : (
+        <ErrorMessage
+          name={name}
+          component="div"
+          className="text-red-500 text-sm mt-1"
+        />
+      )}
+    </div>
+  );
+};
 
 interface BooleanFormFieldProps {
   name: string;
@@ -315,6 +386,78 @@ export const BooleanFormField = ({
     </div>
   );
 };
+
+export function MultiSelectField({
+  name,
+  label,
+  subtext,
+  options,
+  onChange,
+  error,
+  hideError,
+  small,
+  selectedInitially,
+}: {
+  selectedInitially: string[];
+  name: string;
+  label: string;
+  subtext?: string | JSX.Element;
+  options: { value: string; label: string }[];
+  onChange?: (selected: string[]) => void;
+  error?: string;
+  hideError?: boolean;
+  small?: boolean;
+}) {
+  const [selectedOptions, setSelectedOptions] =
+    useState<string[]>(selectedInitially);
+
+  const handleCheckboxChange = (value: string) => {
+    const newSelectedOptions = selectedOptions.includes(value)
+      ? selectedOptions.filter((option) => option !== value)
+      : [...selectedOptions, value];
+
+    setSelectedOptions(newSelectedOptions);
+    if (onChange) {
+      onChange(newSelectedOptions);
+    }
+  };
+
+  return (
+    <div className="mb-6">
+      <div className="flex gap-x-2 items-center">
+        <Label small={small}>{label}</Label>
+        {error ? (
+          <ManualErrorMessage>{error}</ManualErrorMessage>
+        ) : (
+          !hideError && (
+            <ErrorMessage
+              name={name}
+              component="div"
+              className="text-error my-auto text-sm"
+            />
+          )
+        )}
+      </div>
+
+      {subtext && <SubLabel>{subtext}</SubLabel>}
+      <div className="mt-2">
+        {options.map((option) => (
+          <label key={option.value} className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              name={name}
+              value={option.value}
+              checked={selectedOptions.includes(option.value)}
+              onChange={() => handleCheckboxChange(option.value)}
+              className="mr-2"
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface TextArrayFieldProps<T extends Yup.AnyObject> {
   name: string;

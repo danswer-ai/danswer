@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from danswer.main import fetch_versioned_implementation
-from danswer.utils.logger import setup_logger
+from enmedd.main import fetch_versioned_implementation
+from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
 
@@ -18,7 +18,7 @@ def client() -> Generator[TestClient, Any, None]:
 
     # Initialize TestClient with the FastAPI app
     app = fetch_versioned_implementation(
-        module="danswer.main", attribute="get_application"
+        module="enmedd.main", attribute="get_application"
     )()
     client = TestClient(app)
     yield client
@@ -30,7 +30,7 @@ def client() -> Generator[TestClient, Any, None]:
 def test_handle_simplified_chat_message(client: TestClient) -> None:
     req: dict[str, Any] = {}
 
-    req["persona_id"] = 0
+    req["assistant_id"] = 0
     req["description"] = "pytest"
     response = client.post("/chat/create-chat-session", json=req)
     chat_session_id = response.json()["chat_session_id"]
@@ -66,10 +66,10 @@ def test_handle_send_message_simple_with_history(client: TestClient) -> None:
     #                  "Is there a particular area you'd like to know more about?",
     #                  "role": "assistant"})
     # req["prompt_id"] = 9
-    # req["persona_id"] = 6
+    # req["assistant_id"] = 6
 
     # Yoda
-    req["persona_id"] = 1
+    req["assistant_id"] = 1
     req["prompt_id"] = 4
     messages.append(
         {
@@ -100,5 +100,5 @@ def test_handle_send_message_simple_with_history(client: TestClient) -> None:
 
     resp_json = response.json()
 
-    # persona must have LLM relevance enabled for this to pass
+    # assistant must have LLM relevance enabled for this to pass
     assert len(resp_json["llm_selected_doc_indices"]) > 0

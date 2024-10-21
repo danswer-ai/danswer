@@ -2,7 +2,6 @@ import { ChatProvider } from "@/context/ChatContext";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { User } from "@/lib/types";
 import { unstable_noStore as noStore } from "next/cache";
-import { FullEmbeddingModelResponse } from "../admin/models/embedding/embeddingModels";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
@@ -10,6 +9,7 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { fetchSS } from "@/lib/utilsSS";
+import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 
 export default async function ProfilePage() {
   const tasks = [
