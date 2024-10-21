@@ -400,9 +400,15 @@ def connector_indexing_task(
             raise
 
         if fence_data.index_attempt_id is None or fence_data.celery_task_id is None:
+            task_logger.info(
+                f"connector_indexing_task - Waiting for fence: fence={rci.fence_key}"
+            )
             sleep(1)
             continue
 
+        task_logger.info(
+            f"connector_indexing_task - Fence found, continuing...: fence={rci.fence_key}"
+        )
         break
 
     lock = r.lock(
