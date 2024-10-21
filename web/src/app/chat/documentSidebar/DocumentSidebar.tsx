@@ -81,6 +81,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     // space
     const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
 
+    console.log("THIS IS OPEN", showDocSidebar);
     return (
       <div
         ref={ref}

@@ -1,5 +1,11 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { FiPlusCircle, FiPlus, FiInfo, FiX } from "react-icons/fi";
+import {
+  FiPlusCircle,
+  FiPlus,
+  FiInfo,
+  FiX,
+  FiStopCircle,
+} from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
@@ -33,12 +39,12 @@ import { Tooltip } from "@/components/tooltip/Tooltip";
 import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
+import { Button } from "@/components/ui/button";
 
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
   openModelSettings,
-  showDocs,
   showConfigureAPIKey,
   selectedDocuments,
   message,
@@ -68,7 +74,6 @@ export function ChatInputBar({
   openModelSettings: () => void;
   chatState: ChatState;
   stopGenerating: () => void;
-  showDocs: () => void;
   selectedDocuments: EnmeddDocument[];
   assistantOptions: Assistant[];
   setAlternativeAssistant: (alternativeAssistant: Assistant | null) => void;
@@ -419,17 +424,6 @@ export function ChatInputBar({
             {(selectedDocuments.length > 0 || files.length > 0) && (
               <div className="flex gap-x-2 px-2 pt-2">
                 <div className="flex gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end miniscroll">
-                  {selectedDocuments.length > 0 && (
-                    <button
-                      onClick={showDocs}
-                      className="flex-none flex cursor-pointer hover:bg-background-200 transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-150 max-w-[100px]"
-                    >
-                      <FileIcon size={24} />
-                      <p className="text-xs">
-                        {selectedDocuments.length} selected
-                      </p>
-                    </button>
-                  )}
                   {files.map((file) => (
                     <div className="flex-none" key={file.id}>
                       {file.type === ChatFileType.IMAGE ? (
@@ -600,13 +594,12 @@ export function ChatInputBar({
                 }}
               />
             </div>
-
-            <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">
+            <div className="absolute bottom-2.5 right-4">
               {chatState == "streaming" ||
               chatState == "toolBuilding" ||
               chatState == "loading" ? (
                 <button
-                  className={`cursor-pointer ${chatState != "streaming" ? "bg-background-400" : "bg-background-800"}  h-[28px] w-[28px] rounded-full`}
+                  className={`cursor-pointer ${chatState != "streaming" ? "bg-blue-400" : "bg-blue-800"}  h-[28px] w-[28px] rounded-full`}
                   onClick={stopGenerating}
                   disabled={chatState != "streaming"}
                 >
@@ -618,7 +611,7 @@ export function ChatInputBar({
                 </button>
               ) : (
                 <button
-                  className="cursor-pointer"
+                  className="cursor-pointer "
                   onClick={() => {
                     if (message) {
                       onSubmit();
@@ -628,7 +621,7 @@ export function ChatInputBar({
                 >
                   <SendIcon
                     size={28}
-                    className={`text-white p-1 rounded-full  ${chatState == "input" && message ? "bg-submit-background" : "bg-disabled-submit-background"} `}
+                    className={`text-white p-1 rounded-full   ${chatState == "input" && message ? "bg-primary" : "bg-blue-400"} `}
                   />
                 </button>
               )}

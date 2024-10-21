@@ -426,7 +426,13 @@ export const AIMessage = ({
               <>
                 <FileDisplay files={files || []} />
 
-                {typeof content === "string" ? { renderedMarkdown } : content}
+                {typeof content === "string" ? (
+                  <div className="max-w-full prose markdown">
+                    {renderedMarkdown}
+                  </div>
+                ) : (
+                  content
+                )}
               </>
             ) : isComplete ? null : (
               defaultLoader

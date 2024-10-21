@@ -54,6 +54,20 @@ const config = {
           300: "#D7EAFF",
           light: "#F1F5F9",
         },
+        // TODO: make a proper palette for this that uses range
+        blue: {
+          "50": "#e9f4ff",
+          "100": "#d7eaff",
+          "200": "#b8d7ff",
+          "300": "#8dbaff",
+          "400": "#6090ff",
+          "500": "#3c67ff",
+          "600": "#1a38ff",
+          "700": "#2039f3",
+          "800": "#1028c3",
+          "900": "#172b98",
+          "950": "#0e1858",
+        },
         secondary: {
           DEFAULT: "var(--secondary)",
           foreground: "hsl(var(--secondary-foreground))",

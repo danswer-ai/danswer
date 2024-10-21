@@ -726,6 +726,7 @@ export function ChatPage({
     }
   }, [defaultAssistantId]);
 
+  // future feature / to be removed
   const [
     selectedDocuments,
     toggleDocumentSelection,
@@ -1552,6 +1553,7 @@ export function ChatPage({
   }
 
   const windowWidth = window.innerWidth;
+  const [isMobile, setIsMobile] = useState(windowWidth <= 1420);
   const [showDocSidebar, setShowDocSidebar] = useState(windowWidth >= 1420);
   const [isWide, setIsWide] = useState(windowWidth >= 1420);
 
@@ -1571,7 +1573,9 @@ export function ChatPage({
     if (sidebarElementRef.current) {
       sidebarElementRef.current.style.transition = "all 0.3s ease-in-out";
 
-      sidebarElementRef.current.style.width = showDocSidebar ? "300px" : "0px";
+      sidebarElementRef.current.style.width = showDocSidebar
+        ? "300px"
+        : "500px";
     }
 
     setShowDocSidebar((prevState) => !prevState);
@@ -1754,22 +1758,6 @@ export function ChatPage({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [router]);
-  const [sharedChatSession, setSharedChatSession] =
-    useState<ChatSession | null>();
-  const [deletingChatSession, setDeletingChatSession] =
-    useState<ChatSession | null>();
-
-  const showDeleteModal = (chatSession: ChatSession) => {
-    setDeletingChatSession(chatSession);
-  };
-  const showShareModal = (chatSession: ChatSession) => {
-    setSharedChatSession(chatSession);
-  };
-  const [documentSelection, setDocumentSelection] = useState(false);
-  const toggleDocumentSelectionAspects = () => {
-    setDocumentSelection((documentSelection) => !documentSelection);
-    setShowDocSidebar(false);
-  };
 
   interface RegenerationRequest {
     messageId: number;
@@ -1807,7 +1795,7 @@ export function ChatPage({
 
       <ChatPopup />
 
-      <div className="relative flex overflow-x-hidden bg-background ault h-full">
+      <div className="relative flex overflow-x-hidden bg-background default h-full">
         <DynamicSidebar
           user={user}
           openSidebar={openSidebar}
@@ -1837,7 +1825,7 @@ export function ChatPage({
           {documentSidebarInitialWidth !== undefined &&
           isReady &&
           !isLoadingUser ? (
-            <Dropzone onDrop={handleImageUpload} noClick>
+            <Dropzone key="enmedd-dropzone" onDrop={handleImageUpload} noClick>
               {({ getRootProps }) => (
                 <>
                   <div
@@ -1957,14 +1945,8 @@ export function ChatPage({
                           </ChatIntro>
                         )}
                       <div
-                        className={
-                          "-ml-4 w-full mx-auto " +
-                          "absolute mobile:top-0 desktop:top-12 left-0 " +
-                          (settings?.workspaces?.two_lines_for_chat_header
-                            ? "mt-20 "
-                            : "mt-8") +
-                          (hasPerformedInitialScroll ? "" : "invisible")
-                        }
+                        className={`pb-10 md:pb-14 lg:pb-16 px-5 md:px-8 lg:px-5 2xl:px-0 max-w-full mx-auto 2xl:w-searchbar w-full
+                        } ${messageHistory.length === 0 ? "hidden" : "block"}`}
                       >
                         {(messageHistory.length < BUFFER_COUNT
                           ? messageHistory
@@ -2118,9 +2100,6 @@ export function ChatPage({
                                   }}
                                   isActive={messageHistory.length - 1 == i}
                                   selectedDocuments={selectedDocuments}
-                                  toggleDocumentSelection={
-                                    toggleDocumentSelectionAspects
-                                  }
                                   docs={message.documents}
                                   currentAssistant={liveAssistant}
                                   alternativeAssistant={
@@ -2193,15 +2172,29 @@ export function ChatPage({
                                     isShowingRetrieved
                                   }
                                   handleShowRetrieved={(messageNumber) => {
-                                    if (isShowingRetrieved) {
-                                      setSelectedMessageForDocDisplay(null);
-                                    } else {
-                                      if (messageNumber !== null) {
-                                        setSelectedMessageForDocDisplay(
-                                          messageNumber
-                                        );
+                                    if (isMobile) {
+                                      if (!isShowingRetrieved) {
+                                        setSelectedMessageForDocDisplay(null);
                                       } else {
-                                        setSelectedMessageForDocDisplay(-1);
+                                        if (messageNumber !== null) {
+                                          setSelectedMessageForDocDisplay(
+                                            messageNumber
+                                          );
+                                        } else {
+                                          setSelectedMessageForDocDisplay(-1);
+                                        }
+                                      }
+                                    } else {
+                                      if (isShowingRetrieved) {
+                                        setSelectedMessageForDocDisplay(null);
+                                      } else {
+                                        if (messageNumber !== null) {
+                                          setSelectedMessageForDocDisplay(
+                                            messageNumber
+                                          );
+                                        } else {
+                                          setSelectedMessageForDocDisplay(-1);
+                                        }
                                       }
                                     }
                                   }}
@@ -2232,6 +2225,20 @@ export function ChatPage({
                                         )
                                       : !retrievalEnabled
                                   }
+                                  handleToggleSideBar={() => {
+                                    if (isMobile) {
+                                      setShowDocSidebar(isShowingRetrieved);
+                                    } else {
+                                      !isShowingRetrieved
+                                        ? setShowDocSidebar(true)
+                                        : setShowDocSidebar(false);
+                                    }
+
+                                    if (sidebarElementRef.current) {
+                                      sidebarElementRef.current.style.transition =
+                                        "width 0.3s ease-in-out";
+                                    }
+                                  }}
                                 />
                               </div>
                             );
@@ -2338,7 +2345,6 @@ export function ChatPage({
                           stopGenerating={stopGenerating}
                           openModelSettings={() => setSettingsToggled(true)}
                           inputPrompts={userInputPrompts}
-                          showDocs={() => setDocumentSelection(true)}
                           selectedDocuments={selectedDocuments}
                           // assistant stuff
                           assistantOptions={finalAssistants}
@@ -2374,7 +2380,7 @@ export function ChatPage({
                         {enterpriseSettings &&
                           enterpriseSettings.use_custom_logotype && (
                             <div className="hidden lg:block absolute right-0 bottom-0">
-                              <img
+                              <Image
                                 src="/api/enterprise-settings/logotype"
                                 alt="logotype"
                                 style={{ objectFit: "contain" }}
