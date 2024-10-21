@@ -70,7 +70,7 @@ def run_external_doc_permission_sync(
         # - the user_email <-> document mapping
         # - the external_user_group_id <-> document mapping
         # in postgres without committing
-        logger.debug(f"Syncing docs for {source_type}")
+        logger.info(f"Syncing docs for {source_type}")
         doc_sync_func(
             db_session,
             cc_pair,
@@ -107,6 +107,7 @@ def run_external_doc_permission_sync(
 
         # update postgres
         db_session.commit()
+        logger.info(f"Successfully synced docs for {source_type}")
     except Exception:
         logger.exception("Error Syncing Document Permissions")
         db_session.rollback()

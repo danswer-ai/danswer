@@ -242,7 +242,7 @@ def connector_pruning_generator_task(
             runnable_connector = instantiate_connector(
                 db_session,
                 cc_pair.connector.source,
-                InputType.PRUNE,
+                InputType.SLIM_RETRIEVAL,
                 cc_pair.connector.connector_specific_config,
                 cc_pair.credential,
             )

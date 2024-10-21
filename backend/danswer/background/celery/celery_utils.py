@@ -14,9 +14,9 @@ from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
     rate_limit_builder,
 )
 from danswer.connectors.interfaces import BaseConnector
-from danswer.connectors.interfaces import IdConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SlimConnector
 from danswer.connectors.models import Document
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.engine import get_session_with_tenant
@@ -67,7 +67,9 @@ def get_deletion_attempt_snapshot(
     )
 
 
-def document_batch_to_ids(doc_batch: list[Document]) -> set[str]:
+def document_batch_to_ids(
+    doc_batch: list[Document],
+) -> set[str]:
     return {doc.id for doc in doc_batch}
 
 
@@ -83,10 +85,13 @@ def extract_ids_from_runnable_connector(
     """
     all_connector_doc_ids: set[str] = set()
 
+    if isinstance(runnable_connector, SlimConnector):
+        for metadata_batch in runnable_connector.retrieve_all_slim_documents():
+            all_connector_doc_ids.update({doc.id for doc in metadata_batch})
+
     doc_batch_generator = None
-    if isinstance(runnable_connector, IdConnector):
-        all_connector_doc_ids = runnable_connector.retrieve_all_source_ids()
-    elif isinstance(runnable_connector, LoadConnector):
+
+    if isinstance(runnable_connector, LoadConnector):
         doc_batch_generator = runnable_connector.load_from_state()
     elif isinstance(runnable_connector, PollConnector):
         start = datetime(1970, 1, 1, tzinfo=timezone.utc).timestamp()
@@ -95,16 +100,15 @@ def extract_ids_from_runnable_connector(
     else:
         raise RuntimeError("Pruning job could not find a valid runnable_connector.")
 
-    if doc_batch_generator:
-        doc_batch_processing_func = document_batch_to_ids
-        if MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE:
-            doc_batch_processing_func = rate_limit_builder(
-                max_calls=MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE, period=60
-            )(document_batch_to_ids)
-        for doc_batch in doc_batch_generator:
-            if progress_callback:
-                progress_callback(len(doc_batch))
-            all_connector_doc_ids.update(doc_batch_processing_func(doc_batch))
+    doc_batch_processing_func = document_batch_to_ids
+    if MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE:
+        doc_batch_processing_func = rate_limit_builder(
+            max_calls=MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE, period=60
+        )(document_batch_to_ids)
+    for doc_batch in doc_batch_generator:
+        if progress_callback:
+            progress_callback(len(doc_batch))
+        all_connector_doc_ids.update(doc_batch_processing_func(doc_batch))
 
     return all_connector_doc_ids
 

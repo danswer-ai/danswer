@@ -4,8 +4,8 @@ from atlassian import Confluence  # type:ignore
 from requests import HTTPError
 from sqlalchemy.orm import Session
 
-from danswer.connectors.confluence.rate_limit_handler import (
-    make_confluence_call_handle_rate_limit,
+from danswer.connectors.confluence.onyx_confluence import (
+    handle_confluence_rate_limit,
 )
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
@@ -28,9 +28,7 @@ _PAGE_SIZE = 100
 def _get_confluence_group_names_paginated(
     confluence_client: Confluence,
 ) -> Iterator[str]:
-    get_all_groups = make_confluence_call_handle_rate_limit(
-        confluence_client.get_all_groups
-    )
+    get_all_groups = handle_confluence_rate_limit(confluence_client.get_all_groups)
 
     start = 0
     while True:
@@ -55,7 +53,7 @@ def _get_group_members_email_paginated(
     group_name: str,
     is_cloud: bool,
 ) -> set[str]:
-    get_group_members = make_confluence_call_handle_rate_limit(
+    get_group_members = handle_confluence_rate_limit(
         confluence_client.get_group_members
     )
     group_member_emails: set[str] = set()
