@@ -288,7 +288,7 @@ def try_creating_indexing_task(
             priority=DanswerCeleryPriority.MEDIUM,
         )
         if not result:
-            return None
+            raise RuntimeError("send_task for connector_indexing_proxy_task failed.")
 
         # now fill out the fence with the rest of the data
         fence_value = RedisConnectorIndexingFenceData(
@@ -300,6 +300,7 @@ def try_creating_indexing_task(
 
         r.set(rci.fence_key, fence_value.model_dump_json())
     except Exception:
+        r.delete(rci.fence_key)
         task_logger.exception("Unexpected exception")
         return None
     finally:
