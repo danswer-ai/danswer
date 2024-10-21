@@ -265,16 +265,17 @@ def reset_vespa_multitenant() -> None:
                 time.sleep(5)
 
 
-def reset_all(multitenant: bool = False) -> None:
-    """Reset both Postgres and Vespa."""
-    if multitenant:
-        logger.info("Resetting Postgres for all tenants...")
-        reset_postgres_multitenant()
-        logger.info("Resetting Vespa for all tenants...")
-        reset_vespa_multitenant()
-    else:
-        logger.info("Resetting Postgres...")
-        reset_postgres()
-        logger.info("Resetting Vespa...")
-        reset_vespa()
+def reset_all() -> None:
+    logger.info("Resetting Postgres...")
+    reset_postgres()
+    logger.info("Resetting Vespa...")
+    reset_vespa()
+
+
+def reset_all_multitenant() -> None:
+    """Reset both Postgres and Vespa for all tenants."""
+    logger.info("Resetting Postgres for all tenants...")
+    reset_postgres_multitenant()
+    logger.info("Resetting Vespa for all tenants...")
+    reset_vespa_multitenant()
     logger.info("Finished resetting all.")
