@@ -69,7 +69,7 @@ class UserManager:
         response.raise_for_status()
 
         cookies = response.cookies.get_dict()
-        session_cookie = cookies.get("session")
+        session_cookie = cookies.get("fastapiusersauth")
         tenant_details_cookie = cookies.get("tenant_details")
 
         if not session_cookie:
@@ -79,7 +79,8 @@ class UserManager:
 
         # Set both cookies in the headers
         test_user.headers["Cookie"] = (
-            f"session={session_cookie}; " f"tenant_details={tenant_details_cookie}"
+            f"fastapiusersauth={session_cookie}; "
+            f"tenant_details={tenant_details_cookie}"
         )
         return test_user
 
