@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from danswer.access.models import ExternalAccess
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.confluence.connector import OnyxConfluence
+from danswer.connectors.models import SlimDocument
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
@@ -188,7 +189,8 @@ def _extract_read_access_restrictions(
 
 
 def _fetch_all_page_restrictions_for_space(
-    confluence_connector: ConfluenceConnector,
+    confluence_client: OnyxConfluence,
+    slim_docs: list[SlimDocument],
     space_permissions_by_space_key: dict[str, ExternalAccess],
 ) -> dict[str, ExternalAccess]:
     """
@@ -196,11 +198,6 @@ def _fetch_all_page_restrictions_for_space(
     Otherwise, use the space's restrictions.
     """
     document_restrictions: dict[str, ExternalAccess] = {}
-    slim_docs = [
-        slim_doc
-        for doc_batch in confluence_connector.retrieve_all_slim_documents()
-        for slim_doc in doc_batch
-    ]
 
     for slim_doc in slim_docs:
         if slim_doc.perm_sync_data is None:
@@ -208,7 +205,7 @@ def _fetch_all_page_restrictions_for_space(
                 f"No permission sync data found for document {slim_doc.id}"
             )
         restrictions = _extract_read_access_restrictions(
-            confluence_client=confluence_connector.confluence_client,
+            confluence_client=confluence_client,
             restrictions=slim_doc.perm_sync_data.get("restrictions", {}),
         )
         if restrictions:
@@ -247,9 +244,15 @@ def confluence_doc_sync(
         confluence_client=confluence_client,
         is_cloud=is_cloud,
     )
+    slim_docs = [
+        slim_doc
+        for doc_batch in confluence_connector.retrieve_all_slim_documents()
+        for slim_doc in doc_batch
+    ]
 
     permissions_by_doc_id = _fetch_all_page_restrictions_for_space(
-        confluence_connector=confluence_connector,
+        confluence_client=confluence_client,
+        slim_docs=slim_docs,
         space_permissions_by_space_key=space_permissions_by_space_key,
     )
 

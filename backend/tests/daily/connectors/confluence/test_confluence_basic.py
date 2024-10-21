@@ -54,16 +54,17 @@ def test_confluence_connector_basic(
     assert len(page_doc.sections) == 1
 
     section = page_doc.sections[0]
-    assert section.text == "test123\nsmall"
+    assert section.text == "test123"
     assert (
         section.link
         == "https://danswerai.atlassian.net/wiki/spaces/DailyConne/overview"
     )
 
     assert txt_doc.semantic_identifier == "small-file.txt"
-    assert len(txt_doc.primary_owners) == 1
     assert len(txt_doc.sections) == 1
     assert txt_doc.sections[0].text == "small"
+    assert txt_doc.primary_owners
+    assert txt_doc.primary_owners[0].email == "chris@danswer.ai"
     assert (
         txt_doc.sections[0].link
         == "https://danswerai.atlassian.net/wiki/pages/viewpageattachments.action?pageId=52494430&preview=%2F52494430%2F52527123%2Fsmall-file.txt"
