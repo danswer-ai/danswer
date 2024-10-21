@@ -379,7 +379,6 @@ def build_indexing_pipeline(
     attempt_id: int | None = None,
     tenant_id: str | None = None,
 ) -> IndexingPipelineProtocol:
-    print("INDEXING PIPELINE")
     """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
     search_settings = get_current_search_settings(db_session)
     multipass = (

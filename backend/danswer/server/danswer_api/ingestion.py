@@ -113,8 +113,6 @@ def upsert_ingestion_doc(
             credential_id=cc_pair.credential_id,
         ),
     )
-    print("NEW DOC", new_doc)
-    print("CHUNK COUNT", __chunk_count)
 
     # If there's a secondary index being built, index the doc but don't use it for return here
     if sec_ind_name:
