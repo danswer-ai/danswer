@@ -45,21 +45,23 @@ def _get_user(user_id: str, confluence_client: OnyxConfluence) -> str:
     return user_not_found
 
 
-def extract_text_from_page(
-    confluence_client: OnyxConfluence, page: dict[str, Any]
+def extract_text_from_confluence_html(
+    confluence_client: OnyxConfluence, confluence_object: dict[str, Any]
 ) -> str:
     """Parse a Confluence html page and replace the 'user Id' by the real
         User Display Name
 
     Args:
-        text (str): The page content
+        confluence_object (dict): The confluence object as a dict
         confluence_client (Confluence): Confluence client
 
     Returns:
         str: loaded and formated Confluence page
     """
-    text = page["body"].get("storage", page["body"].get("view", {})).get("value")
-    soup = bs4.BeautifulSoup(text, "html.parser")
+    body = confluence_object["body"]
+    object_html = body.get("storage", body.get("view", {})).get("value")
+
+    soup = bs4.BeautifulSoup(object_html, "html.parser")
     for user in soup.findAll("ri:user"):
         user_id = (
             user.attrs["ri:account-id"]

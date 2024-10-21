@@ -10,7 +10,7 @@ from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
 from danswer.connectors.confluence.utils import attachment_to_content
 from danswer.connectors.confluence.utils import build_confluence_document_id
 from danswer.connectors.confluence.utils import datetime_from_string
-from danswer.connectors.confluence.utils import extract_text_from_page
+from danswer.connectors.confluence.utils import extract_text_from_confluence_html
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
@@ -128,14 +128,16 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             expand=expand,
         ):
             for comment in comments:
-                comment_html = comment["body"]["storage"]["value"]
-                comment_string += "\nComment:\n" + extract_text_from_page(
-                    comment_html, self.confluence_client
+                comment_string += "\nComment:\n"
+                comment_string += extract_text_from_confluence_html(
+                    confluence_client=self.confluence_client, confluence_object=comment
                 )
 
         return comment_string
 
-    def _convert_object_to_document(self, object: dict[str, Any]) -> Document | None:
+    def _convert_object_to_document(
+        self, confluence_object: dict[str, Any]
+    ) -> Document | None:
         """
         Takes in a confluence object, extracts all metadata, and converts it into a document.
         If its a page, it extracts the text, adds the comments for the document text.
@@ -146,41 +148,45 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         # The url and the id are the same
         object_url = build_confluence_document_id(
-            self.wiki_base, object["_links"]["webui"]
+            self.wiki_base, confluence_object["_links"]["webui"]
         )
 
         object_text = None
         # Extract text from page
-        if object["type"] == "page":
-            object_text = extract_text_from_page(self.confluence_client, object)
+        if confluence_object["type"] == "page":
+            object_text = extract_text_from_confluence_html(
+                self.confluence_client, confluence_object
+            )
             # Add comments to text
-            object_text += self._get_comment_string_for_page_id(object["id"])
-        elif object["type"] == "attachment":
-            object_text = attachment_to_content(self.confluence_client, object)
+            object_text += self._get_comment_string_for_page_id(confluence_object["id"])
+        elif confluence_object["type"] == "attachment":
+            object_text = attachment_to_content(
+                self.confluence_client, confluence_object
+            )
 
         if object_text is None:
             return None
 
         # Get space name
         doc_metadata: dict[str, str | list[str]] = {
-            "Wiki Space Name": object["space"]["name"]
+            "Wiki Space Name": confluence_object["space"]["name"]
         }
 
         # Get labels
-        label_dicts = object["metadata"]["labels"]["results"]
+        label_dicts = confluence_object["metadata"]["labels"]["results"]
         page_labels = [label["name"] for label in label_dicts]
         if page_labels:
             doc_metadata["labels"] = page_labels
 
         # Get last modified and author email
-        last_modified = datetime_from_string(object["version"]["when"])
-        author_email = object["version"].get("by", {}).get("email")
+        last_modified = datetime_from_string(confluence_object["version"]["when"])
+        author_email = confluence_object["version"].get("by", {}).get("email")
 
         return Document(
             id=object_url,
             sections=[Section(link=object_url, text=object_text)],
             source=DocumentSource.CONFLUENCE,
-            semantic_identifier=object["title"],
+            semantic_identifier=confluence_object["title"],
             doc_updated_at=last_modified,
             primary_owners=(
                 [BasicExpertInfo(email=author_email)] if author_email else None
@@ -253,7 +259,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         restrictions_expand = ",".join(_RESTRICTIONS_EXPANSION_FIELDS)
 
-        for pages in self.confluence_client.paginated_cql_page_retrieval(
+        for pages in self.confluence_client.cql_paginate_all_expansions(
             cql=self.cql_page_query,
             expand=restrictions_expand,
         ):
@@ -275,7 +281,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 )
                 attachment_cql = f"type=attachment and container='{page['id']}'"
                 attachment_cql += self.cql_label_filter
-                for attachments in self.confluence_client.paginated_cql_page_retrieval(
+                for attachments in self.confluence_client.cql_paginate_all_expansions(
                     cql=attachment_cql,
                     expand=restrictions_expand,
                 ):

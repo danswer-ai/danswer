@@ -141,10 +141,8 @@ def _extract_read_access_restrictions(
     restrictions: dict[str, Any]
 ) -> ExternalAccess | None:
     """
-    WARNING: This function includes no paginated retrieval. So if a page is private
-    within the space and has over 200 users or over 200 groups with explicitly read
-    access, this function will leave out some users or groups.
-    200 is a large amount so it is unlikely, but just be aware.
+    Converts a page's restrictions dict into an ExternalAccess object.
+    If there are no restrictions, then return None
     """
     read_access = restrictions.get("read", {})
     read_access_restrictions = read_access.get("restrictions", {})
@@ -181,29 +179,33 @@ def _fetch_all_page_restrictions_for_space(
     confluence_connector: ConfluenceConnector,
     space_permissions_by_space_key: dict[str, ExternalAccess],
 ) -> dict[str, ExternalAccess]:
+    """
+    For all pages, if a page has restrictions, then use those restrictions.
+    Otherwise, use the space's restrictions.
+    """
     document_restrictions: dict[str, ExternalAccess] = {}
-    for doc_batch in confluence_connector.retrieve_all_slim_documents():
-        for slim_doc in doc_batch:
-            """
-            If the page has restrictions, then use those restrictions.
-            Otherwise, use the space's restrictions.
-            """
-            if slim_doc.perm_sync_data is None:
-                raise ValueError(
-                    f"No permission sync data found for document {slim_doc.id}"
-                )
+    slim_docs = [
+        slim_doc
+        for doc_batch in confluence_connector.retrieve_all_slim_documents()
+        for slim_doc in doc_batch
+    ]
 
-            if restrictions := _extract_read_access_restrictions(
-                slim_doc.perm_sync_data.get("restrictions", {})
-            ):
-                document_restrictions[slim_doc.id] = restrictions
+    for slim_doc in slim_docs:
+        if slim_doc.perm_sync_data is None:
+            raise ValueError(
+                f"No permission sync data found for document {slim_doc.id}"
+            )
+        restrictions = _extract_read_access_restrictions(
+            slim_doc.perm_sync_data.get("restrictions", {})
+        )
+        if restrictions:
+            document_restrictions[slim_doc.id] = restrictions
+        else:
+            space_key = slim_doc.perm_sync_data.get("space_key")
+            if space_permissions := space_permissions_by_space_key.get(space_key):
+                document_restrictions[slim_doc.id] = space_permissions
             else:
-                if page_permissions := space_permissions_by_space_key.get(
-                    slim_doc.perm_sync_data.get("space", {}).get("key")
-                ):
-                    document_restrictions[slim_doc.id] = page_permissions
-                else:
-                    logger.warning(f"No permissions found for document {slim_doc.id}")
+                logger.warning(f"No permissions found for document {slim_doc.id}")
 
     return document_restrictions
 

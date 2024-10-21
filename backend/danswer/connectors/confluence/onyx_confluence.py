@@ -144,6 +144,9 @@ class OnyxConfluence(Confluence):
         expand: str | None = None,
         limit: int | None = None,
     ) -> Iterator[list[dict[str, Any]]]:
+        """
+        This will paginate through the top level query.
+        """
         url_suffix = f"rest/api/content/search?cql={cql}"
         if expand:
             url_suffix += f"&expand={expand}"
@@ -174,6 +177,8 @@ class OnyxConfluence(Confluence):
         """
         This function will paginate through the top level query first, then
         paginate through all of the expansions.
+        The limit only applies to the top level query.
+        All expansion paginations use default pagination limit (defined by Atlassian).
         """
 
         def _traverse_and_update(data: dict | list) -> None:
