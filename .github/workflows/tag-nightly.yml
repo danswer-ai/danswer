@@ -22,8 +22,8 @@ jobs:
 
     - name: Set up Git user
       run: |
-        git config user.name "Richard Kuo [bot]"
-        git config user.email "rkuo[bot]@danswer.ai"
+        git config user.name "SchadenKai"
+        git config user.email "kairus.tecson@enmedd.com"
 
     - name: Check for existing nightly tag
       id: check_tag

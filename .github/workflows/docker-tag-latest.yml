@@ -30,8 +30,8 @@ jobs:
 
     - name: Pull, Tag and Push Web Server Image
       run: |
-        docker buildx imagetools create -t danswer/danswer-web-server:latest danswer/danswer-web-server:${{ github.event.inputs.version }}
+        docker buildx imagetools create -t 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:${{ github.event.inputs.version }}
 
     - name: Pull, Tag and Push API Server Image
       run: |
-        docker buildx imagetools create -t danswer/danswer-backend:latest danswer/danswer-backend:${{ github.event.inputs.version }}
+        docker buildx imagetools create -t d471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:${{ github.event.inputs.version }}

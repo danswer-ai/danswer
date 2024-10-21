@@ -34,17 +34,17 @@ jobs:
     runs-on: [runs-on,runner=2cpu-linux-x64,"run-id=${{ github.run_id }}"]
     steps:
     
-      # needs RKUO_DEPLOY_KEY for write access to merge PR's
+      # needs AWS_SECRET_ACCESS_KEY for write access to merge PR's
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ssh-key: "${{ secrets.RKUO_DEPLOY_KEY }}"
+          ssh-key: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           fetch-depth: 0
           
       - name: Set up Git user
         run: |
-          git config user.name "Richard Kuo [bot]"
-          git config user.email "rkuo[bot]@danswer.ai"
+          git config user.name "SchadenKai"
+          git config user.email "kairus.tecson@enmedd.com"
 
       - name: Fetch All Branches
         run: |
@@ -80,7 +80,7 @@ jobs:
           HOTFIX_COMMIT: ${{ github.event.inputs.hotfix_commit }}
           HOTFIX_SUFFIX: ${{ github.event.inputs.hotfix_suffix }}
           AUTO_MERGE: ${{ github.event.inputs.auto_merge }}
-          GH_TOKEN: ${{ secrets.RKUO_PERSONAL_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_KEY }}
         run: |
           # Get the branches from the previous step
           BRANCHES="${{ steps.get_release_branches.outputs.branches }}"

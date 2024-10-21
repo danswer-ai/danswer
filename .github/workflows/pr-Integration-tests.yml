@@ -39,8 +39,8 @@ jobs:
       # successfully.
       - name: Pull Web Docker image
         run: |
-          docker pull danswer/danswer-web-server:latest
-          docker tag danswer/danswer-web-server:latest danswer/danswer-web-server:test
+          docker pull 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest
+          docker tag 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:test
 
       # we use the runs-on cache for docker builds
       # in conjunction with runs-on runners, it has better speed and unlimited caching
@@ -55,7 +55,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           platforms: linux/amd64
-          tags: danswer/danswer-backend:test
+          tags:  471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:test
           push: false
           load: true
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/backend/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
@@ -67,7 +67,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile.model_server
           platforms: linux/amd64
-          tags: danswer/danswer-model-server:test
+          tags: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-model-server:test
           push: false
           load: true
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
@@ -79,7 +79,7 @@ jobs:
           context: ./backend
           file: ./backend/tests/integration/Dockerfile
           platforms: linux/amd64
-          tags: danswer/danswer-integration:test
+          tags: enmedd/enmedd-integration:test
           push: false
           load: true
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
@@ -93,14 +93,14 @@ jobs:
           REQUIRE_EMAIL_VERIFICATION=false \
           DISABLE_TELEMETRY=true \
           IMAGE_TAG=test \
-          docker compose -f docker-compose.dev.yml -p danswer-stack up -d
+          docker compose -f docker-compose.dev.yml -p enmedd-stack up -d
         id: start_docker
 
       - name: Wait for service to be ready
         run: |
           echo "Starting wait-for-service script..."
           
-          docker logs -f danswer-stack-api_server-1 &
+          docker logs -f enmedd-stack-api_server-1 &
 
           start_time=$(date +%s)
           timeout=300  # 5 minutes in seconds
@@ -133,7 +133,7 @@ jobs:
       - name: Run integration tests
         run: |
           echo "Running integration tests..."
-          docker run --rm --network danswer-stack_default \
+          docker run --rm --network enmedd-stack_default \
             --name test-runner \
             -e POSTGRES_HOST=relational_db \
             -e POSTGRES_USER=postgres \
@@ -145,7 +145,7 @@ jobs:
             -e OPENAI_API_KEY=${OPENAI_API_KEY} \
             -e SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN} \
             -e TEST_WEB_HOSTNAME=test-runner \
-            danswer/danswer-integration:test
+            enmedd/enmedd-integration:test
         continue-on-error: true
         id: run_tests
 
@@ -162,7 +162,7 @@ jobs:
         if: success() || failure()
         run: |
           cd deployment/docker_compose
-          docker compose -f docker-compose.dev.yml -p danswer-stack logs > docker-compose.log
+          docker compose -f docker-compose.dev.yml -p enmedd-stack logs > docker-compose.log
           mv docker-compose.log ${{ github.workspace }}/docker-compose.log
       
       - name: Upload logs
@@ -175,4 +175,4 @@ jobs:
       - name: Stop Docker containers
         run: |
           cd deployment/docker_compose
-          docker compose -f docker-compose.dev.yml -p danswer-stack down -v
+          docker compose -f docker-compose.dev.yml -p enmedd-stack down -v

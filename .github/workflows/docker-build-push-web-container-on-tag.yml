@@ -6,7 +6,7 @@ on:
       - '*'
 
 env:
-  REGISTRY_IMAGE: danswer/danswer-web-server
+  REGISTRY_IMAGE: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest
   LATEST_TAG: ${{ contains(github.ref_name, 'latest') }}
   
 jobs:
@@ -59,7 +59,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           build-args: |
-            DANSWER_VERSION=${{ github.ref_name }}
+            ENMEDD_VERSION=${{ github.ref_name }}
           # needed due to weird interactions with the builds for different platforms  
           no-cache: true
           labels: ${{ steps.meta.outputs.labels }}
