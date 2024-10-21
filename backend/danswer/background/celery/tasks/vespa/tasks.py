@@ -574,6 +574,10 @@ def monitor_ccpair_indexing_taskset(
                 "monitor_ccpair_indexing_taskset: generator_progress_value is not an integer."
             )
 
+    if fence_data.index_attempt_id is None or fence_data.celery_task_id is None:
+        # the task is still setting up
+        return
+
     # Read result state BEFORE generator_complete_key to avoid a race condition
     result: AsyncResult = AsyncResult(fence_data.celery_task_id)
     result_state = result.state
