@@ -1,7 +1,6 @@
 import io
 from datetime import datetime
 from datetime import timezone
-from functools import lru_cache
 from typing import Any
 
 import bs4
@@ -19,9 +18,11 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+_USER_NOT_FOUND = "Unknown User"
+_USER_ID_TO_DISPLAY_NAME_CACHE: dict[str, str] = {}
 
-@lru_cache()
-def _get_user(user_id: str, confluence_client: OnyxConfluence) -> str:
+
+def _get_user(confluence_client: OnyxConfluence, user_id: str) -> str:
     """Get Confluence Display Name based on the account-id or userkey value
 
     Args:
@@ -31,18 +32,21 @@ def _get_user(user_id: str, confluence_client: OnyxConfluence) -> str:
     Returns:
         str: The User Display Name. 'Unknown User' if the user is deactivated or not found
     """
-    user_not_found = "Unknown User"
+    if user_id in _USER_ID_TO_DISPLAY_NAME_CACHE:
+        return _USER_ID_TO_DISPLAY_NAME_CACHE[user_id]
 
     try:
-        logger.info(f"_get_user - get_user_details_by_accountid: id={user_id}")
-        return confluence_client.get_user_details_by_accountid(user_id).get(
-            "displayName", user_not_found
+        result = confluence_client.get_user_details_by_accountid(user_id)
+        _USER_ID_TO_DISPLAY_NAME_CACHE[user_id] = result.get(
+            "displayName", _USER_NOT_FOUND
         )
-    except Exception as e:
-        logger.warning(
-            f"Unable to get the User Display Name with the id: '{user_id}' - {e}"
+    except Exception:
+        # may need ot just ignore this error but will leave her for now
+        logger.exception(
+            f"Unable to get the User Display Name with the id: '{user_id}'"
         )
-    return user_not_found
+
+    return _USER_NOT_FOUND
 
 
 def extract_text_from_confluence_html(
@@ -74,7 +78,7 @@ def extract_text_from_confluence_html(
             )
             continue
         # Include @ sign for tagging, more clear for LLM
-        user.replaceWith("@" + _get_user(user_id, confluence_client))
+        user.replaceWith("@" + _get_user(confluence_client, user_id))
     return format_document_soup(soup)
 
 

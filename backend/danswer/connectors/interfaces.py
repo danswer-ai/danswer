@@ -9,7 +9,7 @@ from danswer.connectors.models import SlimDocument
 SecondsSinceUnixEpoch = float
 
 GenerateDocumentsOutput = Iterator[list[Document]]
-SlimDocumentOutput = Iterator[list[SlimDocument]]
+GenerateSlimDocumentOutput = Iterator[list[SlimDocument]]
 
 
 class BaseConnector(abc.ABC):
@@ -56,7 +56,7 @@ class PollConnector(BaseConnector):
 
 class SlimConnector(BaseConnector):
     @abc.abstractmethod
-    def retrieve_all_slim_documents(self) -> SlimDocumentOutput:
+    def retrieve_all_slim_documents(self) -> GenerateSlimDocumentOutput:
         raise NotImplementedError
 
 

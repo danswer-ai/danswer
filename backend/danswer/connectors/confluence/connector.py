@@ -12,10 +12,10 @@ from danswer.connectors.confluence.utils import build_confluence_document_id
 from danswer.connectors.confluence.utils import datetime_from_string
 from danswer.connectors.confluence.utils import extract_text_from_confluence_html
 from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SlimConnector
-from danswer.connectors.interfaces import SlimDocumentOutput
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
@@ -73,28 +73,27 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         # Remove trailing slash from wiki_base if present
         self.wiki_base = wiki_base.rstrip("/")
 
+        # if nothing is provided, we will fetch all pages
+        self.cql_page_query = "type=page"
         if cql_query:
             # if a cql_query is provided, we will use it to fetch the pages
             self.cql_page_query = cql_query
         elif space:
             # if no cql_query is provided, we will use the space to fetch the pages
-            self.cql_page_query = f"type=page and space='{space}'"
+            self.cql_page_query += f" and space='{space}'"
         elif page_id:
             if index_recursively:
-                self.cql_page_query = f"type=page and ancestor='{page_id}'"
+                self.cql_page_query += f" and ancestor='{page_id}'"
             else:
                 # if neither a space nor a cql_query is provided, we will use the page_id to fetch the page
-                self.cql_page_query = f"type=page and id='{page_id}'"
-        else:
-            # if nothing is provided, we will fetch all pages
-            self.cql_page_query = "type=page"
+                self.cql_page_query += f" and id='{page_id}'"
 
         self.cql_label_filter = ""
+        self.cql_time_filter = ""
         if labels_to_skip:
             labels_to_skip = list(set(labels_to_skip))
             comma_separated_labels = ",".join(labels_to_skip)
             self.cql_label_filter = f"&label not in ({comma_separated_labels})"
-            self.cql_page_query += self.cql_label_filter
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         username = credentials["confluence_username"]
@@ -201,9 +200,10 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         doc_batch: list[Document] = []
         confluence_page_ids: list[str] = []
 
+        page_query = self.cql_page_query + self.cql_label_filter + self.cql_time_filter
         # Fetch pages as Documents
         for pages in self.confluence_client.paginated_cql_page_retrieval(
-            cql=self.cql_page_query,
+            cql=page_query,
             expand=",".join(_PAGE_EXPANSION_FIELDS),
             limit=self.batch_size,
         ):
@@ -247,11 +247,11 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         formatted_end_time = datetime.fromtimestamp(end, tz=timezone.utc).strftime(
             "%Y-%m-%d %H:%M"
         )
-        self.cql_page_query += f" and lastmodified >= '{formatted_start_time}'"
-        self.cql_page_query += f" and lastmodified <= '{formatted_end_time}'"
+        self.cql_time_filter = f" and lastmodified >= '{formatted_start_time}'"
+        self.cql_time_filter += f" and lastmodified <= '{formatted_end_time}'"
         return self._fetch_document_batches()
 
-    def retrieve_all_slim_documents(self) -> SlimDocumentOutput:
+    def retrieve_all_slim_documents(self) -> GenerateSlimDocumentOutput:
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
 
@@ -259,8 +259,9 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         restrictions_expand = ",".join(_RESTRICTIONS_EXPANSION_FIELDS)
 
+        page_query = self.cql_page_query + self.cql_label_filter
         for pages in self.confluence_client.cql_paginate_all_expansions(
-            cql=self.cql_page_query,
+            cql=page_query,
             expand=restrictions_expand,
         ):
             for page in pages:

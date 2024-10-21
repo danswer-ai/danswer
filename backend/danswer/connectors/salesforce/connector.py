@@ -11,11 +11,11 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.interfaces import SlimConnector
-from danswer.connectors.interfaces import SlimDocumentOutput
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
@@ -245,7 +245,7 @@ class SalesforceConnector(LoadConnector, PollConnector, SlimConnector):
         end_datetime = datetime.utcfromtimestamp(end)
         return self._fetch_from_salesforce(start=start_datetime, end=end_datetime)
 
-    def retrieve_all_slim_documents(self) -> SlimDocumentOutput:
+    def retrieve_all_slim_documents(self) -> GenerateSlimDocumentOutput:
         if self.sf_client is None:
             raise ConnectorMissingCredentialError("Salesforce")
         doc_metadata_list: list[SlimDocument] = []

@@ -13,10 +13,10 @@ from danswer.configs.app_configs import ENABLE_EXPENSIVE_EXPERT_CALLS
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.interfaces import SlimConnector
-from danswer.connectors.interfaces import SlimDocumentOutput
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
@@ -328,7 +328,7 @@ def _get_all_doc_ids(
     channels: list[str] | None = None,
     channel_name_regex_enabled: bool = False,
     msg_filter_func: Callable[[MessageType], bool] = default_msg_filter,
-) -> SlimDocumentOutput:
+) -> GenerateSlimDocumentOutput:
     """
     Get all document ids in the workspace, channel by channel
     This is pretty identical to get_all_docs, but it returns a set of ids instead of documents
@@ -391,7 +391,7 @@ class SlackPollConnector(PollConnector, SlimConnector):
         self.client = WebClient(token=bot_token)
         return None
 
-    def retrieve_all_slim_documents(self) -> SlimDocumentOutput:
+    def retrieve_all_slim_documents(self) -> GenerateSlimDocumentOutput:
         if self.client is None:
             raise ConnectorMissingCredentialError("Slack")
 
