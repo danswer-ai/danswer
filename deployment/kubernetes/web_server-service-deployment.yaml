@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: web-server
-        image: danswer/danswer-web-server:latest
+        image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
@@ -37,7 +37,7 @@ spec:
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: danswer-secrets
+              name: enmedd-secrets
               key: redis_password
         envFrom:
         - configMapRef:

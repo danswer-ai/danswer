@@ -1,9 +1,9 @@
 apiVersion: v2
-name: danswer-stack
+name: enmedd-stack
 description: A Helm chart for Kubernetes
-home: https://www.danswer.ai/
+home: https://platform.enmedd.com/
 sources:
-  - "https://github.com/danswer-ai/danswer"
+  - "https://github.com/enMedD/enmedd-ai"
 type: application
 version: 0.2.0
 appVersion: "latest"
@@ -12,9 +12,9 @@ annotations:
   licenses: MIT
   images: |
     - name: webserver
-      image: docker.io/danswer/danswer-web-server:latest
+      image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-web:latest
     - name: background
-      image: docker.io/danswer/danswer-backend:latest
+      image: 471112588823.dkr.ecr.ap-southeast-2.amazonaws.com/chp-api-server:latest
     - name: vespa
       image: vespaengine/vespa:8.277.17
 dependencies:
