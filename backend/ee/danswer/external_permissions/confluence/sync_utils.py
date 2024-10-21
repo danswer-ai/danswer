@@ -1,8 +1,8 @@
 from typing import Any
 
-from danswer.connectors.confluence.connector import DanswerConfluence
-from danswer.connectors.confluence.rate_limit_handler import (
-    make_confluence_call_handle_rate_limit,
+from danswer.connectors.confluence.connector import OnyxConfluence
+from danswer.connectors.confluence.onyx_confluence import (
+    handle_confluence_rate_limit,
 )
 
 _USER_EMAIL_CACHE: dict[str, str | None] = {}
@@ -10,9 +10,9 @@ _USER_EMAIL_CACHE: dict[str, str | None] = {}
 
 def build_confluence_client(
     connector_specific_config: dict[str, Any], credentials_json: dict[str, Any]
-) -> DanswerConfluence:
+) -> OnyxConfluence:
     is_cloud = connector_specific_config.get("is_cloud", False)
-    return DanswerConfluence(
+    return OnyxConfluence(
         api_version="cloud" if is_cloud else "latest",
         # Remove trailing slash from wiki_base if present
         url=connector_specific_config["wiki_base"].rstrip("/"),
@@ -27,10 +27,10 @@ def build_confluence_client(
 
 
 def get_user_email_from_username__server(
-    confluence_client: DanswerConfluence, user_name: str
+    confluence_client: OnyxConfluence, user_name: str
 ) -> str | None:
     global _USER_EMAIL_CACHE
-    get_user_info = make_confluence_call_handle_rate_limit(
+    get_user_info = handle_confluence_rate_limit(
         confluence_client.get_mobile_parameters
     )
     if _USER_EMAIL_CACHE.get(user_name) is None:
