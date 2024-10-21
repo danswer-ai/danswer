@@ -32,21 +32,21 @@ def _get_user(confluence_client: OnyxConfluence, user_id: str) -> str:
     Returns:
         str: The User Display Name. 'Unknown User' if the user is deactivated or not found
     """
+    # Cache hit
     if user_id in _USER_ID_TO_DISPLAY_NAME_CACHE:
         return _USER_ID_TO_DISPLAY_NAME_CACHE[user_id]
 
     try:
         result = confluence_client.get_user_details_by_accountid(user_id)
-        _USER_ID_TO_DISPLAY_NAME_CACHE[user_id] = result.get(
-            "displayName", _USER_NOT_FOUND
-        )
+        if found_display_name := result.get("displayName"):
+            _USER_ID_TO_DISPLAY_NAME_CACHE[user_id] = found_display_name
     except Exception:
-        # may need ot just ignore this error but will leave her for now
+        # may need to just not log this error but will leave here for now
         logger.exception(
             f"Unable to get the User Display Name with the id: '{user_id}'"
         )
 
-    return _USER_NOT_FOUND
+    return _USER_ID_TO_DISPLAY_NAME_CACHE.get(user_id, _USER_NOT_FOUND)
 
 
 def extract_text_from_confluence_html(
