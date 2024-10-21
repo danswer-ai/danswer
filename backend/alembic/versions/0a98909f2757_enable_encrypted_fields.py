@@ -1,7 +1,7 @@
 """Enable Encrypted Fields
 
 Revision ID: 0a98909f2757
-Revises: 570282d33c49
+Revises: 7547d982db8f
 Create Date: 2024-05-05 19:30:34.317972
 
 """
@@ -15,7 +15,7 @@ from enmedd.utils.encryption import encrypt_string_to_bytes
 
 # revision identifiers, used by Alembic.
 revision = "0a98909f2757"
-down_revision = "570282d33c49"
+down_revision = "7547d982db8f"
 branch_labels: None = None
 depends_on: None = None
 

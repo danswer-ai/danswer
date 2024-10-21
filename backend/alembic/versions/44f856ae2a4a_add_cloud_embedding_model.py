@@ -1,7 +1,7 @@
 """add cloud embedding model and update embedding_model
 
 Revision ID: 44f856ae2a4a
-Revises: d716b0791ddd
+Revises: 4505fd7302e1
 Create Date: 2024-06-28 20:01:05.927647
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "44f856ae2a4a"
-down_revision = "d716b0791ddd"
+down_revision = "4505fd7302e1"
 branch_labels: None = None
 depends_on: None = None
 

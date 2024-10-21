@@ -1,4 +1,4 @@
-"""add nullable to persona id in Chat Session
+"""add nullable to assistant id in Chat Session
 
 Revision ID: c99d76fcd298
 Revises: 5c7fdadae813
@@ -18,14 +18,14 @@ depends_on = None
 
 def upgrade() -> None:
     op.alter_column(
-        "chat_session", "persona_id", existing_type=sa.INTEGER(), nullable=True
+        "chat_session", "assistant_id", existing_type=sa.INTEGER(), nullable=True
     )
 
 
 def downgrade() -> None:
     op.alter_column(
         "chat_session",
-        "persona_id",
+        "assistant_id",
         existing_type=sa.INTEGER(),
         nullable=False,
     )

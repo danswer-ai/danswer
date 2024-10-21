@@ -58,7 +58,7 @@ def upgrade() -> None:
     op.add_column(
         "document",
         sa.Column(
-            "external_user_group_ids", postgresql.ARRAY(sa.String()), nullable=True
+            "external_teamspace_ids", postgresql.ARRAY(sa.String()), nullable=True
         ),
     )
     op.add_column(
@@ -67,11 +67,11 @@ def upgrade() -> None:
     )
 
     op.create_table(
-        "user__external_user_group_id",
+        "user__external_teamspace_id",
         sa.Column(
             "user_id", fastapi_users_db_sqlalchemy.generics.GUID(), nullable=False
         ),
-        sa.Column("external_user_group_id", sa.String(), nullable=False),
+        sa.Column("external_teamspace_id", sa.String(), nullable=False),
         sa.Column("cc_pair_id", sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint("user_id"),
     )
@@ -97,10 +97,10 @@ def downgrade() -> None:
     op.drop_column("connector_credential_pair", "access_type")
     op.drop_column("connector_credential_pair", "last_time_perm_sync")
     op.drop_column("document", "external_user_emails")
-    op.drop_column("document", "external_user_group_ids")
+    op.drop_column("document", "external_teamspace_ids")
     op.drop_column("document", "is_public")
 
-    op.drop_table("user__external_user_group_id")
+    op.drop_table("user__external_teamspace_id")
 
     # Drop the enum type at the end of the downgrade
     op.create_table(

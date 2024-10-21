@@ -18,18 +18,20 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Reworking persona and user tables for new assistant features
+    # Reworking assistant and user tables for new assistant features
     # keep track of user's chosen assistants separate from their `ordering`
-    op.add_column("persona", sa.Column("builtin_persona", sa.Boolean(), nullable=True))
-    op.execute("UPDATE persona SET builtin_persona = default_persona")
-    op.alter_column("persona", "builtin_persona", nullable=False)
-    op.drop_index("_default_persona_name_idx", table_name="persona")
+    op.add_column(
+        "assistant", sa.Column("builtin_assistant", sa.Boolean(), nullable=True)
+    )
+    op.execute("UPDATE assistant SET builtin_assistant = default_assistant")
+    op.alter_column("assistant", "builtin_assistant", nullable=False)
+    op.drop_index("_default_assistant_name_idx", table_name="assistant")
     op.create_index(
-        "_builtin_persona_name_idx",
-        "persona",
+        "_builtin_assistant_name_idx",
+        "assistant",
         ["name"],
         unique=True,
-        postgresql_where=sa.text("builtin_persona = true"),
+        postgresql_where=sa.text("builtin_assistant = true"),
     )
 
     op.add_column(
@@ -53,9 +55,9 @@ def upgrade() -> None:
         nullable=False,
         server_default=sa.text("'[]'::jsonb"),
     )
-    op.drop_column("persona", "default_persona")
+    op.drop_column("assistant", "default_assistant")
     op.add_column(
-        "persona", sa.Column("is_default_persona", sa.Boolean(), nullable=True)
+        "assistant", sa.Column("is_default_assistant", sa.Boolean(), nullable=True)
     )
 
 
@@ -63,17 +65,19 @@ def downgrade() -> None:
     # Reverting changes made in upgrade
     op.drop_column("user", "hidden_assistants")
     op.drop_column("user", "visible_assistants")
-    op.drop_index("_builtin_persona_name_idx", table_name="persona")
+    op.drop_index("_builtin_assistant_name_idx", table_name="assistant")
 
-    op.drop_column("persona", "is_default_persona")
-    op.add_column("persona", sa.Column("default_persona", sa.Boolean(), nullable=True))
-    op.execute("UPDATE persona SET default_persona = builtin_persona")
-    op.alter_column("persona", "default_persona", nullable=False)
-    op.drop_column("persona", "builtin_persona")
+    op.drop_column("assistant", "is_default_assistant")
+    op.add_column(
+        "assistant", sa.Column("default_assistant", sa.Boolean(), nullable=True)
+    )
+    op.execute("UPDATE assistant SET default_assistant = builtin_assistant")
+    op.alter_column("assistant", "default_assistant", nullable=False)
+    op.drop_column("assistant", "builtin_assistant")
     op.create_index(
-        "_default_persona_name_idx",
-        "persona",
+        "_default_assistant_name_idx",
+        "assistant",
         ["name"],
         unique=True,
-        postgresql_where=sa.text("default_persona = true"),
+        postgresql_where=sa.text("default_assistant = true"),
     )

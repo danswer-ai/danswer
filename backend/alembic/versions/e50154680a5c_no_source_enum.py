@@ -1,7 +1,7 @@
 """No Source Enum
 
 Revision ID: e50154680a5c
-Revises: fcd135795f21
+Revises: 0a2b51deb0b8
 Create Date: 2024-03-14 18:06:08.523106
 
 """
@@ -12,7 +12,7 @@ from enmedd.configs.constants import DocumentSource
 
 # revision identifiers, used by Alembic.
 revision = "e50154680a5c"
-down_revision = "fcd135795f21"
+down_revision = "0a2b51deb0b8"
 branch_labels: None = None
 depends_on: None = None
 

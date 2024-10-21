@@ -17,18 +17,18 @@ depends_on: None = None
 
 def upgrade() -> None:
     op.create_table(
-        "llm_provider__user_group",
+        "llm_provider__teamspace",
         sa.Column("llm_provider_id", sa.Integer(), nullable=False),
-        sa.Column("user_group_id", sa.Integer(), nullable=False),
+        sa.Column("teamspace_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["llm_provider_id"],
             ["llm_provider.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["user_group_id"],
-            ["user_group.id"],
+            ["teamspace_id"],
+            ["teamspace.id"],
         ),
-        sa.PrimaryKeyConstraint("llm_provider_id", "user_group_id"),
+        sa.PrimaryKeyConstraint("llm_provider_id", "teamspace_id"),
     )
     op.add_column(
         "llm_provider",
@@ -37,5 +37,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table("llm_provider__user_group")
+    op.drop_table("llm_provider__teamspace")
     op.drop_column("llm_provider", "is_public")

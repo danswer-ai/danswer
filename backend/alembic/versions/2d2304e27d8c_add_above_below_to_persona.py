@@ -1,4 +1,4 @@
-"""Add Above Below to Persona
+"""Add Above Below to Assistant
 
 Revision ID: 2d2304e27d8c
 Revises: 4b08d97e175a
@@ -16,17 +16,17 @@ depends_on: None = None
 
 
 def upgrade() -> None:
-    op.add_column("persona", sa.Column("chunks_above", sa.Integer(), nullable=True))
-    op.add_column("persona", sa.Column("chunks_below", sa.Integer(), nullable=True))
+    op.add_column("assistant", sa.Column("chunks_above", sa.Integer(), nullable=True))
+    op.add_column("assistant", sa.Column("chunks_below", sa.Integer(), nullable=True))
 
     op.execute(
-        "UPDATE persona SET chunks_above = 1, chunks_below = 1 WHERE chunks_above IS NULL AND chunks_below IS NULL"
+        "UPDATE assistant SET chunks_above = 1, chunks_below = 1 WHERE chunks_above IS NULL AND chunks_below IS NULL"
     )
 
-    op.alter_column("persona", "chunks_above", nullable=False)
-    op.alter_column("persona", "chunks_below", nullable=False)
+    op.alter_column("assistant", "chunks_above", nullable=False)
+    op.alter_column("assistant", "chunks_below", nullable=False)
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "chunks_below")
-    op.drop_column("persona", "chunks_above")
+    op.drop_column("assistant", "chunks_below")
+    op.drop_column("assistant", "chunks_above")

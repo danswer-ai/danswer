@@ -1,4 +1,4 @@
-"""Add icon_color and icon_shape to Persona
+"""Add icon_color and icon_shape to Assistant
 
 Revision ID: 325975216eb3
 Revises: 91ffac7e65b3
@@ -40,31 +40,33 @@ def generate_random_shape() -> int:
 
 
 def upgrade() -> None:
-    op.add_column("persona", sa.Column("icon_color", sa.String(), nullable=True))
-    op.add_column("persona", sa.Column("icon_shape", sa.Integer(), nullable=True))
-    op.add_column("persona", sa.Column("uploaded_image_id", sa.String(), nullable=True))
+    op.add_column("assistant", sa.Column("icon_color", sa.String(), nullable=True))
+    op.add_column("assistant", sa.Column("icon_shape", sa.Integer(), nullable=True))
+    op.add_column(
+        "assistant", sa.Column("uploaded_image_id", sa.String(), nullable=True)
+    )
 
-    persona = table(
-        "persona",
+    assistant = table(
+        "assistant",
         column("id", sa.Integer),
         column("icon_color", sa.String),
         column("icon_shape", sa.Integer),
     )
 
     conn = op.get_bind()
-    personas = conn.execute(select(persona.c.id))
+    assistants = conn.execute(select(assistant.c.id))
 
-    for persona_id in personas:
+    for assistant_id in assistants:
         random_color = random.choice(colorOptions)
         random_shape = generate_random_shape()
         conn.execute(
-            persona.update()
-            .where(persona.c.id == persona_id[0])
+            assistant.update()
+            .where(assistant.c.id == assistant_id[0])
             .values(icon_color=random_color, icon_shape=random_shape)
         )
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "icon_shape")
-    op.drop_column("persona", "uploaded_image_id")
-    op.drop_column("persona", "icon_color")
+    op.drop_column("assistant", "icon_shape")
+    op.drop_column("assistant", "uploaded_image_id")
+    op.drop_column("assistant", "icon_color")

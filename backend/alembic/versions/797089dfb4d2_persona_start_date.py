@@ -1,4 +1,4 @@
-"""persona_start_date
+"""assistant_start_date
 
 Revision ID: 797089dfb4d2
 Revises: 55546a7967ee
@@ -18,10 +18,10 @@ depends_on = None
 
 def upgrade() -> None:
     op.add_column(
-        "persona",
+        "assistant",
         sa.Column("search_start_date", sa.DateTime(timezone=True), nullable=True),
     )
 
 
 def downgrade() -> None:
-    op.drop_column("persona", "search_start_date")
+    op.drop_column("assistant", "search_start_date")

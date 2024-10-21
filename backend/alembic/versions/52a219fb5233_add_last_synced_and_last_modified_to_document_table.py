@@ -1,7 +1,7 @@
 """Add last synced and last modified to document table
 
 Revision ID: 52a219fb5233
-Revises: f7e58d357687
+Revises: ba98eba0f66a
 Create Date: 2024-08-28 17:40:46.077470
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.sql import func
 
 # revision identifiers, used by Alembic.
 revision = "52a219fb5233"
-down_revision = "f7e58d357687"
+down_revision = "ba98eba0f66a"
 branch_labels = None
 depends_on = None
 

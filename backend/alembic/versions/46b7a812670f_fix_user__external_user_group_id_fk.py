@@ -1,4 +1,4 @@
-"""fix_user__external_user_group_id_fk
+"""fix_user__external_teamspace_id_fk
 
 Revision ID: 46b7a812670f
 Revises: f32615f71aeb
@@ -17,30 +17,30 @@ depends_on = None
 def upgrade() -> None:
     # Drop the existing primary key
     op.drop_constraint(
-        "user__external_user_group_id_pkey",
-        "user__external_user_group_id",
+        "user__external_teamspace_id_pkey",
+        "user__external_teamspace_id",
         type_="primary",
     )
 
     # Add the new composite primary key
     op.create_primary_key(
-        "user__external_user_group_id_pkey",
-        "user__external_user_group_id",
-        ["user_id", "external_user_group_id", "cc_pair_id"],
+        "user__external_teamspace_id_pkey",
+        "user__external_teamspace_id",
+        ["user_id", "external_teamspace_id", "cc_pair_id"],
     )
 
 
 def downgrade() -> None:
     # Drop the composite primary key
     op.drop_constraint(
-        "user__external_user_group_id_pkey",
-        "user__external_user_group_id",
+        "user__external_teamspace_id_pkey",
+        "user__external_teamspace_id",
         type_="primary",
     )
     # Delete all entries from the table
-    op.execute("DELETE FROM user__external_user_group_id")
+    op.execute("DELETE FROM user__external_teamspace_id")
 
     # Recreate the original primary key on user_id
     op.create_primary_key(
-        "user__external_user_group_id_pkey", "user__external_user_group_id", ["user_id"]
+        "user__external_teamspace_id_pkey", "user__external_teamspace_id", ["user_id"]
     )

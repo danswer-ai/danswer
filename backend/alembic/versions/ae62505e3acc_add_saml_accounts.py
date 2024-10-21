@@ -1,7 +1,7 @@
 """Add SAML Accounts
 
 Revision ID: ae62505e3acc
-Revises: 7da543f5672f
+Revises: febe9eaa0644
 Create Date: 2023-09-26 16:19:30.933183
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "ae62505e3acc"
-down_revision = "7da543f5672f"
+down_revision = "febe9eaa0644"
 branch_labels: None = None
 depends_on: None = None
 

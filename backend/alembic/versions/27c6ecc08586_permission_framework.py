@@ -26,7 +26,6 @@ def upgrade() -> None:
         sa.Column(
             "source",
             sa.Enum(
-                "SLACK",
                 "WEB",
                 "GOOGLE_DRIVE",
                 "GITHUB",

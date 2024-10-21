@@ -1,7 +1,7 @@
 """created created_at column for users
 
 Revision ID: a5981c441686
-Revises: 46eb3f54ab5b
+Revises: 44d3c68af1f0
 Create Date: 2024-08-31 11:46:58.865629
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "a5981c441686"
-down_revision = "46eb3f54ab5b"
+down_revision = "44d3c68af1f0"
 branch_labels = None
 depends_on = None
 

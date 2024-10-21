@@ -119,7 +119,6 @@ def upgrade() -> None:
         sa.UniqueConstraint("taskset_id"),
         sqlite_autoincrement=True,
     )
-    op.drop_table("slack_bot_config")
     op.create_foreign_key(
         "api_key_owner_id_fk", "api_key", "user", ["owner_id"], ["id"]
     )
@@ -271,29 +270,6 @@ def downgrade() -> None:
     )
     op.drop_constraint("api_key_owner_id_fk", "api_key", type_="foreignkey")
     op.drop_constraint("api_key_user_id_fk", "api_key", type_="foreignkey")
-    op.create_table(
-        "slack_bot_config",
-        sa.Column("id", sa.INTEGER(), autoincrement=True, nullable=False),
-        sa.Column("assistant_id", sa.INTEGER(), autoincrement=False, nullable=True),
-        sa.Column(
-            "channel_config",
-            postgresql.JSONB(astext_type=sa.Text()),
-            autoincrement=False,
-            nullable=False,
-        ),
-        sa.Column(
-            "response_type",
-            sa.VARCHAR(length=9),
-            autoincrement=False,
-            nullable=False,
-        ),
-        sa.ForeignKeyConstraint(
-            ["assistant_id"],
-            ["assistant.id"],
-            name="slack_bot_config_assistant_id_fkey",
-        ),
-        sa.PrimaryKeyConstraint("id", name="slack_bot_config_pkey"),
-    )
     op.drop_table("celery_tasksetmeta")
     op.drop_table("celery_taskmeta")
     op.drop_table("workspace__teamspace")

@@ -16,9 +16,9 @@ depends_on: None = None
 
 
 def upgrade() -> None:
-    # Add is_curator column to User__UserGroup table
+    # Add is_curator column to User__Teamspace table
     op.add_column(
-        "user__user_group",
+        "user__teamspace",
         sa.Column("is_curator", sa.Boolean(), nullable=False, server_default="false"),
     )
 
@@ -39,18 +39,18 @@ def upgrade() -> None:
         )
     # Create the association table
     op.create_table(
-        "credential__user_group",
+        "credential__teamspace",
         sa.Column("credential_id", sa.Integer(), nullable=False),
-        sa.Column("user_group_id", sa.Integer(), nullable=False),
+        sa.Column("teamspace_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["credential_id"],
             ["credential.id"],
         ),
         sa.ForeignKeyConstraint(
-            ["user_group_id"],
-            ["user_group.id"],
+            ["teamspace_id"],
+            ["teamspace.id"],
         ),
-        sa.PrimaryKeyConstraint("credential_id", "user_group_id"),
+        sa.PrimaryKeyConstraint("credential_id", "teamspace_id"),
     )
     op.add_column(
         "credential",
@@ -66,8 +66,8 @@ def downgrade() -> None:
         "UPDATE \"user\" SET role = 'ADMIN' WHERE role IN ('CURATOR', 'GLOBAL_CURATOR')"
     )
 
-    # Remove is_curator column from User__UserGroup table
-    op.drop_column("user__user_group", "is_curator")
+    # Remove is_curator column from User__Teamspace table
+    op.drop_column("user__teamspace", "is_curator")
 
     with op.batch_alter_table("user", schema=None) as batch_op:
         batch_op.alter_column(  # type: ignore[attr-defined]
@@ -86,5 +86,5 @@ def downgrade() -> None:
             existing_nullable=False,
         )
     # Drop the association table
-    op.drop_table("credential__user_group")
+    op.drop_table("credential__teamspace")
     op.drop_column("credential", "curator_public")

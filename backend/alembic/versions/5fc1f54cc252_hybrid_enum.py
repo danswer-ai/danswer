@@ -16,10 +16,10 @@ depends_on: None = None
 
 
 def upgrade() -> None:
-    op.drop_column("persona", "search_type")
+    op.drop_column("assistant", "search_type")
 
 
 def downgrade() -> None:
-    op.add_column("persona", sa.Column("search_type", sa.String(), nullable=True))
-    op.execute("UPDATE persona SET search_type = 'SEMANTIC'")
-    op.alter_column("persona", "search_type", nullable=False)
+    op.add_column("assistant", sa.Column("search_type", sa.String(), nullable=True))
+    op.execute("UPDATE assistant SET search_type = 'SEMANTIC'")
+    op.alter_column("assistant", "search_type", nullable=False)

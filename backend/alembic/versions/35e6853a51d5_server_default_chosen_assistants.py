@@ -32,8 +32,8 @@ def upgrade() -> None:
                     COALESCE(p.display_priority, 2147483647) ASC,
                     p.id ASC
             )
-            FROM persona p
-            LEFT JOIN persona__user pu ON p.id = pu.persona_id AND pu.user_id = u.id
+            FROM assistant p
+            LEFT JOIN assistant__user pu ON p.id = pu.assistant_id AND pu.user_id = u.id
             WHERE p.is_visible = true
             AND (p.is_public = true OR pu.user_id IS NOT NULL)
         )
