@@ -389,7 +389,10 @@ def connector_indexing_task(
         # read related data and evaluate/print task progress
         fence_value = cast(bytes, r.get(rci.fence_key))
         if fence_value is None:
-            return
+            task_logger.info(
+                f"connector_indexing_task: fence_value not found: fence={rci.fence_key}"
+            )
+            raise
 
         try:
             fence_json = fence_value.decode("utf-8")
@@ -397,7 +400,9 @@ def connector_indexing_task(
                 cast(str, fence_json)
             )
         except ValueError:
-            task_logger.exception("connector_indexing_task: fence_data not decodeable.")
+            task_logger.exception(
+                f"connector_indexing_task: fence_data not decodeable: fence={rci.fence_key}"
+            )
             raise
 
         if fence_data.index_attempt_id is None or fence_data.celery_task_id is None:
