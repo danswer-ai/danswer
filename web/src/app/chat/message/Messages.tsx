@@ -228,6 +228,9 @@ export const AIMessage = ({
   };
   const finalContent = processContent(content as string);
 
+  const [isRegenerateHovered, setIsRegenerateHovered] = useState(false);
+  const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
+
   const selectedDocumentIds =
     selectedDocuments?.map((document) => document.document_id) || [];
   let citedDocumentIds: string[] = [];
@@ -611,6 +614,14 @@ export const AIMessage = ({
                   Bad response
                 </CustomTooltip>
               )}
+              {regenerate && (
+                <RegenerateOption
+                  onHoverChange={setIsRegenerateHovered}
+                  selectedAssistant={currentAssistant!}
+                  regenerate={regenerate}
+                  overriddenModel={overriddenModel}
+                />
+              )}
             </div>
           )}
         </div>
@@ -658,6 +669,8 @@ import { Pencil, Image as ImageIcon } from "lucide-react";
 import { User as UserTypes } from "@/lib/types";
 import { UserProfile } from "@/components/UserProfile";
 import { Hoverable } from "@/components/Hoverable";
+import RegenerateOption from "../RegenerateOption";
+import { useMouseTracking } from "./hooks";
 
 export const HumanMessage = ({
   content,
