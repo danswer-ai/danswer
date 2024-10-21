@@ -118,7 +118,7 @@ def get_existing_documents_from_chunks(
     return document_ids
 
 
-@retry(tries=3, delay=1, backoff=2)
+@retry(tries=5, delay=1, backoff=2)
 def _index_vespa_chunk(
     chunk: DocMetadataAwareIndexChunk,
     index_name: str,
