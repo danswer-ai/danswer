@@ -194,8 +194,9 @@ def _get_chunks_via_visit_api(
     document_chunks: list[dict] = []
     while True:
         try:
+            filtered_params = {k: v for k, v in params.items() if v is not None}
             with get_vespa_http_client() as http_client:
-                response = http_client.get(url, params=params)
+                response = http_client.get(url, params=filtered_params)
                 response.raise_for_status()
         except httpx.HTTPError as e:
             error_base = "Failed to query Vespa"
