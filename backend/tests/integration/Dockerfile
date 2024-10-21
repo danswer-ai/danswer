@@ -84,4 +84,4 @@ COPY ./tests/integration /app/tests/integration
 ENV PYTHONPATH=/app
 
 ENTRYPOINT ["pytest", "-s"]
-CMD ["/app/tests/integration"]
+CMD ["/app/tests/integration", "--ignore=/app/tests/integration/multitenant_tests"]

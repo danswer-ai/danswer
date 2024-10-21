@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.db.engine import get_session_context_manager
 from danswer.db.search_settings import get_current_search_settings
 from tests.integration.common_utils.reset import reset_all
+from tests.integration.common_utils.reset import reset_all_multitenant
 from tests.integration.common_utils.vespa import vespa_fixture
 
 
@@ -48,4 +49,4 @@ def reset() -> None:
 
 @pytest.fixture
 def reset_multitenant() -> None:
-    reset_all(multitenant=True)
+    reset_all_multitenant()
