@@ -20,6 +20,8 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 
+DOCUMENT_BY_CC_PAIR_CLEANUP_MAX_RETRIES = 3
+
 
 class RedisConnectorIndexingFenceData(BaseModel):
     index_attempt_id: int | None
@@ -33,7 +35,7 @@ class RedisConnectorIndexingFenceData(BaseModel):
     bind=True,
     soft_time_limit=45,
     time_limit=60,
-    max_retries=3,
+    max_retries=DOCUMENT_BY_CC_PAIR_CLEANUP_MAX_RETRIES,
 )
 def document_by_cc_pair_cleanup_task(
     self: Task,
@@ -57,7 +59,7 @@ def document_by_cc_pair_cleanup_task(
     connector / credential pair from the access list
     (6) delete all relevant entries from postgres
     """
-    task_logger.info(f"document_id={document_id}")
+    task_logger.info(f"tenant_id={tenant_id} document_id={document_id}")
 
     try:
         with get_session_with_tenant(tenant_id) as db_session:
@@ -123,6 +125,8 @@ def document_by_cc_pair_cleanup_task(
             else:
                 pass
 
+            db_session.commit()
+
             task_logger.info(
                 f"tenant_id={tenant_id} "
                 f"document_id={document_id} "
@@ -130,7 +134,6 @@ def document_by_cc_pair_cleanup_task(
                 f"refcount={count} "
                 f"chunks={chunks_affected}"
             )
-            db_session.commit()
     except SoftTimeLimitExceeded:
         task_logger.info(
             f"SoftTimeLimitExceeded exception. tenant_id={tenant_id} doc_id={document_id}"
@@ -139,13 +142,17 @@ def document_by_cc_pair_cleanup_task(
     except Exception as e:
         task_logger.exception("Unexpected exception")
 
-        if self.retries <= 2:
+        if self.retries < DOCUMENT_BY_CC_PAIR_CLEANUP_MAX_RETRIES:
             # Still retrying. Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
             countdown = 2 ** (self.request.retries + 4)
             self.retry(exc=e, countdown=countdown)
         else:
-            # no more retries! mark the document as dirty in the db so that it
-            # eventually gets fixed out of band via the stale document sweep
+            # This is the last attempt! mark the document as dirty in the db so that it
+            # eventually gets fixed out of band via stale document reconciliation
+            task_logger.info(
+                f"Max retries reached. Marking doc as dirty for reconciliation: "
+                f"tenant_id={tenant_id} document_id={document_id}"
+            )
             with get_session_with_tenant(tenant_id):
                 mark_document_as_modified(document_id, db_session)
         return False
