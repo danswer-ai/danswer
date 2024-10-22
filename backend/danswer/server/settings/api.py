@@ -116,6 +116,7 @@ def get_settings_notifications(
             )
             db_session.flush()
             db_session.commit()
+
             notifications.append(Notification.from_model(notif))
             return notifications
 
