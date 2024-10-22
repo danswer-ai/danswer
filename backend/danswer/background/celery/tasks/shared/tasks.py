@@ -1,4 +1,5 @@
 from datetime import datetime
+from http import HTTPStatus
 
 import httpx
 from celery import shared_task
@@ -146,14 +147,22 @@ def document_by_cc_pair_cleanup_task(
     except Exception as ex:
         if isinstance(ex, RetryError):
             task_logger.info(f"Retry failed: {ex.last_attempt.attempt_number}")
-            e = ex.last_attempt.exception()
+
+            # only set the inner exception if it is of type Exception
+            e_temp = ex.last_attempt.exception()
+            if isinstance(e_temp, Exception):
+                e = e_temp
         else:
             e = ex
 
         if isinstance(e, httpx.HTTPStatusError):
-            task_logger.exception(
-                f"Status code BAD_REQUEST. Not retrying: tenant={tenant_id} doc={document_id}"
-            )
+            if e.response.status_code == HTTPStatus.BAD_REQUEST:
+                task_logger.exception(
+                    f"Non-retryable HTTPStatusError: "
+                    f"tenant={tenant_id} "
+                    f"doc={document_id} "
+                    f"status={e.response.status_code}"
+                )
             return False
 
         task_logger.exception(

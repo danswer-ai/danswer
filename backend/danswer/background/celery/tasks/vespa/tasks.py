@@ -13,6 +13,7 @@ from celery.result import AsyncResult
 from celery.states import READY_STATES
 from redis import Redis
 from sqlalchemy.orm import Session
+from tenacity import RetryError
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_app import celery_app
@@ -803,11 +804,25 @@ def vespa_metadata_sync_task(
         task_logger.info(
             f"SoftTimeLimitExceeded exception. tenant={tenant_id} doc={document_id}"
         )
-    except Exception as e:
+    except Exception as ex:
+        if isinstance(ex, RetryError):
+            task_logger.warning(f"Retry failed: {ex.last_attempt.attempt_number}")
+
+            # only set the inner exception if it is of type Exception
+            e_temp = ex.last_attempt.exception()
+            if isinstance(e_temp, Exception):
+                e = e_temp
+        else:
+            e = ex
+
         if isinstance(e, httpx.HTTPStatusError):
-            task_logger.exception(
-                f"Status code BAD_REQUEST. Not retrying: tenant={tenant_id} doc={document_id}"
-            )
+            if e.response.status_code == HTTPStatus.BAD_REQUEST:
+                task_logger.exception(
+                    f"Non-retryable HTTPStatusError: "
+                    f"tenant={tenant_id} "
+                    f"doc={document_id} "
+                    f"status={e.response.status_code}"
+                )
             return False
 
         task_logger.exception(
