@@ -118,7 +118,7 @@ def check_for_indexing(tenant_id: str | None) -> int | None:
             "Soft time limit exceeded, task is being terminated gracefully."
         )
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
         if lock_beat.owned():
             lock_beat.release()
@@ -301,7 +301,12 @@ def try_creating_indexing_task(
         r.set(rci.fence_key, fence_value.model_dump_json())
     except Exception:
         r.delete(rci.fence_key)
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(
+            f"Unexpected exception: "
+            f"tenant={tenant_id} "
+            f"cc_pair={cc_pair.id} "
+            f"search_settings={search_settings.id}"
+        )
         return None
     finally:
         if lock.owned():

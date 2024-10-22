@@ -126,7 +126,7 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
             "Soft time limit exceeded, task is being terminated gracefully."
         )
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
         if lock_beat.owned():
             lock_beat.release()
@@ -756,7 +756,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 def vespa_metadata_sync_task(
     self: Task, document_id: str, tenant_id: str | None
 ) -> bool:
-    task_logger.info(f"document_id={document_id}")
+    task_logger.info(f"doc={document_id}")
 
     try:
         with get_session_with_tenant(tenant_id) as db_session:
@@ -792,13 +792,13 @@ def vespa_metadata_sync_task(
             # the sync might repeat again later
             mark_document_as_synced(document_id, db_session)
 
-            task_logger.info(
-                f"document_id={document_id} action=sync chunks={chunks_affected}"
-            )
+            task_logger.info(f"doc={document_id} action=sync chunks={chunks_affected}")
     except SoftTimeLimitExceeded:
-        task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
+        task_logger.info(f"SoftTimeLimitExceeded exception. doc={document_id}")
     except Exception as e:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(
+            f"Unexpected exception: tenant={tenant_id} doc={document_id}"
+        )
 
         # Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
         countdown = 2 ** (self.request.retries + 4)

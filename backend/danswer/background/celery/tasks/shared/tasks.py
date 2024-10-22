@@ -123,8 +123,8 @@ def document_by_cc_pair_cleanup_task(
                 pass
 
             task_logger.info(
-                f"tenant_id={tenant_id} "
-                f"document_id={document_id} "
+                f"tenant={tenant_id} "
+                f"doc={document_id} "
                 f"action={action} "
                 f"refcount={count} "
                 f"chunks={chunks_affected}"
@@ -132,10 +132,12 @@ def document_by_cc_pair_cleanup_task(
             db_session.commit()
     except SoftTimeLimitExceeded:
         task_logger.info(
-            f"SoftTimeLimitExceeded exception. tenant_id={tenant_id} doc_id={document_id}"
+            f"SoftTimeLimitExceeded exception. tenant={tenant_id} doc={document_id}"
         )
     except Exception as e:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(
+            f"Unexpected exception: tenant={tenant_id} doc={document_id}"
+        )
 
         # Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
         countdown = 2 ** (self.request.retries + 4)
