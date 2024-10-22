@@ -3,7 +3,6 @@ from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Response
 from fastapi import UploadFile
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ee.enmedd.db.teamspace import fetch_teamspace
@@ -70,18 +69,17 @@ def list_teamspaces(
 @admin_router.post("/admin/teamspace")
 def create_teamspace(
     teamspace: TeamspaceCreate,
-    _: User | None = Depends(current_admin_user),
+    current_user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> Teamspace:
-    try:
-        # TODO: revert it back to having creator id
-        db_teamspace = insert_teamspace(db_session, teamspace)
-    except IntegrityError:
-        raise HTTPException(
-            400,
-            f"Teamspace with name '{teamspace.name}' already exists. Please "
-            + "choose a different name.",
-        )
+    # try:
+    db_teamspace = insert_teamspace(db_session, teamspace, creator_id=current_user.id)
+    # except IntegrityError:
+    #     raise HTTPException(
+    #         400,
+    #         f"Teamspace with name '{teamspace.name}' already exists. Please "
+    #         + "choose a different name.",
+    #     )
     return Teamspace.from_model(db_teamspace)
 
 

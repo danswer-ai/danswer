@@ -82,6 +82,7 @@ from enmedd.file_store.file_store import get_default_file_store
 from enmedd.key_value_store.interface import KvKeyNotFoundError
 from enmedd.server.documents.models import AuthStatus
 from enmedd.server.documents.models import AuthUrl
+from enmedd.server.documents.models import ConnectorBase
 from enmedd.server.documents.models import ConnectorCredentialPairIdentifier
 from enmedd.server.documents.models import ConnectorIndexingStatus
 from enmedd.server.documents.models import ConnectorSnapshot
@@ -628,25 +629,14 @@ def _validate_connector_allowed(source: DocumentSource) -> None:
 
 @router.post("/admin/connector")
 def create_connector_from_model(
-    connector_data: ConnectorUpdateRequest,
-    user: User = Depends(current_admin_user),
+    connector_data: ConnectorBase,
+    _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     try:
         _validate_connector_allowed(connector_data.source)
-        validate_user_creation_permissions(
-            db_session=db_session,
-            user=user,
-            target_group_ids=connector_data.groups,
-            object_is_public=connector_data.is_public,
-        )
-        connector_base = connector_data.to_connector_base()
-        return create_connector(
-            db_session=db_session,
-            connector_data=connector_base,
-        )
+        return create_connector(connector_data, db_session)
     except ValueError as e:
-        logger.error(f"Error creating connector: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 

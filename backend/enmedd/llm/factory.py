@@ -7,9 +7,9 @@ from enmedd.db.llm import fetch_provider
 from enmedd.db.models import Assistant
 from enmedd.llm.chat_llm import DefaultMultiLLM
 from enmedd.llm.exceptions import GenAIDisabledException
-from enmedd.llm.headers import build_llm_extra_headers
 from enmedd.llm.interfaces import LLM
 from enmedd.llm.override_models import LLMOverride
+from enmedd.utils.headers import build_llm_extra_headers
 
 
 def get_main_llm_from_tuple(
@@ -88,6 +88,7 @@ def get_default_llms(
         return get_llm(
             provider=llm_provider.provider,
             model=model,
+            deployment_name=llm_provider.deployment_name,
             api_key=llm_provider.api_key,
             api_base=llm_provider.api_base,
             api_version=llm_provider.api_version,
@@ -103,6 +104,7 @@ def get_default_llms(
 def get_llm(
     provider: str,
     model: str,
+    deployment_name: str | None = None,
     api_key: str | None = None,
     api_base: str | None = None,
     api_version: str | None = None,

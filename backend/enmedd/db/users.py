@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from fastapi import status
 from fastapi_users.password import PasswordHelper
+from sqlalchemy import Column
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -13,17 +14,13 @@ from enmedd.auth.schemas import UserRole
 from enmedd.db.models import User
 
 
-def list_users(
-    db_session: Session, email_filter_string: str = "", user: User | None = None
-) -> Sequence[User]:
+def list_users(db_session: Session, q: str = "") -> Sequence[User]:
     """List all users. No pagination as of now, as the # of users
     is assumed to be relatively small (<< 1 million)"""
-    stmt = select(User)
-
-    if email_filter_string:
-        stmt = stmt.where(User.email.ilike(f"%{email_filter_string}%"))  # type: ignore
-
-    return db_session.scalars(stmt).unique().all()
+    query = db_session.query(User)
+    if q:
+        query = query.filter(Column("email").ilike("%{}%".format(q)))
+    return query.all()
 
 
 def get_users_by_emails(

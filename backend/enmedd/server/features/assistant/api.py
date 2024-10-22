@@ -99,13 +99,13 @@ def patch_assistant_display_priority(
 # TODO this should be current teamspace admin user
 @admin_router.get("")
 def list_assistants_admin(
-    teamspace_id: Optional[int] = None,
     user: User | None = Depends(current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
     get_editable: bool = Query(
         False, description="If true, return editable assistants"
     ),
+    teamspace_id: int | None = None,
 ) -> list[AssistantSnapshot]:
     return [
         AssistantSnapshot.from_model(assistant)
@@ -215,30 +215,38 @@ def delete_assistant(
 
 @basic_router.get("")
 def list_assistants(
-    teamspace_id: Optional[int] = None,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
+    assistant_ids: list[int] = Query(None),
+    teamspace_id: Optional[int] = None,
 ) -> list[AssistantSnapshot]:
-    return [
-        AssistantSnapshot.from_model(assistant)
-        for assistant in get_assistants(
-            user=user,
-            teamspace_id=teamspace_id,
-            include_deleted=include_deleted,
-            db_session=db_session,
-            get_editable=False,
-            joinedload_all=True,
+    assistants = get_assistants(
+        user=user,
+        teamspace_id=teamspace_id,
+        include_deleted=include_deleted,
+        db_session=db_session,
+        get_editable=False,
+        joinedload_all=True,
+    )
+
+    if assistant_ids:
+        assistants = [p for p in assistants if p.id in assistant_ids]
+        print(
+            f"Assistants after ID filter: {[assistant.id for assistant in assistants]}"
         )
-        # If the assistant has an image generation tool and it's not available, don't include it
+
+    # Filter out assistants with unavailable tools
+    assistants = [
+        p
+        for p in assistants
         if not (
-            any(
-                tool.in_code_tool_id == "ImageGenerationTool"
-                for tool in assistant.tools
-            )
+            any(tool.in_code_tool_id == "ImageGenerationTool" for tool in p.tools)
             and not is_image_generation_available(db_session=db_session)
         )
     ]
+
+    return [AssistantSnapshot.from_model(p) for p in assistants]
 
 
 @basic_router.get("/{assistant_id}")

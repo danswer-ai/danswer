@@ -20,7 +20,7 @@ class DocumentSetCreationRequest(BaseModel):
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: list[UUID] = Field(default_factory=list)
-    teamspace: list[int] = Field(default_factory=list)
+    groups: list[int] = Field(default_factory=list)
 
 
 class DocumentSetUpdateRequest(BaseModel):
@@ -30,7 +30,7 @@ class DocumentSetUpdateRequest(BaseModel):
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: List[UUID]
-    teamspace: List[int]
+    groups: List[int]
 
 
 class CheckDocSetPublicRequest(BaseModel):

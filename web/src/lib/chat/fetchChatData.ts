@@ -71,7 +71,7 @@ export async function fetchChatData(
     fetchLLMProvidersSS(),
     fetchSS(teamspaceId ? `/folder?teamspace_id=${teamspaceId}` : "/folder"),
     fetchSS("/input_prompt?include_public=true"),
-    getCurrentTeamspaceUserSS(teamspaceId!),
+    teamspaceId ? getCurrentTeamspaceUserSS(teamspaceId) : null,
   ];
 
   let results: (

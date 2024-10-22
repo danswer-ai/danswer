@@ -37,6 +37,7 @@ export interface User {
   is_active: string;
   is_superuser: string;
   is_verified: string;
+  is_custom_profile: string;
   role: UserRole;
   workspace?: Workspace;
   full_name?: string;

@@ -66,6 +66,7 @@ class LLMProvider(BaseModel):
     is_public: bool = True
     teamspace: list[int] = Field(default_factory=list)
     display_model_names: list[str] | None = None
+    deployment_name: str | None = None
 
 
 class LLMProviderUpsertRequest(LLMProvider):
@@ -89,6 +90,7 @@ class FullLLMProvider(LLMProvider):
             api_base=llm_provider_model.api_base,
             api_version=llm_provider_model.api_version,
             custom_config=llm_provider_model.custom_config,
+            deployment_name=llm_provider_model.deployment_name,
             default_model_name=llm_provider_model.default_model_name,
             fast_default_model_name=llm_provider_model.fast_default_model_name,
             is_default_provider=llm_provider_model.is_default_provider,

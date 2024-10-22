@@ -14,7 +14,7 @@ from enmedd.db.models import User__Teamspace
 def make_doc_set_private(
     document_set_id: int,
     user_ids: list[UUID] | None,
-    team_ids: list[int] | None,
+    group_ids: list[int] | None,
     db_session: Session,
 ) -> None:
     db_session.query(DocumentSet__User).filter(
@@ -30,11 +30,11 @@ def make_doc_set_private(
                 DocumentSet__User(document_set_id=document_set_id, user_id=user_uuid)
             )
 
-    if team_ids:
-        for team_id in team_ids:
+    if group_ids:
+        for team_id in group_ids:
             db_session.add(
                 DocumentSet__Teamspace(
-                    document_set_id=document_set_id, teamspace_id=team_id
+                    document_set_id=document_set_id, teamspace_id=group_ids
                 )
             )
 

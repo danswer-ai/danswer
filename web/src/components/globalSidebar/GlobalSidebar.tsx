@@ -44,8 +44,6 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
   displayedTeamspaces = displayedTeamspaces.slice(0, 8);
   const showEllipsis = user?.groups && user.groups.length > 8;
 
-  console.log(user?.groups);
-
   return (
     <div className={`bg-background h-full p-4 border-r border-border z-10`}>
       <div

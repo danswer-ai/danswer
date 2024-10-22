@@ -253,24 +253,32 @@ def get_assistants(
 ) -> Sequence[Assistant]:
     stmt = select(Assistant).distinct()
     stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
+
     if teamspace_id is not None:
-        teamspace_condition = Assistant.id.in_(
-            select(Assistant__Teamspace.assistant_id).where(
-                Assistant__Teamspace.teamspace_id == teamspace_id
-            )
-        )
-        stmt = stmt.where(or_(teamspace_condition))
-    else:
-        stmt = stmt.where(
-            or_(
-                Assistant.is_public,
-                Assistant.id.in_(select(Assistant__Teamspace.assistant_id)),
-            )
+        # Subquery to find all teams the user belongs to
+        teamspaces_subquery = (
+            select(User__Teamspace.teamspace_id)
+            .where(User__Teamspace.user_id == user.id)
+            .subquery()
         )
 
+        # Include assistants where the user is directly related or part of a teamspace that has access
+        access_conditions = or_(
+            Assistant.is_public == True,  # noqa: E712
+            Assistant.id.in_(  # User has access through list of users with access
+                select(Assistant__User.assistant_id).where(
+                    Assistant__User.user_id == user.id
+                )
+            ),
+            Assistant.id.in_(  # User is part of a group that has access
+                select(Assistant__Teamspace.assistant_id).where(
+                    Assistant__Teamspace.teamspace_id.in_(teamspaces_subquery)  # type: ignore
+                )
+            ),
+        )
+        stmt = stmt.where(access_conditions)
     if not include_default:
-        stmt = stmt.where(Assistant.is_default_assistant.is_(False))
-
+        stmt = stmt.where(Assistant.builtin_assistant.is_(False))
     if not include_deleted:
         stmt = stmt.where(Assistant.deleted.is_(False))
 

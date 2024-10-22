@@ -28,7 +28,9 @@ from ee.enmedd.db.api_key import is_api_key_email_address
 from ee.enmedd.db.external_perm import delete_user__ext_teamspace_for_user__no_commit
 from ee.enmedd.server.workspace.store import _PROFILE_FILENAME
 from ee.enmedd.server.workspace.store import upload_profile
+from enmedd.auth.invited_users import generate_invite_email
 from enmedd.auth.invited_users import get_invited_users
+from enmedd.auth.invited_users import send_invite_user_email
 from enmedd.auth.invited_users import write_invited_users
 from enmedd.auth.noauth_user import fetch_no_auth_user
 from enmedd.auth.noauth_user import set_no_auth_user_preferences
@@ -43,6 +45,7 @@ from enmedd.auth.utils import send_2fa_email
 from enmedd.configs.app_configs import AUTH_TYPE
 from enmedd.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from enmedd.configs.app_configs import VALID_EMAIL_DOMAINS
+from enmedd.configs.app_configs import WEB_DOMAIN
 from enmedd.configs.constants import AuthType
 from enmedd.db.engine import get_async_session
 from enmedd.db.engine import get_session
@@ -316,8 +319,11 @@ def bulk_invite_users(
 
     normalized_emails = []
     for email in emails:
-        email_info = validate_email(email)  # can raise EmailNotValidError
-        normalized_emails.append(email_info.normalized)  # type: ignore
+        email_info = validate_email(email)
+        signup_link = f"{WEB_DOMAIN}/auth/signup?email={email_info.email}"
+        subject, body = generate_invite_email(signup_link)
+        send_invite_user_email(email, subject, body)
+        normalized_emails.append(email_info.normalized)
     all_emails = list(set(normalized_emails) | set(get_invited_users()))
     return write_invited_users(all_emails)
 

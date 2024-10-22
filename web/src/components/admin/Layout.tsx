@@ -23,7 +23,7 @@ export async function Layout({
   const tasks = [
     getAuthTypeMetadataSS(),
     getCurrentUserSS(),
-    getCurrentTeamspaceUserSS(teamspaceId!),
+    teamspaceId ? getCurrentTeamspaceUserSS(teamspaceId) : null,
   ];
 
   // catch cases where the backend is completely unreachable here

@@ -42,7 +42,7 @@ def create_document_set(
     validate_user_creation_permissions(
         db_session=db_session,
         user=user,
-        target_group_ids=document_set_creation_request.teamspace,
+        target_group_ids=document_set_creation_request.groups,
         object_is_public=document_set_creation_request.is_public,
     )
     try:
@@ -65,7 +65,7 @@ def patch_document_set(
     validate_user_creation_permissions(
         db_session=db_session,
         user=user,
-        target_group_ids=document_set_update_request.teamspace,
+        target_group_ids=document_set_update_request.groups,
         object_is_public=document_set_update_request.is_public,
     )
     try:

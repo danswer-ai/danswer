@@ -61,7 +61,6 @@ def upgrade() -> None:
             sa.Integer(),
             nullable=False,
         ),
-        sa.Column("is_current", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
             ["document_set_id"],
             ["document_set.id"],
@@ -80,7 +79,6 @@ def upgrade() -> None:
             sa.Integer(),
             nullable=False,
         ),
-        sa.Column("is_current", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
             ["assistant_id"],
             ["assistant.id"],
