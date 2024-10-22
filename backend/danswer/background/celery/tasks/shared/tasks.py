@@ -5,6 +5,7 @@ from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from pydantic import BaseModel
+from tenacity import RetryError
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.celery_app import task_logger
@@ -142,7 +143,13 @@ def document_by_cc_pair_cleanup_task(
             f"SoftTimeLimitExceeded exception. tenant={tenant_id} doc={document_id}"
         )
         return False
-    except Exception as e:
+    except Exception as ex:
+        if isinstance(ex, RetryError):
+            task_logger.info(f"Retry failed: {ex.last_attempt.attempt_number}")
+            e = ex.last_attempt.exception()
+        else:
+            e = ex
+
         if isinstance(e, httpx.HTTPStatusError):
             task_logger.exception(
                 f"Status code BAD_REQUEST. Not retrying: tenant={tenant_id} doc={document_id}"
