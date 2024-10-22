@@ -4,6 +4,7 @@ from datetime import timezone
 from http import HTTPStatus
 from typing import cast
 
+import httpx
 import redis
 from celery import shared_task
 from celery import Task
@@ -803,6 +804,12 @@ def vespa_metadata_sync_task(
             f"SoftTimeLimitExceeded exception. tenant={tenant_id} doc={document_id}"
         )
     except Exception as e:
+        if isinstance(e, httpx.HTTPStatusError):
+            task_logger.exception(
+                f"Status code BAD_REQUEST. Not retrying: tenant={tenant_id} doc={document_id}"
+            )
+            return False
+
         task_logger.exception(
             f"Unexpected exception: tenant={tenant_id} doc={document_id}"
         )

@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import httpx
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
@@ -140,7 +141,14 @@ def document_by_cc_pair_cleanup_task(
         task_logger.info(
             f"SoftTimeLimitExceeded exception. tenant={tenant_id} doc={document_id}"
         )
+        return False
     except Exception as e:
+        if isinstance(e, httpx.HTTPStatusError):
+            task_logger.exception(
+                f"Status code BAD_REQUEST. Not retrying: tenant={tenant_id} doc={document_id}"
+            )
+            return False
+
         task_logger.exception(
             f"Unexpected exception: tenant={tenant_id} doc={document_id}"
         )
@@ -148,5 +156,6 @@ def document_by_cc_pair_cleanup_task(
         # Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
         countdown = 2 ** (self.request.retries + 4)
         self.retry(exc=e, countdown=countdown)
+        return False
 
     return True

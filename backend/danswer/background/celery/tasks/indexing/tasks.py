@@ -394,10 +394,9 @@ def connector_indexing_task(
         # read related data and evaluate/print task progress
         fence_value = cast(bytes, r.get(rci.fence_key))
         if fence_value is None:
-            task_logger.info(
+            raise ValueError(
                 f"connector_indexing_task: fence_value not found: fence={rci.fence_key}"
             )
-            raise
 
         try:
             fence_json = fence_value.decode("utf-8")
