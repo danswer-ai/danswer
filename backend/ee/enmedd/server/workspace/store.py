@@ -15,6 +15,7 @@ from ee.enmedd.server.workspace.models import AnalyticsScriptUpload
 from enmedd.configs.constants import FileOrigin
 from enmedd.configs.constants import QUALITY
 from enmedd.configs.constants import SIZE
+from enmedd.db.models import Teamspace
 from enmedd.db.models import User
 from enmedd.file_store.file_store import get_default_file_store
 from enmedd.key_value_store.factory import get_kv_store
@@ -174,6 +175,10 @@ def upload_profile(db_session: Session, file: UploadFile | str, user: User) -> b
         file_origin=FileOrigin.OTHER,
         file_type=file_type,
     )
+    user.is_custom_profile = True
+    db_session.merge(user)
+    db_session.commit()
+
     return True
 
 
@@ -183,6 +188,10 @@ def upload_teamspace_logo(
     file: UploadFile | str,
 ) -> bool:
     content: IO[Any]
+
+    teamspace = db_session.query(Teamspace).filter_by(id=teamspace_id).first()
+    if not teamspace:
+        raise HTTPException(status_code=404, detail="Teamspace not found")
 
     if isinstance(file, str):
         logger.info(f"Uploading teamspace logo from local path {file}")
@@ -234,4 +243,9 @@ def upload_teamspace_logo(
         file_origin=FileOrigin.OTHER,
         file_type=file_type,
     )
+
+    teamspace.is_custom_logo = True
+    db_session.merge(teamspace)
+    db_session.commit()
+
     return True

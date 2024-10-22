@@ -236,6 +236,7 @@ def list_all_users(
                     company_email=user.company_email,
                     company_name=user.company_name,
                     vat=user.vat,
+                    is_custom_profile=user.is_custom_profile,
                 )
                 for user, role in users_with_roles
                 if not is_api_key_email_address(user.email)
@@ -278,6 +279,7 @@ def list_all_users(
                     company_email=user.company_email,
                     company_name=user.company_name,
                     vat=user.vat,
+                    is_custom_profile=user.is_custom_profile,
                 )
                 for user in users_with_roles
             ],
@@ -299,6 +301,7 @@ def list_all_users(
                 company_email=user.company_email,
                 company_name=user.company_name,
                 vat=user.vat,
+                is_custom_profile=user.is_custom_profile,
             )
             for user in users_with_roles
         ][accepted_page * USERS_PAGE_SIZE : (accepted_page + 1) * USERS_PAGE_SIZE],
@@ -470,7 +473,12 @@ def list_all_users_basic_info(
     db_session: Session = Depends(get_session),
 ) -> list[MinimalUserSnapshot]:
     users = list_users(db_session)
-    return [MinimalUserSnapshot(id=user.id, email=user.email) for user in users]
+    return [
+        MinimalUserSnapshot(
+            id=user.id, email=user.email, is_custom_profile=user.is_custom_profile
+        )
+        for user in users
+    ]
 
 
 @router.get("/get-user-role")
@@ -534,13 +542,17 @@ def fetch_profile(
 def remove_profile(
     db_session: Session = Depends(get_session),
     current_user: User = Depends(current_user),  # Get the current user
-) -> None:
+) -> dict:
     try:
         file_name = f"{current_user.id}/{_PROFILE_FILENAME}"
 
         file_store = get_default_file_store(db_session)
 
         file_store.delete_file(file_name)
+
+        current_user.is_custom_profile = False
+        db_session.merge(current_user)
+        db_session.commit()
 
         return {"detail": "Profile picture removed successfully."}
     except Exception as e:

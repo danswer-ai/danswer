@@ -84,7 +84,11 @@ class AssistantSnapshot(BaseModel):
             id=assistant.id,
             name=assistant.name,
             owner=(
-                MinimalUserSnapshot(id=assistant.user.id, email=assistant.user.email)
+                MinimalUserSnapshot(
+                    id=assistant.user.id,
+                    email=assistant.user.email,
+                    is_custom_profile=assistant.user.is_custom_profile,
+                )
                 if assistant.user
                 else None
             ),
@@ -107,7 +111,11 @@ class AssistantSnapshot(BaseModel):
                 for document_set_model in assistant.document_sets
             ],
             users=[
-                MinimalUserSnapshot(id=user.id, email=user.email)
+                MinimalUserSnapshot(
+                    id=user.id,
+                    email=user.email,
+                    is_custom_profile=user.is_custom_profile,
+                )
                 for user in assistant.users
             ],
             groups=[user_group.id for user_group in assistant.groups],
