@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from enmedd.auth.users import current_admin_user
-from enmedd.auth.users import current_curator_or_admin_user
 from enmedd.auth.users import current_teamspace_admin_user
 from enmedd.auth.users import current_user
 from enmedd.configs.constants import FileOrigin
@@ -55,7 +54,7 @@ class IsPublicRequest(BaseModel):
 def patch_assistant_visibility(
     assistant_id: int,
     is_visible_request: IsVisibleRequest,
-    user: User | None = Depends(current_curator_or_admin_user),
+    user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     update_assistant_visibility(

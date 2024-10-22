@@ -54,24 +54,16 @@ def _add_user_filters(
     """
     Filter cc_pairs by:
     - if the user is in the teamspace that owns the cc_pair
-    - if the user is not a global_curator, they must also have a curator relationship
-    to the teamspace
     - if editing is being done, we also filter out cc_pairs that are owned by groups
-    that the user isn't a curator for
-    - if we are not editing, we show all cc_pairs in the groups the user is a curator
-    for (as well as public cc_pairs)
+    the user isn't part of
+    - if we are not editing, we show all public cc_pairs
     """
     where_clause = User_Teams.user_id == user.id
-    if user.role == UserRole.CURATOR and get_editable:
-        where_clause &= User_Teams.is_curator == True  # noqa: E712
+
     if get_editable:
         teamspaces = select(User_Teams.teamspace_id).where(
             User_Teams.user_id == user.id
         )
-        if user.role == UserRole.CURATOR:
-            teamspaces = teamspaces.where(
-                User__Teamspace.is_curator == True  # noqa: E712
-            )
         where_clause &= (
             ~exists()
             .where(Teams_CCPair.cc_pair_id == ConnectorCredentialPair.id)

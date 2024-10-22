@@ -66,21 +66,15 @@ def _add_user_filters(
     """
     Filter Assistants by:
     - if the user is in the teamspace that owns the Assistant
-    - if the user is not a global_curator, they must also have a curator relationship
-    to the teamspace
     - if editing is being done, we also filter out Assistants that are owned by groups
-    that the user isn't a curator for
-    - if we are not editing, we show all Assistants in the groups the user is a curator
-    for (as well as public Assistants)
-    - if we are not editing, we return all Assistants directly connected to the user
+    that the user isn't associated with
+    - if we are not editing, we show all Assistants that are public or directly connected to the user
     """
     where_clause = User__Teamspace.user_id == user.id
-    if user.role == UserRole.CURATOR and get_editable:
-        where_clause &= User__Teamspace.is_curator == True  # noqa: E712
+
     if get_editable:
         teamspaces = select(User__UG.teamspace_id).where(User__UG.user_id == user.id)
-        if user.role == UserRole.CURATOR:
-            teamspaces = teamspaces.where(User__UG.is_curator == True)  # noqa: E712
+
         where_clause &= (
             ~exists()
             .where(Assistant__UG.assistant_id == Assistant.id)
@@ -707,21 +701,13 @@ def get_assistant_by_id(
     # or check if user owns assistant
     or_conditions = Assistant.user_id == user.id
     # allow access if assistant user id is None
-    or_conditions |= Assistant.user_id == None  # noqa: E711
+    or_conditions |= Assistant.user_id.is_(None)  # noqa: E711
     if not is_for_edit:
         # if the user is in a group related to the assistant
         or_conditions |= User__Teamspace.user_id == user.id
         # if the user is in the .users of the assistant
         or_conditions |= User.id == user.id
-        or_conditions |= Assistant.is_public == True  # noqa: E712
-    elif user.role == UserRole.GLOBAL_CURATOR:
-        # global curators can edit assistants for the groups they are in
-        or_conditions |= User__Teamspace.user_id == user.id
-    elif user.role == UserRole.CURATOR:
-        # curators can edit assistants for the groups they are curators of
-        or_conditions |= (User__Teamspace.user_id == user.id) & (
-            User__Teamspace.is_curator == True  # noqa: E712
-        )
+        or_conditions |= Assistant.is_public.is_(True)  # noqa: E712
 
     assistant_stmt = assistant_stmt.where(or_conditions)
     result = db_session.execute(assistant_stmt)

@@ -145,11 +145,6 @@ class TeamspaceUpdate(BaseModel):
     assistant_ids: Optional[List[int]] = None
 
 
-class SetCuratorRequest(BaseModel):
-    user_id: UUID
-    is_curator: bool
-
-
 class TeamspaceUpdateName(BaseModel):
     name: str
 

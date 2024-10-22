@@ -200,7 +200,7 @@ def setup_postgres(db_session: Session) -> None:
 
     logger.notice("Loading default Prompts and Assistants")
     delete_old_default_assistants(db_session)
-    load_chat_yamls()
+    load_chat_yamls(db_session)
 
     logger.notice("Loading built-in tools")
     load_builtin_tools(db_session)
@@ -254,9 +254,9 @@ def update_default_multipass_indexing(db_session: Session) -> None:
         update_current_search_settings(db_session, updated_settings)
 
         # Update settings with GPU availability
-        settings = load_settings()
+        settings = load_settings(db_session)
         settings.gpu_enabled = gpu_available
-        store_settings(settings)
+        store_settings(settings, db_session)
         logger.notice(f"Updated settings with GPU availability: {gpu_available}")
 
     else:

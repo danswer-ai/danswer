@@ -7,7 +7,7 @@ from fastapi import Query
 from sqlalchemy.orm import Session
 
 from ee.enmedd.db.teamspace import validate_user_creation_permissions
-from enmedd.auth.users import current_curator_or_admin_user
+from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_teamspace_admin_user
 from enmedd.auth.users import current_user
 from enmedd.db.document_set import check_document_sets_are_public
@@ -36,7 +36,7 @@ router = APIRouter(prefix="/manage")
 @router.post("/admin/document-set")
 def create_document_set(
     document_set_creation_request: DocumentSetCreationRequest,
-    user: User = Depends(current_curator_or_admin_user),
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> int:
     validate_user_creation_permissions(
@@ -59,7 +59,7 @@ def create_document_set(
 @router.patch("/admin/document-set")
 def patch_document_set(
     document_set_update_request: DocumentSetUpdateRequest,
-    user: User = Depends(current_curator_or_admin_user),
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     validate_user_creation_permissions(
@@ -81,7 +81,7 @@ def patch_document_set(
 @router.delete("/admin/document-set/{document_set_id}")
 def delete_document_set(
     document_set_id: int,
-    user: User = Depends(current_curator_or_admin_user),
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:

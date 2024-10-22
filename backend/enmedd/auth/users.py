@@ -414,28 +414,6 @@ async def current_user(
     return await double_check_user(user)
 
 
-async def current_curator_or_admin_user(
-    user: User | None = Depends(current_user),
-) -> User | None:
-    if DISABLE_AUTH:
-        return None
-
-    if not user or not hasattr(user, "role"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. User is not authenticated or lacks role information.",
-        )
-
-    allowed_roles = {UserRole.GLOBAL_CURATOR, UserRole.CURATOR, UserRole.ADMIN}
-    if user.role not in allowed_roles:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. User is not a curator or admin.",
-        )
-
-    return user
-
-
 async def current_admin_user(user: User | None = Depends(current_user)) -> User | None:
     if DISABLE_AUTH:
         return None

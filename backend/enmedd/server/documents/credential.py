@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from ee.enmedd.db.teamspace import validate_user_creation_permissions
 from enmedd.auth.users import current_admin_user
-from enmedd.auth.users import current_curator_or_admin_user
 from enmedd.auth.users import current_user
 from enmedd.db.credentials import alter_credential
 from enmedd.db.credentials import create_credential
@@ -43,7 +42,7 @@ def _ignore_credential_permissions(source: DocumentSource) -> bool:
 
 @router.get("/admin/credential")
 def list_credentials_admin(
-    user: User | None = Depends(current_curator_or_admin_user),
+    user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
     """Lists all public credentials"""
@@ -61,7 +60,7 @@ def list_credentials_admin(
 @router.get("/admin/similar-credentials/{source_type}")
 def get_cc_source_full_info(
     source_type: DocumentSource,
-    user: User | None = Depends(current_curator_or_admin_user),
+    user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
     get_editable: bool = Query(
         False, description="If true, return editable credentials"
@@ -127,7 +126,7 @@ def swap_credentials_for_connector(
 @router.post("/credential")
 def create_credential_from_model(
     credential_info: CredentialBase,
-    user: User | None = Depends(current_curator_or_admin_user),
+    user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     if not _ignore_credential_permissions(credential_info.source):
@@ -135,7 +134,6 @@ def create_credential_from_model(
             db_session=db_session,
             user=user,
             target_group_ids=credential_info.groups,
-            object_is_public=credential_info.curator_public,
         )
 
     credential = create_credential(credential_info, user, db_session)
@@ -219,7 +217,6 @@ def update_credential_from_model(
         admin_public=updated_credential.admin_public,
         time_created=updated_credential.time_created,
         time_updated=updated_credential.time_updated,
-        curator_public=updated_credential.curator_public,
     )
 
 

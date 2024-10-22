@@ -81,7 +81,6 @@ class CCPairManager:
             credential_json=credential_json,
             name=name,
             source=source,
-            curator_public=(access_type == AccessType.PUBLIC),
             groups=groups,
             user_performing_action=user_performing_action,
         )

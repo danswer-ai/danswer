@@ -42,14 +42,11 @@ CREDENTIAL_PERMISSIONS_TO_IGNORE = {
 def _add_user_filters(
     stmt: Select,
     user: User | None,
-    assume_admin: bool = False,  # Used with API key
+    assume_admin: bool = False,
     get_editable: bool = True,
 ) -> Select:
-    """Attaches filters to the statement to ensure that the user can only
-    access the appropriate credentials"""
     if not user:
         if assume_admin:
-            # apply admin filters minus the user_id check
             stmt = stmt.where(
                 or_(
                     Credential.user_id.is_(None),
@@ -60,8 +57,6 @@ def _add_user_filters(
         return stmt
 
     if user.role == UserRole.ADMIN:
-        # Admins can access all credentials that are public or owned by them
-        # or are not associated with any user
         return stmt.where(
             or_(
                 Credential.user_id == user.id,
@@ -70,41 +65,21 @@ def _add_user_filters(
                 Credential.source.in_(CREDENTIAL_PERMISSIONS_TO_IGNORE),
             )
         )
+
     if user.role == UserRole.BASIC:
-        # Basic users can only access credentials that are owned by them
         return stmt.where(Credential.user_id == user.id)
 
-    """
-    THIS PART IS FOR CURATORS AND GLOBAL CURATORS
-    Here we select cc_pairs by relation:
-    User -> User__Teamspace -> Credential__Teamspace -> Credential
-    """
     stmt = stmt.outerjoin(Credential__Teamspace).outerjoin(
         User__Teamspace,
         User__Teamspace.teamspace_id == Credential__Teamspace.teamspace_id,
     )
-    """
-    Filter Credentials by:
-    - if the user is in the teamspace that owns the Credential
-    - if the user is not a global_curator, they must also have a curator relationship
-    to the teamspace
-    - if editing is being done, we also filter out Credentials that are owned by groups
-    that the user isn't a curator for
-    - if we are not editing, we show all Credentials in the groups the user is a curator
-    for (as well as public Credentials)
-    - if we are not editing, we return all Credentials directly connected to the user
-    """
+
     where_clause = User__Teamspace.user_id == user.id
-    if user.role == UserRole.CURATOR:
-        where_clause &= User__Teamspace.is_curator == True  # noqa: E712
+
     if get_editable:
         teamspaces = select(User__Teamspace.teamspace_id).where(
             User__Teamspace.user_id == user.id
         )
-        if user.role == UserRole.CURATOR:
-            teamspaces = teamspaces.where(
-                User__Teamspace.is_curator == True  # noqa: E712
-            )
         where_clause &= (
             ~exists()
             .where(Credential__Teamspace.credential_id == Credential.id)
@@ -112,7 +87,6 @@ def _add_user_filters(
             .correlate(Credential)
         )
     else:
-        where_clause |= Credential.curator_public == True  # noqa: E712
         where_clause |= Credential.user_id == user.id  # noqa: E712
 
     where_clause |= Credential.source.in_(CREDENTIAL_PERMISSIONS_TO_IGNORE)
@@ -236,7 +210,6 @@ def create_credential(
         admin_public=credential_data.admin_public,
         source=credential_data.source,
         name=credential_data.name,
-        curator_public=credential_data.curator_public,
     )
     db_session.add(credential)
     db_session.flush()  # This ensures the credential gets an ID

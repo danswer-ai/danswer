@@ -18,7 +18,6 @@ class CredentialManager:
         admin_public: bool = True,
         name: str | None = None,
         source: DocumentSource = DocumentSource.FILE,
-        curator_public: bool = True,
         groups: list[int] | None = None,
         user_performing_action: DATestUser | None = None,
     ) -> DATestCredential:
@@ -29,7 +28,6 @@ class CredentialManager:
             "credential_json": credential_json or {},
             "admin_public": admin_public,
             "source": source,
-            "curator_public": curator_public,
             "groups": groups or [],
         }
         response = requests.post(
@@ -47,7 +45,6 @@ class CredentialManager:
             credential_json=credential_json or {},
             admin_public=admin_public,
             source=source,
-            curator_public=curator_public,
             groups=groups or [],
         )
 
@@ -122,7 +119,6 @@ class CredentialManager:
                     credential.name == fetched_credential.name
                     and credential.admin_public == fetched_credential.admin_public
                     and credential.source == fetched_credential.source
-                    and credential.curator_public == fetched_credential.curator_public
                 ):
                     return
         if not verify_deleted:

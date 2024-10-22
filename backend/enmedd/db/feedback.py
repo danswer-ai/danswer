@@ -76,16 +76,12 @@ def _add_user_filters(
     """
     Filter Documents by:
     - if the user is in the teamspace that owns the object
-    - if the user is not a global_curator, they must also have a curator relationship
-    to the teamspace
     - if editing is being done, we also filter out objects that are owned by groups
-    that the user isn't a curator for
-    - if we are not editing, we show all objects in the groups the user is a curator
-    for (as well as public objects as well)
+    that the user isn't part of
+    - if we are not editing, we show all objects in the groups the user is part of
+    (as well as public objects)
     """
     where_clause = User__UG.user_id == user.id
-    if user.role == UserRole.CURATOR and get_editable:
-        where_clause &= User__UG.is_curator == True  # noqa: E712
     if get_editable:
         teamspaces = select(User__UG.teamspace_id).where(User__UG.user_id == user.id)
         where_clause &= (

@@ -669,8 +669,6 @@ class Credential(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    curator_public: Mapped[bool] = mapped_column(Boolean, default=False)
-
     connectors: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
         back_populates="credential",
@@ -1566,8 +1564,6 @@ class SamlAccount(Base):
 
 class User__Teamspace(Base):
     __tablename__ = "user__teamspace"
-
-    is_curator: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     teamspace_id: Mapped[int] = mapped_column(
         ForeignKey("teamspace.id"), primary_key=True

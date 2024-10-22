@@ -54,12 +54,10 @@ def _add_user_filters(
     """
     Filter DocumentSets by:
     - if the user is in the teamspace that owns the DocumentSet
-    - if the user is not a global_curator, they must also have a curator relationship
-    to the teamspace
     - if editing is being done, we also filter out DocumentSets that are owned by groups
-    that the user isn't a curator for
-    - if we are not editing, we show all DocumentSets in the groups the user is a curator
-    for (as well as public DocumentSets)
+    that the user isn't a part of
+    - if we are not editing, we show all DocumentSets in the groups the user is a part of
+    (as well as public DocumentSets)
     """
     where_clause = User__Teamspace.user_id == user.id
     if user.role == TeamspaceRole.CREATOR and get_editable:

@@ -15,7 +15,6 @@ from fastapi import Response
 from fastapi import status
 from fastapi import UploadFile
 from fastapi_users.password import PasswordHelper
-from file_store.file_store import get_default_file_store
 from pydantic import BaseModel
 from sqlalchemy import Column
 from sqlalchemy import delete
@@ -27,7 +26,6 @@ from sqlalchemy.orm import Session
 
 from ee.enmedd.db.api_key import is_api_key_email_address
 from ee.enmedd.db.external_perm import delete_user__ext_teamspace_for_user__no_commit
-from ee.enmedd.db.teamspace import remove_curator_status__no_commit
 from ee.enmedd.server.workspace.store import _PROFILE_FILENAME
 from ee.enmedd.server.workspace.store import upload_profile
 from enmedd.auth.invited_users import get_invited_users
@@ -35,7 +33,6 @@ from enmedd.auth.invited_users import write_invited_users
 from enmedd.auth.noauth_user import fetch_no_auth_user
 from enmedd.auth.noauth_user import set_no_auth_user_preferences
 from enmedd.auth.schemas import ChangePassword
-from enmedd.auth.schemas import UserRole
 from enmedd.auth.schemas import UserStatus
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_teamspace_admin_user
@@ -59,6 +56,7 @@ from enmedd.db.models import User__Teamspace
 from enmedd.db.users import change_user_password
 from enmedd.db.users import get_user_by_email
 from enmedd.db.users import list_users
+from enmedd.file_store.file_store import get_default_file_store
 from enmedd.key_value_store.factory import get_kv_store
 from enmedd.server.manage.models import AllUsersResponse
 from enmedd.server.manage.models import OTPVerificationRequest
@@ -176,12 +174,6 @@ def set_user_role(
     if not user_to_update:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user_role_update_request.new_role == UserRole.CURATOR:
-        raise HTTPException(
-            status_code=400,
-            detail="Curator role must be set via the User Group Menu",
-        )
-
     if user_to_update.role == user_role_update_request.new_role:
         return
 
@@ -190,9 +182,6 @@ def set_user_role(
             status_code=400,
             detail="An admin cannot demote themselves from admin role!",
         )
-
-    if user_to_update.role == UserRole.CURATOR:
-        remove_curator_status__no_commit(db_session, user_to_update)
 
     user_to_update.role = user_role_update_request.new_role.value
 

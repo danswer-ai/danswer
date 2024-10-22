@@ -8,10 +8,8 @@ from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import Select
 from sqlalchemy import select
-from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from ee.enmedd.server.teamspace.models import SetCuratorRequest
 from ee.enmedd.server.teamspace.models import TeamspaceCreate
 from ee.enmedd.server.teamspace.models import TeamspaceUpdate
 from ee.enmedd.server.teamspace.models import TeamspaceUserRole
@@ -31,7 +29,6 @@ from enmedd.db.models import TokenRateLimit__Teamspace
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
 from enmedd.db.models import Workspace__Teamspace
-from enmedd.db.users import fetch_user_by_id
 from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -69,12 +66,10 @@ def validate_user_creation_permissions(
             status_code=400,
             detail=detail,
         )
-    user_curated_groups = fetch_teamspaces_for_user(
-        db_session=db_session, user_id=user.id, only_curator_groups=True
-    )
-    user_curated_group_ids = set([group.id for group in user_curated_groups])
+    user_groups = fetch_teamspaces_for_user(db_session=db_session, user_id=user.id)
+    user_group_ids = set([group.id for group in user_groups])
     target_group_ids_set = set(target_group_ids)
-    if not target_group_ids_set.issubset(user_curated_group_ids):
+    if not target_group_ids_set.issubset(user_group_ids):
         detail = "Curators cannot control groups they don't curate"
         logger.error(detail)
         raise HTTPException(
@@ -113,7 +108,7 @@ def fetch_teamspaces(
 
 
 def fetch_teamspaces_for_user(
-    db_session: Session, user_id: UUID, only_curator_groups: bool = False
+    db_session: Session, user_id: UUID
 ) -> Sequence[Teamspace]:
     stmt = (
         select(Teamspace)
@@ -121,8 +116,6 @@ def fetch_teamspaces_for_user(
         .join(User, User.id == User__Teamspace.user_id)  # type: ignore
         .where(User.id == user_id)  # type: ignore
     )
-    if only_curator_groups:
-        stmt = stmt.where(User__Teamspace.is_curator == True)  # noqa: E712
     return db_session.scalars(stmt).all()
 
 
@@ -332,79 +325,6 @@ def _mark_teamspace__cc_pair_relationships_outdated__no_commit(
     )
     for teamspace__cc_pair_relationship in teamspace__cc_pair_relationships:
         teamspace__cc_pair_relationship.is_current = False
-
-
-def _validate_curator_status__no_commit(
-    db_session: Session,
-    users: list[User],
-) -> None:
-    for user in users:
-        # Check if the user is a curator in any of their groups
-        curator_relationships = (
-            db_session.query(User__Teamspace)
-            .filter(
-                User__Teamspace.user_id == user.id,
-                User__Teamspace.is_curator == True,  # noqa: E712
-            )
-            .all()
-        )
-
-        if curator_relationships:
-            user.role = UserRole.CURATOR
-        elif user.role == UserRole.CURATOR:
-            user.role = UserRole.BASIC
-        db_session.add(user)
-
-
-def remove_curator_status__no_commit(db_session: Session, user: User) -> None:
-    stmt = (
-        update(User__Teamspace)
-        .where(User__Teamspace.user_id == user.id)
-        .values(is_curator=False)
-    )
-    db_session.execute(stmt)
-    _validate_curator_status__no_commit(db_session, [user])
-
-
-def update_user_curator_relationship(
-    db_session: Session,
-    teamspace_id: int,
-    set_curator_request: SetCuratorRequest,
-) -> None:
-    user = fetch_user_by_id(db_session, set_curator_request.user_id)
-    if not user:
-        raise ValueError(f"User with id '{set_curator_request.user_id}' not found")
-    requested_teamspace = fetch_teamspaces_for_user(
-        db_session=db_session,
-        user_id=set_curator_request.user_id,
-        only_curator_groups=False,
-    )
-
-    group_ids = [group.id for group in requested_teamspace]
-    if teamspace_id not in group_ids:
-        raise ValueError(f"user is not in group '{teamspace_id}'")
-
-    relationship_to_update = (
-        db_session.query(User__Teamspace)
-        .filter(
-            User__Teamspace.teamspace_id == teamspace_id,
-            User__Teamspace.user_id == set_curator_request.user_id,
-        )
-        .first()
-    )
-
-    if relationship_to_update:
-        relationship_to_update.is_curator = set_curator_request.is_curator
-    else:
-        relationship_to_update = User__Teamspace(
-            teamspace_id=teamspace_id,
-            user_id=set_curator_request.user_id,
-            is_curator=True,
-        )
-        db_session.add(relationship_to_update)
-
-    _validate_curator_status__no_commit(db_session, [user])
-    db_session.commit()
 
 
 def _cleanup_teamspace__cc_pair_relationships__no_commit(

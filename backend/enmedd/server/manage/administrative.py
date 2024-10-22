@@ -9,7 +9,6 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from enmedd.auth.users import current_admin_user
-from enmedd.auth.users import current_curator_or_admin_user
 from enmedd.background.celery.celery_app import celery_app
 from enmedd.configs.app_configs import GENERATIVE_MODEL_ACCESS_CHECK_FREQ
 from enmedd.configs.constants import DocumentSource
@@ -51,7 +50,7 @@ logger = setup_logger()
 def get_most_boosted_docs(
     ascending: bool,
     limit: int,
-    user: User | None = Depends(current_curator_or_admin_user),
+    user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[BoostDoc]:
     boost_docs = fetch_docs_ranked_by_boost(
@@ -76,7 +75,7 @@ def get_most_boosted_docs(
 @router.post("/admin/doc-boosts")
 def document_boost_update(
     boost_update: BoostUpdateRequest,
-    user: User | None = Depends(current_curator_or_admin_user),
+    user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     update_document_boost(
@@ -91,7 +90,7 @@ def document_boost_update(
 @router.post("/admin/doc-hidden")
 def document_hidden_update(
     hidden_update: HiddenUpdateRequest,
-    user: User | None = Depends(current_curator_or_admin_user),
+    user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     curr_ind_name, sec_ind_name = get_both_index_names(db_session)
@@ -144,7 +143,7 @@ def validate_existing_genai_api_key(
 @router.post("/admin/deletion-attempt")
 def create_deletion_attempt_for_connector_id(
     connector_credential_pair_identifier: ConnectorCredentialPairIdentifier,
-    user: User = Depends(current_curator_or_admin_user),
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     connector_id = connector_credential_pair_identifier.connector_id

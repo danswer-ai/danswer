@@ -260,7 +260,7 @@ export function UserProfile({
     `/api/me/profile?u=${Date.now()}`
   );
   const [imageError, setImageError] = useState(false);
-
+  console.log(user?.full_name);
   const backgroundGradient =
     user && user.full_name
       ? generateGradient(getNameInitials(user.full_name))
@@ -268,12 +268,11 @@ export function UserProfile({
 
   // Reset the image URL if there is an error
   useEffect(() => {
-    router.refresh();
     if (imageError) {
       setImageUrl(`/api/me/profile?u=${Date.now()}`);
       setImageError(false); // Reset the error state
     }
-  }, [imageError]);
+  }, []);
 
   return (
     <div

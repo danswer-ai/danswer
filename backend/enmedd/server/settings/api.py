@@ -62,7 +62,7 @@ def fetch_settings(
 ) -> UserSettings:
     """Settings and notifications are stuffed into this single endpoint to reduce number of
     Postgres calls"""
-    general_settings = load_settings()
+    general_settings = load_settings(db_session)
     user_notifications = get_user_notifications(user, db_session)
 
     try:
