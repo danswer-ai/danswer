@@ -8,15 +8,13 @@ from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
 from danswer.connectors.confluence.connector import ConfluenceConnector
-from danswer.connectors.confluence.connector import OnyxConfluence
+from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
+from danswer.connectors.confluence.utils import get_user_email_from_username__server
 from danswer.connectors.models import SlimDocument
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.document import upsert_document_external_perms__no_commit
-from ee.danswer.external_permissions.confluence.sync_utils import (
-    get_user_email_from_username__server,
-)
 
 logger = setup_logger()
 
@@ -244,11 +242,10 @@ def confluence_doc_sync(
         confluence_client=confluence_client,
         is_cloud=is_cloud,
     )
-    slim_docs = [
-        slim_doc
-        for doc_batch in confluence_connector.retrieve_all_slim_documents()
-        for slim_doc in doc_batch
-    ]
+
+    slim_docs = []
+    for doc_batch in confluence_connector.retrieve_all_slim_documents():
+        slim_docs.extend(doc_batch)
 
     permissions_by_doc_id = _fetch_all_page_restrictions_for_space(
         confluence_client=confluence_client,
