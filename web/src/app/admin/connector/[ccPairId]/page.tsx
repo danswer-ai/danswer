@@ -188,8 +188,10 @@ function Main({ ccPairId }: { ccPairId: number }) {
                 connectorId={ccPair.connector.id}
                 credentialId={ccPair.credential.id}
                 isDisabled={
+                  ccPair.indexing ||
                   ccPair.status === ConnectorCredentialPairStatus.PAUSED
                 }
+                isIndexing={ccPair.indexing}
                 isDeleting={isDeleting}
               />
             )}
