@@ -348,7 +348,7 @@ def get_llm_max_tokens(
         if not model_obj:
             model_obj = model_map.get(model_name)
             if model_obj:
-                logger.debug(f"Using model object for {model_provider}/{model_name}")
+                logger.debug(f"Using model object for {model_name}")
 
         if not model_obj:
             model_name_split = model_name.split("/")
