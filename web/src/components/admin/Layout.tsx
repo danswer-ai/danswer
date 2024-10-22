@@ -2,6 +2,7 @@ import { User, UserRole } from "@/lib/types";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
+  getCurrentTeamspaceUserSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
@@ -10,8 +11,20 @@ import { BarLayout } from "../BarLayout";
 import { AdminBar } from "./AdminBar";
 import { HealthCheckBanner } from "../health/healthcheck";
 
-export async function Layout({ children }: { children: React.ReactNode }) {
-  const tasks = [getAuthTypeMetadataSS(), getCurrentUserSS()];
+export async function Layout({
+  children,
+  isTeamspace,
+  teamspaceId,
+}: {
+  children: React.ReactNode;
+  isTeamspace?: boolean;
+  teamspaceId?: string;
+}) {
+  const tasks = [
+    getAuthTypeMetadataSS(),
+    getCurrentUserSS(),
+    getCurrentTeamspaceUserSS(teamspaceId!),
+  ];
 
   // catch cases where the backend is completely unreachable here
   // without try / catch, will just raise an exception and the page
@@ -24,7 +37,9 @@ export async function Layout({ children }: { children: React.ReactNode }) {
   }
 
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
-  const user = results[1] as User | null;
+  const user = teamspaceId
+    ? (results[2] as User | null)
+    : (results[1] as User | null);
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   const requiresVerification = authTypeMetadata?.requiresVerification;
@@ -46,7 +61,7 @@ export async function Layout({ children }: { children: React.ReactNode }) {
       <HealthCheckBanner />
       <div className="flex h-full">
         <AdminBar user={user}>
-          <SideBar />
+          <SideBar isTeamspace={isTeamspace} />
         </AdminBar>
         {children}
       </div>

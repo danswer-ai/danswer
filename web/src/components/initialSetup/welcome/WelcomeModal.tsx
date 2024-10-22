@@ -3,7 +3,7 @@
 import { Modal } from "../../Modal";
 import Link from "next/link";
 import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { COMPLETED_WELCOME_FLOW_COOKIE } from "./constants";
 import { useEffect, useState } from "react";
 import { BackButton } from "@/components/BackButton";
@@ -53,6 +53,7 @@ function UsageTypeSection({
 }
 
 export function _WelcomeModal({ user }: { user: User | null }) {
+  const { teamspaceId } = useParams();
   const router = useRouter();
   const [selectedFlow, setSelectedFlow] = useState<null | "search" | "chat">(
     null
@@ -119,11 +120,19 @@ export function _WelcomeModal({ user }: { user: User | null }) {
 
               <div className="flex mt-3">
                 <Link
-                  href="/admin/data-sources"
+                  href={
+                    teamspaceId
+                      ? `/t/${teamspaceId}/admin/data-sources`
+                      : "/admin/data-sources"
+                  }
                   onClick={(e) => {
                     e.preventDefault();
                     setWelcomeFlowComplete();
-                    router.push("/admin/data-sources");
+                    router.push(
+                      teamspaceId
+                        ? `/t/${teamspaceId}/admin/data-sources`
+                        : "/admin/data-sources"
+                    );
                   }}
                   className="mx-auto w-fit"
                 >
@@ -176,11 +185,19 @@ export function _WelcomeModal({ user }: { user: User | null }) {
               your organization&apos;s knowledge, you can always do that in the{" "}
               <Link
                 className="text-link"
-                href="/admin/data-sources"
+                href={
+                  teamspaceId
+                    ? `/t/${teamspaceId}/admin/data-sources`
+                    : "/admin/data-sources"
+                }
                 onClick={(e) => {
                   e.preventDefault();
                   setWelcomeFlowComplete();
-                  router.push("/admin/data-sources");
+                  router.push(
+                    teamspaceId
+                      ? `/t/${teamspaceId}/admin/data-sources`
+                      : "/admin/data-sources"
+                  );
                 }}
               >
                 Admin Panel
@@ -190,11 +207,11 @@ export function _WelcomeModal({ user }: { user: User | null }) {
 
             <div className="flex mt-3">
               <Link
-                href="/chat"
+                href={teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"}
                 onClick={(e) => {
                   e.preventDefault();
                   setWelcomeFlowComplete();
-                  router.push("/chat");
+                  router.push(teamspaceId ? `/t/${teamspaceId}/chat` : "/chat");
                   setIsHidden(true);
                 }}
                 className="mx-auto w-fit"

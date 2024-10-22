@@ -29,6 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 export const ChatSidebar = ({
   existingChats,
@@ -55,6 +56,41 @@ export const ChatSidebar = ({
   useEffect(() => {
     router.refresh();
   }, [currentChatId, router]);
+
+  useKeyboardShortcuts([
+    {
+      key: "k",
+      handler: () => {
+        router.push(
+          "/chat" +
+            (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT &&
+            currentChatSession
+              ? `?assistantId=${currentChatSession.assistant_id}`
+              : "")
+        );
+      },
+      ctrlKey: true,
+    },
+    {
+      key: "i",
+      handler: () => {
+        createFolder("New Folder")
+          .then((folderId) => {
+            console.log(`Folder created with ID: ${folderId}`);
+            router.refresh();
+          })
+          .catch((error) => {
+            console.error("Failed to create folder:", error);
+            toast({
+              title: "Folder Creation Failed",
+              description: `Unable to create the folder: ${error.message}. Please try again.`,
+              variant: "destructive",
+            });
+          });
+      },
+      ctrlKey: true,
+    },
+  ]);
 
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
@@ -130,7 +166,7 @@ export const ChatSidebar = ({
                     <Command size={14} />D
                   </div>
                 </Link>
-                {combinedSettings.featureFlags.explore_assistants && (
+                {/* {combinedSettings.featureFlags.explore_assistants && (
                   <Link
                     href="/assistants/mine"
                     className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
@@ -142,7 +178,7 @@ export const ChatSidebar = ({
                     <Headset size={16} />
                     <span className="truncate">Explore Assistants</span>
                   </Link>
-                )}
+                )} */}
               </>
             )}
             <Separator className="mt-4" />

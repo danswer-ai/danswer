@@ -38,7 +38,7 @@ export default async function Page() {
         Assistants are a way to build custom search/question-answering
         experiences for different use cases.
       </p>
-      <p className="mt-2">They allow you to customize:</p>
+      <h3 className="mt-2">They allow you to customize:</h3>
       <ul className="list-disc mt-2 ml-4 text-sm">
         <li>
           The prompt used by your LLM of choice to respond to the user query

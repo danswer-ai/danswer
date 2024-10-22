@@ -1,8 +1,9 @@
 import { PanelRightClose } from "lucide-react";
 import { Button } from "./ui/button";
 import Image from "next/image";
-import Logo from "../../public/logo-brand.png";
+import EnmeddLogo from "../../public/logo-brand.png";
 import React from "react";
+import { Logo } from "@/components/Logo";
 
 export function TopBar({
   children,
@@ -18,7 +19,7 @@ export function TopBar({
           <Button variant="ghost" size="icon" onClick={toggleLeftSideBar}>
             <PanelRightClose size={24} />
           </Button>
-          <Image src={Logo} alt="Logo" width={112} />
+          <Image src={EnmeddLogo} alt="Logo" width={112} />
         </div>
 
         {children}
@@ -29,8 +30,8 @@ export function TopBar({
 
 export function WelcomeTopBar() {
   return (
-    <div className="fixed w-full py-6 top-0 left-0 bg-background">
-      <Image src={Logo} alt="Logo" className="w-28 xl:w-32 ml-6 xl:ml-10" />
+    <div className="w-full py-6 bg-background">
+      <Logo className="w-28 xl:w-32 ml-6 xl:ml-10" />
     </div>
   );
 }

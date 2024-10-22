@@ -2,8 +2,6 @@
 
 import { TeamspaceCreationForm } from "./TeamspaceCreationForm";
 import { useState } from "react";
-import { ThreeDotsLoader } from "@/components/Loading";
-import { useConnectorCredentialIndexingStatus, useUsers } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { CustomModal } from "@/components/CustomModal";
 import { Assistant } from "@/app/admin/assistants/interfaces";
@@ -17,63 +15,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TeamspacesCard } from "./TeamspacesCard";
-import { Teamspace } from "@/lib/types";
-import { useDocumentSets } from "@/app/admin/documents/sets/hooks";
+import { ConnectorIndexingStatus, DocumentSet, Teamspace } from "@/lib/types";
+import { UsersResponse } from "@/lib/users/interfaces";
 
 export const TeamspaceContent = ({
   assistants,
   onClick,
-  isLoading,
-  error,
   data,
   refreshTeamspaces,
+  ccPairs,
+  users,
+  documentSets,
 }: {
   assistants: Assistant[];
   onClick: (teamspaceId: number) => void;
   data: Teamspace[] | undefined;
-  isLoading: boolean;
-  error: string;
   refreshTeamspaces: () => void;
+  ccPairs: ConnectorIndexingStatus<any, any>[] | undefined;
+  users: UsersResponse;
+  documentSets: DocumentSet[] | undefined;
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const {
-    data: ccPairs,
-    isLoading: isCCPairsLoading,
-    error: ccPairsError,
-  } = useConnectorCredentialIndexingStatus();
-
-  const {
-    data: users,
-    isLoading: userIsLoading,
-    error: usersError,
-  } = useUsers();
-
-  const {
-    data: documentSets,
-    isLoading: isDocumentSetsLoading,
-    error: documentSetsError,
-    refreshDocumentSets,
-  } = useDocumentSets();
-
-  if (isLoading || isCCPairsLoading || userIsLoading) {
-    return <ThreeDotsLoader />;
-  }
-
-  if (error || !data) {
-    return <div className="text-red-600">Error loading teams</div>;
-  }
-
-  if (ccPairsError || !ccPairs) {
-    return <div className="text-red-600">Error loading connectors</div>;
-  }
-
-  if (usersError || !users) {
-    return <div className="text-red-600">Error loading teams</div>;
-  }
-
-  const filteredTeamspaces = data.filter((teamspace) =>
+  const filteredTeamspaces = data!.filter((teamspace) =>
     teamspace.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -117,7 +82,7 @@ export const TeamspaceContent = ({
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Select>
-            <SelectTrigger className="w-full lg:w-64">
+            <SelectTrigger className="w-64">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>

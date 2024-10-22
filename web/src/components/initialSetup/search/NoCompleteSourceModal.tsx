@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CCPairBasicInfo } from "@/lib/types";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -12,6 +12,7 @@ export function NoCompleteSourcesModal({
 }: {
   ccPairs: CCPairBasicInfo[];
 }) {
+  const { teamspaceId } = useParams();
   const router = useRouter();
   const [isHidden, setIsHidden] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -67,7 +68,14 @@ export function NoCompleteSourcesModal({
                 <br />
                 To view the status of your syncing data sources, head over to
                 the{" "}
-                <Link className="text-link" href="admin/indexing/status">
+                <Link
+                  className="text-link"
+                  href={
+                    teamspaceId
+                      ? `/t/${teamspaceId}/admin/indexing/status`
+                      : "/admin/indexing/status"
+                  }
+                >
                   Existing Data Sources page
                 </Link>
                 .

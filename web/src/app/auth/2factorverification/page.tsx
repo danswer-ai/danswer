@@ -104,79 +104,87 @@ const Page = () => {
     <main className="h-full">
       {isLoading && <Spinner />}
       <HealthCheckBanner />
-      <WelcomeTopBar />
-      <div className="w-full h-full flex items-center justify-center px-6">
-        <div className="md:w-[500px] w-full">
-          <div className="flex items-center justify-center">
-            <div className="bg-primary p-3 rounded-md">
-              <ShieldEllipsis size={60} stroke="white" />
+
+      <div className="w-full h-full mx-auto flex flex-col justify-between overflow-y-auto">
+        <WelcomeTopBar />
+
+        <div className="w-full xl:w-1/2 h-full flex items-center justify-center mx-auto px-6 lg:px-14 3xl:px-0">
+          <div className="w-full md:w-3/4 lg:w-1/2 xl:w-full 3xl:w-1/2 my-auto pb-14 md:pb-20">
+            <div className="flex items-center justify-center">
+              <div className="bg-primary p-3 rounded-md">
+                <ShieldEllipsis size={60} stroke="white" />
+              </div>
+            </div>
+
+            <div className="pt-8">
+              <h1 className="text-2xl xl:text-3xl font-bold text-center text-dark-900">
+                Setup Two-Factor Authentication
+              </h1>
+              <p className="text-center pt-2 text-sm text-subtle">
+                Please check your email a 6 digit code has been sent to your
+                registered email{" "}
+                <span className="font-semibold text-default">
+                  “{user_email}”
+                </span>
+              </p>
+            </div>
+
+            <div className="pt-8 flex items-center flex-col gap-8 justify-center">
+              <InputOTP
+                maxLength={6}
+                value={value}
+                onChange={(value) => setValue(value)}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot
+                    index={0}
+                    className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
+                  />
+                  <InputOTPSlot
+                    index={1}
+                    className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
+                  />
+                  <InputOTPSlot
+                    index={2}
+                    className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
+                  />
+                </InputOTPGroup>
+                <InputOTPSeparator />
+                <InputOTPGroup>
+                  <InputOTPSlot
+                    index={3}
+                    className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
+                  />
+                  <InputOTPSlot
+                    index={4}
+                    className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
+                  />
+                  <InputOTPSlot
+                    index={5}
+                    className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
+                  />
+                </InputOTPGroup>
+              </InputOTP>
+
+              <Button className="w-full max-w-[450px]" onClick={handleContinue}>
+                Continue
+              </Button>
+
+              <p className="text-center text-sm">
+                Didn&apos;t receive a code?{" "}
+                <Link
+                  href=""
+                  onClick={handleResendOTP}
+                  className="text-sm font-medium text-link hover:underline"
+                >
+                  Resend Code
+                </Link>
+              </p>
             </div>
           </div>
-
-          <div className="pt-8">
-            <h1 className="text-2xl xl:text-3xl font-bold text-center text-dark-900">
-              Setup Two-Factor Authentication
-            </h1>
-            <p className="text-center pt-2 text-sm text-subtle">
-              Please check your email a 6 digit code has been sent to your
-              registered email{" "}
-              <span className="font-semibold text-default">“{user_email}”</span>
-            </p>
-          </div>
-
-          <div className="pt-8 flex items-center flex-col gap-8 justify-center">
-            <InputOTP
-              maxLength={6}
-              value={value}
-              onChange={(value) => setValue(value)}
-            >
-              <InputOTPGroup>
-                <InputOTPSlot
-                  index={0}
-                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
-                />
-                <InputOTPSlot
-                  index={1}
-                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
-                />
-                <InputOTPSlot
-                  index={2}
-                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
-                />
-              </InputOTPGroup>
-              <InputOTPSeparator />
-              <InputOTPGroup>
-                <InputOTPSlot
-                  index={3}
-                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
-                />
-                <InputOTPSlot
-                  index={4}
-                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
-                />
-                <InputOTPSlot
-                  index={5}
-                  className="w-10 h-10 sm:w-14 sm:h-14 md:h-16 md:w-16 text-3xl font-bold"
-                />
-              </InputOTPGroup>
-            </InputOTP>
-
-            <Button className="w-full" onClick={handleContinue}>
-              Continue
-            </Button>
-
-            <p className="text-center text-sm">
-              Didn&apos;t receive a code?{" "}
-              <Link
-                href=""
-                onClick={handleResendOTP}
-                className="text-sm font-medium text-link hover:underline"
-              >
-                Resend Code
-              </Link>
-            </p>
-          </div>
         </div>
+
+        <div className="w-full h-14 md:h-20"></div>
       </div>
     </main>
   );

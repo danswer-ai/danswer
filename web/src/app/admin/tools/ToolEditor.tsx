@@ -74,6 +74,7 @@ function ToolForm({
   const [definitionError, setDefinitionError] = definitionErrorState;
   const [methodSpecs, setMethodSpecs] = methodSpecsState;
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const { toast } = useToast();
 
   const debouncedValidateDefinition = useCallback(
     (definition: string) => {
@@ -133,8 +134,18 @@ function ToolForm({
                   parseJsonWithTrailingCommas(definition)
                 );
                 setFieldValue("definition", formatted);
+                toast({
+                  title: "Definition formatted",
+                  description:
+                    "The definition has been successfully formatted.",
+                  variant: "success",
+                });
               } catch (error) {
-                alert("Invalid JSON format");
+                toast({
+                  title: "Invalid JSON format",
+                  description: "Please check the JSON syntax and try again.",
+                  variant: "destructive",
+                });
               }
             }
           }}

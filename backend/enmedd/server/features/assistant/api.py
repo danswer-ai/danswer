@@ -1,5 +1,5 @@
 import uuid
-from uuid import UUID
+from typing import Optional
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_curator_or_admin_user
+from enmedd.auth.users import current_teamspace_admin_user
 from enmedd.auth.users import current_user
 from enmedd.configs.constants import FileOrigin
 from enmedd.db.assistant import create_update_assistant
@@ -27,6 +28,7 @@ from enmedd.db.models import User
 from enmedd.file_store.file_store import get_default_file_store
 from enmedd.file_store.models import ChatFileType
 from enmedd.llm.answering.prompts.utils import build_dummy_prompt
+from enmedd.server.features.assistant.models import AssistantShareRequest
 from enmedd.server.features.assistant.models import AssistantSnapshot
 from enmedd.server.features.assistant.models import CreateAssistantRequest
 from enmedd.server.features.assistant.models import PromptTemplateResponse
@@ -95,9 +97,11 @@ def patch_assistant_display_priority(
     )
 
 
+# TODO this should be current teamspace admin user
 @admin_router.get("")
 def list_assistants_admin(
-    user: User | None = Depends(current_curator_or_admin_user),
+    teamspace_id: Optional[int] = None,
+    user: User | None = Depends(current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
     get_editable: bool = Query(
@@ -107,6 +111,7 @@ def list_assistants_admin(
     return [
         AssistantSnapshot.from_model(assistant)
         for assistant in get_assistants(
+            teamspace_id=teamspace_id,
             db_session=db_session,
             user=user,
             get_editable=get_editable,
@@ -181,10 +186,6 @@ def update_assistant(
     )
 
 
-class AssistantShareRequest(BaseModel):
-    user_ids: list[UUID]
-
-
 @basic_router.patch("/{assistant_id}/share")
 def share_assistant(
     assistant_id: int,
@@ -215,6 +216,7 @@ def delete_assistant(
 
 @basic_router.get("")
 def list_assistants(
+    teamspace_id: Optional[int] = None,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
     include_deleted: bool = False,
@@ -223,6 +225,7 @@ def list_assistants(
         AssistantSnapshot.from_model(assistant)
         for assistant in get_assistants(
             user=user,
+            teamspace_id=teamspace_id,
             include_deleted=include_deleted,
             db_session=db_session,
             get_editable=False,

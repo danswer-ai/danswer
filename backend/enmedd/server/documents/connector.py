@@ -1,6 +1,7 @@
 import os
 import uuid
 from typing import cast
+from typing import Optional
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 from ee.enmedd.db.teamspace import validate_user_creation_permissions
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_curator_or_admin_user
+from enmedd.auth.users import current_teamspace_admin_user
 from enmedd.auth.users import current_user
 from enmedd.background.celery.celery_utils import get_deletion_attempt_snapshot
 from enmedd.configs.app_configs import ENABLED_CONNECTOR_TYPES
@@ -71,7 +73,9 @@ from enmedd.db.index_attempt import get_index_attempts_for_cc_pair
 from enmedd.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from enmedd.db.index_attempt import get_latest_index_attempts
 from enmedd.db.index_attempt import get_latest_index_attempts_by_status
+from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.models import IndexingStatus
+from enmedd.db.models import Teamspace__ConnectorCredentialPair
 from enmedd.db.models import User
 from enmedd.db.models import UserRole
 from enmedd.db.search_settings import get_current_search_settings
@@ -471,8 +475,9 @@ def get_currently_failed_indexing_status(
 
 @router.get("/admin/connector/indexing-status")
 def get_connector_indexing_status(
+    teamspace_id: Optional[int] = None,
     secondary_index: bool = False,
-    user: User = Depends(current_curator_or_admin_user),
+    user: User = Depends(current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
     get_editable: bool = Query(
         False, description="If true, return editable document sets"
@@ -480,17 +485,22 @@ def get_connector_indexing_status(
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
-    # NOTE: If the connector is deleting behind the scenes,
-    # accessing cc_pairs can be inconsistent and members like
-    # connector or credential may be None.
-    # Additional checks are done to make sure the connector and credential still exists.
-    # TODO: make this one query ... possibly eager load or wrap in a read transaction
-    # to avoid the complexity of trying to error check throughout the function
-    cc_pairs = get_connector_credential_pairs(
-        db_session=db_session,
-        user=user,
-        get_editable=get_editable,
-    )
+    if teamspace_id:
+        cc_pairs = (
+            db_session.query(ConnectorCredentialPair)
+            .join(Teamspace__ConnectorCredentialPair)
+            .filter(
+                Teamspace__ConnectorCredentialPair.teamspace_id == teamspace_id,
+                Teamspace__ConnectorCredentialPair.is_current == True,  # noqa: E712
+            )
+            .all()
+        )
+    else:
+        cc_pairs = get_connector_credential_pairs(
+            db_session=db_session,
+            user=user,
+            get_editable=get_editable,
+        )
 
     cc_pair_identifiers = [
         ConnectorCredentialPairIdentifier(
@@ -964,10 +974,23 @@ class BasicCCPairInfo(BaseModel):
 
 @router.get("/indexing-status")
 def get_basic_connector_indexing_status(
+    teamspace_id: Optional[int] = None,
     _: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> list[BasicCCPairInfo]:
-    cc_pairs = get_connector_credential_pairs(db_session)
+    if teamspace_id:
+        cc_pairs = (
+            db_session.query(ConnectorCredentialPair)
+            .join(Teamspace__ConnectorCredentialPair)
+            .filter(
+                Teamspace__ConnectorCredentialPair.teamspace_id == teamspace_id,
+                Teamspace__ConnectorCredentialPair.is_current == True,  # noqa: E712
+            )
+            .all()
+        )
+    else:
+        cc_pairs = get_connector_credential_pairs(db_session)
+
     cc_pair_identifiers = [
         ConnectorCredentialPairIdentifier(
             connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id

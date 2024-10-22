@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from datetime import datetime
 from datetime import timedelta
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import delete
@@ -129,12 +130,21 @@ def get_valid_messages_from_query_sessions(
 
 def get_chat_sessions_by_user(
     user_id: UUID | None,
+    teamspace_id: Optional[int] | None,
     deleted: bool | None,
     db_session: Session,
     only_one_shot: bool = False,
     limit: int = 50,
 ) -> list[ChatSession]:
-    stmt = select(ChatSession).where(ChatSession.user_id == user_id)
+    stmt = select(ChatSession)
+
+    if user_id is not None:
+        stmt = stmt.where(ChatSession.user_id == user_id)
+
+    if teamspace_id is not None:
+        stmt = stmt.join(ChatSession__Teamspace).where(
+            ChatSession__Teamspace.teamspace_id == teamspace_id
+        )
 
     if only_one_shot:
         stmt = stmt.where(ChatSession.one_shot.is_(True))
@@ -220,7 +230,6 @@ def create_chat_session(
     prompt_override: PromptOverride | None = None,
     one_shot: bool = False,
 ) -> ChatSession:
-    # Create the chat session
     chat_session = ChatSession(
         user_id=user_id,
         assistant_id=assistant_id,
@@ -230,11 +239,9 @@ def create_chat_session(
         one_shot=one_shot,
     )
 
-    # Add the chat session to the session and commit it to generate an ID
     db_session.add(chat_session)
     db_session.commit()
 
-    # Add the relationship to the ChatSession__Teamspace table if teamspace_id is provided
     if teamspace_id:
         chat_session_teamspace_relationship = ChatSession__Teamspace(
             chat_session_id=chat_session.id, teamspace_id=teamspace_id

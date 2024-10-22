@@ -3,6 +3,7 @@ import io
 import uuid
 from collections.abc import Callable
 from collections.abc import Generator
+from typing import Optional
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -78,6 +79,7 @@ router = APIRouter(prefix="/chat")
 
 @router.get("/get-user-chat-sessions")
 def get_user_chat_sessions(
+    teamspace_id: Optional[int] = None,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionsResponse:
@@ -85,11 +87,16 @@ def get_user_chat_sessions(
 
     try:
         chat_sessions = get_chat_sessions_by_user(
-            user_id=user_id, deleted=False, db_session=db_session
+            user_id=user_id,
+            teamspace_id=teamspace_id,
+            deleted=False,
+            db_session=db_session,
         )
 
     except ValueError:
-        raise ValueError("Chat session does not exist or has been deleted")
+        raise HTTPException(
+            status_code=404, detail="Chat session does not exist or has been deleted"
+        )
 
     return ChatSessionsResponse(
         sessions=[
@@ -182,6 +189,7 @@ def create_new_chat_session(
     chat_session_creation_request: ChatSessionCreationRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
+    teamspace_id: Optional[int] = None,
 ) -> CreateChatSessionID:
     user_id = user.id if user is not None else None
     try:
@@ -191,7 +199,7 @@ def create_new_chat_session(
             or "",  # Leave the naming till later to prevent delay
             user_id=user_id,
             assistant_id=chat_session_creation_request.assistant_id,
-            teamspace_id=chat_session_creation_request.teamspace_id,
+            teamspace_id=teamspace_id,
         )
     except Exception as e:
         logger.exception(e)

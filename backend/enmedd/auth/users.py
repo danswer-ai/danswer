@@ -56,6 +56,7 @@ from enmedd.db.engine import get_session
 from enmedd.db.engine import get_sqlalchemy_engine
 from enmedd.db.models import AccessToken
 from enmedd.db.models import User
+from enmedd.db.models import User__Teamspace
 from enmedd.db.users import get_user_by_email
 from enmedd.utils.logger import setup_logger
 from enmedd.utils.telemetry import optional_telemetry
@@ -448,6 +449,30 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
     return user
 
 
-def get_default_admin_user_emails_() -> list[str]:
-    # No default seeding available for enMedD AI MIT
-    return []
+async def current_teamspace_admin_user(
+    teamspace_id: Optional[int] = None,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> User:
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not authenticated.",
+        )
+
+    if teamspace_id is None:
+        return await current_admin_user(user=user)
+
+    user_teamspace = (
+        db_session.query(User__Teamspace)
+        .filter_by(teamspace_id=teamspace_id, user_id=user.id)
+        .first()
+    )
+
+    if not user_teamspace or user_teamspace.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User is not an admin in this teamspace.",
+        )
+
+    return user

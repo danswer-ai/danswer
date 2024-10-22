@@ -5,7 +5,7 @@ import { basicLogin, basicSignup } from "@/lib/user";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -16,11 +16,13 @@ import GmailIcon from "../../../../public/Gmail.png";
 import MicrosoftIcon from "../../../../public/microsoft.svg";
 import Image from "next/image";
 import Link from "next/link";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 export function LogInForms({}: {}) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const settings = useContext(SettingsContext);
 
   return (
     <>
@@ -39,14 +41,18 @@ export function LogInForms({}: {}) {
 
           const loginResponse = await basicLogin(values.email, values.password);
           if (loginResponse.ok) {
-            router.push(`/auth/2factorverification/?email=${values.email}`);
-            await fetch("/api/users/generate-otp", {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-            });
+            if (settings?.featureFlags.two_factor_auth == true) {
+              router.push(`/auth/2factorverification/?email=${values.email}`);
+              await fetch("/api/users/generate-otp", {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                credentials: "include",
+              });
+            } else {
+              router.push("/");
+            }
           } else {
             setIsLoading(false);
             const errorDetail = (await loginResponse.json()).detail;
@@ -109,7 +115,7 @@ export function LogInForms({}: {}) {
             </div>
 
             <div className="flex items-center gap-3 md:gap-6 w-full flex-col md:flex-row pt-8">
-              <Button className="flex-1 w-full" variant="outline">
+              <Button disabled className="flex-1 w-full" variant="outline">
                 <Image
                   src={GmailIcon}
                   alt="gmail-icon"
@@ -118,7 +124,12 @@ export function LogInForms({}: {}) {
                 />{" "}
                 Continue with Gmail
               </Button>
-              <Button className="flex-1 w-full" variant="outline" type="button">
+              <Button
+                disabled
+                className="flex-1 w-full"
+                variant="outline"
+                type="button"
+              >
                 <Image
                   src={MicrosoftIcon}
                   alt="microsoft-icon"

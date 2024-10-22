@@ -21,7 +21,7 @@ import { useFilters, useObjectState } from "@/lib/hooks";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { AssistantSelector } from "./AssistantSelector";
 import { computeAvailableFilters } from "@/lib/filters";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { ChatSession, SearchSession } from "@/app/chat/interfaces";
 import FunctionalHeader from "../chat_search/Header";
@@ -86,6 +86,8 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
   const [query, setQuery] = useState<string>("");
   const [comments, setComments] = useState<any>(null);
   const [contentEnriched, setContentEnriched] = useState(false);
+
+  const { teamspaceId } = useParams();
 
   const [searchResponse, setSearchResponse] = useState<SearchResponse>({
     suggestedSearchType: null,
@@ -454,7 +456,7 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
   const router = useRouter();
   const settings = useContext(SettingsContext);
   if (settings?.settings?.search_page_enabled === false) {
-    router.push("/chat");
+    router.push(teamspaceId ? `/t/${teamspaceId}/chat` : "/chat");
   }
 
   const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {

@@ -1,12 +1,20 @@
-export async function createChatSession(assistantId?: number | null) {
-  const chatSessionResponse = await fetch("/api/chat/create-chat-session", {
+export async function createChatSession(
+  assistantId?: number | null,
+  teamspaceId?: string | string[]
+) {
+  const url = teamspaceId
+    ? `/api/chat/create-chat-session?teamspace_id=${teamspaceId}`
+    : "/api/chat/create-chat-session";
+
+  const chatSessionResponse = await fetch(url, {
     method: "POST",
-    body: JSON.stringify({
-      assistant_id: assistantId,
-    }),
     headers: {
       "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      assistant_id: assistantId,
+    }),
   });
+
   return chatSessionResponse;
 }

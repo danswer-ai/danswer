@@ -31,6 +31,7 @@ import { CustomTooltip } from "@/components/CustomTooltip";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { WarningCircle } from "@phosphor-icons/react";
 import { DeleteChatModal } from "@/components/modals/DeleteEntityModal";
+import { useToast } from "@/hooks/use-toast";
 
 export function ChatSessionDisplay({
   chatSession,
@@ -53,6 +54,7 @@ export function ChatSessionDisplay({
   const [chatName, setChatName] = useState(chatSession.name);
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
   const settings = useContext(SettingsContext);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (skipGradient) {
@@ -70,8 +72,17 @@ export function ChatSessionDisplay({
     if (response.ok) {
       setIsRenamingChat(false);
       router.refresh();
+      toast({
+        title: "Chat session renamed",
+        description: "The chat session has been successfully renamed.",
+        variant: "success",
+      });
     } else {
-      alert("Failed to rename chat session");
+      toast({
+        title: "Failed to rename chat session",
+        description: "There was an issue renaming the chat session.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -214,8 +225,19 @@ export function ChatSessionDisplay({
                               if (response.ok) {
                                 // go back to the main page
                                 router.push("/chat");
+                                toast({
+                                  title: "Chat session deleted",
+                                  description:
+                                    "The chat session has been successfully deleted.",
+                                  variant: "success",
+                                });
                               } else {
-                                alert("Failed to delete chat session");
+                                toast({
+                                  title: "Failed to delete chat session",
+                                  description:
+                                    "There was an issue deleting the chat session.",
+                                  variant: "destructive",
+                                });
                               }
                             }}
                             chatSessionName={chatSession.name}

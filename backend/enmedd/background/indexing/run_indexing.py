@@ -308,7 +308,6 @@ def _run_indexing(
                         credential_id=db_credential.id,
                         net_docs=net_doc_change,
                     )
-
                 if INDEXING_TRACER_INTERVAL > 0:
                     tracer.stop()
                 raise e

@@ -1,28 +1,46 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const PageSwitcher: React.FC = () => {
-  const pathname = usePathname();
+  const { teamspaceId } = useParams();
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey && event.key === "s") {
-        event.preventDefault();
-        window.location.href = "/search";
-      } else if (event.ctrlKey && event.key === "d") {
-        event.preventDefault();
-        window.location.href = "/chat";
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [pathname]);
+  useKeyboardShortcuts([
+    {
+      key: "s",
+      handler: () => {
+        window.location.href = teamspaceId
+          ? `/t/${teamspaceId}/search`
+          : "/search";
+      },
+      ctrlKey: true,
+    },
+    {
+      key: "d",
+      handler: () => {
+        window.location.href = teamspaceId ? `/t/${teamspaceId}/chat` : "/chat";
+      },
+      ctrlKey: true,
+    },
+    {
+      key: "p",
+      handler: () => {
+        window.location.href = "/profile";
+      },
+      ctrlKey: true,
+    },
+    {
+      key: "q",
+      handler: () => {
+        window.location.href = teamspaceId
+          ? `/t/${teamspaceId}/admin/indexing/status`
+          : "/admin/indexing/status";
+      },
+      ctrlKey: true,
+    },
+  ]);
 
   return <div />;
 };

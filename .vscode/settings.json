@@ -1,1 +1,5 @@
-{}
+{
+    "python.analysis.extraPaths": [
+        "./backend/enmedd"
+    ]
+}

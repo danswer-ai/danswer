@@ -9,10 +9,10 @@ import { Logo } from "@/components/Logo";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Link from "next/link";
-import { useTeamspaces } from "@/lib/hooks";
 import { TeamspaceBubble } from "@/components/TeamspaceBubble";
 import Image from "next/image";
 import { TeamspaceModal } from "./TeamspaceModal";
+import { useParams } from "next/navigation";
 
 interface GlobalSidebarProps {
   openSidebar?: boolean;
@@ -20,8 +20,7 @@ interface GlobalSidebarProps {
 }
 
 export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
-  const { data } = useTeamspaces();
-
+  const { teamspaceId } = useParams();
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -30,8 +29,22 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
   const workspaces = combinedSettings.workspaces;
   const defaultPage = settings.default_page;
 
-  const displayedTeamspaces = data?.slice(0, 8);
-  const showEllipsis = data && data.length > 8;
+  let displayedTeamspaces = user?.groups || [];
+  if (teamspaceId) {
+    const matchingTeamspace = displayedTeamspaces.find(
+      (group) => group.id.toString() === teamspaceId
+    );
+    const otherTeamspaces = displayedTeamspaces.filter(
+      (group) => group.id.toString() !== teamspaceId
+    );
+    displayedTeamspaces = matchingTeamspace
+      ? [matchingTeamspace, ...otherTeamspaces]
+      : otherTeamspaces;
+  }
+  displayedTeamspaces = displayedTeamspaces.slice(0, 8);
+  const showEllipsis = user?.groups && user.groups.length > 8;
+
+  console.log(user?.groups);
 
   return (
     <div className={`bg-background h-full p-4 border-r border-border z-10`}>
@@ -52,7 +65,14 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
           <div className="flex flex-col items-center gap-4 pt-4">
             <CustomTooltip
               trigger={
-                <Link href={`/${defaultPage}`} className="flex items-center">
+                <Link
+                  href={
+                    teamspaceId
+                      ? `/t/${teamspaceId}/${defaultPage}`
+                      : `/${defaultPage}`
+                  }
+                  className="flex items-center"
+                >
                   <Logo />
                 </Link>
               }
@@ -66,16 +86,21 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
             </CustomTooltip>
           </div>
           <Separator className="mt-4" />
-          {data && (
-            <div className="flex flex-col gap-3 pt-4">
+          {user?.groups && (
+            <div className="flex flex-col items-center gap-3 pt-4">
               {displayedTeamspaces?.map((teamspace) => (
                 <TeamspaceBubble
                   key={teamspace.id}
                   teamspace={teamspace}
-                  link={defaultPage}
+                  link={`t/${teamspace.id}/${defaultPage}`}
                 />
               ))}
-              {showEllipsis && <TeamspaceModal teamspace={data} />}
+              {showEllipsis && (
+                <TeamspaceModal
+                  teamspace={user.groups}
+                  defaultPage={defaultPage}
+                />
+              )}
             </div>
           )}
         </div>

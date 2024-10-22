@@ -12,6 +12,7 @@ import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED } from "@/lib/constant
 import { SideBar } from "../SideBar";
 import Image from "next/image";
 import { MessageSquare, Search } from "lucide-react";
+import { useParams } from "next/navigation";
 
 export function HeaderTitle({ children }: { children: JSX.Element | string }) {
   return <h1 className="flex text-2xl font-bold text-strong">{children}</h1>;
@@ -22,6 +23,7 @@ interface HeaderProps {
 }
 
 export function Header({ user }: HeaderProps) {
+  const { teamspaceId } = useParams();
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
@@ -36,7 +38,13 @@ export function Header({ user }: HeaderProps) {
         <Link
           className="flex flex-col py-3"
           href={
-            settings && settings.default_page === "chat" ? "/chat" : "/search"
+            settings && settings.default_page === "chat"
+              ? teamspaceId
+                ? `/t/${teamspaceId}/chat`
+                : "/chat"
+              : teamspaceId
+                ? `/t/${teamspaceId}/search`
+                : "/search"
           }
         >
           <div className="flex my-auto">
@@ -65,7 +73,7 @@ export function Header({ user }: HeaderProps) {
           (settings.search_page_enabled && settings.chat_page_enabled)) && (
           <>
             <Link
-              href="/search"
+              href={teamspaceId ? `/t/${teamspaceId}/search` : "/search"}
               className={"ml-6 h-full  flex-col hover:bg-hover lg:flex hidden"}
             >
               <div className="flex w-24 my-auto">
@@ -77,7 +85,7 @@ export function Header({ user }: HeaderProps) {
             </Link>
 
             <Link
-              href="/chat"
+              href={teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"}
               className="flex-col hidden h-full hover:bg-hover lg:flex"
             >
               <div className="flex w-24 my-auto">

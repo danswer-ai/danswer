@@ -4,14 +4,18 @@ import string
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+from typing import Optional
 
 from email_validator import validate_email
 from fastapi import APIRouter
 from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Response
 from fastapi import status
+from fastapi import UploadFile
 from fastapi_users.password import PasswordHelper
+from file_store.file_store import get_default_file_store
 from pydantic import BaseModel
 from sqlalchemy import Column
 from sqlalchemy import delete
@@ -24,6 +28,8 @@ from sqlalchemy.orm import Session
 from ee.enmedd.db.api_key import is_api_key_email_address
 from ee.enmedd.db.external_perm import delete_user__ext_teamspace_for_user__no_commit
 from ee.enmedd.db.teamspace import remove_curator_status__no_commit
+from ee.enmedd.server.workspace.store import _PROFILE_FILENAME
+from ee.enmedd.server.workspace.store import upload_profile
 from enmedd.auth.invited_users import get_invited_users
 from enmedd.auth.invited_users import write_invited_users
 from enmedd.auth.noauth_user import fetch_no_auth_user
@@ -32,7 +38,7 @@ from enmedd.auth.schemas import ChangePassword
 from enmedd.auth.schemas import UserRole
 from enmedd.auth.schemas import UserStatus
 from enmedd.auth.users import current_admin_user
-from enmedd.auth.users import current_curator_or_admin_user
+from enmedd.auth.users import current_teamspace_admin_user
 from enmedd.auth.users import current_user
 from enmedd.auth.users import optional_user
 from enmedd.auth.utils import generate_2fa_email
@@ -198,19 +204,56 @@ def list_all_users(
     q: str | None = None,
     accepted_page: int | None = None,
     invited_page: int | None = None,
-    user: User | None = Depends(current_curator_or_admin_user),
+    teamspace_id: int | None = None,
+    _: User | None = Depends(current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AllUsersResponse:
     if not q:
         q = ""
 
-    users = [
-        user
-        for user in list_users(db_session, email_filter_string=q, user=user)
-        if not is_api_key_email_address(user.email)
+    users_with_roles = []
+
+    if teamspace_id is not None:
+        users_with_roles = (
+            db_session.query(User, User__Teamspace.role)
+            .join(User__Teamspace)
+            .filter(User__Teamspace.teamspace_id == teamspace_id)
+            .all()
+        )
+
+        return AllUsersResponse(
+            accepted=[
+                FullUserSnapshot(
+                    id=user.id,
+                    email=user.email,
+                    role=role,
+                    status=UserStatus.LIVE
+                    if user.is_active
+                    else UserStatus.DEACTIVATED,
+                    full_name=user.full_name,
+                    billing_email_address=user.billing_email_address,
+                    company_billing=user.company_billing,
+                    company_email=user.company_email,
+                    company_name=user.company_name,
+                    vat=user.vat,
+                )
+                for user, role in users_with_roles
+                if not is_api_key_email_address(user.email)
+            ],
+            invited=[InvitedUserSnapshot(email=email) for email in get_invited_users()],
+            accepted_pages=1,
+            invited_pages=1,
+        )
+    else:
+        users_with_roles = list_users(db_session, q=q)
+
+    users_with_roles = [
+        user for user in users_with_roles if not is_api_key_email_address(user.email)
     ]
-    accepted_emails = {user.email for user in users}
+
+    accepted_emails = {user.email for user in users_with_roles}
     invited_emails = get_invited_users()
+
     if q:
         invited_emails = [
             email for email in invited_emails if re.search(r"{}".format(q), email, re.I)
@@ -219,7 +262,6 @@ def list_all_users(
     accepted_count = len(accepted_emails)
     invited_count = len(invited_emails)
 
-    # If any of q, accepted_page, or invited_page is None, return all users
     if accepted_page is None or invited_page is None:
         return AllUsersResponse(
             accepted=[
@@ -227,9 +269,9 @@ def list_all_users(
                     id=user.id,
                     email=user.email,
                     role=user.role,
-                    status=(
-                        UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED
-                    ),
+                    status=UserStatus.LIVE
+                    if user.is_active
+                    else UserStatus.DEACTIVATED,
                     full_name=user.full_name,
                     billing_email_address=user.billing_email_address,
                     company_billing=user.company_billing,
@@ -237,29 +279,28 @@ def list_all_users(
                     company_name=user.company_name,
                     vat=user.vat,
                 )
-                for user in users
+                for user in users_with_roles
             ],
             invited=[InvitedUserSnapshot(email=email) for email in invited_emails],
             accepted_pages=1,
             invited_pages=1,
         )
 
-    # Otherwise, return paginated results
     return AllUsersResponse(
         accepted=[
             FullUserSnapshot(
                 id=user.id,
                 email=user.email,
                 role=user.role,
+                status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
                 full_name=user.full_name,
                 billing_email_address=user.billing_email_address,
                 company_billing=user.company_billing,
                 company_email=user.company_email,
                 company_name=user.company_name,
                 vat=user.vat,
-                status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
             )
-            for user in users
+            for user in users_with_roles
         ][accepted_page * USERS_PAGE_SIZE : (accepted_page + 1) * USERS_PAGE_SIZE],
         invited=[InvitedUserSnapshot(email=email) for email in invited_emails][
             invited_page * USERS_PAGE_SIZE : (invited_page + 1) * USERS_PAGE_SIZE
@@ -464,9 +505,53 @@ def get_current_token_creation(
         return None
 
 
+@router.put("/me/profile")
+def put_profile(
+    file: UploadFile,
+    db_session: Session = Depends(get_session),
+    current_user: User = Depends(current_user),
+) -> None:
+    upload_profile(file=file, db_session=db_session, user=current_user)
+
+
+@router.get("/me/profile")
+def fetch_profile(
+    db_session: Session = Depends(get_session),
+    current_user: User = Depends(current_user),
+) -> Response:
+    try:
+        file_path = f"{current_user.id}/{_PROFILE_FILENAME}"
+
+        file_store = get_default_file_store(db_session)
+        file_io = file_store.read_file(file_path, mode="b")
+
+        return Response(content=file_io.read(), media_type="image/jpeg")
+    except Exception:
+        raise HTTPException(status_code=404, detail="No profile file found")
+
+
+@router.delete("/me/profile")
+def remove_profile(
+    db_session: Session = Depends(get_session),
+    current_user: User = Depends(current_user),  # Get the current user
+) -> None:
+    try:
+        file_name = f"{current_user.id}/{_PROFILE_FILENAME}"
+
+        file_store = get_default_file_store(db_session)
+
+        file_store.delete_file(file_name)
+
+        return {"detail": "Profile picture removed successfully."}
+    except Exception as e:
+        logger.error(f"Error removing profile picture: {str(e)}")
+        raise HTTPException(status_code=404, detail="Profile picture not found.")
+
+
 @router.get("/me")
 def verify_user_logged_in(
     user: User | None = Depends(optional_user),
+    teamspace_id: Optional[int] = None,
     db_session: Session = Depends(get_session),
 ) -> UserInfo:
     # NOTE: this does not use `current_user` / `current_admin_user` because we don't want
@@ -478,7 +563,6 @@ def verify_user_logged_in(
         if AUTH_TYPE == AuthType.DISABLED:
             store = get_kv_store()
             return fetch_no_auth_user(store)
-
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="User Not Authenticated"
         )
@@ -489,12 +573,32 @@ def verify_user_logged_in(
             detail="Access denied. User's OIDC token has expired.",
         )
 
+    role = user.role
+    if teamspace_id:
+        user_teamspace = (
+            db_session.query(User__Teamspace)
+            .filter(
+                User__Teamspace.user_id == user.id,
+                User__Teamspace.teamspace_id == teamspace_id,
+            )
+            .first()
+        )
+
+        if user_teamspace is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Teamspace or role not found",
+            )
+
+        role = user_teamspace.role
+
     token_created_at = get_current_token_creation(user, db_session)
     user_info = UserInfo.from_model(
         user,
         current_token_created_at=token_created_at,
         expiry_length=SESSION_EXPIRE_TIME_SECONDS,
     )
+    user_info.role = role
 
     return user_info
 

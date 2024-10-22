@@ -1,6 +1,5 @@
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { CCPairBasicInfo, DocumentSet, User } from "../types";
-import { getCurrentUserSS } from "../userSS";
 import { fetchSS } from "../utilsSS";
 import {
   FullLLMProvider,
@@ -8,9 +7,11 @@ import {
 } from "@/app/admin/configuration/llm/interfaces";
 import { ToolSnapshot } from "../tools/interfaces";
 import { fetchToolsSS } from "../tools/fetchTools";
+import { getCurrentTeamspaceUserSS, getCurrentUserSS } from "../userSS";
 
 export async function fetchAssistantEditorInfoSS(
-  assistantId?: number | string
+  assistantId?: number | string,
+  teamspaceId?: string
 ): Promise<
   | [
       {
@@ -29,29 +30,31 @@ export async function fetchAssistantEditorInfoSS(
     fetchSS("/manage/indexing-status"),
     fetchSS("/manage/document-set"),
     fetchSS("/llm/provider"),
-    // duplicate fetch, but shouldn't be too big of a deal
-    // this page is not a high traffic page
-    getCurrentUserSS(),
     fetchToolsSS(),
   ];
+
+  const user = teamspaceId
+    ? await getCurrentTeamspaceUserSS(teamspaceId)
+    : await getCurrentUserSS();
+
+  // Fetch assistant if assistantId is provided
   if (assistantId) {
     tasks.push(fetchSS(`/assistant/${assistantId}`));
   } else {
     tasks.push((async () => null)());
   }
 
+  // Execute all fetch tasks
   const [
     ccPairsInfoResponse,
     documentSetsResponse,
     llmProvidersResponse,
-    user,
     toolsResponse,
     assistantResponse,
   ] = (await Promise.all(tasks)) as [
     Response,
     Response,
     Response,
-    User | null,
     ToolSnapshot[] | null,
     Response | null,
   ];

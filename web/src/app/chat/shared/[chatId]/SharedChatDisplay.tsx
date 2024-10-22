@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Prism from "prismjs";
 import { humanReadableFormat } from "@/lib/time";
 import { BackendChatSession } from "../../interfaces";
 import {
@@ -10,9 +12,11 @@ import {
 import { AIMessage, HumanMessage } from "../../message/Messages";
 import { Callout } from "@tremor/react";
 import { useRouter } from "next/navigation";
-import { useChatContext } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Divider } from "@/components/Divider";
+import { Assistant } from "@/app/admin/assistants/interfaces";
+import { ThreeDotsLoader } from "@/components/Loading";
+import { User } from "@/lib/types";
 
 // TODO: replace the component name
 function BackToEnmeddButton() {
@@ -29,10 +33,17 @@ function BackToEnmeddButton() {
 
 export function SharedChatDisplay({
   chatSession,
+  availableAssistants,
 }: {
   chatSession: BackendChatSession | null;
+  availableAssistants: Assistant[] | null;
 }) {
-  let { availableAssistants } = useChatContext();
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    Prism.highlightAll();
+    setIsReady(true);
+  }, []);
+
   if (!chatSession) {
     return (
       <div className="min-h-full w-full">
@@ -47,7 +58,7 @@ export function SharedChatDisplay({
     );
   }
 
-  const currentAssistant = availableAssistants.find(
+  const currentAssistant = availableAssistants?.find(
     (assistant) => assistant.id === chatSession.assistant_id
   );
 
@@ -68,30 +79,36 @@ export function SharedChatDisplay({
           <Divider />
         </div>
 
-        <div className="pb-16">
-          {messages.map((message) => {
-            if (message.type === "user") {
-              return (
-                <HumanMessage
-                  key={message.messageId}
-                  content={message.message}
-                />
-              );
-            } else {
-              return (
-                <AIMessage
-                  currentAssistant={currentAssistant!}
-                  key={message.messageId}
-                  messageId={message.messageId}
-                  content={message.message}
-                  assistantName={chatSession.assistant_name}
-                  citedDocuments={getCitedDocumentsFromMessage(message)}
-                  isComplete
-                />
-              );
-            }
-          })}
-        </div>
+        {isReady ? (
+          <div className="pb-16">
+            {messages.map((message) => {
+              if (message.type === "user") {
+                return (
+                  <HumanMessage
+                    key={message.messageId}
+                    content={message.message}
+                  />
+                );
+              } else {
+                return (
+                  <AIMessage
+                    currentAssistant={currentAssistant!}
+                    key={message.messageId}
+                    messageId={message.messageId}
+                    content={message.message}
+                    assistantName={chatSession.assistant_name}
+                    citedDocuments={getCitedDocumentsFromMessage(message)}
+                    isComplete
+                  />
+                );
+              }
+            })}
+          </div>
+        ) : (
+          <div className="pt-10">
+            <ThreeDotsLoader />
+          </div>
+        )}
       </div>
 
       <BackToEnmeddButton />

@@ -5,13 +5,18 @@ import { Ellipsis } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CustomModal } from "../CustomModal";
 import { useState } from "react";
-import { Teamspace } from "@/lib/types";
+import { MinimalTeamspaceSnapshot } from "@/lib/types";
+import Link from "next/link";
 
 interface TeamspaceModalProps {
-  teamspace?: Teamspace[] | undefined;
+  teamspace?: MinimalTeamspaceSnapshot[] | undefined;
+  defaultPage: string;
 }
 
-export const TeamspaceModal = ({ teamspace }: TeamspaceModalProps) => {
+export const TeamspaceModal = ({
+  teamspace,
+  defaultPage,
+}: TeamspaceModalProps) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   if (!teamspace) return null;
@@ -47,13 +52,13 @@ export const TeamspaceModal = ({ teamspace }: TeamspaceModalProps) => {
       onClose={() => setIsModalVisible(false)}
       open={isModalVisible}
       title="Your Team Space"
-      description="All your teamspace"
     >
-      <div className="grid grid-cols-3 gap-4 pt-6">
+      <div className="grid grid-cols-3 gap-4">
         {teamspace.map((team) => (
-          <div
+          <Link
             key={team.id}
             className="flex items-center gap-4 border rounded-md p-4 cursor-pointer"
+            href={`/t/${team.id}/${defaultPage}`}
           >
             <div
               style={{ background: generateGradient(team.name) }}
@@ -62,7 +67,7 @@ export const TeamspaceModal = ({ teamspace }: TeamspaceModalProps) => {
               {team.name.charAt(0)}
             </div>
             <h3>{team.name}</h3>
-          </div>
+          </Link>
         ))}
       </div>
     </CustomModal>

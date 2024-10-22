@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { MessageSquare, Share2 } from "lucide-react";
 import { CustomModal } from "@/components/CustomModal";
 import { Divider } from "@/components/Divider";
+import { useParams } from "next/navigation";
 
 export function NoSourcesModal() {
+  const { teamspaceId } = useParams();
   const settings = useContext(SettingsContext);
   const [isHidden, setIsHidden] = useState(
     !settings?.settings.search_page_enabled ?? false
@@ -31,7 +33,13 @@ export function NoSourcesModal() {
           Without any connected knowledge sources, there isn&apos;t anything to
           search over.
         </p>
-        <Link href="/admin/data-sources">
+        <Link
+          href={
+            teamspaceId
+              ? `/t/${teamspaceId}/admin/data-sources`
+              : "/admin/data-sources"
+          }
+        >
           <Button className="mt-3">
             <Share2 size={16} /> Connect a Source!
           </Button>
@@ -43,7 +51,7 @@ export function NoSourcesModal() {
             without any organization specific knowledge, then you can head over
             to the Chat page and start chatting with enMedD AI right away!
           </p>
-          <Link href="/chat">
+          <Link href={teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"}>
             <Button className="mt-3">
               <MessageSquare size={16} /> Start Chatting!
             </Button>

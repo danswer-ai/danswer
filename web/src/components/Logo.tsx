@@ -38,12 +38,10 @@ export function Logo({
 
   return (
     <div style={{ height, width }} className={`relative ${className}`}>
-      <Image
-        src="/api/workspace/logo"
+      <img
+        src={`/api/workspace/logo?u=${Date.now()}`}
         alt="Logo"
-        className="object-contain rounded-regular"
-        width={width}
-        height={height}
+        style={{ objectFit: "cover", height, width, borderRadius: "8px" }}
       />
     </div>
   );

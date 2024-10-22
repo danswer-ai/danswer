@@ -7,11 +7,11 @@ cd ..
 source .venv/bin/activate
 
 # Install requirements
-pip install -r ConversationalHealthPlatform/backend/requirements/default.txt
-pip install -r ConversationalHealthPlatform/backend/requirements/dev.txt
-pip install -r ConversationalHealthPlatform/backend/requirements/model_server.txt
-pip install -r ConversationalHealthPlatform/backend/requirements/ee.txt
-pip install -r ConversationalHealthPlatform/backend/requirements/cdk.txt
+pip install -r enmedd-ai/backend/requirements/default.txt
+pip install -r enmedd-ai/backend/requirements/dev.txt
+pip install -r enmedd-ai/backend/requirements/model_server.txt
+pip install -r enmedd-ai/backend/requirements/ee.txt
+pip install -r enmedd-ai/backend/requirements/cdk.txt
 
-# Change to ConversationalHealthPlatform directory
-cd ConversationalHealthPlatform
+# Change to enmedd-ai directory
+cd enmedd-ai

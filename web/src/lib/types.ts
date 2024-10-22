@@ -2,6 +2,7 @@ import { Assistant } from "@/app/admin/assistants/interfaces";
 import { Credential } from "./connectors/credentials";
 import { Connector } from "./connectors/connectors";
 import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/types";
+import { ChatSession } from "@/app/chat/interfaces";
 
 export interface UserPreferences {
   chosen_assistants: number[] | null;
@@ -49,6 +50,7 @@ export interface User {
   current_token_created_at?: Date;
   current_token_expiry_length?: number;
   oidc_expiry?: Date;
+  groups?: MinimalWorkspaceSnapshot[];
 }
 
 export interface MinimalUserSnapshot {
@@ -188,6 +190,11 @@ export interface StandardAnswer {
   match_regex: boolean;
   match_any_keywords: boolean;
   categories: StandardAnswerCategory[];
+}
+
+export interface MinimalWorkspaceSnapshot {
+  id: number;
+  workspace_name: string;
 }
 
 /* EE Only Types */

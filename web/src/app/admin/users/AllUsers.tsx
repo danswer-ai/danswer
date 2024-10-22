@@ -169,6 +169,10 @@ export const AllUsers = ({ q }: { q: string }) => {
     error: domainsError,
   } = useSWR<string[]>("/api/manage/admin/valid-domains", errorHandlingFetcher);
 
+  if (isLoading) {
+    return <LoadingAnimation text="Loading" />;
+  }
+
   if (domainsError || !validDomains) {
     return (
       <ErrorCallout
@@ -176,10 +180,6 @@ export const AllUsers = ({ q }: { q: string }) => {
         errorMsg={domainsError?.info?.detail}
       />
     );
-  }
-
-  if (isLoading) {
-    return <LoadingAnimation text="Loading" />;
   }
 
   if (error || !data) {

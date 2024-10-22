@@ -9,6 +9,7 @@ import {
 } from "@/lib/connectors/connectors";
 import { getSourceMetadata } from "@/lib/sources";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 interface ConnectorTitleProps {
   connector: Connector<any>;
@@ -30,6 +31,7 @@ export const ConnectorTitle = ({
   showMetadata = true,
 }: ConnectorTitleProps) => {
   const sourceMetadata = getSourceMetadata(connector.source);
+  const { teamspaceId } = useParams();
 
   let additionalMetadata = new Map<string, string>();
   if (connector.source === "github") {
@@ -92,6 +94,7 @@ export const ConnectorTitle = ({
         </div>
       }
       asChild
+      align="start"
     >
       {ccPairName || sourceMetadata.displayName}
     </CustomTooltip>
@@ -101,7 +104,7 @@ export const ConnectorTitle = ({
       {isLink ? (
         <Link
           className={mainSectionClassName}
-          href={`/admin/connector/${ccPairId}`}
+          href={`/t/${teamspaceId}/admin/connector/${ccPairId}`}
         >
           {mainDisplay}
         </Link>

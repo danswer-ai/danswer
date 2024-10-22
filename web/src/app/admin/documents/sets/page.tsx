@@ -15,7 +15,13 @@ import { DeleteButton } from "@/components/DeleteButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Bookmark, CircleCheckBig, Clock, TriangleAlert } from "lucide-react";
+import {
+  Bookmark,
+  CircleCheckBig,
+  Clock,
+  Pencil,
+  TriangleAlert,
+} from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -55,37 +61,30 @@ const EditRow = ({
 
   return (
     <div className="relative flex">
-      {isSyncingTooltipOpen && (
-        <div className="flex flex-nowrap absolute w-64 top-0 left-0 mt-8 border border-border bg-background px-3 py-2 rounded shadow-lg break-words z-40">
-          <InfoIcon className="mt-1 flex flex-shrink-0 mr-2" /> Cannot update
-          while syncing! Wait for the sync to finish, then try again.
-        </div>
-      )}
-      <div
-        className={`
-          text-emphasis font-medium my-auto p-1 hover:bg-hover-light flex items-center select-none
-          ${documentSet.is_up_to_date ? "cursor-pointer" : "cursor-default"}
-        `}
-        style={{ wordBreak: "normal", overflowWrap: "break-word" }}
-        onClick={() => {
-          if (documentSet.is_up_to_date) {
-            router.push(`/admin/documents/sets/${documentSet.id}`);
-          }
-        }}
-        onMouseEnter={() => {
-          if (!documentSet.is_up_to_date) {
-            setIsSyncingTooltipOpen(true);
-          }
-        }}
-        onMouseLeave={() => {
-          if (!documentSet.is_up_to_date) {
-            setIsSyncingTooltipOpen(false);
-          }
-        }}
+      <CustomTooltip
+        trigger={
+          <Button
+            variant="ghost"
+            className={
+              documentSet.is_up_to_date ? "cursor-pointer" : " cursor-default"
+            }
+            onClick={() => {
+              if (documentSet.is_up_to_date) {
+                router.push(`/admin/documents/sets/${documentSet.id}`);
+              }
+            }}
+          >
+            <Pencil size={16} className="my-auto mr-1 " />
+            {documentSet.name}
+          </Button>
+        }
+        asChild
       >
-        <FiEdit2 className="mr-2 flex-shrink-0" />
-        <span className="font-medium">{documentSet.name}</span>
-      </div>
+        <div className="flex gap-1.5">
+          <InfoIcon className="mb-auto shrink-0 mt-[3px]" /> Cannot update while
+          syncing! Wait for the sync to finish, then try again.
+        </div>
+      </CustomTooltip>
     </div>
   );
 };

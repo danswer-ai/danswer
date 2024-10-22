@@ -44,7 +44,7 @@ export const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
 
 export const ThreeDotsLoader = () => {
   return (
-    <div className="flex my-auto">
+    <div className="flex my-auto w-full">
       <div className="mx-auto">
         <ThreeDots
           height="30"

@@ -148,3 +148,28 @@ export const processCookies = (cookies: ReadonlyRequestCookies): string => {
     .map((cookie) => `${cookie.name}=${cookie.value}`)
     .join("; ");
 };
+
+export const getCurrentTeamspaceUserSS = async (
+  teamspaceId: string
+): Promise<User | null> => {
+  try {
+    const response = await fetch(buildUrl(`/me?teamspace_id=${teamspaceId}`), {
+      credentials: "include",
+      next: { revalidate: 0 },
+      headers: {
+        cookie: cookies()
+          .getAll()
+          .map((cookie) => `${cookie.name}=${cookie.value}`)
+          .join("; "),
+      },
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const user = await response.json();
+    return user;
+  } catch (e) {
+    console.log(`Error fetching user: ${e}`);
+    return null;
+  }
+};

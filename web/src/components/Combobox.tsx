@@ -71,7 +71,7 @@ export function Combobox({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between"
+            className="w-full justify-between text-subtle border border-input"
           >
             {selectedItems.length > 0
               ? `${selectedItems.length} selected`
@@ -80,7 +80,7 @@ export function Combobox({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="min-w-[300px] sm:min-w-[495px] md:min-w-[550px] lg:min-w-[495px] xl:min-w-[630px]"
+          className="min-w-[300px] sm:min-w-[495px] md:min-w-[550px] lg:min-w-[495px] xl:min-w-[625px]"
           align="start"
         >
           <Command>

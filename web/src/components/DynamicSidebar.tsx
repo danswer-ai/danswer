@@ -7,6 +7,7 @@ import { User } from "@/lib/types";
 import { useContext, useEffect, useState } from "react";
 import { SettingsContext } from "./settings/SettingsProvider";
 import { CustomTooltip } from "./CustomTooltip";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 interface SidebarProps {
   user?: User | null;
@@ -27,6 +28,14 @@ export function DynamicSidebar({
   const toggleWidth = () => {
     setIsExpanded((prevState) => !prevState);
   };
+
+  useKeyboardShortcuts([
+    {
+      key: "l",
+      handler: toggleWidth,
+      ctrlKey: true,
+    },
+  ]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");

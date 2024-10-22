@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Users } from "lucide-react";
 import { Divider } from "@/components/Divider";
 import { useUser } from "@/components/user/UserProvider";
+import { Combobox } from "@/components/Combobox";
 
 interface SetCreationPopupProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
@@ -51,8 +52,13 @@ export const DocumentSetCreationForm = ({
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredCcPairs = ccPairs.filter((ccPair) =>
-    ccPair.name!.toLowerCase().includes(searchTerm.toLowerCase())
+    ccPair.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const connectorItems = filteredCcPairs.map((ccPair) => ({
+    value: ccPair.cc_pair_id.toString(),
+    label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
+  }));
 
   return (
     <div>
@@ -119,7 +125,7 @@ export const DocumentSetCreationForm = ({
           }
         }}
       >
-        {({ isSubmitting, values }) => (
+        {({ isSubmitting, values, setFieldValue }) => (
           <Form>
             <TextFormField
               name="name"
@@ -139,53 +145,16 @@ export const DocumentSetCreationForm = ({
 
             <div>
               <h3 className="mb-1 text-sm">Pick your connectors:</h3>
-              <p className="mb-3 text-xs text-subtle">
-                All documents indexed by the selected connectors will be a part
-                of this document set.
-              </p>
-              <Input
-                type="text"
-                placeholder="Search connectors..."
-                className="mb-3"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-
-              <FieldArray
-                name="cc_pair_ids"
-                render={(arrayHelpers: ArrayHelpers) => (
-                  <div className="mb-3 flex gap-2 flex-wrap">
-                    {filteredCcPairs.map((ccPair) => {
-                      const ind = values.cc_pair_ids.indexOf(ccPair.cc_pair_id);
-                      const isSelected = ind !== -1;
-
-                      return (
-                        <Badge
-                          key={`${ccPair.connector.id}-${ccPair.credential.id}`}
-                          variant={isSelected ? "default" : "outline"}
-                          className="cursor-pointer hover:bg-opacity-75"
-                          onClick={() => {
-                            if (isSelected) {
-                              arrayHelpers.remove(ind);
-                            } else {
-                              arrayHelpers.push(ccPair.cc_pair_id);
-                            }
-                          }}
-                        >
-                          <div className="my-auto truncate">
-                            <ConnectorTitle
-                              connector={ccPair.connector}
-                              ccPairId={ccPair.cc_pair_id}
-                              ccPairName={ccPair.name}
-                              isLink={false}
-                              showMetadata={false}
-                            />
-                          </div>
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
+              <Combobox
+                items={connectorItems}
+                onSelect={(selectedValues) => {
+                  const selectedIds = selectedValues.map((val) =>
+                    parseInt(val, 10)
+                  );
+                  setFieldValue("cc_pair_ids", selectedIds);
+                }}
+                placeholder="Search connectors"
+                label="Select connectors"
               />
             </div>
 
@@ -206,44 +175,28 @@ export const DocumentSetCreationForm = ({
                 />
 
                 <Divider />
-                <h2 className="mb-1 font-medium text-sm">
-                  Teamspace with Access
-                </h2>
+                <h3 className="mb-1 text-sm">Teamspace with Access</h3>
                 {!values.is_public ? (
                   <>
-                    <p className="mb-3 text-subtle text-xs ">
+                    <p className="mb-2 text-subtle text-xs ">
                       If any teamspace are specified, then this Document Set
                       will only be visible to the specified teamspace. If no
                       teamspace are specified, then the Document Set will be
                       visible to all users.
                     </p>
-                    <FieldArray
-                      name="teamspace"
-                      render={(arrayHelpers: ArrayHelpers) => (
-                        <div className="flex gap-2 flex-wrap">
-                          {teamspaces.map((teamspace) => {
-                            const ind = values.teamspace.indexOf(teamspace.id);
-                            let isSelected = ind !== -1;
-                            return (
-                              <Badge
-                                key={teamspace.id}
-                                variant={isSelected ? "default" : "outline"}
-                                className="cursor-pointer hover:bg-opacity-80"
-                                onClick={() => {
-                                  if (isSelected) {
-                                    arrayHelpers.remove(ind);
-                                  } else {
-                                    arrayHelpers.push(teamspace.id);
-                                  }
-                                }}
-                              >
-                                <Users className="my-auto mr-2" size={14} />
-                                {teamspace.name}
-                              </Badge>
-                            );
-                          })}
-                        </div>
-                      )}
+                    <Combobox
+                      items={teamspaces.map((teamspace) => ({
+                        value: teamspace.id.toString(),
+                        label: teamspace.name,
+                      }))}
+                      onSelect={(selectedTeamspaceIds) => {
+                        const selectedIds = selectedTeamspaceIds.map((val) =>
+                          parseInt(val, 10)
+                        );
+                        setFieldValue("groups", selectedIds);
+                      }}
+                      placeholder="Select teamspaces"
+                      label="Teamspaces"
                     />
                   </>
                 ) : (

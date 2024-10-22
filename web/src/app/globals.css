@@ -13,12 +13,12 @@
     /* --primary: 222.2 47.4% 11.2%; */
     --primary: #2039f3;
     --primary-foreground: #b8d7ff;
-    --secondary: rgba(14, 14, 15, 0.1);
+    --secondary: rgba(128, 128, 128, 0.55);
     /*  --secondary: #8e00c7; */
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary-foreground: rgba(128, 128, 128, 0.33);
     /*  --secondary-foreground: #be8bfc; */
     --success: #69c57d;
-    --success-foreground: #a9deb4;
+    --success-foreground: rgba(27, 232, 72, 0.1);
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 210 40% 96.1%;
@@ -202,5 +202,5 @@ code[class*="language-"] {
 }
 
 .container {
-  @apply mx-auto max-w-[1400px] px-6 lg:px-14 xl:px-10 2xl:px-24 py-24 md:py-32 lg:pt-16;
+  @apply mx-auto max-w-[1400px] px-6 lg:px-14 xl:px-10 2xl:px-24 py-24 md:py-32 lg:pt-16 bg-background;
 }

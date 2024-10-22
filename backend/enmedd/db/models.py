@@ -38,7 +38,7 @@ from enmedd.configs.constants import DEFAULT_BOOST
 from enmedd.configs.constants import DocumentSource
 from enmedd.configs.constants import FileOrigin
 from enmedd.configs.constants import MessageType
-from enmedd.db.enums import AccessType, InstanceSubscriptionPlan
+from enmedd.db.enums import AccessType
 from enmedd.configs.constants import NotificationType
 from enmedd.configs.constants import SearchFeedbackType
 from enmedd.configs.constants import TokenRateLimitScope
@@ -47,6 +47,8 @@ from enmedd.db.enums import ChatSessionSharedStatus
 from enmedd.db.enums import ConnectorCredentialPairStatus
 from enmedd.db.enums import IndexingStatus
 from enmedd.db.enums import IndexModelStatus
+from enmedd.db.enums import InstanceSubscriptionPlan
+from enmedd.db.enums import PageType
 from enmedd.db.enums import TaskStatus
 from enmedd.db.pydantic_type import PydanticType
 from enmedd.key_value_store.interface import JSON_ro
@@ -1706,6 +1708,12 @@ class Teamspace(Base):
         secondary=ChatSession__Teamspace.__table__,
         viewonly=True,
     )
+    token_rate_limit: Mapped["TokenRateLimit"] = relationship(
+        "TokenRateLimit",
+        secondary="token_rate_limit__teamspace",
+        viewonly=True,
+    )
+
     chat_folders: Mapped[list[ChatFolder]] = relationship(
         "ChatFolder",
         secondary=ChatFolder__Teamspace.__table__,
@@ -1714,6 +1722,9 @@ class Teamspace(Base):
     credentials: Mapped[list[Credential]] = relationship(
         "Credential",
         secondary=Credential__Teamspace.__table__,
+    )
+    settings: Mapped["TeamspaceSettings"] = relationship(
+        "TeamspaceSettings", back_populates="teamspace", viewonly=False
     )
 
 
@@ -1734,6 +1745,11 @@ class TokenRateLimit(Base):
     )
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+    groups: Mapped["Teamspace"] = relationship(
+        "Teamspace",
+        secondary="token_rate_limit__teamspace",
+        viewonly=True,
     )
 
 
@@ -1865,7 +1881,9 @@ class Workspace(Base):
         back_populates="workspace",
         viewonly=True,
     )
-
+    settings: Mapped["WorkspaceSettings"] = relationship(
+        "WorkspaceSettings", back_populates="workspace", viewonly=False
+    )
     instance: Mapped["Instance"] = relationship("Instance", back_populates="workspaces")
 
 
@@ -1882,4 +1900,47 @@ class Instance(Base):
 
     workspaces: Mapped[list[Workspace] | None] = relationship(
         "Workspace", back_populates="instance"
+    )
+
+
+class WorkspaceSettings(Base):
+    __tablename__ = "workspace_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_page_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    search_page_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    default_page: Mapped[PageType] = mapped_column(
+        Enum(PageType, native_enum=False), default=PageType.CHAT
+    )
+    maximum_chat_retention_days: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
+
+    workspace_id: Mapped[int | None] = mapped_column(
+        ForeignKey("workspace.id"), nullable=True
+    )
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace", back_populates="settings"
+    )
+
+
+class TeamspaceSettings(Base):
+    __tablename__ = "teamspace_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_page_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    search_page_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    chat_history_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    default_page: Mapped[PageType] = mapped_column(
+        Enum(PageType, native_enum=False), default=PageType.CHAT
+    )
+    maximum_chat_retention_days: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
+
+    teamspace_id: Mapped[int | None] = mapped_column(
+        ForeignKey("teamspace.id"), nullable=True
+    )
+    teamspace: Mapped["Teamspace"] = relationship(
+        "Teamspace", back_populates="settings"
     )

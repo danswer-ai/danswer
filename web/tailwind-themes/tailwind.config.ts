@@ -10,12 +10,6 @@ const config = {
   ],
   prefix: "",
   theme: {
-    /*   container: {
-      center: true,
-      screens: {
-        "2xl": "1400px",
-      },
-    }, */
     extend: {
       fontFamily: {
         sans: ["var(--font-sans)"],
@@ -70,7 +64,7 @@ const config = {
         },
         secondary: {
           DEFAULT: "var(--secondary)",
-          foreground: "hsl(var(--secondary-foreground))",
+          foreground: "var(--secondary-foreground)",
         },
         destructive: {
           DEFAULT: "var(--destructive)",

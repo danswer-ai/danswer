@@ -521,6 +521,79 @@ def fetch_all_document_sets_for_user(
     return db_session.scalars(stmt).all()
 
 
+def fetch_all_document_sets(db_session: Session) -> Sequence[DocumentSetDBModel]:
+    """Used for Admin UI where they should have visibility into all document sets"""
+    return db_session.scalars(select(DocumentSetDBModel)).all()
+
+
+def fetch_document_sets_by_teamspace(
+    teamspace_id: int, db_session: Session
+) -> Sequence[DocumentSetDBModel]:
+    """Fetch document sets for a specific teamspace."""
+    return (
+        db_session.query(DocumentSetDBModel)
+        .join(
+            DocumentSet__Teamspace,
+            DocumentSetDBModel.id == DocumentSet__Teamspace.document_set_id,
+        )
+        .filter(DocumentSet__Teamspace.teamspace_id == teamspace_id)
+        .all()
+    )
+
+
+def fetch_document_sets_by_teamspace_non_admin(
+    teamspace_id: int, db_session: Session
+) -> list[tuple[DocumentSetDBModel, list[ConnectorCredentialPair]]]:
+    """Fetch document sets and associated connector-credential pairs for a specific teamspace."""
+    document_set_data = (
+        db_session.query(DocumentSetDBModel, ConnectorCredentialPair)
+        .join(
+            DocumentSet__Teamspace,
+            DocumentSetDBModel.id == DocumentSet__Teamspace.document_set_id,
+        )
+        .join(
+            DocumentSet__ConnectorCredentialPair,
+            DocumentSetDBModel.id
+            == DocumentSet__ConnectorCredentialPair.document_set_id,
+        )
+        .join(
+            ConnectorCredentialPair,
+            DocumentSet__ConnectorCredentialPair.connector_credential_pair_id
+            == ConnectorCredentialPair.id,
+        )
+        .filter(DocumentSet__Teamspace.teamspace_id == teamspace_id)
+        .all()
+    )
+
+    document_sets = {}
+    for document_set, cc_pair in document_set_data:
+        if document_set not in document_sets:
+            document_sets[document_set] = []
+        document_sets[document_set].append(cc_pair)
+
+    return [(doc_set, cc_pairs) for doc_set, cc_pairs in document_sets.items()]
+
+
+def fetch_user_document_sets(
+    user_id: UUID | None, db_session: Session
+) -> list[tuple[DocumentSetDBModel, list[ConnectorCredentialPair]]]:
+    # If Auth is turned off, all document sets become visible
+    # document sets are not permission enforced, only for organizational purposes
+    # the documents themselves are permission enforced
+    if user_id is None:
+        return fetch_document_sets(
+            user_id=user_id, db_session=db_session, include_outdated=True
+        )
+
+    versioned_fetch_doc_sets_fn = fetch_versioned_implementation(
+        "enmedd.db.document_set", "fetch_document_sets"
+    )
+
+    return versioned_fetch_doc_sets_fn(
+        user_id=user_id, db_session=db_session, include_outdated=True
+    )
+
+
 def fetch_documents_for_document_set_paginated(
     document_set_id: int,
     db_session: Session,

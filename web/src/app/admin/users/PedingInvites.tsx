@@ -95,11 +95,10 @@ export const PendingInvites = ({ q }: { q: string }) => {
     (user) => !accepted.map((u) => u.email).includes(user.email)
   );
 
-  const filteredUsers = finalInvited.filter(
-    (user) =>
-      user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredUsers = finalInvited.filter((user) =>
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   const onRemovalSuccess = () => {
     toast({
       title: "User Removed Successfully",
@@ -119,6 +118,7 @@ export const PendingInvites = ({ q }: { q: string }) => {
     });
     setIsCancelModalVisible(false);
   };
+
   return (
     <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
       <div className="xl:w-2/5">
@@ -149,18 +149,13 @@ export const PendingInvites = ({ q }: { q: string }) => {
                     {filteredUsers.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <div className="flex gap-4">
+                          <div className="flex items-center gap-4">
                             <div className="border rounded-full w-10 h-10 flex items-center justify-center">
                               <UserIcon />
                             </div>
-                            <div className="flex flex-col">
-                              <span className="truncate max-w-44">
-                                {user.full_name}
-                              </span>
-                              <span className="text-sm text-subtle truncate max-w-44">
-                                {user.email}
-                              </span>
-                            </div>
+                            <span className="text-sm text-subtle truncate max-w-44">
+                              {user.email}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>

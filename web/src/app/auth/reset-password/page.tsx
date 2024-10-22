@@ -11,20 +11,20 @@ import { WelcomeTopBar } from "@/components/TopBar";
 
 const Page = () => {
   return (
-    <main className="relative h-full px-6">
+    <main className="h-full overflow-y-auto">
       <HealthCheckBanner />
 
-      <WelcomeTopBar />
+      <div className="w-full h-full flex flex-col justify-between items-center mx-auto">
+        <WelcomeTopBar />
 
-      <div className="flex justify-center items-center h-full">
-        <div className="md:w-[500px]">
+        <div className="w-full md:w-[500px] flex items-center justify-center px-6 md:px-0">
           <SetNewPasswordForms />
         </div>
-      </div>
 
-      <div className="w-full md:w-[500px] flex gap-2 absolute bottom-10 left-1/2 -translate-x-1/2 px-6 md:px-0">
-        <Progress value={100} />
-        <Progress value={0} />
+        <div className="w-full md:w-[500px]  flex gap-2 px-6 md:px-0 py-10">
+          <Progress value={100} />
+          <Progress value={0} />
+        </div>
       </div>
     </main>
   );

@@ -31,13 +31,15 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
                 >
                   <Book
                     size={12}
-                    className={"" + (document.link ? " text-link" : " ")}
+                    className={
+                      "shrink-0" + (document.link ? " text-link" : " ")
+                    }
                   />
                   {document.link ? (
                     <a
                       href={document.link}
                       target="_blank"
-                      className="text-link"
+                      className="text-link truncate"
                     >
                       {document.semantic_identifier}
                     </a>

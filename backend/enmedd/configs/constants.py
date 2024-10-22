@@ -22,6 +22,10 @@ INDEX_SEPARATOR = "==="
 
 ENMEDD_METADATA_FILENAME = ".enmedd_metadata.json"
 
+# Image quality
+QUALITY = 50
+SIZE = (200, 200)
+
 # Messages
 DISABLED_GEN_AI_MSG = (
     "Your System Admin has disabled the Generative AI functionalities of enMedD AI.\n"

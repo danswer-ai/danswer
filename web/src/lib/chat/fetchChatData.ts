@@ -1,6 +1,7 @@
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,
+  getCurrentTeamspaceUserSS,
   getCurrentUserSS,
 } from "@/lib/userSS";
 import { fetchSS } from "@/lib/utilsSS";
@@ -43,20 +44,38 @@ interface FetchChatDataResult {
   shouldDisplaySourcesIncompleteModal: boolean;
 }
 
-export async function fetchChatData(searchParams: {
-  [key: string]: string;
-}): Promise<FetchChatDataResult | { redirect: string }> {
+export async function fetchChatData(
+  searchParams: { [key: string]: string },
+  teamspaceId?: string
+): Promise<FetchChatDataResult | { redirect: string }> {
   const tasks = [
     getAuthTypeMetadataSS(),
     getCurrentUserSS(),
-    fetchSS("/manage/indexing-status"),
-    fetchSS("/manage/document-set"),
-    fetchAssistantsSS(),
-    fetchSS("/chat/get-user-chat-sessions"),
+    fetchSS(
+      teamspaceId
+        ? `/manage/indexing-status?teamspace_id=${teamspaceId}`
+        : "/manage/indexing-status"
+    ),
+    fetchSS(
+      teamspaceId
+        ? `/manage/document-set?teamspace_id=${teamspaceId}`
+        : "/manage/document-set"
+    ),
+    fetchSS(
+      teamspaceId
+        ? `/assistant?include_default=false&teamspace_id=${teamspaceId}`
+        : "/assistant?include_default=true"
+    ),
+    fetchSS(
+      teamspaceId
+        ? `/chat/get-user-chat-sessions?teamspace_id=${teamspaceId}`
+        : "/chat/get-user-chat-sessions"
+    ),
     fetchSS("/query/valid-tags"),
     fetchLLMProvidersSS(),
     fetchSS("/folder"),
     fetchSS("/input_prompt?include_public=true"),
+    getCurrentTeamspaceUserSS(teamspaceId!),
   ];
 
   let results: (
@@ -76,7 +95,9 @@ export async function fetchChatData(searchParams: {
   }
 
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
-  const user = results[1] as User | null;
+  const user = teamspaceId
+    ? (results[10] as User | null)
+    : (results[1] as User | null);
   const ccPairsResponse = results[2] as Response | null;
   const documentSetsResponse = results[3] as Response | null;
   const [rawAssistantsList, assistantsFetchError] = results[4] as [

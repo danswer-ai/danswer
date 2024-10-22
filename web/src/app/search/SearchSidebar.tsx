@@ -101,7 +101,7 @@ export const SearchSidebar = ({
                     <Command size={14} />D
                   </div>
                 </Link>
-                {combinedSettings.featureFlags.explore_assistants && (
+                {/* {combinedSettings.featureFlags.explore_assistants && (
                   <Link
                     href="/assistants/mine"
                     className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
@@ -109,7 +109,7 @@ export const SearchSidebar = ({
                     <Headset size={16} />
                     <span className="truncate">Explore Assistants</span>
                   </Link>
-                )}
+                )} */}
               </>
             )}
             <Separator className="mt-4" />

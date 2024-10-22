@@ -1,15 +1,20 @@
 import { CustomTooltip } from "@/components/CustomTooltip";
-import { Teamspace } from "@/lib/types";
+import { ConnectorIndexingStatus, DocumentSet, Teamspace } from "@/lib/types";
 import { ChevronLeft, ChevronRight, PanelRightClose } from "lucide-react";
 import { TeamspaceSidebarContent } from "./TeamspaceSidebarContent";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Assistant } from "@/app/admin/assistants/interfaces";
 
 interface TeamspaceSidebarProps {
   selectedTeamspace?: Teamspace;
   generateGradient: (teamspaceName: string) => string;
   onClose: () => void;
   isExpanded: boolean;
+  assistants: Assistant[];
+  ccPairs: ConnectorIndexingStatus<any, any>[];
+  documentSets: DocumentSet[];
+  refreshTeamspaces: () => void;
 }
 
 export const TeamspaceSidebar = ({
@@ -17,6 +22,10 @@ export const TeamspaceSidebar = ({
   generateGradient,
   onClose,
   isExpanded,
+  assistants,
+  ccPairs,
+  documentSets,
+  refreshTeamspaces,
 }: TeamspaceSidebarProps) => {
   return (
     <>
@@ -45,11 +54,11 @@ export const TeamspaceSidebar = ({
         }`}
       >
         {isExpanded && (
-          <div className="h-full flex items-center justify-center absolute right-full">
+          <div className="h-full flex items-center justify-center absolute right-full pointer-events-none">
             <CustomTooltip
               trigger={
                 <button
-                  className="border rounded-l py-2 border-r-0 bg-background hidden lg:flex"
+                  className="border rounded-l py-2 border-r-0 bg-background hidden lg:flex pointer-events-auto"
                   onClick={onClose}
                 >
                   <ChevronRight size={16} />
@@ -83,6 +92,10 @@ export const TeamspaceSidebar = ({
                 gradient: generateGradient(selectedTeamspace.name),
               }}
               selectedTeamspaceId={selectedTeamspace.id}
+              assistants={assistants}
+              ccPairs={ccPairs}
+              documentSets={documentSets}
+              refreshTeamspaces={refreshTeamspaces}
             />
           )}
         </div>

@@ -1,4 +1,5 @@
 from typing import cast
+from typing import Optional
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -38,13 +39,20 @@ basic_router = APIRouter(prefix="/settings")
 
 @admin_router.put("")
 def put_settings(
-    settings: Settings, _: User | None = Depends(current_admin_user)
+    settings: Settings,
+    db: Session = Depends(get_session),
+    _: User | None = Depends(current_admin_user),
+    teamspace_id: Optional[int] = None,
 ) -> None:
     try:
         settings.check_validity()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    store_settings(settings)
+
+    try:
+        store_settings(settings, db, teamspace_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @basic_router.get("")

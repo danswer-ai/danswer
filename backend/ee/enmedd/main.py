@@ -22,7 +22,8 @@ from ee.enmedd.server.query_history.api import router as query_history_router
 from ee.enmedd.server.reporting.usage_export_api import router as usage_export_router
 from ee.enmedd.server.saml import router as saml_router
 from ee.enmedd.server.seeding import seed_db
-from ee.enmedd.server.teamspace.api import router as teamspace_router
+from ee.enmedd.server.teamspace.api import admin_router as teamspace_admin_router
+from ee.enmedd.server.teamspace.api import basic_router as teamspace_router
 from ee.enmedd.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
@@ -96,6 +97,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, standard_answer_router)
     # Enterprise-only global settings
     include_router_with_global_prefix_prepended(application, workspaces_admin_router)
+    include_router_with_global_prefix_prepended(application, teamspace_admin_router)
     # Token rate limit settings
     include_router_with_global_prefix_prepended(
         application, token_rate_limit_settings_router

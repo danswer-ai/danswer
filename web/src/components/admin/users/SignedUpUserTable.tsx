@@ -43,7 +43,11 @@ const PromoterButton = ({
   );
   return (
     <Button
-      onClick={() => trigger({ user_email: user.email })}
+      onClick={() =>
+        trigger({
+          user_email: user.email,
+        })
+      }
       disabled={isMutating}
       variant={promote ? "default" : "outline"}
     >

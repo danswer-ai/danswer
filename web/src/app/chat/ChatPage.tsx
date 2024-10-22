@@ -120,6 +120,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ResizableSection from "@/components/resizable/ResizableSection";
 import { AnimatePresence, motion } from "framer-motion";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1703,6 +1704,14 @@ export function ChatPage({
     mostVisibleMessageId: null,
   };
 
+  useKeyboardShortcuts([
+    {
+      key: "m",
+      handler: toggleSidebar,
+      ctrlKey: true,
+    },
+  ]);
+
   useEffect(() => {
     const includes = checkAnyAssistantHasSearch(
       messageHistory,
@@ -1830,7 +1839,7 @@ export function ChatPage({
 
                     {liveAssistant && (
                       <div className="relative z-top-bar shrink-0">
-                        <div className="flex w-full items-start p-4 justify-between">
+                        <div className="flex w-full items-start p-4 lg:px-0 2xl:px-4 justify-between">
                           <div className="flex lg:hidden items-center gap-2">
                             <Button
                               variant="ghost"

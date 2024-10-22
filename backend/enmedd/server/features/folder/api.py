@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -11,6 +13,7 @@ from enmedd.db.folder import add_chat_to_folder
 from enmedd.db.folder import create_folder
 from enmedd.db.folder import delete_folder
 from enmedd.db.folder import get_user_folders
+from enmedd.db.folder import get_user_folders_in_teamspace
 from enmedd.db.folder import remove_chat_from_folder
 from enmedd.db.folder import rename_folder
 from enmedd.db.folder import update_folder_display_priority
@@ -31,13 +34,23 @@ router = APIRouter(prefix="/folder")
 @router.get("")
 def get_folders(
     user: User = Depends(current_user),
+    teamspace_id: Optional[int] = None,
     db_session: Session = Depends(get_session),
 ) -> GetUserFoldersResponse:
-    folders = get_user_folders(
-        user_id=user.id if user else None,
-        db_session=db_session,
-    )
+    if teamspace_id:
+        folders = get_user_folders_in_teamspace(
+            user_id=user.id if user else None,
+            teamspace_id=teamspace_id,
+            db_session=db_session,
+        )
+    else:
+        folders = get_user_folders(
+            user_id=user.id if user else None,
+            db_session=db_session,
+        )
+
     folders.sort()
+
     return GetUserFoldersResponse(
         folders=[
             FolderResponse(
@@ -79,7 +92,7 @@ def put_folder_display_priority(
 def create_folder_endpoint(
     request: FolderCreationRequest,
     user: User = Depends(current_user),
-    teamspace_id: int | None = None,
+    teamspace_id: Optional[int] = None,
     db_session: Session = Depends(get_session),
 ) -> int:
     chat_folder = create_folder(

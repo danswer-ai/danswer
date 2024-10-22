@@ -120,3 +120,7 @@ class AssistantSnapshot(BaseModel):
 
 class PromptTemplateResponse(BaseModel):
     final_prompt_template: str
+
+
+class AssistantShareRequest(BaseModel):
+    user_ids: list[UUID]

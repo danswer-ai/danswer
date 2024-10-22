@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -6,14 +8,21 @@ from sqlalchemy.orm import Session
 
 from ee.enmedd.db.teamspace import validate_user_creation_permissions
 from enmedd.auth.users import current_curator_or_admin_user
+from enmedd.auth.users import current_teamspace_admin_user
 from enmedd.auth.users import current_user
 from enmedd.db.document_set import check_document_sets_are_public
-from enmedd.db.document_set import fetch_all_document_sets_for_user
+from enmedd.db.document_set import fetch_all_document_sets
+from enmedd.db.document_set import fetch_document_sets_by_teamspace
+from enmedd.db.document_set import fetch_document_sets_by_teamspace_non_admin
+from enmedd.db.document_set import fetch_user_document_sets
 from enmedd.db.document_set import insert_document_set
 from enmedd.db.document_set import mark_document_set_as_to_be_deleted
 from enmedd.db.document_set import update_document_set
 from enmedd.db.engine import get_session
 from enmedd.db.models import User
+from enmedd.server.documents.models import ConnectorCredentialPairDescriptor
+from enmedd.server.documents.models import ConnectorSnapshot
+from enmedd.server.documents.models import CredentialSnapshot
 from enmedd.server.features.document_set.models import CheckDocSetPublicRequest
 from enmedd.server.features.document_set.models import CheckDocSetPublicResponse
 from enmedd.server.features.document_set.models import DocumentSet
@@ -85,22 +94,71 @@ def delete_document_set(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.get("/admin/document-set")
+def list_document_sets_admin(
+    teamspace_id: Optional[int] = None,
+    _: User | None = Depends(current_teamspace_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[DocumentSet]:
+    if teamspace_id:
+        return [
+            DocumentSet.from_model(ds)
+            for ds in fetch_document_sets_by_teamspace(teamspace_id, db_session)
+        ]
+    else:
+        return [
+            DocumentSet.from_model(ds)
+            for ds in fetch_all_document_sets(db_session=db_session)
+        ]
+
+
 """Endpoints for non-admins"""
 
 
 @router.get("/document-set")
-def list_document_sets_for_user(
+def list_document_sets(
+    teamspace_id: Optional[int] = None,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
     get_editable: bool = Query(
         False, description="If true, return editable document sets"
     ),
 ) -> list[DocumentSet]:
-    return [
-        DocumentSet.from_model(ds)
-        for ds in fetch_all_document_sets_for_user(
-            db_session=db_session, user=user, get_editable=get_editable
+    if teamspace_id:
+        document_set_info = fetch_document_sets_by_teamspace_non_admin(
+            teamspace_id=teamspace_id, db_session=db_session
         )
+    else:
+        document_set_info = fetch_user_document_sets(
+            user_id=user.id if user else None, db_session=db_session
+        )
+
+    return [
+        DocumentSet(
+            id=document_set_db_model.id,
+            name=document_set_db_model.name,
+            description=document_set_db_model.description,
+            contains_non_public=any(
+                [not cc_pair.access_type == "public" for cc_pair in cc_pairs]
+            ),
+            cc_pair_descriptors=[
+                ConnectorCredentialPairDescriptor(
+                    id=cc_pair.id,
+                    name=cc_pair.name,
+                    connector=ConnectorSnapshot.from_connector_db_model(
+                        cc_pair.connector
+                    ),
+                    credential=CredentialSnapshot.from_credential_db_model(
+                        cc_pair.credential
+                    ),
+                )
+                for cc_pair in cc_pairs
+            ],
+            is_up_to_date=document_set_db_model.is_up_to_date,
+            is_public=document_set_db_model.is_public,
+            users=[user.id for user in document_set_db_model.users],
+        )
+        for document_set_db_model, cc_pairs in document_set_info
     ]
 
 

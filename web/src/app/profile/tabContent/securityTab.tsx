@@ -87,13 +87,15 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
       </div>
 
       <div className="py-8 border-b flex flex-col gap-8">
-        <div className="flex items-center">
+        <div className="flex items-center gap-5">
           <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
             <span className="font-semibold text-inverted-inverted">
               Current Password
             </span>
           </div>
-          <div className="md:w-[500px] h-10 flex items-center justify-between truncate">
+          <div
+            className={`md:w-[500px] h-10 flex items-center justify-between ${isEditing ? "" : "truncate"}`}
+          >
             {isEditing ? (
               <Input
                 type="password"
@@ -110,14 +112,16 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center">
+        <>
+          <div className="flex items-center gap-5">
             <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
               <span className="font-semibold text-inverted-inverted">
                 New Password
               </span>
             </div>
-            <div className="md:w-[500px] h-10 flex items-center justify-between truncate">
+            <div
+              className={`md:w-[500px] h-10 flex items-center justify-between ${isEditing ? "" : "truncate"}`}
+            >
               {isEditing ? (
                 <Input
                   type="password"
@@ -137,7 +141,7 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
             </div>
           </div>
           {isEditing && (
-            <div className="flex">
+            <div className="flex gap-5">
               <div className="w-[500px]" />
               <div className="text-sm text-subtle pt-2">
                 <div className="flex items-center gap-2">
@@ -167,15 +171,17 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
               </div>
             </div>
           )}
-        </div>
+        </>
 
-        <div className="flex items-center">
+        <div className="flex items-center gap-5">
           <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
             <span className="font-semibold text-inverted-inverted">
               Confirm Password
             </span>
           </div>
-          <div className="md:w-[500px] h-10 flex items-center justify-between truncate">
+          <div
+            className={`md:w-[500px] h-10 flex items-center justify-between ${isEditing ? "" : "truncate"}`}
+          >
             {isEditing ? (
               <Input
                 type="password"
