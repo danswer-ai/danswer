@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class RedisConnectorIndexingFenceData(BaseModel):
-    index_attempt_id: int
+    index_attempt_id: int | None
     started: datetime | None
     submitted: datetime
-    celery_task_id: str
+    celery_task_id: str | None
