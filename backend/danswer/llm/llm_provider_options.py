@@ -100,8 +100,8 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
             api_version_required=False,
             custom_config_keys=[],
             llm_names=fetch_models_for_provider(ANTHROPIC_PROVIDER_NAME),
-            default_model="claude-3-5-sonnet-20240620",
-            default_fast_model="claude-3-5-sonnet-20240620",
+            default_model="claude-3-5-sonnet-20241022",
+            default_fast_model="claude-3-5-sonnet-20241022",
         ),
         WellKnownLLMProviderDescriptor(
             name=AZURE_PROVIDER_NAME,
@@ -135,8 +135,8 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
                 ),
             ],
             llm_names=fetch_models_for_provider(BEDROCK_PROVIDER_NAME),
-            default_model="anthropic.claude-3-5-sonnet-20240620-v1:0",
-            default_fast_model="anthropic.claude-3-5-sonnet-20240620-v1:0",
+            default_model="anthropic.claude-3-5-sonnet-claude-3-5-sonnet-20241022-v1:0",
+            default_fast_model="anthropic.claude-3-5-sonnet-claude-3-5-sonnet-20241022-v1:0",
         ),
     ]
 
