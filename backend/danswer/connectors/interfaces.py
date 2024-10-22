@@ -3,11 +3,13 @@ from collections.abc import Iterator
 from typing import Any
 
 from danswer.connectors.models import Document
+from danswer.connectors.models import SlimDocument
 
 
 SecondsSinceUnixEpoch = float
 
 GenerateDocumentsOutput = Iterator[list[Document]]
+GenerateSlimDocumentOutput = Iterator[list[SlimDocument]]
 
 
 class BaseConnector(abc.ABC):
@@ -52,9 +54,9 @@ class PollConnector(BaseConnector):
         raise NotImplementedError
 
 
-class IdConnector(BaseConnector):
+class SlimConnector(BaseConnector):
     @abc.abstractmethod
-    def retrieve_all_source_ids(self) -> set[str]:
+    def retrieve_all_slim_documents(self) -> GenerateSlimDocumentOutput:
         raise NotImplementedError
 
 

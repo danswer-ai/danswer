@@ -373,7 +373,7 @@ class WebConnector(LoadConnector):
                 page.close()
             except Exception as e:
                 last_error = f"Failed to fetch '{current_url}': {e}"
-                logger.error(last_error)
+                logger.exception(last_error)
                 playwright.stop()
                 restart_playwright = True
                 continue

@@ -253,12 +253,6 @@ CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES = (
     os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES", "").lower() == "true"
 )
 
-# Save pages labels as Danswer metadata tags
-# The reason to skip this would be to reduce the number of calls to Confluence due to rate limit concerns
-CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
-    os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
-)
-
 # Attachments exceeding this size will not be retrieved (in bytes)
 CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD = int(
     os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD", 10 * 1024 * 1024)
