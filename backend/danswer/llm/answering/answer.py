@@ -79,6 +79,8 @@ def _get_answer_stream_processor(
     doc_id_to_rank_map: DocumentIdOrderMapping,
     answer_style_configs: AnswerStyleConfig,
 ) -> StreamProcessor:
+    print("ANSWERR STYES")
+    print(answer_style_configs.__dict__)
     if answer_style_configs.citation_config:
         return build_citation_processor(
             context_docs=context_docs, doc_id_to_rank_map=doc_id_to_rank_map

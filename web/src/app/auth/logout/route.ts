@@ -1,4 +1,4 @@
-import { CLOUD_ENABLED } from "@/lib/constants";
+import { NEXT_PUBLIC_CLOUD_ENABLED } from "@/lib/constants";
 import { getAuthTypeMetadataSS, logoutSS } from "@/lib/userSS";
 import { NextRequest } from "next/server";
 
@@ -13,7 +13,7 @@ export const POST = async (request: NextRequest) => {
   }
 
   // Delete cookies only if cloud is enabled (jwt auth)
-  if (CLOUD_ENABLED) {
+  if (NEXT_PUBLIC_CLOUD_ENABLED) {
     const cookiesToDelete = ["fastapiusersauth", "tenant_details"];
     const cookieOptions = {
       path: "/",

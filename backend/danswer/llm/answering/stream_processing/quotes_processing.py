@@ -226,6 +226,7 @@ def process_model_tokens(
     hold_quote = ""
 
     for token in tokens:
+        print(f"Token: {token}")
         model_previous = model_output
         model_output += token
 
