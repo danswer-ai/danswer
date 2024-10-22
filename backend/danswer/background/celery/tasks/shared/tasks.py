@@ -11,6 +11,7 @@ from danswer.db.document import delete_document_by_connector_credential_pair__no
 from danswer.db.document import delete_documents_complete__no_commit
 from danswer.db.document import get_document
 from danswer.db.document import get_document_connector_count
+from danswer.db.document import mark_document_as_modified
 from danswer.db.document import mark_document_as_synced
 from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.engine import get_session_with_tenant
@@ -134,11 +135,19 @@ def document_by_cc_pair_cleanup_task(
         task_logger.info(
             f"SoftTimeLimitExceeded exception. tenant_id={tenant_id} doc_id={document_id}"
         )
+        return False
     except Exception as e:
         task_logger.exception("Unexpected exception")
 
-        # Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
-        countdown = 2 ** (self.request.retries + 4)
-        self.retry(exc=e, countdown=countdown)
+        if self.retries <= 2:
+            # Still retrying. Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
+            countdown = 2 ** (self.request.retries + 4)
+            self.retry(exc=e, countdown=countdown)
+        else:
+            # no more retries! mark the document as dirty in the db so that it
+            # eventually gets fixed out of band via the stale document sweep
+            with get_session_with_tenant(tenant_id):
+                mark_document_as_modified(document_id, db_session)
+        return False
 
     return True
