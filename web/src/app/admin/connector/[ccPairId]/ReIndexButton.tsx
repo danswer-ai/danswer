@@ -128,10 +128,10 @@ export function ReIndexButton({
         }}
         disabled={isDisabled || isDeleting}
         tooltip={
-          isIndexing
-            ? "Indexing is already in progress"
-            : isDeleting
-              ? "Cannot index while connector is deleting"
+          isDeleting
+            ? "Cannot index while connector is deleting"
+            : isIndexing
+              ? "Indexing is already in progress"
               : isDisabled
                 ? "Connector must be re-enabled before indexing"
                 : undefined
