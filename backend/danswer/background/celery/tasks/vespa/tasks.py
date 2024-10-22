@@ -23,6 +23,9 @@ from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
+from danswer.background.celery.tasks.shared.RetryDocumentIndex import RetryDocumentIndex
+from danswer.background.celery.tasks.shared.tasks import LIGHT_SOFT_TIME_LIMIT
+from danswer.background.celery.tasks.shared.tasks import LIGHT_TIME_LIMIT
 from danswer.background.celery.tasks.shared.tasks import RedisConnectorIndexingFenceData
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -749,21 +752,21 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 @shared_task(
     name="vespa_metadata_sync_task",
     bind=True,
-    soft_time_limit=45,
-    time_limit=60,
+    soft_time_limit=LIGHT_SOFT_TIME_LIMIT,
+    time_limit=LIGHT_TIME_LIMIT,
     max_retries=3,
 )
 def vespa_metadata_sync_task(
     self: Task, document_id: str, tenant_id: str | None
 ) -> bool:
-    task_logger.info(f"doc={document_id}")
-
     try:
         with get_session_with_tenant(tenant_id) as db_session:
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
+            doc_index = get_default_document_index(
                 primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
             )
+
+            retry_index = RetryDocumentIndex(doc_index)
 
             doc = get_document(document_id, db_session)
             if not doc:
@@ -786,15 +789,19 @@ def vespa_metadata_sync_task(
             )
 
             # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
-            chunks_affected = document_index.update_single(document_id, fields=fields)
+            chunks_affected = retry_index.update_single(document_id, fields)
 
             # update db last. Worst case = we crash right before this and
             # the sync might repeat again later
             mark_document_as_synced(document_id, db_session)
 
-            task_logger.info(f"doc={document_id} action=sync chunks={chunks_affected}")
+            task_logger.info(
+                f"tenant={tenant_id} doc={document_id} action=sync chunks={chunks_affected}"
+            )
     except SoftTimeLimitExceeded:
-        task_logger.info(f"SoftTimeLimitExceeded exception. doc={document_id}")
+        task_logger.info(
+            f"SoftTimeLimitExceeded exception. tenant={tenant_id} doc={document_id}"
+        )
     except Exception as e:
         task_logger.exception(
             f"Unexpected exception: tenant={tenant_id} doc={document_id}"

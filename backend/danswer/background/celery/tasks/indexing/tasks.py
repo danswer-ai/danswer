@@ -110,7 +110,7 @@ def check_for_indexing(tenant_id: str | None) -> int | None:
                     )
                     if attempt_id:
                         task_logger.info(
-                            f"Indexing queued: cc_pair_id={cc_pair.id} index_attempt_id={attempt_id}"
+                            f"Indexing queued: cc_pair={cc_pair.id} index_attempt={attempt_id}"
                         )
                         tasks_created += 1
     except SoftTimeLimitExceeded:
