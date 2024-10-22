@@ -10,7 +10,7 @@ from celery import Celery
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celeryconfig import CELERY_SEPARATOR
+from danswer.background.celery.configs.base import CELERY_SEPARATOR
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues

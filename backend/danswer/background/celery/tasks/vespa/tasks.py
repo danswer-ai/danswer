@@ -5,6 +5,7 @@ from http import HTTPStatus
 from typing import cast
 
 import redis
+from celery import Celery
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
@@ -14,8 +15,7 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.access.access import get_access_for_document
-from danswer.background.celery.celery_app import celery_app
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import celery_get_queue_length
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
@@ -23,7 +23,9 @@ from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
-from danswer.background.celery.tasks.shared.tasks import RedisConnectorIndexingFenceData
+from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
+    RedisConnectorIndexingFenceData,
+)
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
@@ -54,7 +56,6 @@ from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import DocumentSet
 from danswer.db.models import IndexAttempt
-from danswer.db.models import UserGroup
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
@@ -73,8 +74,9 @@ from danswer.utils.variable_functionality import noop_fallback
     name="check_for_vespa_sync_task",
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
+    bind=True,
 )
-def check_for_vespa_sync_task(tenant_id: str | None) -> None:
+def check_for_vespa_sync_task(self: Task, tenant_id: str | None) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
 
@@ -91,35 +93,53 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
             return
 
         with get_session_with_tenant(tenant_id) as db_session:
-            try_generate_stale_document_sync_tasks(db_session, r, lock_beat, tenant_id)
+            try_generate_stale_document_sync_tasks(
+                self.app, db_session, r, lock_beat, tenant_id
+            )
 
+        # region document set scan
+        document_set_ids: list[int] = []
+        with get_session_with_tenant(tenant_id) as db_session:
             # check if any document sets are not synced
             document_set_info = fetch_document_sets(
                 user_id=None, db_session=db_session, include_outdated=True
             )
+
             for document_set, _ in document_set_info:
+                document_set_ids.append(document_set.id)
+
+        for document_set_id in document_set_ids:
+            with get_session_with_tenant(tenant_id) as db_session:
                 try_generate_document_set_sync_tasks(
-                    document_set, db_session, r, lock_beat, tenant_id
+                    self.app, document_set_id, db_session, r, lock_beat, tenant_id
                 )
+        # endregion
 
-            # check if any user groups are not synced
-            if global_version.is_ee_version():
-                try:
-                    fetch_user_groups = fetch_versioned_implementation(
-                        "danswer.db.user_group", "fetch_user_groups"
-                    )
-
+        # check if any user groups are not synced
+        if global_version.is_ee_version():
+            try:
+                fetch_user_groups = fetch_versioned_implementation(
+                    "danswer.db.user_group", "fetch_user_groups"
+                )
+            except ModuleNotFoundError:
+                # Always exceptions on the MIT version, which is expected
+                # We shouldn't actually get here if the ee version check works
+                pass
+            else:
+                usergroup_ids: list[int] = []
+                with get_session_with_tenant(tenant_id) as db_session:
                     user_groups = fetch_user_groups(
                         db_session=db_session, only_up_to_date=False
                     )
+
                     for usergroup in user_groups:
+                        usergroup_ids.append(usergroup.id)
+
+                for usergroup_id in usergroup_ids:
+                    with get_session_with_tenant(tenant_id) as db_session:
                         try_generate_user_group_sync_tasks(
-                            usergroup, db_session, r, lock_beat, tenant_id
+                            self.app, usergroup_id, db_session, r, lock_beat, tenant_id
                         )
-                except ModuleNotFoundError:
-                    # Always exceptions on the MIT version, which is expected
-                    # We shouldn't actually get here if the ee version check works
-                    pass
 
     except SoftTimeLimitExceeded:
         task_logger.info(
@@ -133,7 +153,11 @@ def check_for_vespa_sync_task(tenant_id: str | None) -> None:
 
 
 def try_generate_stale_document_sync_tasks(
-    db_session: Session, r: Redis, lock_beat: redis.lock.Lock, tenant_id: str | None
+    celery_app: Celery,
+    db_session: Session,
+    r: Redis,
+    lock_beat: redis.lock.Lock,
+    tenant_id: str | None,
 ) -> int | None:
     # the fence is up, do nothing
     if r.exists(RedisConnectorCredentialPair.get_fence_key()):
@@ -184,7 +208,8 @@ def try_generate_stale_document_sync_tasks(
 
 
 def try_generate_document_set_sync_tasks(
-    document_set: DocumentSet,
+    celery_app: Celery,
+    document_set_id: int,
     db_session: Session,
     r: Redis,
     lock_beat: redis.lock.Lock,
@@ -192,7 +217,7 @@ def try_generate_document_set_sync_tasks(
 ) -> int | None:
     lock_beat.reacquire()
 
-    rds = RedisDocumentSet(document_set.id)
+    rds = RedisDocumentSet(document_set_id)
 
     # don't generate document set sync tasks if tasks are still pending
     if r.exists(rds.fence_key):
@@ -200,7 +225,10 @@ def try_generate_document_set_sync_tasks(
 
     # don't generate sync tasks if we're up to date
     # race condition with the monitor/cleanup function if we use a cached result!
-    db_session.refresh(document_set)
+    document_set = get_document_set_by_id(db_session, document_set_id)
+    if not document_set:
+        return None
+
     if document_set.is_up_to_date:
         return None
 
@@ -235,7 +263,8 @@ def try_generate_document_set_sync_tasks(
 
 
 def try_generate_user_group_sync_tasks(
-    usergroup: UserGroup,
+    celery_app: Celery,
+    usergroup_id: int,
     db_session: Session,
     r: Redis,
     lock_beat: redis.lock.Lock,
@@ -243,14 +272,21 @@ def try_generate_user_group_sync_tasks(
 ) -> int | None:
     lock_beat.reacquire()
 
-    rug = RedisUserGroup(usergroup.id)
+    rug = RedisUserGroup(usergroup_id)
 
     # don't generate sync tasks if tasks are still pending
     if r.exists(rug.fence_key):
         return None
 
     # race condition with the monitor/cleanup function if we use a cached result!
-    db_session.refresh(usergroup)
+    fetch_user_group = fetch_versioned_implementation(
+        "danswer.db.user_group", "fetch_user_group"
+    )
+
+    usergroup = fetch_user_group(db_session, usergroup_id)
+    if not usergroup:
+        return None
+
     if usergroup.is_up_to_date:
         return None
 
@@ -680,36 +716,9 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
             f"pruning={n_pruning}"
         )
 
-        lock_beat.reacquire()
-        if r.exists(RedisConnectorCredentialPair.get_fence_key()):
-            monitor_connector_taskset(r)
-
-        lock_beat.reacquire()
-        for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
-            monitor_connector_deletion_taskset(key_bytes, r, tenant_id)
-
+        # do some cleanup before clearing fences
+        # check the db for any outstanding index attempts
         with get_session_with_tenant(tenant_id) as db_session:
-            lock_beat.reacquire()
-            for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
-                monitor_document_set_taskset(key_bytes, r, db_session)
-
-            lock_beat.reacquire()
-            for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
-                monitor_usergroup_taskset = (
-                    fetch_versioned_implementation_with_fallback(
-                        "danswer.background.celery.tasks.vespa.tasks",
-                        "monitor_usergroup_taskset",
-                        noop_fallback,
-                    )
-                )
-                monitor_usergroup_taskset(key_bytes, r, db_session)
-
-            lock_beat.reacquire()
-            for key_bytes in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
-                monitor_ccpair_pruning_taskset(key_bytes, r, db_session)
-
-            # do some cleanup before clearing fences
-            # check the db for any outstanding index attempts
             attempts: list[IndexAttempt] = []
             attempts.extend(
                 get_all_index_attempts_by_status(IndexingStatus.NOT_STARTED, db_session)
@@ -727,8 +736,42 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                 if not r.exists(rci.fence_key):
                     mark_attempt_failed(a, db_session, failure_reason=failure_reason)
 
+        lock_beat.reacquire()
+        if r.exists(RedisConnectorCredentialPair.get_fence_key()):
+            monitor_connector_taskset(r)
+
+        lock_beat.reacquire()
+        for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
             lock_beat.reacquire()
-            for key_bytes in r.scan_iter(RedisConnectorIndexing.FENCE_PREFIX + "*"):
+            monitor_connector_deletion_taskset(key_bytes, r, tenant_id)
+
+        lock_beat.reacquire()
+        for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
+            lock_beat.reacquire()
+            with get_session_with_tenant(tenant_id) as db_session:
+                monitor_document_set_taskset(key_bytes, r, db_session)
+
+        lock_beat.reacquire()
+        for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
+            lock_beat.reacquire()
+            monitor_usergroup_taskset = fetch_versioned_implementation_with_fallback(
+                "danswer.background.celery.tasks.vespa.tasks",
+                "monitor_usergroup_taskset",
+                noop_fallback,
+            )
+            with get_session_with_tenant(tenant_id) as db_session:
+                monitor_usergroup_taskset(key_bytes, r, db_session)
+
+        lock_beat.reacquire()
+        for key_bytes in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
+            lock_beat.reacquire()
+            with get_session_with_tenant(tenant_id) as db_session:
+                monitor_ccpair_pruning_taskset(key_bytes, r, db_session)
+
+        lock_beat.reacquire()
+        for key_bytes in r.scan_iter(RedisConnectorIndexing.FENCE_PREFIX + "*"):
+            lock_beat.reacquire()
+            with get_session_with_tenant(tenant_id) as db_session:
                 monitor_ccpair_indexing_taskset(key_bytes, r, db_session)
 
         # uncomment for debugging if needed

@@ -18,6 +18,7 @@ from danswer.auth.users import current_user
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.background.celery.tasks.indexing.tasks import try_creating_indexing_task
+from danswer.background.celery.versioned_apps.primary import app as primary_app
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
@@ -834,6 +835,7 @@ def connector_run_once(
     for cc_pair in connector_credential_pairs:
         if cc_pair is not None:
             attempt_id = try_creating_indexing_task(
+                primary_app,
                 cc_pair,
                 search_settings,
                 run_info.from_beginning,

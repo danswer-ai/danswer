@@ -11,7 +11,7 @@ from sqlalchemy import inspect
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import PostgresAdvisoryLocks
 from danswer.db.engine import get_session_with_tenant
