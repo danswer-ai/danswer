@@ -61,10 +61,10 @@ class DanswerLoggingAdapter(logging.LoggerAdapter):
         cc_pair_id = IndexAttemptSingleton.get_connector_credential_pair_id()
 
         if attempt_id is not None:
-            msg = f"[Attempt ID: {attempt_id}] {msg}"
+            msg = f"[Attempt: {attempt_id}] {msg}"
 
         if cc_pair_id is not None:
-            msg = f"[CC Pair ID: {cc_pair_id}] {msg}"
+            msg = f"[CC Pair: {cc_pair_id}] {msg}"
 
         # For Slack Bot, logs the channel relevant to the request
         channel_id = self.extra.get(SLACK_CHANNEL_ID) if self.extra else None
