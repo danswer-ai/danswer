@@ -18,7 +18,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({
   passwordWarning,
 }) => {
   return (
-    <div className="bg-background lg:w-[300px] absolute bottom-[calc(100%_+_14px)] left-0 lg:bottom-auto top-0 lg:left-[calc(100%_+_20px)] z-overlay p-4 rounded-md shadow-md space-y-3 text-sm">
+    <div className="bg-background lg:w-[300px] absolute bottom-[calc(100%_+_14px)] left-0 lg:bottom-auto top-0 lg:left-[calc(100%_+_20px)] z-popout p-4 rounded-md shadow-md space-y-3 text-sm">
       <div className="space-y-2">
         <h3 className="text-base">Password must have:</h3>
         <p className="flex items-center gap-2 whitespace-nowrap">
@@ -61,7 +61,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({
           </span>
         </p>
 
-        <div className="flex gap-2 w-full pt-2">
+        <div className="flex w-full gap-2 pt-2">
           <Progress value={passwordStrength >= 1 ? 100 : 0} />
           <Progress value={passwordStrength >= 2 ? 100 : 0} />
           <Progress value={passwordStrength >= 3 ? 100 : 0} />

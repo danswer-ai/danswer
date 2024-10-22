@@ -18,7 +18,7 @@ import { Modal } from "@/components/Modal";
 import { EnmeddApiKeyForm } from "./EnmeddApiKeyForm";
 import { APIKey } from "./types";
 import { CustomTooltip } from "@/components/CustomTooltip";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CustomModal } from "@/components/CustomModal";
 import { Divider } from "@/components/Divider";
@@ -29,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 
 const API_KEY_TEXT = `
 API Keys allow you to access enMedD AI APIs programmatically. Click the button below to generate a new API Key.
@@ -76,7 +77,7 @@ function NewApiKeyModal({
           </CustomTooltip>
         </div>
         {isCopyClicked && (
-          <p className="text-success text-xs font-medium pt-1">
+          <p className="pt-1 text-xs font-medium text-success">
             API Key copied!
           </p>
         )}
@@ -118,12 +119,7 @@ function Main() {
   }
 
   const newApiKeyButton = (
-    <Button
-      color="green"
-      size="xs"
-      className="mt-3"
-      onClick={() => setShowCreateUpdateForm(true)}
-    >
+    <Button className="mt-3" onClick={() => setShowCreateUpdateForm(true)}>
       Create API Key
     </Button>
   );
@@ -171,23 +167,41 @@ function Main() {
 
       <Divider />
 
-      <Title className="mt-6">Existing API Keys</Title>
-      <Table className="overflow-visible">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>API Key</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Regenerate</TableHead>
-            <TableHead>Delete</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {apiKeys.map((apiKey) => (
-            <TableRow key={apiKey.api_key_id}>
-              <TableCell>
-                <div
-                  className={`
+      <h3 className="pb-4 mt-6">Existing API Keys</h3>
+      <Card>
+        <CardContent className="p-0">
+          <Table className="overflow-visible">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>API Key</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Regenerate</TableHead>
+                <TableHead>Delete</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {apiKeys.map((apiKey) => (
+                <TableRow key={apiKey.api_key_id}>
+                  <TableCell className="max-w-[200px] truncate">
+                    <Button
+                      variant="ghost"
+                      className="w-full truncate"
+                      onClick={() => handleEdit(apiKey)}
+                    >
+                      <Pencil size={14} />
+                      {apiKey.api_key_name || <i>null</i>}
+                    </Button>
+                  </TableCell>
+                  <TableCell className="max-w-64">
+                    {apiKey.api_key_display}
+                  </TableCell>
+                  <TableCell className="max-w-64">
+                    {apiKey.api_key_role.toUpperCase()}
+                  </TableCell>
+                  <TableCell>
+                    <div
+                      className={`
                   my-auto 
                   flex 
                   mb-1 
@@ -197,71 +211,49 @@ function Main() {
                   rounded-lg
                   border-border
                   text-sm`}
-                  onClick={() => handleEdit(apiKey)}
-                >
-                  <FiEdit2 className="my-auto mr-2" />
-                  {apiKey.api_key_name || <i>null</i>}
-                </div>
-              </TableCell>
-              <TableCell className="max-w-64">
-                {apiKey.api_key_display}
-              </TableCell>
-              <TableCell className="max-w-64">
-                {apiKey.api_key_role.toUpperCase()}
-              </TableCell>
-              <TableCell>
-                <div
-                  className={`
-                  my-auto 
-                  flex 
-                  mb-1 
-                  w-fit 
-                  hover:bg-hover cursor-pointer
-                  p-2 
-                  rounded-lg
-                  border-border
-                  text-sm`}
-                  onClick={async () => {
-                    setKeyIsGenerating(true);
-                    const response = await regenerateApiKey(apiKey);
-                    setKeyIsGenerating(false);
-                    if (!response.ok) {
-                      const errorMsg = await response.text();
-                      setPopup({
-                        type: "error",
-                        message: `Failed to regenerate API Key: ${errorMsg}`,
-                      });
-                      return;
-                    }
-                    const newKey = (await response.json()) as APIKey;
-                    setFullApiKey(newKey.api_key);
-                    mutate("/api/admin/api-key");
-                  }}
-                >
-                  <FiRefreshCw className="mr-1 my-auto" />
-                  Refresh
-                </div>
-              </TableCell>
-              <TableCell>
-                <DeleteButton
-                  onClick={async () => {
-                    const response = await deleteApiKey(apiKey.api_key_id);
-                    if (!response.ok) {
-                      const errorMsg = await response.text();
-                      setPopup({
-                        type: "error",
-                        message: `Failed to delete API Key: ${errorMsg}`,
-                      });
-                      return;
-                    }
-                    mutate("/api/admin/api-key");
-                  }}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                      onClick={async () => {
+                        setKeyIsGenerating(true);
+                        const response = await regenerateApiKey(apiKey);
+                        setKeyIsGenerating(false);
+                        if (!response.ok) {
+                          const errorMsg = await response.text();
+                          setPopup({
+                            type: "error",
+                            message: `Failed to regenerate API Key: ${errorMsg}`,
+                          });
+                          return;
+                        }
+                        const newKey = (await response.json()) as APIKey;
+                        setFullApiKey(newKey.api_key);
+                        mutate("/api/admin/api-key");
+                      }}
+                    >
+                      <FiRefreshCw className="my-auto mr-1" />
+                      Refresh
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <DeleteButton
+                      onClick={async () => {
+                        const response = await deleteApiKey(apiKey.api_key_id);
+                        if (!response.ok) {
+                          const errorMsg = await response.text();
+                          setPopup({
+                            type: "error",
+                            message: `Failed to delete API Key: ${errorMsg}`,
+                          });
+                          return;
+                        }
+                        mutate("/api/admin/api-key");
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {showCreateUpdateForm && (
         <EnmeddApiKeyForm
@@ -283,7 +275,7 @@ function Main() {
 
 export default function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <AdminPageTitle title="API Keys" icon={<KeyIcon size={32} />} />
 
       <Main />

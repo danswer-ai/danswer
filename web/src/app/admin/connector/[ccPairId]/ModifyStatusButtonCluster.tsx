@@ -1,11 +1,12 @@
 "use client";
 
-import { Button } from "@tremor/react";
 import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
 import { setCCPairStatus } from "@/lib/ccPair";
+import { Button } from "@/components/ui/button";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export function ModifyStatusButtonCluster({
   ccPair,
@@ -17,40 +18,47 @@ export function ModifyStatusButtonCluster({
     <>
       {popup}
       {ccPair.status === ConnectorCredentialPairStatus.PAUSED ? (
-        <Button
-          color="green"
-          size="xs"
-          onClick={() =>
-            setCCPairStatus(
-              ccPair.id,
-              ConnectorCredentialPairStatus.ACTIVE,
-              setPopup,
-              () => mutate(buildCCPairInfoUrl(ccPair.id))
-            )
+        <CustomTooltip
+          trigger={
+            <Button
+              onClick={() =>
+                setCCPairStatus(
+                  ccPair.id,
+                  ConnectorCredentialPairStatus.ACTIVE,
+                  setPopup,
+                  () => mutate(buildCCPairInfoUrl(ccPair.id))
+                )
+              }
+            >
+              Re-Enable
+            </Button>
           }
-          tooltip="Click to start indexing again!"
+          asChild
         >
-          Re-Enable
-        </Button>
+          Click to start indexing again!
+        </CustomTooltip>
       ) : (
-        <Button
-          color="red"
-          size="xs"
-          onClick={() =>
-            setCCPairStatus(
-              ccPair.id,
-              ConnectorCredentialPairStatus.PAUSED,
-              setPopup,
-              () => mutate(buildCCPairInfoUrl(ccPair.id))
-            )
+        <CustomTooltip
+          trigger={
+            <Button
+              variant="destructive"
+              onClick={() =>
+                setCCPairStatus(
+                  ccPair.id,
+                  ConnectorCredentialPairStatus.PAUSED,
+                  setPopup,
+                  () => mutate(buildCCPairInfoUrl(ccPair.id))
+                )
+              }
+            >
+              Pause
+            </Button>
           }
-          tooltip={
-            "When paused, the connectors documents will still" +
-            " be visible. However, no new documents will be indexed."
-          }
+          asChild
         >
-          Pause
-        </Button>
+          When paused, the connectors documents will still be visible. However,
+          no new documents will be indexed.
+        </CustomTooltip>
       )}
     </>
   );

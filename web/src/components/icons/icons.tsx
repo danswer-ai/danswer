@@ -1471,21 +1471,7 @@ export const NotebookIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 24 24"
-    >
-      <path
-        fill="currentColor"
-        d="M11.25 4.533A9.707 9.707 0 0 0 6 3a9.735 9.735 0 0 0-3.25.555a.75.75 0 0 0-.5.707v14.25a.75.75 0 0 0 1 .707A8.237 8.237 0 0 1 6 18.75c1.995 0 3.823.707 5.25 1.886V4.533Zm1.5 16.103A8.214 8.214 0 0 1 18 18.75c.966 0 1.89.166 2.75.47a.75.75 0 0 0 1-.708V4.262a.75.75 0 0 0-.5-.707A9.735 9.735 0 0 0 18 3a9.707 9.707 0 0 0-5.25 1.533v16.103Z"
-      />
-    </svg>
-  );
+  return <Notebook size={size} className={className} />;
 };
 
 export const ConnectorIconSkeleton = ({
@@ -1517,23 +1503,7 @@ export const ConnectorIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 16 16"
-    >
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        d="M4.5 13a3.5 3.5 0 0 1-1.41-6.705a3.5 3.5 0 0 1 6.63-2.171a2.5 2.5 0 0 1 3.197 3.018A3.001 3.001 0 0 1 12 13zm.72-5.03a.75.75 0 0 0 1.06 1.06l.97-.97v2.69a.75.75 0 0 0 1.5 0V8.06l.97.97a.75.75 0 1 0 1.06-1.06L8.53 5.72a.75.75 0 0 0-1.06 0z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
+  return <CloudUpload size={size} className={className} />;
 };
 
 export const DocumentSetIcon = ({
@@ -1609,21 +1579,7 @@ export const BookmarkIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 16 16"
-    >
-      <path
-        fill="currentColor"
-        d="M3.75 2a.75.75 0 0 0-.75.75v10.5a.75.75 0 0 0 1.28.53L8 10.06l3.72 3.72a.75.75 0 0 0 1.28-.53V2.75a.75.75 0 0 0-.75-.75z"
-      />
-    </svg>
-  );
+  return <Bookmark size={size} className={className} />;
 };
 
 export const BookIcon = ({
@@ -1676,25 +1632,7 @@ export const ZoomInIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 20 20"
-    >
-      <g fill="currentColor">
-        <path d="M8 10a1.5 1.5 0 1 1 3 0a1.5 1.5 0 0 1-3 0Z" />
-        <path
-          fillRule="evenodd"
-          d="M4.5 2A1.5 1.5 0 0 0 3 3.5v13A1.5 1.5 0 0 0 4.5 18h11a1.5 1.5 0 0 0 1.5-1.5V7.621a1.5 1.5 0 0 0-.44-1.06l-4.12-4.122A1.5 1.5 0 0 0 11.378 2H4.5Zm5 5a3 3 0 1 0 1.524 5.585l1.196 1.195a.75.75 0 1 0 1.06-1.06l-1.195-1.196A3 3 0 0 0 9.5 7Z"
-          clipRule="evenodd"
-        />
-      </g>
-    </svg>
-  );
+  return <ZoomIn size={size} className={className} />;
 };
 
 export const ThumbsUpIconSkeleton = ({
@@ -1860,7 +1798,7 @@ export const RobotIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return <FaRobot size={size} className={className} />;
+  return <Bot size={size} className={className} />;
 };
 
 export const ToolIconSkeleton = ({
@@ -2084,21 +2022,7 @@ export const UsersIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 16 16"
-    >
-      <path
-        fill="currentColor"
-        d="M8 8a3 3 0 1 0 0-6a3 3 0 0 0 0 6m4.735 6c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139z"
-      />
-    </svg>
-  );
+  return <Users size={size} className={className} />;
   // return <FiUser size={size} className={className} />;
 };
 
@@ -2131,21 +2055,7 @@ export const GroupsIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 16 16"
-    >
-      <path
-        fill="currentColor"
-        d="M8.5 4.5a2.5 2.5 0 1 1-5 0a2.5 2.5 0 0 1 5 0m2.4 7.506c.11.542-.348.994-.9.994H2c-.553 0-1.01-.452-.902-.994a5.002 5.002 0 0 1 9.803 0M14.002 12h-1.59a2.556 2.556 0 0 0-.04-.29a6.476 6.476 0 0 0-1.167-2.603a3.002 3.002 0 0 1 3.633 1.911c.18.522-.283.982-.836.982M12 8a2 2 0 1 0 0-4a2 2 0 0 0 0 4"
-      />
-    </svg>
-  );
+  return <Users size={size} className={className} />;
 };
 export const KeyIconSkeleton = ({
   size = 16,
@@ -2175,23 +2085,7 @@ export const KeyIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 20 20"
-    >
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        d="M8 7a5 5 0 1 1 3.61 4.804l-1.903 1.903A1 1 0 0 1 9 14H8v1a1 1 0 0 1-1 1H6v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L8.196 8.39A5.002 5.002 0 0 1 8 7Zm5-3a.75.75 0 0 0 0 1.5A1.5 1.5 0 0 1 14.5 7A.75.75 0 0 0 16 7a3 3 0 0 0-3-3Z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
+  return <KeyRound size={size} className={className} />;
 };
 export const ShieldIconSkeleton = ({
   size = 16,
@@ -2613,7 +2507,7 @@ export const CameraIcon = ({
 
 export const MacIcon = ({
   size = 16,
-  className = "my-auto flex flex-shrink-0 ",
+  className = "flex flex-shrink-0 my-auto ",
 }: IconProps) => {
   return (
     <svg
@@ -2659,7 +2553,7 @@ export const DocumentIcon2 = ({
 
 export const WindowsIcon = ({
   size = 16,
-  className = "my-auto flex flex-shrink-0 ",
+  className = "flex flex-shrink-0 my-auto ",
 }: IconProps) => {
   return (
     <svg

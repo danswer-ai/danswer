@@ -56,23 +56,23 @@ const Page = async () => {
     <main className="relative h-full">
       <HealthCheckBanner />
 
-      <div className="w-screen flex h-full">
-        <div className="w-full xl:w-1/2 h-full mx-auto flex flex-col justify-between overflow-y-auto">
+      <div className="flex w-screen h-full">
+        <div className="flex flex-col justify-between w-full h-full mx-auto overflow-y-auto xl:w-1/2">
           <WelcomeTopBar />
 
-          <div className="w-full h-full flex items-center justify-center px-6 lg:px-14 3xl:px-0">
-            <div className="w-full md:w-3/4 lg:w-1/2 xl:w-full 3xl:w-1/2 my-auto pb-14 md:pb-20">
+          <div className="flex items-center justify-center w-full h-full px-6 lg:px-14 3xl:px-0">
+            <div className="w-full my-auto md:w-3/4 lg:w-1/2 xl:w-full 3xl:w-1/2 pb-14 md:pb-20">
               <div>
-                <h1 className="text-xl md:text-3xl font-bold text-center text-dark-900">
+                <h1 className="text-xl font-bold text-center md:text-3xl text-dark-900">
                   Create Your Account
                 </h1>
-                <p className="text-center text-sm text-subtle md:pt-2">
+                <p className="text-sm text-center text-subtle md:pt-2">
                   Welcome back! Please enter your details
                 </p>
               </div>
 
               <div className="pt-8">
-                <div className="flex items-center gap-3 md:gap-6 w-full flex-col md:flex-row">
+                <div className="flex flex-col items-center w-full gap-3 md:gap-6 md:flex-row">
                   <Button disabled className="flex-1 w-full" variant="outline">
                     <Image
                       src={GmailIcon}
@@ -100,7 +100,7 @@ const Page = async () => {
 
                 <div className="flex items-center gap-4 pt-8">
                   <Separator className="flex-1" />
-                  <p className="whitespace-nowrap text-sm">OR</p>
+                  <p className="text-sm whitespace-nowrap">OR</p>
                   <Separator className="flex-1" />
                 </div>
 
@@ -110,7 +110,7 @@ const Page = async () => {
                   />
                 </div>
 
-                <p className="pt-8 text-center text-sm">
+                <p className="pt-8 text-sm text-center">
                   Already have an account?{" "}
                   <Link
                     href="/auth/login"
@@ -125,11 +125,11 @@ const Page = async () => {
 
           <div className="w-full h-14 md:h-20"></div>
         </div>
-        <div className="w-1/2 h-full relative overflow-hidden hidden xl:flex">
+        <div className="relative hidden w-1/2 h-full overflow-hidden xl:flex">
           <Image
             src={SignupImage}
             alt="signup-image"
-            className="w-full h-full object-cover"
+            className="absolute top-0 right-0 object-cover w-full h-full"
           />
         </div>
       </div>

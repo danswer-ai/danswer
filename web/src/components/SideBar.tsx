@@ -26,6 +26,7 @@ import {
   Image as ImageIcon,
   Activity,
   SearchIcon,
+  Search,
 } from "lucide-react";
 import { useContext } from "react";
 import { SettingsContext } from "./settings/SettingsProvider";
@@ -166,7 +167,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isTeamspace }) => {
                 error: dynamicSettings?.settings.needs_reindexing,
                 name: (
                   <div className="flex">
-                    <SearchIcon className="text-icon-settings-sidebar" />
+                    <Search size={16} />
                     <div className="ml-1">Search Settings</div>
                   </div>
                 ),

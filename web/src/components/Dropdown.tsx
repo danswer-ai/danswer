@@ -116,7 +116,7 @@ export function SearchMultiSelectDropdown({
           />
           <button
             type="button"
-            className="absolute top-0 right-0 text-sm h-full px-2 border-border"
+            className="absolute top-0 right-0 h-full px-2 text-sm border-border"
             onClick={() => setIsOpen(!isOpen)}
           >
             <ChevronDownIcon className="my-auto" />
@@ -126,7 +126,7 @@ export function SearchMultiSelectDropdown({
 
       <DropdownMenuContent
         align="start"
-        className="w-full max-h-80 overflow-y-auto overscroll-contain"
+        className="w-full overflow-y-auto max-h-80 overscroll-contain"
         style={{ minWidth: dropdownRef.current?.offsetWidth }}
       >
         {filteredOptions.length ? (
@@ -187,7 +187,7 @@ export const CustomDropdown = ({
   }, []);
 
   return (
-    <div className="relative inline-block text-left w-full" ref={dropdownRef}>
+    <div className="relative inline-block w-full text-left" ref={dropdownRef}>
       <div onClick={() => setIsOpen(!isOpen)}>{children}</div>
 
       {isOpen && (
@@ -252,7 +252,7 @@ export function DefaultDropdownElement({
         {description && <div className="text-xs">{description}</div>}
       </div>
       {isSelected && (
-        <div className="ml-auto mr-1 my-auto">
+        <div className="my-auto ml-auto mr-1">
           <Check size={16} />
         </div>
       )}

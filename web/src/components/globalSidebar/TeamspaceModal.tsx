@@ -7,6 +7,7 @@ import { CustomModal } from "../CustomModal";
 import { useState } from "react";
 import { MinimalTeamspaceSnapshot } from "@/lib/types";
 import Link from "next/link";
+import Image from "next/image";
 
 interface TeamspaceModalProps {
   teamspace?: MinimalTeamspaceSnapshot[] | undefined;
@@ -60,12 +61,22 @@ export const TeamspaceModal = ({
             className="flex items-center gap-4 border rounded-md p-4 cursor-pointer"
             href={`/t/${team.id}/${defaultPage}`}
           >
-            <div
-              style={{ background: generateGradient(team.name) }}
-              className="font-bold text-inverted w-10 h-10 shrink-0 rounded-md bg-primary flex justify-center items-center uppercase"
-            >
-              {team.name.charAt(0)}
-            </div>
+            {team.is_custom_logo ? (
+              <Image
+                src={`/api/teamspace/logo?teamspace_id=${team.id}&t=${Date.now()}`}
+                alt="Teamspace Logo"
+                className="object-cover shrink-0 rounded-md w-10 h-10"
+                width={40}
+                height={40}
+              />
+            ) : (
+              <div
+                style={{ background: generateGradient(team.name) }}
+                className="font-bold text-inverted w-10 h-10 shrink-0 rounded-md bg-primary flex justify-center items-center uppercase"
+              >
+                {team.name.charAt(0)}
+              </div>
+            )}
             <h3>{team.name}</h3>
           </Link>
         ))}

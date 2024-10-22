@@ -1,13 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import {
-  Table,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-  Badge,
-  Button,
-} from "@tremor/react";
 import { IndexAttemptStatus } from "@/components/Status";
 import { timeAgo } from "@/lib/time";
 import {
@@ -33,6 +24,21 @@ import Cookies from "js-cookie";
 import { TOGGLED_CONNECTORS_COOKIE_NAME } from "@/lib/constants";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { ConnectorCredentialPairStatus } from "../../connector/[ccPairId]/types";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Lock, Unlock } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Progress } from "@/components/ui/progress";
 
 function SummaryRow({
   source,
@@ -49,12 +55,9 @@ function SummaryRow({
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   return (
-    <TableRow
-      onClick={onToggle}
-      className="border-border bg-white py-4 rounded-sm !border cursor-pointer"
-    >
+    <TableRow onClick={onToggle}>
       <TableCell>
-        <div className="text-xl flex items-center truncate ellipsis gap-x-2 font-semibold">
+        <div className="flex items-center text-xl font-semibold truncate ellipsis gap-x-2">
           <div className="cursor-pointer">
             {isOpen ? (
               <FiChevronDown size={20} />
@@ -78,11 +81,12 @@ function SummaryRow({
           content={`${summary.active} out of ${summary.count} connectors are active`}
         >
           <div className="flex items-center mt-1">
-            <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
-              <div
-                className="bg-green-500 h-2 rounded-full"
+            <div className="w-full h-2 mr-2 bg-gray-200 rounded-full">
+              {/* <div
+                className="h-2 rounded-full bg-success"
                 style={{ width: `${activePercentage}%` }}
-              ></div>
+              ></div> */}
+              <Progress value={activePercentage} />
             </div>
             <span className="text-sm font-medium whitespace-nowrap">
               {summary.active} ({activePercentage.toFixed(0)}%)
@@ -94,7 +98,7 @@ function SummaryRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell>
           <div className="text-sm text-gray-500">Public Connectors</div>
-          <p className="flex text-xl mx-auto font-semibold items-center text-lg mt-1">
+          <p className="flex items-center mx-auto mt-1 text-xl font-semibold">
             {summary.public}/{summary.count}
           </p>
         </TableCell>
@@ -110,8 +114,8 @@ function SummaryRow({
       <TableCell>
         <div className="text-sm text-gray-500">Errors</div>
 
-        <div className="flex items-center text-lg gap-x-1 font-semibold">
-          {summary.errors > 0 && <Warning className="text-error h-6 w-6" />}
+        <div className="flex items-center text-lg font-semibold gap-x-1">
+          {summary.errors > 0 && <Warning className="w-6 h-6 text-error" />}
           {summary.errors}
         </div>
       </TableCell>
@@ -144,14 +148,9 @@ function ConnectorRow({
       ConnectorCredentialPairStatus.DELETING
     ) {
       return (
-        <Badge
-          color="red"
-          className="w-fit px-2 py-1 rounded-full border border-red-500"
-        >
-          <div className="flex text-xs items-center gap-x-1">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            Deleting
-          </div>
+        <Badge variant="destructive">
+          <div className="w-3 h-3 rounded-full bg-destructive"></div>
+          Deleting
         </Badge>
       );
     } else if (
@@ -159,14 +158,9 @@ function ConnectorRow({
       ConnectorCredentialPairStatus.PAUSED
     ) {
       return (
-        <Badge
-          color="yellow"
-          className="w-fit px-2 py-1 rounded-full border border-yellow-500"
-        >
-          <div className="flex text-xs items-center gap-x-1">
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            Paused
-          </div>
+        <Badge variant="warning">
+          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+          Paused
         </Badge>
       );
     }
@@ -175,38 +169,23 @@ function ConnectorRow({
     switch (ccPairsIndexingStatus.last_status) {
       case "in_progress":
         return (
-          <Badge
-            color="green"
-            className="w-fit px-2 py-1 rounded-full border border-green-500"
-          >
-            <div className="flex text-xs items-center gap-x-1">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              Indexing
-            </div>
+          <Badge color="success">
+            <div className="w-3 h-3 rounded-full bg-background"></div>
+            Indexing
           </Badge>
         );
       case "not_started":
         return (
-          <Badge
-            color="purple"
-            className="w-fit px-2 py-1 rounded-full border border-purple-500"
-          >
-            <div className="flex text-xs items-center gap-x-1">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              Scheduled
-            </div>
+          <Badge color="outline">
+            <div className="w-3 h-3 rounded-full bg-primary"></div>
+            Scheduled
           </Badge>
         );
       default:
         return (
-          <Badge
-            color="green"
-            className="w-fit px-2 py-1 rounded-full border border-green-500"
-          >
-            <div className="flex text-xs items-center gap-x-1">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              Active
-            </div>
+          <Badge color="success">
+            <div className="w-3 h-3 rounded-full bg-background"></div>
+            Active
           </Badge>
         );
     }
@@ -214,15 +193,13 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className={`hover:bg-hover-light ${
-        invisible ? "invisible h-0 !-mb-10" : "border border-border !border-b"
-      }  w-full cursor-pointer relative`}
+      className={`${invisible ? "invisible h-0 !-mb-10" : ""}`}
       onClick={() => {
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
       }}
     >
-      <TableCell className="!w-[300px]">
-        <p className="w-[200px] xl:w-[400px] inline-block ellipsis truncate">
+      <TableCell className="w-[200px] xl:w-[400px]">
+        <p className="inline-block w-full truncate ellipsis">
           {ccPairsIndexingStatus.name}
         </p>
       </TableCell>
@@ -233,16 +210,12 @@ function ConnectorRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell>
           {ccPairsIndexingStatus.access_type === "public" ? (
-            <Badge
-              size="md"
-              color={isEditable ? "green" : "gray"}
-              icon={FiUnlock}
-            >
-              Public
+            <Badge color={isEditable ? "green" : "gray"}>
+              <Unlock size={14} /> Public
             </Badge>
           ) : (
-            <Badge size="md" color={isEditable ? "blue" : "gray"} icon={FiLock}>
-              Private
+            <Badge color={isEditable ? "blue" : "gray"}>
+              <Lock size={14} /> Private
             </Badge>
           )}
         </TableCell>
@@ -389,7 +362,7 @@ export function CCPairIndexingStatusTable({
 
   return (
     <div className="-mt-20">
-      <Table>
+      <div>
         <ConnectorRow
           invisible
           ccPairsIndexingStatus={{
@@ -435,87 +408,96 @@ export function CCPairIndexingStatusTable({
           }}
           isEditable={false}
         />
-        <div className="flex items-center w-0 mt-4 gap-x-2">
-          <input
+        <div className="flex items-center mt-4 gap-x-2">
+          <Input
             type="text"
             ref={searchInputRef}
             placeholder="Search connectors..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="ml-1 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
 
-          <Button className="h-9" onClick={() => toggleSources()}>
+          <Button
+            onClick={() => toggleSources()}
+            className="w-[110px]"
+            variant="outline"
+          >
             {!shouldExpand ? "Collapse All" : "Expand All"}
           </Button>
         </div>
+      </div>
 
-        <TableBody>
-          {sortedSources
-            .filter(
-              (source) =>
-                source != "not_applicable" && source != "ingestion_api"
-            )
-            .map((source, ind) => {
-              const sourceMatches = source
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase());
-              const matchingConnectors = groupedStatuses[source].filter(
-                (status) =>
-                  (status.name || "")
+      <Card className="mt-6">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[200px] xl:w-[400px]">
+                  <div className="w-full">Name</div>
+                </TableHead>
+                <TableHead>Last Indexed</TableHead>
+                <TableHead>Activity</TableHead>
+                {isPaidEnterpriseFeaturesEnabled && (
+                  <TableHead>Permissions</TableHead>
+                )}
+                <TableHead>Total Docs</TableHead>
+                <TableHead>Last Status</TableHead>
+                <TableHead className="!w-[100px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedSources
+                .filter(
+                  (source) =>
+                    source != "not_applicable" && source != "ingestion_api"
+                )
+                .map((source, ind) => {
+                  const sourceMatches = source
                     .toLowerCase()
-                    .includes(searchTerm.toLowerCase())
-              );
-              if (sourceMatches || matchingConnectors.length > 0) {
-                return (
-                  <React.Fragment key={ind}>
-                    <br className="mt-4" />
+                    .includes(searchTerm.toLowerCase());
+                  const matchingConnectors = groupedStatuses[source].filter(
+                    (status) =>
+                      (status.name || "")
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
+                  );
+                  if (sourceMatches || matchingConnectors.length > 0) {
+                    return (
+                      <React.Fragment key={ind}>
+                        <SummaryRow
+                          source={source}
+                          summary={groupSummaries[source]}
+                          isOpen={connectorsToggled[source] || false}
+                          onToggle={() => toggleSource(source)}
+                        />
 
-                    <SummaryRow
-                      source={source}
-                      summary={groupSummaries[source]}
-                      isOpen={connectorsToggled[source] || false}
-                      onToggle={() => toggleSource(source)}
-                    />
-
-                    {connectorsToggled[source] && (
-                      <>
-                        <TableRow className="border border-border">
-                          <TableHeaderCell>Name</TableHeaderCell>
-                          <TableHeaderCell>Last Indexed</TableHeaderCell>
-                          <TableHeaderCell>Activity</TableHeaderCell>
-                          {isPaidEnterpriseFeaturesEnabled && (
-                            <TableHeaderCell>Permissions</TableHeaderCell>
-                          )}
-                          <TableHeaderCell>Total Docs</TableHeaderCell>
-                          <TableHeaderCell>Last Status</TableHeaderCell>
-                          <TableHeaderCell></TableHeaderCell>
-                        </TableRow>
-                        {(sourceMatches
-                          ? groupedStatuses[source]
-                          : matchingConnectors
-                        ).map((ccPairsIndexingStatus) => (
-                          <ConnectorRow
-                            key={ccPairsIndexingStatus.cc_pair_id}
-                            ccPairsIndexingStatus={ccPairsIndexingStatus}
-                            isEditable={editableCcPairsIndexingStatuses.some(
-                              (e) =>
-                                e.cc_pair_id ===
-                                ccPairsIndexingStatus.cc_pair_id
-                            )}
-                          />
-                        ))}
-                      </>
-                    )}
-                  </React.Fragment>
-                );
-              }
-              return null;
-            })}
-        </TableBody>
-
-        <div className="invisible w-full pb-40" />
-      </Table>
+                        {connectorsToggled[source] && (
+                          <>
+                            {(sourceMatches
+                              ? groupedStatuses[source]
+                              : matchingConnectors
+                            ).map((ccPairsIndexingStatus) => (
+                              <ConnectorRow
+                                key={ccPairsIndexingStatus.cc_pair_id}
+                                ccPairsIndexingStatus={ccPairsIndexingStatus}
+                                isEditable={editableCcPairsIndexingStatuses.some(
+                                  (e) =>
+                                    e.cc_pair_id ===
+                                    ccPairsIndexingStatus.cc_pair_id
+                                )}
+                              />
+                            ))}
+                          </>
+                        )}
+                      </React.Fragment>
+                    );
+                  }
+                  return null;
+                })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

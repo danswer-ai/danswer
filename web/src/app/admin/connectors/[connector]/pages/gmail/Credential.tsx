@@ -1,4 +1,3 @@
-import { Button } from "@/components/Button";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
@@ -16,6 +15,7 @@ import {
   GmailCredentialJson,
   GmailServiceAccountCredentialJson,
 } from "@/lib/connectors/credentials";
+import { Button } from "@/components/ui/button";
 
 type GmailCredentialJsonTypes = "authorized_user" | "service_account";
 
@@ -161,7 +161,7 @@ export const GmailJsonUploadSection = ({
       <div className="mt-2 text-sm">
         <div>
           Found existing service account key with the following <b>Email:</b>
-          <p className="italic mt-1">
+          <p className="mt-1 italic">
             {serviceAccountCredentialData.service_account_email}
           </p>
         </div>
@@ -216,7 +216,7 @@ export const GmailJsonUploadSection = ({
       <div className="mt-2 text-sm">
         <div>
           Found existing app credentials with the following <b>Client ID:</b>
-          <p className="italic mt-1">{appCredentialData.client_id}</p>
+          <p className="mt-1 italic">{appCredentialData.client_id}</p>
         </div>
         <div className="mt-4 mb-1">
           If you want to update these credentials, delete the existing
@@ -255,7 +255,7 @@ export const GmailJsonUploadSection = ({
   if (!isAdmin) {
     return (
       <div className="mt-2">
-        <p className="text-sm mb-2">
+        <p className="mb-2 text-sm">
           Curators are unable to set up the Gmail credentials. To add a Gmail
           connector, please contact an administrator.
         </p>
@@ -265,7 +265,7 @@ export const GmailJsonUploadSection = ({
 
   return (
     <div className="mt-2">
-      <p className="text-sm mb-2">
+      <p className="mb-2 text-sm">
         Follow the guide{" "}
         <a
           className="text-link"
@@ -341,7 +341,7 @@ export const GmailOAuthSection = ({
   if (serviceAccountKeyData?.service_account_email) {
     return (
       <div>
-        <p className="text-sm mb-2">
+        <p className="mb-2 text-sm">
           When using a Gmail Service Account, you can either have enMedD AI act
           as the service account itself OR you can specify an account for the
           service account to impersonate.
@@ -422,7 +422,7 @@ export const GmailOAuthSection = ({
 
   if (appCredentialData?.client_id) {
     return (
-      <div className="text-sm mb-4">
+      <div className="mb-4 text-sm">
         <p className="mb-2">
           Next, you must provide credentials via OAuth. This gives us read
           access to the docs you have access to in your gmail account.

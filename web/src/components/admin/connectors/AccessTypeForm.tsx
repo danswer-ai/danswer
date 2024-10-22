@@ -60,12 +60,12 @@ export function AccessTypeForm({
       {isPaidEnterpriseEnabled && (
         <>
           <div>
-            <div className="flex gap-x-2 items-center">
-              <label className="text-text-950 font-medium">
+            <div className="flex items-center gap-x-2">
+              <label className="font-medium text-text-950">
                 Document Access
               </label>
             </div>
-            <p className="text-sm text-text-500 mb-2">
+            <p className="mb-2 text-sm text-text-500">
               Control who has access to the documents indexed by this connector.
             </p>
 

@@ -4,7 +4,7 @@ import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
-import { Card, Title } from "@tremor/react";
+import { Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -48,6 +48,9 @@ export interface AdvancedConfig {
   indexingStart: string;
 }
 import { Connector, ConnectorBase } from "@/lib/connectors/connectors";
+import { ChartLegendContent } from "@/components/ui/chart";
+import { Card, CardContent } from "@/components/ui/card";
+import { BackButton } from "@/components/BackButton";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -345,12 +348,14 @@ export default function AddConnector({
     >
       {(formikProps) => {
         return (
-          <div className="mx-auto mb-8 w-full">
+          <div className="w-full mx-auto mb-8">
             {popup}
 
             <div className="mb-4">
               <HealthCheckBanner />
             </div>
+
+            <BackButton />
 
             <AdminPageTitle
               icon={<SourceIcon iconSize={32} sourceType={connector} />}
@@ -359,82 +364,90 @@ export default function AddConnector({
 
             {formStep == 0 && (
               <Card>
-                <Title className="mb-2 text-lg">Select a credential</Title>
+                <CardContent>
+                  <h3 className="mb-2">Select a credential</h3>
 
-                {connector == "google_drive" ? (
-                  <GDriveMain />
-                ) : connector == "gmail" ? (
-                  <GmailMain />
-                ) : (
-                  <>
-                    <ModifyCredential
-                      showIfEmpty
-                      source={connector}
-                      defaultedCredential={currentCredential!}
-                      credentials={credentials}
-                      editableCredentials={editableCredentials}
-                      onDeleteCredential={onDeleteCredential}
-                      onSwitch={onSwap}
-                    />
-                    {!createConnectorToggle && (
-                      <button
-                        className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
-                        onClick={() =>
-                          setCreateConnectorToggle(
-                            (createConnectorToggle) => !createConnectorToggle
-                          )
-                        }
-                      >
-                        Create New
-                      </button>
-                    )}
-
-                    {/* NOTE: connector will never be google_drive, since the ternary above will 
-                    prevent that, but still keeping this here for safety in case the above changes. */}
-                    {(connector as ValidSources) !== "google_drive" &&
-                      createConnectorToggle && (
-                        <Modal
-                          className="max-w-3xl rounded-lg"
-                          onOutsideClick={() => setCreateConnectorToggle(false)}
+                  {connector == "google_drive" ? (
+                    <GDriveMain />
+                  ) : connector == "gmail" ? (
+                    <GmailMain />
+                  ) : (
+                    <>
+                      <ModifyCredential
+                        showIfEmpty
+                        source={connector}
+                        defaultedCredential={currentCredential!}
+                        credentials={credentials}
+                        editableCredentials={editableCredentials}
+                        onDeleteCredential={onDeleteCredential}
+                        onSwitch={onSwap}
+                      />
+                      {!createConnectorToggle && (
+                        <button
+                          className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
+                          onClick={() =>
+                            setCreateConnectorToggle(
+                              (createConnectorToggle) => !createConnectorToggle
+                            )
+                          }
                         >
-                          <>
-                            <Title className="mb-2 text-lg">
-                              Create a {getSourceDisplayName(connector)}{" "}
-                              credential
-                            </Title>
-                            <CreateCredential
-                              close
-                              refresh={refresh}
-                              sourceType={connector}
-                              setPopup={setPopup}
-                              onSwitch={onSwap}
-                              onClose={() => setCreateConnectorToggle(false)}
-                            />
-                          </>
-                        </Modal>
+                          Create New
+                        </button>
                       )}
-                  </>
-                )}
+
+                      {/* NOTE: connector will never be google_drive, since the ternary above will 
+    prevent that, but still keeping this here for safety in case the above changes. */}
+                      {(connector as ValidSources) !== "google_drive" &&
+                        createConnectorToggle && (
+                          <Modal
+                            className="max-w-3xl rounded-lg"
+                            onOutsideClick={() =>
+                              setCreateConnectorToggle(false)
+                            }
+                          >
+                            <>
+                              <h3 className="mb-2">
+                                Create a {getSourceDisplayName(connector)}{" "}
+                                credential
+                              </h3>
+                              <CreateCredential
+                                close
+                                refresh={refresh}
+                                sourceType={connector}
+                                setPopup={setPopup}
+                                onSwitch={onSwap}
+                                onClose={() => setCreateConnectorToggle(false)}
+                              />
+                            </>
+                          </Modal>
+                        )}
+                    </>
+                  )}
+                </CardContent>
               </Card>
             )}
 
             {formStep == 1 && (
-              <Card className="w-full py-8 flex gap-y-6 flex-col max-w-3xl px-12 mx-auto">
-                <DynamicConnectionForm
-                  values={formikProps.values}
-                  config={configuration}
-                  setSelectedFiles={setSelectedFiles}
-                  selectedFiles={selectedFiles}
-                />
+              <Card>
+                <CardContent>
+                  <DynamicConnectionForm
+                    values={formikProps.values}
+                    config={configuration}
+                    setSelectedFiles={setSelectedFiles}
+                    selectedFiles={selectedFiles}
+                  />
 
-                <AccessTypeForm connector={connector} />
-                <AccessTypeGroupSelector />
+                  <AccessTypeForm connector={connector} />
+                  <AccessTypeGroupSelector />
+                </CardContent>
               </Card>
             )}
 
             {formStep === 2 && (
               <Card>
-                <AdvancedFormPage />
+                <CardContent>
+                  <AdvancedFormPage />
+                </CardContent>
               </Card>
             )}
 

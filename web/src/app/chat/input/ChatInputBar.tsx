@@ -40,6 +40,13 @@ import { Hoverable } from "@/components/Hoverable";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { CircleStop, Cpu, Filter, Paperclip, Send } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -281,15 +288,8 @@ export function ChatInputBar({
 
   return (
     <div id="enmedd-chat-input">
-      <div className="flex justify-center mx-auto">
-        <div
-          className="
-            w-[800px]
-            relative
-            desktop:px-4
-            mx-auto
-          "
-        >
+      <div className="flex justify-center items-center max-w-full mx-auto px-5 md:px-8 lg:px-5 2xl:px-0">
+        <div className="relative w-full mx-auto shrink 2xl:w-searchbar 3xl:px-0">
           {showSuggestions && assistantTagOptions.length > 0 && (
             <div
               ref={suggestionsRef}
@@ -375,20 +375,20 @@ export function ChatInputBar({
 
           <div
             className="
-              opacity-100
-              w-full
-              h-fit
-              bg-bl
-              flex
-              flex-col
-              border
-              border-[#E5E7EB]
-              rounded-lg
-              text-text-chatbar
-              bg-background-chatbar
-              [&:has(textarea:focus)]::ring-1
-              [&:has(textarea:focus)]::ring-black
-            "
+                opacity-100
+                w-full
+                h-fit
+                flex
+                flex-col
+                rounded-xl
+                overflow-hidden
+                bg-background
+                [&:has(textarea:focus)]::ring-1
+                [&:has(textarea:focus)]::ring-black
+                px-4
+                lg:px-6
+                border
+              "
           >
             {alternativeAssistant && (
               <div className="flex flex-wrap gap-y-1 gap-x-2 px-2 pt-1.5 w-full">
@@ -457,13 +457,16 @@ export function ChatInputBar({
               </div>
             )}
 
-            <textarea
+            <Textarea
               onPaste={handlePaste}
               onKeyDownCapture={handleKeyDown}
               onChange={handleInputChange}
               ref={textAreaRef}
               className={`
                 m-0
+                px-0
+                py-6
+                text-base
                 w-full
                 shrink
                 resize-none
@@ -483,15 +486,16 @@ export function ChatInputBar({
                 outline-none
                 placeholder-subtle
                 resize-none
-                px-5
-                py-4
-                h-14
+                h-12
+                xl:h-28
+                focus-visible:!ring-0
+                focus-visible:!ring-offset-0
               `}
               autoFocus
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
-              placeholder={`Send a message`}
+              placeholder="How can I help you?"
               value={message}
               onKeyDown={(event) => {
                 if (
@@ -509,122 +513,102 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            <div className="flex items-center space-x-3 mr-12 px-4 pb-2">
-              <Popup
-                removePadding
-                content={(close) => (
-                  <AssistantsTab
-                    availableAssistants={assistantOptions}
-                    llmProviders={llmProviders}
-                    selectedAssistant={selectedAssistant}
-                    onSelect={(assistant) => {
-                      setSelectedAssistant(assistant);
-                      close();
-                    }}
-                    refreshUser={refreshUser}
-                  />
-                )}
-                flexPriority="shrink"
-                position="top"
-                mobilePosition="top-right"
-              >
-                <ChatInputOption
-                  toggle
-                  flexPriority="shrink"
-                  name={
-                    selectedAssistant ? selectedAssistant.name : "Assistants"
-                  }
-                  Icon={AssistantsIconSkeleton as IconType}
-                />
-              </Popup>
-              <Popup
-                tab
-                content={(close, ref) => (
-                  <LlmTab
-                    currentAssistant={alternativeAssistant || selectedAssistant}
-                    openModelSettings={openModelSettings}
-                    currentLlm={
-                      llmOverrideManager.llmOverride.modelName ||
-                      (selectedAssistant
-                        ? selectedAssistant.llm_model_version_override ||
-                          llmOverrideManager.globalDefault.modelName ||
-                          llmName
-                        : llmName)
-                    }
-                    close={close}
-                    ref={ref}
-                    llmOverrideManager={llmOverrideManager}
-                    chatSessionId={chatSessionId}
-                  />
-                )}
-                position="top"
-              >
-                <ChatInputOption
-                  flexPriority="second"
-                  toggle
-                  name={getDisplayNameForModel(
-                    llmOverrideManager.llmOverride.modelName ||
-                      (selectedAssistant
-                        ? selectedAssistant.llm_model_version_override ||
-                          llmOverrideManager.globalDefault.modelName ||
-                          llmName
-                        : llmName)
-                  )}
-                  Icon={CpuIconSkeleton}
-                />
-              </Popup>
+            <div className="flex items-center justify-between py-4 overflow-hidden border-t border-border-light">
+              <div className="flex w-auto items-center">
+                <Popover>
+                  <PopoverTrigger>
+                    <Button variant="ghost" className="mr-2 border">
+                      <Cpu size={16} />
+                      {selectedAssistant
+                        ? selectedAssistant.name
+                        : "Assistants"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <AssistantsTab
+                      availableAssistants={assistantOptions}
+                      llmProviders={llmProviders}
+                      selectedAssistant={selectedAssistant}
+                      onSelect={(assistant) => {
+                        setSelectedAssistant(assistant);
+                        close();
+                      }}
+                      refreshUser={refreshUser}
+                    />
+                  </PopoverContent>
+                </Popover>
 
-              <ChatInputOption
-                flexPriority="stiff"
-                name="File"
-                Icon={FiPlusCircle}
-                onClick={() => {
-                  const input = document.createElement("input");
-                  input.type = "file";
-                  input.multiple = true; // Allow multiple files
-                  input.onchange = (event: any) => {
-                    const files = Array.from(
-                      event?.target?.files || []
-                    ) as File[];
-                    if (files.length > 0) {
-                      handleFileUpload(files);
-                    }
-                  };
-                  input.click();
-                }}
-              />
-            </div>
-            <div className="absolute bottom-2.5 right-4">
-              {chatState == "streaming" ||
-              chatState == "toolBuilding" ||
-              chatState == "loading" ? (
-                <button
-                  className={`cursor-pointer ${chatState != "streaming" ? "bg-blue-400" : "bg-blue-800"}  h-[28px] w-[28px] rounded-full`}
-                  onClick={stopGenerating}
-                  disabled={chatState != "streaming"}
-                >
-                  <StopGeneratingIcon
-                    size={10}
-                    className={`m-auto text-white flex-none
-                      }`}
-                  />
-                </button>
-              ) : (
-                <button
-                  className="cursor-pointer "
+                <Popover>
+                  <PopoverTrigger>
+                    <Button variant="ghost" className="mr-2">
+                      <Filter size={16} />
+                      Filters
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <LlmTab
+                      currentAssistant={
+                        alternativeAssistant || selectedAssistant
+                      }
+                      openModelSettings={openModelSettings}
+                      currentLlm={
+                        llmOverrideManager.llmOverride.modelName ||
+                        (selectedAssistant
+                          ? selectedAssistant.llm_model_version_override ||
+                            llmOverrideManager.globalDefault.modelName ||
+                            llmName
+                          : llmName)
+                      }
+                      close={close}
+                      llmOverrideManager={llmOverrideManager}
+                      chatSessionId={chatSessionId}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Button
                   onClick={() => {
-                    if (message) {
-                      onSubmit();
-                    }
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.multiple = true; // Allow multiple files
+                    input.onchange = (event: any) => {
+                      const files = Array.from(
+                        event?.target?.files || []
+                      ) as File[];
+                      if (files.length > 0) {
+                        handleFileUpload(files);
+                      }
+                    };
+                    input.click();
                   }}
-                  disabled={chatState != "input"}
+                  variant="ghost"
                 >
-                  <SendIcon
-                    size={28}
-                    className={`text-white p-1 rounded-full   ${chatState == "input" && message ? "bg-primary" : "bg-blue-400"} `}
-                  />
-                </button>
-              )}
+                  <Paperclip size={16} />
+                </Button>
+              </div>
+              <div>
+                {chatState == "streaming" ||
+                chatState == "toolBuilding" ||
+                chatState == "loading" ? (
+                  <Button
+                    onClick={stopGenerating}
+                    disabled={chatState != "streaming"}
+                  >
+                    <CircleStop size={16} />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      if (message) {
+                        onSubmit();
+                      }
+                    }}
+                    disabled={chatState != "input"}
+                  >
+                    <Send size={16} />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

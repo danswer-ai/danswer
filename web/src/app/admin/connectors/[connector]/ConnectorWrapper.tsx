@@ -15,11 +15,10 @@ export default function ConnectorWrapper({
 }) {
   return (
     <FormProvider connector={connector}>
-      <div className="flex justify-center w-full h-full">
-        <Sidebar />
-        <div className="mt-12 w-full max-w-3xl mx-auto">
+      <div className="w-full h-full overflow-y-auto">
+        <div className="container">
           {!isValidSource(connector) ? (
-            <div className="mx-auto flex flex-col gap-y-2">
+            <div className="flex flex-col mx-auto gap-y-2">
               <HeaderTitle>
                 <p>&lsquo;{connector}&lsquo; is not a valid Connector Type!</p>
               </HeaderTitle>
@@ -34,6 +33,7 @@ export default function ConnectorWrapper({
           ) : (
             <AddConnector connector={connector} />
           )}
+          <Sidebar />
         </div>
       </div>
     </FormProvider>

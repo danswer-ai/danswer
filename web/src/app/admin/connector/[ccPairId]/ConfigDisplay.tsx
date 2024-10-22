@@ -74,28 +74,30 @@ export function AdvancedConfigDisplay({
 
   return (
     <>
-      <Title className="mt-8 mb-2">Advanced Configuration</Title>
+      <h3 className="mt-8 mb-4">Advanced Configuration</h3>
       <Card>
-        <List>
-          {pruneFreq && (
-            <ListItem key={0}>
-              <span>Pruning Frequency</span>
-              <span>{formatPruneFrequency(pruneFreq)}</span>
-            </ListItem>
-          )}
-          {refreshFreq && (
-            <ListItem key={1}>
-              <span>Refresh Frequency</span>
-              <span>{formatRefreshFrequency(refreshFreq)}</span>
-            </ListItem>
-          )}
-          {indexingStart && (
-            <ListItem key={2}>
-              <span>Indexing Start</span>
-              <span>{formatDate(indexingStart)}</span>
-            </ListItem>
-          )}
-        </List>
+        <CardContent>
+          <ul className="flex flex-col gap-4">
+            {pruneFreq && (
+              <li key={0} className="flex justify-between gap-10">
+                <span>Pruning Frequency</span>
+                <span>{formatPruneFrequency(pruneFreq)}</span>
+              </li>
+            )}
+            {refreshFreq && (
+              <li key={1} className="flex justify-between gap-10">
+                <span>Refresh Frequency</span>
+                <span>{formatRefreshFrequency(refreshFreq)}</span>
+              </li>
+            )}
+            {indexingStart && (
+              <li key={2} className="flex justify-between gap-10">
+                <span>Indexing Start</span>
+                <span>{formatDate(indexingStart)}</span>
+              </li>
+            )}
+          </ul>
+        </CardContent>
       </Card>
     </>
   );
@@ -117,12 +119,12 @@ export function ConfigDisplay({
 
   return (
     <>
-      <h3 className="mb-4 mt-12">Configuration</h3>
+      <h3 className="mt-12 mb-4">Configuration</h3>
       <Card>
         <CardContent>
           <ul className="flex flex-col gap-4">
             {configEntries.map(([key, value]) => (
-              <li key={key} className="flex gap-10 justify-between">
+              <li key={key} className="flex justify-between gap-10">
                 <span>{key}:</span>
                 <span className="truncate">
                   {convertObjectToString(value) || "-"}

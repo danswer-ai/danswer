@@ -25,7 +25,9 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
 }) => {
   return (
     <>
-      <h2 className="text-2xl font-bold text-text-800">{config.description}</h2>
+      <h2 className="pb-4 text-2xl font-bold text-text-800">
+        {config.description}
+      </h2>
 
       {config.subtext && (
         <CredentialSubText>{config.subtext}</CredentialSubText>

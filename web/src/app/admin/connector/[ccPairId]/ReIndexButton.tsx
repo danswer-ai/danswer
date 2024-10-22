@@ -6,9 +6,10 @@ import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
-import { Button } from "@tremor/react";
 import { useToast } from "@/hooks/use-toast";
 import { Divider } from "@/components/Divider";
+import { CustomTooltip } from "@/components/CustomTooltip";
+import { Button } from "@/components/ui/button";
 
 function ReIndexPopup({
   connectorId,
@@ -114,24 +115,46 @@ export function ReIndexButton({
         />
       )}
       {popup}
-      <Button
-        className="ml-auto"
-        color="green"
-        size="xs"
-        onClick={() => {
-          setReIndexPopupVisible(true);
-        }}
-        disabled={isDisabled || isDeleting}
-        tooltip={
-          isDeleting
-            ? "Cannot index while connector is deleting"
-            : isDisabled
-              ? "Connector must be re-enabled before indexing"
-              : undefined
-        }
-      >
-        Index
-      </Button>
+      {isDeleting || isDisabled ? (
+        <CustomTooltip
+          trigger={
+            <Button
+              className="ml-auto"
+              onClick={() => {
+                setReIndexPopupVisible(true);
+              }}
+              disabled={isDisabled || isDeleting}
+            >
+              Index
+            </Button>
+          }
+          asChild
+        >
+          <Button
+            className="ml-auto"
+            onClick={() => {
+              setReIndexPopupVisible(true);
+            }}
+            disabled={isDisabled || isDeleting}
+          >
+            {isDeleting
+              ? "Cannot index while connector is deleting"
+              : isDisabled
+                ? "Connector must be re-enabled before indexing"
+                : undefined}
+          </Button>
+        </CustomTooltip>
+      ) : (
+        <Button
+          className="ml-auto"
+          onClick={() => {
+            setReIndexPopupVisible(true);
+          }}
+          disabled={isDisabled || isDeleting}
+        >
+          Index
+        </Button>
+      )}
     </>
   );
 }

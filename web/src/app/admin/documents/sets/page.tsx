@@ -53,7 +53,7 @@ const EditRow = ({
 
   if (!isEditable) {
     return (
-      <div className="text-emphasis font-medium my-auto p-1">
+      <div className="p-1 my-auto font-medium text-emphasis">
         {documentSet.name}
       </div>
     );
@@ -131,8 +131,8 @@ const DocumentSetTable = ({
       <h3 className="pb-4">Existing Document Sets</h3>
       <Card>
         <CardContent className="p-0">
-          <Table className="overflow-visible mt-2">
-            <TableHeader>
+          <Table>
+            <TableHeader className="h-12">
               <TableRow>
                 <TableHeaderCell>Name</TableHeaderCell>
                 <TableHeaderCell>Connectors</TableHeaderCell>
@@ -150,7 +150,7 @@ const DocumentSetTable = ({
                   );
                   return (
                     <TableRow key={documentSet.id}>
-                      <TableCell className="whitespace-normal break-all">
+                      <TableCell className="break-all whitespace-normal">
                         <div className="flex gap-x-1 text-emphasis">
                           <EditRow
                             documentSet={documentSet}
@@ -331,7 +331,7 @@ const Main = () => {
 
 const Page = () => {
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div className="w-full h-full overflow-y-auto">
       <div className="container">
         <AdminPageTitle icon={<Bookmark size={32} />} title="Document Sets" />
 

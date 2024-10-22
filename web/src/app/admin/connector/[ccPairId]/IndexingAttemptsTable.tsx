@@ -1,16 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-  Text,
-  Callout,
-} from "@tremor/react";
+import { Text, Callout } from "@tremor/react";
 import { CCPairFullInfo, PaginatedIndexAttempts } from "./types";
 import { IndexAttemptStatus } from "@/components/Status";
 import { PageSelector } from "@/components/PageSelector";
@@ -25,6 +16,14 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { useRouter } from "next/navigation";
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { FiInfo } from "react-icons/fi";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
 
 // This is the number of index attempts to display per page
 const NUM_IN_PAGE = 8;
@@ -221,115 +220,120 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
           />
         )}
 
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableHeaderCell>Time Started</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>New Doc Cnt</TableHeaderCell>
-            <TableHeaderCell>
-              <div className="w-fit">
-                <Tooltip
-                  width="max-w-sm"
-                  content="Total number of documents replaced in the index during this indexing attempt"
-                >
-                  <span className="cursor-help flex items-center">
-                    Total Doc Cnt
-                    <InfoIcon className="ml-1 w-4 h-4" />
-                  </span>
-                </Tooltip>
-              </div>
-            </TableHeaderCell>
-            <TableHeaderCell>Error Message</TableHeaderCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {currentPageData.index_attempts.map((indexAttempt) => {
-            const docsPerMinute =
-              getDocsProcessedPerMinute(indexAttempt)?.toFixed(2);
-            return (
-              <TableRow key={indexAttempt.id}>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableCell>Time Started</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>New Doc Cnt</TableCell>
                 <TableCell>
-                  {indexAttempt.time_started
-                    ? localizeAndPrettify(indexAttempt.time_started)
-                    : "-"}
-                </TableCell>
-                <TableCell>
-                  <IndexAttemptStatus
-                    status={indexAttempt.status || "not_started"}
-                  />
-                  {docsPerMinute ? (
-                    <div className="text-xs mt-1">
-                      {docsPerMinute} docs / min
-                    </div>
-                  ) : (
-                    indexAttempt.status === "success" && (
-                      <div className="text-xs mt-1">
-                        No additional docs processed
-                      </div>
-                    )
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex">
-                    <div className="text-right">
-                      <div>{indexAttempt.new_docs_indexed}</div>
-                      {indexAttempt.docs_removed_from_index > 0 && (
-                        <div className="text-xs w-52 text-wrap flex italic overflow-hidden whitespace-normal px-1">
-                          (also removed {indexAttempt.docs_removed_from_index}{" "}
-                          docs that were detected as deleted in the source)
-                        </div>
-                      )}
-                    </div>
+                  <div className="w-fit">
+                    <Tooltip
+                      width="max-w-sm"
+                      content="Total number of documents replaced in the index during this indexing attempt"
+                    >
+                      <span className="flex items-center cursor-help">
+                        Total Doc Cnt
+                        <InfoIcon className="w-4 h-4 ml-1" />
+                      </span>
+                    </Tooltip>
                   </div>
                 </TableCell>
-                <TableCell>{indexAttempt.total_docs_indexed}</TableCell>
-                <TableCell>
-                  <div>
-                    {indexAttempt.error_count > 0 && (
-                      <Link
-                        className="cursor-pointer my-auto"
-                        href={`/admin/indexing/${indexAttempt.id}`}
-                      >
-                        <Text className="flex flex-wrap text-link whitespace-normal">
-                          <SearchIcon />
-                          &nbsp;View Errors
-                        </Text>
-                      </Link>
-                    )}
-
-                    {indexAttempt.status === "success" && (
-                      <Text className="flex flex-wrap whitespace-normal">
-                        {"-"}
-                      </Text>
-                    )}
-
-                    {indexAttempt.status === "failed" &&
-                      indexAttempt.error_msg && (
-                        <Text className="flex flex-wrap whitespace-normal">
-                          {indexAttempt.error_msg}
-                        </Text>
-                      )}
-
-                    {indexAttempt.full_exception_trace && (
-                      <div
-                        onClick={() => {
-                          setIndexAttemptTracePopupId(indexAttempt.id);
-                        }}
-                        className="mt-2 text-link cursor-pointer select-none"
-                      >
-                        View Full Trace
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
+                <TableCell>Error Message</TableCell>
               </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+            </TableHeader>
+            <TableBody>
+              {currentPageData.index_attempts.map((indexAttempt) => {
+                const docsPerMinute =
+                  getDocsProcessedPerMinute(indexAttempt)?.toFixed(2);
+                return (
+                  <TableRow key={indexAttempt.id}>
+                    <TableCell>
+                      {indexAttempt.time_started
+                        ? localizeAndPrettify(indexAttempt.time_started)
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      <IndexAttemptStatus
+                        status={indexAttempt.status || "not_started"}
+                      />
+                      {docsPerMinute ? (
+                        <div className="mt-1 text-xs">
+                          {docsPerMinute} docs / min
+                        </div>
+                      ) : (
+                        indexAttempt.status === "success" && (
+                          <div className="mt-1 text-xs">
+                            No additional docs processed
+                          </div>
+                        )
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex">
+                        <div className="text-right">
+                          <div>{indexAttempt.new_docs_indexed}</div>
+                          {indexAttempt.docs_removed_from_index > 0 && (
+                            <div className="flex px-1 overflow-hidden text-xs italic whitespace-normal w-52 text-wrap">
+                              (also removed{" "}
+                              {indexAttempt.docs_removed_from_index} docs that
+                              were detected as deleted in the source)
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{indexAttempt.total_docs_indexed}</TableCell>
+                    <TableCell>
+                      <div>
+                        {indexAttempt.error_count > 0 && (
+                          <Link
+                            className="my-auto cursor-pointer"
+                            href={`/admin/indexing/${indexAttempt.id}`}
+                          >
+                            <Text className="flex flex-wrap whitespace-normal text-link">
+                              <SearchIcon />
+                              &nbsp;View Errors
+                            </Text>
+                          </Link>
+                        )}
+
+                        {indexAttempt.status === "success" && (
+                          <Text className="flex flex-wrap whitespace-normal">
+                            {"-"}
+                          </Text>
+                        )}
+
+                        {indexAttempt.status === "failed" &&
+                          indexAttempt.error_msg && (
+                            <Text className="flex flex-wrap whitespace-normal">
+                              {indexAttempt.error_msg}
+                            </Text>
+                          )}
+
+                        {indexAttempt.full_exception_trace && (
+                          <div
+                            onClick={() => {
+                              setIndexAttemptTracePopupId(indexAttempt.id);
+                            }}
+                            className="mt-2 cursor-pointer select-none text-link"
+                          >
+                            View Full Trace
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
       {totalPages > 1 && (
-        <div className="mt-3 flex">
+        <div className="flex mt-3">
           <div className="mx-auto">
             <PageSelector
               totalPages={totalPages}

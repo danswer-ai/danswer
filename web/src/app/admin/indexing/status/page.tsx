@@ -5,8 +5,8 @@ import { NotebookIcon } from "@/components/icons/icons";
 import { CCPairIndexingStatusTable } from "./CCPairIndexingStatusTable";
 import { AdminPageTitle } from "@/components/admin/Title";
 import Link from "next/link";
-import { Button } from "@tremor/react";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
+import { Button } from "@/components/ui/button";
 
 function Main() {
   const {
@@ -72,7 +72,7 @@ function Main() {
 
 export default function Status() {
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div className="w-full h-full overflow-y-auto">
       <div className="container">
         <AdminPageTitle
           icon={<NotebookIcon size={32} />}

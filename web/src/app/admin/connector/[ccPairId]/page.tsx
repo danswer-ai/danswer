@@ -3,7 +3,7 @@
 import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
 import { CCPairStatus } from "@/components/Status";
 import { BackButton } from "@/components/BackButton";
-import { Button, Divider, Title } from "@tremor/react";
+import { Divider } from "@tremor/react";
 import { IndexingAttemptsTable } from "./IndexingAttemptsTable";
 import { AdvancedConfigDisplay, ConfigDisplay } from "./ConfigDisplay";
 import { ModifyStatusButtonCluster } from "./ModifyStatusButtonCluster";
@@ -25,6 +25,8 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { updateConnectorCredentialPairName } from "@/lib/connector";
 import DeletionErrorStatus from "./DeletionErrorStatus";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -148,24 +150,27 @@ function Main({ ccPairId }: { ccPairId: number }) {
     <>
       {popup}
       <BackButton />
-      <div className="pb-5 flex flex-col items-start sm:flex-row lg:items-center gap-4 w-full">
-        <div className="mr-2 my-auto">
+      <div className="flex flex-col items-start w-full gap-4 pb-5 sm:flex-row lg:items-center">
+        <div className="my-auto mr-2">
           <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
         </div>
 
         {ccPair.is_editable_for_current_user && isEditing ? (
           <div className="flex items-center">
-            <input
+            <Input
               ref={inputRef}
               type="text"
               value={editableName}
               onChange={handleNameChange}
-              className="text-3xl w-full ring ring-1 ring-neutral-800 text-emphasis font-bold"
             />
             <Button onClick={handleUpdateName} className="ml-2">
               <CheckmarkIcon className="text-neutral-200" />
             </Button>
-            <Button onClick={() => resetEditing()} className="ml-2">
+            <Button
+              onClick={() => resetEditing()}
+              className="ml-2"
+              variant="destructive"
+            >
               <XIcon className="text-neutral-200" />
             </Button>
           </div>
@@ -178,13 +183,13 @@ function Main({ ccPairId }: { ccPairId: number }) {
           >
             {ccPair.name}
             {ccPair.is_editable_for_current_user && (
-              <EditIcon className="group-hover:visible invisible" />
+              <EditIcon className="invisible group-hover:visible" />
             )}
           </h1>
         )}
 
         {ccPair.is_editable_for_current_user && (
-          <div className="ml-auto flex gap-x-2">
+          <div className="flex ml-auto gap-x-2">
             {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
               ccPair.connector.source
             ) && (
@@ -207,12 +212,12 @@ function Main({ ccPairId }: { ccPairId: number }) {
         disabled={ccPair.status === ConnectorCredentialPairStatus.PAUSED}
         isDeleting={isDeleting}
       />
-      <div className="text-sm mt-1">
+      <div className="mt-1 text-sm">
         Total Documents Indexed:{" "}
         <b className="text-emphasis">{ccPair.num_docs_indexed}</b>
       </div>
       {!ccPair.is_editable_for_current_user && (
-        <div className="text-sm mt-2 text-neutral-500 italic">
+        <div className="mt-2 text-sm italic text-neutral-500">
           {ccPair.is_public
             ? "Public connectors are not editable by curators."
             : "This connector belongs to groups where you don't have curator permissions, so it's not editable."}
@@ -234,7 +239,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
           <>
             <Divider />
 
-            <Title className="mb-2">Credentials</Title>
+            <h3 className="mb-2">Credentials</h3>
 
             <CredentialSection
               ccPair={ccPair}
@@ -260,8 +265,8 @@ function Main({ ccPairId }: { ccPairId: number }) {
       {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
         to render these conditionally.*/}
       <div className="mt-6">
-        <div className="flex">
-          <Title>Indexing Attempts</Title>
+        <div className="flex pb-4">
+          <h3>Indexing Attempts</h3>
         </div>
         <IndexingAttemptsTable ccPair={ccPair} />
       </div>
@@ -281,7 +286,7 @@ export default function Page({ params }: { params: { ccPairId: string } }) {
   const ccPairId = parseInt(params.ccPairId);
 
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div className="w-full h-full overflow-y-auto">
       <div className="container">
         <Main ccPairId={ccPairId} />
       </div>

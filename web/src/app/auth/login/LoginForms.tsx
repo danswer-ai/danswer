@@ -110,11 +110,11 @@ export function LogInForms({}: {}) {
 
             <div className="flex items-center gap-4 pt-8">
               <Separator className="flex-1" />
-              <p className="whitespace-nowrap text-sm">Or login with</p>
+              <p className="text-sm whitespace-nowrap">Or login with</p>
               <Separator className="flex-1" />
             </div>
 
-            <div className="flex items-center gap-3 md:gap-6 w-full flex-col md:flex-row pt-8">
+            <div className="flex flex-col items-center w-full gap-3 pt-8 md:gap-6 md:flex-row">
               <Button disabled className="flex-1 w-full" variant="outline">
                 <Image
                   src={GmailIcon}
