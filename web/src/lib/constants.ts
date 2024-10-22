@@ -62,7 +62,7 @@ export const CUSTOM_ANALYTICS_ENABLED = process.env.CUSTOM_ANALYTICS_SECRET_KEY
 export const DISABLE_LLM_DOC_RELEVANCE =
   process.env.DISABLE_LLM_DOC_RELEVANCE?.toLowerCase() === "true";
 
-export const CLOUD_ENABLED =
+export const NEXT_PUBLIC_CLOUD_ENABLED =
   process.env.NEXT_PUBLIC_CLOUD_ENABLED?.toLowerCase() === "true";
 
 export const REGISTRATION_URL =
