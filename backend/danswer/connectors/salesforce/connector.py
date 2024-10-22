@@ -24,6 +24,12 @@ from danswer.connectors.models import SlimDocument
 from danswer.connectors.salesforce.utils import extract_dict_text
 from danswer.utils.logger import setup_logger
 
+
+# TODO: this connector does not work well at large scales
+# the large query against a large Salesforce instance has been reported to take 1.5 hours.
+# Additionally it seems to eat up more memory over time if the connection is long running (again a scale issue).
+
+
 DEFAULT_PARENT_OBJECT_TYPES = ["Account"]
 MAX_QUERY_LENGTH = 10000  # max query length is 20,000 characters
 ID_PREFIX = "SALESFORCE_"
