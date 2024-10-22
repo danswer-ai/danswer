@@ -21,6 +21,7 @@ import { DocumentSets } from "./DocumentSets";
 import { Assistants } from "./Assistants";
 import { Input } from "@/components/ui/input";
 import { errorHandlingFetcher } from "@/lib/fetcher";
+import { useRouter } from "next/navigation";
 
 interface TeamspaceCreationFormProps {
   onClose: () => void;
@@ -39,6 +40,7 @@ export const TeamspaceCreationForm = ({
   assistants,
   documentSets,
 }: TeamspaceCreationFormProps) => {
+  const router = useRouter();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [tokenBudget, setTokenBudget] = useState(0);
   const [periodHours, setPeriodHours] = useState(0);
@@ -106,7 +108,7 @@ export const TeamspaceCreationForm = ({
             const { id } = await response.json();
 
             await setTokenRateLimit(id);
-
+            router.refresh();
             toast({
               title: isUpdate ? "Teamspace Updated!" : "Teamspace Created!",
               description: isUpdate

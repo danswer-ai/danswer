@@ -53,7 +53,7 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
           openSidebar ? "opacity-100 delay-200" : "opacity-0 delay-100"
         }`}
       >
-        <div className="flex flex-col items-center h-full">
+        <div className="flex flex-col items-center h-full overflow-y-auto">
           <Image
             src={ArnoldAi}
             alt="ArnoldAi Logo"
@@ -104,7 +104,7 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
             </div>
           )}
         </div>
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4 mt-5">
           <UserSettingsButton user={user} defaultPage={defaultPage} />
         </div>
       </div>

@@ -85,8 +85,6 @@ export const Main = ({ assistants }: { assistants: Assistant[] }) => {
     setIsExpanded(false);
   };
 
-  console.log(data);
-
   return (
     <>
       <div className="h-full w-full overflow-y-auto">

@@ -73,7 +73,7 @@ export async function fetchChatData(
     ),
     fetchSS("/query/valid-tags"),
     fetchLLMProvidersSS(),
-    fetchSS("/folder"),
+    fetchSS(teamspaceId ? `/folder?teamspace_id=${teamspaceId}` : "/folder"),
     fetchSS("/input_prompt?include_public=true"),
     getCurrentTeamspaceUserSS(teamspaceId!),
   ];

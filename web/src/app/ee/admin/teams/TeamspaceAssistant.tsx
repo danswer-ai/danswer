@@ -10,6 +10,7 @@ import Logo from "../../../../../public/logo.png";
 import { SearchInput } from "@/components/SearchInput";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface TeamspaceAssistantProps {
   teamspace: Teamspace & { gradient: string };
@@ -88,6 +89,7 @@ export const TeamspaceAssistant = ({
   assistants,
   refreshTeamspaces,
 }: TeamspaceAssistantProps) => {
+  const router = useRouter();
   const { toast } = useToast();
   const [isAssistantModalOpen, setIsAssistantModalOpen] = useState(false);
   const [searchTermCurrent, setSearchTermCurrent] = useState("");
@@ -175,7 +177,7 @@ export const TeamspaceAssistant = ({
         });
         return;
       }
-
+      router.refresh();
       setCurrentAssistants(tempCurrentAssistants);
       setGlobalAssistants(tempGlobalAssistants);
       toast({

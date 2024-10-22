@@ -8,6 +8,7 @@ import { Globe, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ConnectorIndexingStatus, Teamspace } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 interface SimplifiedDataSource {
   id: number;
@@ -75,6 +76,7 @@ export const TeamspaceDataSource = ({
   ccPairs,
   refreshTeamspaces,
 }: TeamspaceDataSourceProps) => {
+  const router = useRouter();
   const { toast } = useToast();
   const [isDataSourceModalOpen, setIsDataSourceModalOpen] = useState(false);
   const [searchTermCurrent, setSearchTermCurrent] = useState("");
@@ -172,6 +174,7 @@ export const TeamspaceDataSource = ({
 
       setCurrentDataSources(tempCurrentDataSources);
       setGlobalDataSources(tempGlobalDataSources);
+      router.refresh();
       toast({
         title: "Data Source Updated",
         description:

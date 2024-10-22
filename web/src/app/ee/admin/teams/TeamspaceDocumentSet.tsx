@@ -7,6 +7,7 @@ import { DocumentSet, Teamspace } from "@/lib/types";
 import { Globe, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface TeamspaceDocumentSetProps {
   teamspace: Teamspace & { gradient: string };
@@ -78,6 +79,7 @@ export const TeamspaceDocumentSet = ({
   documentSets,
   refreshTeamspaces,
 }: TeamspaceDocumentSetProps) => {
+  const router = useRouter();
   const { toast } = useToast();
   const [isDocumentSetModalOpen, setIsDocumentSetModalOpen] = useState(false);
   const [searchTermCurrent, setSearchTermCurrent] = useState("");
@@ -164,7 +166,7 @@ export const TeamspaceDocumentSet = ({
         });
         return;
       }
-
+      router.refresh();
       setCurrentDocumentSets(tempCurrentDocumentSets);
       setGlobalDocumentSets(tempGlobalDocumentSets);
       toast({

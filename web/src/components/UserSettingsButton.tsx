@@ -44,7 +44,7 @@ export function UserSettingsButton({
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
   return (
-    <div className="relative" ref={userInfoRef}>
+    <div className="relative flex" ref={userInfoRef}>
       <Popover>
         <PopoverTrigger
           onClick={() => setUserInfoVisible(!userInfoVisible)}

@@ -18,7 +18,7 @@ import { DateRangeSearchSelector } from "../DateRangeSearchSelector";
 import { Button } from "@/components/ui/button";
 
 const SectionTitle = ({ children }: { children: string }) => (
-  <div className="flex px-2 py-3 text-sm font-bold">{children}</div>
+  <div className="flex px-5 py-3 text-sm font-bold">{children}</div>
 );
 
 import { DateRange as BaseDateRange } from "react-day-picker";
@@ -114,9 +114,9 @@ export function SourceSelector({
       </div>
 
       {existingSources.length > 0 && (
-        <div className="lg:border rounded-[8px] w-full px-2.5">
+        <div className="lg:border rounded-[8px] w-full">
           <SectionTitle>Sources</SectionTitle>
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:gap-0">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 lg:gap-0 px-3 max-h-96 overflow-y-auto">
             {listSourceMetadata()
               .filter((source) => existingSources.includes(source.internalName))
               .map((source, index, array) => (
@@ -145,9 +145,9 @@ export function SourceSelector({
       )}
 
       {availableDocumentSets.length > 0 && (
-        <div className="lg:border rounded-[8px] w-full px-2.5">
+        <div className="lg:border rounded-[8px] w-full">
           <SectionTitle>Knowledge Sets</SectionTitle>
-          <div>
+          <div className="px-3 max-h-80 overflow-y-auto">
             {availableDocumentSets
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((documentSet) => (
