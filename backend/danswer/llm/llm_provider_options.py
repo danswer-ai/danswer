@@ -135,8 +135,8 @@ def fetch_available_well_known_llms() -> list[WellKnownLLMProviderDescriptor]:
                 ),
             ],
             llm_names=fetch_models_for_provider(BEDROCK_PROVIDER_NAME),
-            default_model="anthropic.claude-3-5-sonnet-20241022-v1:0",
-            default_fast_model="anthropic.claude-3-5-sonnet-20241022-v1:0",
+            default_model="anthropic.claude-3-5-sonnet-20241022-v2:0",
+            default_fast_model="anthropic.claude-3-5-sonnet-20241022-v2:0",
         ),
     ]
 
