@@ -273,7 +273,13 @@ class NotionConnector(LoadConnector, PollConnector):
             if not prop:
                 continue
 
-            inner_value = _recurse_properties(prop)
+            try:
+                inner_value = _recurse_properties(prop)
+            except Exception as e:
+                # This is not a critical failure, these properties are not the actual contents of the page
+                # more similar to metadata
+                logger.warning(f"Error recursing properties for {prop_name}: {e}")
+                continue
             # Not a perfect way to format Notion database tables but there's no perfect representation
             # since this must be represented as plaintext
             if inner_value:
