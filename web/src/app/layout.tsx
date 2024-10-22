@@ -174,20 +174,6 @@ export default async function RootLayout({
             process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
           }`}
         >
-          {productGating === GatingType.PARTIAL && (
-            <div className="fixed top-0 left-0 right-0 z-50 bg-warning-100 text-warning-900 p-2 text-center">
-              <p className="text-sm font-medium">
-                Your account is pending payment!{" "}
-                <a
-                  href="/admin/cloud-settings"
-                  className="font-bold underline hover:text-warning-700 transition-colors"
-                >
-                  Update your billing information
-                </a>{" "}
-                or access will be suspended soon.
-              </p>
-            </div>
-          )}
           <UserProvider>
             <ProviderContextProvider>
               <SettingsProvider settings={combinedSettings}>

@@ -54,6 +54,7 @@ def fetch_settings(
     Postgres calls"""
     general_settings = load_settings()
     user_notifications = get_reindex_notification(user, db_session)
+    product_gating_notification = get_product_gating_notification(db_session)
 
     try:
         kv_store = get_kv_store()
@@ -61,11 +62,27 @@ def fetch_settings(
     except KvKeyNotFoundError:
         needs_reindexing = False
 
-    return UserSettings(
+    print("product_gating_notification", product_gating_notification)
+    # TODO: Clean up
+    print("response is ", [product_gating_notification])
+    response = UserSettings(
         **general_settings.model_dump(),
-        notifications=user_notifications,
+        notifications=[product_gating_notification]
+        if product_gating_notification
+        else user_notifications,
         needs_reindexing=needs_reindexing,
     )
+    print("act is ", response)
+    return response
+
+
+def get_product_gating_notification(db_session: Session) -> Notification | None:
+    notification = get_notifications(
+        user=None,
+        notif_type=NotificationType.TRIAL_ENDS_TWO_DAYS,
+        db_session=db_session,
+    )
+    return Notification.from_model(notification[0]) if notification else None
 
 
 def get_reindex_notification(

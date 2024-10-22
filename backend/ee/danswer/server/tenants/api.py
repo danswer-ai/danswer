@@ -8,6 +8,7 @@ from danswer.auth.users import User
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.engine import get_session_with_tenant
+from danswer.db.notification import create_notification
 from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
 from danswer.setup import setup_danswer
@@ -87,11 +88,16 @@ def gate_product(
     1) User has ended free trial without adding payment method
     2) User's card has declined
     """
-    token = current_tenant_id.set(current_tenant_id.get())
+    tenant_id = product_gating_request.tenant_id
+    token = current_tenant_id.set(tenant_id)
 
     settings = load_settings()
     settings.product_gating = product_gating_request.product_gating
     store_settings(settings)
+
+    if product_gating_request.notification:
+        with get_session_with_tenant(tenant_id) as db_session:
+            create_notification(None, product_gating_request.notification, db_session)
 
     if token is not None:
         current_tenant_id.reset(token)
