@@ -185,6 +185,7 @@ def setup_logger(
 
 
 def print_loggers() -> None:
+    """Print information about all loggers. Use to debug logging issues."""
     root_logger = logging.getLogger()
     loggers: list[logging.Logger | logging.PlaceHolder] = [root_logger]
     loggers.extend(logging.Logger.manager.loggerDict.values())
