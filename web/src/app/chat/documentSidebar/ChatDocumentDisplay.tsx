@@ -7,7 +7,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Info, Radio } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 
 interface DocumentDisplayProps {
   document: EnmeddDocument;
@@ -26,9 +25,7 @@ export function ChatDocumentDisplay({
   handleSelect,
   tokenLimitReached,
 }: DocumentDisplayProps) {
-  const isInternet = document.is_internet;
   // Consider reintroducing null scored docs in the future
-
   if (document.score === null) {
     return null;
   }
@@ -57,11 +54,6 @@ export function ChatDocumentDisplay({
               target="_blank"
               rel="noopener noreferrer"
             >
-              {isInternet ? (
-                <InternetSearchIcon url={document.link} />
-              ) : (
-                <SourceIcon sourceType={document.source_type} iconSize={18} />
-              )}
               <span className="truncate">
                 {document.semantic_identifier || document.document_id}
               </span>

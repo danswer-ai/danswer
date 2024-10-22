@@ -191,7 +191,6 @@ export const DocumentDisplay = ({
   const relevance_explanation =
     document.relevance_explanation ?? additional_relevance?.content;
   const settings = useContext(SettingsContext);
-
   return (
     <div
       key={document.semantic_identifier}

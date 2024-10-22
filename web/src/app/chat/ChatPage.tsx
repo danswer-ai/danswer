@@ -1557,32 +1557,19 @@ export function ChatPage({
   const [showDocSidebar, setShowDocSidebar] = useState(windowWidth >= 1420);
   const [isWide, setIsWide] = useState(windowWidth >= 1420);
 
-  // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
-  const [untoggled, setUntoggled] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
-  const explicitlyUntoggle = () => {
-    setShowDocSidebar(false);
-
-    setUntoggled(true);
-    setTimeout(() => {
-      setUntoggled(false);
-    }, 200);
-  };
   const toggleSidebar = () => {
     if (sidebarElementRef.current) {
       sidebarElementRef.current.style.transition = "all 0.3s ease-in-out";
 
-      sidebarElementRef.current.style.width = showDocSidebar
-        ? "300px"
-        : "500px";
+      sidebarElementRef.current.style.width = showDocSidebar ? "300px" : "0px";
     }
 
     setShowDocSidebar((prevState) => !prevState);
   };
   const removeToggle = () => {
     setShowDocSidebar(false);
-    setUntoggled(true);
   };
 
   const sidebarElementRef = useRef<HTMLDivElement>(null);
@@ -2388,82 +2375,70 @@ export function ChatPage({
                               />
                             </div>
                           )}
-                        {retrievalEnabled ? (
-                          <>
-                            <AnimatePresence>
-                              {showDocSidebar && (
-                                <motion.div
-                                  className={`fixed w-full h-full bg-background-inverted bg-opacity-20 inset-0 z-overlay 2xl:hidden`}
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: showDocSidebar ? 1 : 0 }}
-                                  exit={{ opacity: 0 }}
-                                  transition={{
-                                    duration: 0.2,
-                                    opacity: {
-                                      delay: showDocSidebar ? 0 : 0.3,
-                                    },
-                                  }}
-                                  style={{
-                                    pointerEvents: showDocSidebar
-                                      ? "auto"
-                                      : "none",
-                                  }}
-                                  onClick={toggleSidebar}
-                                />
-                              )}
-                            </AnimatePresence>
-
-                            <div
-                              ref={sidebarElementRef}
-                              className={`fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full ${
-                                showDocSidebar
-                                  ? "translate-x-0"
-                                  : "translate-x-full"
-                              }`}
-                              style={{
-                                width: showDocSidebar
-                                  ? Math.max(350, usedSidebarWidth)
-                                  : 0,
-                              }}
-                            >
-                              <ResizableSection
-                                updateSidebarWidth={updateSidebarWidth}
-                                intialWidth={usedSidebarWidth}
-                                minWidth={350}
-                                maxWidth={maxDocumentSidebarWidth || undefined}
-                              >
-                                <DocumentSidebar
-                                  initialWidth={
-                                    showDocSidebar ? usedSidebarWidth : 0
-                                  }
-                                  ref={innerSidebarElementRef}
-                                  closeSidebar={() => toggleSidebar()}
-                                  selectedMessage={aiMessage}
-                                  selectedDocuments={selectedDocuments}
-                                  toggleDocumentSelection={
-                                    toggleDocumentSelection
-                                  }
-                                  clearSelectedDocuments={
-                                    clearSelectedDocuments
-                                  }
-                                  selectedDocumentTokens={
-                                    selectedDocumentTokens
-                                  }
-                                  maxTokens={maxTokens}
-                                  isLoading={isFetchingChatMessages}
-                                  showDocSidebar={showDocSidebar}
-                                  isWide={isWide}
-                                />
-                              </ResizableSection>
-                            </div>
-                          </>
-                        ) : // Another option is to use a div with the width set to the initial width, so that the
-                        // chat section appears in the same place as before
-                        // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
-                        null}
                       </div>
                     </div>
                   </div>
+                  {retrievalEnabled ? (
+                    <>
+                      <AnimatePresence>
+                        {showDocSidebar && (
+                          <motion.div
+                            className={`fixed w-full h-full bg-background-inverted bg-opacity-20 inset-0 z-overlay 2xl:hidden`}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: showDocSidebar ? 1 : 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{
+                              duration: 0.2,
+                              opacity: {
+                                delay: showDocSidebar ? 0 : 0.3,
+                              },
+                            }}
+                            style={{
+                              pointerEvents: showDocSidebar ? "auto" : "none",
+                            }}
+                            onClick={toggleSidebar}
+                          />
+                        )}
+                      </AnimatePresence>
+
+                      <div
+                        ref={sidebarElementRef}
+                        className={`fixed 2xl:relative top-0 right-0 z-overlay bg-background  flex-none overflow-y-hidden h-full ${
+                          showDocSidebar ? "translate-x-0" : "translate-x-full"
+                        }`}
+                        style={{
+                          width: showDocSidebar
+                            ? Math.max(350, usedSidebarWidth)
+                            : 0,
+                        }}
+                      >
+                        <ResizableSection
+                          updateSidebarWidth={updateSidebarWidth}
+                          intialWidth={usedSidebarWidth}
+                          minWidth={350}
+                          maxWidth={maxDocumentSidebarWidth || undefined}
+                        >
+                          <DocumentSidebar
+                            initialWidth={showDocSidebar ? usedSidebarWidth : 0}
+                            ref={innerSidebarElementRef}
+                            closeSidebar={() => toggleSidebar()}
+                            selectedMessage={aiMessage}
+                            selectedDocuments={selectedDocuments}
+                            toggleDocumentSelection={toggleDocumentSelection}
+                            clearSelectedDocuments={clearSelectedDocuments}
+                            selectedDocumentTokens={selectedDocumentTokens}
+                            maxTokens={maxTokens}
+                            isLoading={isFetchingChatMessages}
+                            showDocSidebar={showDocSidebar}
+                            isWide={isWide}
+                          />
+                        </ResizableSection>
+                      </div>
+                    </>
+                  ) : // Another option is to use a div with the width set to the initial width, so that the
+                  // chat section appears in the same place as before
+                  // <div style={documentSidebarInitialWidth ? {width: documentSidebarInitialWidth} : {}}></div>
+                  null}
                 </>
               )}
             </Dropzone>
