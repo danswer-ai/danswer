@@ -18,7 +18,25 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-_USER_NOT_FOUND = "Unknown User"
+
+_USER_EMAIL_CACHE: dict[str, str | None] = {}
+
+
+def get_user_email_from_username__server(
+    confluence_client: OnyxConfluence, user_name: str
+) -> str | None:
+    global _USER_EMAIL_CACHE
+    if _USER_EMAIL_CACHE.get(user_name) is None:
+        try:
+            response = confluence_client.get_mobile_parameters(user_name)
+            email = response.get("email")
+        except Exception:
+            email = None
+        _USER_EMAIL_CACHE[user_name] = email
+    return _USER_EMAIL_CACHE[user_name]
+
+
+_USER_NOT_FOUND = "Unknown Confluence User"
 _USER_ID_TO_DISPLAY_NAME_CACHE: dict[str, str] = {}
 
 
@@ -32,19 +50,22 @@ def _get_user(confluence_client: OnyxConfluence, user_id: str) -> str:
     Returns:
         str: The User Display Name. 'Unknown User' if the user is deactivated or not found
     """
-    # Cache hit
-    if user_id in _USER_ID_TO_DISPLAY_NAME_CACHE:
-        return _USER_ID_TO_DISPLAY_NAME_CACHE[user_id]
+    global _USER_ID_TO_DISPLAY_NAME_CACHE
+    if _USER_ID_TO_DISPLAY_NAME_CACHE.get(user_id) is None:
+        try:
+            result = confluence_client.get_user_details_by_userkey(user_id)
+            found_display_name = result.get("displayName")
+        except Exception:
+            found_display_name = None
 
-    try:
-        result = confluence_client.get_user_details_by_accountid(user_id)
-        if found_display_name := result.get("displayName"):
-            _USER_ID_TO_DISPLAY_NAME_CACHE[user_id] = found_display_name
-    except Exception:
-        # may need to just not log this error but will leave here for now
-        logger.exception(
-            f"Unable to get the User Display Name with the id: '{user_id}'"
-        )
+        if not found_display_name:
+            try:
+                result = confluence_client.get_user_details_by_accountid(user_id)
+                found_display_name = result.get("displayName")
+            except Exception:
+                found_display_name = None
+
+        _USER_ID_TO_DISPLAY_NAME_CACHE[user_id] = found_display_name
 
     return _USER_ID_TO_DISPLAY_NAME_CACHE.get(user_id, _USER_NOT_FOUND)
 
@@ -174,3 +195,20 @@ def datetime_from_string(datetime_string: str) -> datetime:
         datetime_object = datetime_object.astimezone(timezone.utc)
 
     return datetime_object
+
+
+def build_confluence_client(
+    credentials_json: dict[str, Any], is_cloud: bool, wiki_base: str
+) -> OnyxConfluence:
+    return OnyxConfluence(
+        api_version="cloud" if is_cloud else "latest",
+        # Remove trailing slash from wiki_base if present
+        url=wiki_base.rstrip("/"),
+        # passing in username causes issues for Confluence data center
+        username=credentials_json["confluence_username"] if is_cloud else None,
+        password=credentials_json["confluence_access_token"] if is_cloud else None,
+        token=credentials_json["confluence_access_token"] if not is_cloud else None,
+        backoff_and_retry=True,
+        max_backoff_retries=60,
+        max_backoff_seconds=60,
+    )

@@ -1,6 +1,7 @@
 from datetime import datetime
 from datetime import timezone
 from typing import Any
+from urllib.parse import quote
 
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
@@ -8,6 +9,7 @@ from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
 from danswer.connectors.confluence.utils import attachment_to_content
+from danswer.connectors.confluence.utils import build_confluence_client
 from danswer.connectors.confluence.utils import build_confluence_document_id
 from danswer.connectors.confluence.utils import datetime_from_string
 from danswer.connectors.confluence.utils import extract_text_from_confluence_html
@@ -74,20 +76,21 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         self.wiki_base = wiki_base.rstrip("/")
 
         # if nothing is provided, we will fetch all pages
-        self.cql_page_query = "type=page"
+        cql_page_query = "type=page"
         if cql_query:
             # if a cql_query is provided, we will use it to fetch the pages
-            self.cql_page_query = cql_query
+            cql_page_query = cql_query
         elif space:
             # if no cql_query is provided, we will use the space to fetch the pages
-            self.cql_page_query += f" and space='{space}'"
+            cql_page_query += f" and space='{quote(space)}'"
         elif page_id:
             if index_recursively:
-                self.cql_page_query += f" and ancestor='{page_id}'"
+                cql_page_query += f" and ancestor='{page_id}'"
             else:
                 # if neither a space nor a cql_query is provided, we will use the page_id to fetch the page
-                self.cql_page_query += f" and id='{page_id}'"
+                cql_page_query += f" and id='{page_id}'"
 
+        self.cql_page_query = cql_page_query
         self.cql_label_filter = ""
         self.cql_time_filter = ""
         if labels_to_skip:
@@ -96,19 +99,12 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             self.cql_label_filter = f"&label not in ({comma_separated_labels})"
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
-        username = credentials["confluence_username"]
-        access_token = credentials["confluence_access_token"]
-
         # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
         # for a list of other hidden constructor args
-        self.confluence_client = OnyxConfluence(
-            url=self.wiki_base,
-            username=username if self.is_cloud else None,
-            password=access_token if self.is_cloud else None,
-            token=access_token if not self.is_cloud else None,
-            backoff_and_retry=True,
-            max_backoff_retries=60,
-            max_backoff_seconds=60,
+        self.confluence_client = build_confluence_client(
+            credentials_json=credentials,
+            is_cloud=self.is_cloud,
+            wiki_base=self.wiki_base,
         )
         return None
 
@@ -202,12 +198,12 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         page_query = self.cql_page_query + self.cql_label_filter + self.cql_time_filter
         # Fetch pages as Documents
-        for pages in self.confluence_client.paginated_cql_page_retrieval(
+        for page_batch in self.confluence_client.paginated_cql_page_retrieval(
             cql=page_query,
             expand=",".join(_PAGE_EXPANSION_FIELDS),
             limit=self.batch_size,
         ):
-            for page in pages:
+            for page in page_batch:
                 confluence_page_ids.append(page["id"])
                 doc = self._convert_object_to_document(page)
                 if doc is not None:

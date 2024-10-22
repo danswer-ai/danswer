@@ -1,4 +1,3 @@
-import argparse
 import subprocess
 import threading
 
@@ -131,7 +130,4 @@ def run_jobs() -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run background jobs.")
-    args = parser.parse_args()
-
     run_jobs()
