@@ -77,12 +77,12 @@ const MODEL_NAMES_SUPPORTING_IMAGE_INPUT = [
   "claude-3-opus-20240229-v1:0",
   "claude-3-sonnet-20240229-v1:0",
   "claude-3-haiku-20240307-v1:0",
-  "claude-3-5-sonnet-claude-3-5-sonnet-20241022-v1:0",
+  "claude-3-5-sonnet-20241022-v1:0",
   // claude names with full AWS Bedrock names
   "anthropic.claude-3-opus-20240229-v1:0",
   "anthropic.claude-3-sonnet-20240229-v1:0",
   "anthropic.claude-3-haiku-20240307-v1:0",
-  "anthropic.claude-3-5-sonnet-claude-3-5-sonnet-20241022-v1:0",
+  "anthropic.claude-3-5-sonnet-20241022-v1:0",
 ];
 
 export function checkLLMSupportsImageInput(model: string) {
