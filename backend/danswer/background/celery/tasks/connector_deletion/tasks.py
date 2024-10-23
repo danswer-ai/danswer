@@ -53,7 +53,7 @@ def check_for_connector_deletion_task(self: Task, tenant_id: str | None) -> None
             "Soft time limit exceeded, task is being terminated gracefully."
         )
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
         if lock_beat.owned():
             lock_beat.release()
@@ -95,7 +95,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
 
     # Add all documents that need to be updated into the queue
     task_logger.info(
-        f"RedisConnectorDeletion.generate_tasks starting. cc_pair_id={cc_pair.id}"
+        f"RedisConnectorDeletion.generate_tasks starting. cc_pair={cc_pair.id}"
     )
     tasks_generated = rcd.generate_tasks(app, db_session, r, lock_beat, tenant_id)
     if tasks_generated is None:
@@ -109,7 +109,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
 
     task_logger.info(
         f"RedisConnectorDeletion.generate_tasks finished. "
-        f"cc_pair_id={cc_pair.id} tasks_generated={tasks_generated}"
+        f"cc_pair={cc_pair.id} tasks_generated={tasks_generated}"
     )
 
     # set this only after all tasks have been added
