@@ -128,7 +128,9 @@ else:
     # If the environment variable is empty, allow all origins
     CORS_ALLOWED_ORIGIN = ["*"]
 
-current_tenant_id = contextvars.ContextVar("current_tenant_id", default="public")
+CURRENT_TENANT_ID_CONTEXTVAR = contextvars.ContextVar(
+    "current_tenant_id", default="public"
+)
 
 
 SUPPORTED_EMBEDDING_MODELS = [

@@ -93,7 +93,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
-from shared_configs.configs import current_tenant_id
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
 
@@ -246,7 +246,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             )
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
-            token = current_tenant_id.set(tenant_id)
+            token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
             verify_email_is_invited(user_create.email)
             verify_email_domain(user_create.email)
@@ -285,7 +285,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 else:
                     raise exceptions.UserAlreadyExists()
 
-            current_tenant_id.reset(token)
+            CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
             return user
 
     async def on_after_login(
@@ -337,7 +337,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         token = None
         async with get_async_session_with_tenant(tenant_id) as db_session:
-            token = current_tenant_id.set(tenant_id)
+            token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
             verify_email_in_whitelist(account_email, tenant_id)
             verify_email_domain(account_email)
@@ -427,7 +427,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 user.oidc_expiry = None  # type: ignore
 
             if token:
-                current_tenant_id.reset(token)
+                CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
             return user
 

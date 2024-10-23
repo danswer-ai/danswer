@@ -21,7 +21,7 @@ from danswer.db.models import User
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from ee.danswer.db.token_limit import fetch_all_global_token_rate_limits
-from shared_configs.configs import current_tenant_id
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 
 
 logger = setup_logger()
@@ -41,7 +41,7 @@ def check_token_rate_limits(
     versioned_rate_limit_strategy = fetch_versioned_implementation(
         "danswer.server.query_and_chat.token_limit", "_check_token_rate_limits"
     )
-    return versioned_rate_limit_strategy(user, current_tenant_id.get())
+    return versioned_rate_limit_strategy(user, CURRENT_TENANT_ID_CONTEXTVAR.get())
 
 
 def _check_token_rate_limits(_: User | None, tenant_id: str | None) -> None:

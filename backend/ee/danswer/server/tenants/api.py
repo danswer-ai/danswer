@@ -23,7 +23,7 @@ from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
 from ee.danswer.server.tenants.provisioning import user_owns_a_tenant
-from shared_configs.configs import current_tenant_id
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 
 
 stripe.api_key = STRIPE_SECRET_KEY
@@ -54,7 +54,7 @@ def create_tenant(
         else:
             logger.info(f"Schema already exists for tenant {tenant_id}")
 
-        token = current_tenant_id.set(tenant_id)
+        token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
         run_alembic_migrations(tenant_id)
 
         with get_session_with_tenant(tenant_id) as db_session:
@@ -73,7 +73,7 @@ def create_tenant(
         )
     finally:
         if token is not None:
-            current_tenant_id.reset(token)
+            CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
 
 @router.post("/product-gating")
@@ -87,14 +87,14 @@ def gate_product(
     1) User has ended free trial without adding payment method
     2) User's card has declined
     """
-    token = current_tenant_id.set(current_tenant_id.get())
+    token = CURRENT_TENANT_ID_CONTEXTVAR.set(CURRENT_TENANT_ID_CONTEXTVAR.get())
 
     settings = load_settings()
     settings.product_gating = product_gating_request.product_gating
     store_settings(settings)
 
     if token is not None:
-        current_tenant_id.reset(token)
+        CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
 
 @router.get("/billing-information", response_model=BillingInformation)
@@ -102,14 +102,16 @@ async def billing_information(
     _: User = Depends(current_admin_user),
 ) -> BillingInformation:
     logger.info("Fetching billing information")
-    return BillingInformation(**fetch_billing_information(current_tenant_id.get()))
+    return BillingInformation(
+        **fetch_billing_information(CURRENT_TENANT_ID_CONTEXTVAR.get())
+    )
 
 
 @router.post("/create-customer-portal-session")
 async def create_customer_portal_session(_: User = Depends(current_admin_user)) -> dict:
     try:
         # Fetch tenant_id and current tenant's information
-        tenant_id = current_tenant_id.get()
+        tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
         stripe_info = fetch_tenant_stripe_information(tenant_id)
         stripe_customer_id = stripe_info.get("stripe_customer_id")
         if not stripe_customer_id:

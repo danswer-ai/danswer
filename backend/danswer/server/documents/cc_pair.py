@@ -24,7 +24,7 @@ from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
 from danswer.db.document import get_document_counts_for_cc_pairs
-from danswer.db.engine import current_tenant_id
+from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.enums import AccessType
@@ -267,7 +267,7 @@ def prune_cc_pair(
         f"{cc_pair.connector.name} connector."
     )
     tasks_created = try_creating_prune_generator_task(
-        primary_app, cc_pair, db_session, r, current_tenant_id.get()
+        primary_app, cc_pair, db_session, r, CURRENT_TENANT_ID_CONTEXTVAR.get()
     )
     if not tasks_created:
         raise HTTPException(
@@ -353,7 +353,9 @@ def sync_cc_pair(
 
     logger.info(f"Syncing the {cc_pair.connector.name} connector.")
     sync_external_doc_permissions_task.apply_async(
-        kwargs=dict(cc_pair_id=cc_pair_id, tenant_id=current_tenant_id.get()),
+        kwargs=dict(
+            cc_pair_id=cc_pair_id, tenant_id=CURRENT_TENANT_ID_CONTEXTVAR.get()
+        ),
     )
 
     return StatusResponse(
