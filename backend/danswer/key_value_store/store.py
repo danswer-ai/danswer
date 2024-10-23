@@ -17,6 +17,7 @@ from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import current_tenant_id
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 logger = setup_logger()
 
@@ -35,7 +36,7 @@ class PgRedisKVStore(KeyValueStore):
         with Session(engine, expire_on_commit=False) as session:
             if MULTI_TENANT:
                 tenant_id = current_tenant_id.get()
-                if tenant_id == "public":
+                if tenant_id == POSTGRES_DEFAULT_SCHEMA:
                     raise HTTPException(
                         status_code=401, detail="User must authenticate"
                     )

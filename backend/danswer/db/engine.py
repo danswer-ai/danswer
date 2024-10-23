@@ -36,11 +36,11 @@ from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.app_configs import SECRET_JWT_KEY
-from danswer.configs.constants import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import current_tenant_id
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 logger = setup_logger()
 
@@ -192,13 +192,13 @@ class SqlEngine:
 def get_all_tenant_ids() -> list[str] | list[None]:
     if not MULTI_TENANT:
         return [None]
-    with get_session_with_tenant(tenant_id="public") as session:
+    with get_session_with_tenant(tenant_id=POSTGRES_DEFAULT_SCHEMA) as session:
         result = session.execute(
             text(
-                """
-            SELECT schema_name
-            FROM information_schema.schemata
-            WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'public')"""
+                f"""
+                SELECT schema_name
+                FROM information_schema.schemata
+                WHERE schema_name NOT IN ('pg_catalog', 'information_schema', '{POSTGRES_DEFAULT_SCHEMA}')"""
             )
         )
         tenant_ids = [row[0] for row in result]
@@ -365,7 +365,7 @@ def get_session_generator_with_tenant() -> Generator[Session, None, None]:
 def get_session() -> Generator[Session, None, None]:
     """Generate a database session with the appropriate tenant schema set."""
     tenant_id = current_tenant_id.get()
-    if tenant_id == "public" and MULTI_TENANT:
+    if tenant_id == POSTGRES_DEFAULT_SCHEMA and MULTI_TENANT:
         raise HTTPException(status_code=401, detail="User must authenticate")
 
     engine = get_sqlalchemy_engine()

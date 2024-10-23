@@ -94,6 +94,7 @@ from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from shared_configs.configs import current_tenant_id
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 logger = setup_logger()
 
@@ -187,7 +188,7 @@ def verify_email_domain(email: str) -> None:
 
 def get_tenant_id_for_email(email: str) -> str:
     if not MULTI_TENANT:
-        return "public"
+        return POSTGRES_DEFAULT_SCHEMA
     # Implement logic to get tenant_id from the mapping table
     with Session(get_sqlalchemy_engine()) as db_session:
         result = db_session.execute(
@@ -235,7 +236,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     ) -> User:
         try:
             tenant_id = (
-                get_tenant_id_for_email(user_create.email) if MULTI_TENANT else "public"
+                get_tenant_id_for_email(user_create.email)
+                if MULTI_TENANT
+                else POSTGRES_DEFAULT_SCHEMA
             )
         except exceptions.UserNotExists:
             raise HTTPException(status_code=401, detail="User not found")
@@ -327,7 +330,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         # Get tenant_id from mapping table
         try:
             tenant_id = (
-                get_tenant_id_for_email(account_email) if MULTI_TENANT else "public"
+                get_tenant_id_for_email(account_email)
+                if MULTI_TENANT
+                else POSTGRES_DEFAULT_SCHEMA
             )
         except exceptions.UserNotExists:
             raise HTTPException(status_code=401, detail="User not found")

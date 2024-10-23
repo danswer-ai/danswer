@@ -60,6 +60,7 @@ from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import current_tenant_id
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.configs import SLACK_CHANNEL_ID
 
 logger = setup_logger()
@@ -510,7 +511,9 @@ if __name__ == "__main__":
             for tenant_id in tenant_ids:
                 with get_session_with_tenant(tenant_id) as db_session:
                     try:
-                        token = current_tenant_id.set(tenant_id or "public")
+                        token = current_tenant_id.set(
+                            tenant_id or POSTGRES_DEFAULT_SCHEMA
+                        )
                         latest_slack_bot_tokens = fetch_tokens()
                         current_tenant_id.reset(token)
 
