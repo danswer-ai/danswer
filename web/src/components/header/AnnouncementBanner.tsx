@@ -15,7 +15,6 @@ export function AnnouncementBanner() {
     settings?.settings.notifications || []
   );
 
-  console.log("notifications", localNotifications);
   useEffect(() => {
     const filteredNotifications = (
       settings?.settings.notifications || []
