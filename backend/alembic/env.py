@@ -14,7 +14,7 @@ from danswer.db.engine import build_connection_string
 from danswer.db.models import Base
 from celery.backends.database.session import ResultModelBase  # type: ignore
 from danswer.db.engine import get_all_tenant_ids
-from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 # Alembic Config object
 config = context.config

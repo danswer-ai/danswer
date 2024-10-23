@@ -7,12 +7,12 @@ from sqlalchemy.schema import CreateSchema
 
 from alembic import command
 from alembic.config import Config
-from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
 from danswer.db.engine import build_connection_string
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import UserTenantMapping
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 logger = setup_logger()
 

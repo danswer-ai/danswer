@@ -60,7 +60,6 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import EMAIL_FROM
 from danswer.configs.app_configs import MULTI_TENANT
-from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SECRET_JWT_KEY
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
@@ -95,6 +94,7 @@ from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from shared_configs.configs import current_tenant_id
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 logger = setup_logger()
 

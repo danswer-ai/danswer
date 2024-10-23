@@ -29,7 +29,6 @@ from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
 from danswer.configs.app_configs import POSTGRES_DB
-from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
 from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
@@ -41,6 +40,7 @@ from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import current_tenant_id
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 logger = setup_logger()
 

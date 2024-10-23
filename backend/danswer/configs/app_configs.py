@@ -142,7 +142,6 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
-POSTGRES_DEFAULT_SCHEMA = os.environ.get("POSTGRES_DEFAULT_SCHEMA") or "public"
 
 POSTGRES_API_SERVER_POOL_SIZE = int(
     os.environ.get("POSTGRES_API_SERVER_POOL_SIZE") or 40

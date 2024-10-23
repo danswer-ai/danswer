@@ -7,7 +7,6 @@ from slack_sdk import WebClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
-from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
@@ -61,6 +60,7 @@ from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import current_tenant_id
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.configs import SLACK_CHANNEL_ID
 
 logger = setup_logger()
