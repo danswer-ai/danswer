@@ -3,7 +3,7 @@ from typing import cast
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.user_group import delete_user_group

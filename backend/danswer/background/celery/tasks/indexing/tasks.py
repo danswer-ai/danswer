@@ -5,15 +5,18 @@ from time import sleep
 from typing import cast
 from uuid import uuid4
 
+from celery import Celery
 from celery import shared_task
+from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
 from sqlalchemy.orm import Session
 
-from danswer.background.celery.celery_app import celery_app
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
-from danswer.background.celery.tasks.shared.tasks import RedisConnectorIndexingFenceData
+from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
+    RedisConnectorIndexingFenceData,
+)
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
@@ -50,8 +53,9 @@ logger = setup_logger()
 @shared_task(
     name="check_for_indexing",
     soft_time_limit=300,
+    bind=True,
 )
-def check_for_indexing(tenant_id: str | None) -> int | None:
+def check_for_indexing(self: Task, tenant_id: str | None) -> int | None:
     tasks_created = 0
 
     r = get_redis_client()
@@ -66,24 +70,35 @@ def check_for_indexing(tenant_id: str | None) -> int | None:
         if not lock_beat.acquire(blocking=False):
             return None
 
+        cc_pair_ids: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
-            # Get the primary search settings
-            primary_search_settings = get_current_search_settings(db_session)
-            search_settings = [primary_search_settings]
-
-            # Check for secondary search settings
-            secondary_search_settings = get_secondary_search_settings(db_session)
-            if secondary_search_settings is not None:
-                # If secondary settings exist, add them to the list
-                search_settings.append(secondary_search_settings)
-
             cc_pairs = fetch_connector_credential_pairs(db_session)
-            for cc_pair in cc_pairs:
+            for cc_pair_entry in cc_pairs:
+                cc_pair_ids.append(cc_pair_entry.id)
+
+        for cc_pair_id in cc_pair_ids:
+            with get_session_with_tenant(tenant_id) as db_session:
+                # Get the primary search settings
+                primary_search_settings = get_current_search_settings(db_session)
+                search_settings = [primary_search_settings]
+
+                # Check for secondary search settings
+                secondary_search_settings = get_secondary_search_settings(db_session)
+                if secondary_search_settings is not None:
+                    # If secondary settings exist, add them to the list
+                    search_settings.append(secondary_search_settings)
+
                 for search_settings_instance in search_settings:
                     rci = RedisConnectorIndexing(
-                        cc_pair.id, search_settings_instance.id
+                        cc_pair_id, search_settings_instance.id
                     )
                     if r.exists(rci.fence_key):
+                        continue
+
+                    cc_pair = get_connector_credential_pair_from_id(
+                        cc_pair_id, db_session
+                    )
+                    if not cc_pair:
                         continue
 
                     last_attempt = get_last_attempt_for_cc_pair(
@@ -101,6 +116,7 @@ def check_for_indexing(tenant_id: str | None) -> int | None:
                     # using a task queue and only allowing one task per cc_pair/search_setting
                     # prevents us from starving out certain attempts
                     attempt_id = try_creating_indexing_task(
+                        self.app,
                         cc_pair,
                         search_settings_instance,
                         False,
@@ -210,6 +226,7 @@ def _should_index(
 
 
 def try_creating_indexing_task(
+    celery_app: Celery,
     cc_pair: ConnectorCredentialPair,
     search_settings: SearchSettings,
     reindex: bool,

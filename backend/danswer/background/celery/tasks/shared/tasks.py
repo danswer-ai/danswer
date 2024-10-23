@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from tenacity import RetryError
 
 from danswer.access.access import get_access_for_document
-from danswer.background.celery.celery_app import task_logger
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.tasks.shared.RetryDocumentIndex import RetryDocumentIndex
 from danswer.db.document import delete_document_by_connector_credential_pair__no_commit
 from danswer.db.document import delete_documents_complete__no_commit

@@ -3,13 +3,10 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.configs.app_configs import MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE
-from danswer.configs.app_configs import MULTI_TENANT
-from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
     rate_limit_builder,
 )
@@ -19,7 +16,6 @@ from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SlimConnector
 from danswer.connectors.models import Document
 from danswer.db.connector_credential_pair import get_connector_credential_pair
-from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import TaskStatus
 from danswer.db.models import TaskQueueState
 from danswer.redis.redis_pool import get_redis_client
@@ -129,33 +125,10 @@ def celery_is_listening_to_queue(worker: Any, name: str) -> bool:
 def celery_is_worker_primary(worker: Any) -> bool:
     """There are multiple approaches that could be taken to determine if a celery worker
     is 'primary', as defined by us. But the way we do it is to check the hostname set
-    for the celery worker, which can be done either in celeryconfig.py or on the
+    for the celery worker, which can be done on the
     command line with '--hostname'."""
     hostname = worker.hostname
     if hostname.startswith("primary"):
         return True
 
     return False
-
-
-def get_all_tenant_ids() -> list[str] | list[None]:
-    if not MULTI_TENANT:
-        return [None]
-    with get_session_with_tenant(tenant_id="public") as session:
-        result = session.execute(
-            text(
-                """
-            SELECT schema_name
-            FROM information_schema.schemata
-            WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'public')"""
-            )
-        )
-        tenant_ids = [row[0] for row in result]
-
-    valid_tenants = [
-        tenant
-        for tenant in tenant_ids
-        if tenant is None or tenant.startswith(TENANT_ID_PREFIX)
-    ]
-
-    return valid_tenants
