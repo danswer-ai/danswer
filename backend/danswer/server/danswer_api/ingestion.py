@@ -68,7 +68,7 @@ def upsert_ingestion_doc(
     doc_info: IngestionDocument,
     _: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
-    tenant_id=Depends(get_current_tenant_id),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> IngestionResult:
     doc_info.document.from_ingestion_api = True
 

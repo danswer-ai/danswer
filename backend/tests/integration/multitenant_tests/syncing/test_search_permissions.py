@@ -91,7 +91,7 @@ def test_multi_tenant_access_control(reset_multitenant: None) -> None:
     # Assert that the search tool was used
     assert response1.tool_name == "run_search"
 
-    response_doc_ids = {doc["document_id"] for doc in response1.tool_result}
+    response_doc_ids = {doc["document_id"] for doc in response1.tool_result or []}
     assert tenant1_doc_ids.issubset(
         response_doc_ids
     ), "Not all Tenant 1 document IDs are in the response"
@@ -100,7 +100,7 @@ def test_multi_tenant_access_control(reset_multitenant: None) -> None:
     ), "Tenant 2 document IDs should not be in the response"
 
     # Assert that the contents are correct
-    for doc in response1.tool_result:
+    for doc in response1.tool_result or []:
         assert doc["content"] == "Tenant 1 Document Content"
 
     # User 2 sends a message and gets a response
@@ -112,7 +112,7 @@ def test_multi_tenant_access_control(reset_multitenant: None) -> None:
     # Assert that the search tool was used
     assert response2.tool_name == "run_search"
     # Assert that the tool_result contains Tenant 2's documents
-    response_doc_ids = {doc["document_id"] for doc in response2.tool_result}
+    response_doc_ids = {doc["document_id"] for doc in response2.tool_result or []}
     assert tenant2_doc_ids.issubset(
         response_doc_ids
     ), "Not all Tenant 2 document IDs are in the response"
@@ -120,7 +120,7 @@ def test_multi_tenant_access_control(reset_multitenant: None) -> None:
         tenant1_doc_ids
     ), "Tenant 1 document IDs should not be in the response"
     # Assert that the contents are correct
-    for doc in response2.tool_result:
+    for doc in response2.tool_result or []:
         assert doc["content"] == "Tenant 2 Document Content"
 
     # User 1 tries to access Tenant 2's documents
@@ -132,7 +132,7 @@ def test_multi_tenant_access_control(reset_multitenant: None) -> None:
     # Assert that the search tool was used
     assert response_cross.tool_name == "run_search"
     # Assert that the tool_result is empty or does not contain Tenant 2's documents
-    response_doc_ids = {doc["document_id"] for doc in response_cross.tool_result}
+    response_doc_ids = {doc["document_id"] for doc in response_cross.tool_result or []}
     # Ensure none of Tenant 2's document IDs are in the response
     assert not response_doc_ids.intersection(tenant2_doc_ids)
     # Optionally, assert that tool_result is empty
@@ -147,7 +147,7 @@ def test_multi_tenant_access_control(reset_multitenant: None) -> None:
     # Assert that the search tool was used
     assert response_cross2.tool_name == "run_search"
     # Assert that the tool_result is empty or does not contain Tenant 1's documents
-    response_doc_ids = {doc["document_id"] for doc in response_cross2.tool_result}
+    response_doc_ids = {doc["document_id"] for doc in response_cross2.tool_result or []}
     # Ensure none of Tenant 1's document IDs are in the response
     assert not response_doc_ids.intersection(tenant1_doc_ids)
     # Optionally, assert that tool_result is empty

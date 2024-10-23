@@ -7,12 +7,12 @@ import requests
 
 from alembic import command
 from alembic.config import Config
-from danswer.background.celery.celery_utils import get_all_tenant_ids
 from danswer.configs.app_configs import POSTGRES_HOST
 from danswer.configs.app_configs import POSTGRES_PASSWORD
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
 from danswer.db.engine import build_connection_string
+from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import get_session_context_manager
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import SYNC_DB_API
