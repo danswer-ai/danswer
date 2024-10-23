@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
+from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.background.celery.tasks.pruning.tasks import (
@@ -34,6 +35,7 @@ from danswer.db.index_attempt import count_index_attempts_for_connector
 from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_paginated_index_attempts_for_cc_pair_id
 from danswer.db.models import User
+from danswer.db.search_settings import get_current_search_settings
 from danswer.db.tasks import check_task_is_live_and_not_timed_out
 from danswer.db.tasks import get_latest_task
 from danswer.redis.redis_pool import get_redis_client
@@ -93,6 +95,8 @@ def get_cc_pair_full_info(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> CCPairFullInfo:
+    r = get_redis_client()
+
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id, db_session, user, get_editable=False
     )
@@ -122,9 +126,14 @@ def get_cc_pair_full_info(
 
     latest_attempt = get_latest_index_attempt_for_cc_pair_id(
         db_session=db_session,
-        connector_credential_pair_id=cc_pair.id,
+        connector_credential_pair_id=cc_pair_id,
         secondary_index=False,
         only_finished=False,
+    )
+
+    search_settings = get_current_search_settings(db_session)
+    rci = RedisConnectorIndexing(
+        cc_pair_id=cc_pair_id, search_settings_id=search_settings.id
     )
 
     return CCPairFullInfo.from_models(
@@ -141,6 +150,7 @@ def get_cc_pair_full_info(
         ),
         num_docs_indexed=documents_indexed,
         is_editable_for_current_user=is_editable_for_current_user,
+        indexing=rci.is_indexing(r),
     )
 
 
@@ -250,7 +260,7 @@ def prune_cc_pair(
 
     r = get_redis_client()
     rcp = RedisConnectorPruning(cc_pair_id)
-    if rcp.is_pruning(db_session, r):
+    if rcp.is_pruning(r):
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail="Pruning task already in progress.",

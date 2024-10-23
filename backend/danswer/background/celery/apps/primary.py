@@ -11,9 +11,9 @@ from celery.signals import celeryd_init
 from celery.signals import worker_init
 from celery.signals import worker_ready
 from celery.signals import worker_shutdown
-from celery.utils.log import get_task_logger
 
 import danswer.background.celery.apps.app_base as app_base
+from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
@@ -30,9 +30,6 @@ from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
-
-# use this within celery tasks to get celery task specific logging
-task_logger = get_task_logger(__name__)
 
 celery_app = Celery(__name__)
 celery_app.config_from_object("danswer.background.celery.configs.primary")

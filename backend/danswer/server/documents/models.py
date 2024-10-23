@@ -222,6 +222,7 @@ class CCPairFullInfo(BaseModel):
     access_type: AccessType
     is_editable_for_current_user: bool
     deletion_failure_message: str | None
+    indexing: bool
 
     @classmethod
     def from_models(
@@ -232,6 +233,7 @@ class CCPairFullInfo(BaseModel):
         last_index_attempt: IndexAttempt | None,
         num_docs_indexed: int,  # not ideal, but this must be computed separately
         is_editable_for_current_user: bool,
+        indexing: bool,
     ) -> "CCPairFullInfo":
         # figure out if we need to artificially deflate the number of docs indexed.
         # This is required since the total number of docs indexed by a CC Pair is
@@ -265,6 +267,7 @@ class CCPairFullInfo(BaseModel):
             access_type=cc_pair_model.access_type,
             is_editable_for_current_user=is_editable_for_current_user,
             deletion_failure_message=cc_pair_model.deletion_failure_message,
+            indexing=indexing,
         )
 
 
