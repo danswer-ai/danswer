@@ -29,7 +29,7 @@ from ee.danswer.external_permissions.permission_sync import (
     run_external_group_permission_sync,
 )
 from ee.danswer.server.reporting.usage_export_generation import create_new_usage_report
-from shared_configs.configs import current_tenant_id
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
 
@@ -110,7 +110,7 @@ def check_ttl_management_task(*, tenant_id: str | None) -> None:
     to the queue"""
     token = None
     if MULTI_TENANT and tenant_id is not None:
-        token = current_tenant_id.set(tenant_id)
+        token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
     settings = load_settings()
     retention_limit_days = settings.maximum_chat_retention_days
@@ -122,7 +122,7 @@ def check_ttl_management_task(*, tenant_id: str | None) -> None:
                 ),
             )
     if token is not None:
-        current_tenant_id.reset(token)
+        CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
 
 @celery_app.task(

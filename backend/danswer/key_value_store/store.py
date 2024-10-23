@@ -16,7 +16,7 @@ from danswer.key_value_store.interface import KeyValueStore
 from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
-from shared_configs.configs import current_tenant_id
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 logger = setup_logger()
@@ -28,7 +28,7 @@ KV_REDIS_KEY_EXPIRATION = 60 * 60 * 24  # 1 Day
 
 class PgRedisKVStore(KeyValueStore):
     def __init__(self) -> None:
-        tenant_id = current_tenant_id.get()
+        tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
         self.redis_client = get_redis_client(tenant_id=tenant_id)
 
     @contextmanager
@@ -36,7 +36,7 @@ class PgRedisKVStore(KeyValueStore):
         engine = get_sqlalchemy_engine()
         with Session(engine, expire_on_commit=False) as session:
             if MULTI_TENANT:
-                tenant_id = current_tenant_id.get()
+                tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
                 if tenant_id == POSTGRES_DEFAULT_SCHEMA:
                     raise HTTPException(
                         status_code=401, detail="User must authenticate"

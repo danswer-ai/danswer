@@ -38,7 +38,7 @@ from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
 from danswer.db.auth import get_total_users
-from danswer.db.engine import current_tenant_id
+from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
 from danswer.db.models import DocumentSet__User
@@ -188,7 +188,7 @@ def bulk_invite_users(
             status_code=400, detail="Auth is disabled, cannot invite users"
         )
 
-    tenant_id = current_tenant_id.get()
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
 
     normalized_emails = []
     try:
@@ -222,7 +222,9 @@ def bulk_invite_users(
         return number_of_invited_users
     try:
         logger.info("Registering tenant users")
-        register_tenant_users(current_tenant_id.get(), get_total_users(db_session))
+        register_tenant_users(
+            CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users(db_session)
+        )
         if ENABLE_EMAIL_INVITES:
             try:
                 for email in all_emails:
@@ -250,13 +252,15 @@ def remove_invited_user(
     user_emails = get_invited_users()
     remaining_users = [user for user in user_emails if user != user_email.user_email]
 
-    tenant_id = current_tenant_id.get()
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
     remove_users_from_tenant([user_email.user_email], tenant_id)
     number_of_invited_users = write_invited_users(remaining_users)
 
     try:
         if MULTI_TENANT:
-            register_tenant_users(current_tenant_id.get(), get_total_users(db_session))
+            register_tenant_users(
+                CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users(db_session)
+            )
     except Exception:
         logger.error(
             "Request to update number of seats taken in control plane failed. "
