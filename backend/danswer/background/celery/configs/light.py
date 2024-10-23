@@ -1,4 +1,6 @@
 import danswer.background.celery.configs.base as shared_config
+from danswer.configs.app_configs import CELERY_WORKER_LIGHT_CONCURRENCY
+from danswer.configs.app_configs import CELERY_WORKER_LIGHT_PREFETCH_MULTIPLIER
 
 broker_url = shared_config.broker_url
 broker_connection_retry_on_startup = shared_config.broker_connection_retry_on_startup
@@ -15,6 +17,6 @@ result_expires = shared_config.result_expires  # 86400 seconds is the default
 task_default_priority = shared_config.task_default_priority
 task_acks_late = shared_config.task_acks_late
 
-worker_concurrency = 24
+worker_concurrency = CELERY_WORKER_LIGHT_CONCURRENCY
 worker_pool = "threads"
-worker_prefetch_multiplier = 8
+worker_prefetch_multiplier = CELERY_WORKER_LIGHT_PREFETCH_MULTIPLIER

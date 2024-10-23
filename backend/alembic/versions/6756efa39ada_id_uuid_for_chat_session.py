@@ -1,7 +1,9 @@
-"""
+"""Migrate chat_session and chat_message tables to use UUID primary keys
+
 Revision ID: 6756efa39ada
 Revises: 5d12a446f5c0
 Create Date: 2024-10-15 17:47:44.108537
+
 """
 from alembic import op
 import sqlalchemy as sa
@@ -12,8 +14,6 @@ branch_labels = None
 depends_on = None
 
 """
-Migrate chat_session and chat_message tables to use UUID primary keys.
-
 This script:
 1. Adds UUID columns to chat_session and chat_message
 2. Populates new columns with UUIDs

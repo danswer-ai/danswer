@@ -142,7 +142,7 @@ def document_by_cc_pair_cleanup_task(
     except Exception as e:
         task_logger.exception("Unexpected exception")
 
-        if self.retries < DOCUMENT_BY_CC_PAIR_CLEANUP_MAX_RETRIES:
+        if self.request.retries < DOCUMENT_BY_CC_PAIR_CLEANUP_MAX_RETRIES:
             # Still retrying. Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
             countdown = 2 ** (self.request.retries + 4)
             self.retry(exc=e, countdown=countdown)
