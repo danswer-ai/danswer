@@ -160,6 +160,9 @@ class AuthType(str, Enum):
     OIDC = "oidc"
     SAML = "saml"
 
+    # google auth and basic
+    CLOUD = "cloud"
+
 
 class SessionType(str, Enum):
     CHAT = "Chat"
