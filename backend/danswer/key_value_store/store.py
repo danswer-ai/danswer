@@ -28,7 +28,8 @@ KV_REDIS_KEY_EXPIRATION = 60 * 60 * 24  # 1 Day
 
 class PgRedisKVStore(KeyValueStore):
     def __init__(self) -> None:
-        self.redis_client = get_redis_client()
+        tenant_id = current_tenant_id.get()
+        self.redis_client = get_redis_client(tenant_id=tenant_id)
 
     @contextmanager
     def get_session(self) -> Iterator[Session]:

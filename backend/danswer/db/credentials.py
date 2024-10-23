@@ -242,7 +242,6 @@ def create_credential(
     )
     db_session.add(credential)
     db_session.flush()  # This ensures the credential gets an ID
-
     _relate_credential_to_user_groups__no_commit(
         db_session=db_session,
         credential_id=credential.id,

@@ -295,30 +295,32 @@ async def get_async_session_with_tenant(
 def get_session_with_tenant(
     tenant_id: str | None = None,
 ) -> Generator[Session, None, None]:
-    """Generate a database session with the appropriate tenant schema set."""
+    """Generate a database session bound to a connection with the appropriate tenant schema set."""
     engine = get_sqlalchemy_engine()
+
     if tenant_id is None:
         tenant_id = current_tenant_id.get()
+    else:
+        current_tenant_id.set(tenant_id)
+
+    event.listen(engine, "checkout", set_search_path_on_checkout)
 
     if not is_valid_schema_name(tenant_id):
         raise HTTPException(status_code=400, detail="Invalid tenant ID")
 
-    # Establish a raw connection without starting a transaction
+    # Establish a raw connection
     with engine.connect() as connection:
-        # Access the raw DBAPI connection
+        # Access the raw DBAPI connection and set the search_path
         dbapi_connection = connection.connection
 
-        # Execute SET search_path outside of any transaction
+        # Set the search_path outside of any transaction
         cursor = dbapi_connection.cursor()
         try:
-            cursor.execute(f'SET search_path TO "{tenant_id}"')
-            # Optionally verify the search_path was set correctly
-            cursor.execute("SHOW search_path")
-            cursor.fetchone()
+            cursor.execute(f'SET search_path = "{tenant_id}"')
         finally:
             cursor.close()
 
-        # Proceed to create a session using the connection
+        # Bind the session to the connection
         with Session(bind=connection, expire_on_commit=False) as session:
             try:
                 yield session
@@ -330,6 +332,18 @@ def get_session_with_tenant(
                         cursor.execute('SET search_path TO "$user", public')
                     finally:
                         cursor.close()
+
+
+def set_search_path_on_checkout(
+    dbapi_conn: Any, connection_record: Any, connection_proxy: Any
+) -> None:
+    tenant_id = current_tenant_id.get()
+    if tenant_id and is_valid_schema_name(tenant_id):
+        with dbapi_conn.cursor() as cursor:
+            cursor.execute(f'SET search_path TO "{tenant_id}"')
+            logger.debug(
+                f"Set search_path to {tenant_id} for connection {connection_record}"
+            )
 
 
 def get_session_generator_with_tenant(
