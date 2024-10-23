@@ -341,7 +341,7 @@ def get_user_chat_sessions(
 ) -> ChatSessionsResponse:
     try:
         chat_sessions = get_chat_sessions_by_user(
-            user_id=user_id, deleted=False, db_session=db_session, limit=None
+            user_id=user_id, deleted=False, db_session=db_session, limit=0
         )
 
     except ValueError:
