@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import cast
 
 from fastapi import HTTPException
+from redis.client import Redis
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -27,9 +28,15 @@ KV_REDIS_KEY_EXPIRATION = 60 * 60 * 24  # 1 Day
 
 
 class PgRedisKVStore(KeyValueStore):
-    def __init__(self) -> None:
-        tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-        self.redis_client = get_redis_client(tenant_id=tenant_id)
+    def __init__(
+        self, redis_client: Redis | None = None, tenant_id: str | None = None
+    ) -> None:
+        # If no redis_client is provided, fall back to the context var
+        if redis_client is not None:
+            self.redis_client = redis_client
+        else:
+            tenant_id = tenant_id or CURRENT_TENANT_ID_CONTEXTVAR.get()
+            self.redis_client = get_redis_client(tenant_id=tenant_id)
 
     @contextmanager
     def get_session(self) -> Iterator[Session]:
