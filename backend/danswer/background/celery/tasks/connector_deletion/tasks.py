@@ -24,8 +24,8 @@ from danswer.redis.redis_pool import get_redis_client
     trail=False,
     bind=True,
 )
-def check_for_connector_deletion_task(self: Task, tenant_id: str | None) -> None:
-    r = get_redis_client()
+def check_for_connector_deletion_task(self: Task, *, tenant_id: str | None) -> None:
+    r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_CONNECTOR_DELETION_BEAT_LOCK,

@@ -25,6 +25,7 @@ from danswer.db.connector_credential_pair import (
 )
 from danswer.db.document import get_document_counts_for_cc_pairs
 from danswer.db.engine import current_tenant_id
+from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
@@ -92,6 +93,7 @@ def get_cc_pair_full_info(
     cc_pair_id: int,
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> CCPairFullInfo:
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id, db_session, user, get_editable=False
@@ -138,6 +140,7 @@ def get_cc_pair_full_info(
             connector_id=cc_pair.connector_id,
             credential_id=cc_pair.credential_id,
             db_session=db_session,
+            tenant_id=tenant_id,
         ),
         num_docs_indexed=documents_indexed,
         is_editable_for_current_user=is_editable_for_current_user,
@@ -233,6 +236,7 @@ def prune_cc_pair(
     cc_pair_id: int,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> StatusResponse[list[int]]:
     """Triggers pruning on a particular cc_pair immediately"""
 
@@ -248,7 +252,7 @@ def prune_cc_pair(
             detail="Connection not found for current user's permissions",
         )
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
     rcp = RedisConnectorPruning(cc_pair_id)
     if rcp.is_pruning(db_session, r):
         raise HTTPException(

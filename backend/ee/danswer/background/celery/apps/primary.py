@@ -39,7 +39,9 @@ global_version.set_ee()
 
 @build_celery_task_wrapper(name_sync_external_doc_permissions_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
-def sync_external_doc_permissions_task(cc_pair_id: int, tenant_id: str | None) -> None:
+def sync_external_doc_permissions_task(
+    cc_pair_id: int, *, tenant_id: str | None
+) -> None:
     with get_session_with_tenant(tenant_id) as db_session:
         run_external_doc_permission_sync(db_session=db_session, cc_pair_id=cc_pair_id)
 
@@ -47,7 +49,7 @@ def sync_external_doc_permissions_task(cc_pair_id: int, tenant_id: str | None) -
 @build_celery_task_wrapper(name_sync_external_group_permissions_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def sync_external_group_permissions_task(
-    cc_pair_id: int, tenant_id: str | None
+    cc_pair_id: int, *, tenant_id: str | None
 ) -> None:
     with get_session_with_tenant(tenant_id) as db_session:
         run_external_group_permission_sync(db_session=db_session, cc_pair_id=cc_pair_id)
@@ -56,7 +58,7 @@ def sync_external_group_permissions_task(
 @build_celery_task_wrapper(name_chat_ttl_task)
 @celery_app.task(soft_time_limit=JOB_TIMEOUT)
 def perform_ttl_management_task(
-    retention_limit_days: int, tenant_id: str | None
+    retention_limit_days: int, *, tenant_id: str | None
 ) -> None:
     with get_session_with_tenant(tenant_id) as db_session:
         delete_chat_sessions_older_than(retention_limit_days, db_session)
@@ -69,7 +71,7 @@ def perform_ttl_management_task(
     name="check_sync_external_doc_permissions_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_sync_external_doc_permissions_task(tenant_id: str | None) -> None:
+def check_sync_external_doc_permissions_task(*, tenant_id: str | None) -> None:
     """Runs periodically to sync external permissions"""
     with get_session_with_tenant(tenant_id) as db_session:
         cc_pairs = get_all_auto_sync_cc_pairs(db_session)
@@ -86,7 +88,7 @@ def check_sync_external_doc_permissions_task(tenant_id: str | None) -> None:
     name="check_sync_external_group_permissions_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_sync_external_group_permissions_task(tenant_id: str | None) -> None:
+def check_sync_external_group_permissions_task(*, tenant_id: str | None) -> None:
     """Runs periodically to sync external group permissions"""
     with get_session_with_tenant(tenant_id) as db_session:
         cc_pairs = get_all_auto_sync_cc_pairs(db_session)
@@ -103,7 +105,7 @@ def check_sync_external_group_permissions_task(tenant_id: str | None) -> None:
     name="check_ttl_management_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def check_ttl_management_task(tenant_id: str | None) -> None:
+def check_ttl_management_task(*, tenant_id: str | None) -> None:
     """Runs periodically to check if any ttl tasks should be run and adds them
     to the queue"""
     token = None
@@ -127,7 +129,7 @@ def check_ttl_management_task(tenant_id: str | None) -> None:
     name="autogenerate_usage_report_task",
     soft_time_limit=JOB_TIMEOUT,
 )
-def autogenerate_usage_report_task(tenant_id: str | None) -> None:
+def autogenerate_usage_report_task(*, tenant_id: str | None) -> None:
     """This generates usage report under the /admin/generate-usage/report endpoint"""
     with get_session_with_tenant(tenant_id) as db_session:
         create_new_usage_report(
