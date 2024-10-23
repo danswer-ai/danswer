@@ -37,7 +37,7 @@ def get_user_email_from_username__server(
 
 
 _USER_NOT_FOUND = "Unknown Confluence User"
-_USER_ID_TO_DISPLAY_NAME_CACHE: dict[str, str] = {}
+_USER_ID_TO_DISPLAY_NAME_CACHE: dict[str, str | None] = {}
 
 
 def _get_user(confluence_client: OnyxConfluence, user_id: str) -> str:
@@ -67,7 +67,7 @@ def _get_user(confluence_client: OnyxConfluence, user_id: str) -> str:
 
         _USER_ID_TO_DISPLAY_NAME_CACHE[user_id] = found_display_name
 
-    return _USER_ID_TO_DISPLAY_NAME_CACHE.get(user_id, _USER_NOT_FOUND)
+    return _USER_ID_TO_DISPLAY_NAME_CACHE.get(user_id) or _USER_NOT_FOUND
 
 
 def extract_text_from_confluence_html(
