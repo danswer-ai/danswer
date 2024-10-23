@@ -135,8 +135,6 @@ def test_multi_tenant_access_control(reset_multitenant: None) -> None:
     response_doc_ids = {doc["document_id"] for doc in response_cross.tool_result or []}
     # Ensure none of Tenant 2's document IDs are in the response
     assert not response_doc_ids.intersection(tenant2_doc_ids)
-    # Optionally, assert that tool_result is empty
-    # assert len(response_cross.tool_result) == 0
 
     # User 2 tries to access Tenant 1's documents
     response_cross2 = ChatSessionManager.send_message(
@@ -150,5 +148,3 @@ def test_multi_tenant_access_control(reset_multitenant: None) -> None:
     response_doc_ids = {doc["document_id"] for doc in response_cross2.tool_result or []}
     # Ensure none of Tenant 1's document IDs are in the response
     assert not response_doc_ids.intersection(tenant1_doc_ids)
-    # Optionally, assert that tool_result is empty
-    # assert len(response_cross2.tool_result) == 0
