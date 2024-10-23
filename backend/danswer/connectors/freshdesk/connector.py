@@ -13,10 +13,7 @@ logger = setup_logger()
 
 
 class FreshdeskConnector(PollConnector):
-    def __init__(self, api_key: str, domain: str, password: str, batch_size: int = INDEX_BATCH_SIZE) -> None:
-        self.api_key = api_key
-        self.domain = domain
-        self.password = password
+    def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
         self.batch_size = batch_size
 
     def ticket_link(self, tid: int) -> str:
@@ -63,6 +60,8 @@ class FreshdeskConnector(PollConnector):
             for ticket in tickets:
                 # Convert the "created_at", "updated_at", and "due_by" values to ISO 8601 strings
                 for date_field in ["created_at", "updated_at", "due_by"]:
+                    if ticket[date_field].endswith('Z'):
+                        ticket[date_field] = ticket[date_field][:-1] + '+00:00'
                     ticket[date_field] = datetime.fromisoformat(ticket[date_field]).strftime("%Y-%m-%d %H:%M:%S")
 
                 # Convert all other values to strings
