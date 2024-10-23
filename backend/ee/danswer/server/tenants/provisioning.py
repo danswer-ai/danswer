@@ -7,6 +7,7 @@ from sqlalchemy.schema import CreateSchema
 
 from alembic import command
 from alembic.config import Config
+from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
 from danswer.db.engine import build_connection_string
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
@@ -71,7 +72,7 @@ def ensure_schema_exists(tenant_id: str) -> bool:
 # For now, we're implementing a primitive mapping between users and tenants.
 # This function is only used to determine a user's relationship to a tenant upon creation (implying ownership).
 def user_owns_a_tenant(email: str) -> bool:
-    with get_session_with_tenant("public") as db_session:
+    with get_session_with_tenant(POSTGRES_DEFAULT_SCHEMA) as db_session:
         result = (
             db_session.query(UserTenantMapping)
             .filter(UserTenantMapping.email == email)
@@ -81,7 +82,7 @@ def user_owns_a_tenant(email: str) -> bool:
 
 
 def add_users_to_tenant(emails: list[str], tenant_id: str) -> None:
-    with get_session_with_tenant("public") as db_session:
+    with get_session_with_tenant(POSTGRES_DEFAULT_SCHEMA) as db_session:
         try:
             for email in emails:
                 db_session.add(UserTenantMapping(email=email, tenant_id=tenant_id))
@@ -91,7 +92,7 @@ def add_users_to_tenant(emails: list[str], tenant_id: str) -> None:
 
 
 def remove_users_from_tenant(emails: list[str], tenant_id: str) -> None:
-    with get_session_with_tenant("public") as db_session:
+    with get_session_with_tenant(POSTGRES_DEFAULT_SCHEMA) as db_session:
         try:
             mappings_to_delete = (
                 db_session.query(UserTenantMapping)

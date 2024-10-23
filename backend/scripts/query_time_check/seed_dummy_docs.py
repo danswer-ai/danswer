@@ -12,6 +12,7 @@ import random
 from datetime import datetime
 
 from danswer.access.models import DocumentAccess
+from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.db.engine import get_session_context_manager
@@ -94,7 +95,7 @@ def generate_dummy_chunk(
         ),
         document_sets={document_set for document_set in document_set_names},
         boost=random.randint(-1, 1),
-        tenant_id="public",
+        tenant_id=POSTGRES_DEFAULT_SCHEMA,
     )
 
 

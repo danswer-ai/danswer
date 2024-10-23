@@ -7,6 +7,7 @@ from slack_sdk import WebClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
+from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
@@ -510,7 +511,9 @@ if __name__ == "__main__":
             for tenant_id in tenant_ids:
                 with get_session_with_tenant(tenant_id) as db_session:
                     try:
-                        token = current_tenant_id.set(tenant_id or "public")
+                        token = current_tenant_id.set(
+                            tenant_id or POSTGRES_DEFAULT_SCHEMA
+                        )
                         latest_slack_bot_tokens = fetch_tokens()
                         current_tenant_id.reset(token)
 

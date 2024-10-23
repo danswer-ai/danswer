@@ -9,8 +9,8 @@ from typing import IO
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
+from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
 from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import POSTGRES_DEFAULT_SCHEMA
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector

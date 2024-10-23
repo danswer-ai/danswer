@@ -3,6 +3,7 @@ import os
 from typing import List
 from urllib.parse import urlparse
 
+from danswer.configs.app_configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.model_server_models import SupportedEmbeddingModel
 
 # Used for logging
@@ -128,7 +129,9 @@ else:
     # If the environment variable is empty, allow all origins
     CORS_ALLOWED_ORIGIN = ["*"]
 
-current_tenant_id = contextvars.ContextVar("current_tenant_id", default="public")
+current_tenant_id = contextvars.ContextVar(
+    "current_tenant_id", default=POSTGRES_DEFAULT_SCHEMA
+)
 
 
 SUPPORTED_EMBEDDING_MODELS = [
