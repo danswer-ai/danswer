@@ -75,9 +75,13 @@ async function handleRequest(request: NextRequest, path: string[]) {
       backendUrl.searchParams.append(key, value);
     });
 
+    // Create a new headers object, omitting the 'connection' header
+    const headers = new Headers(request.headers);
+    headers.delete('connection');
+
     const response = await fetch(backendUrl, {
       method: request.method,
-      headers: request.headers,
+      headers: headers,
       body: request.body,
       signal: request.signal,
       // @ts-ignore

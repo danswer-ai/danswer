@@ -46,6 +46,7 @@ from danswer.connectors.wikipedia.connector import WikipediaConnector
 from danswer.connectors.xenforo.connector import XenforoConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
+from danswer.connectors.freshdesk.connector import FreshdeskConnector
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.models import Credential
 
@@ -101,6 +102,7 @@ def identify_connector_class(
         DocumentSource.GOOGLE_CLOUD_STORAGE: BlobStorageConnector,
         DocumentSource.OCI_STORAGE: BlobStorageConnector,
         DocumentSource.XENFORO: XenforoConnector,
+        DocumentSource.FRESHDESK: FreshdeskConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
