@@ -8,10 +8,8 @@ import {
 } from "@/lib/userSS";
 import { redirect } from "next/navigation";
 import { EmailPasswordForm } from "../login/EmailPasswordForm";
-import { Card, Title, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
-import { CLOUD_ENABLED } from "@/lib/constants";
 import { SignInButton } from "../login/SignInButton";
 import AuthFlowContainer from "@/components/auth/AuthFlowContainer";
 

@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
+from danswer.auth.schemas import UserRole
 from danswer.configs.constants import NotificationType
 from danswer.db.models import Notification
 from danswer.db.models import User
@@ -54,7 +55,9 @@ def get_notification_by_id(
     notif = db_session.get(Notification, notification_id)
     if not notif:
         raise ValueError(f"No notification found with id {notification_id}")
-    if notif.user_id != user_id:
+    if notif.user_id != user_id and not (
+        notif.user_id is None and user is not None and user.role == UserRole.ADMIN
+    ):
         raise PermissionError(
             f"User {user_id} is not authorized to access notification {notification_id}"
         )

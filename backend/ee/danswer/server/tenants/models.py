@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from danswer.configs.constants import NotificationType
 from danswer.server.settings.models import GatingType
 
 
@@ -15,6 +16,7 @@ class CreateTenantRequest(BaseModel):
 class ProductGatingRequest(BaseModel):
     tenant_id: str
     product_gating: GatingType
+    notification: NotificationType | None = None
 
 
 class BillingInformation(BaseModel):
