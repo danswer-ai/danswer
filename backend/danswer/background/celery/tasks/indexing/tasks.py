@@ -55,10 +55,10 @@ logger = setup_logger()
     soft_time_limit=300,
     bind=True,
 )
-def check_for_indexing(self: Task, tenant_id: str | None) -> int | None:
+def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
     tasks_created = 0
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat = r.lock(
         DanswerRedisLocks.CHECK_INDEXING_BEAT_LOCK,
@@ -68,6 +68,7 @@ def check_for_indexing(self: Task, tenant_id: str | None) -> int | None:
     try:
         # these tasks should never overlap
         if not lock_beat.acquire(blocking=False):
+            task_logger.info(f"Lock acquired for tenant (Y): {tenant_id}")
             return None
 
         cc_pair_ids: list[int] = []
@@ -398,7 +399,7 @@ def connector_indexing_task(
     attempt = None
     n_final_progress = 0
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
 
