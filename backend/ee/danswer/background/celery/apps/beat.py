@@ -41,7 +41,7 @@ for tenant_id in tenant_ids:
         beat_schedule[task_name] = {
             "task": task["task"],
             "schedule": task["schedule"],
-            "args": (tenant_id,),  # Must pass tenant_id as an argument
+            "kwargs": {"tenant_id": tenant_id},  # Must pass tenant_id as an argument
         }
 
 # Include any existing beat schedules
