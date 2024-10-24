@@ -2,14 +2,15 @@
 # In this case, the equivalent of asking a question in Danswer Chat in a new chat session
 import argparse
 import logging
-from datetime import datetime
-from enum import Enum
 from logging import getLogger
 from typing import Any
 from uuid import UUID
 
 import requests
-from pydantic import BaseModel
+
+from danswer.server.manage.models import AllUsersResponse
+from danswer.server.query_and_chat.models import ChatSessionsResponse
+from ee.danswer.server.query_history.api import ChatSessionSnapshot
 
 # Configure the logger
 logging.basicConfig(
@@ -20,111 +21,115 @@ logging.basicConfig(
 
 logger = getLogger(__name__)
 
+# uncomment the following pydantic models if you need the script to be independent
+# from pydantic import BaseModel
+# from datetime import datetime
+# from enum import Enum
 
-class UserRole(str, Enum):
-    """
-    User roles
-    - Basic can't perform any admin actions
-    - Admin can perform all admin actions
-    - Curator can perform admin actions for
-        groups they are curators of
-    - Global Curator can perform admin actions
-        for all groups they are a member of
-    """
+# class UserRole(str, Enum):
+#     """
+#     User roles
+#     - Basic can't perform any admin actions
+#     - Admin can perform all admin actions
+#     - Curator can perform admin actions for
+#         groups they are curators of
+#     - Global Curator can perform admin actions
+#         for all groups they are a member of
+#     """
 
-    BASIC = "basic"
-    ADMIN = "admin"
-    CURATOR = "curator"
-    GLOBAL_CURATOR = "global_curator"
-
-
-class UserStatus(str, Enum):
-    LIVE = "live"
-    INVITED = "invited"
-    DEACTIVATED = "deactivated"
+#     BASIC = "basic"
+#     ADMIN = "admin"
+#     CURATOR = "curator"
+#     GLOBAL_CURATOR = "global_curator"
 
 
-class FullUserSnapshot(BaseModel):
-    id: UUID
-    email: str
-    role: UserRole
-    status: UserStatus
+# class UserStatus(str, Enum):
+#     LIVE = "live"
+#     INVITED = "invited"
+#     DEACTIVATED = "deactivated"
 
 
-class InvitedUserSnapshot(BaseModel):
-    email: str
+# class FullUserSnapshot(BaseModel):
+#     id: UUID
+#     email: str
+#     role: UserRole
+#     status: UserStatus
 
 
-class AllUsersResponse(BaseModel):
-    accepted: list[FullUserSnapshot]
-    invited: list[InvitedUserSnapshot]
-    accepted_pages: int
-    invited_pages: int
+# class InvitedUserSnapshot(BaseModel):
+#     email: str
 
 
-class ChatSessionSharedStatus(str, Enum):
-    PUBLIC = "public"
-    PRIVATE = "private"
+# class AllUsersResponse(BaseModel):
+#     accepted: list[FullUserSnapshot]
+#     invited: list[InvitedUserSnapshot]
+#     accepted_pages: int
+#     invited_pages: int
 
 
-class ChatSessionDetails(BaseModel):
-    id: UUID
-    name: str
-    persona_id: int | None = None
-    time_created: str
-    shared_status: ChatSessionSharedStatus
-    folder_id: int | None = None
-    current_alternate_model: str | None = None
+# class ChatSessionSharedStatus(str, Enum):
+#     PUBLIC = "public"
+#     PRIVATE = "private"
 
 
-class ChatSessionsResponse(BaseModel):
-    sessions: list[ChatSessionDetails]
+# class ChatSessionDetails(BaseModel):
+#     id: UUID
+#     name: str
+#     persona_id: int | None = None
+#     time_created: str
+#     shared_status: ChatSessionSharedStatus
+#     folder_id: int | None = None
+#     current_alternate_model: str | None = None
 
 
-class SessionType(str, Enum):
-    CHAT = "Chat"
-    SEARCH = "Search"
-    SLACK = "Slack"
+# class ChatSessionsResponse(BaseModel):
+#     sessions: list[ChatSessionDetails]
 
 
-class AbridgedSearchDoc(BaseModel):
-    """A subset of the info present in `SearchDoc`"""
-
-    document_id: str
-    semantic_identifier: str
-    link: str | None
+# class SessionType(str, Enum):
+#     CHAT = "Chat"
+#     SEARCH = "Search"
+#     SLACK = "Slack"
 
 
-class QAFeedbackType(str, Enum):
-    LIKE = "like"  # User likes the answer, used for metrics
-    DISLIKE = "dislike"  # User dislikes the answer, used for metrics
+# class AbridgedSearchDoc(BaseModel):
+#     """A subset of the info present in `SearchDoc`"""
+
+#     document_id: str
+#     semantic_identifier: str
+#     link: str | None
 
 
-class MessageType(str, Enum):
-    # Using OpenAI standards, Langchain equivalent shown in comment
-    # System message is always constructed on the fly, not saved
-    SYSTEM = "system"  # SystemMessage
-    USER = "user"  # HumanMessage
-    ASSISTANT = "assistant"  # AIMessage
+# class QAFeedbackType(str, Enum):
+#     LIKE = "like"  # User likes the answer, used for metrics
+#     DISLIKE = "dislike"  # User dislikes the answer, used for metrics
 
 
-class MessageSnapshot(BaseModel):
-    message: str
-    message_type: MessageType
-    documents: list[AbridgedSearchDoc]
-    feedback_type: QAFeedbackType | None
-    feedback_text: str | None
-    time_created: datetime
+# class MessageType(str, Enum):
+#     # Using OpenAI standards, Langchain equivalent shown in comment
+#     # System message is always constructed on the fly, not saved
+#     SYSTEM = "system"  # SystemMessage
+#     USER = "user"  # HumanMessage
+#     ASSISTANT = "assistant"  # AIMessage
 
 
-class ChatSessionSnapshot(BaseModel):
-    id: UUID
-    user_email: str
-    name: str | None
-    messages: list[MessageSnapshot]
-    persona_name: str | None
-    time_created: datetime
-    flow_type: SessionType
+# class MessageSnapshot(BaseModel):
+#     message: str
+#     message_type: MessageType
+#     documents: list[AbridgedSearchDoc]
+#     feedback_type: QAFeedbackType | None
+#     feedback_text: str | None
+#     time_created: datetime
+
+
+# class ChatSessionSnapshot(BaseModel):
+#     id: UUID
+#     user_email: str
+#     name: str | None
+#     messages: list[MessageSnapshot]
+#     persona_name: str | None
+#     time_created: datetime
+#     flow_type: SessionType
 
 
 def create_new_chat_session(danswer_url: str, api_key: str | None) -> int:
