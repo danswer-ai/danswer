@@ -317,32 +317,17 @@ def mark_delete_persona_by_name(
 
 
 def update_all_personas_display_priority(
-    display_priority_map: dict[str, int],  # Map is string IDs to priority numbers
+    display_priority_map: dict[int, int],
     db_session: Session,
 ) -> None:
-    """Updates the display priority of all live Personas"""
-    logger = setup_logger()
-
-    # Convert string IDs to integers for DB lookup
-    int_priority_map = {int(k): v for k, v in display_priority_map.items()}
-    logger.info(f"Updating display priorities for {len(int_priority_map)} personas")
-
-    # Get all personas that have IDs in the priority map
+    """Updates the display priority of all lives Personas"""
     personas = get_personas(user=None, db_session=db_session)
-    updates_made = 0
-    for persona in personas:
-        # Update priority if this persona's ID is in the map
-        if persona.id in int_priority_map:
-            old_priority = persona.display_priority
-            new_priority = int_priority_map[persona.id]
-            persona.display_priority = new_priority
-            updates_made += 1
-            logger.debug(
-                f"Updated persona {persona.id} priority from {old_priority} to {new_priority}"
-            )
+    available_persona_ids = {persona.id for persona in personas}
+    if available_persona_ids != set(display_priority_map.keys()):
+        raise ValueError("Invalid persona IDs provided")
 
-    db_session.commit()
-    logger.info(f"Successfully updated {updates_made} persona display priorities")
+    for persona in personas:
+        persona.display_priority = display_priority_map[persona.id]
 
 
 def upsert_prompt(

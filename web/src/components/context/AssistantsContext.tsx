@@ -21,6 +21,8 @@ interface AssistantsContextProps {
   finalAssistants: Persona[];
   ownedButHiddenAssistants: Persona[];
   refreshAssistants: () => Promise<void>;
+
+  // Admin only
   editablePersonas: Persona[];
   allAssistants: Persona[];
 }
