@@ -1,6 +1,7 @@
 import time
 import traceback
-from collections.abc import Callable
+from abc import ABC
+from abc import abstractmethod
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
@@ -39,6 +40,19 @@ from danswer.utils.variable_functionality import global_version
 logger = setup_logger()
 
 INDEXING_TRACER_NUM_PRINT_ENTRIES = 5
+
+
+class RunIndexingCallbackInterface(ABC):
+    """Defines a callback interface to be passed to
+    to run_indexing_entrypoint."""
+
+    @abstractmethod
+    def should_stop(self) -> bool:
+        """Signal to stop the looping function in flight."""
+
+    @abstractmethod
+    def progress(self, amount: int) -> None:
+        """Send progress updates to the caller."""
 
 
 def _get_connector_runner(
@@ -92,7 +106,7 @@ def _run_indexing(
     db_session: Session,
     index_attempt: IndexAttempt,
     tenant_id: str | None,
-    progress_callback: Callable[[int], None] | None = None,
+    callback: RunIndexingCallbackInterface | None = None,
 ) -> None:
     """
     1. Get documents which are either new or updated from specified application
@@ -218,6 +232,10 @@ def _run_indexing(
                     # let the `except` block handle this
                     raise RuntimeError("Connector was disabled mid run")
 
+                if callback:
+                    if callback.should_stop():
+                        raise RuntimeError("Connector stop signal detected")
+
                 db_session.refresh(index_attempt)
                 if index_attempt.status != IndexingStatus.IN_PROGRESS:
                     # Likely due to user manually disabling it or model swap
@@ -263,8 +281,8 @@ def _run_indexing(
                 # be inaccurate
                 db_session.commit()
 
-                if progress_callback:
-                    progress_callback(len(doc_batch))
+                if callback:
+                    callback.progress(len(doc_batch))
 
                 # This new value is updated every batch, so UI can refresh per batch update
                 update_docs_indexed(
@@ -394,7 +412,7 @@ def run_indexing_entrypoint(
     tenant_id: str | None,
     connector_credential_pair_id: int,
     is_ee: bool = False,
-    progress_callback: Callable[[int], None] | None = None,
+    callback: RunIndexingCallbackInterface | None = None,
 ) -> None:
     try:
         if is_ee:
@@ -417,7 +435,7 @@ def run_indexing_entrypoint(
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
 
-            _run_indexing(db_session, attempt, tenant_id, progress_callback)
+            _run_indexing(db_session, attempt, tenant_id, callback)
 
             logger.info(
                 f"Indexing finished for tenant {tenant_id}: "

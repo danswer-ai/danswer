@@ -313,6 +313,8 @@ class RedisConnectorDeletion(RedisObjectHelper):
         lock: redis.lock.Lock,
         tenant_id: str | None,
     ) -> int | None:
+        """Returns None if the cc_pair doesn't exist.
+        Otherwise, returns an int with the number of generated tasks."""
         last_lock_time = time.monotonic()
 
         async_results = []
@@ -527,6 +529,29 @@ class RedisConnectorIndexing(RedisObjectHelper):
     @property
     def subtask_id_prefix(self) -> str:
         return f"{self.SUBTASK_PREFIX}_{self._id}"
+
+    def generate_tasks(
+        self,
+        celery_app: Celery,
+        db_session: Session,
+        redis_client: Redis,
+        lock: redis.lock.Lock | None,
+        tenant_id: str | None,
+    ) -> int | None:
+        return None
+
+
+class RedisConnectorStop(RedisObjectHelper):
+    """Used to signal any running tasks for a connector to stop. We should refactor
+    connector related redis helpers into a single class.
+    """
+
+    PREFIX = "connectorstop"
+    FENCE_PREFIX = PREFIX + "_fence"  # a fence for the entire indexing process
+    TASKSET_PREFIX = PREFIX + "_taskset"  # stores a list of prune tasks id's
+
+    def __init__(self, id: int) -> None:
+        super().__init__(str(id))
 
     def generate_tasks(
         self,
