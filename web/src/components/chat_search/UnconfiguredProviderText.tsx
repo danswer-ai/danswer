@@ -5,7 +5,7 @@ export default function CredentialNotConfigured({
   noSources,
 }: {
   showConfigureAPIKey: () => void;
-  noSources: boolean;
+  noSources?: boolean;
 }) {
   const { shouldShowConfigurationNeeded } = useProviderStatus();
 
