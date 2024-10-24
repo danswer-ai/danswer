@@ -232,7 +232,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--api-key",
         type=str,
-        help="Danswer Admin level API key",
+        help="Danswer Admin Level API key",
     )
 
     args = parser.parse_args()
