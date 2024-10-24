@@ -30,7 +30,7 @@ overview = (
     "Whereas other AI systems have no context of your team and are generally unhelpful with work related questions, "
     "Danswer makes it possible to ask these questions in natural language and get back answers in seconds.\n\n"
     "Danswer can connect to +30 different tools and the use cases are not limited to the ones in the following pages. "
-    "The highlighted use cases are for inspiration and come from feedback gathered from our users and customers.\n\n"
+    "The highlighted use cases are for inspiration and come from feedback gathered from our users and customers.\n\n\n"
     "Common Getting Started Questions:\n\n"
     "Why are these docs connected in my Danswer deployment?\n"
     "Answer: This is just an example of how connectors work in Danswer. You can connect up your own team's knowledge "

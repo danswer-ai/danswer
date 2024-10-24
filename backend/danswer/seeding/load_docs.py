@@ -103,6 +103,14 @@ def seed_initial_documents(db_session: Session) -> None:
 
     Note that regardless of any search settings, the default documents are always loaded with
     the predetermined chunk sizes and single pass embedding.
+
+    Steps are as follows:
+    - Check if this needs to run
+    - Create the connector representing this
+    - Create the cc-pair (attaching the public credential) and mocking values like the last success
+    - Indexing the documents into Postgres
+    - Indexing the documents into Vespa
+    - Create a fake index attempt with fake times
     """
     logger.info("Seeding initial documents")
 
