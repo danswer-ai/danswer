@@ -153,16 +153,12 @@ def _build_slack_channel_from_name(
         )
 
     try:
-        channel_response = make_slack_api_call_w_retries(
-            slack_client.conversations_unarchive,
-            channel=channel_response["channel"]["id"],
-        )
+        slack_client.conversations_unarchive(channel=channel_response["channel"]["id"])
     except Exception:
         # Channel is already unarchived
         pass
     try:
-        channel_response = make_slack_api_call_w_retries(
-            slack_client.conversations_invite,
+        slack_client.conversations_invite(
             channel=channel_response["channel"]["id"],
             users=[admin_user_id],
         )
