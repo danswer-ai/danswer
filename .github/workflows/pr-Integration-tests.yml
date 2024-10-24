@@ -72,6 +72,18 @@ jobs:
           load: true
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
           cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
+      
+      - name: Build integration test Docker image
+        uses: ./.github/actions/custom-build-and-push
+        with:
+          context: ./backend
+          file: ./backend/tests/integration/Dockerfile
+          platforms: linux/amd64
+          tags: danswer/danswer-integration:test
+          push: false
+          load: true
+          cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
+          cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
       # Start containers for multi-tenant tests
       - name: Start Docker containers for multi-tenant tests
@@ -116,18 +128,7 @@ jobs:
             exit 1
           else
             echo "All integration tests passed successfully."
-          fi
-      - name: Build integration test Docker image
-        uses: ./.github/actions/custom-build-and-push
-        with:
-          context: ./backend
-          file: ./backend/tests/integration/Dockerfile
-          platforms: linux/amd64
-          tags: danswer/danswer-integration:test
-          push: false
-          load: true
-          cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
-          cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
+          fi 
 
       - name: Start Docker containers
         run: |
