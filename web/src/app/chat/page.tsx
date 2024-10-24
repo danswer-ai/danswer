@@ -32,38 +32,29 @@ export default async function Page({
     openedFolders,
     defaultAssistantId,
     shouldShowWelcomeModal,
-    assistants,
     userInputPrompts,
-    hasAnyConnectors,
-    hasImageCompatibleModel,
   } = data;
 
   return (
     <>
       <InstantSSRAutoRefresh />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-      <AssistantsProvider
-        initialAssistants={assistants}
-        hasAnyConnectors={hasAnyConnectors}
-        hasImageCompatibleModel={hasImageCompatibleModel}
+      <ChatProvider
+        value={{
+          chatSessions,
+          availableSources,
+          availableDocumentSets: documentSets,
+          availableTags: tags,
+          llmProviders,
+          folders,
+          openedFolders,
+          userInputPrompts,
+          shouldShowWelcomeModal,
+          defaultAssistantId,
+        }}
       >
-        <ChatProvider
-          value={{
-            chatSessions,
-            availableSources,
-            availableDocumentSets: documentSets,
-            availableTags: tags,
-            llmProviders,
-            folders,
-            openedFolders,
-            userInputPrompts,
-            shouldShowWelcomeModal,
-            defaultAssistantId,
-          }}
-        >
-          <WrappedChat initiallyToggled={toggleSidebar} />
-        </ChatProvider>
-      </AssistantsProvider>
+        <WrappedChat initiallyToggled={toggleSidebar} />
+      </ChatProvider>
     </>
   );
 }

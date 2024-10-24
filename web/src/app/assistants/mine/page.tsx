@@ -23,20 +23,13 @@ export default async function GalleryPage({
     user,
     chatSessions,
     folders,
-    assistants,
     openedFolders,
     shouldShowWelcomeModal,
     toggleSidebar,
-    hasAnyConnectors,
-    hasImageCompatibleModel,
   } = data;
 
   return (
-    <AssistantsProvider
-      initialAssistants={assistants}
-      hasAnyConnectors={hasAnyConnectors}
-      hasImageCompatibleModel={hasImageCompatibleModel}
-    >
+    <>
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
       <InstantSSRAutoRefresh />
@@ -46,6 +39,6 @@ export default async function GalleryPage({
         folders={folders}
         openedFolders={openedFolders}
       />
-    </AssistantsProvider>
+    </>
   );
 }

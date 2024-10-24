@@ -201,32 +201,25 @@ export default async function Home({
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       <ChatPopup />
-      <AssistantsProvider
-        initialAssistants={assistants}
-        hasAnyConnectors={hasAnyConnectors}
-        hasImageCompatibleModel={false}
+      <SearchProvider
+        value={{
+          querySessions,
+          ccPairs,
+          documentSets,
+          assistants,
+          tags,
+          agenticSearchEnabled,
+          disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
+          initiallyToggled: toggleSidebar,
+          shouldShowWelcomeModal,
+          shouldDisplayNoSources: shouldDisplayNoSourcesModal,
+        }}
       >
-        <SearchProvider
-          value={{
-            querySessions,
-            ccPairs,
-            documentSets,
-            assistants,
-            tags,
-            agenticSearchEnabled,
-            disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
-            initiallyToggled: toggleSidebar,
-            shouldShowWelcomeModal,
-            shouldDisplayNoSources: shouldDisplayNoSourcesModal,
-          }}
-        >
-          <WrappedSearch
-            initiallyToggled={toggleSidebar}
-            searchTypeDefault={searchTypeDefault}
-          />
-        </SearchProvider>
-      </AssistantsProvider>
-      s
+        <WrappedSearch
+          initiallyToggled={toggleSidebar}
+          searchTypeDefault={searchTypeDefault}
+        />
+      </SearchProvider>
     </>
   );
 }
