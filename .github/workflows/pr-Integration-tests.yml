@@ -198,7 +198,7 @@ jobs:
             danswer/danswer-integration:test \
             /app/tests/integration/multitenant_tests
         continue-on-error: true
-        id: run_tests
+        id: run_multitenant_tests
 
       - name: Check multi-tenant test results
         run: |
