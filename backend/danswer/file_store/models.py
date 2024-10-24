@@ -1,6 +1,6 @@
 import base64
 from enum import Enum
-from typing import NotRequired
+from typing_extensions import NotRequired
 from typing_extensions import TypedDict  # noreorder
 
 from pydantic import BaseModel
