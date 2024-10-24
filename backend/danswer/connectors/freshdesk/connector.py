@@ -1,6 +1,6 @@
 import requests
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, List, Optional
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -40,73 +40,79 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         self.domain = credentials.get("freshdesk_domain")
         self.password = credentials.get("freshdesk_password")
         return None
-
-    def _process_tickets(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
+    
+    def _fetch_tickets(self) -> List[dict]:
         if any([self.api_key, self.domain, self.password]) is None:
             raise ConnectorMissingCredentialError("freshdesk")
-
+        
         freshdesk_url = f"https://{self.domain}.freshdesk.com/api/v2/tickets?include=description"
         response = requests.get(freshdesk_url, auth=(self.api_key, self.password))
         response.raise_for_status()  # raises exception when not a 2xx response
-
+        
         if response.status_code!= 204:
             tickets = json.loads(response.content)
             logger.info(f"Fetched {len(tickets)} tickets from Freshdesk API")
-            doc_batch: List[Document] = []
+            return tickets
+        else:
+            return []
 
-            for ticket in tickets:
-                # Convert the "created_at", "updated_at", and "due_by" values to ISO 8601 strings
-                for date_field in ["created_at", "updated_at", "due_by"]:
-                    if ticket[date_field].endswith('Z'):
-                        ticket[date_field] = ticket[date_field][:-1] + '+00:00'
-                    ticket[date_field] = datetime.fromisoformat(ticket[date_field]).strftime("%Y-%m-%d %H:%M:%S")
+    def _process_tickets(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
+        tickets = self._fetch_tickets()
+        doc_batch: List[Document] = []
 
-                # Convert all other values to strings
-                ticket = {
-                    key: str(value) if not isinstance(value, str) else value
-                    for key, value in ticket.items()
-                }
+        for ticket in tickets:
+            #convert to iso format
+            for date_field in ["created_at", "updated_at", "due_by"]:
+                if ticket[date_field].endswith('Z'):
+                    ticket[date_field] = ticket[date_field][:-1] + '+00:00'
+                ticket[date_field] = datetime.fromisoformat(ticket[date_field]).strftime("%Y-%m-%d %H:%M:%S")
 
-                # Checking for overdue tickets
-                today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                ticket["overdue"] = "true" if today > ticket["due_by"] else "false"
+            #convert all other values to strings
+            ticket = {
+                key: str(value) if not isinstance(value, str) else value
+                for key, value in ticket.items()
+            }
 
-                # Mapping the status field values
-                status_mapping = {2: "open", 3: "pending", 4: "resolved", 5: "closed"}
-                ticket["status"] = status_mapping.get(ticket["status"], str(ticket["status"]))
+            # Checking for overdue tickets
+            today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            ticket["overdue"] = "true" if today > ticket["due_by"] else "false"
 
-                # Stripping HTML tags from the description field
-                ticket["description"] = self.strip_html_tags(ticket["description"])
+            # Mapping the status field values
+            status_mapping = {2: "open", 3: "pending", 4: "resolved", 5: "closed"}
+            ticket["status"] = status_mapping.get(ticket["status"], str(ticket["status"]))
 
-                # Remove extra white spaces from the description field
-                ticket["description"] = " ".join(ticket["description"].split())
+            # Stripping HTML tags from the description field
+            ticket["description"] = self.strip_html_tags(ticket["description"])
 
-                # Use list comprehension for building sections
-                sections = self.build_doc_sections_from_ticket(ticket)
+            # Remove extra white spaces from the description field
+            ticket["description"] = " ".join(ticket["description"].split())
 
-                created_at = datetime.fromisoformat(ticket["created_at"])
-                today = datetime.now()
-                if (today - created_at).days / 30.4375 <= 2:
-                    doc = Document(
-                        id=ticket["id"],
-                        sections=sections,
-                        source=DocumentSource.FRESHDESK,
-                        semantic_identifier=ticket["subject"],
-                        metadata={
-                            key: value
-                            for key, value in ticket.items()
-                            if isinstance(value, str) and key not in ["description", "description_text"]
-                        },
-                    )
+            # Use list comprehension for building sections
+            sections = self.build_doc_sections_from_ticket(ticket)
 
-                    doc_batch.append(doc)
+            created_at = datetime.fromisoformat(ticket["created_at"])
+            today = datetime.now()
+            if (today - created_at).days / 30.4375 <= 2:
+                doc = Document(
+                    id=ticket["id"],
+                    sections=sections,
+                    source=DocumentSource.FRESHDESK,
+                    semantic_identifier=ticket["subject"],
+                    metadata={
+                        key: value
+                        for key, value in ticket.items()
+                        if isinstance(value, str) and key not in ["description", "description_text"]
+                    },
+                )
 
-                    if len(doc_batch) >= self.batch_size:
-                        yield doc_batch
-                        doc_batch = []
+                doc_batch.append(doc)
 
-            if doc_batch:
+            if len(doc_batch) >= self.batch_size:
                 yield doc_batch
+                doc_batch = []
+
+        if doc_batch:
+            yield doc_batch
 
     def poll_source(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
         yield from self._process_tickets(start, end)
