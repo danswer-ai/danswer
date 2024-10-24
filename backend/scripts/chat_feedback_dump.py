@@ -1,5 +1,5 @@
 # This file is used to demonstrate how to use the backend APIs directly
-# In this case, the equivalent of asking a question in Danswer Chat in a new chat session
+# to query out feedback for all messages
 import argparse
 import logging
 from logging import getLogger
@@ -219,7 +219,7 @@ def process_all_chat_feedback(danswer_url: str, api_key: str | None) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Sample API Usage")
+    parser = argparse.ArgumentParser(description="Sample API Usage - Chat Feedback")
     parser.add_argument(
         "--url",
         type=str,
@@ -228,11 +228,11 @@ if __name__ == "__main__":
     )
 
     # Not needed if Auth is disabled?
-    # Or for Danswer MIT API key must be replaced with session cookie
+    # Or for Danswer MIT Edition API key must be replaced with session cookie
     parser.add_argument(
         "--api-key",
         type=str,
-        help="Danswer admin API key",
+        help="Danswer Admin level API key",
     )
 
     args = parser.parse_args()
