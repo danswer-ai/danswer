@@ -130,7 +130,7 @@ jobs:
             echo "All integration tests passed successfully."
           fi 
 
-      - name: Start Docker containers
+      - name: Start Docker containers 
         run: |
           cd deployment/docker_compose
           ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true \
