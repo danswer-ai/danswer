@@ -60,6 +60,8 @@ from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_cc_pair_groups_for_ids
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
+from danswer.db.credentials import cleanup_gmail_credentials
+from danswer.db.credentials import cleanup_google_drive_credentials
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_gmail_service_account_credentials
 from danswer.db.credentials import delete_google_drive_service_account_credentials
@@ -143,9 +145,11 @@ def upsert_google_app_gmail_credentials(
 @router.delete("/admin/connector/gmail/app-credential")
 def delete_google_app_gmail_credentials(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
         delete_google_app_gmail_cred()
+        cleanup_gmail_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -181,9 +185,11 @@ def upsert_google_app_credentials(
 @router.delete("/admin/connector/google-drive/app-credential")
 def delete_google_app_credentials(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
         delete_google_app_cred()
+        cleanup_google_drive_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -221,9 +227,11 @@ def upsert_google_service_gmail_account_key(
 @router.delete("/admin/connector/gmail/service-account-key")
 def delete_google_service_gmail_account_key(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
         delete_gmail_service_account_key()
+        cleanup_gmail_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -261,9 +269,11 @@ def upsert_google_service_account_key(
 @router.delete("/admin/connector/google-drive/service-account-key")
 def delete_google_service_account_key(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
         delete_service_account_key()
+        cleanup_google_drive_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
