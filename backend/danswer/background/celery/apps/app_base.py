@@ -9,7 +9,7 @@ from celery.app import trace
 from celery.exceptions import WorkerShutdown
 from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
-from celery.worker import strategy
+from celery.worker import strategy  # type: ignore
 from sentry_sdk.integrations.celery import CeleryIntegration
 
 from danswer.background.celery.apps.task_formatters import CeleryTaskColoredFormatter
