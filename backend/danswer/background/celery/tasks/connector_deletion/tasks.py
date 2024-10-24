@@ -67,14 +67,13 @@ def check_for_connector_deletion_task(self: Task, tenant_id: str | None) -> None
                     try_generate_document_cc_pair_cleanup_tasks(
                         self.app, cc_pair_id, db_session, r, lock_beat, tenant_id
                     )
-                except TaskDependencyError:
+                except TaskDependencyError as e:
+                    # this means we wanted to start deleting but dependent tasks were running
                     # Leave a stop signal to clear indexing and pruning tasks more quickly
-                    task_logger.exception(
-                        "try_generate_document_cc_pair_cleanup_tasks raised a TaskDependencyError exception."
-                    )
-                    r.set(rcs.fence_key, 0)
+                    task_logger.info(str(e))
+                    r.set(rcs.fence_key, cc_pair_id)
                 else:
-                    # clear the stop signal if it exists ... no longer neeeded
+                    # clear the stop signal if it exists ... no longer needed
                     r.delete(rcs.fence_key)
 
     except SoftTimeLimitExceeded:
@@ -137,7 +136,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
             rci = RedisConnectorIndexing(cc_pair_id, search_settings.id)
             if r.get(rci.fence_key):
                 raise TaskDependencyError(
-                    f"Connector deletion delayed because indexing is in progress: "
+                    f"Connector deletion - Delayed (indexing in progress): "
                     f"cc_pair={cc_pair_id} "
                     f"search_settings={search_settings.id}"
                 )
@@ -145,7 +144,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
         rcp = RedisConnectorPruning(cc_pair_id)
         if r.get(rcp.fence_key):
             raise TaskDependencyError(
-                f"Connector deletion delayed because pruning is in progress: "
+                f"Connector deletion - Delayed (pruning in progress): "
                 f"cc_pair={cc_pair_id}"
             )
 

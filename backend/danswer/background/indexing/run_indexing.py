@@ -220,6 +220,11 @@ def _run_indexing(
                 # index being built. We want to populate it even for paused connectors
                 # Often paused connectors are sources that aren't updated frequently but the
                 # contents still need to be initially pulled.
+                if callback:
+                    if callback.should_stop():
+                        raise RuntimeError("Connector stop signal detected")
+
+                # TODO: should we move this into the above callback instead?
                 db_session.refresh(db_cc_pair)
                 if (
                     (
@@ -231,10 +236,6 @@ def _run_indexing(
                 ):
                     # let the `except` block handle this
                     raise RuntimeError("Connector was disabled mid run")
-
-                if callback:
-                    if callback.should_stop():
-                        raise RuntimeError("Connector stop signal detected")
 
                 db_session.refresh(index_attempt)
                 if index_attempt.status != IndexingStatus.IN_PROGRESS:
