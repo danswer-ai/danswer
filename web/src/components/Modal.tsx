@@ -56,7 +56,7 @@ export function Modal({
         }}
         className={`bg-background  text-emphasis rounded shadow-2xl 
           transform transition-all duration-300 ease-in-out
-          ${width ?? "w-11/12 max-w-3xl"}
+          ${width ?? "w-11/12 max-w-4xl"}
           ${noPadding ? "" : "p-10"}
           ${className || ""}`}
       >
