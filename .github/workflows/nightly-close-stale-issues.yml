@@ -1,8 +1,13 @@
-name: 'Close stale issues and PRs'
+name: 'Nightly - Close stale issues and PRs'
 on:
   schedule:
     - cron: '0 11 * * *' # Runs every day at 3 AM PST / 4 AM PDT / 11 AM UTC
 
+permissions:
+  # contents: write # only for delete-branch option
+  issues: write
+  pull-requests: write
+  
 jobs:
   stale:
     runs-on: ubuntu-latest
