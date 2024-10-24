@@ -269,8 +269,8 @@ class HubPeriodicTask(bootsteps.StartStopStep):
                             f"Primary worker lock for tenant {tenant_id} could not be acquired!"
                         )
 
-        except Exception as e:
-            task_logger.error(f"Error in periodic task: {e}")
+        except Exception:
+            task_logger.exception("Periodic task failed.")
 
     def stop(self, worker: Any) -> None:
         # Cancel the scheduled task when the worker stops

@@ -231,10 +231,22 @@ def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
         return
 
     for tenant_id, lock in sender.primary_worker_locks.items():
-        if lock and lock.owned():
-            logger.debug(f"Releasing lock for tenant {tenant_id}")
-            lock.release()
-            sender.primary_worker_locks[tenant_id] = None
+        try:
+            if lock and lock.owned():
+                logger.debug(f"Attempting to release lock for tenant {tenant_id}")
+                try:
+                    lock.release()
+                    logger.debug(f"Successfully released lock for tenant {tenant_id}")
+                except Exception as e:
+                    logger.error(
+                        f"Failed to release lock for tenant {tenant_id}. Error: {str(e)}"
+                    )
+                finally:
+                    sender.primary_worker_locks[tenant_id] = None
+        except Exception as e:
+            logger.error(
+                f"Error checking lock status for tenant {tenant_id}. Error: {str(e)}"
+            )
 
 
 def on_setup_logging(

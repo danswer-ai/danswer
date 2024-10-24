@@ -68,7 +68,6 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
     try:
         # these tasks should never overlap
         if not lock_beat.acquire(blocking=False):
-            task_logger.info(f"Lock acquired for tenant (Y): {tenant_id}")
             return None
 
         cc_pair_ids: list[int] = []
