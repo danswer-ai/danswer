@@ -32,6 +32,7 @@ import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "../admin/configuration/llm/interfaces";
 import { AssistantsProvider } from "@/components/context/AssistantsContext";
 import { headers } from "next/headers";
+import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 
 export default async function Home({
   searchParams,
