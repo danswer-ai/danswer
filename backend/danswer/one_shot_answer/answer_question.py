@@ -129,7 +129,13 @@ def stream_answer_objects(
 
     persona = temporary_persona if temporary_persona else chat_session.persona
 
-    llm, fast_llm = get_llms_for_persona(persona=persona)
+    try:
+        llm, fast_llm = get_llms_for_persona(persona=persona)
+    except ValueError as e:
+        logger.error("Was not able to get LLMs for persona", exc_info=e)
+        raise ValueError(
+            "You must configure a Generative AI model to use this feature"
+        ) from e
 
     llm_tokenizer = get_tokenizer(
         model_name=llm.config.model_name,

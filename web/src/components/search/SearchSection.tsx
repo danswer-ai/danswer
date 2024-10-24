@@ -783,6 +783,7 @@ export const SearchSection = ({
                     </div>
 
                     <UnconfiguredProviderText
+                      noSources={shouldDisplayNoSources}
                       showConfigureAPIKey={() => setShowApiKeyModal(true)}
                     />
 
