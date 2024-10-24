@@ -5,14 +5,14 @@ from typing import Any, List, Optional
 from bs4 import BeautifulSoup  # Add this import for HTML parsing
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import GenerateDocumentsOutput, PollConnector
+from danswer.connectors.interfaces import GenerateDocumentsOutput, PollConnector, LoadConnector
 from danswer.connectors.models import ConnectorMissingCredentialError, Document, Section
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
 
-class FreshdeskConnector(PollConnector):
+class FreshdeskConnector(PollConnector, LoadConnector):
     def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
         self.batch_size = batch_size
 
@@ -37,7 +37,6 @@ class FreshdeskConnector(PollConnector):
         return soup.get_text()
 
     def load_credentials(self, credentials: dict[str, Any]) -> Optional[dict[str, Any]]:
-        logger.info("Loading credentials")
         self.api_key = credentials.get("freshdesk_api_key")
         self.domain = credentials.get("freshdesk_domain")
         self.password = credentials.get("freshdesk_password")
