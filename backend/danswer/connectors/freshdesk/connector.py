@@ -41,11 +41,15 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         self.password = credentials.get("freshdesk_password")
         return None
     
-    def _fetch_tickets(self) -> List[dict]:
+    def _fetch_tickets(self, start: datetime, end: datetime) -> List[dict]:
         if any([self.api_key, self.domain, self.password]) is None:
             raise ConnectorMissingCredentialError("freshdesk")
         
-        freshdesk_url = f"https://{self.domain}.freshdesk.com/api/v2/tickets?include=description"
+        #convert start and end time to the format required by Freshdesk API
+        start_time = start.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_time = end.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        freshdesk_url = f"https://{self.domain}.freshdesk.com/api/v2/tickets?include=description&updated_since={start_time}&updated_before={end_time}"
         response = requests.get(freshdesk_url, auth=(self.api_key, self.password))
         response.raise_for_status()  # raises exception when not a 2xx response
         
@@ -57,7 +61,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
             return []
 
     def _process_tickets(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
-        tickets = self._fetch_tickets()
+        tickets = self._fetch_tickets(start, end)
         doc_batch: List[Document] = []
 
         for ticket in tickets:
@@ -91,8 +95,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
             sections = self.build_doc_sections_from_ticket(ticket)
 
             created_at = datetime.fromisoformat(ticket["created_at"])
-            today = datetime.now()
-            if (today - created_at).days / 30.4375 <= 2:
+            if start <= created_at <= end:
                 doc = Document(
                     id=ticket["id"],
                     sections=sections,
