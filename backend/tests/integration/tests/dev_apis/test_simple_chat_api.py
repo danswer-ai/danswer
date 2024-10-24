@@ -119,6 +119,7 @@ def test_using_reference_docs_with_simple_with_history_api_flow(reset: None) -> 
     )
     assert response.status_code == 200
     response_json = response.json()
+
     # get the db_doc_id of the top document to use as a search doc id for second message
     first_db_doc_id = response_json["top_documents"][0]["db_doc_id"]
 

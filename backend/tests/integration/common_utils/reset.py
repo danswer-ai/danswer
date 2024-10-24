@@ -134,7 +134,7 @@ def reset_postgres(
         direction="upgrade",
         revision="head",
     )
-    if setup_danswer:
+    if not setup_danswer:
         return
 
     # do the same thing as we do on API server startup
@@ -215,7 +215,7 @@ def reset_postgres_multitenant() -> None:
     cur.close()
     conn.close()
 
-    reset_postgres(config_name="schema_private")
+    reset_postgres(config_name="schema_private", setup_danswer=False)
 
 
 def reset_vespa_multitenant() -> None:
