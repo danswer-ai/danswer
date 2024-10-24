@@ -106,6 +106,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
             logger.error("Primary worker lock: Acquire failed!")
             raise WorkerShutdown("Primary worker lock could not be acquired!")
 
+        # tacking on our own user data to the sender
+        sender.primary_worker_locks = {}
         sender.primary_worker_locks[tenant_id] = lock
 
         # As currently designed, when this worker starts as "primary", we reinitialize redis
