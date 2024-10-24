@@ -493,10 +493,11 @@ def get_connector_indexing_status(
     get_editable: bool = Query(
         False, description="If true, return editable document sets"
     ),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     # NOTE: If the connector is deleting behind the scenes,
     # accessing cc_pairs can be inconsistent and members like
@@ -617,6 +618,7 @@ def get_connector_indexing_status(
                     connector_id=connector.id,
                     credential_id=credential.id,
                     db_session=db_session,
+                    tenant_id=tenant_id,
                 ),
                 is_deletable=check_deletion_attempt_is_allowed(
                     connector_credential_pair=cc_pair,
@@ -694,15 +696,18 @@ def create_connector_with_mock_credential(
         connector_response = create_connector(
             db_session=db_session, connector_data=connector_data
         )
+
         mock_credential = CredentialBase(
             credential_json={}, admin_public=True, source=connector_data.source
         )
         credential = create_credential(
             mock_credential, user=user, db_session=db_session
         )
+
         access_type = (
             AccessType.PUBLIC if connector_data.is_public else AccessType.PRIVATE
         )
+
         response = add_credential_to_connector(
             db_session=db_session,
             user=user,
@@ -786,7 +791,7 @@ def connector_run_once(
     """Used to trigger indexing on a set of cc_pairs associated with a
     single connector."""
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     connector_id = run_info.connector_id
     specified_credential_ids = run_info.credential_ids

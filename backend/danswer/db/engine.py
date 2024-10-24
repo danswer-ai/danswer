@@ -39,7 +39,7 @@ from danswer.configs.app_configs import SECRET_JWT_KEY
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.utils.logger import setup_logger
-from shared_configs.configs import current_tenant_id
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 logger = setup_logger()
@@ -260,12 +260,12 @@ def get_current_tenant_id(request: Request) -> str:
     """Dependency that extracts the tenant ID from the JWT token in the request and sets the context variable."""
     if not MULTI_TENANT:
         tenant_id = POSTGRES_DEFAULT_SCHEMA
-        current_tenant_id.set(tenant_id)
+        CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
         return tenant_id
 
     token = request.cookies.get("tenant_details")
     if not token:
-        current_value = current_tenant_id.get()
+        current_value = CURRENT_TENANT_ID_CONTEXTVAR.get()
         # If no token is present, use the default schema or handle accordingly
         return current_value
 
@@ -273,14 +273,14 @@ def get_current_tenant_id(request: Request) -> str:
         payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
         tenant_id = payload.get("tenant_id")
         if not tenant_id:
-            return current_tenant_id.get()
+            return CURRENT_TENANT_ID_CONTEXTVAR.get()
         if not is_valid_schema_name(tenant_id):
             raise HTTPException(status_code=400, detail="Invalid tenant ID format")
-        current_tenant_id.set(tenant_id)
+        CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
         return tenant_id
     except jwt.InvalidTokenError:
-        return current_tenant_id.get()
+        return CURRENT_TENANT_ID_CONTEXTVAR.get()
     except Exception as e:
         logger.error(f"Unexpected error in get_current_tenant_id: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -291,7 +291,7 @@ async def get_async_session_with_tenant(
     tenant_id: str | None = None,
 ) -> AsyncGenerator[AsyncSession, None]:
     if tenant_id is None:
-        tenant_id = current_tenant_id.get()
+        tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
 
     if not is_valid_schema_name(tenant_id):
         logger.error(f"Invalid tenant ID: {tenant_id}")
@@ -319,30 +319,32 @@ async def get_async_session_with_tenant(
 def get_session_with_tenant(
     tenant_id: str | None = None,
 ) -> Generator[Session, None, None]:
-    """Generate a database session with the appropriate tenant schema set."""
+    """Generate a database session bound to a connection with the appropriate tenant schema set."""
     engine = get_sqlalchemy_engine()
+
     if tenant_id is None:
-        tenant_id = current_tenant_id.get()
+        tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+    else:
+        CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
+
+    event.listen(engine, "checkout", set_search_path_on_checkout)
 
     if not is_valid_schema_name(tenant_id):
         raise HTTPException(status_code=400, detail="Invalid tenant ID")
 
-    # Establish a raw connection without starting a transaction
+    # Establish a raw connection
     with engine.connect() as connection:
-        # Access the raw DBAPI connection
+        # Access the raw DBAPI connection and set the search_path
         dbapi_connection = connection.connection
 
-        # Execute SET search_path outside of any transaction
+        # Set the search_path outside of any transaction
         cursor = dbapi_connection.cursor()
         try:
-            cursor.execute(f'SET search_path TO "{tenant_id}"')
-            # Optionally verify the search_path was set correctly
-            cursor.execute("SHOW search_path")
-            cursor.fetchone()
+            cursor.execute(f'SET search_path = "{tenant_id}"')
         finally:
             cursor.close()
 
-        # Proceed to create a session using the connection
+        # Bind the session to the connection
         with Session(bind=connection, expire_on_commit=False) as session:
             try:
                 yield session
@@ -356,15 +358,27 @@ def get_session_with_tenant(
                         cursor.close()
 
 
+def set_search_path_on_checkout(
+    dbapi_conn: Any, connection_record: Any, connection_proxy: Any
+) -> None:
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+    if tenant_id and is_valid_schema_name(tenant_id):
+        with dbapi_conn.cursor() as cursor:
+            cursor.execute(f'SET search_path TO "{tenant_id}"')
+            logger.debug(
+                f"Set search_path to {tenant_id} for connection {connection_record}"
+            )
+
+
 def get_session_generator_with_tenant() -> Generator[Session, None, None]:
-    tenant_id = current_tenant_id.get()
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
     with get_session_with_tenant(tenant_id) as session:
         yield session
 
 
 def get_session() -> Generator[Session, None, None]:
     """Generate a database session with the appropriate tenant schema set."""
-    tenant_id = current_tenant_id.get()
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
     if tenant_id == POSTGRES_DEFAULT_SCHEMA and MULTI_TENANT:
         raise HTTPException(status_code=401, detail="User must authenticate")
 
@@ -381,7 +395,7 @@ def get_session() -> Generator[Session, None, None]:
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """Generate an async database session with the appropriate tenant schema set."""
-    tenant_id = current_tenant_id.get()
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
     engine = get_sqlalchemy_async_engine()
     async with AsyncSession(engine, expire_on_commit=False) as async_session:
         if MULTI_TENANT:

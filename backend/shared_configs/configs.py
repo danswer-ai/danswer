@@ -131,7 +131,7 @@ else:
 
 POSTGRES_DEFAULT_SCHEMA = os.environ.get("POSTGRES_DEFAULT_SCHEMA") or "public"
 
-current_tenant_id = contextvars.ContextVar(
+CURRENT_TENANT_ID_CONTEXTVAR = contextvars.ContextVar(
     "current_tenant_id", default=POSTGRES_DEFAULT_SCHEMA
 )
 

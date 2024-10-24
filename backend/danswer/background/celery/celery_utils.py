@@ -27,7 +27,10 @@ logger = setup_logger()
 
 
 def _get_deletion_status(
-    connector_id: int, credential_id: int, db_session: Session
+    connector_id: int,
+    credential_id: int,
+    db_session: Session,
+    tenant_id: str | None = None,
 ) -> TaskQueueState | None:
     """We no longer store TaskQueueState in the DB for a deletion attempt.
     This function populates TaskQueueState by just checking redis.
@@ -40,7 +43,7 @@ def _get_deletion_status(
 
     rcd = RedisConnectorDeletion(cc_pair.id)
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
     if not r.exists(rcd.fence_key):
         return None
 
@@ -50,9 +53,14 @@ def _get_deletion_status(
 
 
 def get_deletion_attempt_snapshot(
-    connector_id: int, credential_id: int, db_session: Session
+    connector_id: int,
+    credential_id: int,
+    db_session: Session,
+    tenant_id: str | None = None,
 ) -> DeletionAttemptSnapshot | None:
-    deletion_task = _get_deletion_status(connector_id, credential_id, db_session)
+    deletion_task = _get_deletion_status(
+        connector_id, credential_id, db_session, tenant_id
+    )
     if not deletion_task:
         return None
 

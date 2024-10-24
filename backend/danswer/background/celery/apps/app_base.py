@@ -19,6 +19,7 @@ from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
 from danswer.configs.constants import DanswerRedisLocks
+from danswer.db.engine import get_all_tenant_ids
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
@@ -56,7 +57,7 @@ def on_task_postrun(
     task_id: str | None = None,
     task: Task | None = None,
     args: tuple | None = None,
-    kwargs: dict | None = None,
+    kwargs: dict[str, Any] | None = None,
     retval: Any | None = None,
     state: str | None = None,
     **kwds: Any,
@@ -83,7 +84,19 @@ def on_task_postrun(
     if not task_id:
         return
 
-    r = get_redis_client()
+    # Get tenant_id directly from kwargs- each celery task has a tenant_id kwarg
+    if not kwargs:
+        logger.error(f"Task {task.name} (ID: {task_id}) is missing kwargs")
+        tenant_id = None
+    else:
+        tenant_id = kwargs.get("tenant_id")
+
+    task_logger.debug(
+        f"Task {task.name} (ID: {task_id}) completed with state: {state} "
+        f"{f'for tenant_id={tenant_id}' if tenant_id else ''}"
+    )
+
+    r = get_redis_client(tenant_id=tenant_id)
 
     if task_id.startswith(RedisConnectorCredentialPair.PREFIX):
         r.srem(RedisConnectorCredentialPair.get_taskset_key(), task_id)
@@ -124,7 +137,7 @@ def on_celeryd_init(sender: Any = None, conf: Any = None, **kwargs: Any) -> None
 
 
 def wait_for_redis(sender: Any, **kwargs: Any) -> None:
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=None)
 
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
@@ -157,26 +170,44 @@ def wait_for_redis(sender: Any, **kwargs: Any) -> None:
 
 
 def on_secondary_worker_init(sender: Any, **kwargs: Any) -> None:
-    r = get_redis_client()
-
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
 
     logger.info("Running as a secondary celery worker.")
-    logger.info("Waiting for primary worker to be ready...")
+    logger.info("Waiting for all tenant primary workers to be ready...")
     time_start = time.monotonic()
+
     while True:
-        if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+        tenant_ids = get_all_tenant_ids()
+        # Check if we have a primary worker lock for each tenant
+        all_tenants_ready = all(
+            get_redis_client(tenant_id=tenant_id).exists(
+                DanswerRedisLocks.PRIMARY_WORKER
+            )
+            for tenant_id in tenant_ids
+        )
+
+        if all_tenants_ready:
             break
 
-        time.monotonic()
         time_elapsed = time.monotonic() - time_start
-        logger.info(
-            f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        ready_tenants = sum(
+            1
+            for tenant_id in tenant_ids
+            if get_redis_client(tenant_id=tenant_id).exists(
+                DanswerRedisLocks.PRIMARY_WORKER
+            )
         )
+
+        logger.info(
+            f"Not all tenant primary workers are ready yet. "
+            f"Ready tenants: {ready_tenants}/{len(tenant_ids)} "
+            f"elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        )
+
         if time_elapsed > WAIT_LIMIT:
             msg = (
-                f"Primary worker was not ready within the timeout. "
+                f"Not all tenant primary workers were ready within the timeout "
                 f"({WAIT_LIMIT} seconds). Exiting..."
             )
             logger.error(msg)
@@ -184,7 +215,7 @@ def on_secondary_worker_init(sender: Any, **kwargs: Any) -> None:
 
         time.sleep(WAIT_INTERVAL)
 
-    logger.info("Wait for primary worker completed successfully. Continuing...")
+    logger.info("All tenant primary workers are ready. Continuing...")
     return
 
 
@@ -196,14 +227,26 @@ def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
     if not celery_is_worker_primary(sender):
         return
 
-    if not sender.primary_worker_lock:
+    if not hasattr(sender, "primary_worker_locks"):
         return
 
-    logger.info("Releasing primary worker lock.")
-    lock = sender.primary_worker_lock
-    if lock.owned():
-        lock.release()
-        sender.primary_worker_lock = None
+    for tenant_id, lock in sender.primary_worker_locks.items():
+        try:
+            if lock and lock.owned():
+                logger.debug(f"Attempting to release lock for tenant {tenant_id}")
+                try:
+                    lock.release()
+                    logger.debug(f"Successfully released lock for tenant {tenant_id}")
+                except Exception as e:
+                    logger.error(
+                        f"Failed to release lock for tenant {tenant_id}. Error: {str(e)}"
+                    )
+                finally:
+                    sender.primary_worker_locks[tenant_id] = None
+        except Exception as e:
+            logger.error(
+                f"Error checking lock status for tenant {tenant_id}. Error: {str(e)}"
+            )
 
 
 def on_setup_logging(
