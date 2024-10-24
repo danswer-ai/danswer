@@ -19,6 +19,8 @@ import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Logo } from "@/components/Logo";
 import { UserProvider } from "@/components/user/UserProvider";
 import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
+import { fetchAssistantData } from "@/lib/chat/fetchAssistantdata";
+import { AppProvider } from "@/components/context/AppProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -54,6 +56,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const combinedSettings = await fetchSettingsSS();
+
+  const data = await fetchAssistantData();
+
+  const { assistants, hasAnyConnectors, hasImageCompatibleModel } = data;
 
   const productGating =
     combinedSettings?.settings.product_gating ?? GatingType.NONE;
@@ -174,13 +180,14 @@ export default async function RootLayout({
             process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
           }`}
         >
-          <UserProvider>
-            <ProviderContextProvider>
-              <SettingsProvider settings={combinedSettings}>
-                {children}
-              </SettingsProvider>
-            </ProviderContextProvider>
-          </UserProvider>
+          <AppProvider
+            settings={combinedSettings}
+            assistants={assistants}
+            hasAnyConnectors={hasAnyConnectors}
+            hasImageCompatibleModel={hasImageCompatibleModel}
+          >
+            {children}
+          </AppProvider>
         </div>
       </body>
     </html>

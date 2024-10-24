@@ -1,5 +1,11 @@
 "use client";
-import React, { createContext, useState, useContext, useMemo } from "react";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useMemo,
+  useEffect,
+} from "react";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import {
   classifyAssistants,
@@ -15,6 +21,10 @@ interface AssistantsContextProps {
   finalAssistants: Persona[];
   ownedButHiddenAssistants: Persona[];
   refreshAssistants: () => Promise<void>;
+
+  // Admin only
+  editablePersonas: Persona[];
+  allAssistants: Persona[];
 }
 
 const AssistantsContext = createContext<AssistantsContextProps | undefined>(
@@ -35,7 +45,54 @@ export const AssistantsProvider: React.FC<{
   const [assistants, setAssistants] = useState<Persona[]>(
     initialAssistants || []
   );
-  const { user } = useUser();
+  const { user, isLoadingUser, isAdmin } = useUser();
+  const [editablePersonas, setEditablePersonas] = useState<Persona[]>([]);
+
+  useEffect(() => {
+    const fetchEditablePersonas = async () => {
+      if (!isAdmin) {
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/admin/persona?get_editable=true");
+        if (!response.ok) {
+          console.error("Failed to fetch editable personas");
+          return;
+        }
+        const personas = await response.json();
+        setEditablePersonas(personas);
+      } catch (error) {
+        console.error("Error fetching editable personas:", error);
+      }
+    };
+
+    fetchEditablePersonas();
+  }, [isAdmin]);
+
+  const [allAssistants, setAllAssistants] = useState<Persona[]>([]);
+
+  useEffect(() => {
+    const fetchAllAssistants = async () => {
+      if (!isAdmin) {
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/admin/persona");
+        if (!response.ok) {
+          console.error("Failed to fetch all personas");
+          return;
+        }
+        const personas = await response.json();
+        setAllAssistants(personas);
+      } catch (error) {
+        console.error("Error fetching all personas:", error);
+      }
+    };
+
+    fetchAllAssistants();
+  }, [isAdmin]);
 
   const refreshAssistants = async () => {
     try {
@@ -92,7 +149,7 @@ export const AssistantsProvider: React.FC<{
       finalAssistants,
       ownedButHiddenAssistants,
     };
-  }, [user, assistants]);
+  }, [user, assistants, isLoadingUser]);
 
   return (
     <AssistantsContext.Provider
@@ -103,6 +160,8 @@ export const AssistantsProvider: React.FC<{
         finalAssistants,
         ownedButHiddenAssistants,
         refreshAssistants,
+        editablePersonas,
+        allAssistants,
       }}
     >
       {children}
