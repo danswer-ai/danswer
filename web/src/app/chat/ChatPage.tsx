@@ -809,7 +809,6 @@ export function ChatPage({
 
       // Check if all messages are currently rendered
       if (currentVisibleRange.end < messageHistory.length) {
-        console.log("Updating visible range");
         // Update visible range to include the last messages
         updateCurrentVisibleRange({
           start: Math.max(
