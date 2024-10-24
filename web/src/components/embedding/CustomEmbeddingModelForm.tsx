@@ -49,7 +49,6 @@ export function CustomEmbeddingModelForm({
           index_name: Yup.string().nullable(),
         })}
         onSubmit={async (values) => {
-          console.log(values);
           setShowTentativeModel(values as CloudEmbeddingModel);
         }}
       >
