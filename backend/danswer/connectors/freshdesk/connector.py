@@ -2,7 +2,7 @@ import requests
 import json
 from datetime import datetime, timezone
 from typing import Any, List, Optional
-from bs4 import BeautifulSoup  # Add this import for HTML parsing
+from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput, PollConnector, LoadConnector
@@ -33,8 +33,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         ]
 
     def strip_html_tags(self, html: str) -> str:
-        soup = BeautifulSoup(html, 'html.parser')
-        return soup.get_text()
+        return parse_html_page_basic(html)
 
     def load_credentials(self, credentials: dict[str, Any]) -> Optional[dict[str, Any]]:
         self.api_key = credentials.get("freshdesk_api_key")
@@ -43,7 +42,6 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         return None
 
     def _process_tickets(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
-        logger.info("Processing tickets")
         if any([self.api_key, self.domain, self.password]) is None:
             raise ConnectorMissingCredentialError("freshdesk")
 
