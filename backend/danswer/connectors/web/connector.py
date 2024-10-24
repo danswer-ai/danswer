@@ -224,8 +224,6 @@ class WebConnector(LoadConnector):
         web_connector_type: str = WEB_CONNECTOR_VALID_SETTINGS.RECURSIVE.value,
         mintlify_cleanup: bool = True,  # Mostly ok to apply to other websites as well
         batch_size: int = INDEX_BATCH_SIZE,
-        site_list_override: list[str]
-        | None = None,  # Should only be used for dev flows
     ) -> None:
         self.mintlify_cleanup = mintlify_cleanup
         self.batch_size = batch_size
@@ -253,10 +251,6 @@ class WebConnector(LoadConnector):
             raise ValueError(
                 "Invalid Web Connector Config, must choose a valid type between: " ""
             )
-
-        if site_list_override:
-            logger.warning("Overriding site list for Web Connector")
-            self.to_visit_list = site_list_override
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         if credentials:
@@ -324,8 +318,6 @@ class WebConnector(LoadConnector):
                             else None,
                         )
                     )
-                    continue
-
                 page = context.new_page()
                 page_response = page.goto(current_url)
                 last_modified = (

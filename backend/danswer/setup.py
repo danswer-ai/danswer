@@ -114,7 +114,8 @@ def setup_danswer(db_session: Session) -> None:
     if not MULTI_TENANT:
         mark_reindex_flag(db_session)
 
-    # ensure Vespa is setup correctly
+    # Ensure Vespa is setup correctly, this step is relatively near the end because Vespa
+    # takes a bit of time to start up
     logger.notice("Verifying Document Index(s) is/are available.")
     document_index = get_default_document_index(
         primary_index_name=search_settings.index_name,

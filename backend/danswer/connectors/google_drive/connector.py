@@ -19,7 +19,6 @@ from danswer.configs.app_configs import GOOGLE_DRIVE_ONLY_ORG_PUBLIC
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
@@ -40,6 +39,7 @@ from danswer.file_processing.unstructured import get_unstructured_api_key
 from danswer.file_processing.unstructured import unstructured_to_text
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
+from danswer.utils.retry_wrapper import retry_builder
 
 logger = setup_logger()
 
