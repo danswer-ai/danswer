@@ -406,6 +406,24 @@ def create_initial_public_credential(db_session: Session) -> None:
     db_session.commit()
 
 
+def cleanup_gmail_credentials(db_session: Session) -> None:
+    gmail_credentials = fetch_credentials_by_source(
+        db_session=db_session, user=None, document_source=DocumentSource.GMAIL
+    )
+    for credential in gmail_credentials:
+        db_session.delete(credential)
+    db_session.commit()
+
+
+def cleanup_google_drive_credentials(db_session: Session) -> None:
+    google_drive_credentials = fetch_credentials_by_source(
+        db_session=db_session, user=None, document_source=DocumentSource.GOOGLE_DRIVE
+    )
+    for credential in google_drive_credentials:
+        db_session.delete(credential)
+    db_session.commit()
+
+
 def delete_gmail_service_account_credentials(
     user: User | None, db_session: Session
 ) -> None:
