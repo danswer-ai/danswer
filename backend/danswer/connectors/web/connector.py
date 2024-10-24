@@ -318,6 +318,8 @@ class WebConnector(LoadConnector):
                             else None,
                         )
                     )
+                    continue
+
                 page = context.new_page()
                 page_response = page.goto(current_url)
                 last_modified = (
