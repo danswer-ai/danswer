@@ -5,9 +5,11 @@ from typing import Any
 
 import sentry_sdk
 from celery import Task
+from celery.app import trace
 from celery.exceptions import WorkerShutdown
 from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
+from celery.worker import strategy  # type: ignore
 from sentry_sdk.integrations.celery import CeleryIntegration
 
 from danswer.background.celery.apps.task_formatters import CeleryTaskColoredFormatter
@@ -297,3 +299,11 @@ def on_setup_logging(
 
     task_logger.setLevel(loglevel)
     task_logger.propagate = False
+
+    # hide celery task received spam
+    # e.g. "Task check_for_pruning[a1e96171-0ba8-4e00-887b-9fbf7442eab3] received"
+    strategy.logger.setLevel(logging.WARNING)
+
+    # hide celery task succeeded/failed spam
+    # e.g. "Task check_for_pruning[a1e96171-0ba8-4e00-887b-9fbf7442eab3] succeeded in 0.03137450001668185s: None"
+    trace.logger.setLevel(logging.WARNING)
