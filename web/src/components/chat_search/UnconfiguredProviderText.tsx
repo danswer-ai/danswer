@@ -9,10 +9,6 @@ export default function CredentialNotConfigured({
 }) {
   const { shouldShowConfigurationNeeded } = useProviderStatus();
 
-  if (!shouldShowConfigurationNeeded) {
-    return null;
-  }
-
   return (
     <>
       {noSources ? (
@@ -22,22 +18,24 @@ export default function CredentialNotConfigured({
             href="/admin/add-connector"
             className="text-link hover:underline cursor-pointer"
           >
-            some sources
+            a source
           </a>{" "}
           to continue.
         </p>
       ) : (
-        <p className="text-base text-center w-full text-subtle">
-          Please note that you have not yet configured an LLM provider. You can
-          configure one{" "}
-          <button
-            onClick={showConfigureAPIKey}
-            className="text-link hover:underline cursor-pointer"
-          >
-            here
-          </button>
-          .
-        </p>
+        shouldShowConfigurationNeeded && (
+          <p className="text-base text-center w-full text-subtle">
+            Please note that you have not yet configured an LLM provider. You
+            can configure one{" "}
+            <button
+              onClick={showConfigureAPIKey}
+              className="text-link hover:underline cursor-pointer"
+            >
+              here
+            </button>
+            .
+          </p>
+        )
       )}
     </>
   );

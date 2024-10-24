@@ -1,10 +1,10 @@
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
+
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
 import WrappedAssistantsMine from "./WrappedAssistantsMine";
-import { AssistantsProvider } from "@/components/context/AssistantsContext";
+import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 
 export default async function GalleryPage({
   searchParams,
@@ -24,8 +24,8 @@ export default async function GalleryPage({
     chatSessions,
     folders,
     openedFolders,
-    shouldShowWelcomeModal,
     toggleSidebar,
+    shouldShowWelcomeModal,
   } = data;
 
   return (
