@@ -280,6 +280,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None,
         tool_choice: ToolChoiceOptions | None,
         stream: bool,
+        strict_json_mode: bool = False,
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
         if isinstance(prompt, list):
             prompt = [
@@ -291,30 +292,28 @@ class DefaultMultiLLM(LLM):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
         try:
-            return litellm.completion(
-                # model choice
-                model=f"{self.config.model_provider}/{self.config.deployment_name or self.config.model_name}",
-                # NOTE: have to pass in None instead of empty string for these
-                # otherwise litellm can have some issues with bedrock
-                api_key=self._api_key or None,
-                base_url=self._api_base or None,
-                api_version=self._api_version or None,
-                custom_llm_provider=self._custom_llm_provider or None,
-                # actual input
-                messages=prompt,
-                tools=tools,
-                tool_choice=tool_choice if tools else None,
-                # streaming choice
-                stream=stream,
-                # model params
-                temperature=self._temperature,
-                timeout=self._timeout,
-                # For now, we don't support parallel tool calls
-                # NOTE: we can't pass this in if tools are not specified
-                # or else OpenAI throws an error
-                **({"parallel_tool_calls": False} if tools else {}),
+            completion_kwargs: dict[str, Any] = {
+                "model": f"{self.config.model_provider}/{self.config.deployment_name or self.config.model_name}",
+                "api_key": self._api_key or None,
+                "base_url": self._api_base or None,
+                "api_version": self._api_version or None,
+                "custom_llm_provider": self._custom_llm_provider or None,
+                "messages": prompt,
+                "tools": tools,
+                "tool_choice": tool_choice if tools else None,
+                "stream": stream,
+                "temperature": self._temperature,
+                "timeout": self._timeout,
                 **self._model_kwargs,
-            )
+            }
+
+            if strict_json_mode:
+                completion_kwargs["response_format"] = {"type": "json_object"}
+
+            if tools:
+                completion_kwargs["parallel_tool_calls"] = False
+
+            return litellm.completion(**completion_kwargs)
         except Exception as e:
             # for break pointing
             raise e
@@ -336,12 +335,14 @@ class DefaultMultiLLM(LLM):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
+        strict_json_mode: bool = False,  # Add this parameter
     ) -> BaseMessage:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
 
         response = cast(
-            litellm.ModelResponse, self._completion(prompt, tools, tool_choice, False)
+            litellm.ModelResponse,
+            self._completion(prompt, tools, tool_choice, False, strict_json_mode),
         )
         choice = response.choices[0]
         if hasattr(choice, "message"):
@@ -354,6 +355,7 @@ class DefaultMultiLLM(LLM):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
+        strict_json_mode: bool = False,  # Add this parameter
     ) -> Iterator[BaseMessage]:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
@@ -365,7 +367,7 @@ class DefaultMultiLLM(LLM):
         output = None
         response = cast(
             litellm.CustomStreamWrapper,
-            self._completion(prompt, tools, tool_choice, True),
+            self._completion(prompt, tools, tool_choice, True, strict_json_mode),
         )
         try:
             for part in response:

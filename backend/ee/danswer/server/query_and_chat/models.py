@@ -60,6 +60,7 @@ class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
     skip_rerank: bool | None = None
     # If search_doc_ids provided, then retrieval options are unused
     search_doc_ids: list[int] | None = None
+    strict_json_mode: bool = False
 
 
 class SimpleDoc(BaseModel):

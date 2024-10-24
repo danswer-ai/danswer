@@ -296,6 +296,7 @@ def handle_send_message_simple_with_history(
         chunks_above=0,
         chunks_below=0,
         full_doc=req.full_doc,
+        strict_json_mode=req.strict_json_mode,
     )
 
     packets = stream_chat_message_objects(
