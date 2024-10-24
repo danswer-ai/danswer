@@ -180,20 +180,14 @@ export default async function RootLayout({
             process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
           }`}
         >
-          <UserProvider>
-            <ProviderContextProvider>
-              <SettingsProvider settings={combinedSettings}>
-                <AppProvider
-                  settings={combinedSettings}
-                  assistants={assistants}
-                  hasAnyConnectors={hasAnyConnectors}
-                  hasImageCompatibleModel={hasImageCompatibleModel}
-                >
-                  {children}
-                </AppProvider>
-              </SettingsProvider>
-            </ProviderContextProvider>
-          </UserProvider>
+          <AppProvider
+            settings={combinedSettings}
+            assistants={assistants}
+            hasAnyConnectors={hasAnyConnectors}
+            hasImageCompatibleModel={hasImageCompatibleModel}
+          >
+            {children}
+          </AppProvider>
         </div>
       </body>
     </html>
