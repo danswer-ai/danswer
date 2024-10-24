@@ -4,6 +4,8 @@
 <a href="https://www.danswer.ai/"> <img width="50%" src="https://github.com/danswer-owners/danswer/blob/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png?raw=true)" /></a>
 </h2>
 
+
+
 <p align="center">
 <p align="center">Open Source Gen-AI Chat + Unified Search.</p>
 
@@ -24,7 +26,7 @@
 
 <strong>[Danswer](https://www.danswer.ai/)</strong> is the AI Assistant connected to your company's docs, apps, and people. 
 Danswer provides a Chat interface and plugs into any LLM of your choice. Danswer can be deployed anywhere and for any 
-scale - on a laptop, on-premise, or to cloud. Since you own the deployment, your user data and chats are fully in your 
+scale - on a laptop, on-premise, or in the cloud. Since you own the deployment, your user data and chats are fully in your 
 own control. Danswer is MIT licensed and designed to be modular and easily extensible. The system also comes fully ready 
 for production usage with user authentication, role management (admin/basic users), chat persistence, and a UI for 
 configuring Personas (AI Assistants) and their Prompts.
@@ -68,9 +70,9 @@ We also have built-in support for deployment on Kubernetes. Files for that can b
 
 ## 🚧 Roadmap
 * Chat/Prompt sharing with specific teammates and user groups.
-* Multi-Model model support, chat with images, video etc.
+* Multimodal model support, chat with images, video, etc.
 * Choosing between LLMs and parameters during chat session.
-* Tool calling and agent configurations options.
+* Tool calling and agent configuration options.
 * Organizational understanding and ability to locate and suggest experts from your team.
 
 
@@ -79,7 +81,7 @@ We also have built-in support for deployment on Kubernetes. Files for that can b
 * Best in class Hybrid Search across all sources (BM-25 + prefix aware embedding models).
 * Admin Dashboard to configure connectors, document-sets, access, etc.
 * Custom deep learning models + learn from user feedback.
-* Easy deployment and ability to host Danswer anywhere of your choosing.
+* Easy deployment and ability to host Danswer anywhere you choose.
 
 
 ## 🔌 Connectors
@@ -118,7 +120,7 @@ There are two editions of Danswer:
     * Whitelabeling
     * API key authentication
     * Encryption of secrets
-    * Any many more! Checkout [our website](https://www.danswer.ai/) for the latest.
+    * And many more! Checkout [our website](https://www.danswer.ai/) for the latest.
 
 To try the Danswer Enterprise Edition: 
 
