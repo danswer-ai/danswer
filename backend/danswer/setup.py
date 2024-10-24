@@ -40,6 +40,7 @@ from danswer.natural_language_processing.search_nlp_models import warm_up_bi_enc
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
 from danswer.search.models import SavedSearchSettings
 from danswer.search.retrieval.search_runner import download_nltk_data
+from danswer.seeding.load_docs import seed_initial_documents
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
@@ -58,6 +59,12 @@ logger = setup_logger()
 
 
 def setup_danswer(db_session: Session) -> None:
+    """
+    Setup Danswer for a particular tenant. In the Single Tenant case, it will set it up for the default schema
+    on server startup. In the MT case, it will be called when the tenant is created.
+
+    The Tenant Service calls the tenants/create endpoint which runs this.
+    """
     check_index_swap(db_session=db_session)
     search_settings = get_current_search_settings(db_session)
     secondary_search_settings = get_secondary_search_settings(db_session)
@@ -107,7 +114,8 @@ def setup_danswer(db_session: Session) -> None:
     if not MULTI_TENANT:
         mark_reindex_flag(db_session)
 
-    # ensure Vespa is setup correctly
+    # Ensure Vespa is setup correctly, this step is relatively near the end because Vespa
+    # takes a bit of time to start up
     logger.notice("Verifying Document Index(s) is/are available.")
     document_index = get_default_document_index(
         primary_index_name=search_settings.index_name,
@@ -138,6 +146,8 @@ def setup_danswer(db_session: Session) -> None:
 
     # update multipass indexing setting based on GPU availability
     update_default_multipass_indexing(db_session)
+
+    seed_initial_documents(db_session)
 
 
 def translate_saved_search_settings(db_session: Session) -> None:
@@ -311,11 +321,13 @@ def update_default_multipass_indexing(db_session: Session) -> None:
 
 
 def setup_multitenant_danswer() -> None:
+    # For Managed Vespa, the schema is sent over via the Vespa Console manually.
     if not MANAGED_VESPA:
         setup_vespa_multitenant(SUPPORTED_EMBEDDING_MODELS)
 
 
 def setup_vespa_multitenant(supported_indices: list[SupportedEmbeddingModel]) -> bool:
+    # This is for local testing
     WAIT_SECONDS = 5
     VESPA_ATTEMPTS = 5
     for x in range(VESPA_ATTEMPTS):

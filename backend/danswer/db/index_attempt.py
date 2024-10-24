@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 
 from sqlalchemy import and_
@@ -59,6 +60,32 @@ def create_index_attempt(
         search_settings_id=search_settings_id,
         from_beginning=from_beginning,
         status=IndexingStatus.NOT_STARTED,
+    )
+    db_session.add(new_attempt)
+    db_session.commit()
+
+    return new_attempt.id
+
+
+def mock_successful_index_attempt(
+    connector_credential_pair_id: int,
+    search_settings_id: int,
+    docs_indexed: int,
+    db_session: Session,
+) -> int:
+    """Should not be used in any user triggered flows"""
+    db_time = func.now()
+    new_attempt = IndexAttempt(
+        connector_credential_pair_id=connector_credential_pair_id,
+        search_settings_id=search_settings_id,
+        from_beginning=True,
+        status=IndexingStatus.SUCCESS,
+        total_docs_indexed=docs_indexed,
+        new_docs_indexed=docs_indexed,
+        # Need this to be some convincing random looking value and it can't be 0
+        # or the indexing rate would calculate out to infinity
+        time_started=db_time - timedelta(seconds=1.92),
+        time_updated=db_time,
     )
     db_session.add(new_attempt)
     db_session.commit()

@@ -40,6 +40,8 @@ CREDENTIAL_PERMISSIONS_TO_IGNORE = {
     DocumentSource.MEDIAWIKI,
 }
 
+PUBLIC_CREDENTIAL_ID = 0
+
 
 def _add_user_filters(
     stmt: Select,
@@ -384,12 +386,11 @@ def delete_credential(
 
 
 def create_initial_public_credential(db_session: Session) -> None:
-    public_cred_id = 0
     error_msg = (
         "DB is not in a valid initial state."
         "There must exist an empty public credential for data connectors that do not require additional Auth."
     )
-    first_credential = fetch_credential_by_id(public_cred_id, None, db_session)
+    first_credential = fetch_credential_by_id(PUBLIC_CREDENTIAL_ID, None, db_session)
 
     if first_credential is not None:
         if first_credential.credential_json != {} or first_credential.user is not None:
@@ -397,7 +398,7 @@ def create_initial_public_credential(db_session: Session) -> None:
         return
 
     credential = Credential(
-        id=public_cred_id,
+        id=PUBLIC_CREDENTIAL_ID,
         credential_json={},
         user_id=None,
     )
