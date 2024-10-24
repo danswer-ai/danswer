@@ -88,11 +88,12 @@ class LLM(abc.ABC):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
+        max_tokens: int | None = None,
     ) -> BaseMessage:
         self._precall(prompt)
         # TODO add a postcall to log model outputs independent of concrete class
         # implementation
-        return self._invoke_implementation(prompt, tools, tool_choice)
+        return self._invoke_implementation(prompt, tools, tool_choice, max_tokens)
 
     @abc.abstractmethod
     def _invoke_implementation(
@@ -100,6 +101,7 @@ class LLM(abc.ABC):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
+        max_tokens: int | None = None,
     ) -> BaseMessage:
         raise NotImplementedError
 
@@ -108,11 +110,12 @@ class LLM(abc.ABC):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
+        max_tokens: int | None = None,
     ) -> Iterator[BaseMessage]:
         self._precall(prompt)
         # TODO add a postcall to log model outputs independent of concrete class
         # implementation
-        return self._stream_implementation(prompt, tools, tool_choice)
+        return self._stream_implementation(prompt, tools, tool_choice, max_tokens)
 
     @abc.abstractmethod
     def _stream_implementation(
@@ -120,5 +123,6 @@ class LLM(abc.ABC):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
+        max_tokens: int | None = None,
     ) -> Iterator[BaseMessage]:
         raise NotImplementedError

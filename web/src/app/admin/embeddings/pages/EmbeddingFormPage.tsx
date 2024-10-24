@@ -35,6 +35,7 @@ export default function EmbeddingForm() {
     useState<AdvancedSearchConfiguration>({
       index_name: "",
       multipass_indexing: true,
+      enable_contextual_rag: false,
       multilingual_expansion: [],
       disable_rerank_for_streaming: false,
       api_url: null,
@@ -106,6 +107,7 @@ export default function EmbeddingForm() {
       setAdvancedEmbeddingDetails({
         index_name: searchSettings.index_name,
         multipass_indexing: searchSettings.multipass_indexing,
+        enable_contextual_rag: searchSettings.enable_contextual_rag,
         multilingual_expansion: searchSettings.multilingual_expansion,
         disable_rerank_for_streaming:
           searchSettings.disable_rerank_for_streaming,
