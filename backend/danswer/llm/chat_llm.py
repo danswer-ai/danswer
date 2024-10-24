@@ -291,6 +291,12 @@ class DefaultMultiLLM(LLM):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
         try:
+            print("I AM USING LITELLM")
+
+            print(self.config)
+            print(
+                f"model is {self.config.model_provider}/{self.config.deployment_name or self.config.model_name}"
+            )
             return litellm.completion(
                 # model choice
                 model=f"{self.config.model_provider}/{self.config.deployment_name or self.config.model_name}",
