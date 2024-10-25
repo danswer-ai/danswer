@@ -42,7 +42,6 @@ def check_index_swap(db_session: Session) -> SearchSettings | None:
         logger.error("More unique indexings than cc pairs, should not occur")
 
     if cc_pair_count == 0 or cc_pair_count == unique_cc_indexings:
-        # Swap indices
         now_old_search_settings = get_current_search_settings(db_session)
         update_search_settings_status(
             search_settings=now_old_search_settings,
@@ -69,4 +68,6 @@ def check_index_swap(db_session: Session) -> SearchSettings | None:
 
             if MULTI_TENANT:
                 return now_old_search_settings
+    else:
+        logger.warning("No need to swap indices")
     return None

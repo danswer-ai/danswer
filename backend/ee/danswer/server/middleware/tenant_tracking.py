@@ -22,7 +22,6 @@ def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> Non
     ) -> Response:
         try:
             logger.info(f"Request route: {request.url.path}")
-
             if not MULTI_TENANT:
                 tenant_id = POSTGRES_DEFAULT_SCHEMA
             else:
