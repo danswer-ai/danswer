@@ -61,6 +61,7 @@ BEDROCK_MODEL_NAMES = [
 IGNORABLE_ANTHROPIC_MODELS = [
     "claude-2",
     "claude-instant-1",
+    "anthropic/claude-3-5-sonnet-20241022",
 ]
 ANTHROPIC_PROVIDER_NAME = "anthropic"
 ANTHROPIC_MODEL_NAMES = [
