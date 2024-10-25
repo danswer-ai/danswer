@@ -49,7 +49,7 @@ def reset() -> None:
 
 
 @pytest.fixture
-def new_admin_user() -> DATestUser | None:
+def new_admin_user(reset: None) -> DATestUser | None:
     try:
         return UserManager.create(name="admin_user")
     except Exception:
