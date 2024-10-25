@@ -23,6 +23,9 @@ from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
+from danswer.background.celery.tasks.shared.RedisConnectorDeletionFenceData import (
+    RedisConnectorDeletionFenceData,
+)
 from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
     RedisConnectorIndexingFenceData,
 )
@@ -368,7 +371,7 @@ def monitor_document_set_taskset(
 
     count = cast(int, r.scard(rds.taskset_key))
     task_logger.info(
-        f"Document set sync progress: document_set_id={document_set_id} "
+        f"Document set sync progress: document_set={document_set_id} "
         f"remaining={count} initial={initial_count}"
     )
     if count > 0:
@@ -383,12 +386,12 @@ def monitor_document_set_taskset(
             # if there are no connectors, then delete the document set.
             delete_document_set(document_set_row=document_set, db_session=db_session)
             task_logger.info(
-                f"Successfully deleted document set with ID: '{document_set_id}'!"
+                f"Successfully deleted document set: document_set={document_set_id}"
             )
         else:
             mark_document_set_as_synced(document_set_id, db_session)
             task_logger.info(
-                f"Successfully synced document set with ID: '{document_set_id}'!"
+                f"Successfully synced document set: document_set={document_set_id}"
             )
 
     r.delete(rds.taskset_key)
@@ -408,19 +411,29 @@ def monitor_connector_deletion_taskset(
 
     rcd = RedisConnectorDeletion(cc_pair_id)
 
-    fence_value = r.get(rcd.fence_key)
+    # read related data and evaluate/print task progress
+    fence_value = cast(bytes, r.get(rcd.fence_key))
     if fence_value is None:
         return
 
     try:
-        initial_count = int(cast(int, fence_value))
+        fence_json = fence_value.decode("utf-8")
+        fence_data = RedisConnectorDeletionFenceData.model_validate_json(
+            cast(str, fence_json)
+        )
     except ValueError:
-        task_logger.error("The value is not an integer.")
+        task_logger.exception(
+            "monitor_ccpair_indexing_taskset: fence_data not decodeable."
+        )
+        raise
+
+    # the fence is setting up but isn't ready yet
+    if fence_data.num_tasks is None:
         return
 
     count = cast(int, r.scard(rcd.taskset_key))
     task_logger.info(
-        f"Connector deletion progress: cc_pair={cc_pair_id} remaining={count} initial={initial_count}"
+        f"Connector deletion progress: cc_pair={cc_pair_id} remaining={count} initial={fence_data.num_tasks}"
     )
     if count > 0:
         return
@@ -483,7 +496,7 @@ def monitor_connector_deletion_taskset(
             )
             if not connector or not len(connector.credentials):
                 task_logger.info(
-                    "Found no credentials left for connector, deleting connector"
+                    "Connector deletion - Found no credentials left for connector, deleting connector"
                 )
                 db_session.delete(connector)
             db_session.commit()
@@ -493,17 +506,17 @@ def monitor_connector_deletion_taskset(
             error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
             add_deletion_failure_message(db_session, cc_pair_id, error_message)
             task_logger.exception(
-                f"Failed to run connector_deletion. "
+                f"Connector deletion exceptioned: "
                 f"cc_pair={cc_pair_id} connector={cc_pair.connector_id} credential={cc_pair.credential_id}"
             )
             raise e
 
     task_logger.info(
-        f"Successfully deleted cc_pair: "
+        f"Connector deletion succeeded: "
         f"cc_pair={cc_pair_id} "
         f"connector={cc_pair.connector_id} "
         f"credential={cc_pair.credential_id} "
-        f"docs_deleted={initial_count}"
+        f"docs_deleted={fence_data.num_tasks}"
     )
 
     r.delete(rcd.taskset_key)
@@ -618,6 +631,7 @@ def monitor_ccpair_indexing_taskset(
         return
 
     # Read result state BEFORE generator_complete_key to avoid a race condition
+    # never use any blocking methods on the result from inside a task!
     result: AsyncResult = AsyncResult(fence_data.celery_task_id)
     result_state = result.state
 

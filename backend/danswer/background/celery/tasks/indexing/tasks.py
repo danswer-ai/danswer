@@ -5,6 +5,7 @@ from time import sleep
 from typing import cast
 from uuid import uuid4
 
+import redis
 from celery import Celery
 from celery import shared_task
 from celery import Task
@@ -13,12 +14,15 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
+from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
+from danswer.background.celery.celery_redis import RedisConnectorStop
 from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
     RedisConnectorIndexingFenceData,
 )
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
+from danswer.background.indexing.run_indexing import RunIndexingCallbackInterface
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.constants import CELERY_INDEXING_LOCK_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -48,6 +52,30 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 
 logger = setup_logger()
+
+
+class RunIndexingCallback(RunIndexingCallbackInterface):
+    def __init__(
+        self,
+        stop_key: str,
+        generator_progress_key: str,
+        redis_lock: redis.lock.Lock,
+        redis_client: Redis,
+    ):
+        super().__init__()
+        self.redis_lock: redis.lock.Lock = redis_lock
+        self.stop_key: str = stop_key
+        self.generator_progress_key: str = generator_progress_key
+        self.redis_client = redis_client
+
+    def should_stop(self) -> bool:
+        if self.redis_client.exists(self.stop_key):
+            return True
+        return False
+
+    def progress(self, amount: int) -> None:
+        self.redis_lock.reacquire()
+        self.redis_client.incrby(self.generator_progress_key, amount)
 
 
 @shared_task(
@@ -262,6 +290,10 @@ def try_creating_indexing_task(
             return None
 
         # skip indexing if the cc_pair is deleting
+        rcd = RedisConnectorDeletion(cc_pair.id)
+        if r.exists(rcd.fence_key):
+            return None
+
         db_session.refresh(cc_pair)
         if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
             return None
@@ -308,13 +340,8 @@ def try_creating_indexing_task(
             raise RuntimeError("send_task for connector_indexing_proxy_task failed.")
 
         # now fill out the fence with the rest of the data
-        fence_value = RedisConnectorIndexingFenceData(
-            index_attempt_id=index_attempt_id,
-            started=None,
-            submitted=datetime.now(timezone.utc),
-            celery_task_id=result.id,
-        )
-
+        fence_value.index_attempt_id = index_attempt_id
+        fence_value.celery_task_id = result.id
         r.set(rci.fence_key, fence_value.model_dump_json())
     except Exception:
         r.delete(rci.fence_key)
@@ -400,6 +427,22 @@ def connector_indexing_task(
 
     r = get_redis_client(tenant_id=tenant_id)
 
+    rcd = RedisConnectorDeletion(cc_pair_id)
+    if r.exists(rcd.fence_key):
+        raise RuntimeError(
+            f"Indexing will not start because connector deletion is in progress: "
+            f"cc_pair={cc_pair_id} "
+            f"fence={rcd.fence_key}"
+        )
+
+    rcs = RedisConnectorStop(cc_pair_id)
+    if r.exists(rcs.fence_key):
+        raise RuntimeError(
+            f"Indexing will not start because a connector stop signal was detected: "
+            f"cc_pair={cc_pair_id} "
+            f"fence={rcs.fence_key}"
+        )
+
     rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
 
     while True:
@@ -409,7 +452,7 @@ def connector_indexing_task(
             task_logger.info(
                 f"connector_indexing_task: fence_value not found: fence={rci.fence_key}"
             )
-            raise
+            raise RuntimeError(f"Fence not found: fence={rci.fence_key}")
 
         try:
             fence_json = fence_value.decode("utf-8")
@@ -443,17 +486,20 @@ def connector_indexing_task(
     if not acquired:
         task_logger.warning(
             f"Indexing task already running, exiting...: "
-            f"cc_pair_id={cc_pair_id} search_settings_id={search_settings_id}"
+            f"cc_pair={cc_pair_id} search_settings={search_settings_id}"
         )
         # r.set(rci.generator_complete_key, HTTPStatus.CONFLICT.value)
         return None
+
+    fence_data.started = datetime.now(timezone.utc)
+    r.set(rci.fence_key, fence_data.model_dump_json())
 
     try:
         with get_session_with_tenant(tenant_id) as db_session:
             attempt = get_index_attempt(db_session, index_attempt_id)
             if not attempt:
                 raise ValueError(
-                    f"Index attempt not found: index_attempt_id={index_attempt_id}"
+                    f"Index attempt not found: index_attempt={index_attempt_id}"
                 )
 
             cc_pair = get_connector_credential_pair_from_id(
@@ -462,31 +508,31 @@ def connector_indexing_task(
             )
 
             if not cc_pair:
-                raise ValueError(f"cc_pair not found: cc_pair_id={cc_pair_id}")
+                raise ValueError(f"cc_pair not found: cc_pair={cc_pair_id}")
 
             if not cc_pair.connector:
                 raise ValueError(
-                    f"Connector not found: connector_id={cc_pair.connector_id}"
+                    f"Connector not found: cc_pair={cc_pair_id} connector={cc_pair.connector_id}"
                 )
 
             if not cc_pair.credential:
                 raise ValueError(
-                    f"Credential not found: credential_id={cc_pair.credential_id}"
+                    f"Credential not found: cc_pair={cc_pair_id} credential={cc_pair.credential_id}"
                 )
 
             rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
 
-            # Define the callback function
-            def redis_increment_callback(amount: int) -> None:
-                lock.reacquire()
-                r.incrby(rci.generator_progress_key, amount)
+            # define a callback class
+            callback = RunIndexingCallback(
+                rcs.fence_key, rci.generator_progress_key, lock, r
+            )
 
             run_indexing_entrypoint(
                 index_attempt_id,
                 tenant_id,
                 cc_pair_id,
                 is_ee,
-                progress_callback=redis_increment_callback,
+                callback=callback,
             )
 
             # get back the total number of indexed docs and return it
@@ -499,9 +545,10 @@ def connector_indexing_task(
 
             r.set(rci.generator_complete_key, HTTPStatus.OK.value)
     except Exception as e:
-        task_logger.exception(f"Failed to run indexing for cc_pair_id={cc_pair_id}.")
+        task_logger.exception(f"Indexing failed: cc_pair={cc_pair_id}")
         if attempt:
-            mark_attempt_failed(attempt, db_session, failure_reason=str(e))
+            with get_session_with_tenant(tenant_id) as db_session:
+                mark_attempt_failed(attempt, db_session, failure_reason=str(e))
 
         r.delete(rci.generator_lock_key)
         r.delete(rci.generator_progress_key)
