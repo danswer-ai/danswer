@@ -1,9 +1,6 @@
-from datetime import datetime
-
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
-from pydantic import BaseModel
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.apps.app_base import task_logger
@@ -21,13 +18,6 @@ from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 
 DOCUMENT_BY_CC_PAIR_CLEANUP_MAX_RETRIES = 3
-
-
-class RedisConnectorIndexingFenceData(BaseModel):
-    index_attempt_id: int | None
-    started: datetime | None
-    submitted: datetime
-    celery_task_id: str | None
 
 
 @shared_task(
