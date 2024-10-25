@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import GenerateDocumentsOutput, PollConnector, LoadConnector
+from danswer.connectors.interfaces import GenerateDocumentsOutput, PollConnector, LoadConnector, SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError, Document, Section
 from danswer.utils.logger import setup_logger
 
@@ -45,20 +45,34 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         if any([self.api_key, self.domain, self.password]) is None:
             raise ConnectorMissingCredentialError("freshdesk")
         
-        #convert start and end time to the format required by Freshdesk API
         start_time = start.strftime("%Y-%m-%dT%H:%M:%SZ")
-        end_time = end.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        freshdesk_url = f"https://{self.domain}.freshdesk.com/api/v2/tickets?include=description&updated_since={start_time}&updated_before={end_time}"
-        response = requests.get(freshdesk_url, auth=(self.api_key, self.password))
-        response.raise_for_status()  # raises exception when not a 2xx response
-        
-        if response.status_code!= 204:
-            tickets = json.loads(response.content)
-            logger.info(f"Fetched {len(tickets)} tickets from Freshdesk API")
-            return tickets
-        else:
-            return []
+        all_tickets = []
+        page = 1
+        per_page = 50
+
+        while True:
+            freshdesk_url = (
+                f"https://{self.domain}.freshdesk.com/api/v2/tickets"
+                f"?include=description&updated_since={start_time}"
+                f"&per_page={per_page}&page={page}"
+            )
+            response = requests.get(freshdesk_url, auth=(self.api_key, self.password))
+            response.raise_for_status()
+            
+            if response.status_code != 204:
+                tickets = json.loads(response.content)
+                all_tickets.extend(tickets)
+                logger.info(f"Fetched {len(tickets)} tickets from Freshdesk API (Page {page})")
+
+                if len(tickets) < per_page:
+                    break
+                
+                page += 1
+            else:
+                break
+
+        return all_tickets
 
     def _process_tickets(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
         tickets = self._fetch_tickets(start, end)
@@ -107,7 +121,6 @@ class FreshdeskConnector(PollConnector, LoadConnector):
                         if isinstance(value, str) and key not in ["description", "description_text"]
                     },
                 )
-
                 doc_batch.append(doc)
 
             if len(doc_batch) >= self.batch_size:
@@ -117,5 +130,11 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         if doc_batch:
             yield doc_batch
 
-    def poll_source(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
-        yield from self._process_tickets(start, end)
+    def load_from_state(self) -> GenerateDocumentsOutput:
+        return self._fetch_tickets()
+
+    def poll_source(self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch) -> GenerateDocumentsOutput:
+        start_datetime = datetime.fromtimestamp(start)
+        end_datetime = datetime.fromtimestamp(end)
+
+        yield from self._process_tickets(start_datetime, end_datetime)

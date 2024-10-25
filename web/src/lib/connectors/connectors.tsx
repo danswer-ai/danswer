@@ -1186,9 +1186,7 @@ export interface AsanaConfig {
   asana_team_id?: string;
 }
 
-export interface FreshdeskConfig {
-  requested_objects?: string[];
-}
+export interface FreshdeskConfig {}
 
 
 export interface MediaWikiConfig extends MediaWikiBaseConfig {
