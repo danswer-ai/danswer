@@ -25,6 +25,8 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+pywikibot.config.base_dir = tempfile.TemporaryDirectory().name
+
 
 def pywikibot_timestamp_to_utc_datetime(
     timestamp: pywikibot.time.Timestamp,
@@ -121,8 +123,6 @@ class MediaWikiConnector(LoadConnector, PollConnector):
         self.batch_size = batch_size
 
         # short names can only have ascii letters and digits
-        pywikibot.config.base_dir = tempfile.TemporaryDirectory().name
-
         self.family = family_class_dispatch(hostname, "WikipediaConnector")()
         self.site = pywikibot.Site(fam=self.family, code=language_code)
         self.categories = [

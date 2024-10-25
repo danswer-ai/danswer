@@ -19,6 +19,8 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+pywikibot.config.base_dir = tempfile.TemporaryDirectory().name
+
 
 @mock.patch.object(
     builtins, "print", lambda *args: logger.info("\t".join(map(str, args)))
@@ -148,7 +150,6 @@ if __name__ == "__main__":
     recursion_depth = 1
     family_type = generate_family_class(url, name)
 
-    pywikibot.config.base_dir = tempfile.TemporaryDirectory().name
     site = pywikibot.Site(fam=family_type(), code="en")
     categories = [
         pywikibot.Category(site, f"Category:{category.replace(' ', '_')}")

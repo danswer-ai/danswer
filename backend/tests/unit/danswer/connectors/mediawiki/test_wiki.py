@@ -10,10 +10,11 @@ from pytest_mock import MockFixture
 
 from danswer.connectors.mediawiki import wiki
 
+pywikibot.config.base_dir = tempfile.TemporaryDirectory().name
+
 
 @pytest.fixture
 def site() -> pywikibot.Site:
-    pywikibot.config.base_dir = tempfile.TemporaryDirectory().name
     return pywikibot.Site("en", "wikipedia")
 
 
