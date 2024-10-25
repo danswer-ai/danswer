@@ -1,3 +1,3 @@
 import os
 
-__version__ = os.environ.get("DANSWER_VERSION", "") or "Dev"
+__version__ = os.environ.get("DANSWER_VERSION", "") or "Development"
