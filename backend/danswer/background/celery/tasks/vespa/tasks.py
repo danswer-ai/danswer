@@ -408,10 +408,6 @@ def monitor_connector_deletion_taskset(
 
     rcd = RedisConnectorDeletion(cc_pair_id)
 
-    # fence_value = r.get(rcd.fence_key)
-    # if fence_value is None:
-    #     return
-
     # read related data and evaluate/print task progress
     fence_value = cast(bytes, r.get(rcd.fence_key))
     if fence_value is None:
