@@ -145,7 +145,7 @@ jobs:
           DISABLE_TELEMETRY=true \
           IMAGE_TAG=test \
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d
-        id: start_dockerstop m
+        id: start_docker
 
       - name: Wait for service to be ready
         run: |
