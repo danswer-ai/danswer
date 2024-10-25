@@ -52,11 +52,21 @@ jobs:
           git checkout ${{ steps.list-branches.outputs.beta }}
           # Cherry-pick the last commit from the merged PR
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }}
-          # Push the changes to the beta branch
+          # Determine the current tag and bump it
+          CURRENT_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          NEW_TAG="v$(echo $CURRENT_TAG | sed -e 's/v\([0-9]*\)/\1+1/' | bc)"
+          git tag $NEW_TAG
+          # Push the changes and the new tag to the beta branch
           git push origin ${{ steps.list-branches.outputs.beta }}
+          git push origin $NEW_TAG
           # Checkout the stable branch
           git checkout ${{ steps.list-branches.outputs.stable }}
           # Cherry-pick the last commit from the merged PR
           git cherry-pick ${{ github.event.pull_request.merge_commit_sha }}
-          # Push the changes to the stable branch
+          # Determine the current tag and bump it
+          CURRENT_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          NEW_TAG="v$(echo $CURRENT_TAG | sed -e 's/v\([0-9]*\)/\1+1/' | bc)"
+          git tag $NEW_TAG
+          # Push the changes and the new tag to the stable branch
           git push origin ${{ steps.list-branches.outputs.stable }}
+          git push origin $NEW_TAG
