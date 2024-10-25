@@ -280,7 +280,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None,
         tool_choice: ToolChoiceOptions | None,
         stream: bool,
-        response_format: dict | None = None,
+        structured_response_format: dict | None = None,
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
         if isinstance(prompt, list):
             prompt = [
@@ -307,8 +307,8 @@ class DefaultMultiLLM(LLM):
                 **self._model_kwargs,
             }
 
-            if response_format:
-                completion_kwargs["response_format"] = response_format
+            if structured_response_format:
+                completion_kwargs["response_format"] = structured_response_format
 
             if tools:
                 completion_kwargs["parallel_tool_calls"] = False
@@ -335,14 +335,16 @@ class DefaultMultiLLM(LLM):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
-        response_format: dict | None = None,  # Change this parameter
+        structured_response_format: dict | None = None,
     ) -> BaseMessage:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
 
         response = cast(
             litellm.ModelResponse,
-            self._completion(prompt, tools, tool_choice, False, response_format),
+            self._completion(
+                prompt, tools, tool_choice, False, structured_response_format
+            ),
         )
         choice = response.choices[0]
         if hasattr(choice, "message"):
@@ -355,19 +357,21 @@ class DefaultMultiLLM(LLM):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
-        response_format: dict | None = None,  # Change this parameter
+        structured_response_format: dict | None = None,
     ) -> Iterator[BaseMessage]:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
 
         if DISABLE_LITELLM_STREAMING:
-            yield self.invoke(prompt)
+            yield self.invoke(prompt, tools, tool_choice, structured_response_format)
             return
 
         output = None
         response = cast(
             litellm.CustomStreamWrapper,
-            self._completion(prompt, tools, tool_choice, True, response_format),
+            self._completion(
+                prompt, tools, tool_choice, True, structured_response_format
+            ),
         )
         try:
             for part in response:

@@ -50,7 +50,7 @@ class BasicCreateChatMessageRequest(ChunkContext):
     search_doc_ids: list[int] | None = None
     # only works if using an OpenAI model. See the following for more details:
     # https://platform.openai.com/docs/guides/structured-outputs/introduction
-    response_format: dict | None = None
+    structured_response_format: dict | None = None
 
 
 class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
@@ -65,7 +65,7 @@ class BasicCreateChatMessageWithHistoryRequest(ChunkContext):
     search_doc_ids: list[int] | None = None
     # only works if using an OpenAI model. See the following for more details:
     # https://platform.openai.com/docs/guides/structured-outputs/introduction
-    response_format: dict | None = None
+    structured_response_format: dict | None = None
 
 
 class SimpleDoc(BaseModel):

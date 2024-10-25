@@ -1,6 +1,5 @@
 from typing import Any
 from typing import Dict
-from typing import List
 
 import requests
 
@@ -15,7 +14,7 @@ def create_connector(
     input_type: str,
     connector_specific_config: Dict[str, Any],
     is_public: bool = True,
-    groups: List[int] = None,
+    groups: list[int] | None = None,
 ) -> Dict[str, Any]:
     connector_update_request = {
         "name": name,
@@ -40,7 +39,7 @@ def create_credential(
     source: str,
     credential_json: Dict[str, Any],
     is_public: bool = True,
-    groups: List[int] = None,
+    groups: list[int] | None = None,
 ) -> Dict[str, Any]:
     credential_request = {
         "name": name,
@@ -64,7 +63,7 @@ def create_cc_pair(
     credential_id: int,
     name: str,
     access_type: str = "public",
-    groups: List[int] = None,
+    groups: list[int] | None = None,
 ) -> Dict[str, Any]:
     cc_pair_request = {
         "name": name,
@@ -81,7 +80,7 @@ def create_cc_pair(
     return response.json()
 
 
-def main():
+def main() -> None:
     # Create a Web connector
     web_connector = create_connector(
         name="Example Web Connector",

@@ -4,6 +4,7 @@ import requests
 
 from danswer.configs.constants import MessageType
 from tests.integration.common_utils.constants import API_SERVER_URL
+from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import NUM_DOCS
 from tests.integration.common_utils.managers.api_key import APIKeyManager
 from tests.integration.common_utils.managers.cc_pair import CCPairManager
@@ -149,18 +150,17 @@ def test_using_reference_docs_with_simple_with_history_api_flow(reset: None) -> 
     assert response_json["top_documents"][0]["document_id"] == cc_pair_1.documents[2].id
 
 
-def test_send_message_simple_with_history_strict_json() -> None:
-    # Creating an admin user (first user created is automatically an admin)
-    admin_user: DATestUser = UserManager.create(name="admin_user")
-
+def test_send_message_simple_with_history_strict_json(
+    new_admin_user: DATestUser | None,
+) -> None:
     # create connectors
     cc_pair_1: DATestCCPair = CCPairManager.create_from_scratch(
-        user_performing_action=admin_user,
+        user_performing_action=new_admin_user,
     )
     api_key: DATestAPIKey = APIKeyManager.create(
-        user_performing_action=admin_user,
+        user_performing_action=new_admin_user,
     )
-    LLMProviderManager.create(user_performing_action=admin_user)
+    LLMProviderManager.create(user_performing_action=new_admin_user)
     cc_pair_1.documents = DocumentManager.seed_dummy_docs(
         cc_pair=cc_pair_1,
         num_docs=NUM_DOCS,
@@ -178,7 +178,7 @@ def test_send_message_simple_with_history_strict_json() -> None:
             ],
             "persona_id": 0,
             "prompt_id": 0,
-            "response_format": {
+            "structured_response_format": {
                 "type": "json_object",
                 "schema": {
                     "type": "object",
@@ -193,7 +193,7 @@ def test_send_message_simple_with_history_strict_json() -> None:
                 },
             },
         },
-        headers=admin_user.headers,
+        headers=new_admin_user.headers if new_admin_user else GENERAL_HEADERS,
     )
     assert response.status_code == 200
 
@@ -203,9 +203,14 @@ def test_send_message_simple_with_history_strict_json() -> None:
     assert "answer" in response_json
     assert response_json["answer"] is not None
 
+    # helper
+    def clean_json_string(json_string: str) -> str:
+        return json_string.strip().removeprefix("```json").removesuffix("```").strip()
+
     # Attempt to parse the answer as JSON
     try:
-        parsed_answer = json.loads(response_json["answer"])
+        clean_answer = clean_json_string(response_json["answer"])
+        parsed_answer = json.loads(clean_answer)
         assert isinstance(parsed_answer, dict)
         assert "presidents" in parsed_answer
         assert isinstance(parsed_answer["presidents"], list)
@@ -219,7 +224,10 @@ def test_send_message_simple_with_history_strict_json() -> None:
     assert "answer_citationless" in response_json
     assert response_json["answer_citationless"] is not None
     try:
-        parsed_answer_citationless = json.loads(response_json["answer_citationless"])
+        clean_answer_citationless = clean_json_string(
+            response_json["answer_citationless"]
+        )
+        parsed_answer_citationless = json.loads(clean_answer_citationless)
         assert isinstance(parsed_answer_citationless, dict)
     except json.JSONDecodeError:
         assert False, "The answer_citationless is not a valid JSON object"
