@@ -108,6 +108,10 @@ class CreateChatMessageRequest(ChunkContext):
     # used for seeded chats to kick off the generation of an AI answer
     use_existing_user_message: bool = False
 
+    # forces the LLM to return a structured response, see
+    # https://platform.openai.com/docs/guides/structured-outputs/introduction
+    structured_response_format: dict | None = None
+
     @model_validator(mode="after")
     def check_search_doc_ids_or_retrieval_options(self) -> "CreateChatMessageRequest":
         if self.search_doc_ids is None and self.retrieval_options is None:
