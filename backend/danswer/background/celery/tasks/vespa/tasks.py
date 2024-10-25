@@ -18,14 +18,10 @@ from danswer.access.access import get_access_for_document
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import celery_get_queue_length
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
-from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
-from danswer.background.celery.tasks.shared.RedisConnectorDeletionFenceData import (
-    RedisConnectorDeletionFenceData,
-)
 from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
     RedisConnectorIndexingFenceData,
 )
@@ -62,6 +58,7 @@ from danswer.db.models import IndexAttempt
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
+from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
@@ -402,40 +399,26 @@ def monitor_connector_deletion_taskset(
     key_bytes: bytes, r: Redis, tenant_id: str | None
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    cc_pair_id_str = RedisConnectorDeletion.get_id_from_fence_key(fence_key)
+    cc_pair_id_str = RedisConnector.get_id_from_fence_key(fence_key)
     if cc_pair_id_str is None:
         task_logger.warning(f"could not parse cc_pair_id from {fence_key}")
         return
 
     cc_pair_id = int(cc_pair_id_str)
 
-    rcd = RedisConnectorDeletion(cc_pair_id)
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
 
-    # read related data and evaluate/print task progress
-    fence_value = cast(bytes, r.get(rcd.fence_key))
-    if fence_value is None:
-        return
+    fence_data = redis_connector.deletion_fence_read()
 
-    try:
-        fence_json = fence_value.decode("utf-8")
-        fence_data = RedisConnectorDeletionFenceData.model_validate_json(
-            cast(str, fence_json)
-        )
-    except ValueError:
-        task_logger.exception(
-            "monitor_ccpair_indexing_taskset: fence_data not decodeable."
-        )
-        raise
-
-    # the fence is setting up but isn't ready yet
     if fence_data.num_tasks is None:
+        # the fence is setting up but isn't ready yet
         return
 
-    count = cast(int, r.scard(rcd.taskset_key))
+    remaining = redis_connector.deletion_get_remaining()
     task_logger.info(
-        f"Connector deletion progress: cc_pair={cc_pair_id} remaining={count} initial={fence_data.num_tasks}"
+        f"Connector deletion progress: cc_pair={cc_pair_id} remaining={remaining} initial={fence_data.num_tasks}"
     )
-    if count > 0:
+    if remaining > 0:
         return
 
     with get_session_with_tenant(tenant_id) as db_session:
@@ -519,8 +502,8 @@ def monitor_connector_deletion_taskset(
         f"docs_deleted={fence_data.num_tasks}"
     )
 
-    r.delete(rcd.taskset_key)
-    r.delete(rcd.fence_key)
+    redis_connector.deletion_taskset_clear()
+    redis_connector.deletion_fence_clear()
 
 
 def monitor_ccpair_pruning_taskset(
@@ -758,7 +741,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
             monitor_connector_taskset(r)
 
         lock_beat.reacquire()
-        for key_bytes in r.scan_iter(RedisConnectorDeletion.FENCE_PREFIX + "*"):
+        for key_bytes in r.scan_iter(RedisConnector.DELETION_FENCE + "*"):
             lock_beat.reacquire()
             monitor_connector_deletion_taskset(key_bytes, r, tenant_id)
 

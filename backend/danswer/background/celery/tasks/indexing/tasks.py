@@ -14,7 +14,6 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
-from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorStop
 from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
@@ -47,6 +46,7 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import SearchSettings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
+from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
@@ -283,6 +283,8 @@ def try_creating_indexing_task(
         return None
 
     try:
+        redis_connector = RedisConnector(tenant_id, cc_pair.id)
+
         rci = RedisConnectorIndexing(cc_pair.id, search_settings.id)
 
         # skip if already indexing
@@ -290,8 +292,7 @@ def try_creating_indexing_task(
             return None
 
         # skip indexing if the cc_pair is deleting
-        rcd = RedisConnectorDeletion(cc_pair.id)
-        if r.exists(rcd.fence_key):
+        if redis_connector.is_deleting():
             return None
 
         db_session.refresh(cc_pair)
@@ -425,14 +426,15 @@ def connector_indexing_task(
     attempt = None
     n_final_progress = 0
 
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+
     r = get_redis_client(tenant_id=tenant_id)
 
-    rcd = RedisConnectorDeletion(cc_pair_id)
-    if r.exists(rcd.fence_key):
+    if redis_connector.is_deleting():
         raise RuntimeError(
             f"Indexing will not start because connector deletion is in progress: "
             f"cc_pair={cc_pair_id} "
-            f"fence={rcd.fence_key}"
+            f"fence={redis_connector.get_deletion_fence_key()}"
         )
 
     rcs = RedisConnectorStop(cc_pair_id)

@@ -10,13 +10,9 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
-from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisConnectorStop
-from danswer.background.celery.tasks.shared.RedisConnectorDeletionFenceData import (
-    RedisConnectorDeletionFenceData,
-)
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerRedisLocks
@@ -25,6 +21,10 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.search_settings import get_all_search_settings
+from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector import (
+    RedisConnectorDeletionFenceData,
+)
 from danswer.redis.redis_pool import get_redis_client
 
 
@@ -106,10 +106,10 @@ def try_generate_document_cc_pair_cleanup_tasks(
 
     lock_beat.reacquire()
 
-    rcd = RedisConnectorDeletion(cc_pair_id)
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
 
     # don't generate sync tasks if tasks are still pending
-    if r.exists(rcd.fence_key):
+    if redis_connector.is_deleting():
         return None
 
     # we need to load the state of the object inside the fence
@@ -127,7 +127,8 @@ def try_generate_document_cc_pair_cleanup_tasks(
         num_tasks=None,
         submitted=datetime.now(timezone.utc),
     )
-    r.set(rcd.fence_key, fence_value.model_dump_json())
+
+    redis_connector.deletion_fence_set(fence_value.model_dump_json())
 
     try:
         # do not proceed if connector indexing or connector pruning are running
@@ -149,21 +150,23 @@ def try_generate_document_cc_pair_cleanup_tasks(
             )
 
         # add tasks to celery and build up the task set to monitor in redis
-        r.delete(rcd.taskset_key)
+        redis_connector.deletion_taskset_clear()
 
         # Add all documents that need to be updated into the queue
         task_logger.info(
             f"RedisConnectorDeletion.generate_tasks starting. cc_pair={cc_pair_id}"
         )
-        tasks_generated = rcd.generate_tasks(app, db_session, r, lock_beat, tenant_id)
+        tasks_generated = redis_connector.deletion_generate_tasks(
+            app, db_session, lock_beat, tenant_id
+        )
         if tasks_generated is None:
             raise ValueError("RedisConnectorDeletion.generate_tasks returned None")
     except TaskDependencyError:
-        r.delete(rcd.fence_key)
+        redis_connector.deletion_fence_clear()
         raise
     except Exception:
         task_logger.exception("Unexpected exception")
-        r.delete(rcd.fence_key)
+        redis_connector.deletion_fence_clear()
         return None
     else:
         # Currently we are allowing the sync to proceed with 0 tasks.
@@ -179,6 +182,6 @@ def try_generate_document_cc_pair_cleanup_tasks(
 
         # set this only after all tasks have been added
         fence_value.num_tasks = tasks_generated
-        r.set(rcd.fence_key, fence_value.model_dump_json())
+        redis_connector.deletion_fence_set(fence_value.model_dump_json())
 
     return tasks_generated

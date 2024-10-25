@@ -15,13 +15,13 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 from danswer.background.celery.apps.task_formatters import CeleryTaskColoredFormatter
 from danswer.background.celery.apps.task_formatters import CeleryTaskPlainFormatter
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
-from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.engine import get_all_tenant_ids
+from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
@@ -118,11 +118,10 @@ def on_task_postrun(
             r.srem(rug.taskset_key, task_id)
         return
 
-    if task_id.startswith(RedisConnectorDeletion.PREFIX):
-        cc_pair_id = RedisConnectorDeletion.get_id_from_task_id(task_id)
+    if task_id.startswith(RedisConnector.DELETION):
+        cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
-            rcd = RedisConnectorDeletion(int(cc_pair_id))
-            r.srem(rcd.taskset_key, task_id)
+            RedisConnector.deletion_taskset_remove(int(cc_pair_id), task_id, r)
         return
 
     if task_id.startswith(RedisConnectorPruning.SUBTASK_PREFIX):

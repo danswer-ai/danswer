@@ -11,7 +11,6 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
-from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisConnectorStop
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
@@ -33,6 +32,7 @@ from danswer.db.document import get_documents_for_connector_credential_pair
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
+from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 
@@ -164,6 +164,8 @@ def try_creating_prune_generator_task(
         return None
 
     try:
+        redis_connector = RedisConnector(tenant_id, cc_pair.id)
+
         rcp = RedisConnectorPruning(cc_pair.id)
 
         # skip pruning if already pruning
@@ -171,8 +173,7 @@ def try_creating_prune_generator_task(
             return None
 
         # skip pruning if the cc_pair is deleting
-        rcd = RedisConnectorDeletion(cc_pair.id)
-        if r.exists(rcd.fence_key):
+        if redis_connector.is_deleting():
             return None
 
         db_session.refresh(cc_pair)
