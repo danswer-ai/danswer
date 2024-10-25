@@ -68,6 +68,4 @@ def check_index_swap(db_session: Session) -> SearchSettings | None:
 
             if MULTI_TENANT:
                 return now_old_search_settings
-    else:
-        logger.warning("No need to swap indices")
     return None
