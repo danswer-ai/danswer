@@ -202,7 +202,7 @@ def handle_send_message_simple_with_history(
         raise HTTPException(status_code=400, detail="Messages cannot be zero length")
 
     # This is a sanity check to make sure the chat history is valid
-    # It must start with a user message and alternate between user and assistant
+    # It must start with a user message and alternate beteen user and assistant
     expected_role = MessageType.USER
     for msg in req.messages:
         if not msg.message:
@@ -296,7 +296,7 @@ def handle_send_message_simple_with_history(
         chunks_above=0,
         chunks_below=0,
         full_doc=req.full_doc,
-        strict_json_mode=req.strict_json_mode,
+        response_format=req.response_format,
     )
 
     packets = stream_chat_message_objects(

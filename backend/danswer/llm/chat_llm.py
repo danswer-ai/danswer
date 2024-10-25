@@ -280,7 +280,7 @@ class DefaultMultiLLM(LLM):
         tools: list[dict] | None,
         tool_choice: ToolChoiceOptions | None,
         stream: bool,
-        strict_json_mode: bool = False,
+        response_format: dict | None = None,
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
         if isinstance(prompt, list):
             prompt = [
@@ -307,8 +307,8 @@ class DefaultMultiLLM(LLM):
                 **self._model_kwargs,
             }
 
-            if strict_json_mode:
-                completion_kwargs["response_format"] = {"type": "json_object"}
+            if response_format:
+                completion_kwargs["response_format"] = response_format
 
             if tools:
                 completion_kwargs["parallel_tool_calls"] = False
@@ -335,14 +335,14 @@ class DefaultMultiLLM(LLM):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
-        strict_json_mode: bool = False,  # Add this parameter
+        response_format: dict | None = None,  # Change this parameter
     ) -> BaseMessage:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
 
         response = cast(
             litellm.ModelResponse,
-            self._completion(prompt, tools, tool_choice, False, strict_json_mode),
+            self._completion(prompt, tools, tool_choice, False, response_format),
         )
         choice = response.choices[0]
         if hasattr(choice, "message"):
@@ -355,7 +355,7 @@ class DefaultMultiLLM(LLM):
         prompt: LanguageModelInput,
         tools: list[dict] | None = None,
         tool_choice: ToolChoiceOptions | None = None,
-        strict_json_mode: bool = False,  # Add this parameter
+        response_format: dict | None = None,  # Change this parameter
     ) -> Iterator[BaseMessage]:
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
@@ -367,7 +367,7 @@ class DefaultMultiLLM(LLM):
         output = None
         response = cast(
             litellm.CustomStreamWrapper,
-            self._completion(prompt, tools, tool_choice, True, strict_json_mode),
+            self._completion(prompt, tools, tool_choice, True, response_format),
         )
         try:
             for part in response:
