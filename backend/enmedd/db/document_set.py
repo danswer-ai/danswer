@@ -192,45 +192,6 @@ def _check_if_cc_pairs_are_owned_by_groups(
                 )
 
 
-def _check_if_cc_pairs_are_owned_by_groups(
-    db_session: Session,
-    cc_pair_ids: list[int],
-    group_ids: list[int],
-) -> None:
-    """
-    This function checks if the CC pairs are owned by the specified groups or public.
-    If not, it raises a ValueError.
-    """
-    group_cc_pair_relationships = get_cc_pair_groups_for_ids(
-        db_session=db_session,
-        cc_pair_ids=cc_pair_ids,
-    )
-
-    group_cc_pair_relationships_set = {
-        (relationship.cc_pair_id, relationship.teamspace_id)
-        for relationship in group_cc_pair_relationships
-    }
-
-    missing_cc_pair_ids = []
-    for cc_pair_id in cc_pair_ids:
-        for group_id in group_ids:
-            if (cc_pair_id, group_id) not in group_cc_pair_relationships_set:
-                missing_cc_pair_ids.append(cc_pair_id)
-                break
-
-    if missing_cc_pair_ids:
-        cc_pairs = get_connector_credential_pairs(
-            db_session=db_session,
-            ids=missing_cc_pair_ids,
-        )
-        for cc_pair in cc_pairs:
-            if cc_pair.access_type != AccessType.PUBLIC:
-                raise ValueError(
-                    f"Connector Credential Pair with ID: '{cc_pair.id}'"
-                    " is not owned by the specified groups"
-                )
-
-
 def insert_document_set(
     document_set_creation_request: DocumentSetCreationRequest,
     user_id: UUID | None,

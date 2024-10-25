@@ -54,7 +54,7 @@ class DocumentSet(BaseModel):
     is_public: bool
     # For Private Document Sets, who should be able to access these
     users: List[UUID]
-    teamspace: Optional[List[MinimalTeamspaceSnapshot]] = None
+    groups: Optional[List[MinimalTeamspaceSnapshot]] = None
 
     @classmethod
     def from_model(cls, document_set_model: DocumentSetDBModel) -> "DocumentSet":
@@ -72,19 +72,19 @@ class DocumentSet(BaseModel):
                     credential=CredentialSnapshot.from_credential_db_model(
                         cc_pair.credential
                     ),
-                    teamspace=[
+                    groups=[
                         MinimalTeamspaceSnapshot(
-                            id=teams.id,
-                            name=teams.name,
+                            id=groups.id,
+                            name=groups.name,
                             workspace=[
                                 MinimalWorkspaceSnapshot(
                                     id=workspace.id,
                                     workspace_name=workspace.workspace_name,
                                 )
-                                for workspace in teams.workspace
+                                for workspace in groups.workspace
                             ],
                         )
-                        for teams in cc_pair.groups
+                        for groups in cc_pair.groups
                     ],
                 )
                 for cc_pair in document_set_model.connector_credential_pairs
@@ -92,17 +92,17 @@ class DocumentSet(BaseModel):
             is_up_to_date=document_set_model.is_up_to_date,
             is_public=document_set_model.is_public,
             users=[user.id for user in document_set_model.users],
-            teamspace=[
+            groups=[
                 MinimalTeamspaceSnapshot(
-                    id=teamspace.id,
-                    name=teamspace.name,
+                    id=groups.id,
+                    name=groups.name,
                     workspace=[
                         MinimalWorkspaceSnapshot(
                             id=workspace.id, workspace_name=workspace.workspace_name
                         )
-                        for workspace in teamspace.workspace
+                        for workspace in groups.workspace
                     ],
                 )
-                for teamspace in document_set_model.groups
+                for groups in document_set_model.groups
             ],
         )

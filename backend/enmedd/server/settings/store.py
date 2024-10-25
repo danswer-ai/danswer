@@ -31,6 +31,8 @@ def load_settings(db_session: Session, teamspace_id: Optional[int] = None) -> Se
             search_page_enabled=settings_record.search_page_enabled,
             default_page=settings_record.default_page,
             maximum_chat_retention_days=settings_record.maximum_chat_retention_days,
+            num_indexing_workers=settings_record.num_indexing_workers,
+            vespa_searcher_threads=settings_record.vespa_searcher_threads,
         )
 
     return Settings()
@@ -58,6 +60,8 @@ def store_settings(
         settings_record.maximum_chat_retention_days = (
             settings.maximum_chat_retention_days
         )
+        settings_record.num_indexing_workers = settings.num_indexing_workers
+        settings_record.vespa_searcher_threads = settings.vespa_searcher_threads
     else:
         new_record = (
             TeamspaceSettings(
@@ -75,6 +79,8 @@ def store_settings(
                 default_page=settings.default_page,
                 maximum_chat_retention_days=settings.maximum_chat_retention_days,
                 workspace_id=0,
+                num_indexing_workers=settings.num_indexing_workers,
+                vespa_searcher_threads=settings.vespa_searcher_threads,
             )
         )
         db_session.add(new_record)

@@ -4,7 +4,7 @@ export interface DocumentSetCreationRequest {
   cc_pair_ids: number[];
   is_public: boolean;
   users: string[];
-  teamspace: number[];
+  groups: number[];
 }
 
 export const createDocumentSet = async ({
@@ -13,7 +13,7 @@ export const createDocumentSet = async ({
   cc_pair_ids,
   is_public,
   users,
-  teamspace,
+  groups,
 }: DocumentSetCreationRequest) => {
   return fetch("/api/manage/admin/document-set", {
     method: "POST",
@@ -26,7 +26,7 @@ export const createDocumentSet = async ({
       cc_pair_ids,
       is_public,
       users,
-      teamspace,
+      groups,
     }),
   });
 };
@@ -37,7 +37,7 @@ interface DocumentSetUpdateRequest {
   cc_pair_ids: number[];
   is_public: boolean;
   users: string[];
-  teamspace: number[];
+  groups: number[];
 }
 
 export const updateDocumentSet = async ({
@@ -46,7 +46,7 @@ export const updateDocumentSet = async ({
   cc_pair_ids,
   is_public,
   users,
-  teamspace,
+  groups,
 }: DocumentSetUpdateRequest) => {
   return fetch("/api/manage/admin/document-set", {
     method: "PATCH",
@@ -59,7 +59,7 @@ export const updateDocumentSet = async ({
       cc_pair_ids,
       is_public,
       users,
-      teamspace,
+      groups,
     }),
   });
 };

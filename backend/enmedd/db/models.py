@@ -1923,6 +1923,12 @@ class WorkspaceSettings(Base):
     workspace: Mapped["Workspace"] = relationship(
         "Workspace", back_populates="settings"
     )
+    num_indexing_workers: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1
+    )
+    vespa_searcher_threads: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=2
+    )
 
 
 class TeamspaceSettings(Base):

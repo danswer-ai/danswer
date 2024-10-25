@@ -72,7 +72,7 @@ export const DocumentSetCreationForm = ({
             ) ?? [],
           is_public: existingDocumentSet?.is_public ?? true,
           users: existingDocumentSet?.users ?? [],
-          teamspace: existingDocumentSet?.teamspace ?? [],
+          groups: existingDocumentSet?.groups ?? [],
         }}
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Please enter a name for the set"),
@@ -88,7 +88,7 @@ export const DocumentSetCreationForm = ({
           // If the document set is public, then we don't want to send any teamspace
           const processedValues = {
             ...values,
-            teamspace: values.is_public ? [] : values.teamspace,
+            groups: values.is_public ? [] : values.groups,
           };
 
           let response;
@@ -185,9 +185,9 @@ export const DocumentSetCreationForm = ({
                       visible to all users.
                     </p>
                     <Combobox
-                      items={teamspaces.map((teamspace) => ({
-                        value: teamspace.id.toString(),
-                        label: teamspace.name,
+                      items={teamspaces.map((groups) => ({
+                        value: groups.id.toString(),
+                        label: groups.name,
                       }))}
                       onSelect={(selectedTeamspaceIds) => {
                         const selectedIds = selectedTeamspaceIds.map((val) =>

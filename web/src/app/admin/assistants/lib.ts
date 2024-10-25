@@ -15,7 +15,7 @@ interface AssistantCreationRequest {
   llm_model_version_override: string | null;
   starter_messages: StarterMessage[] | null;
   users?: string[];
-  teamspace: number[];
+  groups: number[];
   tool_ids: number[];
   icon_color: string | null;
   icon_shape: number | null;
@@ -41,7 +41,7 @@ interface AssistantUpdateRequest {
   llm_model_version_override: string | null;
   starter_messages: StarterMessage[] | null;
   users?: string[];
-  teamspace: number[];
+  groups: number[];
   tool_ids: number[];
   icon_color: string | null;
   icon_shape: number | null;
@@ -120,7 +120,7 @@ function buildAssistantAPIBody(
     num_chunks,
     llm_relevance_filter,
     is_public,
-    teamspace,
+    groups,
     users,
     tool_ids,
     icon_color,
@@ -148,7 +148,7 @@ function buildAssistantAPIBody(
     llm_model_version_override: creationRequest.llm_model_version_override,
     starter_messages: creationRequest.starter_messages,
     users,
-    teamspace,
+    groups,
     tool_ids,
     icon_color,
     icon_shape,

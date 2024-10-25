@@ -58,11 +58,12 @@ def put_settings(
 @basic_router.get("")
 def fetch_settings(
     user: User | None = Depends(current_user),
+    teamspace_id: Optional[int] = None,
     db_session: Session = Depends(get_session),
 ) -> UserSettings:
     """Settings and notifications are stuffed into this single endpoint to reduce number of
     Postgres calls"""
-    general_settings = load_settings(db_session)
+    general_settings = load_settings(db_session, teamspace_id)
     user_notifications = get_user_notifications(user, db_session)
 
     try:

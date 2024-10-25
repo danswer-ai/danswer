@@ -48,6 +48,8 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("maximum_chat_retention_days", sa.Integer(), nullable=True),
+        sa.Column("num_indexing_workers", sa.Integer(), nullable=False, default=1),
+        sa.Column("vespa_searcher_threads", sa.Integer(), nullable=False, default=2),
         sa.Column("workspace_id", sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(
             ["workspace_id"],

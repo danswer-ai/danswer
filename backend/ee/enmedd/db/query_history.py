@@ -33,34 +33,45 @@ def fetch_chat_sessions_eagerly_by_time(
     filters: list[ColumnElement | BinaryExpression] = [
         ChatSession.time_created.between(start, end)
     ]
-
-    if teamspace_id:
-        filters.append(ChatSession__Teamspace.teamspace_id == teamspace_id)
     if initial_id:
         filters.append(ChatSession.id < initial_id)
 
-    subquery = (
-        db_session.query(ChatSession.id, ChatSession.time_created)
-        .join(
-            ChatSession__Teamspace,
-            ChatSession.id == ChatSession__Teamspace.chat_session_id,
-        )
-        .join(
-            TeamspaceSettings,
-            TeamspaceSettings.teamspace_id == ChatSession__Teamspace.teamspace_id,
-        )
-        .filter(*filters)
-    )
+    if teamspace_id:
+        filters.append(ChatSession__Teamspace.teamspace_id == teamspace_id)
 
-    if not teamspace_id:
-        subquery = subquery.filter(TeamspaceSettings.chat_history_enabled)
-
-    subquery = (
-        subquery.order_by(id_order, time_order)
-        .distinct(ChatSession.id)
-        .limit(limit)
-        .subquery()
-    )
+        subquery = (
+            db_session.query(ChatSession.id, ChatSession.time_created)
+            .join(
+                ChatSession__Teamspace,
+                ChatSession.id == ChatSession__Teamspace.chat_session_id,
+            )
+            .filter(*filters)
+            .order_by(id_order, time_order)
+            .distinct(ChatSession.id)
+            .limit(limit)
+            .subquery()
+        )
+    else:
+        subquery = (
+            db_session.query(ChatSession.id, ChatSession.time_created)
+            .outerjoin(
+                ChatSession__Teamspace,
+                ChatSession.id == ChatSession__Teamspace.chat_session_id,
+            )
+            .outerjoin(
+                TeamspaceSettings,
+                TeamspaceSettings.teamspace_id == ChatSession__Teamspace.teamspace_id,
+            )
+            .filter(*filters)
+            .filter(
+                (ChatSession__Teamspace.teamspace_id.is_(None))
+                | (TeamspaceSettings.chat_history_enabled.is_(True))
+            )
+            .order_by(id_order, time_order)
+            .distinct(ChatSession.id)
+            .limit(limit)
+            .subquery()
+        )
 
     query = (
         db_session.query(ChatSession)

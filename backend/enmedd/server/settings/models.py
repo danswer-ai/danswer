@@ -41,6 +41,8 @@ class Settings(BaseModel):
     default_page: PageType = PageType.CHAT
     maximum_chat_retention_days: int | None = None
     gpu_enabled: bool | None = None
+    num_indexing_workers: int | None = None
+    vespa_searcher_threads: int | None = None
 
     def check_validity(self) -> None:
         chat_page_enabled = self.chat_page_enabled

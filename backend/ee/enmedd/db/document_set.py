@@ -31,10 +31,10 @@ def make_doc_set_private(
             )
 
     if group_ids:
-        for team_id in group_ids:
+        for group_id in group_ids:
             db_session.add(
                 DocumentSet__Teamspace(
-                    document_set_id=document_set_id, teamspace_id=group_ids
+                    document_set_id=document_set_id, teamspace_id=group_id
                 )
             )
 

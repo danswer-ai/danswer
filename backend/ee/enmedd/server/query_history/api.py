@@ -3,6 +3,7 @@ import io
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
+from typing import List
 from typing import Literal
 from typing import Optional
 
@@ -94,7 +95,7 @@ class ChatSessionMinimal(BaseModel):
     assistant_name: str
     time_created: datetime
     feedback_type: QAFeedbackType | Literal["mixed"] | None
-    teamspace: list[MinimalTeamspaceSnapshot] | None
+    groups: Optional[List[MinimalTeamspaceSnapshot]] = None
 
 
 class ChatSessionSnapshot(BaseModel):
@@ -104,7 +105,7 @@ class ChatSessionSnapshot(BaseModel):
     messages: list[MessageSnapshot]
     assistant_name: str
     time_created: datetime
-    teamspace: list[MinimalTeamspaceSnapshot] | None
+    groups: Optional[List[MinimalTeamspaceSnapshot]] = None
     flow_type: SessionType
 
 
@@ -334,7 +335,6 @@ def snapshot_from_chat_session(
         assistant_name=chat_session.assistant.name if chat_session.assistant else None,
         time_created=chat_session.time_created,
         flow_type=flow_type,
-        teamspace=chat_session.groups if chat_session.groups else None,
     )
 
 

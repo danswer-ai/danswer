@@ -9,7 +9,7 @@ from enmedd.db.models import Assistant__User
 def make_assistant_private(
     assistant_id: int,
     user_ids: list[UUID] | None,
-    group_ids: list[int] | None,
+    team_ids: list[int] | None,
     db_session: Session,
 ) -> None:
     db_session.query(Assistant__User).filter(
@@ -25,10 +25,10 @@ def make_assistant_private(
                 Assistant__User(assistant_id=assistant_id, user_id=user_uuid)
             )
 
-    if group_ids:
-        for group_id in group_ids:
+    if team_ids:
+        for team_id in team_ids:
             db_session.add(
-                Assistant__Teamspace(assistant_id=assistant_id, teamspace_id=group_id)
+                Assistant__Teamspace(assistant_id=assistant_id, teamspace_id=team_id)
             )
 
     db_session.commit()

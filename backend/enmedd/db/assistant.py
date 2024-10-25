@@ -167,7 +167,7 @@ def create_update_assistant(
         versioned_make_assistant_private(
             assistant_id=assistant.id,
             user_ids=create_assistant_request.users,
-            group_ids=create_assistant_request.groups,
+            team_ids=create_assistant_request.groups,
             db_session=db_session,
         )
 
@@ -242,7 +242,6 @@ def get_prompts(
 
 
 def get_assistants(
-    # if user is `None` assume the user is an admin or auth is disabled
     user: User | None,
     db_session: Session,
     get_editable: bool = True,
@@ -255,28 +254,14 @@ def get_assistants(
     stmt = _add_user_filters(stmt=stmt, user=user, get_editable=get_editable)
 
     if teamspace_id is not None:
-        # Subquery to find all teams the user belongs to
-        teamspaces_subquery = (
-            select(User__Teamspace.teamspace_id)
-            .where(User__Teamspace.user_id == user.id)
-            .subquery()
+        stmt = stmt.where(
+            Assistant.id.in_(
+                select(Assistant__Teamspace.assistant_id).where(
+                    Assistant__Teamspace.teamspace_id == teamspace_id
+                )
+            )
         )
 
-        # Include assistants where the user is directly related or part of a teamspace that has access
-        access_conditions = or_(
-            Assistant.is_public == True,  # noqa: E712
-            Assistant.id.in_(  # User has access through list of users with access
-                select(Assistant__User.assistant_id).where(
-                    Assistant__User.user_id == user.id
-                )
-            ),
-            Assistant.id.in_(  # User is part of a group that has access
-                select(Assistant__Teamspace.assistant_id).where(
-                    Assistant__Teamspace.teamspace_id.in_(teamspaces_subquery)  # type: ignore
-                )
-            ),
-        )
-        stmt = stmt.where(access_conditions)
     if not include_default:
         stmt = stmt.where(Assistant.builtin_assistant.is_(False))
     if not include_deleted:
