@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ModalWrapper } from "@/components/modals/ModalWrapper";
+import { Modal } from "@/components/Modal";
 import { Button, Callout, Divider, Text } from "@tremor/react";
 import { Spinner } from "@/components/Spinner";
 import { ChatSessionSharedStatus } from "../interfaces";
@@ -57,7 +57,7 @@ export function ShareChatSessionModal({
   );
 
   return (
-    <ModalWrapper onClose={onClose} modalClassName="max-w-3xl">
+    <Modal onOutsideClick={onClose} width="max-w-3xl">
       <>
         <div className="flex mb-4">
           <h2 className="text-2xl text-emphasis font-bold flex my-auto">
@@ -154,6 +154,6 @@ export function ShareChatSessionModal({
           )}
         </div>
       </>
-    </ModalWrapper>
+    </Modal>
   );
 }

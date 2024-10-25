@@ -54,9 +54,9 @@ export function Modal({
             e.stopPropagation();
           }
         }}
-        className={`bg-background text-emphasis rounded shadow-2xl 
+        className={`bg-background  text-emphasis rounded shadow-2xl 
           transform transition-all duration-300 ease-in-out
-          ${width ?? "w-11/12 max-w-5xl"}
+          ${width ?? "w-11/12 max-w-4xl"}
           ${noPadding ? "" : "p-10"}
           ${className || ""}`}
       >
@@ -88,7 +88,7 @@ export function Modal({
               {!hideDividerForTitle && <Divider />}
             </>
           )}
-          {children}
+          <div className="max-h-[60vh] overflow-y-scroll">{children}</div>
         </div>
       </div>
     </div>

@@ -173,7 +173,6 @@ export function ProviderCreationModal({
 
   return (
     <Modal
-      width="max-w-3xl"
       title={`Configure ${selectedProvider.provider_type}`}
       onOutsideClick={onCancel}
       icon={selectedProvider.icon}

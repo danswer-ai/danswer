@@ -1,4 +1,4 @@
-import { ModalWrapper } from "@/components/modals/ModalWrapper";
+import { Modal } from "@/components/Modal";
 import { Button, Divider, Text } from "@tremor/react";
 
 export function MakePublicAssistantModal({
@@ -11,7 +11,7 @@ export function MakePublicAssistantModal({
   onClose: () => void;
 }) {
   return (
-    <ModalWrapper onClose={onClose} modalClassName="max-w-3xl">
+    <Modal onOutsideClick={onClose} width="max-w-3xl">
       <div className="space-y-6">
         <h2 className="text-2xl font-bold text-emphasis">
           {isPublic ? "Public Assistant" : "Make Assistant Public"}
@@ -67,6 +67,6 @@ export function MakePublicAssistantModal({
           </div>
         )}
       </div>
-    </ModalWrapper>
+    </Modal>
   );
 }

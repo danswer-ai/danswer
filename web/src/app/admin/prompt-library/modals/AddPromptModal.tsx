@@ -1,12 +1,12 @@
 import React from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import { Button } from "@tremor/react";
 
 import { BookstackIcon } from "@/components/icons/icons";
 import { AddPromptModalProps } from "../interfaces";
 import { TextFormField } from "@/components/admin/connectors/Field";
+import { Modal } from "@/components/Modal";
 
 const AddPromptSchema = Yup.object().shape({
   title: Yup.string().required("Title is required"),
@@ -15,7 +15,7 @@ const AddPromptSchema = Yup.object().shape({
 
 const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
   return (
-    <ModalWrapper onClose={onClose} modalClassName="max-w-xl">
+    <Modal onOutsideClick={onClose} width="max-w-xl">
       <Formik
         initialValues={{
           title: "",
@@ -57,7 +57,7 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
           </Form>
         )}
       </Formik>
-    </ModalWrapper>
+    </Modal>
   );
 };
 
