@@ -292,28 +292,35 @@ class DefaultMultiLLM(LLM):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
         try:
-            completion_kwargs: dict[str, Any] = {
-                "model": f"{self.config.model_provider}/{self.config.deployment_name or self.config.model_name}",
-                "api_key": self._api_key or None,
-                "base_url": self._api_base or None,
-                "api_version": self._api_version or None,
-                "custom_llm_provider": self._custom_llm_provider or None,
-                "messages": prompt,
-                "tools": tools,
-                "tool_choice": tool_choice if tools else None,
-                "stream": stream,
-                "temperature": self._temperature,
-                "timeout": self._timeout,
+            return litellm.completion(
+                # model choice
+                model=f"{self.config.model_provider}/{self.config.deployment_name or self.config.model_name}",
+                # NOTE: have to pass in None instead of empty string for these
+                # otherwise litellm can have some issues with bedrock
+                api_key=self._api_key or None,
+                base_url=self._api_base or None,
+                api_version=self._api_version or None,
+                custom_llm_provider=self._custom_llm_provider or None,
+                # actual input
+                messages=prompt,
+                tools=tools,
+                tool_choice=tool_choice if tools else None,
+                # streaming choice
+                stream=stream,
+                # model params
+                temperature=self._temperature,
+                timeout=self._timeout,
+                # For now, we don't support parallel tool calls
+                # NOTE: we can't pass this in if tools are not specified
+                # or else OpenAI throws an error
+                **({"parallel_tool_calls": False} if tools else {}),
+                **(
+                    {"response_format": structured_response_format}
+                    if structured_response_format
+                    else {}
+                ),
                 **self._model_kwargs,
-            }
-
-            if structured_response_format:
-                completion_kwargs["response_format"] = structured_response_format
-
-            if tools:
-                completion_kwargs["parallel_tool_calls"] = False
-
-            return litellm.completion(**completion_kwargs)
+            )
         except Exception as e:
             # for break pointing
             raise e
