@@ -12,18 +12,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch all history for all branches and tags
 
       - name: Set up Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Check for Backport Label
-        id: check-label
+      - name: Check for Backport Checkbox
+        id: checkbox-check
         run: |
-          labels="${{ github.event.pull_request.labels.*.name }}"
-          if [[ "$labels" == *"backport"* ]]; then
+          PR_BODY="${{ github.event.pull_request.body }}"
+          if [[ "$PR_BODY" == *"[x] This PR should be backported"* ]]; then
             echo "backport=true" >> $GITHUB_OUTPUT
           else
             echo "backport=false" >> $GITHUB_OUTPUT
@@ -32,20 +32,17 @@ jobs:
       - name: List and sort release branches
         id: list-branches
         run: |
+          git fetch --all --tags
           BRANCHES=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin/release/* | sed 's|origin/release/||' | sort -Vr)
           BETA=$(echo "$BRANCHES" | head -n 1)
           STABLE=$(echo "$BRANCHES" | head -n 2 | tail -n 1)
           echo "beta=$BETA" >> $GITHUB_OUTPUT
           echo "stable=$STABLE" >> $GITHUB_OUTPUT
-
           # Fetch latest tags for beta and stable
-          # Beta tag is in the format vX.Y.Z-beta.W
-          # Stable tag is in the format vX.Y.Z
           LATEST_BETA_TAG=$(git tag -l "v*.*.0-beta.*" | sort -Vr | head -n 1)
           LATEST_STABLE_TAG=$(git tag -l "v*.*.*" | grep -v -- "-beta" | sort -Vr | head -n 1)
-          
           # Increment latest beta tag
-          NEW_BETA_TAG=$(echo $LATEST_BETA_TAG | awk -F '.' '{print $1 "." $2 ".0-beta." ($4+1)}')
+          NEW_BETA_TAG=$(echo $LATEST_BETA_TAG | awk -F '[.-]' '{print $1 "." $2 ".0-beta." ($NF+1)}')
           # Increment latest stable tag
           NEW_STABLE_TAG=$(echo $LATEST_STABLE_TAG | awk -F '.' '{print $1 "." $2 "." ($3+1)}')
           echo "latest_beta_tag=$LATEST_BETA_TAG" >> $GITHUB_OUTPUT
@@ -63,13 +60,15 @@ jobs:
           echo "New stable tag: ${{ steps.list-branches.outputs.new_stable_tag }}"
 
       - name: Trigger Backport
-        if: steps.check-label.outputs.backport == 'true'
+        if: steps.checkbox-check.outputs.backport == 'true'
         run: |
           set -e
           echo "Backporting to beta ${{ steps.list-branches.outputs.beta }} and stable ${{ steps.list-branches.outputs.stable }}"
+          # Fetch all history for all branches and tags
+          git fetch --prune --unshallow
           # Checkout the beta branch
           git checkout ${{ steps.list-branches.outputs.beta }}
-          # Cherry-pick the last commit from the merged PR
+          # Cherry-pick the merge commit from the merged PR
           git cherry-pick -m 1 ${{ github.event.pull_request.merge_commit_sha }} || {
             echo "Cherry-pick to beta failed due to conflicts."
             exit 1
@@ -81,7 +80,7 @@ jobs:
           git push origin ${{ steps.list-branches.outputs.new_beta_tag }}
           # Checkout the stable branch
           git checkout ${{ steps.list-branches.outputs.stable }}
-          # Cherry-pick the last commit from the merged PR
+          # Cherry-pick the merge commit from the merged PR
           git cherry-pick -m 1 ${{ github.event.pull_request.merge_commit_sha }} || {
             echo "Cherry-pick to stable failed due to conflicts."
             exit 1
