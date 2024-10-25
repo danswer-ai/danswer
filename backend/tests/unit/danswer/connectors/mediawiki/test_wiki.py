@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import tempfile
 from collections.abc import Iterable
 
 import pytest
@@ -12,6 +13,7 @@ from danswer.connectors.mediawiki import wiki
 
 @pytest.fixture
 def site() -> pywikibot.Site:
+    pywikibot.config.base_dir = tempfile.TemporaryDirectory().name
     return pywikibot.Site("en", "wikipedia")
 
 

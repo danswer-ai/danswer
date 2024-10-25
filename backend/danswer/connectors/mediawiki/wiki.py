@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import itertools
+import tempfile
 from collections.abc import Generator
 from collections.abc import Iterator
 from typing import Any
@@ -120,6 +121,7 @@ class MediaWikiConnector(LoadConnector, PollConnector):
         self.batch_size = batch_size
 
         # short names can only have ascii letters and digits
+        pywikibot.config.base_dir = tempfile.TemporaryDirectory().name
 
         self.family = family_class_dispatch(hostname, "WikipediaConnector")()
         self.site = pywikibot.Site(fam=self.family, code=language_code)
