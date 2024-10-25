@@ -1,0 +1,52 @@
+name: Backport on Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  backport:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Check for Backport Checkbox
+        id: checkbox-check
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          if [[ "$PR_BODY" == *"[x] This PR should be backported"* ]]; then
+            echo "::set-output name=backport::true"
+          else
+            echo "::set-output name=backport::false"
+          fi
+
+      - name: List and sort release branches
+        id: list-branches
+        run: |
+          git fetch --all
+          BRANCHES=$(git branch -r | grep 'origin/release/v' | sed 's|origin/release/v||' | sort -Vr)
+          BETA=$(echo "$BRANCHES" | head -n 1)
+          STABLE=$(echo "$BRANCHES" | head -n 2 | tail -n 1)
+          echo "::set-output name=beta::$BETA"
+          echo "::set-output name=stable::$STABLE"
+
+      - name: Trigger Backport
+        if: steps.checkbox-check.outputs.backport == 'true'
+        run: |
+          echo "Backporting to beta ${{ steps.list-branches.outputs.beta }} and stable ${{ steps.list-branches.outputs.stable }}"
+          # Fetch all history for all branches and tags
+          git fetch --prune --unshallow
+          # Checkout the beta branch
+          git checkout ${{ steps.list-branches.outputs.beta }}
+          # Cherry-pick the last commit from the merged PR
+          git cherry-pick ${{ github.event.pull_request.merge_commit_sha }}
+          # Push the changes to the beta branch
+          git push origin ${{ steps.list-branches.outputs.beta }}
+          # Checkout the stable branch
+          git checkout ${{ steps.list-branches.outputs.stable }}
+          # Cherry-pick the last commit from the merged PR
+          git cherry-pick ${{ github.event.pull_request.merge_commit_sha }}
+          # Push the changes to the stable branch
+          git push origin ${{ steps.list-branches.outputs.stable }}
