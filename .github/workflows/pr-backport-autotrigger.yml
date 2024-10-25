@@ -26,7 +26,17 @@ jobs:
         id: list-branches
         run: |
           git fetch --all
-          BRANCHES=$(git branch -r | grep 'origin/release/v' | sed 's|origin/release/v||' | sort -Vr)
+          BRANCHES=$(git branch -r | grep 'origin/release/' | sed 's|origin/release/||' | sort -Vr)
+          BETA=$(echo "$BRANCHES" | head -n 1)
+          STABLE=$(echo "$BRANCHES" | head -n 2 | tail -n 1)
+          echo "::set-output name=beta::$BETA"
+          echo "::set-output name=stable::$STABLE"
+
+      - name: List and sort release tags
+        id: list-tags
+        run: |
+          git fetch --all
+          BRANCHES=$(git branch -r | grep 'origin/release/' | sed 's|origin/release/||' | sort -Vr)
           BETA=$(echo "$BRANCHES" | head -n 1)
           STABLE=$(echo "$BRANCHES" | head -n 2 | tail -n 1)
           echo "::set-output name=beta::$BETA"
