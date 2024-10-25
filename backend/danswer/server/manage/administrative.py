@@ -19,7 +19,6 @@ from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
-from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.enums import ConnectorCredentialPairStatus
@@ -175,15 +174,19 @@ def create_deletion_attempt_for_connector_id(
         cc_pair_id=cc_pair.id, db_session=db_session, include_secondary_index=True
     )
 
+    # TODO(rkuo): 2024-10-24 - check_deletion_attempt_is_allowed shouldn't be necessary
+    # any more due to background locking improvements.
+    # Remove the below permanently if everything is behaving for 30 days.
+
     # Check if the deletion attempt should be allowed
-    deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(
-        connector_credential_pair=cc_pair, db_session=db_session
-    )
-    if deletion_attempt_disallowed_reason:
-        raise HTTPException(
-            status_code=400,
-            detail=deletion_attempt_disallowed_reason,
-        )
+    # deletion_attempt_disallowed_reason = check_deletion_attempt_is_allowed(
+    #     connector_credential_pair=cc_pair, db_session=db_session
+    # )
+    # if deletion_attempt_disallowed_reason:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail=deletion_attempt_disallowed_reason,
+    #     )
 
     # mark as deleting
     update_connector_credential_pair_from_id(

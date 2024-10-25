@@ -11,8 +11,11 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
+from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorPruning
+from danswer.background.celery.celery_redis import RedisConnectorStop
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
+from danswer.background.celery.tasks.indexing.tasks import RunIndexingCallback
 from danswer.configs.app_configs import ALLOW_SIMULTANEOUS_PRUNING
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_PRUNING_LOCK_TIMEOUT
@@ -168,6 +171,10 @@ def try_creating_prune_generator_task(
             return None
 
         # skip pruning if the cc_pair is deleting
+        rcd = RedisConnectorDeletion(cc_pair.id)
+        if r.exists(rcd.fence_key):
+            return None
+
         db_session.refresh(cc_pair)
         if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
             return None
@@ -234,7 +241,7 @@ def connector_pruning_generator_task(
     acquired = lock.acquire(blocking=False)
     if not acquired:
         task_logger.warning(
-            f"Pruning task already running, exiting...: cc_pair_id={cc_pair_id}"
+            f"Pruning task already running, exiting...: cc_pair={cc_pair_id}"
         )
         return None
 
@@ -252,11 +259,6 @@ def connector_pruning_generator_task(
                 )
                 return
 
-            # Define the callback function
-            def redis_increment_callback(amount: int) -> None:
-                lock.reacquire()
-                r.incrby(rcp.generator_progress_key, amount)
-
             runnable_connector = instantiate_connector(
                 db_session,
                 cc_pair.connector.source,
@@ -265,9 +267,14 @@ def connector_pruning_generator_task(
                 cc_pair.credential,
             )
 
+            rcs = RedisConnectorStop(cc_pair_id)
+
+            callback = RunIndexingCallback(
+                rcs.fence_key, rcp.generator_progress_key, lock, r
+            )
             # a list of docs in the source
             all_connector_doc_ids: set[str] = extract_ids_from_runnable_connector(
-                runnable_connector, redis_increment_callback
+                runnable_connector, callback
             )
 
             # a list of docs in our local index
@@ -285,7 +292,7 @@ def connector_pruning_generator_task(
 
             task_logger.info(
                 f"Pruning set collected: "
-                f"cc_pair_id={cc_pair.id} "
+                f"cc_pair={cc_pair_id} "
                 f"docs_to_remove={len(doc_ids_to_remove)} "
                 f"doc_source={cc_pair.connector.source}"
             )
@@ -293,7 +300,7 @@ def connector_pruning_generator_task(
             rcp.documents_to_prune = set(doc_ids_to_remove)
 
             task_logger.info(
-                f"RedisConnectorPruning.generate_tasks starting. cc_pair_id={cc_pair.id}"
+                f"RedisConnectorPruning.generate_tasks starting. cc_pair_id={cc_pair_id}"
             )
             tasks_generated = rcp.generate_tasks(
                 self.app, db_session, r, None, tenant_id
@@ -303,12 +310,14 @@ def connector_pruning_generator_task(
 
             task_logger.info(
                 f"RedisConnectorPruning.generate_tasks finished. "
-                f"cc_pair_id={cc_pair.id} tasks_generated={tasks_generated}"
+                f"cc_pair={cc_pair_id} tasks_generated={tasks_generated}"
             )
 
             r.set(rcp.generator_complete_key, tasks_generated)
     except Exception as e:
-        task_logger.exception(f"Failed to run pruning for connector id {connector_id}.")
+        task_logger.exception(
+            f"Failed to run pruning: cc_pair={cc_pair_id} connector={connector_id}"
+        )
 
         r.delete(rcp.generator_progress_key)
         r.delete(rcp.taskset_key)
