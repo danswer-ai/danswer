@@ -365,9 +365,6 @@ def set_search_path_on_checkout(
     if tenant_id and is_valid_schema_name(tenant_id):
         with dbapi_conn.cursor() as cursor:
             cursor.execute(f'SET search_path TO "{tenant_id}"')
-            logger.debug(
-                f"Set search_path to {tenant_id} for connection {connection_record}"
-            )
 
 
 def get_session_generator_with_tenant() -> Generator[Session, None, None]:
