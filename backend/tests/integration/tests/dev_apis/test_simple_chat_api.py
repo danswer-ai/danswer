@@ -151,7 +151,6 @@ def test_using_reference_docs_with_simple_with_history_api_flow(reset: None) -> 
 
 
 def test_send_message_simple_with_history_strict_json(
-    reset: None,
     new_admin_user: DATestUser | None,
 ) -> None:
     # create connectors
