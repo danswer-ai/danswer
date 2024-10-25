@@ -128,7 +128,12 @@ else:
     # If the environment variable is empty, allow all origins
     CORS_ALLOWED_ORIGIN = ["*"]
 
-current_tenant_id = contextvars.ContextVar("current_tenant_id", default="public")
+
+POSTGRES_DEFAULT_SCHEMA = os.environ.get("POSTGRES_DEFAULT_SCHEMA") or "public"
+
+CURRENT_TENANT_ID_CONTEXTVAR = contextvars.ContextVar(
+    "current_tenant_id", default=POSTGRES_DEFAULT_SCHEMA
+)
 
 
 SUPPORTED_EMBEDDING_MODELS = [

@@ -33,11 +33,6 @@ export default function EmbeddingForm() {
 
   const [advancedEmbeddingDetails, setAdvancedEmbeddingDetails] =
     useState<AdvancedSearchConfiguration>({
-      model_name: "",
-      model_dim: 0,
-      normalize: false,
-      query_prefix: "",
-      passage_prefix: "",
       index_name: "",
       multipass_indexing: true,
       multilingual_expansion: [],
@@ -109,11 +104,6 @@ export default function EmbeddingForm() {
   useEffect(() => {
     if (searchSettings) {
       setAdvancedEmbeddingDetails({
-        model_name: searchSettings.model_name,
-        model_dim: searchSettings.model_dim,
-        normalize: searchSettings.normalize,
-        query_prefix: searchSettings.query_prefix,
-        passage_prefix: searchSettings.passage_prefix,
         index_name: searchSettings.index_name,
         multipass_indexing: searchSettings.multipass_indexing,
         multilingual_expansion: searchSettings.multilingual_expansion,
@@ -263,8 +253,8 @@ export default function EmbeddingForm() {
       // This is a cloud model
       newModel = {
         ...selectedProvider,
-        ...rerankingDetails,
         ...advancedEmbeddingDetails,
+        ...rerankingDetails,
         provider_type:
           (selectedProvider.provider_type
             ?.toLowerCase()
@@ -274,8 +264,8 @@ export default function EmbeddingForm() {
       // This is a locally hosted model
       newModel = {
         ...selectedProvider,
-        ...rerankingDetails,
         ...advancedEmbeddingDetails,
+        ...rerankingDetails,
         provider_type: null,
       };
     }
@@ -388,6 +378,16 @@ export default function EmbeddingForm() {
 
         {formStep == 1 && (
           <>
+            <h2 className="text-2xl font-bold mb-4 text-text-800">
+              Select a Reranking Model
+            </h2>
+            <Text className="mb-4">
+              Updating the reranking model does not require re-indexing
+              documents. The reranker helps improve search quality by reordering
+              results after the initial embedding search. Changes will take
+              effect immediately for all new searches.
+            </Text>
+
             <Card>
               <RerankingDetailsForm
                 setModelTab={setModelTab}
@@ -429,6 +429,14 @@ export default function EmbeddingForm() {
         )}
         {formStep == 2 && (
           <>
+            <h2 className="text-2xl font-bold mb-4 text-text-800">
+              Advanced Search Configuration
+            </h2>
+            <Text className="mb-4">
+              Configure advanced embedding and search settings. Changes will
+              require re-indexing documents.
+            </Text>
+
             <Card>
               <AdvancedEmbeddingFormPage
                 advancedEmbeddingDetails={advancedEmbeddingDetails}

@@ -93,7 +93,8 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
-from shared_configs.configs import current_tenant_id
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 logger = setup_logger()
 
@@ -187,7 +188,7 @@ def verify_email_domain(email: str) -> None:
 
 def get_tenant_id_for_email(email: str) -> str:
     if not MULTI_TENANT:
-        return "public"
+        return POSTGRES_DEFAULT_SCHEMA
     # Implement logic to get tenant_id from the mapping table
     with Session(get_sqlalchemy_engine()) as db_session:
         result = db_session.execute(
@@ -233,35 +234,62 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        verify_email_is_invited(user_create.email)
-        verify_email_domain(user_create.email)
-        if hasattr(user_create, "role"):
-            user_count = await get_user_count()
-            if user_count == 0 or user_create.email in get_default_admin_user_emails():
-                user_create.role = UserRole.ADMIN
-            else:
-                user_create.role = UserRole.BASIC
-        user = None
         try:
-            user = await super().create(user_create, safe=safe, request=request)  # type: ignore
-        except exceptions.UserAlreadyExists:
-            user = await self.get_by_email(user_create.email)
-            # Handle case where user has used product outside of web and is now creating an account through web
-            if (
-                not user.has_web_login
-                and hasattr(user_create, "has_web_login")
-                and user_create.has_web_login
-            ):
-                user_update = UserUpdate(
-                    password=user_create.password,
-                    has_web_login=True,
-                    role=user_create.role,
-                    is_verified=user_create.is_verified,
-                )
-                user = await self.update(user_update, user)
-            else:
-                raise exceptions.UserAlreadyExists()
-        return user
+            tenant_id = (
+                get_tenant_id_for_email(user_create.email)
+                if MULTI_TENANT
+                else POSTGRES_DEFAULT_SCHEMA
+            )
+        except exceptions.UserNotExists:
+            raise HTTPException(status_code=401, detail="User not found")
+
+        if not tenant_id:
+            raise HTTPException(
+                status_code=401, detail="User does not belong to an organization"
+            )
+
+        async with get_async_session_with_tenant(tenant_id) as db_session:
+            token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
+
+            verify_email_is_invited(user_create.email)
+            verify_email_domain(user_create.email)
+            if MULTI_TENANT:
+                tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
+                self.user_db = tenant_user_db
+                self.database = tenant_user_db
+
+            if hasattr(user_create, "role"):
+                user_count = await get_user_count()
+                if (
+                    user_count == 0
+                    or user_create.email in get_default_admin_user_emails()
+                ):
+                    user_create.role = UserRole.ADMIN
+                else:
+                    user_create.role = UserRole.BASIC
+            user = None
+            try:
+                user = await super().create(user_create, safe=safe, request=request)  # type: ignore
+            except exceptions.UserAlreadyExists:
+                user = await self.get_by_email(user_create.email)
+                # Handle case where user has used product outside of web and is now creating an account through web
+                if (
+                    not user.has_web_login
+                    and hasattr(user_create, "has_web_login")
+                    and user_create.has_web_login
+                ):
+                    user_update = UserUpdate(
+                        password=user_create.password,
+                        has_web_login=True,
+                        role=user_create.role,
+                        is_verified=user_create.is_verified,
+                    )
+                    user = await self.update(user_update, user)
+                else:
+                    raise exceptions.UserAlreadyExists()
+
+            CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
+            return user
 
     async def on_after_login(
         self,
@@ -302,7 +330,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         # Get tenant_id from mapping table
         try:
             tenant_id = (
-                get_tenant_id_for_email(account_email) if MULTI_TENANT else "public"
+                get_tenant_id_for_email(account_email)
+                if MULTI_TENANT
+                else POSTGRES_DEFAULT_SCHEMA
             )
         except exceptions.UserNotExists:
             raise HTTPException(status_code=401, detail="User not found")
@@ -312,7 +342,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         token = None
         async with get_async_session_with_tenant(tenant_id) as db_session:
-            token = current_tenant_id.set(tenant_id)
+            token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
             verify_email_in_whitelist(account_email, tenant_id)
             verify_email_domain(account_email)
@@ -320,7 +350,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             if MULTI_TENANT:
                 tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
                 self.user_db = tenant_user_db
-                self.database = tenant_user_db
+                self.database = tenant_user_db  # type: ignore
 
             oauth_account_dict = {
                 "oauth_name": oauth_name,
@@ -402,7 +432,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 user.oidc_expiry = None  # type: ignore
 
             if token:
-                current_tenant_id.reset(token)
+                CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
             return user
 

@@ -313,6 +313,8 @@ class RedisConnectorDeletion(RedisObjectHelper):
         lock: redis.lock.Lock,
         tenant_id: str | None,
     ) -> int | None:
+        """Returns None if the cc_pair doesn't exist.
+        Otherwise, returns an int with the number of generated tasks."""
         last_lock_time = time.monotonic()
 
         async_results = []
@@ -465,14 +467,8 @@ class RedisConnectorPruning(RedisObjectHelper):
 
         return len(async_results)
 
-    def is_pruning(self, db_session: Session, redis_client: Redis) -> bool:
+    def is_pruning(self, redis_client: Redis) -> bool:
         """A single example of a helper method being refactored into the redis helper"""
-        cc_pair = get_connector_credential_pair_from_id(
-            cc_pair_id=int(self._id), db_session=db_session
-        )
-        if not cc_pair:
-            raise ValueError(f"cc_pair_id {self._id} does not exist.")
-
         if redis_client.exists(self.fence_key):
             return True
 
@@ -527,6 +523,36 @@ class RedisConnectorIndexing(RedisObjectHelper):
     @property
     def subtask_id_prefix(self) -> str:
         return f"{self.SUBTASK_PREFIX}_{self._id}"
+
+    def generate_tasks(
+        self,
+        celery_app: Celery,
+        db_session: Session,
+        redis_client: Redis,
+        lock: redis.lock.Lock | None,
+        tenant_id: str | None,
+    ) -> int | None:
+        return None
+
+    def is_indexing(self, redis_client: Redis) -> bool:
+        """A single example of a helper method being refactored into the redis helper"""
+        if redis_client.exists(self.fence_key):
+            return True
+
+        return False
+
+
+class RedisConnectorStop(RedisObjectHelper):
+    """Used to signal any running tasks for a connector to stop. We should refactor
+    connector related redis helpers into a single class.
+    """
+
+    PREFIX = "connectorstop"
+    FENCE_PREFIX = PREFIX + "_fence"  # a fence for the entire indexing process
+    TASKSET_PREFIX = PREFIX + "_taskset"  # stores a list of prune tasks id's
+
+    def __init__(self, id: int) -> None:
+        super().__init__(str(id))
 
     def generate_tasks(
         self,

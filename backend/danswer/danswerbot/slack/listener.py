@@ -57,7 +57,7 @@ from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
-from shared_configs.configs import current_tenant_id
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import SLACK_CHANNEL_ID
@@ -363,7 +363,7 @@ def process_message(
     # Set the current tenant ID at the beginning for all DB calls within this thread
     if client.tenant_id:
         logger.info(f"Setting tenant ID to {client.tenant_id}")
-        token = current_tenant_id.set(client.tenant_id)
+        token = CURRENT_TENANT_ID_CONTEXTVAR.set(client.tenant_id)
     try:
         with get_session_with_tenant(client.tenant_id) as db_session:
             slack_bot_config = get_slack_bot_config_for_channel(
@@ -412,7 +412,7 @@ def process_message(
                     apologize_for_fail(details, client)
     finally:
         if client.tenant_id:
-            current_tenant_id.reset(token)
+            CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
 
 def acknowledge_message(req: SocketModeRequest, client: TenantSocketModeClient) -> None:
@@ -510,9 +510,9 @@ if __name__ == "__main__":
             for tenant_id in tenant_ids:
                 with get_session_with_tenant(tenant_id) as db_session:
                     try:
-                        token = current_tenant_id.set(tenant_id or "public")
+                        token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id or "public")
                         latest_slack_bot_tokens = fetch_tokens()
-                        current_tenant_id.reset(token)
+                        CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
                         if (
                             tenant_id not in slack_bot_tokens

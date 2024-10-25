@@ -8,7 +8,6 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.configs.app_configs import STRIPE_PRICE_ID
 from ee.danswer.configs.app_configs import STRIPE_SECRET_KEY
 from ee.danswer.server.tenants.access import generate_data_plane_token
-from shared_configs.configs import current_tenant_id
 
 stripe.api_key = STRIPE_SECRET_KEY
 
@@ -50,7 +49,6 @@ def register_tenant_users(tenant_id: str, number_of_users: int) -> stripe.Subscr
     if not STRIPE_PRICE_ID:
         raise Exception("STRIPE_PRICE_ID is not set")
 
-    tenant_id = current_tenant_id.get()
     response = fetch_tenant_stripe_information(tenant_id)
     stripe_subscription_id = cast(str, response.get("stripe_subscription_id"))
 

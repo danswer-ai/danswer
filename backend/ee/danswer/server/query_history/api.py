@@ -20,10 +20,13 @@ from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
 from danswer.configs.constants import SessionType
 from danswer.db.chat import get_chat_session_by_id
+from danswer.db.chat import get_chat_sessions_by_user
 from danswer.db.engine import get_session
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
 from danswer.db.models import User
+from danswer.server.query_and_chat.models import ChatSessionDetails
+from danswer.server.query_and_chat.models import ChatSessionsResponse
 from ee.danswer.db.query_history import fetch_chat_sessions_eagerly_by_time
 
 router = APIRouter()
@@ -327,6 +330,36 @@ def snapshot_from_chat_session(
         persona_name=chat_session.persona.name if chat_session.persona else None,
         time_created=chat_session.time_created,
         flow_type=flow_type,
+    )
+
+
+@router.get("/admin/chat-sessions")
+def get_user_chat_sessions(
+    user_id: UUID,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> ChatSessionsResponse:
+    try:
+        chat_sessions = get_chat_sessions_by_user(
+            user_id=user_id, deleted=False, db_session=db_session, limit=0
+        )
+
+    except ValueError:
+        raise ValueError("Chat session does not exist or has been deleted")
+
+    return ChatSessionsResponse(
+        sessions=[
+            ChatSessionDetails(
+                id=chat.id,
+                name=chat.description,
+                persona_id=chat.persona_id,
+                time_created=chat.time_created.isoformat(),
+                shared_status=chat.shared_status,
+                folder_id=chat.folder_id,
+                current_alternate_model=chat.current_alternate_model,
+            )
+            for chat in chat_sessions
+        ]
     )
 
 

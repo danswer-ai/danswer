@@ -60,6 +60,8 @@ from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_cc_pair_groups_for_ids
 from danswer.db.connector_credential_pair import get_connector_credential_pair
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
+from danswer.db.credentials import cleanup_gmail_credentials
+from danswer.db.credentials import cleanup_google_drive_credentials
 from danswer.db.credentials import create_credential
 from danswer.db.credentials import delete_gmail_service_account_credentials
 from danswer.db.credentials import delete_google_drive_service_account_credentials
@@ -143,9 +145,11 @@ def upsert_google_app_gmail_credentials(
 @router.delete("/admin/connector/gmail/app-credential")
 def delete_google_app_gmail_credentials(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
         delete_google_app_gmail_cred()
+        cleanup_gmail_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -181,9 +185,11 @@ def upsert_google_app_credentials(
 @router.delete("/admin/connector/google-drive/app-credential")
 def delete_google_app_credentials(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
         delete_google_app_cred()
+        cleanup_google_drive_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -221,9 +227,11 @@ def upsert_google_service_gmail_account_key(
 @router.delete("/admin/connector/gmail/service-account-key")
 def delete_google_service_gmail_account_key(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
         delete_gmail_service_account_key()
+        cleanup_gmail_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -261,9 +269,11 @@ def upsert_google_service_account_key(
 @router.delete("/admin/connector/google-drive/service-account-key")
 def delete_google_service_account_key(
     _: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
         delete_service_account_key()
+        cleanup_google_drive_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -483,10 +493,11 @@ def get_connector_indexing_status(
     get_editable: bool = Query(
         False, description="If true, return editable document sets"
     ),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     # NOTE: If the connector is deleting behind the scenes,
     # accessing cc_pairs can be inconsistent and members like
@@ -607,6 +618,7 @@ def get_connector_indexing_status(
                     connector_id=connector.id,
                     credential_id=credential.id,
                     db_session=db_session,
+                    tenant_id=tenant_id,
                 ),
                 is_deletable=check_deletion_attempt_is_allowed(
                     connector_credential_pair=cc_pair,
@@ -684,15 +696,18 @@ def create_connector_with_mock_credential(
         connector_response = create_connector(
             db_session=db_session, connector_data=connector_data
         )
+
         mock_credential = CredentialBase(
             credential_json={}, admin_public=True, source=connector_data.source
         )
         credential = create_credential(
             mock_credential, user=user, db_session=db_session
         )
+
         access_type = (
             AccessType.PUBLIC if connector_data.is_public else AccessType.PRIVATE
         )
+
         response = add_credential_to_connector(
             db_session=db_session,
             user=user,
@@ -776,7 +791,7 @@ def connector_run_once(
     """Used to trigger indexing on a set of cc_pairs associated with a
     single connector."""
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
 
     connector_id = run_info.connector_id
     specified_credential_ids = run_info.credential_ids

@@ -10,9 +10,9 @@ from fastapi import Response
 
 from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import SECRET_JWT_KEY
-from danswer.configs.constants import POSTGRES_DEFAULT_SCHEMA
 from danswer.db.engine import is_valid_schema_name
-from shared_configs.configs import current_tenant_id
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 
 def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> None:
@@ -49,7 +49,7 @@ def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> Non
                 else:
                     tenant_id = POSTGRES_DEFAULT_SCHEMA
 
-            current_tenant_id.set(tenant_id)
+            CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
             logger.info(f"Middleware set current_tenant_id to: {tenant_id}")
 
             response = await call_next(request)

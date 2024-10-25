@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -6,6 +5,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
+from danswer.background.indexing.run_indexing import RunIndexingCallbackInterface
 from danswer.configs.app_configs import MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE
 from danswer.connectors.cross_connector_utils.rate_limit_wrapper import (
     rate_limit_builder,
@@ -27,7 +27,10 @@ logger = setup_logger()
 
 
 def _get_deletion_status(
-    connector_id: int, credential_id: int, db_session: Session
+    connector_id: int,
+    credential_id: int,
+    db_session: Session,
+    tenant_id: str | None = None,
 ) -> TaskQueueState | None:
     """We no longer store TaskQueueState in the DB for a deletion attempt.
     This function populates TaskQueueState by just checking redis.
@@ -40,7 +43,7 @@ def _get_deletion_status(
 
     rcd = RedisConnectorDeletion(cc_pair.id)
 
-    r = get_redis_client()
+    r = get_redis_client(tenant_id=tenant_id)
     if not r.exists(rcd.fence_key):
         return None
 
@@ -50,9 +53,14 @@ def _get_deletion_status(
 
 
 def get_deletion_attempt_snapshot(
-    connector_id: int, credential_id: int, db_session: Session
+    connector_id: int,
+    credential_id: int,
+    db_session: Session,
+    tenant_id: str | None = None,
 ) -> DeletionAttemptSnapshot | None:
-    deletion_task = _get_deletion_status(connector_id, credential_id, db_session)
+    deletion_task = _get_deletion_status(
+        connector_id, credential_id, db_session, tenant_id
+    )
     if not deletion_task:
         return None
 
@@ -71,7 +79,7 @@ def document_batch_to_ids(
 
 def extract_ids_from_runnable_connector(
     runnable_connector: BaseConnector,
-    progress_callback: Callable[[int], None] | None = None,
+    callback: RunIndexingCallbackInterface | None = None,
 ) -> set[str]:
     """
     If the PruneConnector hasnt been implemented for the given connector, just pull
@@ -102,8 +110,10 @@ def extract_ids_from_runnable_connector(
             max_calls=MAX_PRUNING_DOCUMENT_RETRIEVAL_PER_MINUTE, period=60
         )(document_batch_to_ids)
     for doc_batch in doc_batch_generator:
-        if progress_callback:
-            progress_callback(len(doc_batch))
+        if callback:
+            if callback.should_stop():
+                raise RuntimeError("Stop signal received")
+            callback.progress(len(doc_batch))
         all_connector_doc_ids.update(doc_batch_processing_func(doc_batch))
 
     return all_connector_doc_ids
