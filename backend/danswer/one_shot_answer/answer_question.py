@@ -129,7 +129,19 @@ def stream_answer_objects(
 
     persona = temporary_persona if temporary_persona else chat_session.persona
 
-    llm, fast_llm = get_llms_for_persona(persona=persona)
+    try:
+        llm, fast_llm = get_llms_for_persona(persona=persona)
+    except ValueError as e:
+        logger.error(
+            f"Failed to initialize LLMs for persona '{persona.name}': {str(e)}"
+        )
+        if "No LLM provider" in str(e):
+            raise ValueError(
+                "Please configure a Generative AI model to use this feature."
+            ) from e
+        raise ValueError(
+            "Failed to initialize the AI model. Please check your configuration and try again."
+        ) from e
 
     llm_tokenizer = get_tokenizer(
         model_name=llm.config.model_name,
