@@ -1,8 +1,9 @@
 import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { ModalWrapper } from "@/components/modals/ModalWrapper";
+import { Modal } from "@/components/Modal";
 import { Button, Textarea, TextInput } from "@tremor/react";
+
 import { useInputPrompt } from "../hooks";
 import { EditPromptModalProps } from "../interfaces";
 
@@ -25,20 +26,20 @@ const EditPromptModal = ({
 
   if (error)
     return (
-      <ModalWrapper onClose={onClose} modalClassName="max-w-xl">
+      <Modal onOutsideClick={onClose} width="max-w-xl">
         <p>Failed to load prompt data</p>
-      </ModalWrapper>
+      </Modal>
     );
 
   if (!promptData)
     return (
-      <ModalWrapper onClose={onClose} modalClassName="max-w-xl">
+      <Modal onOutsideClick={onClose} width="max-w-xl">
         <p>Loading...</p>
-      </ModalWrapper>
+      </Modal>
     );
 
   return (
-    <ModalWrapper onClose={onClose} modalClassName="max-w-xl">
+    <Modal onOutsideClick={onClose} width="max-w-xl">
       <Formik
         initialValues={{
           prompt: promptData.prompt,
@@ -131,7 +132,7 @@ const EditPromptModal = ({
           </Form>
         )}
       </Formik>
-    </ModalWrapper>
+    </Modal>
   );
 };
 
