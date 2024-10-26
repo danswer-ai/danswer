@@ -311,8 +311,6 @@ class VespaIndex(DocumentIndex):
         with updating the associated permissions. Assumes that a document will not be split into
         multiple chunk batches calling this function multiple times, otherwise only the last set of
         chunks will be kept"""
-        print("INDEXING")
-        print(chunks[0].tenant_id)
         # IMPORTANT: This must be done one index at a time, do not use secondary index here
         cleaned_chunks = [clean_chunk_id_copy(chunk) for chunk in chunks]
 
@@ -324,12 +322,10 @@ class VespaIndex(DocumentIndex):
             concurrent.futures.ThreadPoolExecutor(max_workers=NUM_THREADS) as executor,
             get_vespa_http_client() as http_client,
         ):
-            print("existing docs")
             # Check for existing documents, existing documents need to have all of their chunks deleted
             # prior to indexing as the document size (num chunks) may have shrunk
             first_chunks = [chunk for chunk in cleaned_chunks if chunk.chunk_id == 0]
             for chunk_batch in batch_generator(first_chunks, BATCH_SIZE):
-                print("batch")
                 existing_docs.update(
                     get_existing_documents_from_chunks(
                         chunks=chunk_batch,
@@ -338,7 +334,6 @@ class VespaIndex(DocumentIndex):
                         executor=executor,
                     )
                 )
-            print("delete docs ")
 
             for doc_id_batch in batch_generator(existing_docs, BATCH_SIZE):
                 delete_vespa_docs(
@@ -348,7 +343,6 @@ class VespaIndex(DocumentIndex):
                     executor=executor,
                 )
 
-            print("index chunks")
             for chunk_batch in batch_generator(cleaned_chunks, BATCH_SIZE):
                 batch_index_vespa_chunks(
                     chunks=chunk_batch,

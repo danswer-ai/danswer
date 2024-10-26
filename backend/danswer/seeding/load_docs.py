@@ -31,6 +31,7 @@ from danswer.key_value_store.factory import get_kv_store
 from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.server.documents.models import ConnectorBase
 from danswer.utils.logger import setup_logger
+from danswer.utils.retry_wrapper import retry_builder
 
 
 logger = setup_logger()
@@ -199,8 +200,8 @@ def seed_initial_documents(db_session: Session, tenant_id: str | None) -> None:
     # Retries here because the index may take a few seconds to become ready
     # as we just sent over the Vespa schema and there is a slight delay
 
-    document_index.index(chunks=chunks)
-    # index_with_retries(chunks=chunks)
+    index_with_retries = retry_builder()(document_index.index)
+    index_with_retries(chunks=chunks)
 
     # Mock a run for the UI even though it did not actually call out to anything
     mock_successful_index_attempt(
