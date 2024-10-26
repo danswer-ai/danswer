@@ -65,7 +65,7 @@ jobs:
           set -e
           echo "Backporting to beta ${{ steps.list-branches.outputs.beta }} and stable ${{ steps.list-branches.outputs.stable }}"
           # Fetch all history for all branches and tags
-          git fetch --prune --unshallow
+          git fetch --prune
           # Checkout the beta branch
           git checkout ${{ steps.list-branches.outputs.beta }}
           # Cherry-pick the merge commit from the merged PR
