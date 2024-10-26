@@ -21,7 +21,6 @@ import {
   LoopioIcon,
   NotionIcon,
   ProductboardIcon,
-  RequestTrackerIcon,
   R2Icon,
   SalesforceIcon,
   SharepointIcon,
@@ -242,12 +241,6 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "MediaWiki",
     category: SourceCategory.Wiki,
     docs: "https://docs.danswer.dev/connectors/mediawiki",
-  },
-  requesttracker: {
-    icon: RequestTrackerIcon,
-    displayName: "Request Tracker",
-    category: SourceCategory.CustomerSupport,
-    docs: "https://docs.danswer.dev/connectors/requesttracker",
   },
   clickup: {
     icon: ClickupIcon,

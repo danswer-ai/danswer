@@ -241,7 +241,6 @@ const validSources = [
   "linear",
   "hubspot",
   "document360",
-  "requesttracker",
   "file",
   "google_sites",
   "loopio",
