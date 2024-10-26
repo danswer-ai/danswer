@@ -80,6 +80,7 @@ from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from shared_configs.configs import current_tenant_id
 
+
 logger = setup_logger()
 
 
