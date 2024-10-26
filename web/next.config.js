@@ -15,12 +15,15 @@ const nextConfig = {
 
 const { withSentryConfig } = require("@sentry/nextjs");
 
+// Sentry configuration for error monitoring:
+// - Without SENTRY_AUTH_TOKEN and NEXT_PUBLIC_SENTRY_DSN: Sentry is completely disabled
+// - With both configured: Only unhandled errors are captured (no performance/session tracking)
 module.exports = withSentryConfig(nextConfig, {
-  org: "danswer",
-  project: "javascript-nextjs",
-
-  // An auth token is required for uploading source maps.
+  org: process.env.SENTRY_ORG || "danswer",
+  project: process.env.SENTRY_PROJECT || "data-plane-web",
   authToken: process.env.SENTRY_AUTH_TOKEN,
-
-  silent: false, // Can be used to suppress logs
+  silent: false,
+  sourceMaps: {
+    skipUpload: !process.env.SENTRY_AUTH_TOKEN,
+  },
 });
