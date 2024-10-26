@@ -8,12 +8,13 @@ import { credentialTemplates } from "@/lib/connectors/credentials";
 import Link from "next/link";
 import { useUser } from "@/components/user/UserProvider";
 import { useContext } from "react";
+import { UserRole } from "@/lib/types";
 
 export default function Sidebar() {
   const { formStep, setFormStep, connector, allowAdvanced, allowCreate } =
     useFormContext();
   const combinedSettings = useContext(SettingsContext);
-  const { isLoadingUser, isAdmin } = useUser();
+  const { user } = useUser();
   if (!combinedSettings) {
     return null;
   }
@@ -62,7 +63,7 @@ export default function Sidebar() {
             >
               <SettingsIcon className="flex-none " />
               <p className="my-auto flex items-center text-sm">
-                {isAdmin ? "Admin Page" : "Curator Page"}
+                {user?.role === UserRole.ADMIN ? "Admin Page" : "Curator Page"}
               </p>
             </Link>
           </div>
