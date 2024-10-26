@@ -28,6 +28,7 @@ from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import SENTRY_DSN
 
+
 logger = setup_logger()
 
 task_logger = get_task_logger(__name__)
