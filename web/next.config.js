@@ -16,6 +16,10 @@ const nextConfig = {
   },
 };
 
+// Sentry configuration for error monitoring:
+// - Without SENTRY_AUTH_TOKEN and NEXT_PUBLIC_SENTRY_DSN: Sentry is completely disabled
+// - With both configured: Only unhandled errors are captured (no performance/session tracking)
+
 // Determine if Sentry should be enabled
 const sentryEnabled = Boolean(
   process.env.SENTRY_AUTH_TOKEN && process.env.NEXT_PUBLIC_SENTRY_DSN
