@@ -13,15 +13,21 @@ import { UserRole } from "@/lib/types";
 function BackButton({
   isAdmin,
   isCurator,
+  user,
 }: {
   isAdmin: boolean;
   isCurator: boolean;
+  user: User | null;
 }) {
   const buttonText = isAdmin ? "Admin Page" : "Curator Page";
 
   if (!isAdmin && !isCurator) {
     console.error(
-      "User is neither admin nor curator, defaulting to curator view"
+      `User is neither admin nor curator, defaulting to curator view. Found user:\n ${JSON.stringify(
+        user,
+        null,
+        2
+      )}`
     );
   }
 
@@ -42,7 +48,7 @@ export default function Sidebar() {
   const { formStep, setFormStep, connector, allowAdvanced, allowCreate } =
     useFormContext();
   const combinedSettings = useContext(SettingsContext);
-  const { isCurator, isAdmin } = useUser();
+  const { isCurator, isAdmin, user } = useUser();
   if (!combinedSettings) {
     return null;
   }
@@ -84,7 +90,7 @@ export default function Sidebar() {
             </div>
           </div>
 
-          <BackButton isAdmin={isAdmin} isCurator={isCurator} />
+          <BackButton isAdmin={isAdmin} isCurator={isCurator} user={user} />
 
           <div className="h-full flex">
             <div className="mx-auto w-full max-w-2xl px-4 py-8">
