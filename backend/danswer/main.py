@@ -96,6 +96,7 @@ from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import CORS_ALLOWED_ORIGIN
 from shared_configs.configs import SENTRY_DSN
 
+
 logger = setup_logger()
 
 
