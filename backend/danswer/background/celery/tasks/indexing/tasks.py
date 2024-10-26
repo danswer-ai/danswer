@@ -24,6 +24,7 @@ from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.background.indexing.run_indexing import RunIndexingCallbackInterface
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.constants import CELERY_INDEXING_LOCK_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DANSWER_REDIS_FUNCTION_LOCK_PREFIX
@@ -47,9 +48,14 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import SearchSettings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
+from danswer.db.swap_index import check_index_swap
+from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
+from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
+from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
+from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
 
 logger = setup_logger()
 
@@ -97,6 +103,21 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
         # these tasks should never overlap
         if not lock_beat.acquire(blocking=False):
             return None
+
+        with get_session_with_tenant(tenant_id=tenant_id) as db_session:
+            check_index_swap(db_session=db_session)
+            current_search_settings = get_current_search_settings(db_session)
+            # So that the first time users aren't surprised by really slow speed of first
+            # batch of documents indexed
+            if current_search_settings.provider_type is None and not MULTI_TENANT:
+                embedding_model = EmbeddingModel.from_db_model(
+                    search_settings=current_search_settings,
+                    server_host=INDEXING_MODEL_SERVER_HOST,
+                    server_port=INDEXING_MODEL_SERVER_PORT,
+                )
+                warm_up_bi_encoder(
+                    embedding_model=embedding_model,
+                )
 
         cc_pair_ids: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
