@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "@/components/Modal";
-import { Button, Text, Badge } from "@tremor/react";
+import { Text, Badge } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
 import {
   EditIcon,
@@ -13,6 +13,16 @@ import {
   Credential,
 } from "@/lib/connectors/credentials";
 import { Connector } from "@/lib/connectors/connectors";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const CredentialSelectionTable = ({
   credentials,
@@ -55,79 +65,85 @@ const CredentialSelectionTable = ({
 
   return (
     <div className="w-full overflow-auto">
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2 text-left font-medium text-gray-600"></th>
-            <th className="p-2 text-left font-medium text-gray-600">ID</th>
-            <th className="p-2 text-left font-medium text-gray-600">Name</th>
-            <th className="p-2 text-left font-medium text-gray-600">Created</th>
-            <th className="p-2 text-left font-medium text-gray-600">
-              Last Updated
-            </th>
-            <th />
-          </tr>
-        </thead>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead />
+                <TableHead>ID</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Last Updated</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
 
-        {allCredentials.length > 0 && (
-          <tbody>
-            {allCredentials.map((credential, ind) => {
-              const selected = currentCredentialId
-                ? credential.id == (selectedCredentialId || currentCredentialId)
-                : false;
-              const editable = editableCredentials.some(
-                (editableCredential) => editableCredential.id === credential.id
-              );
-              return (
-                <tr key={credential.id} className="border-b hover:bg-gray-50">
-                  <td className="min-w-[60px] p-2">
-                    {!selected ? (
-                      <input
-                        type="radio"
-                        name="credentialSelection"
-                        onChange={() => handleSelectCredential(credential.id)}
-                        className="form-radio ml-4 h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                      />
-                    ) : (
-                      <Badge>selected</Badge>
-                    )}
-                  </td>
-                  <td className="p-2">{credential.id}</td>
-                  <td className="p-2">
-                    <p>{credential.name ?? "Untitled"}</p>
-                  </td>
-                  <td className="p-2">
-                    {new Date(credential.time_created).toLocaleString()}
-                  </td>
-                  <td className="p-2">
-                    {new Date(credential.time_updated).toLocaleString()}
-                  </td>
-                  <td className="pt-3 flex gap-x-2 content-center mt-auto">
-                    <button
-                      disabled={selected || !editable}
-                      onClick={async () => {
-                        onDeleteCredential(credential);
-                      }}
-                      className="disabled:opacity-20 enabled:cursor-pointer my-auto"
-                    >
-                      <TrashIcon />
-                    </button>
-                    {onEditCredential && (
-                      <button
-                        disabled={!editable}
-                        onClick={() => onEditCredential(credential)}
-                        className="cursor-pointer my-auto"
-                      >
-                        <EditIcon />
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        )}
-      </table>
+            {allCredentials.length > 0 && (
+              <TableBody>
+                {allCredentials.map((credential, ind) => {
+                  const selected = currentCredentialId
+                    ? credential.id ==
+                      (selectedCredentialId || currentCredentialId)
+                    : false;
+                  const editable = editableCredentials.some(
+                    (editableCredential) =>
+                      editableCredential.id === credential.id
+                  );
+                  return (
+                    <TableRow key={credential.id}>
+                      <TableCell className="min-w-[60px]">
+                        {!selected ? (
+                          <input
+                            type="radio"
+                            name="credentialSelection"
+                            onChange={() =>
+                              handleSelectCredential(credential.id)
+                            }
+                            className="w-4 h-4 ml-4 text-blue-600 transition duration-150 ease-in-out form-radio"
+                          />
+                        ) : (
+                          <Badge>selected</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{credential.id}</TableCell>
+                      <TableCell>
+                        <p>{credential.name ?? "Untitled"}</p>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(credential.time_created).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(credential.time_updated).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="flex content-center gap-x-2">
+                        <button
+                          disabled={selected || !editable}
+                          onClick={async () => {
+                            onDeleteCredential(credential);
+                          }}
+                          className="my-auto disabled:opacity-20 enabled:cursor-pointer"
+                        >
+                          <TrashIcon />
+                        </button>
+                        {onEditCredential && (
+                          <button
+                            disabled={!editable}
+                            onClick={() => onEditCredential(credential)}
+                            className="my-auto cursor-pointer"
+                          >
+                            <EditIcon />
+                          </button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            )}
+          </Table>
+        </CardContent>
+      </Card>
 
       {allCredentials.length == 0 && (
         <p className="mt-4"> No credentials exist for this connector!</p>
@@ -184,11 +200,11 @@ export default function ModifyCredential({
           className="max-w-sm"
         >
           <>
-            <p className="text-lg mb-2">
+            <p className="mb-2 text-lg">
               Are you sure you want to delete this credential? You cannot delete
               credentials that are linked to live connectors.
             </p>
-            <div className="mt-6 flex justify-between">
+            <div className="flex justify-between mt-6">
               <button
                 className="rounded py-1.5 px-2 bg-background-800 text-text-200"
                 onClick={async () => {
@@ -241,17 +257,14 @@ export default function ModifyCredential({
         />
 
         {!showIfEmpty && (
-          <div className="flex mt-8 justify-between">
+          <div className="flex justify-between mt-8">
             {showCreate ? (
               <Button
                 onClick={() => {
                   showCreate();
                 }}
-                className="bg-neutral-500 disabled:border-transparent 
-              transition-colors duration-150 ease-in disabled:bg-neutral-300 
-              disabled:hover:bg-neutral-300 hover:bg-neutral-600 cursor-pointer"
               >
-                <div className="flex gap-x-2 items-center w-full border-none">
+                <div className="flex items-center w-full border-none gap-x-2">
                   <NewChatIcon className="text-white" />
                   <p>Create</p>
                 </div>
@@ -273,11 +286,8 @@ export default function ModifyCredential({
                   onSwitch(selectedCredential!);
                 }
               }}
-              className="bg-indigo-500 disabled:border-transparent 
-              transition-colors duration-150 ease-in disabled:bg-indigo-300 
-              disabled:hover:bg-indigo-300 hover:bg-indigo-600 cursor-pointer"
             >
-              <div className="flex gap-x-2 items-center w-full border-none">
+              <div className="flex items-center w-full border-none gap-x-2">
                 <SwapIcon className="text-white" />
                 <p>Select</p>
               </div>

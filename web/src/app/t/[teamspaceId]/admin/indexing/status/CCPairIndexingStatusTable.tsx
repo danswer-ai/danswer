@@ -165,7 +165,7 @@ export function CCPairIndexingStatusTable({
                       <div className="p-4">
                         <Pencil size={16} />
                       </div>
-                      <div className="whitespace-normal break-all max-w-lg">
+                      <div className="max-w-lg break-all whitespace-normal">
                         <ConnectorTitle
                           connector={ccPairsIndexingStatus.connector}
                           ccPairId={ccPairsIndexingStatus.cc_pair_id}
@@ -202,7 +202,7 @@ export function CCPairIndexingStatusTable({
           </Table>
 
           {filteredStatuses.length > NUM_IN_PAGE && (
-            <div className="mt-3 flex">
+            <div className="flex mt-3">
               <div className="mx-auto">
                 <PageSelector
                   totalPages={Math.ceil(filteredStatuses.length / NUM_IN_PAGE)}

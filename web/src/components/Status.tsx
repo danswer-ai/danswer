@@ -24,7 +24,7 @@ export function IndexAttemptStatus({
   if (status === "failed") {
     const icon = (
       <Badge variant="destructive">
-        <TriangleAlert size={14} className="mr-0.5" /> Failed
+        <TriangleAlert size={14} /> Failed
       </Badge>
     );
     if (errorMsg) {
@@ -43,7 +43,7 @@ export function IndexAttemptStatus({
       <HoverPopup
         mainContent={<div className="cursor-pointer">{icon}</div>}
         popupContent={
-          <div className="w-64 p-2 break-words overflow-hidden whitespace-normal">
+          <div className="w-64 p-2 overflow-hidden break-words whitespace-normal">
             The indexing attempt completed, but some errors were encountered
             during the run.
             <br />
@@ -56,19 +56,19 @@ export function IndexAttemptStatus({
   } else if (status === "success") {
     badge = (
       <Badge variant="success">
-        <CircleCheckBig size={14} className="mr-0.5" /> Succeeded
+        <CircleCheckBig size={14} /> Succeeded
       </Badge>
     );
   } else if (status === "in_progress") {
     badge = (
       <Badge className="whitespace-nowrap">
-        <Clock size={14} className="mr-0.5" /> In Progress
+        <Clock size={14} /> In Progress
       </Badge>
     );
   } else if (status === "not_started") {
     badge = (
       <Badge variant="outline">
-        <Clock size={14} className="mr-0.5" /> Scheduled
+        <Clock size={14} /> Scheduled
       </Badge>
     );
   } else {
@@ -80,7 +80,7 @@ export function IndexAttemptStatus({
     );
   }
 
-  return <div>{badge}</div>;
+  return <>{badge}</>;
 }
 
 export function CCPairStatus({
@@ -99,25 +99,25 @@ export function CCPairStatus({
   if (isDeleting) {
     badge = (
       <Badge variant="destructive">
-        <TriangleAlert size={14} className="mr-0.5" /> Deleting
+        <TriangleAlert size={14} /> Deleting
       </Badge>
     );
   } else if (disabled) {
     badge = (
       <Badge variant="secondary">
-        <CirclePause size={14} className="mr-0.5" /> Paused
+        <CirclePause size={14} /> Paused
       </Badge>
     );
   } else if (status == "in_progress") {
     badge = (
       <Badge>
-        <CirclePause size={14} className="mr-0.5" /> In Progress
+        <CirclePause size={14} /> In Progress
       </Badge>
     );
   } else if (status === "failed") {
     badge = (
       <Badge variant="destructive">
-        <TriangleAlert size={14} className="mr-0.5" /> Error
+        <TriangleAlert size={14} /> Error
       </Badge>
     );
   } else {

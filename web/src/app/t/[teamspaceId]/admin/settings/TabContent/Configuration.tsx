@@ -31,7 +31,7 @@ function CheckboxComponent({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex text-sm mb-4 gap-3">
+    <div className="flex gap-3 mb-4 text-sm">
       <Checkbox checked={checked} onCheckedChange={onChange} id={label} />
       <div className="grid leading-none">
         <ShadcnLabel
@@ -71,14 +71,14 @@ function Selector({
       )}
       {subtext && <p className="text-sm text-muted-foreground">{subtext}</p>}
 
-      <div className="mt-2 w-full max-w-96">
+      <div className="w-full mt-2 max-w-96">
         <Select value={selected} onValueChange={onSelect}>
           <SelectTrigger className="flex text-sm bg-background px-3 py-1.5 rounded-regular border border-border cursor-pointer">
             <SelectValue
               placeholder={selected ? undefined : "Select an option..."}
             />
           </SelectTrigger>
-          <SelectContent className="border rounded-regular flex flex-col bg-background max-h-96 overflow-y-auto overscroll-contain">
+          <SelectContent className="flex flex-col overflow-y-auto border rounded-regular bg-background max-h-96 overscroll-contain">
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.name}
@@ -107,7 +107,7 @@ function IntegerInput({
   placeholder?: string;
 }) {
   return (
-    <label className="flex flex-col text-sm mb-4">
+    <label className="flex flex-col mb-4 text-sm">
       <ShadcnLabel
         htmlFor={label}
         className="font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

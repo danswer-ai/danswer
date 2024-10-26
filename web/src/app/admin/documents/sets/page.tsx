@@ -60,31 +60,35 @@ const EditRow = ({
   }
 
   return (
-    <div className="relative flex">
-      <CustomTooltip
-        trigger={
-          <Button
-            variant="ghost"
-            className={
-              documentSet.is_up_to_date ? "cursor-pointer" : " cursor-default"
+    <div className="relative w-full">
+      {documentSet.is_up_to_date ? (
+        <div
+          className="flex items-center w-full gap-2 cursor-pointer"
+          onClick={() => {
+            if (documentSet.is_up_to_date) {
+              router.push(`/admin/documents/sets/${documentSet.id}`);
             }
-            onClick={() => {
-              if (documentSet.is_up_to_date) {
-                router.push(`/admin/documents/sets/${documentSet.id}`);
-              }
-            }}
-          >
-            <Pencil size={16} className="my-auto mr-1 " />
-            {documentSet.name}
-          </Button>
-        }
-        asChild
-      >
-        <div className="flex gap-1.5">
-          <InfoIcon className="mb-auto shrink-0 mt-[3px]" /> Cannot update while
-          syncing! Wait for the sync to finish, then try again.
+          }}
+        >
+          <Pencil size={16} className="shrink-0" />
+          <p className="truncate">{documentSet.name}</p>
         </div>
-      </CustomTooltip>
+      ) : (
+        <CustomTooltip
+          trigger={
+            <div className="flex items-center w-full gap-2">
+              <Pencil size={16} className="shrink-0" />
+              <p className="truncate">{documentSet.name}</p>
+            </div>
+          }
+          asChild
+        >
+          <div className="flex gap-1.5">
+            <InfoIcon className="mb-auto shrink-0 mt-[3px]" /> Cannot update
+            while syncing! Wait for the sync to finish, then try again.
+          </div>
+        </CustomTooltip>
+      )}
     </div>
   );
 };
@@ -150,8 +154,8 @@ const DocumentSetTable = ({
                   );
                   return (
                     <TableRow key={documentSet.id}>
-                      <TableCell className="break-all whitespace-normal">
-                        <div className="flex gap-x-1 text-emphasis">
+                      <TableCell>
+                        <div className="flex w-full gap-x-1 text-emphasis">
                           <EditRow
                             documentSet={documentSet}
                             isEditable={isEditable}

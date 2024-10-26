@@ -3,7 +3,7 @@ import { ConnectorIndexingStatus } from "@/lib/types";
 import { Combobox } from "@/components/Combobox";
 
 interface ConnectorEditorProps {
-  allCCPairs: ConnectorIndexingStatus<any, any>[];
+  allCCPairs: ConnectorIndexingStatus<any, any>[] | undefined;
   selectedCCPairIds: number[];
   setSetCCPairIds: (ccPairIds: number[]) => void;
 }
@@ -14,7 +14,7 @@ export const ConnectorEditor: React.FC<ConnectorEditorProps> = ({
   setSetCCPairIds,
 }) => {
   const items = allCCPairs
-    .filter((ccPair) => ccPair.access_type == "public")
+    ?.filter((ccPair) => ccPair.access_type == "public")
     .map((ccPair) => ({
       value: ccPair.cc_pair_id.toString(),
       label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,

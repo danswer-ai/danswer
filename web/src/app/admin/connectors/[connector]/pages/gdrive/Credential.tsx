@@ -1,4 +1,3 @@
-import { Button } from "@/components/Button";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
@@ -10,12 +9,13 @@ import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
-import { Button as TremorButton } from "@tremor/react";
 import {
   Credential,
   GoogleDriveCredentialJson,
   GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/connectors/credentials";
+import { Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type GoogleDriveCredentialJsonTypes = "authorized_user" | "service_account";
 
@@ -28,35 +28,48 @@ export const DriveJsonUpload = ({
   const [credentialJsonStr, setCredentialJsonStr] = useState<
     string | undefined
   >();
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
 
   return (
-    <>
-      <input
-        className={
-          "mr-3 text-sm text-gray-900 border border-gray-300 " +
-          "cursor-pointer bg-backgrournd dark:text-gray-400 focus:outline-none " +
-          "dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-        }
-        type="file"
-        accept=".json"
-        onChange={(event) => {
-          if (!event.target.files) {
-            return;
-          }
-          const file = event.target.files[0];
-          const reader = new FileReader();
+    <div className="flex flex-col items-start gap-4">
+      <div className="w-full space-y-4">
+        <label htmlFor="file-upload" className="relative cursor-pointer">
+          <div className="flex flex-col items-center justify-center w-full h-40 gap-4 p-4 rounded-md shadow-md bg-background sm:w-96">
+            <Upload size={32} />
+            <p>Browse Drag & drop files</p>
+          </div>
+          <input
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            type="file"
+            accept=".json"
+            onChange={(event) => {
+              if (!event.target.files) {
+                return;
+              }
+              const file = event.target.files[0];
+              const reader = new FileReader();
+              setSelectedFileName(file.name);
 
-          reader.onload = function (loadEvent) {
-            if (!loadEvent?.target?.result) {
-              return;
-            }
-            const fileContents = loadEvent.target.result;
-            setCredentialJsonStr(fileContents as string);
-          };
+              reader.onload = function (loadEvent) {
+                if (!loadEvent?.target?.result) {
+                  return;
+                }
+                const fileContents = loadEvent.target.result;
+                setCredentialJsonStr(fileContents as string);
+              };
 
-          reader.readAsText(file);
-        }}
-      />
+              reader.readAsText(file);
+            }}
+          />
+        </label>
+
+        {selectedFileName && (
+          <p className="text-sm text-gray-700 dark:text-gray-300">
+            Selected file:{" "}
+            <span className="font-semibold">{selectedFileName}</span>
+          </p>
+        )}
+      </div>
 
       <Button
         disabled={!credentialJsonStr}
@@ -139,7 +152,7 @@ export const DriveJsonUpload = ({
       >
         Upload
       </Button>
-    </>
+    </div>
   );
 };
 
@@ -163,7 +176,7 @@ export const DriveJsonUploadSection = ({
       <div className="mt-2 text-sm">
         <div>
           Found existing service account key with the following <b>Email:</b>
-          <p className="italic mt-1">
+          <p className="mt-1 italic">
             {serviceAccountCredentialData.service_account_email}
           </p>
         </div>
@@ -198,6 +211,7 @@ export const DriveJsonUploadSection = ({
                   });
                 }
               }}
+              variant="destructive"
             >
               Delete
             </Button>
@@ -218,7 +232,7 @@ export const DriveJsonUploadSection = ({
       <div className="mt-2 text-sm">
         <div>
           Found existing app credentials with the following <b>Client ID:</b>
-          <p className="italic mt-1">{appCredentialData.client_id}</p>
+          <p className="mt-1 italic">{appCredentialData.client_id}</p>
         </div>
         {isAdmin ? (
           <>
@@ -251,6 +265,7 @@ export const DriveJsonUploadSection = ({
                   });
                 }
               }}
+              variant="destructive"
             >
               Delete
             </Button>
@@ -267,7 +282,7 @@ export const DriveJsonUploadSection = ({
   if (!isAdmin) {
     return (
       <div className="mt-2">
-        <p className="text-sm mb-2">
+        <p className="mb-2 text-sm">
           Curators are unable to set up the google drive credentials. To add a
           Google Drive connector, please contact an administrator.
         </p>
@@ -277,7 +292,7 @@ export const DriveJsonUploadSection = ({
 
   return (
     <div className="mt-2">
-      <p className="text-sm mb-2">
+      <p className="mb-2 text-sm">
         Follow the guide{" "}
         <a
           className="text-link"
@@ -355,7 +370,7 @@ export const DriveOAuthSection = ({
   if (serviceAccountKeyData?.service_account_email) {
     return (
       <div>
-        <p className="text-sm mb-6">
+        <p className="mb-6 text-sm">
           When using a Google Drive Service Account, you can either have enMedD
           AI act as the service account itself OR you can specify an account for
           the service account to impersonate.
@@ -413,9 +428,9 @@ export const DriveOAuthSection = ({
                 subtext="If left blank, enMedD AI will use the service account itself."
               />
               <div className="flex">
-                <TremorButton type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting}>
                   Create Credential
-                </TremorButton>
+                </Button>
               </div>
             </Form>
           )}
@@ -426,7 +441,7 @@ export const DriveOAuthSection = ({
 
   if (appCredentialData?.client_id) {
     return (
-      <div className="text-sm mb-4">
+      <div className="mb-4 text-sm">
         <p className="mb-2">
           Next, you must provide credentials via OAuth. This gives us read
           access to the docs you have access to in your google drive account.

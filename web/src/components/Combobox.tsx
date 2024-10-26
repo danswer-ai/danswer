@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 interface ComboboxProps {
-  items: { value: string; label: string }[];
+  items: { value: string; label: string }[] | undefined;
   onSelect?: (selectedValue: string[]) => void;
   placeholder?: string;
   label?: string;
@@ -35,7 +35,7 @@ export function Combobox({
   >([]);
 
   const handleSelect = (currentValue: string) => {
-    const selectedItem = items.find((item) => item.label === currentValue);
+    const selectedItem = items?.find((item) => item.label === currentValue);
     if (
       selectedItem &&
       !selectedItems.some((item) => item.value === selectedItem.value)
@@ -59,7 +59,7 @@ export function Combobox({
     }
   };
 
-  const filteredItems = items.filter(
+  const filteredItems = items?.filter(
     (item) => !selectedItems.some((selected) => selected.value === item.value)
   );
 
@@ -71,12 +71,12 @@ export function Combobox({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between text-subtle border border-input"
+            className="justify-between w-full border text-subtle border-input"
           >
             {selectedItems.length > 0
               ? `${selectedItems.length} selected`
               : label}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="w-4 h-4 ml-2 opacity-50 shrink-0" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
@@ -90,7 +90,7 @@ export function Combobox({
             <CommandList>
               <CommandEmpty>No items found.</CommandEmpty>
               <CommandGroup>
-                {filteredItems.map((item) => (
+                {filteredItems?.map((item) => (
                   <CommandItem
                     key={item.value}
                     value={item.label}
@@ -116,7 +116,7 @@ export function Combobox({
               className="cursor-pointer hover:bg-opacity-80"
             >
               {selectedItem.label}
-              <X className="ml-1 my-auto cursor-pointer" size={14} />
+              <X className="my-auto ml-1 cursor-pointer" size={14} />
             </Badge>
           ))}
         </div>

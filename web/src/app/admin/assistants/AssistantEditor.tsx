@@ -3,7 +3,7 @@
 import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
-import { Button, Divider, Italic } from "@tremor/react";
+import { Divider, Italic } from "@tremor/react";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
   ArrayHelpers,
@@ -63,6 +63,8 @@ import { buildImgUrl } from "@/app/chat/files/images/utils";
 import { LlmList } from "@/components/llm/LLMList";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -77,7 +79,7 @@ function findInternetSearchTool(tools: ToolSnapshot[]) {
 }
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <span className="text-sm text-subtle mb-2">{children}</span>;
+  return <span className="mb-2 text-sm text-subtle">{children}</span>;
 }
 
 export function AssistantEditor({
@@ -484,13 +486,13 @@ export function AssistantEditor({
 
           return (
             <Form className="w-full text-text-950">
-              <div className="w-full flex gap-x-2 justify-center">
+              <div className="flex justify-center w-full gap-x-2">
                 <Popover
                   open={isIconDropdownOpen}
                   onOpenChange={setIsIconDropdownOpen}
                   content={
                     <div
-                      className="p-1 cursor-pointer border-dashed rounded-full flex border border-border border-2 border-dashed"
+                      className="flex p-1 border border-2 border-dashed rounded-full cursor-pointer border-border"
                       style={{
                         borderStyle: "dashed",
                         borderWidth: "1.5px",
@@ -502,7 +504,7 @@ export function AssistantEditor({
                         <img
                           src={URL.createObjectURL(values.uploaded_image)}
                           alt="Uploaded assistant icon"
-                          className="w-12 h-12 rounded-full object-cover"
+                          className="object-cover w-12 h-12 rounded-full"
                         />
                       ) : existingAssistant?.uploaded_image_id &&
                         !removeAssistantImage ? (
@@ -511,7 +513,7 @@ export function AssistantEditor({
                             existingAssistant?.uploaded_image_id
                           )}
                           alt="Uploaded assistant icon"
-                          className="w-12 h-12 rounded-full object-cover"
+                          className="object-cover w-12 h-12 rounded-full"
                         />
                       ) : (
                         createSVG(
@@ -528,7 +530,7 @@ export function AssistantEditor({
                   }
                   popover={
                     <div className="bg-white text-text-800 flex flex-col gap-y-1 w-[300px] border border-border rounded-lg shadow-lg p-2">
-                      <label className="block w-full flex gap-x-2 text-left items-center px-4 py-2 hover:bg-background-100 rounded cursor-pointer">
+                      <label className="flex items-center block w-full px-4 py-2 text-left rounded cursor-pointer gap-x-2 hover:bg-background-100">
                         <CameraIcon />
                         Upload {values.uploaded_image && " New "} Photo
                         <input
@@ -546,25 +548,25 @@ export function AssistantEditor({
                       </label>
 
                       {values.uploaded_image && (
-                        <button
+                        <Button
                           onClick={() => {
                             setFieldValue("uploaded_image", null);
                             setRemoveAssistantImage(false);
                           }}
-                          className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
+                          variant="destructive"
                         >
                           <TrashIcon />
                           {removeAssistantImage
                             ? "Revert to Previous "
                             : "Remove "}
                           Image
-                        </button>
+                        </Button>
                       )}
 
                       {!values.uploaded_image &&
                         (!existingAssistant?.uploaded_image_id ||
                           removeAssistantImage) && (
-                          <button
+                          <Button
                             onClick={(e) => {
                               e.stopPropagation();
                               const newShape = generateRandomIconShape();
@@ -577,60 +579,50 @@ export function AssistantEditor({
                               setFieldValue("icon_shape", newShape.encodedGrid);
                               setFieldValue("icon_color", randomColor);
                             }}
-                            className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
                           >
                             <NewChatIcon />
                             Generate New Icon
-                          </button>
+                          </Button>
                         )}
 
                       {existingAssistant?.uploaded_image_id &&
                         removeAssistantImage &&
                         !values.uploaded_image && (
-                          <button
+                          <Button
                             onClick={(e) => {
                               e.stopPropagation();
                               setRemoveAssistantImage(false);
                               setFieldValue("uploaded_image", null);
                             }}
-                            className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
                           >
                             <SwapIcon />
                             Revert to Previous Image
-                          </button>
+                          </Button>
                         )}
 
                       {existingAssistant?.uploaded_image_id &&
                         !removeAssistantImage &&
                         !values.uploaded_image && (
-                          <button
+                          <Button
                             onClick={(e) => {
                               e.stopPropagation();
                               setRemoveAssistantImage(true);
                             }}
-                            className="block w-full items-center flex gap-x-2 text-left px-4 py-2 hover:bg-background-100 rounded"
+                            variant="destructive"
                           >
                             <TrashIcon />
                             Remove Image
-                          </button>
+                          </Button>
                         )}
                     </div>
                   }
                   align="start"
                   side="bottom"
                 />
-                <TooltipProvider delayDuration={50}>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <FiInfo size={12} />
-                    </TooltipTrigger>
-                    <TooltipContent side="top" align="center">
-                      <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                        This icon will visually represent your Assistant
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+
+                <CustomTooltip trigger={<FiInfo size={12} />}>
+                  This icon will visually represent your Assistant
+                </CustomTooltip>
               </div>
 
               <TextFormField
@@ -665,25 +657,16 @@ export function AssistantEditor({
               />
 
               <div>
-                <div className="flex gap-x-2 items-center">
-                  <div className="block  font-medium text-base">
+                <div className="flex items-center gap-x-2">
+                  <div className="block text-base font-medium">
                     Default AI Model{" "}
                   </div>
-                  <TooltipProvider delayDuration={50}>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <FiInfo size={12} />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" align="center">
-                        <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                          Select a Large Language Model (Generative AI model) to
-                          power this Assistant
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <CustomTooltip trigger={<FiInfo size={12} />}>
+                    Select a Large Language Model (Generative AI model) to power
+                    this Assistant
+                  </CustomTooltip>
                 </div>
-                <p className="my-1 font-description text-base text-text-400">
+                <p className="my-1 text-base font-description text-text-400">
                   Your assistant will use the user&apos;s set default unless
                   otherwise specified below.
                   {admin &&
@@ -691,7 +674,7 @@ export function AssistantEditor({
                     `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
                 </p>
                 {admin ? (
-                  <div className="mb-2 flex items-starts">
+                  <div className="flex mb-2 items-starts">
                     <div className="w-96">
                       <SelectorFormField
                         defaultValue={`User default`}
@@ -715,7 +698,7 @@ export function AssistantEditor({
                     </div>
 
                     {values.llm_model_provider_override && (
-                      <div className="w-96 ml-4">
+                      <div className="ml-4 w-96">
                         <SelectorFormField
                           name="llm_model_version_override"
                           options={
@@ -759,29 +742,20 @@ export function AssistantEditor({
                 )}
               </div>
               <div>
-                <div className="flex gap-x-2 items-center">
-                  <div className="block font-medium text-base">
+                <div className="flex items-center gap-x-2">
+                  <div className="block text-base font-medium">
                     Capabilities{" "}
                   </div>
-                  <TooltipProvider delayDuration={50}>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <FiInfo size={12} />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" align="center">
-                        <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                          You can give your assistant advanced capabilities like
-                          image generation
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <CustomTooltip trigger={<FiInfo size={12} />}>
+                    You can give your assistant advanced capabilities like image
+                    generation
+                  </CustomTooltip>
                   <div className="block text-sm font-description text-subtle">
                     Advanced
                   </div>
                 </div>
 
-                <div className="mt-4 flex flex-col gap-y-4  ml-1">
+                <div className="flex flex-col mt-4 ml-1 gap-y-4">
                   {imageGenerationTool && (
                     <TooltipProvider delayDuration={50}>
                       <Tooltip>
@@ -886,7 +860,7 @@ export function AssistantEditor({
                                     name="document_set_ids"
                                     render={(arrayHelpers: ArrayHelpers) => (
                                       <div>
-                                        <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
+                                        <div className="flex flex-wrap gap-2 mt-2 mb-3 text-sm">
                                           {documentSets.map((documentSet) => {
                                             const ind =
                                               values.document_set_ids.indexOf(
@@ -927,7 +901,7 @@ export function AssistantEditor({
                                   </i>
                                 )}
 
-                                <div className="mt-4  flex flex-col gap-y-4">
+                                <div className="flex flex-col mt-4 gap-y-4">
                                   <TextFormField
                                     name="num_chunks"
                                     label="Number of Context Documents"
@@ -1039,9 +1013,9 @@ export function AssistantEditor({
                     </>
                   )}
 
-                  <div className="mb-6 flex flex-col">
-                    <div className="flex gap-x-2 items-center">
-                      <div className="block font-medium text-base">
+                  <div className="flex flex-col mb-6">
+                    <div className="flex items-center gap-x-2">
+                      <div className="block text-base font-medium">
                         Starter Messages (Optional){" "}
                       </div>
                     </div>
@@ -1064,7 +1038,7 @@ export function AssistantEditor({
                                     className={index === 0 ? "mt-2" : "mt-6"}
                                   >
                                     <div className="flex">
-                                      <div className="w-full mr-6 border border-border p-3 rounded">
+                                      <div className="w-full p-3 mr-6 border rounded border-border">
                                         <div>
                                           <Label small>Name</Label>
                                           <SubLabel>
@@ -1089,7 +1063,7 @@ export function AssistantEditor({
                                           <ErrorMessage
                                             name={`starter_messages[${index}].name`}
                                             component="div"
-                                            className="text-error text-sm mt-1"
+                                            className="mt-1 text-sm text-error"
                                           />
                                         </div>
 
@@ -1119,7 +1093,7 @@ export function AssistantEditor({
                                           <ErrorMessage
                                             name={`starter_messages[${index}].description`}
                                             component="div"
-                                            className="text-error text-sm mt-1"
+                                            className="mt-1 text-sm text-error"
                                           />
                                         </div>
 
@@ -1151,13 +1125,13 @@ export function AssistantEditor({
                                           <ErrorMessage
                                             name={`starter_messages[${index}].message`}
                                             component="div"
-                                            className="text-error text-sm mt-1"
+                                            className="mt-1 text-sm text-error"
                                           />
                                         </div>
                                       </div>
                                       <div className="my-auto">
                                         <FiX
-                                          className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                                          className="w-10 h-10 p-2 my-auto rounded cursor-pointer hover:bg-hover"
                                           onClick={() =>
                                             arrayHelpers.remove(index)
                                           }
@@ -1203,8 +1177,6 @@ export function AssistantEditor({
               <div className="flex">
                 <Button
                   className="mx-auto"
-                  color="green"
-                  size="md"
                   type="submit"
                   disabled={isSubmitting}
                 >

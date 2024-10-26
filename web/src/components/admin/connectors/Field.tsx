@@ -42,7 +42,7 @@ export function SectionHeader({
 }: {
   children: string | JSX.Element;
 }) {
-  return <div className="mb-4 font-bold text-lg">{children}</div>;
+  return <div className="mb-4 text-lg font-bold">{children}</div>;
 }
 
 export function Label({
@@ -69,18 +69,9 @@ export function ToolTipDetails({
   children: string | JSX.Element;
 }) {
   return (
-    <TooltipProvider delayDuration={50}>
-      <Tooltip>
-        <TooltipTrigger>
-          <FiInfo size={12} />
-        </TooltipTrigger>
-        <TooltipContent side="top" align="center">
-          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-inverted">
-            {children}
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div>
+      <CustomTooltip trigger={<FiInfo size={12} />}>{children}</CustomTooltip>
+    </div>
   );
 }
 
@@ -100,11 +91,11 @@ export function LabelWithTooltip({
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <p className="text-sm text-subtle pb-2">{children}</p>;
+  return <p className="pb-2 text-sm text-subtle">{children}</p>;
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
-  return <div className="text-error text-sm mt-1">{children}</div>;
+  return <div className="mt-1 text-sm text-error">{children}</div>;
 }
 
 export function ExplanationText({
@@ -116,7 +107,7 @@ export function ExplanationText({
 }) {
   return link ? (
     <a
-      className="underline text-text-500 cursor-pointer text-sm font-medium"
+      className="text-sm font-medium underline cursor-pointer text-text-500"
       target="_blank"
       href={link}
     >
@@ -151,6 +142,7 @@ export function TextFormField({
   explanationText,
   explanationLink,
   width,
+  maxHeight,
 }: {
   value?: string;
   name: string;
@@ -169,6 +161,7 @@ export function TextFormField({
   fontSize?: "text-sm" | "text-base" | "text-lg";
   hideError?: boolean;
   fullWidth?: boolean;
+  maxHeight?: number;
   onFocus?: (
     e: React.FocusEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => void;
@@ -201,13 +194,15 @@ export function TextFormField({
     <div className={`grid pb-4 ${fullWidth ? "w-full" : ""} ${width}`}>
       {(label || subtext) && (
         <div className="grid leading-none">
-          <ShadcnLabel
-            htmlFor={label}
-            className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
-          >
-            {label}
-          </ShadcnLabel>
-          {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
+          <div className="flex items-start gap-2">
+            <ShadcnLabel
+              htmlFor={label}
+              className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
+            >
+              {label}
+            </ShadcnLabel>
+            {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
+          </div>
           {subtext && (
             <p className="text-sm text-muted-foreground pb-1.5">{subtext}</p>
           )}
@@ -232,10 +227,17 @@ export function TextFormField({
               onBlur={onBlur}
               className={`
                 ${fontSize}
-                ${isTextArea ? "max-h-[1000px]" : ""}
                 ${disabled ? " bg-background-strong" : " bg-white"}
                 ${isCode ? " font-mono" : ""}
               `}
+              style={{
+                maxHeight:
+                  isTextArea && !maxHeight
+                    ? "1000px"
+                    : maxHeight
+                      ? `${maxHeight}px`
+                      : "",
+              }}
             />
           );
         }}
@@ -250,7 +252,7 @@ export function TextFormField({
           <ErrorMessage
             name={name}
             component="div"
-            className="text-red-500 text-sm mt-1"
+            className="mt-1 text-sm text-red-500"
           />
         )
       )}
@@ -279,7 +281,7 @@ export const MarkdownFormField = ({
   };
 
   return (
-    <div className="flex flex-col space-y-4 mb-4">
+    <div className="flex flex-col mb-4 space-y-4">
       <Label>{label}</Label>
       <div className="border border-gray-300 rounded-md">
         <div className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-t-md">
@@ -304,7 +306,7 @@ export const MarkdownFormField = ({
             </ReactMarkdown>
           </div>
         ) : (
-          <div className="pt-2 px-2">
+          <div className="px-2 pt-2">
             <textarea
               {...field}
               rows={2}
@@ -320,7 +322,7 @@ export const MarkdownFormField = ({
         <ErrorMessage
           name={name}
           component="div"
-          className="text-red-500 text-sm mt-1"
+          className="mt-1 text-sm text-red-500"
         />
       )}
     </div>
@@ -357,7 +359,7 @@ export const BooleanFormField = ({
 
   return (
     <div className="mb-4">
-      <label className="flex text-sm space-x-2">
+      <label className="flex space-x-2 text-sm">
         <Checkbox
           id={label}
           checked={field.value}
@@ -381,7 +383,7 @@ export const BooleanFormField = ({
       <ErrorMessage
         name={name}
         component="div"
-        className="text-red-500 text-sm mt-1"
+        className="mt-1 text-sm text-red-500"
       />
     </div>
   );
@@ -424,7 +426,7 @@ export function MultiSelectField({
 
   return (
     <div className="mb-6">
-      <div className="flex gap-x-2 items-center">
+      <div className="flex items-center gap-x-2">
         <Label small={small}>{label}</Label>
         {error ? (
           <ManualErrorMessage>{error}</ManualErrorMessage>
@@ -433,7 +435,7 @@ export function MultiSelectField({
             <ErrorMessage
               name={name}
               component="div"
-              className="text-error my-auto text-sm"
+              className="my-auto text-sm text-error"
             />
           )
         )}
@@ -443,12 +445,19 @@ export function MultiSelectField({
       <div className="mt-2">
         {options.map((option) => (
           <label key={option.value} className="flex items-center mb-2">
-            <input
+            {/* <input
               type="checkbox"
               name={name}
               value={option.value}
               checked={selectedOptions.includes(option.value)}
               onChange={() => handleCheckboxChange(option.value)}
+              className="mr-2"
+            /> */}
+            <Checkbox
+              name={name}
+              value={option.value}
+              checked={selectedOptions.includes(option.value)}
+              onCheckedChange={() => handleCheckboxChange(option.value)}
               className="mr-2"
             />
             {option.label}
@@ -516,7 +525,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
                   <ErrorMessage
                     name={`${name}.${index}`}
                     component="div"
-                    className="text-error text-sm mt-1"
+                    className="mt-1 text-sm text-error"
                   />
                 </div>
               ))}
@@ -634,7 +643,7 @@ export function SelectorFormField({
       <ErrorMessage
         name={name}
         component="div"
-        className="text-red-500 text-sm mt-1"
+        className="mt-1 text-sm text-red-500"
       />
     </div>
   );

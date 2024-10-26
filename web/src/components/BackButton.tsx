@@ -24,7 +24,7 @@ export function BackButton({
       variant="ghost"
       className="mb-5"
     >
-      <ChevronLeft className="mr-1 my-auto" size={16} />
+      <ChevronLeft className="my-auto mr-1" size={16} />
       Back
     </Button>
   );

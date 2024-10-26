@@ -84,11 +84,11 @@ const RerankingDetailsForm = forwardRef<
           };
 
           return (
-            <div className="p-2 rounded-lg max-w-4xl mx-auto">
-              <h2 className="text-2xl font-bold mb-4 text-text-800">
+            <div className="max-w-4xl p-2 mx-auto rounded-lg">
+              <h2 className="mb-4 text-2xl font-bold text-text-800">
                 Post-processing
               </h2>
-              <div className="text-sm mr-auto mb-6 divide-x-2 flex">
+              <div className="flex mb-6 mr-auto text-sm divide-x-2">
                 {originalRerankingDetails.rerank_model_name && (
                   <button
                     onClick={() => setModelTab(null)}
@@ -132,7 +132,7 @@ const RerankingDetailsForm = forwardRef<
                   <div className="px-2">
                     <button
                       onClick={() => resetRerankingValues()}
-                      className="mx-2 p-2 font-bold   rounded bg-background-100 text-text-900 hover:underline"
+                      className="p-2 mx-2 font-bold rounded bg-background-100 text-text-900 hover:underline"
                     >
                       Remove Reranking
                     </button>
@@ -141,7 +141,7 @@ const RerankingDetailsForm = forwardRef<
               </div>
 
               <Form>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {(modelTab
                     ? rerankingModels.filter(
                         (model) => model.cloud == (modelTab == "cloud")
@@ -216,7 +216,7 @@ const RerankingDetailsForm = forwardRef<
                             ) : (
                               <MixedBreadIcon size={24} className="mr-2" />
                             )}
-                            <h3 className="font-bold text-lg">
+                            <h3 className="text-lg font-bold">
                               {card.displayName}
                             </h3>
                           </div>
@@ -226,13 +226,13 @@ const RerankingDetailsForm = forwardRef<
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+                              className="text-blue-500 transition-colors duration-200 hover:text-blue-700"
                             >
                               <FiExternalLink size={18} />
                             </a>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="mb-2 text-sm text-gray-600">
                           {card.description}
                         </p>
                         <div className="text-xs text-gray-500">
@@ -250,7 +250,7 @@ const RerankingDetailsForm = forwardRef<
                     title="GPU Not Enabled"
                   >
                     <>
-                      <p className="text-error font-semibold">Warning:</p>
+                      <p className="font-semibold text-error">Warning:</p>
                       <p>
                         Local reranking models require significant computational
                         resources and may perform slowly without GPU
@@ -279,7 +279,7 @@ const RerankingDetailsForm = forwardRef<
                     width="w-[800px]"
                     title="API Key Configuration"
                   >
-                    <div className="w-full  flex flex-col gap-y-4 px-4">
+                    <div className="flex flex-col w-full px-4 gap-y-4">
                       <TextFormField
                         subtext="Set the URL at which your LiteLLM Proxy is hosted"
                         placeholder={values.rerank_api_url || undefined}
@@ -337,7 +337,7 @@ const RerankingDetailsForm = forwardRef<
                         optional
                       />
 
-                      <div className="flex w-full justify-end mt-4">
+                      <div className="flex justify-end w-full mt-4">
                         <Button
                           onClick={() => {
                             setShowLiteLLMConfigurationModal(false);
@@ -388,7 +388,7 @@ const RerankingDetailsForm = forwardRef<
                         label="Cohere API Key"
                         name="rerank_api_key"
                       />
-                      <div className="flex w-full justify-end mt-4">
+                      <div className="flex justify-end w-full mt-4">
                         <Button
                           onClick={() => setIsApiKeyModalOpen(false)}
                           color="blue"

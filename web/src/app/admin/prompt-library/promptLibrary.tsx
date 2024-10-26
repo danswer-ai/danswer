@@ -4,19 +4,24 @@ import { EditIcon, TrashIcon } from "@/components/icons/icons";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useState } from "react";
-import {
-  Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
-  TableBody,
-  TableCell,
-} from "@tremor/react";
 import { FilterDropdown } from "@/components/search/filtering/FilterDropdown";
 import { FiTag } from "react-icons/fi";
 import { PageSelector } from "@/components/PageSelector";
 import { InputPrompt } from "./interfaces";
 import { Modal } from "@/components/Modal";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const CategoryBubble = ({
   name,
@@ -143,11 +148,11 @@ export const PromptLibraryTable = ({
           className="max-w-sm"
         >
           <>
-            <p className="text-lg mb-2">
+            <p className="mb-2 text-lg">
               Are you sure you want to delete this prompt? You will not be able
               to recover this prompt
             </p>
-            <div className="mt-6 flex justify-between">
+            <div className="flex justify-between mt-6">
               <button
                 className="rounded py-1.5 px-2 bg-background-800 text-text-200"
                 onClick={async () => {
@@ -169,16 +174,16 @@ export const PromptLibraryTable = ({
         </Modal>
       )}
 
-      <div className="flex items-center w-full border-2 border-border rounded-lg px-4 py-2 focus-within:border-accent">
-        <MagnifyingGlass />
-        <input
-          className="flex-grow ml-2 bg-transparent outline-none placeholder-subtle"
+      <div className="relative">
+        <MagnifyingGlass className="absolute -translate-y-1/2 left-4 top-1/2" />
+        <Input
           placeholder="Find prompts..."
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
             setCurrentPage(1);
           }}
+          className="pl-10"
         />
       </div>
       <div className="my-4 border-b border-border">
@@ -203,58 +208,80 @@ export const PromptLibraryTable = ({
         </div>
       </div>
       <div className="mx-auto overflow-x-auto">
-        <Table>
-          <TableHead>
-            <TableRow>
-              {columns.map((column) => (
-                <TableHeaderCell key={column.key}>
-                  {column.name}
-                </TableHeaderCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedPromptLibrary.length > 0 ? (
-              paginatedPromptLibrary
-                .filter((prompt) => !(!isPublic && prompt.is_public))
-                .map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.prompt}</TableCell>
-                    <TableCell
-                      className="
-                      max-w-xs
-                      overflow-hidden
-                      text-ellipsis
-                      break-words
-                    "
-                    >
-                      {item.content}
-                    </TableCell>
-                    <TableCell>{item.active ? "Active" : "Inactive"}</TableCell>
-                    <TableCell>
-                      <button
-                        className="cursor-pointer"
-                        onClick={() => setConfirmDeletionId(item.id)}
-                      >
-                        <TrashIcon size={20} />
-                      </button>
-                    </TableCell>
-                    <TableCell>
-                      <button onClick={() => handleEdit(item.id)}>
-                        <EditIcon size={12} />
-                      </button>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {columns.map((column) => (
+                    <TableHead key={column.key}>{column.name}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedPromptLibrary.length > 0 ? (
+                  paginatedPromptLibrary
+                    .filter((prompt) => !(!isPublic && prompt.is_public))
+                    .map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.prompt}</TableCell>
+                        <TableCell className="max-w-xs overflow-hidden break-words text-ellipsis">
+                          {item.content}
+                        </TableCell>
+                        <TableCell>
+                          {item.active ? (
+                            <Badge>Active</Badge>
+                          ) : (
+                            <Badge variant="secondary">Inactive</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <CustomTooltip
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setConfirmDeletionId(item.id)}
+                              >
+                                <TrashIcon size={20} />
+                              </Button>
+                            }
+                            asChild
+                          >
+                            Delete
+                          </CustomTooltip>
+                        </TableCell>
+                        <TableCell>
+                          <CustomTooltip
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(item.id)}
+                              >
+                                <EditIcon size={16} />
+                              </Button>
+                            }
+                            asChild
+                          >
+                            Edit
+                          </CustomTooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      No matching prompts found...
                     </TableCell>
                   </TableRow>
-                ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6}>No matching prompts found...</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
         {paginatedPromptLibrary.length > 0 && (
-          <div className="mt-4 flex justify-center">
+          <div className="flex justify-center mt-4">
             <PageSelector
               currentPage={currentPage}
               totalPages={totalPages}

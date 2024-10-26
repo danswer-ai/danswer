@@ -3,7 +3,7 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Button, Card, Text, Title } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
 import useSWR from "swr";
 import { ModelPreview } from "../../../../components/embedding/ModelSelector";
 import {
@@ -26,6 +26,8 @@ import { SavedSearchSettings } from "../../embeddings/interfaces";
 import UpgradingPage from "./UpgradingPage";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 function Main() {
   const settings = useContext(SettingsContext);
@@ -93,58 +95,62 @@ function Main() {
           <Title className="mb-2 mt-8 !text-2xl">Post-processing</Title>
 
           <Card className="!mr-auto mt-8 !w-96">
-            {searchSettings && (
-              <>
-                <div className="px-1 w-full rounded-lg">
-                  <div className="space-y-4">
-                    <div>
-                      <Text className="font-semibold">Reranking Model</Text>
-                      <Text className="text-gray-700">
-                        {searchSettings.rerank_model_name || "Not set"}
-                      </Text>
-                    </div>
+            <CardContent>
+              {searchSettings && (
+                <>
+                  <div className="w-full px-1 rounded-lg">
+                    <div className="space-y-4">
+                      <div>
+                        <Text className="font-semibold">Reranking Model</Text>
+                        <Text className="text-gray-700">
+                          {searchSettings.rerank_model_name || "Not set"}
+                        </Text>
+                      </div>
 
-                    <div>
-                      <Text className="font-semibold">Results to Rerank</Text>
-                      <Text className="text-gray-700">
-                        {searchSettings.num_rerank}
-                      </Text>
-                    </div>
+                      <div>
+                        <Text className="font-semibold">Results to Rerank</Text>
+                        <Text className="text-gray-700">
+                          {searchSettings.num_rerank}
+                        </Text>
+                      </div>
 
-                    <div>
-                      <Text className="font-semibold">
-                        Multilingual Expansion
-                      </Text>
-                      <Text className="text-gray-700">
-                        {searchSettings.multilingual_expansion.length > 0
-                          ? searchSettings.multilingual_expansion.join(", ")
-                          : "None"}
-                      </Text>
-                    </div>
+                      <div>
+                        <Text className="font-semibold">
+                          Multilingual Expansion
+                        </Text>
+                        <Text className="text-gray-700">
+                          {searchSettings.multilingual_expansion.length > 0
+                            ? searchSettings.multilingual_expansion.join(", ")
+                            : "None"}
+                        </Text>
+                      </div>
 
-                    <div>
-                      <Text className="font-semibold">Multipass Indexing</Text>
-                      <Text className="text-gray-700">
-                        {searchSettings.multipass_indexing
-                          ? "Enabled"
-                          : "Disabled"}
-                      </Text>
-                    </div>
+                      <div>
+                        <Text className="font-semibold">
+                          Multipass Indexing
+                        </Text>
+                        <Text className="text-gray-700">
+                          {searchSettings.multipass_indexing
+                            ? "Enabled"
+                            : "Disabled"}
+                        </Text>
+                      </div>
 
-                    <div>
-                      <Text className="font-semibold">
-                        Disable Reranking for Streaming
-                      </Text>
-                      <Text className="text-gray-700">
-                        {searchSettings.disable_rerank_for_streaming
-                          ? "Yes"
-                          : "No"}
-                      </Text>
+                      <div>
+                        <Text className="font-semibold">
+                          Disable Reranking for Streaming
+                        </Text>
+                        <Text className="text-gray-700">
+                          {searchSettings.disable_rerank_for_streaming
+                            ? "Yes"
+                            : "No"}
+                        </Text>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </CardContent>
           </Card>
 
           <Link href="/admin/embeddings">
@@ -160,7 +166,7 @@ function Main() {
 
 function Page() {
   return (
-    <div className="mx-auto container">
+    <div className="container mx-auto">
       <AdminPageTitle
         title="Search Settings"
         icon={<EmbeddingIcon size={32} className="my-auto" />}

@@ -116,7 +116,7 @@ function Main() {
         given time period. With token rate limits, you can:
       </p>
 
-      <ul className="list-disc mt-2 ml-4 mb-2 text-sm">
+      <ul className="mt-2 mb-2 ml-4 text-sm list-disc">
         <li>
           Set a global rate limit to control your organization&apos;s overall
           token spend.
@@ -223,7 +223,7 @@ function Main() {
 
 export default function Page() {
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div className="w-full h-full overflow-y-auto">
       <div className="container">
         <AdminPageTitle title="Token Rate Limits" icon={<Shield size={32} />} />
 

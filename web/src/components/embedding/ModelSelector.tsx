@@ -8,6 +8,7 @@ import {
   HostedEmbeddingModel,
 } from "./interfaces";
 import { FiExternalLink } from "react-icons/fi";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 export function ModelPreview({
   model,
@@ -19,16 +20,16 @@ export function ModelPreview({
   const currentModelCopy = getCurrentModelCopy(model.model_name);
 
   return (
-    <div
-      className={`border border-border rounded shadow-md ${display ? "bg-inverted rounded-lg p-4" : "bg-hover-light p-2"} w-96 flex flex-col`}
-    >
-      <div className="font-bold text-lg flex">{model.model_name}</div>
-      <div className="text-sm mt-1 mx-1">
+    <Card className="!mr-auto mt-8 !w-96">
+      <CardHeader className="pb-0">
+        <CardTitle>{model.model_name}</CardTitle>
+      </CardHeader>
+      <CardContent>
         {model.description ||
           currentModelCopy?.description ||
           "Custom model—no description is available."}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -52,7 +53,7 @@ export function ModelOption({
       }`}
     >
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-lg">{model.model_name}</h3>
+        <h3 className="text-lg font-bold">{model.model_name}</h3>
 
         {model.link && (
           <a
@@ -60,13 +61,13 @@ export function ModelOption({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
+            className="text-blue-500 transition-colors duration-200 hover:text-blue-700"
           >
             <FiExternalLink size={18} />
           </a>
         )}
       </div>
-      <p className="text-sm k text-gray-600 text-left mb-2">
+      <p className="mb-2 text-sm text-left text-gray-600 k">
         {model.description ||
           currentModelCopy?.description ||
           "Custom model—no description is available."}
@@ -118,17 +119,17 @@ export function ModelSelector({
 
   return (
     <div>
-      <div className="flex flex-col gap-y-6 gap-6">
+      <div className="flex flex-col gap-6 gap-y-6">
         {Object.entries(groupedModelOptions).map(([type, models]) => (
           <div key={type}>
             <div className="flex items-center mb-2">
               {getIconForRerankType(type)}
-              <h2 className="ml-2 mt-2 text-xl font-bold">
+              <h2 className="mt-2 ml-2 text-xl font-bold">
                 {getTitleForRerankType(type)}
               </h2>
             </div>
 
-            <div className="flex mt-4 flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 mt-4">
               {models.map((modelOption) => (
                 <ModelOption
                   key={modelOption.model_name}

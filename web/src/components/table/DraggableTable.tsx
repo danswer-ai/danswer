@@ -110,7 +110,9 @@ export function DraggableTable({
                   isAdmin={isAdmin}
                   onClick={() =>
                     router.push(
-                      `/t/${teamspaceId}/admin/assistants/${row.id}?u=${Date.now()}`
+                      teamspaceId
+                        ? `/t/${teamspaceId}/admin/assistants/${row.id}?u=${Date.now()}`
+                        : `/admin/assistants/${row.id}?u=${Date.now()}`
                     )
                   }
                 />

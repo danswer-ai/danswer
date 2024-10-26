@@ -7,6 +7,7 @@ import { Teamspace, UserRole } from "@/lib/types";
 import { useTeamspaces } from "@/lib/hooks";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
 import { useUser } from "./user/UserProvider";
+import { Combobox } from "./Combobox";
 
 export type IsPublicGroupSelectorFormType = {
   is_public: boolean;
@@ -65,7 +66,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
     return (
       <>
         {teamspaces && (
-          <div className="mb-1 font-medium text-base">
+          <div className="mb-1 text-base font-medium">
             This {objectName} will be assigned to group{" "}
             <b>{teamspaces[0].name}</b>.
           </div>
@@ -103,13 +104,13 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         teamspaces &&
         teamspaces?.length > 0 && (
           <>
-            <div className="flex mt-4 gap-x-2 items-center">
-              <div className="block font-medium text-base">
+            <div className="flex items-center mt-4 gap-x-2">
+              <div className="block text-base font-medium">
                 Assign group access for this {objectName}
               </div>
             </div>
             {teamspacesIsLoading ? (
-              <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+              <div className="w-32 h-8 bg-gray-200 rounded animate-pulse"></div>
             ) : (
               <Text className="mb-3">
                 {isAdmin || !enforceGroupSelection ? (
@@ -128,9 +129,9 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
             <FieldArray
               name="groups"
               render={(arrayHelpers: ArrayHelpers) => (
-                <div className="flex gap-2 flex-wrap mb-4">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {teamspacesIsLoading ? (
-                    <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+                    <div className="w-32 h-8 bg-gray-200 rounded animate-pulse"></div>
                   ) : (
                     teamspaces &&
                     teamspaces.map((teamspace: Teamspace) => {
@@ -160,7 +161,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                             }
                           }}
                         >
-                          <div className="my-auto flex">
+                          <div className="flex my-auto">
                             <FiUsers className="my-auto mr-2" />{" "}
                             {teamspace.name}
                           </div>
@@ -171,10 +172,25 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                 </div>
               )}
             />
+
+            {/*  <Combobox
+              items={teamspaces.map((teamspace) => ({
+                value: teamspace.id.toString(),
+                label: teamspace.name,
+              }))}
+              onSelect={(selectedTeamspaceIds) => {
+                const selectedIds = selectedTeamspaceIds.map((val) =>
+                  parseInt(val, 10)
+                );
+                formikProps.setFieldValue("groups", selectedIds);
+              }}
+              placeholder="Select teamspaces"
+              label="Teamspaces"
+            /> */}
             <ErrorMessage
               name="groups"
               component="div"
-              className="text-error text-sm mt-1"
+              className="mt-1 text-sm text-error"
             />
           </>
         )}

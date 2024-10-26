@@ -30,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const API_KEY_TEXT = `
 API Keys allow you to access enMedD AI APIs programmatically. Click the button below to generate a new API Key.
@@ -105,6 +106,8 @@ function Main() {
     setShowCreateUpdateForm(true);
   };
 
+  const isUpdate = selectedApiKey !== undefined;
+
   if (isLoading) {
     return <ThreeDotsLoader />;
   }
@@ -119,7 +122,7 @@ function Main() {
   }
 
   const newApiKeyButton = (
-    <Button className="mt-3" onClick={() => setShowCreateUpdateForm(true)}>
+    <Button className="mt-4" onClick={() => setShowCreateUpdateForm(true)}>
       Create API Key
     </Button>
   );
@@ -127,52 +130,73 @@ function Main() {
   if (apiKeys.length === 0) {
     return (
       <div>
-        {popup}
-        <p>{API_KEY_TEXT}</p>
-        {newApiKeyButton}
+        <p className="pb-4">{API_KEY_TEXT}</p>
 
-        {showCreateUpdateForm && (
+        <CustomModal
+          trigger={newApiKeyButton}
+          onClose={() => setShowCreateUpdateForm(false)}
+          open={showCreateUpdateForm}
+          title={isUpdate ? "Update API Key" : "Create a new API Key"}
+        >
           <EnmeddApiKeyForm
-            onCreateApiKey={(apiKey) => {
-              setFullApiKey(apiKey.api_key);
-            }}
+            onCreateApiKey={(apiKey) => setFullApiKey(apiKey.api_key)}
             onClose={() => {
               setShowCreateUpdateForm(false);
               setSelectedApiKey(undefined);
               mutate("/api/admin/api-key");
             }}
-            setPopup={setPopup}
             apiKey={selectedApiKey}
           />
-        )}
+        </CustomModal>
       </div>
     );
   }
 
   return (
     <div>
-      {popup}
-
       {fullApiKey && (
-        <NewApiKeyModal
-          apiKey={fullApiKey}
+        <CustomModal
+          trigger={null}
           onClose={() => setFullApiKey(null)}
-        />
+          open={Boolean(fullApiKey)}
+          title="New API Key"
+        >
+          <NewApiKeyModal
+            apiKey={fullApiKey}
+            onClose={() => setFullApiKey(null)}
+          />
+        </CustomModal>
       )}
 
       {keyIsGenerating && <Spinner />}
 
       <p>{API_KEY_TEXT}</p>
-      {newApiKeyButton}
+
+      <CustomModal
+        trigger={newApiKeyButton}
+        onClose={() => setShowCreateUpdateForm(false)}
+        open={showCreateUpdateForm}
+        title={isUpdate ? "Update API Key" : "Create a new API Key"}
+      >
+        <EnmeddApiKeyForm
+          onCreateApiKey={(apiKey) => setFullApiKey(apiKey.api_key)}
+          onClose={() => {
+            setShowCreateUpdateForm(false);
+            setSelectedApiKey(undefined);
+            mutate("/api/admin/api-key");
+          }}
+          apiKey={selectedApiKey}
+        />
+      </CustomModal>
 
       <Divider />
 
       <h3 className="pb-4 mt-6">Existing API Keys</h3>
       <Card>
         <CardContent className="p-0">
-          <Table className="overflow-visible">
+          <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="text-sm">
                 <TableHead>Name</TableHead>
                 <TableHead>API Key</TableHead>
                 <TableHead>Role</TableHead>
@@ -183,34 +207,37 @@ function Main() {
             <TableBody>
               {apiKeys.map((apiKey) => (
                 <TableRow key={apiKey.api_key_id}>
-                  <TableCell className="max-w-[200px] truncate">
-                    <Button
-                      variant="ghost"
-                      className="w-full truncate"
-                      onClick={() => handleEdit(apiKey)}
+                  <TableCell>
+                    <CustomTooltip
+                      trigger={
+                        <div
+                          className="flex items-center w-full gap-2 cursor-pointer"
+                          onClick={() => handleEdit(apiKey)}
+                        >
+                          <Pencil size={16} className="shrink-0" />
+                          <p className="truncate">
+                            {apiKey.api_key_name || <i>null</i>}
+                          </p>
+                        </div>
+                      }
+                      asChild
                     >
-                      <Pencil size={14} />
                       {apiKey.api_key_name || <i>null</i>}
-                    </Button>
+                    </CustomTooltip>
                   </TableCell>
                   <TableCell className="max-w-64">
                     {apiKey.api_key_display}
                   </TableCell>
                   <TableCell className="max-w-64">
-                    {apiKey.api_key_role.toUpperCase()}
+                    {apiKey.api_key_role === "admin" ? (
+                      <Badge>ADMIN</Badge>
+                    ) : (
+                      <Badge variant="secondary">BASIC</Badge>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <div
-                      className={`
-                  my-auto 
-                  flex 
-                  mb-1 
-                  w-fit 
-                  hover:bg-hover cursor-pointer
-                  p-2 
-                  rounded-lg
-                  border-border
-                  text-sm`}
+                    <Button
+                      variant="ghost"
                       onClick={async () => {
                         setKeyIsGenerating(true);
                         const response = await regenerateApiKey(apiKey);
@@ -230,7 +257,7 @@ function Main() {
                     >
                       <FiRefreshCw className="my-auto mr-1" />
                       Refresh
-                    </div>
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <DeleteButton
@@ -254,21 +281,6 @@ function Main() {
           </Table>
         </CardContent>
       </Card>
-
-      {showCreateUpdateForm && (
-        <EnmeddApiKeyForm
-          onCreateApiKey={(apiKey) => {
-            setFullApiKey(apiKey.api_key);
-          }}
-          onClose={() => {
-            setShowCreateUpdateForm(false);
-            setSelectedApiKey(undefined);
-            mutate("/api/admin/api-key");
-          }}
-          setPopup={setPopup}
-          apiKey={selectedApiKey}
-        />
-      )}
     </div>
   );
 }

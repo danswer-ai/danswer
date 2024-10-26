@@ -56,7 +56,7 @@ function findImageGenerationTool(tools: ToolSnapshot[]) {
 }
 
 function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <span className="text-sm text-subtle mb-2">{children}</span>;
+  return <span className="mb-2 text-sm text-subtle">{children}</span>;
 }
 
 export function AssistantEditor({
@@ -403,7 +403,7 @@ export function AssistantEditor({
             <Form>
               <div className="pb-6">
                 <>
-                  <h2 className="font-bold text:lg md:text-xl my-auto mb-4">
+                  <h2 className="my-auto mb-4 font-bold text:lg md:text-xl">
                     Basics
                   </h2>
                   <TextFormField
@@ -458,7 +458,7 @@ export function AssistantEditor({
                   <Label>Final Prompt</Label>
 
                   {finalPrompt ? (
-                    <pre className="text-sm mt-2 whitespace-pre-wrap">
+                    <pre className="mt-2 text-sm whitespace-pre-wrap">
                       {finalPrompt}
                     </pre>
                   ) : (
@@ -483,7 +483,7 @@ export function AssistantEditor({
                         />
 
                         {searchToolEnabled() && (
-                          <div className="pl-4 border-l-2 ml-4 border-border">
+                          <div className="pl-4 ml-4 border-l-2 border-border">
                             {ccPairs.length > 0 && (
                               <>
                                 <Label>Document Sets</Label>
@@ -516,7 +516,7 @@ export function AssistantEditor({
                                     name="document_set_ids"
                                     render={(arrayHelpers: ArrayHelpers) => (
                                       <div>
-                                        <div className="mb-3 mt-2 flex gap-2 flex-wrap text-sm">
+                                        <div className="flex flex-wrap gap-2 mt-2 mb-3 text-sm">
                                           {documentSets.map((documentSet) => {
                                             const ind =
                                               values.document_set_ids.indexOf(
@@ -715,7 +715,7 @@ export function AssistantEditor({
                           </div>
 
                           {values.llm_model_provider_override && (
-                            <div className="w-96 ml-4">
+                            <div className="ml-4 w-96">
                               <Label>Model</Label>
                               <SelectorFormField
                                 name="llm_model_version_override"
@@ -762,7 +762,7 @@ export function AssistantEditor({
                                   className={index === 0 ? "mt-2" : "mt-6"}
                                 >
                                   <div className="flex">
-                                    <div className="w-full mr-6 border border-border p-3 rounded">
+                                    <div className="w-full p-3 mr-6 border rounded border-border">
                                       <div>
                                         <TextFormField
                                           label="Name"

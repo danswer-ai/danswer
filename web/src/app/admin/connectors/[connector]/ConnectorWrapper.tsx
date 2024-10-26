@@ -3,7 +3,7 @@
 import { ConfigurableSources, ValidSources } from "@/lib/types";
 import AddConnector from "./AddConnectorPage";
 import { FormProvider } from "@/context/FormContext";
-import Sidebar from "./Sidebar";
+import Sidebar from "./Stepper";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { Button } from "@tremor/react";
 import { isValidSource } from "@/lib/sources";
@@ -15,7 +15,7 @@ export default function ConnectorWrapper({
 }) {
   return (
     <FormProvider connector={connector}>
-      <div className="w-full h-full overflow-y-auto">
+      <div className="flex w-full h-full">
         <div className="container">
           {!isValidSource(connector) ? (
             <div className="flex flex-col mx-auto gap-y-2">
@@ -33,7 +33,6 @@ export default function ConnectorWrapper({
           ) : (
             <AddConnector connector={connector} />
           )}
-          <Sidebar />
         </div>
       </div>
     </FormProvider>

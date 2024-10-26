@@ -531,84 +531,86 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
     );
 
   return (
-    <div className="relative flex gap-16 lg:gap-10 xl:gap-10 2xl:gap-20 h-full max-w-full ml-auto">
-      <div className="w-full flex flex-col gap-5">
-        <div className="flex items-center gap-2 relative">
-          <FullSearchBar
-            disabled={previousSearch === query}
-            toggleAgentic={disabledAgentic ? undefined : toggleAgentic}
-            agentic={agentic}
-            query={query}
-            setQuery={setQuery}
-            onSearch={async (agentic?: boolean) => {
-              setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
-              await onSearch({ agentic, offset: 0 });
-            }}
-            finalAvailableDocumentSets={finalAvailableDocumentSets}
-            finalAvailableSources={finalAvailableSources}
-            filterManager={filterManager}
-            documentSets={documentSets}
-            ccPairs={ccPairs}
-            tags={tags}
-          />
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="lg:hidden">
-                <Filter size={16} className="" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-[85vw] sm:w-full">
-              {(ccPairs.length > 0 || documentSets.length > 0) && (
-                <SourceSelector
-                  {...filterManager}
-                  availableDocumentSets={finalAvailableDocumentSets}
-                  existingSources={finalAvailableSources}
-                  availableTags={tags}
-                />
-              )}
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div className="w-full flex justify-between flex-col md:flex-row gap-5">
-          <div className="items-center gap-2 ml-auto hidden lg:flex">
-            <DateRangeSearchSelector
-              value={filterManager.timeRange}
-              onValueChange={filterManager.setTimeRange}
+    <div className="relative flex h-full max-w-full gap-16 ml-auto lg:gap-10 xl:gap-10 2xl:gap-20">
+      <div className="flex w-full gap-5">
+        <div className="w-full space-y-5">
+          <div className="relative flex gap-2">
+            <FullSearchBar
+              disabled={previousSearch === query}
+              toggleAgentic={disabledAgentic ? undefined : toggleAgentic}
+              agentic={agentic}
+              query={query}
+              setQuery={setQuery}
+              onSearch={async (agentic?: boolean) => {
+                setDefaultOverrides(SEARCH_DEFAULT_OVERRIDES_START);
+                await onSearch({ agentic, offset: 0 });
+              }}
+              finalAvailableDocumentSets={finalAvailableDocumentSets}
+              finalAvailableSources={finalAvailableSources}
+              filterManager={filterManager}
+              documentSets={documentSets}
+              ccPairs={ccPairs}
+              tags={tags}
             />
-            <SortSearch />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="lg:hidden">
+                  <Filter size={16} className="" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[85vw] sm:w-full">
+                {(ccPairs.length > 0 || documentSets.length > 0) && (
+                  <SourceSelector
+                    {...filterManager}
+                    availableDocumentSets={finalAvailableDocumentSets}
+                    existingSources={finalAvailableSources}
+                    availableTags={tags}
+                  />
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
-        </div>
 
-        {!firstSearch && (
-          <SearchAnswer
-            isFetching={isFetching}
-            dedupedQuotes={dedupedQuotes}
-            searchResponse={searchResponse}
-            setSearchAnswerExpanded={setSearchAnswerExpanded}
-            searchAnswerExpanded={searchAnswerExpanded}
-            setCurrentFeedback={setCurrentFeedback}
-            searchState={searchState}
-          />
-        )}
-
-        <div className="mt-6">
-          {!(agenticResults && isFetching) || disabledAgentic ? (
-            <SearchResultsDisplay
-              searchState={searchState}
-              disabledAgentic={disabledAgentic}
-              contentEnriched={contentEnriched}
-              comments={comments}
-              sweep={sweep}
-              agenticResults={shouldUseAgenticDisplay && !disabledAgentic}
-              performSweep={performSweep}
-              searchResponse={searchResponse}
+          {!firstSearch && (
+            <SearchAnswer
               isFetching={isFetching}
-              defaultOverrides={defaultOverrides}
+              dedupedQuotes={dedupedQuotes}
+              searchResponse={searchResponse}
+              setSearchAnswerExpanded={setSearchAnswerExpanded}
+              searchAnswerExpanded={searchAnswerExpanded}
+              setCurrentFeedback={setCurrentFeedback}
+              searchState={searchState}
             />
-          ) : (
-            <></>
           )}
+
+          <div className="flex flex-col justify-between w-full gap-5 md:flex-row">
+            <div className="items-center hidden gap-2 ml-auto lg:flex">
+              <DateRangeSearchSelector
+                value={filterManager.timeRange}
+                onValueChange={filterManager.setTimeRange}
+              />
+              <SortSearch />
+            </div>
+          </div>
+
+          <div className="mt-6">
+            {!(agenticResults && isFetching) || disabledAgentic ? (
+              <SearchResultsDisplay
+                searchState={searchState}
+                disabledAgentic={disabledAgentic}
+                contentEnriched={contentEnriched}
+                comments={comments}
+                sweep={sweep}
+                agenticResults={shouldUseAgenticDisplay && !disabledAgentic}
+                performSweep={performSweep}
+                searchResponse={searchResponse}
+                isFetching={isFetching}
+                defaultOverrides={defaultOverrides}
+              />
+            ) : (
+              <></>
+            )}
+          </div>
         </div>
 
         <div className="min-w-[220px] lg:min-w-[300px] xl:min-w-[320px] max-w-[320px] hidden lg:flex flex-col">

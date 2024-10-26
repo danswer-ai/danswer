@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { useUser } from "@/components/user/UserProvider";
+import Link from "next/link";
 
 function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
   if (assistant.builtin_assistant) {
@@ -112,21 +113,26 @@ export function AssistantsTable({
               return {
                 id: assistant.id.toString(),
                 cells: [
-                  <div
+                  <CustomTooltip
                     key="name"
-                    className="flex gap-4 items-center"
-                    onClick={() =>
-                      router.push(
-                        `/admin/assistants/${assistant.id}?u=${Date.now()}`
-                      )
+                    trigger={
+                      <Link
+                        href={`/admin/assistants/${assistant.id}?u=${Date.now()}`}
+                        className="flex items-center w-full gap-2 truncate"
+                      >
+                        {!assistant.builtin_assistant && (
+                          <Pencil size={16} className="shrink-0" />
+                        )}
+                        <p className="font-medium truncate text break-none">
+                          {assistant.name}
+                        </p>
+                      </Link>
                     }
+                    asChild
                   >
-                    {!assistant.builtin_assistant && <Pencil size={16} />}
-                    <p className="text font-medium whitespace-normal break-none">
-                      {assistant.name}
-                    </p>
-                  </div>,
-                  <p key="description" className="whitespace-normal max-w-2xl">
+                    {assistant.name}
+                  </CustomTooltip>,
+                  <p key="description" className="max-w-2xl whitespace-normal">
                     {assistant.description}
                   </p>,
                   <AssistantTypeDisplay

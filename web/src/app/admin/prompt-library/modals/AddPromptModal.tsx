@@ -1,12 +1,11 @@
 import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { ModalWrapper } from "@/components/modals/ModalWrapper";
-import { Button, Textarea, TextInput } from "@tremor/react";
 
 import { BookstackIcon } from "@/components/icons/icons";
 import { AddPromptModalProps } from "../interfaces";
 import { TextFormField } from "@/components/admin/connectors/Field";
+import { Button } from "@/components/ui/button";
 
 const AddPromptSchema = Yup.object().shape({
   title: Yup.string().required("Title is required"),
@@ -15,7 +14,7 @@ const AddPromptSchema = Yup.object().shape({
 
 const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
   return (
-    <ModalWrapper onClose={onClose} modalClassName="max-w-xl">
+    <div>
       <Formik
         initialValues={{
           title: "",
@@ -33,11 +32,6 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
       >
         {({ isSubmitting, setFieldValue }) => (
           <Form>
-            <h2 className="w-full text-2xl gap-x-2 text-emphasis font-bold mb-3 flex items-center">
-              <BookstackIcon size={20} />
-              Add prompt
-            </h2>
-
             <TextFormField
               label="Title"
               name="title"
@@ -49,6 +43,7 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
               label="Prompt"
               name="prompt"
               placeholder="Enter a prompt (e.g. 'help me rewrite the following politely and concisely for professional communication')"
+              maxHeight={500}
             />
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -57,7 +52,7 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
           </Form>
         )}
       </Formik>
-    </ModalWrapper>
+    </div>
   );
 };
 

@@ -48,7 +48,7 @@ export const FileUpload: FC<FileUploadProps> = ({
 
       {selectedFiles.length > 0 && (
         <div className="mt-4">
-          <span className="font-semibold text-sm">Uploaded image:</span>
+          <span className="text-sm font-semibold">Uploaded image:</span>
           <ul>
             {selectedFiles.map((file) => (
               <div key={file.name} className="flex items-center mt-2">
@@ -61,7 +61,7 @@ export const FileUpload: FC<FileUploadProps> = ({
                     height={150}
                   />
                 ) : (
-                  <p className="text-sm mr-2">{file.name}</p>
+                  <p className="mr-2 text-sm">{file.name}</p>
                 )}
               </div>
             ))}

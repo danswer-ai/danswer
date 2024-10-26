@@ -18,7 +18,6 @@ import {
 import { Tooltip } from "@/components/tooltip/Tooltip";
 import { SourceIcon } from "@/components/SourceIcon";
 import { getSourceDisplayName } from "@/lib/sources";
-import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 import { Warning } from "@phosphor-icons/react";
 import Cookies from "js-cookie";
 import { TOGGLED_CONNECTORS_COOKIE_NAME } from "@/lib/constants";
@@ -39,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Lock, Unlock } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 function SummaryRow({
   source,
@@ -56,7 +56,7 @@ function SummaryRow({
 
   return (
     <TableRow onClick={onToggle}>
-      <TableCell>
+      <TableCell className="gap-y-2">
         <div className="flex items-center text-xl font-semibold truncate ellipsis gap-x-2">
           <div className="cursor-pointer">
             {isOpen ? (
@@ -70,25 +70,21 @@ function SummaryRow({
         </div>
       </TableCell>
 
-      <TableCell>
-        <div className="text-sm text-gray-500">Total Connectors</div>
+      <TableCell className="gap-y-2">
+        <div className="text-gray-500">Total Connectors</div>
         <div className="text-xl font-semibold">{summary.count}</div>
       </TableCell>
 
-      <TableCell>
-        <div className="text-sm text-gray-500">Active Connectors</div>
+      <TableCell className="gap-y-2">
+        <div className="text-gray-500">Active Connectors</div>
         <Tooltip
           content={`${summary.active} out of ${summary.count} connectors are active`}
         >
           <div className="flex items-center mt-1">
             <div className="w-full h-2 mr-2 bg-gray-200 rounded-full">
-              {/* <div
-                className="h-2 rounded-full bg-success"
-                style={{ width: `${activePercentage}%` }}
-              ></div> */}
               <Progress value={activePercentage} />
             </div>
-            <span className="text-sm font-medium whitespace-nowrap">
+            <span className="whitespace-nowrap">
               {summary.active} ({activePercentage.toFixed(0)}%)
             </span>
           </div>
@@ -96,23 +92,23 @@ function SummaryRow({
       </TableCell>
 
       {isPaidEnterpriseFeaturesEnabled && (
-        <TableCell>
-          <div className="text-sm text-gray-500">Public Connectors</div>
+        <TableCell className="gap-y-2">
+          <div className="text-gray-500">Public Connectors</div>
           <p className="flex items-center mx-auto mt-1 text-xl font-semibold">
             {summary.public}/{summary.count}
           </p>
         </TableCell>
       )}
 
-      <TableCell>
-        <div className="text-sm text-gray-500">Total Docs Indexed</div>
+      <TableCell className="gap-y-2">
+        <div className="text-gray-500">Total Docs Indexed</div>
         <div className="text-xl font-semibold">
           {summary.totalDocsIndexed.toLocaleString()}
         </div>
       </TableCell>
 
-      <TableCell>
-        <div className="text-sm text-gray-500">Errors</div>
+      <TableCell className="gap-y-2">
+        <div className="text-gray-500">Errors</div>
 
         <div className="flex items-center text-lg font-semibold gap-x-1">
           {summary.errors > 0 && <Warning className="w-6 h-6 text-error" />}
@@ -120,7 +116,7 @@ function SummaryRow({
         </div>
       </TableCell>
 
-      <TableCell />
+      <TableCell className="gap-y-2" />
     </TableRow>
   );
 }
@@ -149,7 +145,7 @@ function ConnectorRow({
     ) {
       return (
         <Badge variant="destructive">
-          <div className="w-3 h-3 rounded-full bg-destructive"></div>
+          <div className="w-3 h-3 rounded-full bg-destructive" />
           Deleting
         </Badge>
       );
@@ -159,7 +155,7 @@ function ConnectorRow({
     ) {
       return (
         <Badge variant="warning">
-          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+          <div className="w-3 h-3 bg-yellow-500 rounded-full" />
           Paused
         </Badge>
       );
@@ -170,21 +166,21 @@ function ConnectorRow({
       case "in_progress":
         return (
           <Badge color="success">
-            <div className="w-3 h-3 rounded-full bg-background"></div>
+            <div className="w-3 h-3 rounded-full bg-background" />
             Indexing
           </Badge>
         );
       case "not_started":
         return (
           <Badge color="outline">
-            <div className="w-3 h-3 rounded-full bg-primary"></div>
+            <div className="w-3 h-3 rounded-full bg-primary" />
             Scheduled
           </Badge>
         );
       default:
         return (
           <Badge color="success">
-            <div className="w-3 h-3 rounded-full bg-background"></div>
+            <div className="w-3 h-3 rounded-full bg-background" />
             Active
           </Badge>
         );
@@ -198,10 +194,17 @@ function ConnectorRow({
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
       }}
     >
-      <TableCell className="w-[200px] xl:w-[400px]">
-        <p className="inline-block w-full truncate ellipsis">
+      <TableCell>
+        <CustomTooltip
+          trigger={
+            <p className="inline-block w-full truncate ellipsis">
+              {ccPairsIndexingStatus.name}
+            </p>
+          }
+          asChild
+        >
           {ccPairsIndexingStatus.name}
-        </p>
+        </CustomTooltip>
       </TableCell>
       <TableCell>
         {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
@@ -231,11 +234,15 @@ function ConnectorRow({
       </TableCell>
       <TableCell>
         {isEditable && (
-          <CustomTooltip content="Manage Connector">
-            <FiSettings
-              className="cursor-pointer"
-              onClick={handleManageClick}
-            />
+          <CustomTooltip
+            trigger={
+              <FiSettings
+                className="cursor-pointer"
+                onClick={handleManageClick}
+              />
+            }
+          >
+            Manage Connector
           </CustomTooltip>
         )}
       </TableCell>
@@ -432,7 +439,7 @@ export function CCPairIndexingStatusTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[200px] xl:w-[400px]">
+                <TableHead className="w-[200px] xl:w-[350px]">
                   <div className="w-full">Name</div>
                 </TableHead>
                 <TableHead>Last Indexed</TableHead>
@@ -441,7 +448,7 @@ export function CCPairIndexingStatusTable({
                   <TableHead>Permissions</TableHead>
                 )}
                 <TableHead>Total Docs</TableHead>
-                <TableHead>Last Status</TableHead>
+                <TableHead className="!w-[140px]">Last Status</TableHead>
                 <TableHead className="!w-[100px]"></TableHead>
               </TableRow>
             </TableHeader>

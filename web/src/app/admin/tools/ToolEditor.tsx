@@ -13,7 +13,6 @@ import {
 import * as Yup from "yup";
 import { MethodSpec, ToolSnapshot } from "@/lib/tools/interfaces";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { Divider } from "@tremor/react";
 import {
   createCustomTool,
   updateCustomTool,
@@ -110,7 +109,7 @@ function ToolForm({
   }, [values.definition, debouncedValidateDefinition]);
 
   return (
-    <Form className="max-w-4xl">
+    <Form className="w-full">
       <div className="relative w-full">
         <TextFormField
           name="definition"
@@ -162,16 +161,16 @@ function ToolForm({
         component="div"
         className="text-sm text-error"
       />
-      <div className="mt-4 text-sm bg-blue-50 p-4 rounded-md border border-blue-200">
+      <div className="p-4 mt-4 text-sm border border-blue-200 rounded-md bg-blue-50">
         <Link
           href="https://docs.danswer.dev/tools/custom"
-          className="text-link hover:underline flex items-center"
+          className="flex items-center text-link hover:underline"
           target="_blank"
           rel="noopener noreferrer"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-2"
+            className="w-5 h-5 mr-2"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -221,10 +220,10 @@ function ToolForm({
       />
       {showAdvancedOptions && (
         <div>
-          <h3 className="text-xl font-bold mb-2 text-primary-600">
+          <h3 className="mb-2 text-xl font-bold text-primary-600">
             Custom Headers
           </h3>
-          <p className="text-sm mb-6 text-gray-600 italic">
+          <p className="mb-6 text-sm italic text-gray-600">
             Specify custom headers for each request to this tool&apos;s API.
           </p>
           <FieldArray
@@ -240,7 +239,7 @@ function ToolForm({
                       ) => (
                         <div
                           key={index}
-                          className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg shadow-sm"
+                          className="flex items-center p-3 space-x-2 rounded-lg shadow-sm bg-gray-50"
                         >
                           <Field
                             name={`customHeaders.${index}.key`}
@@ -255,9 +254,7 @@ function ToolForm({
                           <Button
                             type="button"
                             onClick={() => arrayHelpers.remove(index)}
-                            color="red"
-                            size="sm"
-                            className="transition-colors duration-200 hover:bg-red-600"
+                            variant="destructive"
                           >
                             Remove
                           </Button>

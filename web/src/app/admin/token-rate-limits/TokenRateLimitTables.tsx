@@ -83,9 +83,7 @@ export const TokenRateLimitTable = ({
       )}
       <Card>
         <CardContent className="p-0">
-          <Table
-            className={`overflow-visible ${!hideHeading && "my-8"} [&_td]:text-center [&_th]:text-center`}
-          >
+          <Table className="overflow-visibl">
             <TableHeader>
               <TableRow>
                 <TableHead>Enabled</TableHead>
@@ -100,36 +98,31 @@ export const TokenRateLimitTable = ({
                 return (
                   <TableRow key={tokenRateLimit.token_id}>
                     <TableCell>
-                      <div className="flex justify-center">
-                        <div
-                          onClick={
-                            isAdmin
-                              ? () =>
-                                  handleEnabledChange(tokenRateLimit.token_id)
-                              : undefined
-                          }
-                          className={`px-1 py-0.5 rounded select-none w-24 ${
-                            isAdmin
-                              ? "hover:bg-hover-light cursor-pointer"
-                              : "opacity-50"
-                          }`}
-                        >
-                          <div className="flex items-center justify-center">
-                            <CustomCheckbox
-                              checked={tokenRateLimit.enabled}
-                              onChange={
-                                isAdmin
-                                  ? () =>
-                                      handleEnabledChange(
-                                        tokenRateLimit.token_id
-                                      )
-                                  : undefined
-                              }
-                            />
-                            <p className="ml-2">
-                              {tokenRateLimit.enabled ? "Enabled" : "Disabled"}
-                            </p>
-                          </div>
+                      <div
+                        onClick={
+                          isAdmin
+                            ? () => handleEnabledChange(tokenRateLimit.token_id)
+                            : undefined
+                        }
+                        className={`py-0.5 rounded select-none w-24 ${
+                          isAdmin
+                            ? "hover:bg-hover-light cursor-pointer"
+                            : "opacity-50"
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <CustomCheckbox
+                            checked={tokenRateLimit.enabled}
+                            onChange={
+                              isAdmin
+                                ? () =>
+                                    handleEnabledChange(tokenRateLimit.token_id)
+                                : undefined
+                            }
+                          />
+                          <p className="ml-2">
+                            {tokenRateLimit.enabled ? "Enabled" : "Disabled"}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
@@ -148,13 +141,9 @@ export const TokenRateLimitTable = ({
                     </TableCell>
                     {isAdmin && (
                       <TableCell>
-                        <div className="flex justify-center">
-                          <DeleteButton
-                            onClick={() =>
-                              handleDelete(tokenRateLimit.token_id)
-                            }
-                          />
-                        </div>
+                        <DeleteButton
+                          onClick={() => handleDelete(tokenRateLimit.token_id)}
+                        />
                       </TableCell>
                     )}
                   </TableRow>

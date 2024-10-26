@@ -41,7 +41,7 @@ export default async function Page({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div className="w-full h-full overflow-y-auto">
       <div className="container">
         <BackButton />
 

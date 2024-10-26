@@ -70,11 +70,11 @@ export default function SearchAnswer({
   return (
     <div
       ref={answerContainerRef}
-      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"} ${!searchAnswerExpanded && searchAnswerOverflowing && "overflow-y-hidden"} p-4 border-2 border-border rounded-lg relative`}
+      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"} ${!searchAnswerExpanded && searchAnswerOverflowing && "overflow-y-hidden"} p-4 border border-border-medium rounded-lg relative`}
     >
       <div>
         <div className="flex gap-x-2">
-          <h2 className="text-emphasis font-bold my-auto mb-1">AI Answer</h2>
+          <h2 className="my-auto mb-1 font-bold text-emphasis">AI Answer</h2>
 
           {searchState == "generating" && (
             <div key={"generating"} className="relative inline-block">
@@ -128,7 +128,7 @@ export default function SearchAnswer({
           )}
 
           {searchResponse.messageId !== null && (
-            <div className="absolute right-3 flex bottom-3">
+            <div className="absolute flex right-3 bottom-3">
               <HoverableIcon
                 icon={<LikeFeedbackIcon />}
                 onClick={() =>
@@ -150,10 +150,10 @@ export default function SearchAnswer({
       )}
 
       {!searchAnswerExpanded && searchAnswerOverflowing && (
-        <div className="w-full h-12 absolute items-center content-center flex left-0 px-4 bottom-0">
+        <div className="absolute bottom-0 left-0 flex items-center content-center w-full h-12 px-4">
           <button
             onClick={() => setSearchAnswerExpanded(true)}
-            className="flex gap-x-1 items-center justify-center hover:bg-background-100 cursor-pointer max-w-sm text-sm mx-auto w-full bg-background border py-2 rounded-full"
+            className="flex items-center justify-center w-full max-w-sm py-2 mx-auto text-sm border rounded-full cursor-pointer gap-x-1 hover:bg-background-100 bg-background"
           >
             Show more
             <ToggleDown />

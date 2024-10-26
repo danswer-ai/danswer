@@ -17,6 +17,7 @@ import { deleteTeamspace } from "./lib";
 import { useToast } from "@/hooks/use-toast";
 import { CustomModal } from "@/components/CustomModal";
 import { useState } from "react";
+import Image from "next/image";
 
 interface TeamspaceWithGradient extends Teamspace {
   gradient?: string;
@@ -52,7 +53,7 @@ const DeleteArchiveModal = ({
         You are about to {type} this Team Space. Members will no longer have
         access to it, and it will be removed from their sidebar
       </p>
-      <div className="flex justify-end gap-2 pt-6 border-t w-full">
+      <div className="flex justify-end w-full gap-2 pt-6 border-t">
         <Button onClick={onClose} variant="secondary">
           Cancel
         </Button>
@@ -84,7 +85,7 @@ export const TeamspacesCard = ({
       <Popover>
         <PopoverTrigger
           asChild
-          className="absolute top-3 right-3 cursor-pointer"
+          className="absolute cursor-pointer top-3 right-3"
         >
           <EllipsisVertical stroke="#ffffff" />
         </PopoverTrigger>
@@ -93,7 +94,7 @@ export const TeamspacesCard = ({
             <DeleteArchiveModal
               trigger={
                 <button
-                  className="flex py-2 px-4 text-sm cursor-pointer rounded-regular hover:bg-primary hover:text-inverted w-full focus:outline-none"
+                  className="flex w-full px-4 py-2 text-sm cursor-pointer rounded-regular hover:bg-primary hover:text-inverted focus:outline-none"
                   onClick={() => setIsArchiveModalOpen(true)}
                 >
                   Archive
@@ -110,7 +111,7 @@ export const TeamspacesCard = ({
             <DeleteArchiveModal
               trigger={
                 <button
-                  className="flex py-2 px-4 text-sm cursor-pointer rounded-regular hover:bg-primary hover:text-inverted w-full focus:outline-none"
+                  className="flex w-full px-4 py-2 text-sm cursor-pointer rounded-regular hover:bg-primary hover:text-inverted focus:outline-none"
                   onClick={() => setIsDeleteModalOpen(true)}
                 >
                   Delete
@@ -151,17 +152,27 @@ export const TeamspacesCard = ({
           style={{ background: teamspace.gradient }}
           className="p-10"
         ></CardHeader>
-        <CardContent className="flex flex-col justify-between min-h-48 relative bg-muted/50">
-          <div className="absolute top-0 -translate-y-1/2 right-4">
-            <span
-              style={{ background: teamspace.gradient }}
-              className="text-xl uppercase font-bold min-w-12 min-h-12 flex items-center justify-center rounded-lg text-inverted border-[5px] border-inverted w-full"
-            >
-              {teamspace.name.charAt(0)}
-            </span>
+        <CardContent className="relative flex flex-col justify-between min-h-48 bg-muted/50">
+          <div className="absolute top-0 w-12 h-12 -translate-y-1/2 right-4">
+            {teamspace.is_custom_logo ? (
+              <Image
+                src={`/api/teamspace/logo?teamspace_id=${teamspace.id}&t=${Date.now()}`}
+                alt="Teamspace Logo"
+                className="object-cover w-10 h-10 rounded-md shrink-0"
+                width={40}
+                height={40}
+              />
+            ) : (
+              <span
+                style={{ background: teamspace.gradient }}
+                className="text-xl uppercase font-bold h-full flex items-center justify-center rounded-lg text-inverted border-[5px] border-inverted w-full"
+              >
+                {teamspace.name.charAt(0)}
+              </span>
+            )}
           </div>
           <div className="pb-6">
-            <h2 className="font-bold whitespace-normal break-all w-full">
+            <h2 className="w-full font-bold break-all whitespace-normal">
               <span className="inline">{teamspace.name}</span>
               <CustomTooltip
                 trigger={

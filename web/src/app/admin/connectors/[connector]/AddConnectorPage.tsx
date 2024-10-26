@@ -50,7 +50,10 @@ export interface AdvancedConfig {
 import { Connector, ConnectorBase } from "@/lib/connectors/connectors";
 import { ChartLegendContent } from "@/components/ui/chart";
 import { Card, CardContent } from "@/components/ui/card";
-import { BackButton } from "@/components/BackButton";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Stepper from "./Stepper";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -114,6 +117,7 @@ export default function AddConnector({
 }: {
   connector: ConfigurableSources;
 }) {
+  const router = useRouter();
   // State for managing credentials and files
   const [currentCredential, setCurrentCredential] =
     useState<Credential<any> | null>(null);
@@ -355,12 +359,21 @@ export default function AddConnector({
               <HealthCheckBanner />
             </div>
 
-            <BackButton />
+            <Button
+              onClick={() => router.push("/admin/data-sources")}
+              variant="ghost"
+              className="mb-5"
+            >
+              <ChevronLeft className="my-auto mr-1" size={16} />
+              Back
+            </Button>
 
             <AdminPageTitle
               icon={<SourceIcon iconSize={32} sourceType={connector} />}
               title={displayName}
             />
+
+            <Stepper />
 
             {formStep == 0 && (
               <Card>
@@ -383,8 +396,8 @@ export default function AddConnector({
                         onSwitch={onSwap}
                       />
                       {!createConnectorToggle && (
-                        <button
-                          className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
+                        <Button
+                          className="mt-6"
                           onClick={() =>
                             setCreateConnectorToggle(
                               (createConnectorToggle) => !createConnectorToggle
@@ -392,7 +405,7 @@ export default function AddConnector({
                           }
                         >
                           Create New
-                        </button>
+                        </Button>
                       )}
 
                       {/* NOTE: connector will never be google_drive, since the ternary above will 
