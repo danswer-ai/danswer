@@ -26,7 +26,10 @@ async function getSharedChat(chatId: string) {
   return null;
 }
 
-export default async function Page({ params }: { params: { chatId: string } }) {
+export default async function Page(props: {
+  params: Promise<{ chatId: string }>;
+}) {
+  const params = await props.params;
   const tasks = [
     getAuthTypeMetadataSS(),
     getCurrentUserSS(),
@@ -60,9 +63,9 @@ export default async function Page({ params }: { params: { chatId: string } }) {
   }
   const persona: Persona =
     chatSession?.persona_id && availableAssistants?.length
-      ? (availableAssistants.find((p) => p.id === chatSession.persona_id) ??
-        defaultPersona)
-      : (availableAssistants?.[0] ?? defaultPersona);
+      ? availableAssistants.find((p) => p.id === chatSession.persona_id) ??
+        defaultPersona
+      : availableAssistants?.[0] ?? defaultPersona;
 
   return (
     <div>

@@ -1,4 +1,5 @@
 "use client";
+import { use } from "react";
 
 import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -46,7 +47,8 @@ function Main({ id }: { id: number }) {
   );
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const id = parseInt(params.id);
 
   return (

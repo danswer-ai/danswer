@@ -1,4 +1,5 @@
 "use client";
+import { use } from "react";
 
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { refreshDocumentSets, useDocumentSets } from "../hooks";
@@ -93,11 +94,10 @@ function Main({ documentSetId }: { documentSetId: number }) {
   );
 }
 
-export default function Page({
-  params,
-}: {
-  params: { documentSetId: string };
+export default function Page(props: {
+  params: Promise<{ documentSetId: string }>;
 }) {
+  const params = use(props.params);
   const documentSetId = parseInt(params.documentSetId);
 
   return (

@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import Title from "@/components/ui/title";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, use } from "react";
 import useSWR, { mutate } from "swr";
 import { AdvancedConfigDisplay, ConfigDisplay } from "./ConfigDisplay";
 import { DeletionButton } from "./DeletionButton";
@@ -278,7 +278,8 @@ function Main({ ccPairId }: { ccPairId: number }) {
   );
 }
 
-export default function Page({ params }: { params: { ccPairId: string } }) {
+export default function Page(props: { params: Promise<{ ccPairId: string }> }) {
+  const params = use(props.params);
   const ccPairId = parseInt(params.ccPairId);
 
   return (

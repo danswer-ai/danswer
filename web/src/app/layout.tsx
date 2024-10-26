@@ -17,13 +17,10 @@ import { Logo } from "@/components/Logo";
 import { fetchAssistantData } from "@/lib/chat/fetchAssistantdata";
 import { AppProvider } from "@/components/context/AppProvider";
 import { PHProvider } from "./providers";
-import { default as dynamicImport } from "next/dynamic";
 import { getCurrentUserSS } from "@/lib/userSS";
 import CardSection from "@/components/admin/CardSection";
-
-const PostHogPageView = dynamicImport(() => import("./PostHogPageView"), {
-  ssr: false,
-});
+import { Suspense } from "react";
+import PostHogPageView from "./PostHogPageView";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -181,7 +178,9 @@ export default async function RootLayout({
       hasAnyConnectors={hasAnyConnectors}
       hasImageCompatibleModel={hasImageCompatibleModel}
     >
-      <PostHogPageView />
+      <Suspense fallback={null}>
+        <PostHogPageView />
+      </Suspense>
       {children}
     </AppProvider>
   );

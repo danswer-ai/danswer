@@ -9,7 +9,10 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { BackButton } from "@/components/BackButton";
 import { ToolIcon } from "@/components/icons/icons";
 
-export default async function Page({ params }: { params: { toolId: string } }) {
+export default async function Page(props: {
+  params: Promise<{ toolId: string }>;
+}) {
+  const params = await props.params;
   const tool = await fetchToolByIdSS(params.toolId);
 
   let body;

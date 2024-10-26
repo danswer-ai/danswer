@@ -3,7 +3,7 @@
   "version": "0.2-dev",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -13,6 +13,7 @@
     "@dnd-kit/modifiers": "^7.0.0",
     "@dnd-kit/sortable": "^8.0.0",
     "@headlessui/tailwindcss": "^0.2.1",
+    "@headlessui/react": "^2.2.0",
     "@phosphor-icons/react": "^2.0.8",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-popover": "^1.1.2",
@@ -39,7 +40,7 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.454.0",
     "mdast-util-find-and-replace": "^3.0.1",
-    "next": "^14.2.3",
+    "next": "^15.0.1",
     "npm": "^10.8.0",
     "postcss": "^8.4.31",
     "posthog-js": "^1.176.0",
@@ -71,5 +72,10 @@
     "eslint": "^8.48.0",
     "eslint-config-next": "^14.1.0",
     "prettier": "2.8.8"
+  },
+  "overrides": {
+    "@tremor/react": {
+      "@headlessui/react": "2.2.0"
+    } 
   }
 }

@@ -5,6 +5,7 @@ import {
   TableHead,
   TableBody,
   TableCell,
+  TableHeader,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -363,52 +364,54 @@ export function CCPairIndexingStatusTable({
 
   return (
     <Table>
-      <ConnectorRow
-        invisible
-        ccPairsIndexingStatus={{
-          cc_pair_id: 1,
-          name: "Sample File Connector",
-          cc_pair_status: ConnectorCredentialPairStatus.ACTIVE,
-          last_status: "success",
-          connector: {
+      <TableHeader>
+        <ConnectorRow
+          invisible
+          ccPairsIndexingStatus={{
+            cc_pair_id: 1,
             name: "Sample File Connector",
-            source: "file",
-            input_type: "poll",
-            connector_specific_config: {
-              file_locations: ["/path/to/sample/file.txt"],
+            cc_pair_status: ConnectorCredentialPairStatus.ACTIVE,
+            last_status: "success",
+            connector: {
+              name: "Sample File Connector",
+              source: "file",
+              input_type: "poll",
+              connector_specific_config: {
+                file_locations: ["/path/to/sample/file.txt"],
+              },
+              refresh_freq: 86400,
+              prune_freq: null,
+              indexing_start: new Date("2023-07-01T12:00:00Z"),
+              id: 1,
+              credential_ids: [],
+              time_created: "2023-07-01T12:00:00Z",
+              time_updated: "2023-07-01T12:00:00Z",
             },
-            refresh_freq: 86400,
-            prune_freq: null,
-            indexing_start: new Date("2023-07-01T12:00:00Z"),
-            id: 1,
-            credential_ids: [],
-            time_created: "2023-07-01T12:00:00Z",
-            time_updated: "2023-07-01T12:00:00Z",
-          },
-          credential: {
-            id: 1,
-            name: "Sample Credential",
-            source: "file",
-            user_id: "1",
-            time_created: "2023-07-01T12:00:00Z",
-            time_updated: "2023-07-01T12:00:00Z",
-            credential_json: {},
-            admin_public: false,
-          },
-          access_type: "public",
-          docs_indexed: 1000,
-          last_success: "2023-07-01T12:00:00Z",
-          last_finished_status: "success",
-          latest_index_attempt: null,
-          owner: "1",
-          error_msg: "",
-          deletion_attempt: null,
-          is_deletable: true,
-          in_progress: false,
-          groups: [], // Add this line
-        }}
-        isEditable={false}
-      />
+            credential: {
+              id: 1,
+              name: "Sample Credential",
+              source: "file",
+              user_id: "1",
+              time_created: "2023-07-01T12:00:00Z",
+              time_updated: "2023-07-01T12:00:00Z",
+              credential_json: {},
+              admin_public: false,
+            },
+            access_type: "public",
+            docs_indexed: 1000,
+            last_success: "2023-07-01T12:00:00Z",
+            last_finished_status: "success",
+            latest_index_attempt: null,
+            owner: "1",
+            error_msg: "",
+            deletion_attempt: null,
+            is_deletable: true,
+            in_progress: false,
+            groups: [], // Add this line
+          }}
+          isEditable={false}
+        />
+      </TableHeader>
       <div className="flex -mt-12 items-center w-0 m4 gap-x-2">
         <input
           type="text"
