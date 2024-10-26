@@ -33,7 +33,7 @@ jobs:
         id: list-branches
         run: |
           git fetch --all --tags
-          BRANCHES=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin/release/* | sed 's|origin/release/||' | sort -Vr)
+          BRANCHES=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin/* | sed 's|origin/||' | sort -Vr)
           BETA=$(echo "$BRANCHES" | head -n 1)
           STABLE=$(echo "$BRANCHES" | head -n 2 | tail -n 1)
           echo "beta=$BETA" >> $GITHUB_OUTPUT
