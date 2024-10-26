@@ -50,82 +50,82 @@ const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   );
 };
 
-const UsersTables = ({ q }: { q: string }) => {
-  const [invitedPage, setInvitedPage] = useState(1);
-  const [acceptedPage, setAcceptedPage] = useState(1);
-  const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
-    `/api/manage/users?q=${encodeURI(q)}&accepted_page=${
-      acceptedPage - 1
-    }&invited_page=${invitedPage - 1}`,
-    errorHandlingFetcher
-  );
-  const {
-    data: validDomains,
-    isLoading: isLoadingDomains,
-    error: domainsError,
-  } = useSWR<string[]>("/api/manage/admin/valid-domains", errorHandlingFetcher);
+// const UsersTables = ({ q }: { q: string }) => {
+//   const [invitedPage, setInvitedPage] = useState(1);
+//   const [acceptedPage, setAcceptedPage] = useState(1);
+//   const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
+//     `/api/manage/users?q=${encodeURI(q)}&accepted_page=${
+//       acceptedPage - 1
+//     }&invited_page=${invitedPage - 1}`,
+//     errorHandlingFetcher
+//   );
+//   const {
+//     data: validDomains,
+//     isLoading: isLoadingDomains,
+//     error: domainsError,
+//   } = useSWR<string[]>("/api/manage/admin/valid-domains", errorHandlingFetcher);
 
-  if (isLoading || isLoadingDomains) {
-    return <LoadingAnimation text="Loading" />;
-  }
+//   if (isLoading || isLoadingDomains) {
+//     return <LoadingAnimation text="Loading" />;
+//   }
 
-  if (error || !data) {
-    return (
-      <ErrorCallout
-        errorTitle="Error loading users"
-        errorMsg={error?.info?.detail}
-      />
-    );
-  }
+//   if (error || !data) {
+//     return (
+//       <ErrorCallout
+//         errorTitle="Error loading users"
+//         errorMsg={error?.info?.detail}
+//       />
+//     );
+//   }
 
-  if (domainsError || !validDomains) {
-    return (
-      <ErrorCallout
-        errorTitle="Error loading valid domains"
-        errorMsg={domainsError?.info?.detail}
-      />
-    );
-  }
+//   if (domainsError || !validDomains) {
+//     return (
+//       <ErrorCallout
+//         errorTitle="Error loading valid domains"
+//         errorMsg={domainsError?.info?.detail}
+//       />
+//     );
+//   }
 
-  const { accepted, invited, accepted_pages, invited_pages } = data;
+//   const { accepted, invited, accepted_pages, invited_pages } = data;
 
-  // remove users that are already accepted
-  const finalInvited = invited.filter(
-    (user) => !accepted.map((u) => u.email).includes(user.email)
-  );
+//   // remove users that are already accepted
+//   const finalInvited = invited.filter(
+//     (user) => !accepted.map((u) => u.email).includes(user.email)
+//   );
 
-  return (
-    <>
-      <HidableSection sectionTitle="Invited Users">
-        {invited.length > 0 ? (
-          finalInvited.length > 0 ? (
-            <InvitedUserTable
-              users={finalInvited}
-              currentPage={invitedPage}
-              onPageChange={setInvitedPage}
-              totalPages={invited_pages}
-              mutate={mutate}
-            />
-          ) : (
-            <div className="text-sm">
-              To invite additional teammates, use the <b>Invite Users</b> button
-              above!
-            </div>
-          )
-        ) : (
-          <ValidDomainsDisplay validDomains={validDomains} />
-        )}
-      </HidableSection>
-      <SignedUpUserTable
-        users={accepted}
-        currentPage={acceptedPage}
-        onPageChange={setAcceptedPage}
-        totalPages={accepted_pages}
-        mutate={mutate}
-      />
-    </>
-  );
-};
+//   return (
+//     <>
+//       <HidableSection sectionTitle="Invited Users">
+//         {invited.length > 0 ? (
+//           finalInvited.length > 0 ? (
+//             <InvitedUserTable
+//               users={finalInvited}
+//               currentPage={invitedPage}
+//               onPageChange={setInvitedPage}
+//               totalPages={invited_pages}
+//               mutate={mutate}
+//             />
+//           ) : (
+//             <div className="text-sm">
+//               To invite additional teammates, use the <b>Invite Users</b> button
+//               above!
+//             </div>
+//           )
+//         ) : (
+//           <ValidDomainsDisplay validDomains={validDomains} />
+//         )}
+//       </HidableSection>
+//       <SignedUpUserTable
+//         users={accepted}
+//         currentPage={acceptedPage}
+//         onPageChange={setAcceptedPage}
+//         totalPages={accepted_pages}
+//         mutate={mutate}
+//       />
+//     </>
+//   );
+// };
 
 const SearchableTables = () => {
   const [query, setQuery] = useState("");

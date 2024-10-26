@@ -126,9 +126,9 @@ export function DocumentMetadataBlock({
 }) {
   // don't display super long tags, as they are ugly
   const MAXIMUM_TAG_LENGTH = 40;
-  const score = Math.abs(document.score) * 100;
-  const badgeVariant =
-    score < 50 ? "destructive" : score < 80 ? "warning" : "success";
+  // const score = Math.abs(document.score) * 100;
+  // const badgeVariant =
+  //   score < 50 ? "destructive" : score < 80 ? "warning" : "success";
 
   return (
     <div className="flex flex-col">
@@ -154,11 +154,11 @@ export function DocumentMetadataBlock({
             })}
         </>
       )}
-      {document.score !== null && (
+      {/* {document.score !== null && (
         <div className="flex items-center gap-1">
           <Badge variant={badgeVariant}>{score.toFixed()}%</Badge>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

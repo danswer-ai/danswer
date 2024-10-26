@@ -25,6 +25,7 @@ import { cookies } from "next/headers";
 import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/constants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
+import { checkLLMSupportsImageInput } from "../llm/utils";
 
 interface FetchChatDataResult {
   user: User | null;
@@ -42,6 +43,8 @@ interface FetchChatDataResult {
   shouldShowWelcomeModal: boolean;
   userInputPrompts: InputPrompt[];
   shouldDisplaySourcesIncompleteModal: boolean;
+  hasAnyConnectors: boolean;
+  hasImageCompatibleModel: boolean;
 }
 
 export async function fetchChatData(
@@ -209,10 +212,13 @@ export async function fetchChatData(
     assistants = assistants.filter((assistant) => assistant.num_chunks === 0);
   }
 
-  const hasOpenAIProvider = llmProviders.some(
-    (provider) => provider.provider === "openai"
+  const hasImageCompatibleModel = llmProviders.some(
+    (provider) =>
+      provider.provider === "openai" ||
+      provider.model_names.some((model) => checkLLMSupportsImageInput(model))
   );
-  if (!hasOpenAIProvider) {
+
+  if (!hasImageCompatibleModel) {
     assistants = assistants.filter(
       (assistant) =>
         !assistant.tools.some(
@@ -249,5 +255,7 @@ export async function fetchChatData(
     shouldShowWelcomeModal,
     userInputPrompts,
     shouldDisplaySourcesIncompleteModal,
+    hasAnyConnectors,
+    hasImageCompatibleModel,
   };
 }

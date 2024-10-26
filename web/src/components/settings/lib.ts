@@ -18,7 +18,7 @@ export async function fetchStandardSettingsSS() {
   return fetchSS("/settings");
 }
 
-export async function fetchFeatureFlag() {
+export async function fetchFeatureFlagSS() {
   return fetchSS("/ff");
 }
 
@@ -31,7 +31,7 @@ export async function fetchCustomAnalyticsScriptSS() {
 }
 
 export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
-  const tasks = [fetchStandardSettingsSS(), fetchFeatureFlag()];
+  const tasks = [fetchStandardSettingsSS(), fetchFeatureFlagSS()];
   if (SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED) {
     tasks.push(fetchEnterpriseSettingsSS());
     if (CUSTOM_ANALYTICS_ENABLED) {
@@ -66,7 +66,7 @@ export async function fetchSettingsSS(): Promise<CombinedSettings | null> {
     let featureFlags: FeatureFlags;
     if (!results[1].ok) {
       throw new Error(
-        `fetchFeatureFlags failed: status=${results[1].status} body=${await results[0].text()}`
+        `fetchFeatureFlagSS failed: status=${results[1].status} body=${await results[0].text()}`
       );
     } else {
       featureFlags = await results[1].json();

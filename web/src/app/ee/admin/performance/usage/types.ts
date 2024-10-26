@@ -1,4 +1,4 @@
-import { Feedback, SessionType } from "@/lib/types";
+import { Feedback, MinimalTeamspaceSnapshot, SessionType } from "@/lib/types";
 
 export interface QueryAnalytics {
   total_queries: number;

@@ -180,9 +180,8 @@ export const TeamspaceMember = ({
                       <Checkbox />
                     </TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead>Email Address</TableHead>
-                    <TableHead>Teams</TableHead>
+                    {/* <TableHead>Workspace</TableHead> */}
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -210,10 +209,9 @@ export const TeamspaceMember = ({
                                 user.role.slice(1)}
                             </Badge>
                           </div>
-                          <span className="text-xs">@username</span>
+                          {/* <span className="text-xs">@username</span> */}
                         </div>
                       </TableCell>
-                      <TableCell>{user.status}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.workspace?.workspace_name}</TableCell>
                       <TableCell>

@@ -39,7 +39,7 @@ export interface Assistant {
   builtin_assistant: boolean;
   is_default_assistant: boolean;
   users: MinimalUserSnapshot[];
-  teamspace: number[];
+  groups: number[];
   icon_shape?: number;
   icon_color?: string;
   uploaded_image_id?: string;

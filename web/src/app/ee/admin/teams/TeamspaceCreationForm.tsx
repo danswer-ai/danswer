@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 interface TeamspaceCreationFormProps {
   onClose: () => void;
   users: User[];
-  ccPairs: ConnectorIndexingStatus<any, any>[] | undefined;
+  ccPairs: ConnectorIndexingStatus<any, any>[];
   existingTeamspace?: Teamspace;
   assistants: Assistant[];
   documentSets: DocumentSet[] | undefined;
@@ -42,44 +42,44 @@ export const TeamspaceCreationForm = ({
 }: TeamspaceCreationFormProps) => {
   const router = useRouter();
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [tokenBudget, setTokenBudget] = useState(0);
-  const [periodHours, setPeriodHours] = useState(0);
+  // const [tokenBudget, setTokenBudget] = useState(0);
+  // const [periodHours, setPeriodHours] = useState(0);
   const isUpdate = existingTeamspace !== undefined;
   const { toast } = useToast();
 
-  const setTokenRateLimit = async (teamspaceId: number) => {
-    const response = await fetch(
-      `/api/admin/token-rate-limits/teamspace/${teamspaceId}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          enabled: true,
-          token_budget: tokenBudget,
-          period_hours: periodHours,
-        }),
-      }
-    );
+  // const setTokenRateLimit = async (teamspaceId: number) => {
+  //   const response = await fetch(
+  //     `/api/admin/token-rate-limits/teamspace/${teamspaceId}`,
+  //     {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         enabled: true,
+  //         token_budget: tokenBudget,
+  //         period_hours: periodHours,
+  //       }),
+  //     }
+  //   );
 
-    if (!response.ok) {
-      const errorMsg =
-        (await response.json()).detail || "Failed to set token rate limit.";
-      toast({
-        title: "Operation Failed",
-        description: `Could not set token rate limit: ${errorMsg}`,
-        variant: "destructive",
-      });
-      return;
-    }
+  //   if (!response.ok) {
+  //     const errorMsg =
+  //       (await response.json()).detail || "Failed to set token rate limit.";
+  //     toast({
+  //       title: "Operation Failed",
+  //       description: `Could not set token rate limit: ${errorMsg}`,
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
-    toast({
-      title: "Token Rate Limit Set",
-      description: "The token rate limit has been successfully set.",
-      variant: "success",
-    });
-  };
+  //   toast({
+  //     title: "Token Rate Limit Set",
+  //     description: "The token rate limit has been successfully set.",
+  //     variant: "success",
+  //   });
+  // };
 
   return (
     <div>
@@ -107,7 +107,7 @@ export const TeamspaceCreationForm = ({
           if (response.ok) {
             const { id } = await response.json();
 
-            await setTokenRateLimit(id);
+            // await setTokenRateLimit(id);
             router.refresh();
             toast({
               title: isUpdate ? "Teamspace Updated!" : "Teamspace Created!",
@@ -218,7 +218,7 @@ export const TeamspaceCreationForm = ({
                 </div>
               </div>
 
-              <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
+              {/* <div className="flex justify-between pb-4 gap-2 flex-col lg:flex-row">
                 <p className="whitespace-nowrap w-1/2 font-semibold">
                   Set Token Rate Limit
                 </p>
@@ -236,7 +236,7 @@ export const TeamspaceCreationForm = ({
                     onChange={(e) => setTokenBudget(Number(e.target.value))}
                   />
                 </div>
-              </div>
+              </div> */}
 
               <div className="flex gap-2 pt-4 justify-end">
                 <Button

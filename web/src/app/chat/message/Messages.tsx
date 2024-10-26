@@ -333,298 +333,298 @@ export const AIMessage = ({
   ) : undefined;
 
   return (
-    <div className={`flex -mr-6 w-full pb-5`}>
-      <div className="w-full">
-        <div className="">
-          <div className="flex">
+    <div className={`w-full`}>
+      <div className="">
+        <div className="flex items-center">
+          <div className="mx-1 flex items-center">
             <AssistantIcon
               size="large"
               assistant={alternativeAssistant || currentAssistant}
             />
-
-            <div className="my-auto ml-2 font-bold text-inverted-inverted">
-              {assistantName || "enMedD AI"}
-            </div>
-
-            {query === undefined &&
-              hasDocs &&
-              handleShowRetrieved !== undefined &&
-              isCurrentlyShowingRetrieved !== undefined &&
-              !retrievalDisabled && (
-                <div className="absolute flex ml-8 w-message-xs 2xl:w-message-sm 3xl:w-message-default">
-                  <div className="ml-auto">
-                    <ShowHideDocsButton
-                      messageId={messageId}
-                      isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
-                      handleShowRetrieved={handleShowRetrieved}
-                      handleToggleSideBar={handleToggleSideBar}
-                    />
-                  </div>
-                </div>
-              )}
           </div>
 
-          <div className="pl-1.5 md:pl-12 break-words w-full">
-            {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
-              <>
-                {query !== undefined &&
-                  handleShowRetrieved !== undefined &&
-                  !retrievalDisabled && (
-                    <div className="mb-1">
-                      <SearchSummary
-                        query={query}
-                        finished={toolCall?.tool_result != undefined}
-                        hasDocs={hasDocs || false}
-                        messageId={messageId}
-                        handleShowRetrieved={handleShowRetrieved}
-                        handleSearchQueryEdit={handleSearchQueryEdit}
-                      />
-                    </div>
-                  )}
-                {handleForceSearch &&
-                  content &&
-                  query === undefined &&
-                  !hasDocs &&
-                  !retrievalDisabled && (
-                    <div className="mb-1">
-                      <SkippedSearch handleForceSearch={handleForceSearch} />
-                    </div>
-                  )}
-              </>
-            ) : null}
+          <div className="my-auto ml-2 font-bold text-inverted-inverted">
+            {assistantName || "enMedD AI"}
+          </div>
 
-            {toolCall &&
-              !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
-                <div className="my-2">
-                  <ToolRunDisplay
-                    toolName={
-                      toolCall.tool_result && content
-                        ? `Used "${toolCall.tool_name}"`
-                        : `Using "${toolCall.tool_name}"`
-                    }
-                    toolLogo={<Wrench size={15} className="my-auto mr-1" />}
-                    isRunning={!toolCall.tool_result || !content}
+          {query === undefined &&
+            hasDocs &&
+            handleShowRetrieved !== undefined &&
+            isCurrentlyShowingRetrieved !== undefined &&
+            !retrievalDisabled && (
+              <div className="absolute flex ml-8 w-message-xs 2xl:w-message-sm 3xl:w-message-default">
+                <div className="ml-auto">
+                  <ShowHideDocsButton
+                    messageId={messageId}
+                    isCurrentlyShowingRetrieved={isCurrentlyShowingRetrieved}
+                    handleShowRetrieved={handleShowRetrieved}
+                    handleToggleSideBar={handleToggleSideBar}
                   />
                 </div>
-              )}
-
-            {toolCall &&
-              (!files || files.length == 0) &&
-              toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
-              !toolCall.tool_result && <GeneratingImageDisplay />}
-
-            {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
-              <ToolRunDisplay
-                toolName={
-                  toolCall.tool_result
-                    ? `Searched the internet`
-                    : `Searching the internet`
-                }
-                toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
-                isRunning={!toolCall.tool_result}
-              />
-            )}
-
-            {content || files ? (
-              <>
-                <FileDisplay files={files || []} />
-
-                {typeof content === "string" ? (
-                  <div className="max-w-full prose markdown">
-                    {renderedMarkdown}
-                  </div>
-                ) : (
-                  content
-                )}
-              </>
-            ) : isComplete ? null : (
-              defaultLoader
-            )}
-            {citedDocuments && citedDocuments.length > 0 && (
-              <div className="mt-2 flex flex-col gap-1">
-                <b className="text-sm text-inverted-inverted">Sources:</b>
-                <div className="flex flex-wrap gap-2">
-                  {citedDocuments
-                    .filter(([_, document]) => document.semantic_identifier)
-                    .map(([citationKey, document], ind) => {
-                      const display = (
-                        <div className="w-full flex gap-1.5">
-                          <SourceIcon
-                            sourceType={document.source_type}
-                            iconSize={16}
-                          />
-                          <p className="truncate">
-                            [{citationKey}] {document!.semantic_identifier}
-                          </p>
-                        </div>
-                      );
-                      if (document.link) {
-                        return (
-                          <Badge
-                            variant="secondary"
-                            className="cursor-pointer hover:bg-opacity-75"
-                            key={document.document_id}
-                          >
-                            <a
-                              href={document.link}
-                              target="_blank"
-                              className="cursor-pointer flex truncate"
-                            >
-                              {display}
-                            </a>
-                          </Badge>
-                        );
-                      } else {
-                        return (
-                          <Badge
-                            variant="secondary"
-                            className="cursor-pointer hover:bg-opacity-75"
-                            key={document.document_id}
-                          >
-                            {display}
-                          </Badge>
-                        );
-                      }
-                    })}
-                </div>
               </div>
             )}
-          </div>
-          {handleFeedback && (
-            <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
-              <div className="flex justify-start w-full gap-x-0.5">
-                {includeMessageSwitcher && (
-                  <div className="-mx-1 mr-auto">
-                    <MessageSwitcher
-                      currentPage={currentMessageInd + 1}
-                      totalPages={otherMessagesCanSwitchTo.length}
-                      handlePrevious={() => {
-                        onMessageSelection(
-                          otherMessagesCanSwitchTo[currentMessageInd - 1]
-                        );
-                      }}
-                      handleNext={() => {
-                        onMessageSelection(
-                          otherMessagesCanSwitchTo[currentMessageInd + 1]
-                        );
-                      }}
+        </div>
+
+        <div className="pl-1.5 md:pl-12 break-words w-full">
+          {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
+            <>
+              {query !== undefined &&
+                handleShowRetrieved !== undefined &&
+                !retrievalDisabled && (
+                  <div className="mb-1">
+                    <SearchSummary
+                      query={query}
+                      finished={toolCall?.tool_result != undefined}
+                      hasDocs={hasDocs || false}
+                      messageId={messageId}
+                      handleShowRetrieved={handleShowRetrieved}
+                      handleSearchQueryEdit={handleSearchQueryEdit}
                     />
                   </div>
                 )}
-              </div>
-              <CopyButton content={content.toString()} smallIcon />
-              {showLikeButton && (
-                <CustomTooltip
-                  trigger={
-                    <CustomModal
-                      trigger={
-                        <Button
-                          variant="ghost"
-                          size="smallIcon"
-                          onClick={() => {
-                            handleFeedback("like");
-                            setIsLikeModalOpen(true);
-                          }}
-                          className={
-                            feedbackSubmitted ? "pointer-events-none" : ""
-                          }
-                        >
-                          <ThumbsUp
-                            size={16}
-                            className={
-                              feedbackSubmitted
-                                ? "fill-primary stroke-primary cursor-not-allowed"
-                                : ""
-                            }
-                          />
-                        </Button>
-                      }
-                      onClose={() => setIsLikeModalOpen(false)}
-                      open={isLikeModalOpen}
-                      title={
-                        <div className="flex text-2xl font-bold pb-6">
-                          <div className="my-auto mr-1">
-                            <ThumbsUpIcon className="my-auto mr-2 text-green-500" />
-                          </div>
-                          Provide additional feedback
-                        </div>
-                      }
-                    >
-                      <FeedbackModal
-                        feedbackType="like"
-                        onClose={onClose}
-                        onSubmit={handleLikeSubmit}
-                        onModalClose={() => setIsLikeModalOpen(false)}
-                      />
-                    </CustomModal>
-                  }
-                  side="bottom"
-                >
-                  Good response
-                </CustomTooltip>
-              )}
+              {handleForceSearch &&
+                content &&
+                query === undefined &&
+                !hasDocs &&
+                !retrievalDisabled && (
+                  <div className="mb-1">
+                    <SkippedSearch handleForceSearch={handleForceSearch} />
+                  </div>
+                )}
+            </>
+          ) : null}
 
-              {showDislikeButton && (
-                <CustomTooltip
-                  trigger={
-                    <CustomModal
-                      trigger={
-                        <Button
-                          variant="ghost"
-                          size="smallIcon"
-                          onClick={() => {
-                            handleFeedback("dislike");
-                            setIsDislikeModalOpen(true);
-                          }}
-                          className={
-                            feedbackSubmitted ? "pointer-events-none" : ""
-                          }
-                        >
-                          <ThumbsDown
-                            size={16}
-                            className={
-                              feedbackSubmitted
-                                ? "fill-primary stroke-primary cursor-not-allowed"
-                                : ""
-                            }
-                          />
-                        </Button>
-                      }
-                      onClose={() => setIsDislikeModalOpen(false)}
-                      open={isDislikeModalOpen}
-                      title={
-                        <div className="flex text-2xl font-bold pb-6">
-                          <div className="my-auto mr-1">
-                            <ThumbsDownIcon className="my-auto mr-2 text-red-600" />
-                          </div>
-                          Provide additional feedback
-                        </div>
-                      }
-                    >
-                      <FeedbackModal
-                        feedbackType="dislike"
-                        onClose={onClose}
-                        onSubmit={handleDislikeSubmit}
-                        onModalClose={() => setIsDislikeModalOpen(false)}
-                      />
-                    </CustomModal>
+          {toolCall &&
+            !TOOLS_WITH_CUSTOM_HANDLING.includes(toolCall.tool_name) && (
+              <div className="my-2">
+                <ToolRunDisplay
+                  toolName={
+                    toolCall.tool_result && content
+                      ? `Used "${toolCall.tool_name}"`
+                      : `Using "${toolCall.tool_name}"`
                   }
-                  side="bottom"
-                >
-                  Bad response
-                </CustomTooltip>
-              )}
-              {regenerate && (
-                <RegenerateOption
-                  onHoverChange={setIsRegenerateHovered}
-                  selectedAssistant={currentAssistant!}
-                  regenerate={regenerate}
-                  overriddenModel={overriddenModel}
+                  toolLogo={<Wrench size={15} className="my-auto mr-1" />}
+                  isRunning={!toolCall.tool_result || !content}
                 />
+              </div>
+            )}
+
+          {toolCall &&
+            (!files || files.length == 0) &&
+            toolCall.tool_name === IMAGE_GENERATION_TOOL_NAME &&
+            !toolCall.tool_result && <GeneratingImageDisplay />}
+
+          {toolCall && toolCall.tool_name === INTERNET_SEARCH_TOOL_NAME && (
+            <ToolRunDisplay
+              toolName={
+                toolCall.tool_result
+                  ? `Searched the internet`
+                  : `Searching the internet`
+              }
+              toolLogo={<FiGlobe size={15} className="my-auto mr-1" />}
+              isRunning={!toolCall.tool_result}
+            />
+          )}
+
+          {content || files ? (
+            <>
+              <FileDisplay files={files || []} />
+
+              {typeof content === "string" ? (
+                <div className="max-w-full prose markdown">
+                  {renderedMarkdown}
+                </div>
+              ) : (
+                content
               )}
+            </>
+          ) : isComplete ? null : (
+            defaultLoader
+          )}
+          {citedDocuments && citedDocuments.length > 0 && (
+            <div className="mt-2 flex flex-col gap-1">
+              <b className="text-sm text-inverted-inverted">Sources:</b>
+              <div className="flex flex-wrap gap-2">
+                {citedDocuments
+                  .filter(([_, document]) => document.semantic_identifier)
+                  .map(([citationKey, document], ind) => {
+                    const display = (
+                      <div className="w-full flex gap-1.5">
+                        <SourceIcon
+                          sourceType={document.source_type}
+                          iconSize={16}
+                        />
+                        <p className="truncate">
+                          [{citationKey}] {document!.semantic_identifier}
+                        </p>
+                      </div>
+                    );
+                    if (document.link) {
+                      return (
+                        <Badge
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-opacity-75"
+                          key={document.document_id}
+                        >
+                          <a
+                            href={document.link}
+                            target="_blank"
+                            className="cursor-pointer flex truncate"
+                          >
+                            {display}
+                          </a>
+                        </Badge>
+                      );
+                    } else {
+                      return (
+                        <Badge
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-opacity-75"
+                          key={document.document_id}
+                        >
+                          {display}
+                        </Badge>
+                      );
+                    }
+                  })}
+              </div>
             </div>
           )}
         </div>
+        {handleFeedback && (
+          <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
+            <div className="flex justify-start w-full gap-x-0.5">
+              {includeMessageSwitcher && (
+                <div className="-mx-1 mr-auto">
+                  <MessageSwitcher
+                    currentPage={currentMessageInd + 1}
+                    totalPages={otherMessagesCanSwitchTo.length}
+                    handlePrevious={() => {
+                      onMessageSelection(
+                        otherMessagesCanSwitchTo[currentMessageInd - 1]
+                      );
+                    }}
+                    handleNext={() => {
+                      onMessageSelection(
+                        otherMessagesCanSwitchTo[currentMessageInd + 1]
+                      );
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            <CopyButton content={content.toString()} smallIcon />
+            {showLikeButton && (
+              <CustomTooltip
+                trigger={
+                  <CustomModal
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="smallIcon"
+                        onClick={() => {
+                          handleFeedback("like");
+                          setIsLikeModalOpen(true);
+                        }}
+                        className={
+                          feedbackSubmitted ? "pointer-events-none" : ""
+                        }
+                      >
+                        <ThumbsUp
+                          size={16}
+                          className={
+                            feedbackSubmitted
+                              ? "fill-primary stroke-primary cursor-not-allowed"
+                              : ""
+                          }
+                        />
+                      </Button>
+                    }
+                    onClose={() => setIsLikeModalOpen(false)}
+                    open={isLikeModalOpen}
+                    title={
+                      <div className="flex text-2xl font-bold pb-6">
+                        <div className="my-auto mr-1">
+                          <ThumbsUpIcon className="my-auto mr-2 text-green-500" />
+                        </div>
+                        Provide additional feedback
+                      </div>
+                    }
+                  >
+                    <FeedbackModal
+                      feedbackType="like"
+                      onClose={onClose}
+                      onSubmit={handleLikeSubmit}
+                      onModalClose={() => setIsLikeModalOpen(false)}
+                    />
+                  </CustomModal>
+                }
+                side="bottom"
+              >
+                Good response
+              </CustomTooltip>
+            )}
+
+            {showDislikeButton && (
+              <CustomTooltip
+                trigger={
+                  <CustomModal
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="smallIcon"
+                        onClick={() => {
+                          handleFeedback("dislike");
+                          setIsDislikeModalOpen(true);
+                        }}
+                        className={
+                          feedbackSubmitted ? "pointer-events-none" : ""
+                        }
+                      >
+                        <ThumbsDown
+                          size={16}
+                          className={
+                            feedbackSubmitted
+                              ? "fill-primary stroke-primary cursor-not-allowed"
+                              : ""
+                          }
+                        />
+                      </Button>
+                    }
+                    onClose={() => setIsDislikeModalOpen(false)}
+                    open={isDislikeModalOpen}
+                    title={
+                      <div className="flex text-2xl font-bold pb-6">
+                        <div className="my-auto mr-1">
+                          <ThumbsDownIcon className="my-auto mr-2 text-red-600" />
+                        </div>
+                        Provide additional feedback
+                      </div>
+                    }
+                  >
+                    <FeedbackModal
+                      feedbackType="dislike"
+                      onClose={onClose}
+                      onSubmit={handleDislikeSubmit}
+                      onModalClose={() => setIsDislikeModalOpen(false)}
+                    />
+                  </CustomModal>
+                }
+                side="bottom"
+              >
+                Bad response
+              </CustomTooltip>
+            )}
+            {regenerate && (
+              <RegenerateOption
+                onHoverChange={setIsRegenerateHovered}
+                selectedAssistant={currentAssistant!}
+                regenerate={regenerate}
+                overriddenModel={overriddenModel}
+              />
+            )}
+          </div>
+        )}
         {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&
           !query &&
           continueGenerating && (

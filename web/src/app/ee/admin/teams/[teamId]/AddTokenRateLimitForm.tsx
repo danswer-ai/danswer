@@ -46,7 +46,7 @@ export const AddTokenRateLimitForm: React.FC<AddMemberFormProps> = ({
           description: "The token rate limit has been successfully created.",
           variant: "success",
         });
-        mutate(`/api/admin/token-rate-limits/user-group/${teamspaceId}`);
+        mutate(`/api/admin/token-rate-limits/teamspace/${teamspaceId}`);
       })
       .catch((error) => {
         toast({

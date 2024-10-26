@@ -64,7 +64,7 @@ class LLMProvider(BaseModel):
     default_model_name: str
     fast_default_model_name: str | None = None
     is_public: bool = True
-    teamspace: list[int] = Field(default_factory=list)
+    groups: list[int] = Field(default_factory=list)
     display_model_names: list[str] | None = None
     deployment_name: str | None = None
 

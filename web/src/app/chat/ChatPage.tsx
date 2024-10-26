@@ -121,6 +121,7 @@ import ResizableSection from "@/components/resizable/ResizableSection";
 import { AnimatePresence, motion } from "framer-motion";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useAssistants } from "@/context/AssistantsContext";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -133,13 +134,11 @@ export function ChatPage({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const chatContextData = useContext(ChatContext);
 
   let {
     chatSessions,
     availableSources,
     availableDocumentSets,
-    availableAssistants,
     llmProviders,
     folders,
     openedFolders,
@@ -147,12 +146,10 @@ export function ChatPage({
     defaultAssistantId,
     shouldShowWelcomeModal,
     refreshChatSessions,
-  } = chatContextData!;
+  } = useChatContext();
 
   const { toast } = useToast();
   const { user, refreshUser, isLoadingUser } = useUser();
-
-  const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
 
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
@@ -173,17 +170,7 @@ export function ChatPage({
   // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
   const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
 
-  // Assistants in order
-  const { finalAssistants } = useMemo(() => {
-    const { visibleAssistants, hiddenAssistants: _ } = classifyAssistants(
-      user,
-      availableAssistants
-    );
-    const finalAssistants = user
-      ? orderAssistantsForUser(visibleAssistants, user)
-      : visibleAssistants;
-    return { finalAssistants };
-  }, [user, availableAssistants]);
+  const { assistants: availableAssistants, finalAssistants } = useAssistants();
 
   const existingChatSessionAssistantId = selectedChatSession?.assistant_id;
   const [selectedAssistant, setSelectedAssistant] = useState<
@@ -258,7 +245,7 @@ export function ChatPage({
         destructureValue(user?.preferences.default_model)
       );
     }
-  }, [liveAssistant]);
+  }, [liveAssistant, llmProviders, user?.preferences.default_model]);
 
   const stopGenerating = () => {
     const currentSession = currentSessionId();
@@ -725,7 +712,7 @@ export function ChatPage({
         )
       );
     }
-  }, [defaultAssistantId]);
+  }, [defaultAssistantId, availableAssistants, messageHistory.length]);
 
   // future feature / to be removed
   const [
@@ -1685,7 +1672,7 @@ export function ChatPage({
 
   useEffect(() => {
     initializeVisibleRange();
-  }, [router, messageHistory, chatSessionIdRef.current]);
+  }, [router, messageHistory]);
 
   useLayoutEffect(() => {
     const handleScroll = () => {
@@ -1979,6 +1966,7 @@ export function ChatPage({
                                 key={messageReactComponentKey}
                               >
                                 <HumanMessage
+                                  user={user}
                                   stopGenerating={stopGenerating}
                                   content={message.message}
                                   files={message.files}
@@ -2274,6 +2262,7 @@ export function ChatPage({
                             messageHistory[messageHistory.length - 1]?.type !=
                               "user")) && (
                           <HumanMessage
+                            user={user}
                             key={-2}
                             messageId={-1}
                             content={submittedMessage}

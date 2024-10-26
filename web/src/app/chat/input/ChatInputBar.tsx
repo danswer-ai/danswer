@@ -495,7 +495,7 @@ export function ChatInputBar({
               style={{ scrollbarWidth: "thin" }}
               role="textarea"
               aria-multiline
-              placeholder="How can I help you?"
+              placeholder="Send a message"
               value={message}
               onKeyDown={(event) => {
                 if (
@@ -540,10 +540,19 @@ export function ChatInputBar({
 
                 <Popover>
                   <PopoverTrigger>
-                    <Button variant="ghost" className="mr-2">
-                      <Filter size={16} />
-                      Filters
-                    </Button>
+                    <ChatInputOption
+                      flexPriority="second"
+                      toggle
+                      name={getDisplayNameForModel(
+                        llmOverrideManager.llmOverride.modelName ||
+                          (selectedAssistant
+                            ? selectedAssistant.llm_model_version_override ||
+                              llmOverrideManager.globalDefault.modelName ||
+                              llmName
+                            : llmName)
+                      )}
+                      Icon={CpuIconSkeleton}
+                    />
                   </PopoverTrigger>
                   <PopoverContent>
                     <LlmTab
@@ -594,7 +603,10 @@ export function ChatInputBar({
                     onClick={stopGenerating}
                     disabled={chatState != "streaming"}
                   >
-                    <CircleStop size={16} />
+                    <StopGeneratingIcon
+                      className="text-white m-auto flex-none"
+                      size={10}
+                    />
                   </Button>
                 ) : (
                   <Button

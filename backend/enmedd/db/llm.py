@@ -91,7 +91,7 @@ def upsert_llm_provider(
     # Make sure the relationship table stays up to date
     update_group_llm_provider_relationships__no_commit(
         llm_provider_id=existing_llm_provider.id,
-        group_ids=llm_provider.teamspace,
+        group_ids=llm_provider.groups,
         db_session=db_session,
     )
 

@@ -54,7 +54,7 @@ export default async function RootLayout({
         </Head>
         <body className="bg-background text-default">
           <div className="flex flex-col items-center justify-center min-h-screen">
-            <div className="mb-2 flex items-center max-w-[175px]">
+            <div className="mb-4 flex items-center max-w-[175px]">
               <HeaderTitle>enMedD AI</HeaderTitle>
               <Logo height={40} width={40} />
             </div>

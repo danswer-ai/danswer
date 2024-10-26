@@ -71,11 +71,11 @@ export const Main = ({ assistants }: { assistants: Assistant[] }) => {
     }
   };
 
-  const selectedTeamspace = data?.find(
+  const selectedTeamspace = data.find(
     (teamspace) => teamspace.id === selectedTeamspaceId
   );
 
-  const teamspacesWithGradients = data?.map((teamspace) => ({
+  const teamspacesWithGradients = data.map((teamspace) => ({
     ...teamspace,
     gradient: generateGradient(teamspace.name),
   }));

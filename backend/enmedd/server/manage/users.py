@@ -35,6 +35,7 @@ from enmedd.auth.invited_users import write_invited_users
 from enmedd.auth.noauth_user import fetch_no_auth_user
 from enmedd.auth.noauth_user import set_no_auth_user_preferences
 from enmedd.auth.schemas import ChangePassword
+from enmedd.auth.schemas import UserRole
 from enmedd.auth.schemas import UserStatus
 from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_teamspace_admin_user
@@ -67,7 +68,6 @@ from enmedd.server.manage.models import UserByEmail
 from enmedd.server.manage.models import UserInfo
 from enmedd.server.manage.models import UserPreferences
 from enmedd.server.manage.models import UserRoleResponse
-from enmedd.server.manage.models import UserRoleUpdateRequest
 from enmedd.server.models import FullUserSnapshot
 from enmedd.server.models import InvitedUserSnapshot
 from enmedd.server.models import MinimalUserSnapshot
@@ -165,29 +165,68 @@ async def change_password(
     logger.info("Password updated and tokens invalidated")
 
 
-@router.patch("/manage/set-user-role")
-def set_user_role(
-    user_role_update_request: UserRoleUpdateRequest,
-    current_user: User = Depends(current_admin_user),
+# @router.patch("/manage/set-user-role")
+# def set_user_role(
+#     user_role_update_request: UserRoleUpdateRequest,
+#     current_user: User = Depends(current_admin_user),
+#     db_session: Session = Depends(get_session),
+# ) -> None:
+#     user_to_update = get_user_by_email(
+#         email=user_role_update_request.user_email, db_session=db_session
+#     )
+#     if not user_to_update:
+#         raise HTTPException(status_code=404, detail="User not found")
+
+#     if user_to_update.role == user_role_update_request.new_role:
+#         return
+
+#     if current_user.id == user_to_update.id:
+#         raise HTTPException(
+#             status_code=400,
+#             detail="An admin cannot demote themselves from admin role!",
+#         )
+
+#     user_to_update.role = user_role_update_request.new_role.value
+
+#     db_session.commit()
+
+
+@router.patch("/manage/promote-user-to-admin")
+def promote_admin(
+    user_email: UserByEmail,
+    _: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    user_to_update = get_user_by_email(
-        email=user_role_update_request.user_email, db_session=db_session
+    user_to_promote = get_user_by_email(
+        email=user_email.user_email, db_session=db_session
     )
-    if not user_to_update:
+    if not user_to_promote:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user_to_update.role == user_role_update_request.new_role:
-        return
+    user_to_promote.role = UserRole.ADMIN
+    db_session.add(user_to_promote)
+    db_session.commit()
 
-    if current_user.id == user_to_update.id:
+
+@router.patch("/manage/demote-admin-to-basic")
+async def demote_admin(
+    user_email: UserByEmail,
+    user: User = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    user_to_demote = get_user_by_email(
+        email=user_email.user_email, db_session=db_session
+    )
+    if not user_to_demote:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user_to_demote.id == user.id:
         raise HTTPException(
-            status_code=400,
-            detail="An admin cannot demote themselves from admin role!",
+            status_code=400, detail="Cannot demote yourself from admin role!"
         )
 
-    user_to_update.role = user_role_update_request.new_role.value
-
+    user_to_demote.role = UserRole.BASIC
+    db_session.add(user_to_demote)
     db_session.commit()
 
 

@@ -17,6 +17,7 @@ import { Divider } from "@/components/Divider";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { User } from "@/lib/types";
+import { useUser } from "@/components/user/UserProvider";
 
 // TODO: replace the component name
 function BackToEnmeddButton() {
@@ -39,6 +40,7 @@ export function SharedChatDisplay({
   availableAssistants: Assistant[] | null;
 }) {
   const [isReady, setIsReady] = useState(false);
+  const { user, isAdmin, isLoadingUser } = useUser();
   useEffect(() => {
     Prism.highlightAll();
     setIsReady(true);
@@ -85,6 +87,7 @@ export function SharedChatDisplay({
               if (message.type === "user") {
                 return (
                   <HumanMessage
+                    user={user}
                     key={message.messageId}
                     content={message.message}
                   />
