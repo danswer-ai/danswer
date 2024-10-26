@@ -1,6 +1,6 @@
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, List, Optional
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -75,24 +75,28 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         return all_tickets
 
     def _process_tickets(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
+        # Ensure start and end are in UTC
+        start = start.astimezone(timezone.utc)
+        end = end.astimezone(timezone.utc)
+        
         tickets = self._fetch_tickets(start, end)
         doc_batch: List[Document] = []
 
         for ticket in tickets:
-            #convert to iso format
+            # Convert date fields to UTC
             for date_field in ["created_at", "updated_at", "due_by"]:
                 if ticket[date_field].endswith('Z'):
                     ticket[date_field] = ticket[date_field][:-1] + '+00:00'
-                ticket[date_field] = datetime.fromisoformat(ticket[date_field]).strftime("%Y-%m-%d %H:%M:%S")
+                ticket[date_field] = datetime.fromisoformat(ticket[date_field]).replace(tzinfo=timezone.utc)
 
-            #convert all other values to strings
+            # Convert all other values to strings
             ticket = {
-                key: str(value) if not isinstance(value, str) else value
+                key: str(value) if not isinstance(value, (str, datetime)) else value
                 for key, value in ticket.items()
             }
 
             # Checking for overdue tickets
-            today = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            today = datetime.now(timezone.utc)
             ticket["overdue"] = "true" if today > ticket["due_by"] else "false"
 
             # Mapping the status field values
@@ -108,7 +112,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
             # Use list comprehension for building sections
             sections = self.build_doc_sections_from_ticket(ticket)
 
-            created_at = datetime.fromisoformat(ticket["created_at"])
+            created_at = ticket["created_at"]
             if start <= created_at <= end:
                 doc = Document(
                     id=ticket["id"],
@@ -116,9 +120,9 @@ class FreshdeskConnector(PollConnector, LoadConnector):
                     source=DocumentSource.FRESHDESK,
                     semantic_identifier=ticket["subject"],
                     metadata={
-                        key: value
+                        key: value.isoformat() if isinstance(value, datetime) else str(value)
                         for key, value in ticket.items()
-                        if isinstance(value, str) and key not in ["description", "description_text"]
+                        if isinstance(value, (str, datetime)) and key not in ["description", "description_text"]
                     },
                 )
                 doc_batch.append(doc)
@@ -134,7 +138,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         return self._fetch_tickets()
 
     def poll_source(self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch) -> GenerateDocumentsOutput:
-        start_datetime = datetime.fromtimestamp(start)
-        end_datetime = datetime.fromtimestamp(end)
+        start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
+        end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
 
         yield from self._process_tickets(start_datetime, end_datetime)
