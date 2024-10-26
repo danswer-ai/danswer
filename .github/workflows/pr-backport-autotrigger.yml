@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  actions: write  # Allows the workflow to trigger other workflows on push
 
 jobs:
   backport:
@@ -19,9 +20,10 @@ jobs:
 
       - name: Set up Git
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git config --global user.name "yuhongsun96"
+          git config --global user.email "yuhongsun96@gmail.com"
+          # Configure Git to use the PAT for authentication
+          git remote set-url origin https://yuhongsun96:${{ secrets.YUHONG_GH_ACTIONS }}@github.com/${{ github.repository }}.git
 
       - name: Check for Backport Checkbox
         id: checkbox-check
@@ -80,7 +82,7 @@ jobs:
           # Create new beta tag
           git tag ${{ steps.list-branches.outputs.new_beta_tag }}
           # Push the changes and tag to the beta branch
-          git push origin ${{ steps.list-branches.outputs.beta }}
+          git push origin ${{ steps.list-branches.outputs.beta }} --force
           git push origin ${{ steps.list-branches.outputs.new_beta_tag }}
           # Checkout the stable branch
           git checkout ${{ steps.list-branches.outputs.stable }}
@@ -92,5 +94,5 @@ jobs:
           # Create new stable tag
           git tag ${{ steps.list-branches.outputs.new_stable_tag }}
           # Push the changes and tag to the stable branch
-          git push origin ${{ steps.list-branches.outputs.stable }}
+          git push origin ${{ steps.list-branches.outputs.stable }} --force
           git push origin ${{ steps.list-branches.outputs.new_stable_tag }}
