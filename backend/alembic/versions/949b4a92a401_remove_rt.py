@@ -25,7 +25,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     # Deletes all RequestTracker connectors and associated data
     bind = op.get_bind()
     session = Session(bind=bind)
@@ -69,6 +69,6 @@ def upgrade():
     session.commit()
 
 
-def downgrade():
+def downgrade() -> None:
     # No-op downgrade as we cannot restore deleted data
     pass

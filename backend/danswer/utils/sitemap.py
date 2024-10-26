@@ -1,6 +1,5 @@
 import re
 import xml.etree.ElementTree as ET
-from typing import List
 from typing import Set
 from urllib.parse import urljoin
 
@@ -13,7 +12,7 @@ logger = setup_logger()
 
 def _get_sitemap_locations_from_robots(base_url: str) -> Set[str]:
     """Extract sitemap URLs from robots.txt"""
-    sitemap_urls = set()
+    sitemap_urls: set = set()
     try:
         robots_url = urljoin(base_url, "/robots.txt")
         resp = requests.get(robots_url, timeout=10)
@@ -29,7 +28,7 @@ def _get_sitemap_locations_from_robots(base_url: str) -> Set[str]:
 
 def _extract_urls_from_sitemap(sitemap_url: str) -> Set[str]:
     """Extract URLs from a sitemap XML file"""
-    urls = set()
+    urls: set[str] = set()
     try:
         resp = requests.get(sitemap_url, timeout=10)
         if resp.status_code != 200:
@@ -45,8 +44,9 @@ def _extract_urls_from_sitemap(sitemap_url: str) -> Set[str]:
         if root.tag == f"{ns}sitemapindex":
             # This is a sitemap index
             for sitemap in root.findall(f".//{ns}loc"):
-                sub_urls = _extract_urls_from_sitemap(sitemap.text)
-                urls.update(sub_urls)
+                if sitemap.text:
+                    sub_urls = _extract_urls_from_sitemap(sitemap.text)
+                    urls.update(sub_urls)
         else:
             # This is a regular sitemap
             for url in root.findall(f".//{ns}loc"):
@@ -59,7 +59,7 @@ def _extract_urls_from_sitemap(sitemap_url: str) -> Set[str]:
     return urls
 
 
-def list_pages_for_site(site: str) -> List[str]:
+def list_pages_for_site(site: str) -> list[str]:
     """Get list of pages from a site's sitemaps"""
     site = site.rstrip("/")
     all_urls = set()
