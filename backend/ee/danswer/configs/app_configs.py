@@ -25,7 +25,3 @@ NUM_PERMISSION_WORKERS = int(os.environ.get("NUM_PERMISSION_WORKERS") or 2)
 
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
 STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE")
-
-SUPER_USERS = (
-    os.environ.get("SUPER_USERS").split(",") if os.environ.get("SUPER_USERS") else []
-)
