@@ -106,12 +106,6 @@ export interface HubSpotCredentialJson {
   hubspot_access_token: string;
 }
 
-export interface RequestTrackerCredentialJson {
-  requesttracker_username: string;
-  requesttracker_password: string;
-  requesttracker_base_url: string;
-}
-
 export interface Document360CredentialJson {
   portal_id: string;
   document360_api_token: string;
@@ -224,11 +218,6 @@ export const credentialTemplates: Record<ValidSources, any> = {
     portal_id: "",
     document360_api_token: "",
   } as Document360CredentialJson,
-  requesttracker: {
-    requesttracker_username: "",
-    requesttracker_password: "",
-    requesttracker_base_url: "",
-  } as RequestTrackerCredentialJson,
   loopio: {
     loopio_subdomain: "",
     loopio_client_id: "",
@@ -371,12 +360,6 @@ export const credentialDisplayNames: Record<string, string> = {
 
   // HubSpot
   hubspot_access_token: "HubSpot Access Token",
-
-  // Request Tracker
-  requesttracker_username: "Request Tracker Username",
-  requesttracker_password: "Request Tracker Password",
-  requesttracker_base_url: "Request Tracker Base URL",
-
   // Document360
   portal_id: "Document360 Portal ID",
   document360_api_token: "Document360 API Token",

@@ -34,7 +34,6 @@ from danswer.connectors.mediawiki.wiki import MediaWikiConnector
 from danswer.connectors.models import InputType
 from danswer.connectors.notion.connector import NotionConnector
 from danswer.connectors.productboard.connector import ProductboardConnector
-from danswer.connectors.requesttracker.connector import RequestTrackerConnector
 from danswer.connectors.salesforce.connector import SalesforceConnector
 from danswer.connectors.sharepoint.connector import SharepointConnector
 from danswer.connectors.slab.connector import SlabConnector
@@ -77,7 +76,6 @@ def identify_connector_class(
         DocumentSource.SLAB: SlabConnector,
         DocumentSource.NOTION: NotionConnector,
         DocumentSource.ZULIP: ZulipConnector,
-        DocumentSource.REQUESTTRACKER: RequestTrackerConnector,
         DocumentSource.GURU: GuruConnector,
         DocumentSource.LINEAR: LinearConnector,
         DocumentSource.HUBSPOT: HubSpotConnector,
