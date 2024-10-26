@@ -36,7 +36,7 @@ if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[CeleryIntegration()],
-        traces_sample_rate=0.5,
+        traces_sample_rate=0.1,
     )
     logger.info("Sentry initialized")
 else:

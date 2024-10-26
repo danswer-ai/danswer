@@ -50,7 +50,6 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -2392,6 +2391,7 @@ export function ChatPage({
 
                             {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                             <div ref={endPaddingRef} className="h-[95px]" />
+
                             <div ref={endDivRef} />
                           </div>
                         </div>
