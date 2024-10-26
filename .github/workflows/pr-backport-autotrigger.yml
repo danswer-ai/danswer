@@ -33,11 +33,11 @@ jobs:
         id: list-branches
         run: |
           git fetch --all --tags
-          BRANCHES=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin/* | sed 's|origin/||' | sort -Vr)
+          BRANCHES=$(git for-each-ref --format='%(refname:short)' refs/remotes/origin/release/* | sed 's|origin/release/||' | sort -Vr)
           BETA=$(echo "$BRANCHES" | head -n 1)
           STABLE=$(echo "$BRANCHES" | head -n 2 | tail -n 1)
-          echo "beta=$BETA" >> $GITHUB_OUTPUT
-          echo "stable=$STABLE" >> $GITHUB_OUTPUT
+          echo "beta=release/$BETA" >> $GITHUB_OUTPUT
+          echo "stable=release/$STABLE" >> $GITHUB_OUTPUT
           # Fetch latest tags for beta and stable
           LATEST_BETA_TAG=$(git tag -l "v*.*.0-beta.*" | sort -Vr | head -n 1)
           LATEST_STABLE_TAG=$(git tag -l "v*.*.*" | grep -v -- "-beta" | sort -Vr | head -n 1)
