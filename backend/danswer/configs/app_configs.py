@@ -472,9 +472,6 @@ MANAGED_VESPA = os.environ.get("MANAGED_VESPA", "").lower() == "true"
 ENABLE_EMAIL_INVITES = os.environ.get("ENABLE_EMAIL_INVITES", "").lower() == "true"
 
 # Security and authentication
-SECRET_JWT_KEY = os.environ.get(
-    "SECRET_JWT_KEY", ""
-)  # Used for encryption of the JWT token for user's tenant context
 DATA_PLANE_SECRET = os.environ.get(
     "DATA_PLANE_SECRET", ""
 )  # Used for secure communication between the control and data plane

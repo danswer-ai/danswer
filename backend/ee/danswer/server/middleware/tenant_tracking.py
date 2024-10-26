@@ -9,7 +9,7 @@ from fastapi import Request
 from fastapi import Response
 
 from danswer.configs.app_configs import MULTI_TENANT
-from danswer.configs.app_configs import SECRET_JWT_KEY
+from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.db.engine import is_valid_schema_name
 from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
@@ -25,11 +25,15 @@ def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> Non
             if not MULTI_TENANT:
                 tenant_id = POSTGRES_DEFAULT_SCHEMA
             else:
-                token = request.cookies.get("tenant_details")
+                token = request.cookies.get("fastapiusersauth")
+
                 if token:
                     try:
                         payload = jwt.decode(
-                            token, SECRET_JWT_KEY, algorithms=["HS256"]
+                            token,
+                            USER_AUTH_SECRET,
+                            audience=["fastapi-users:auth"],
+                            algorithms=["HS256"],
                         )
                         tenant_id = payload.get("tenant_id", POSTGRES_DEFAULT_SCHEMA)
                         if not is_valid_schema_name(tenant_id):
