@@ -138,6 +138,8 @@ CURRENT_TENANT_ID_CONTEXTVAR = contextvars.ContextVar(
     "current_tenant_id", default=POSTGRES_DEFAULT_SCHEMA
 )
 
+# Prefix used for all tenant ids
+TENANT_ID_PREFIX = "tenant_"
 
 SUPPORTED_EMBEDDING_MODELS = [
     # Cloud-based models
