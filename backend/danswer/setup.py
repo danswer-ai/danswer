@@ -55,6 +55,7 @@ from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import SUPPORTED_EMBEDDING_MODELS
 from shared_configs.model_server_models import SupportedEmbeddingModel
 
+
 logger = setup_logger()
 
 
