@@ -21,7 +21,6 @@ def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> Non
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         try:
-            logger.info(f"Request route: {request.url.path}")
             if not MULTI_TENANT:
                 tenant_id = POSTGRES_DEFAULT_SCHEMA
             else:
@@ -53,8 +52,6 @@ def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> Non
                     tenant_id = POSTGRES_DEFAULT_SCHEMA
 
             CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
-            logger.info(f"Middleware set current_tenant_id to: {tenant_id}")
-
             response = await call_next(request)
             return response
 
