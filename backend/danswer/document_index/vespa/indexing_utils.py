@@ -57,7 +57,7 @@ def _does_document_exist(
     chunk. This checks for whether the chunk exists already in the index"""
     doc_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
     doc_fetch_response = http_client.get(doc_url)
-
+    print("doc fetch response")
     if doc_fetch_response.status_code == 404:
         return False
 
@@ -96,6 +96,7 @@ def get_existing_documents_from_chunks(
 
     document_ids: set[str] = set()
     try:
+        print("chunk existence future")
         chunk_existence_future = {
             executor.submit(
                 _does_document_exist,
