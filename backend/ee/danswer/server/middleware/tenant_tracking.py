@@ -8,10 +8,10 @@ from fastapi import HTTPException
 from fastapi import Request
 from fastapi import Response
 
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.db.engine import is_valid_schema_name
 from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
 

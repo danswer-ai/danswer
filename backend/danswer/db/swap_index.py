@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
@@ -15,6 +14,7 @@ from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_search_settings_status
 from danswer.key_value_store.factory import get_kv_store
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import MULTI_TENANT
 
 
 logger = setup_logger()

@@ -4,12 +4,12 @@ from collections.abc import MutableMapping
 from logging.handlers import RotatingFileHandler
 from typing import Any
 
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.constants import TENANT_ID_PREFIX
 from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import DEV_LOGGING_ENABLED
 from shared_configs.configs import LOG_FILE_NAME
 from shared_configs.configs import LOG_LEVEL
+from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.configs import SLACK_CHANNEL_ID
 

@@ -24,7 +24,6 @@ from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.background.indexing.run_indexing import RunIndexingCallbackInterface
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.constants import CELERY_INDEXING_LOCK_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DANSWER_REDIS_FUNCTION_LOCK_PREFIX
@@ -56,6 +55,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
+from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
 
