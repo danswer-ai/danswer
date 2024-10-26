@@ -12,9 +12,7 @@ const eePaths = [
   "/admin/whitelabeling/:path*",
   "/admin/performance/custom-analytics/:path*",
   "/admin/standard-answer/:path*",
-  ...(process.env.NEXT_PUBLIC_CLOUD_ENABLED
-    ? ["/admin/cloud-settings/:path*"]
-    : []),
+  "/admin/cloud-settings/:path*",
 ];
 
 // removes the "/:path*" from the end
@@ -46,5 +44,14 @@ export async function middleware(request: NextRequest) {
 
 // Specify the paths that the middleware should run for
 export const config = {
-  matcher: eePaths,
+  matcher: [
+    "/admin/groups/:path*",
+    "/admin/api-key/:path*",
+    "/admin/performance/usage/:path*",
+    "/admin/performance/query-history/:path*",
+    "/admin/whitelabeling/:path*",
+    "/admin/performance/custom-analytics/:path*",
+    "/admin/standard-answer/:path*",
+    "/admin/cloud-settings/:path*",
+  ],
 };

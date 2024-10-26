@@ -23,11 +23,11 @@ import { default as dynamicImport } from "next/dynamic";
 const PostHogPageView = dynamicImport(() => import("./PostHogPageView"), {
   ssr: false,
 });
-
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap",
+  preload: false, // Add this to prevent build-time font loading issues
+  adjustFontFallback: true, // Add this to ensure smooth fallback
 });
 
 export async function generateMetadata(): Promise<Metadata> {

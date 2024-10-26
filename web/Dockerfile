@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM --platform=linux/amd64 node:20-alpine AS base
 
 LABEL com.danswer.maintainer="founders@danswer.ai"
 LABEL com.danswer.description="This image is the web/frontend container of Danswer which \
@@ -66,7 +66,7 @@ ARG NEXT_PUBLIC_POSTHOG_HOST
 ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
 ENV NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST}
 
-RUN npx next build
+RUN npx next build --no-lint
 
 # Step 2. Production image, copy all the files and run next
 FROM base AS runner

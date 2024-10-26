@@ -21,9 +21,10 @@ const nextConfig = {
 // - With both configured: Only unhandled errors are captured (no performance/session tracking)
 
 // Determine if Sentry should be enabled
-const sentryEnabled = Boolean(
-  process.env.SENTRY_AUTH_TOKEN && process.env.NEXT_PUBLIC_SENTRY_DSN
-);
+const sentryEnabled = false;
+//  Boolean(
+//   process.env.SENTRY_AUTH_TOKEN && process.env.NEXT_PUBLIC_SENTRY_DSN
+// );
 
 // Sentry webpack plugin options
 const sentryWebpackPluginOptions = {
