@@ -45,10 +45,10 @@ jobs:
           echo "beta=release/$BETA" >> $GITHUB_OUTPUT
           echo "stable=release/$STABLE" >> $GITHUB_OUTPUT
           # Fetch latest tags for beta and stable
-          LATEST_BETA_TAG=$(git tag -l "v*.*.0-beta.*" | sort -Vr | head -n 1)
-          LATEST_STABLE_TAG=$(git tag -l "v*.*.*" | grep -v -- "-beta" | sort -Vr | head -n 1)
+          LATEST_BETA_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$" | grep -v -- "-cloud" | sort -Vr | head -n 1)
+          LATEST_STABLE_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | sort -Vr | head -n 1)
           # Increment latest beta tag
-          NEW_BETA_TAG=$(echo $LATEST_BETA_TAG | awk -F '[.-]' '{print $1 "." $2 ".0-beta." ($NF+1)}')
+          NEW_BETA_TAG=$(echo $LATEST_BETA_TAG | awk -F '[.-]' '{print $1 "." $2 "." $3 "-beta." ($NF+1)}')
           # Increment latest stable tag
           NEW_STABLE_TAG=$(echo $LATEST_STABLE_TAG | awk -F '.' '{print $1 "." $2 "." ($3+1)}')
           echo "latest_beta_tag=$LATEST_BETA_TAG" >> $GITHUB_OUTPUT
