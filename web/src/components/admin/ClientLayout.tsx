@@ -24,7 +24,6 @@ import {
 } from "@/components/icons/icons";
 import { UserRole } from "@/lib/types";
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
-import { UserDropdown } from "../UserDropdown";
 import { User } from "@/lib/types";
 import { usePathname } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
@@ -388,9 +387,6 @@ export function ClientLayout({
           />
         </div>
         <div className="pb-8 relative h-full overflow-y-auto w-full">
-          <div className="fixed bg-background left-0 gap-x-4 mb-8 px-4 py-2 w-full items-center flex justify-end">
-            <UserDropdown user={user} />
-          </div>
           <div className="pt-20 flex overflow-y-auto h-full px-4 md:px-12">
             {children}
           </div>

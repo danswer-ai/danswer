@@ -76,7 +76,6 @@ from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.models import IndexingStatus
 from enmedd.db.models import Teamspace__ConnectorCredentialPair
 from enmedd.db.models import User
-from enmedd.db.models import UserRole
 from enmedd.db.search_settings import get_current_search_settings
 from enmedd.file_store.file_store import get_default_file_store
 from enmedd.key_value_store.interface import KvKeyNotFoundError
@@ -635,7 +634,7 @@ def create_connector_from_model(
 ) -> ObjectCreationIdResponse:
     try:
         _validate_connector_allowed(connector_data.source)
-        return create_connector(connector_data, db_session)
+        return create_connector(connector_data=connector_data, db_session=db_session)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -647,17 +646,6 @@ def create_connector_with_mock_credential(
     user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
-    if user and user.role != UserRole.ADMIN:
-        if connector_data.is_public:
-            raise HTTPException(
-                status_code=401,
-                detail="User does not have permission to create public credentials",
-            )
-        if not connector_data.groups:
-            raise HTTPException(
-                status_code=401,
-                detail="Curators must specify 1+ groups",
-            )
     try:
         _validate_connector_allowed(connector_data.source)
         connector_response = create_connector(

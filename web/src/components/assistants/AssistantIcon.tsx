@@ -42,7 +42,8 @@ export function AssistantIcon({
           {
             // Prioritization order: image, graph, defaults
             assistant.uploaded_image_id ? (
-              <Image
+              <img
+                height={size === "large" ? 8 : 6}
                 alt={`${assistant.name} logo`}
                 className={`object-cover object-center rounded-sm overflow-hidden transition-opacity duration-300 opacity-100 my-auto
               ${size === "large" ? "w-8 h-8" : "w-6 h-6"}`}

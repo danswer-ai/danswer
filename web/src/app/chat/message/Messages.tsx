@@ -306,7 +306,7 @@ export const AIMessage = ({
   const renderedMarkdown = useMemo(() => {
     return (
       <ReactMarkdown
-        className="prose max-w-full text-base"
+        className="prose max-w-full markdown"
         components={markdownComponents}
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
@@ -519,16 +519,12 @@ export const AIMessage = ({
                 trigger={
                   <CustomModal
                     trigger={
-                      <Button
-                        variant="ghost"
-                        size="smallIcon"
+                      <div
                         onClick={() => {
                           handleFeedback("like");
                           setIsLikeModalOpen(true);
                         }}
-                        className={
-                          feedbackSubmitted ? "pointer-events-none" : ""
-                        }
+                        className={`${feedbackSubmitted ? "pointer-events-none" : ""} hover:bg-light hover:text-accent-foreground focus-visible:ring-light p-2 rounded-xs`}
                       >
                         <ThumbsUp
                           size={16}
@@ -538,7 +534,7 @@ export const AIMessage = ({
                               : ""
                           }
                         />
-                      </Button>
+                      </div>
                     }
                     onClose={() => setIsLikeModalOpen(false)}
                     open={isLikeModalOpen}
@@ -570,16 +566,12 @@ export const AIMessage = ({
                 trigger={
                   <CustomModal
                     trigger={
-                      <Button
-                        variant="ghost"
-                        size="smallIcon"
+                      <div
                         onClick={() => {
                           handleFeedback("dislike");
                           setIsDislikeModalOpen(true);
                         }}
-                        className={
-                          feedbackSubmitted ? "pointer-events-none" : ""
-                        }
+                        className={`${feedbackSubmitted ? "pointer-events-none" : ""} hover:bg-light hover:text-accent-foreground focus-visible:ring-light p-2 rounded-xs`}
                       >
                         <ThumbsDown
                           size={16}
@@ -589,7 +581,7 @@ export const AIMessage = ({
                               : ""
                           }
                         />
-                      </Button>
+                      </div>
                     }
                     onClose={() => setIsDislikeModalOpen(false)}
                     open={isDislikeModalOpen}
@@ -828,16 +820,15 @@ export const HumanMessage = ({
                       <div className="bg-hover absolute -top-11 right-0 rounded">
                         <CustomTooltip
                           trigger={
-                            <Button
-                              variant="ghost"
-                              size="smallIcon"
+                            <div
+                              className="hover:bg-light hover:text-accent-foreground focus-visible:ring-light p-2 rounded-xs"
                               onClick={() => {
                                 setIsEditing(true);
                                 setIsHovered(false);
                               }}
                             >
                               <Pencil size={16} />
-                            </Button>
+                            </div>
                           }
                           asChild
                         >

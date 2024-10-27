@@ -391,11 +391,24 @@ def get_llm_max_output_tokens(
     """Best effort attempt to get the max output tokens for the LLM"""
     try:
         model_obj = model_map.get(f"{model_provider}/{model_name}")
-        if not model_obj:
-            model_obj = model_map[model_name]
-            logger.debug(f"Using model object for {model_name}")
-        else:
+        if model_obj:
             logger.debug(f"Using model object for {model_provider}/{model_name}")
+        if not model_obj:
+            model_obj = model_map.get(model_name)
+            if model_obj:
+                logger.debug(f"Using model object for {model_name}")
+
+        if not model_obj:
+            model_name_split = model_name.split("/")
+            if len(model_name_split) > 1:
+                model_obj = model_map.get(model_name_split[1])
+            if model_obj:
+                logger.debug(f"Using model object for {model_name_split[1]}")
+
+        if not model_obj:
+            raise RuntimeError(
+                f"No litellm entry found for {model_provider}/{model_name}"
+            )
 
         if "max_output_tokens" in model_obj:
             max_output_tokens = model_obj["max_output_tokens"]

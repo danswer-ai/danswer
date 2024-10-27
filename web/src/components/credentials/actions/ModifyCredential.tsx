@@ -117,7 +117,8 @@ const CredentialSelectionTable = ({
                         {new Date(credential.time_updated).toLocaleString()}
                       </TableCell>
                       <TableCell className="flex content-center gap-x-2">
-                        <button
+                        <Button
+                          variant="destructive"
                           disabled={selected || !editable}
                           onClick={async () => {
                             onDeleteCredential(credential);
@@ -125,7 +126,7 @@ const CredentialSelectionTable = ({
                           className="my-auto disabled:opacity-20 enabled:cursor-pointer"
                         >
                           <TrashIcon />
-                        </button>
+                        </Button>
                         {onEditCredential && (
                           <button
                             disabled={!editable}
@@ -260,6 +261,7 @@ export default function ModifyCredential({
           <div className="flex justify-between mt-8">
             {showCreate ? (
               <Button
+                variant="success"
                 onClick={() => {
                   showCreate();
                 }}

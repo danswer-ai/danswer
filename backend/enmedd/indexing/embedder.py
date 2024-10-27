@@ -32,6 +32,8 @@ class IndexingEmbedder(ABC):
         provider_type: EmbeddingProvider | None,
         api_key: str | None,
         api_url: str | None,
+        api_version: str | None,
+        deployment_name: str | None,
         heartbeat: Heartbeat | None,
     ):
         self.model_name = model_name
@@ -41,6 +43,8 @@ class IndexingEmbedder(ABC):
         self.provider_type = provider_type
         self.api_key = api_key
         self.api_url = api_url
+        self.api_version = api_version
+        self.deployment_name = deployment_name
 
         self.embedding_model = EmbeddingModel(
             model_name=model_name,
@@ -50,6 +54,8 @@ class IndexingEmbedder(ABC):
             api_key=api_key,
             provider_type=provider_type,
             api_url=api_url,
+            api_version=api_version,
+            deployment_name=deployment_name,
             # The below are globally set, this flow always uses the indexing one
             server_host=INDEXING_MODEL_SERVER_HOST,
             server_port=INDEXING_MODEL_SERVER_PORT,
@@ -75,6 +81,8 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         provider_type: EmbeddingProvider | None = None,
         api_key: str | None = None,
         api_url: str | None = None,
+        api_version: str | None = None,
+        deployment_name: str | None = None,
         heartbeat: Heartbeat | None = None,
     ):
         super().__init__(
@@ -85,6 +93,8 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             provider_type,
             api_key,
             api_url,
+            api_version,
+            deployment_name,
             heartbeat,
         )
 
@@ -193,5 +203,7 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             provider_type=search_settings.provider_type,
             api_key=search_settings.api_key,
             api_url=search_settings.api_url,
+            api_version=search_settings.api_version,
+            deployment_name=search_settings.deployment_name,
             heartbeat=heartbeat,
         )

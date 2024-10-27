@@ -208,17 +208,23 @@ export const TeamspaceAssistant = ({
     <CustomModal
       trigger={
         <div
-          className="rounded-md bg-muted w-full p-4 min-h-36 flex flex-col justify-between"
-          onClick={() => setIsAssistantModalOpen(true)}
+          className={`rounded-md bg-muted w-full p-4 min-h-36 flex flex-col justify-between ${teamspace.is_up_to_date && !teamspace.is_up_for_deletion && "cursor-pointer"}`}
+          onClick={() =>
+            setIsAssistantModalOpen(
+              teamspace.is_up_to_date && !teamspace.is_up_for_deletion
+                ? true
+                : false
+            )
+          }
         >
           <div className="flex items-center justify-between">
             <h3>
               Assistant <span className="px-2 font-normal">|</span>{" "}
               {currentAssistants.length}
             </h3>
-            <Button size="smallIcon">
+            {teamspace.is_up_to_date && !teamspace.is_up_for_deletion && (
               <Pencil size={16} />
-            </Button>
+            )}
           </div>
 
           {teamspace.assistants.length > 0 ? (

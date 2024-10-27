@@ -158,12 +158,10 @@ export const TeamspaceCreationForm = ({
           <Form>
             <div className="pt-8 space-y-6">
               <div className="flex flex-col justify-between gap-2 lg:flex-row">
-                <p className="w-1/2 font-semibold whitespace-nowrap">
-                  Teamspace Name
-                </p>
+                <p className="w-1/2 font-semibold whitespace-nowrap">Name</p>
                 <TextFormField
                   name="name"
-                  placeholder="A name for the Teamspace"
+                  placeholder="Teamspace name"
                   disabled={isUpdate}
                   autoCompleteDisabled={true}
                   fullWidth
@@ -171,9 +169,7 @@ export const TeamspaceCreationForm = ({
               </div>
 
               <div className="flex flex-col justify-between gap-2 lg:flex-row">
-                <p className="w-1/2 font-semibold whitespace-nowrap">
-                  Teamspace Logo
-                </p>
+                <p className="w-1/2 font-semibold whitespace-nowrap">Logo</p>
                 <div className="flex items-center w-full gap-2">
                   <FileUpload
                     selectedFiles={selectedFiles}
@@ -264,6 +260,7 @@ export const TeamspaceCreationForm = ({
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button
+                  type="button"
                   disabled={isSubmitting}
                   className=""
                   onClick={onClose}

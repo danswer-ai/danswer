@@ -220,7 +220,8 @@ export function WhitelabelingForm() {
 
             <div className="pt-2" />
 
-            <AdvancedOptionsToggle
+            {/* TODO: polish the features here*/}
+            {/* <AdvancedOptionsToggle
               showAdvancedOptions={showAdvancedOptions}
               setShowAdvancedOptions={setShowAdvancedOptions}
             />
@@ -319,7 +320,7 @@ export function WhitelabelingForm() {
                       <SubLabel>Current Custom Logotype: </SubLabel>
                       <Image
                         src={
-                          "/api/enterprise-settings/logotype?u=" + Date.now()
+                          "/api/workspace/logotype?u=" + Date.now()
                         }
                         alt="logotype"
                         style={{ objectFit: "contain" }}
@@ -364,7 +365,7 @@ export function WhitelabelingForm() {
                   />
                 </div>
               </div>
-            )}
+            )} */}
 
             <div className="pt-2" />
 

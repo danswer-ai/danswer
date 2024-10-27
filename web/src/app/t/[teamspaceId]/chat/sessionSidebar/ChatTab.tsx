@@ -1,5 +1,4 @@
 import { ChatSession } from "../interfaces";
-import { groupSessionsByDateRange } from "../lib";
 import { ChatSessionDisplay } from "./ChatSessionDisplay";
 import { removeChatFromFolder } from "../folders/FolderManagement";
 import { FolderList } from "../folders/FolderList";
@@ -9,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { groupSessionsByDateRange } from "@/app/chat/lib";
 
 export function ChatTab({
   existingChats,

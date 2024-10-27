@@ -10,6 +10,7 @@ from cohere import Client as CohereClient
 from fastapi import APIRouter
 from fastapi import HTTPException
 from google.oauth2 import service_account  # type: ignore
+from litellm import embedding
 from retry import retry
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
@@ -25,6 +26,7 @@ from model_server.constants import EmbeddingModelTextType
 from model_server.constants import EmbeddingProvider
 from model_server.utils import simple_log_function_time
 from shared_configs.configs import INDEXING_ONLY
+from shared_configs.configs import OPENAI_EMBEDDING_TIMEOUT
 from shared_configs.enums import EmbedTextType
 from shared_configs.enums import RerankerProvider
 from shared_configs.model_server_models import Embedding
@@ -53,10 +55,14 @@ _COHERE_MAX_INPUT_LEN = 96
 
 
 def _initialize_client(
-    api_key: str, provider: EmbeddingProvider, model: str | None = None
+    api_key: str,
+    provider: EmbeddingProvider,
+    model: str | None = None,
+    api_url: str | None = None,
+    api_version: str | None = None,
 ) -> Any:
     if provider == EmbeddingProvider.OPENAI:
-        return openai.OpenAI(api_key=api_key)
+        return openai.OpenAI(api_key=api_key, timeout=OPENAI_EMBEDDING_TIMEOUT)
     elif provider == EmbeddingProvider.COHERE:
         return CohereClient(api_key=api_key)
     elif provider == EmbeddingProvider.VOYAGE:
@@ -68,6 +74,8 @@ def _initialize_client(
         project_id = json.loads(api_key)["project_id"]
         vertexai.init(project=project_id, credentials=credentials)
         return TextEmbeddingModel.from_pretrained(model or DEFAULT_VERTEX_MODEL)
+    elif provider == EmbeddingProvider.AZURE:
+        return {"api_key": api_key, "api_url": api_url, "api_version": api_version}
     else:
         raise ValueError(f"Unsupported provider: {provider}")
 
@@ -77,18 +85,22 @@ class CloudEmbedding:
         self,
         api_key: str,
         provider: EmbeddingProvider,
+        api_url: str | None = None,
+        api_version: str | None = None,
         # Only for Google as is needed on client setup
         model: str | None = None,
     ) -> None:
         self.provider = provider
-        self.client = _initialize_client(api_key, self.provider, model)
+        self.client = _initialize_client(
+            api_key, self.provider, model, api_url, api_version
+        )
 
     def _embed_openai(self, texts: list[str], model: str | None) -> list[Embedding]:
         if not model:
             model = DEFAULT_OPENAI_MODEL
 
         # OpenAI does not seem to provide truncation option, however
-        # the context lengths used by enMedD AI currently are smaller than the max token length
+        # the context lengths used by Danswer currently are smaller than the max token length
         # for OpenAI embeddings so it's not a big deal
         final_embeddings: list[Embedding] = []
         try:
@@ -116,7 +128,7 @@ class CloudEmbedding:
 
         final_embeddings: list[Embedding] = []
         for text_batch in batch_list(texts, _COHERE_MAX_INPUT_LEN):
-            # Does not use the same tokenizer as the enMedD AI API server but it's approximately the same
+            # Does not use the same tokenizer as the Danswer API server but it's approximately the same
             # empirically it's only off by a very few tokens so it's not a big deal
             response = self.client.embed(
                 texts=text_batch,
@@ -143,6 +155,18 @@ class CloudEmbedding:
         )
         return response.embeddings
 
+    def _embed_azure(self, texts: list[str], model: str | None) -> list[Embedding]:
+        response = embedding(
+            model=model,
+            input=texts,
+            api_key=self.client["api_key"],
+            api_base=self.client["api_url"],
+            api_version=self.client["api_version"],
+        )
+        embeddings = [embedding["embedding"] for embedding in response.data]
+
+        return embeddings
+
     def _embed_vertex(
         self, texts: list[str], model: str | None, embedding_type: str
     ) -> list[Embedding]:
@@ -168,10 +192,13 @@ class CloudEmbedding:
         texts: list[str],
         text_type: EmbedTextType,
         model_name: str | None = None,
+        deployment_name: str | None = None,
     ) -> list[Embedding]:
         try:
             if self.provider == EmbeddingProvider.OPENAI:
                 return self._embed_openai(texts, model_name)
+            elif self.provider == EmbeddingProvider.AZURE:
+                return self._embed_azure(texts, f"azure/{deployment_name}")
             embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
             if self.provider == EmbeddingProvider.COHERE:
                 return self._embed_cohere(texts, model_name, embedding_type)
@@ -189,10 +216,14 @@ class CloudEmbedding:
 
     @staticmethod
     def create(
-        api_key: str, provider: EmbeddingProvider, model: str | None = None
+        api_key: str,
+        provider: EmbeddingProvider,
+        model: str | None = None,
+        api_url: str | None = None,
+        api_version: str | None = None,
     ) -> "CloudEmbedding":
         logger.debug(f"Creating Embedding instance for provider: {provider}")
-        return CloudEmbedding(api_key, provider, model)
+        return CloudEmbedding(api_key, provider, model, api_url, api_version)
 
 
 def get_embedding_model(
@@ -259,12 +290,14 @@ def embed_text(
     texts: list[str],
     text_type: EmbedTextType,
     model_name: str | None,
+    deployment_name: str | None,
     max_context_length: int,
     normalize_embeddings: bool,
     api_key: str | None,
     provider_type: EmbeddingProvider | None,
     prefix: str | None,
     api_url: str | None,
+    api_version: str | None,
 ) -> list[Embedding]:
     logger.info(f"Embedding {len(texts)} texts with provider: {provider_type}")
 
@@ -306,11 +339,16 @@ def embed_text(
             )
 
         cloud_model = CloudEmbedding(
-            api_key=api_key, provider=provider_type, model=model_name
+            api_key=api_key,
+            provider=provider_type,
+            model=model_name,
+            api_url=api_url,
+            api_version=api_version,
         )
         embeddings = cloud_model.embed(
             texts=texts,
             model_name=model_name,
+            deployment_name=deployment_name,
             text_type=text_type,
         )
 
@@ -404,12 +442,14 @@ async def process_embed_request(
         embeddings = embed_text(
             texts=embed_request.texts,
             model_name=embed_request.model_name,
+            deployment_name=embed_request.deployment_name,
             max_context_length=embed_request.max_context_length,
             normalize_embeddings=embed_request.normalize_embeddings,
             api_key=embed_request.api_key,
             provider_type=embed_request.provider_type,
             text_type=embed_request.text_type,
             api_url=embed_request.api_url,
+            api_version=embed_request.api_version,
             prefix=prefix,
         )
         return EmbedResponse(embeddings=embeddings)

@@ -19,22 +19,22 @@ import { getFinalLLM } from "@/lib/llm/utils";
 import React, { useState } from "react";
 import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
 import { DraggableAssistantCard } from "@/components/assistants/AssistantCards";
+import { useUser } from "@/components/user/UserProvider";
+import { useAssistants } from "@/context/AssistantsContext";
 
 export function AssistantsTab({
   selectedAssistant,
-  availableAssistants,
   llmProviders,
   onSelect,
-  refreshUser,
 }: {
   selectedAssistant: Assistant;
-  availableAssistants: Assistant[];
   llmProviders: LLMProviderDescriptor[];
   onSelect: (assistant: Assistant) => void;
-  refreshUser: () => void;
 }) {
+  const { refreshUser } = useUser();
   const [_, llmName] = getFinalLLM(llmProviders, null, null);
-  const [assistants, setAssistants] = useState(availableAssistants);
+  const { finalAssistants, refreshAssistants } = useAssistants();
+  const [assistants, setAssistants] = useState(finalAssistants);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -57,7 +57,8 @@ export function AssistantsTab({
 
       setAssistants(updatedAssistants);
       await updateUserAssistantList(updatedAssistants.map((a) => a.id));
-      refreshUser();
+      await refreshUser();
+      await refreshAssistants();
     }
   }
 

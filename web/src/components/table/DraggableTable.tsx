@@ -103,20 +103,7 @@ export function DraggableTable({
         <TableBody>
           <SortableContext items={items} strategy={verticalListSortingStrategy}>
             {rows.map((row) => {
-              return (
-                <DraggableRow
-                  key={row.id}
-                  row={row}
-                  isAdmin={isAdmin}
-                  onClick={() =>
-                    router.push(
-                      teamspaceId
-                        ? `/t/${teamspaceId}/admin/assistants/${row.id}?u=${Date.now()}`
-                        : `/admin/assistants/${row.id}?u=${Date.now()}`
-                    )
-                  }
-                />
-              );
+              return <DraggableRow key={row.id} row={row} isAdmin={isAdmin} />;
             })}
           </SortableContext>
 

@@ -80,21 +80,23 @@ export async function updateModelOverrideForChatSession(
 
 export async function createChatSession(
   assistantId: number,
-  description: string | null
+  description: string | null,
+  teamspaceId?: string | string[]
 ): Promise<number> {
-  const createChatSessionResponse = await fetch(
-    "/api/chat/create-chat-session",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        assistant_id: assistantId,
-        description,
-      }),
-    }
-  );
+  const url =
+    teamspaceId && Number(teamspaceId) > 0
+      ? `/api/chat/create-chat-session?teamspace_id=${teamspaceId}`
+      : "/api/chat/create-chat-session";
+  const createChatSessionResponse = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      assistant_id: assistantId,
+      description,
+    }),
+  });
   if (!createChatSessionResponse.ok) {
     console.log(
       `Failed to create chat session - ${createChatSessionResponse.status}`

@@ -143,7 +143,9 @@ export function TextFormField({
   explanationLink,
   width,
   maxHeight,
+  small,
 }: {
+  small?: boolean;
   value?: string;
   name: string;
   label?: string;
@@ -197,12 +199,11 @@ export function TextFormField({
       {(label || subtext) && (
         <div className="grid leading-none">
           <div className="flex items-start gap-2">
-            <ShadcnLabel
-              htmlFor={label}
-              className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
-            >
-              {label}
-            </ShadcnLabel>
+            {label && (
+              <Label className="text-text-950" small={small}>
+                {label}
+              </Label>
+            )}
             {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
           </div>
           {subtext && (

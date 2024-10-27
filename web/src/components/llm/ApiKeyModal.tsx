@@ -1,72 +1,58 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { ApiKeyForm } from "./ApiKeyForm";
-import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
-import { checkLlmProvider } from "../initialSetup/welcome/lib";
-import { User } from "@/lib/types";
+import { Modal } from "../Modal";
 import { useRouter } from "next/navigation";
-import { CustomModal } from "../CustomModal";
+import { useProviderStatus } from "../chat_search/ProviderContext";
+import { PopupSpec } from "../admin/connectors/Popup";
 
-export const ApiKeyModal = ({ user }: { user: User | null }) => {
+export const ApiKeyModal = ({
+  hide,
+  setPopup,
+}: {
+  hide: () => void;
+  setPopup: (popup: PopupSpec) => void;
+}) => {
   const router = useRouter();
 
-  const [forceHidden, setForceHidden] = useState<boolean>(false);
-  const [validProviderExists, setValidProviderExists] = useState<boolean>(true);
-  const [providerOptions, setProviderOptions] = useState<
-    WellKnownLLMProviderDescriptor[]
-  >([]);
+  const {
+    shouldShowConfigurationNeeded,
+    providerOptions,
+    refreshProviderInfo,
+  } = useProviderStatus();
 
-  useEffect(() => {
-    async function fetchProviderInfo() {
-      const { providers, options, defaultCheckSuccessful } =
-        await checkLlmProvider(user);
-      setValidProviderExists(providers.length > 0 && defaultCheckSuccessful);
-      setProviderOptions(options);
-    }
-
-    fetchProviderInfo();
-  }, []);
-
-  // don't show if
-  //  (1) a valid provider has been setup or
-  //  (2) there are no provider options (e.g. user isn't an admin)
-  //  (3) user explicitly hides the modal
-  if (validProviderExists || !providerOptions.length || forceHidden) {
+  if (!shouldShowConfigurationNeeded) {
     return null;
   }
-
   return (
-    <CustomModal
-      open={!forceHidden}
-      onClose={() => setForceHidden(true)}
-      trigger={null}
-      title="LLM Key Setup"
+    <Modal
+      title="Set an API Key!"
+      width="max-w-3xl w-full"
+      onOutsideClick={() => hide()}
     >
-      <div>
-        <div className="mb-5 text-sm">
-          Please setup an LLM below in order to start using Search or Chat.
-          Don&apos;t worry, you can always change this later in the Admin Panel.
+      <>
+        <div className="mb-5 text-sm text-gray-700">
+          Please provide an API Key below in order to start using Danswer – you
+          can always change this later.
           <br />
-          <br />
-          Or if you&apos;d rather look around first,{" "}
-          <strong
-            onClick={() => setForceHidden(true)}
-            className="text-link cursor-pointer"
-          >
+          If you&apos;d rather look around first, you can
+          <strong onClick={() => hide()} className="text-link cursor-pointer">
+            {" "}
             skip this step
           </strong>
           .
         </div>
 
         <ApiKeyForm
+          setPopup={setPopup}
           onSuccess={() => {
             router.refresh();
-            setForceHidden(true);
+            refreshProviderInfo();
+            hide();
           }}
           providerOptions={providerOptions}
         />
-      </div>
-    </CustomModal>
+      </>
+    </Modal>
   );
 };

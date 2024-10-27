@@ -1,4 +1,5 @@
 import {
+  AzureIcon,
   CohereIcon,
   GoogleIcon,
   IconProps,
@@ -16,12 +17,15 @@ export enum EmbeddingProvider {
   VOYAGE = "Voyage",
   GOOGLE = "Google",
   LITELLM = "LiteLLM",
+  AZURE = "Azure",
 }
 
 export interface CloudEmbeddingProvider {
   provider_type: EmbeddingProvider;
   api_key?: string;
   api_url?: string;
+  api_version?: string | null;
+  deployment_name?: string | null;
   custom_config?: Record<string, string>;
   docsLink?: string;
 
@@ -158,6 +162,20 @@ export const LITELLM_CLOUD_PROVIDER: CloudEmbeddingProvider = {
   icon: LiteLLMIcon,
   description: "Open-source library to call LLM APIs using OpenAI format",
   apiLink: "https://docs.litellm.ai/docs/proxy/quick_start",
+  embedding_models: [], // No default embedding models
+};
+
+export const AZURE_CLOUD_PROVIDER: CloudEmbeddingProvider = {
+  provider_type: EmbeddingProvider.AZURE,
+  website:
+    "https://azure.microsoft.com/en-us/products/cognitive-services/openai/",
+  icon: AzureIcon,
+  description:
+    "Azure OpenAI is a cloud-based AI service that provides access to OpenAI models.",
+  apiLink:
+    "https://docs.microsoft.com/en-us/azure/ai-services/openai/how-to/create-resource",
+  costslink:
+    "https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai/",
   embedding_models: [], // No default embedding models
 };
 

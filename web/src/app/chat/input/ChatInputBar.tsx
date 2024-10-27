@@ -75,7 +75,6 @@ export function ChatInputBar({
   alternativeAssistant,
   chatSessionId,
   inputPrompts,
-  refreshUser,
 }: {
   showConfigureAPIKey: () => void;
   openModelSettings: () => void;
@@ -98,7 +97,6 @@ export function ChatInputBar({
   handleFileUpload: (files: File[]) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   chatSessionId?: number;
-  refreshUser: () => void;
 }) {
   useEffect(() => {
     const textarea = textAreaRef.current;
@@ -526,14 +524,12 @@ export function ChatInputBar({
                   </PopoverTrigger>
                   <PopoverContent>
                     <AssistantsTab
-                      availableAssistants={assistantOptions}
                       llmProviders={llmProviders}
                       selectedAssistant={selectedAssistant}
                       onSelect={(assistant) => {
                         setSelectedAssistant(assistant);
                         close();
                       }}
-                      refreshUser={refreshUser}
                     />
                   </PopoverContent>
                 </Popover>

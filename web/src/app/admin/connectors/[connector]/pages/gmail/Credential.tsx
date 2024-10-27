@@ -188,6 +188,7 @@ export const GmailJsonUploadSection = ({
               credentials JSON.
             </div>
             <Button
+              variant="destructive"
               onClick={async () => {
                 const response = await fetch(
                   "/api/manage/admin/connector/gmail/service-account-key",
@@ -330,6 +331,7 @@ export const GmailOAuthSection = ({
           <i>Existing credential already setup!</i>
         </p>
         <Button
+          variant="destructive"
           onClick={async () => {
             if (connectorExists) {
               setPopup({
@@ -415,7 +417,8 @@ export const GmailOAuthSection = ({
                   subtext="If left blank, enMedD AI will use the service account itself."
                 />
                 <div className="flex">
-                  <button
+                  <Button
+                    variant="success"
                     type="submit"
                     disabled={isSubmitting}
                     className={
@@ -425,7 +428,7 @@ export const GmailOAuthSection = ({
                     }
                   >
                     Submit
-                  </button>
+                  </Button>
                 </div>
               </Form>
             )}

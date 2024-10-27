@@ -1,7 +1,7 @@
 "use client";
 
 import { Assistant } from "./interfaces";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import Link from "next/link";
 
 function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
   if (assistant.is_default_assistant) {
@@ -30,6 +31,7 @@ function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
 export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { teamspaceId } = useParams();
 
   const availableAssistantIds = new Set(
     assistants.map((assistant) => assistant.id.toString())
@@ -95,12 +97,31 @@ export function AssistantsTable({ assistants }: { assistants: Assistant[] }) {
                 return {
                   id: assistant.id.toString(),
                   cells: [
-                    <div key="name" className="flex gap-4 items-center">
-                      {!assistant.is_default_assistant && <Pencil size={16} />}
-                      <p className="text font-medium whitespace-normal break-none">
-                        {assistant.name}
-                      </p>
-                    </div>,
+                    <CustomTooltip
+                      key="name"
+                      trigger={
+                        assistant.builtin_assistant ? (
+                          <div className="flex items-center w-full gap-2 truncate">
+                            <p className="font-medium truncate text break-none">
+                              {assistant.name}
+                            </p>
+                          </div>
+                        ) : (
+                          <Link
+                            href={`/t${teamspaceId}/admin/assistants/${assistant.id}?u=${Date.now()}`}
+                            className="flex items-center w-full gap-2 truncate"
+                          >
+                            <Pencil size={16} className="shrink-0" />
+                            <p className="font-medium truncate text break-none">
+                              {assistant.name}
+                            </p>
+                          </Link>
+                        )
+                      }
+                      asChild
+                    >
+                      {assistant.name}
+                    </CustomTooltip>,
                     <p
                       key="description"
                       className="whitespace-normal max-w-2xl"

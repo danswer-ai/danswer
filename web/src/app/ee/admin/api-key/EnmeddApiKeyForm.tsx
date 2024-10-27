@@ -99,7 +99,7 @@ export const EnmeddApiKeyForm = ({
             />
 
             <Button type="submit" disabled={isSubmitting}>
-              {isUpdate ? "Update!" : "Create!"}
+              {isUpdate ? "Update" : "Create"}
             </Button>
           </Form>
         )}

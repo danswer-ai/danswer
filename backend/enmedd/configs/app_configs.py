@@ -143,6 +143,13 @@ POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
 
+POSTGRES_API_SERVER_POOL_SIZE = int(
+    os.environ.get("POSTGRES_API_SERVER_POOL_SIZE") or 40
+)
+POSTGRES_API_SERVER_POOL_OVERFLOW = int(
+    os.environ.get("POSTGRES_API_SERVER_POOL_OVERFLOW") or 10
+)
+
 # defaults to False
 POSTGRES_POOL_PRE_PING = os.environ.get("POSTGRES_POOL_PRE_PING", "").lower() == "true"
 

@@ -197,17 +197,23 @@ export const TeamspaceDocumentSet = ({
     <CustomModal
       trigger={
         <div
-          className="rounded-md bg-muted w-full p-4 min-h-36 flex flex-col justify-between"
-          onClick={() => setIsDocumentSetModalOpen(true)}
+          className={`rounded-md bg-muted w-full p-4 min-h-36 flex flex-col justify-between ${teamspace.is_up_to_date && !teamspace.is_up_for_deletion && "cursor-pointer"}`}
+          onClick={() =>
+            setIsDocumentSetModalOpen(
+              teamspace.is_up_to_date && !teamspace.is_up_for_deletion
+                ? true
+                : false
+            )
+          }
         >
           <div className="flex items-center justify-between">
             <h3>
               Document Set <span className="px-2 font-normal">|</span>{" "}
               {currentDocumentSets.length}
             </h3>
-            <Button size="smallIcon">
+            {teamspace.is_up_to_date && !teamspace.is_up_for_deletion && (
               <Pencil size={16} />
-            </Button>
+            )}
           </div>
 
           {teamspace.document_sets.length > 0 ? (

@@ -33,6 +33,8 @@ from enmedd.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from enmedd.configs.app_configs import LOG_ENDPOINT_LATENCY
 from enmedd.configs.app_configs import OAUTH_CLIENT_ID
 from enmedd.configs.app_configs import OAUTH_CLIENT_SECRET
+from enmedd.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
+from enmedd.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
 from enmedd.configs.app_configs import USER_AUTH_SECRET
 from enmedd.configs.app_configs import WEB_DOMAIN
 from enmedd.configs.constants import AuthType
@@ -52,8 +54,7 @@ from enmedd.db.connector_credential_pair import get_connector_credential_pairs
 from enmedd.db.connector_credential_pair import resync_cc_pair
 from enmedd.db.credentials import create_initial_public_credential
 from enmedd.db.document import check_docs_exist
-from enmedd.db.engine import get_sqlalchemy_engine
-from enmedd.db.engine import init_sqlalchemy_engine
+from enmedd.db.engine import SqlEngine
 from enmedd.db.engine import warm_up_connections
 from enmedd.db.index_attempt import cancel_indexing_attempts_past_model
 from enmedd.db.index_attempt import expire_index_attempts
@@ -363,8 +364,12 @@ def setup_vespa(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
-    init_sqlalchemy_engine(POSTGRES_WEB_APP_NAME)
-    engine = get_sqlalchemy_engine()
+    SqlEngine.set_app_name(POSTGRES_WEB_APP_NAME)
+    SqlEngine.init_engine(
+        pool_size=POSTGRES_API_SERVER_POOL_SIZE,
+        max_overflow=POSTGRES_API_SERVER_POOL_OVERFLOW,
+    )
+    engine = SqlEngine.get_engine()
 
     verify_auth = fetch_versioned_implementation(
         "enmedd.auth.users", "verify_auth_setting"

@@ -13,3 +13,4 @@ transformers==4.39.2
 uvicorn==0.21.1
 voyageai==0.2.3
 python-dotenv==1.0.0
+litellm==1.48.7

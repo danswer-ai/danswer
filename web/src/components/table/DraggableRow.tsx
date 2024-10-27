@@ -8,12 +8,10 @@ export function DraggableRow({
   row,
   forceDragging,
   isAdmin = true,
-  onClick,
 }: {
   row: Row;
   forceDragging?: boolean;
   isAdmin?: boolean;
-  onClick?: () => void;
 }) {
   const {
     attributes,
@@ -34,8 +32,7 @@ export function DraggableRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={`cursor-pointer ${isDragging ? "invisible" : "bg-background"}`}
-      onClick={onClick}
+      className={`${isDragging ? "invisible " : "bg-background"}`}
     >
       <TableCell>
         {isAdmin && (

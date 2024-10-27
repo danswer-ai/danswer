@@ -95,7 +95,7 @@ export const TeamspaceDataSource = ({
     ccPairs
       .filter(
         (ccPair) =>
-          ccPair.public_doc &&
+          ccPair.access_type === "public" &&
           !teamspace.cc_pairs.some(
             (currentCCPair) => currentCCPair.id === ccPair.cc_pair_id
           )
@@ -113,7 +113,7 @@ export const TeamspaceDataSource = ({
     const updatedGlobalDataSources = ccPairs
       .filter(
         (ccPair) =>
-          ccPair.public_doc &&
+          ccPair.access_type === "public" &&
           !currentDataSources.some(
             (dataSource) => dataSource.id === ccPair.cc_pair_id
           )
@@ -203,17 +203,23 @@ export const TeamspaceDataSource = ({
     <CustomModal
       trigger={
         <div
-          className="rounded-md bg-muted w-full p-4 min-h-36 flex flex-col justify-between"
-          onClick={() => setIsDataSourceModalOpen(true)}
+          className={`rounded-md bg-muted w-full p-4 min-h-36 flex flex-col justify-between ${teamspace.is_up_to_date && !teamspace.is_up_for_deletion && "cursor-pointer"}`}
+          onClick={() =>
+            setIsDataSourceModalOpen(
+              teamspace.is_up_to_date && !teamspace.is_up_for_deletion
+                ? true
+                : false
+            )
+          }
         >
           <div className="flex items-center justify-between">
             <h3>
               Data Source <span className="px-2 font-normal">|</span>
               {teamspace.cc_pairs.length}
             </h3>
-            <Button size="smallIcon">
+            {teamspace.is_up_to_date && !teamspace.is_up_for_deletion && (
               <Pencil size={16} />
-            </Button>
+            )}
           </div>
           {teamspace.cc_pairs.length > 0 ? (
             <div className="pt-8 flex flex-wrap gap-2">

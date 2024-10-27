@@ -60,12 +60,12 @@ export const TeamspaceSidebarContent = ({
               ? `${tokenRate.token_budget} Token Rate`
               : "No Token Rate"}
           </span>
-          <p className="text-center text-subtle pt-4 text-sm line-clamp">
+          {/* <p className="text-center text-subtle pt-4 text-sm line-clamp">
             Lorem ipsum dolor, sit amet consectetur adipisicing elit.
             Perferendis omnis nesciunt est saepe sequi nam cum ratione
             aspernatur reprehenderit, ducimus illo eveniet et quidem itaque
             ipsam error nobis, dolores accusamus!
-          </p>
+          </p> */}
         </div>
 
         <div className="w-full flex flex-col gap-4 pt-14">

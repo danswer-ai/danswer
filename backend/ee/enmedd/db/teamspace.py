@@ -40,7 +40,6 @@ def validate_user_creation_permissions(
     db_session: Session,
     user: User | None,
     target_group_ids: list[int] | None,
-    object_is_public: bool | None,
 ) -> None:
     """
     All admin actions are allowed.
@@ -52,13 +51,6 @@ def validate_user_creation_permissions(
     if not user or user.role == UserRole.ADMIN:
         return
 
-    if object_is_public:
-        detail = "User does not have permission to create public credentials"
-        logger.error(detail)
-        raise HTTPException(
-            status_code=400,
-            detail=detail,
-        )
     if not target_group_ids:
         detail = "Curators must specify 1+ groups"
         logger.error(detail)
@@ -254,6 +246,8 @@ def _add_user__teamspace_relationships__no_commit(
         User__Teamspace(
             user_id=user_id,
             teamspace_id=teamspace_id,
+            # TODO: replace this with the CREATOR role but with the same
+            # privilege as the ADMIN.
             role=TeamspaceUserRole.ADMIN
             if user_id == creator_id
             else TeamspaceUserRole.BASIC,

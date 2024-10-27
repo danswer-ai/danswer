@@ -690,6 +690,7 @@ class SearchSettings(Base):
     normalize: Mapped[bool] = mapped_column(Boolean)
     query_prefix: Mapped[str | None] = mapped_column(String, nullable=True)
     passage_prefix: Mapped[str | None] = mapped_column(String, nullable=True)
+
     status: Mapped[IndexModelStatus] = mapped_column(
         Enum(IndexModelStatus, native_enum=False)
     )
@@ -744,6 +745,20 @@ class SearchSettings(Base):
     def __repr__(self) -> str:
         return f"<EmbeddingModel(model_name='{self.model_name}', status='{self.status}',\
           cloud_provider='{self.cloud_provider.provider_type if self.cloud_provider else 'None'}')>"
+
+    @property
+    def api_version(self) -> str | None:
+        return (
+            self.cloud_provider.api_version if self.cloud_provider is not None else None
+        )
+
+    @property
+    def deployment_name(self) -> str | None:
+        return (
+            self.cloud_provider.deployment_name
+            if self.cloud_provider is not None
+            else None
+        )
 
     @property
     def api_url(self) -> str | None:
@@ -1243,6 +1258,9 @@ class CloudEmbeddingProvider(Base):
     )
     api_url: Mapped[str | None] = mapped_column(String, nullable=True)
     api_key: Mapped[str | None] = mapped_column(EncryptedString())
+    api_version: Mapped[str | None] = mapped_column(String, nullable=True)
+    deployment_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
     search_settings: Mapped[list["SearchSettings"]] = relationship(
         "SearchSettings",
         back_populates="cloud_provider",

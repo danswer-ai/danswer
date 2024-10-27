@@ -3,8 +3,6 @@
 import { useParams, useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
 import { useState, useEffect, useContext } from "react";
-import { deleteChatSession, renameChatSession } from "../lib";
-import { DeleteChatModal } from "../modal/DeleteChatModal";
 import { BasicSelectable } from "@/components/BasicClickable";
 import Link from "next/link";
 
@@ -26,16 +24,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { WarningCircle } from "@phosphor-icons/react";
+import { DeleteChatModal } from "@/components/modals/DeleteEntityModal";
 import { useToast } from "@/hooks/use-toast";
+import {
+  deleteChatSession,
+  getChatRetentionInfo,
+  renameChatSession,
+} from "@/app/chat/lib";
 
 export function ChatSessionDisplay({
   chatSession,
+  search,
   isSelected,
   skipGradient,
   toggleSideBar,
 }: {
   chatSession: ChatSession;
   isSelected: boolean;
+  search?: boolean;
   // needed when the parent is trying to apply some background effect
   // if not set, the gradient will still be applied and cause weirdness
   skipGradient?: boolean;
@@ -47,6 +54,7 @@ export function ChatSessionDisplay({
   const [isRenamingChat, setIsRenamingChat] = useState(false);
   const [chatName, setChatName] = useState(chatSession.name);
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
+  const settings = useContext(SettingsContext);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -78,6 +86,15 @@ export function ChatSessionDisplay({
       });
     }
   };
+
+  if (!settings) {
+    return <></>;
+  }
+
+  const { daysUntilExpiration, showRetentionWarning } = getChatRetentionInfo(
+    chatSession,
+    settings?.settings
+  );
 
   return (
     <CustomTooltip
@@ -143,6 +160,22 @@ export function ChatSessionDisplay({
                   ) : (
                     <div className="ml-auto my-auto flex z-30 gap-1">
                       <div className="flex items-center">
+                        {showRetentionWarning && (
+                          <CustomTooltip
+                            trigger={
+                              <div className="mr-1 hover:bg-black/10 p-1 -m-1 rounded z-50">
+                                <WarningCircle className="text-warning" />
+                              </div>
+                            }
+                          >
+                            <p>
+                              This chat will expire{" "}
+                              {daysUntilExpiration < 1
+                                ? "today"
+                                : `in ${daysUntilExpiration} day${daysUntilExpiration !== 1 ? "s" : ""}`}
+                            </p>
+                          </CustomTooltip>
+                        )}
                         <div className={"-m-1"}>
                           <CustomTooltip
                             trigger={

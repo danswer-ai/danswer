@@ -242,6 +242,7 @@ export const DriveJsonUploadSection = ({
               credentials JSON.
             </div>
             <Button
+              variant="destructive"
               onClick={async () => {
                 const response = await fetch(
                   "/api/manage/admin/connector/google-drive/app-credential",
@@ -265,7 +266,6 @@ export const DriveJsonUploadSection = ({
                   });
                 }
               }}
-              variant="destructive"
             >
               Delete
             </Button>
@@ -341,9 +341,10 @@ export const DriveOAuthSection = ({
     return (
       <>
         <p className="mb-2 text-sm">
-          <i>Existing credential already setup!</i>
+          <i>Existing credential already setup</i>
         </p>
         <Button
+          variant="destructive"
           onClick={async () => {
             if (connectorExists) {
               setPopup({

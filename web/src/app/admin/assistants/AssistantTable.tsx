@@ -116,17 +116,23 @@ export function AssistantsTable({
                   <CustomTooltip
                     key="name"
                     trigger={
-                      <Link
-                        href={`/admin/assistants/${assistant.id}?u=${Date.now()}`}
-                        className="flex items-center w-full gap-2 truncate"
-                      >
-                        {!assistant.builtin_assistant && (
+                      assistant.builtin_assistant ? (
+                        <div className="flex items-center w-full gap-2 truncate">
+                          <p className="font-medium truncate text break-none">
+                            {assistant.name}
+                          </p>
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/admin/assistants/${assistant.id}?u=${Date.now()}`}
+                          className="flex items-center w-full gap-2 truncate"
+                        >
                           <Pencil size={16} className="shrink-0" />
-                        )}
-                        <p className="font-medium truncate text break-none">
-                          {assistant.name}
-                        </p>
-                      </Link>
+                          <p className="font-medium truncate text break-none">
+                            {assistant.name}
+                          </p>
+                        </Link>
+                      )
                     }
                     asChild
                   >

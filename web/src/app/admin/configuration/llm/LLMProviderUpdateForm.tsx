@@ -1,7 +1,8 @@
 import { LoadingAnimation } from "@/components/Loading";
-import { Text } from "@tremor/react";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
+import { Button, Divider, Text } from "@tremor/react";
 import { Form, Formik } from "formik";
+import { FiTrash } from "react-icons/fi";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import {
   SelectorFormField,
@@ -12,13 +13,10 @@ import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { defaultModelsByProvider, getDisplayNameForModel } from "@/lib/hooks";
 import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";
-import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 
 export function LLMProviderUpdateForm({
   llmProviderDescriptor,
@@ -27,6 +25,7 @@ export function LLMProviderUpdateForm({
   shouldMarkAsDefault,
   setPopup,
   hideAdvanced,
+  hideSuccess,
 }: {
   llmProviderDescriptor: WellKnownLLMProviderDescriptor;
   onClose: () => void;
@@ -34,9 +33,9 @@ export function LLMProviderUpdateForm({
   shouldMarkAsDefault?: boolean;
   hideAdvanced?: boolean;
   setPopup?: (popup: PopupSpec) => void;
+  hideSuccess?: boolean;
 }) {
   const { mutate } = useSWRConfig();
-  const { toast } = useToast();
 
   const [isTesting, setIsTesting] = useState(false);
   const [testError, setTestError] = useState<string>("");
@@ -71,6 +70,7 @@ export function LLMProviderUpdateForm({
       existingLlmProvider?.display_model_names ||
       defaultModelsByProvider[llmProviderDescriptor.name] ||
       [],
+    deployment_name: existingLlmProvider?.deployment_name,
   };
 
   // Setup validation schema if required
@@ -102,6 +102,9 @@ export function LLMProviderUpdateForm({
           ),
         }
       : {}),
+    deployment_name: llmProviderDescriptor.deployment_name_required
+      ? Yup.string().required("Deployment Name is required")
+      : Yup.string(),
     default_model_name: Yup.string().required("Model name is required"),
     fast_default_model_name: Yup.string().nullable(),
     // EE Only
@@ -158,14 +161,17 @@ export function LLMProviderUpdateForm({
 
         if (!response.ok) {
           const errorMsg = (await response.json()).detail;
-          const action = existingLlmProvider ? "update" : "enable";
-          const fullErrorMsg = `Unable to ${action} the provider: ${errorMsg}`;
-
-          toast({
-            title: "Provider Action Failed",
-            description: fullErrorMsg,
-            variant: "destructive",
-          });
+          const fullErrorMsg = existingLlmProvider
+            ? `Failed to update provider: ${errorMsg}`
+            : `Failed to enable provider: ${errorMsg}`;
+          if (setPopup) {
+            setPopup({
+              type: "error",
+              message: fullErrorMsg,
+            });
+          } else {
+            alert(fullErrorMsg);
+          }
           return;
         }
 
@@ -179,13 +185,15 @@ export function LLMProviderUpdateForm({
           );
           if (!setDefaultResponse.ok) {
             const errorMsg = (await setDefaultResponse.json()).detail;
-            const fullErrorMsg = `Could not set "${newLlmProvider.name}" as the default provider: ${errorMsg}`;
-
-            toast({
-              title: "Default Provider Update Failed",
-              description: fullErrorMsg,
-              variant: "destructive",
-            });
+            const fullErrorMsg = `Failed to set provider as default: ${errorMsg}`;
+            if (setPopup) {
+              setPopup({
+                type: "error",
+                message: fullErrorMsg,
+              });
+            } else {
+              alert(fullErrorMsg);
+            }
             return;
           }
         }
@@ -196,11 +204,14 @@ export function LLMProviderUpdateForm({
         const successMsg = existingLlmProvider
           ? "Provider updated successfully!"
           : "Provider enabled successfully!";
-        toast({
-          title: "Operation Successful",
-          description: successMsg,
-          variant: "success",
-        });
+        if (!hideSuccess && setPopup) {
+          setPopup({
+            type: "success",
+            message: successMsg,
+          });
+        } else {
+          alert(successMsg);
+        }
 
         setSubmitting(false);
       }}
@@ -219,6 +230,7 @@ export function LLMProviderUpdateForm({
 
           {llmProviderDescriptor.api_key_required && (
             <TextFormField
+              small={hideAdvanced}
               name="api_key"
               label="API Key"
               placeholder="API Key"
@@ -228,6 +240,7 @@ export function LLMProviderUpdateForm({
 
           {llmProviderDescriptor.api_base_required && (
             <TextFormField
+              small={hideAdvanced}
               name="api_base"
               label="API Base"
               placeholder="API Base"
@@ -236,6 +249,7 @@ export function LLMProviderUpdateForm({
 
           {llmProviderDescriptor.api_version_required && (
             <TextFormField
+              small={hideAdvanced}
               name="api_version"
               label="API Version"
               placeholder="API Version"
@@ -245,6 +259,7 @@ export function LLMProviderUpdateForm({
           {llmProviderDescriptor.custom_config_keys?.map((customConfigKey) => (
             <div key={customConfigKey.name}>
               <TextFormField
+                small={hideAdvanced}
                 name={`custom_config.${customConfigKey.name}`}
                 label={
                   customConfigKey.is_required
@@ -258,7 +273,7 @@ export function LLMProviderUpdateForm({
 
           {!(hideAdvanced && llmProviderDescriptor.name != "azure") && (
             <>
-              <div className="pt-2" />
+              <Divider />
 
               {llmProviderDescriptor.llm_names.length > 0 ? (
                 <SelectorFormField
@@ -280,40 +295,50 @@ export function LLMProviderUpdateForm({
                 />
               )}
 
-              <div className="pt-2" />
-
-              {llmProviderDescriptor.llm_names.length > 0 ? (
-                <SelectorFormField
-                  name="fast_default_model_name"
-                  subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
-                for this provider. If \`Default\` is specified, will use 
-                the Default Model configured above.`}
-                  label="[Optional] Fast Model"
-                  options={llmProviderDescriptor.llm_names.map((name) => ({
-                    name: getDisplayNameForModel(name),
-                    value: name,
-                  }))}
-                  includeDefault
-                  maxHeight="max-h-56"
-                />
-              ) : (
+              {llmProviderDescriptor.deployment_name_required && (
                 <TextFormField
-                  name="fast_default_model_name"
-                  subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
-                for this provider. If \`Default\` is specified, will use 
-                the Default Model configured above.`}
-                  label="[Optional] Fast Model"
-                  placeholder="E.g. gpt-4"
+                  small={hideAdvanced}
+                  name="deployment_name"
+                  label="Deployment Name"
+                  placeholder="Deployment Name"
                 />
               )}
 
-              <div className="pt-2" />
+              {!llmProviderDescriptor.single_model_supported &&
+                (llmProviderDescriptor.llm_names.length > 0 ? (
+                  <SelectorFormField
+                    name="fast_default_model_name"
+                    subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
+                for this provider. If \`Default\` is specified, will use 
+                the Default Model configured above.`}
+                    label="[Optional] Fast Model"
+                    options={llmProviderDescriptor.llm_names.map((name) => ({
+                      name: getDisplayNameForModel(name),
+                      value: name,
+                    }))}
+                    includeDefault
+                    maxHeight="max-h-56"
+                  />
+                ) : (
+                  <TextFormField
+                    name="fast_default_model_name"
+                    subtext={`The model to use for lighter flows like \`LLM Chunk Filter\` 
+                for this provider. If \`Default\` is specified, will use 
+                the Default Model configured above.`}
+                    label="[Optional] Fast Model"
+                    placeholder="E.g. gpt-4"
+                  />
+                ))}
 
               {llmProviderDescriptor.name != "azure" && (
-                <AdvancedOptionsToggle
-                  showAdvancedOptions={showAdvancedOptions}
-                  setShowAdvancedOptions={setShowAdvancedOptions}
-                />
+                <>
+                  <Divider />
+
+                  <AdvancedOptionsToggle
+                    showAdvancedOptions={showAdvancedOptions}
+                    setShowAdvancedOptions={setShowAdvancedOptions}
+                  />
+                </>
               )}
 
               {showAdvancedOptions && (
@@ -333,7 +358,7 @@ export function LLMProviderUpdateForm({
                             label: getDisplayNameForModel(name),
                           })
                         )}
-                        onChange={(selected: any) =>
+                        onChange={(selected) =>
                           formikProps.setFieldValue(
                             "display_model_names",
                             selected
@@ -353,17 +378,12 @@ export function LLMProviderUpdateForm({
               )}
             </>
           )}
-
-          <div className="pt-2" />
-
           <div>
             {/* NOTE: this is above the test button to make sure it's visible */}
-            {testError && (
-              <p className="text-error mt-2 text-sm">{testError}</p>
-            )}
+            {testError && <Text className="text-error mt-2">{testError}</Text>}
 
             <div className="flex w-full mt-4">
-              <Button type="submit">
+              <Button type="submit" size="xs">
                 {isTesting ? (
                   <LoadingAnimation text="Testing" />
                 ) : existingLlmProvider ? (
@@ -375,8 +395,10 @@ export function LLMProviderUpdateForm({
               {existingLlmProvider && (
                 <Button
                   type="button"
+                  color="red"
                   className="ml-3"
-                  variant="destructive"
+                  size="xs"
+                  icon={FiTrash}
                   onClick={async () => {
                     const response = await fetch(
                       `${LLM_PROVIDERS_ADMIN_URL}/${existingLlmProvider.id}`,
@@ -386,11 +408,7 @@ export function LLMProviderUpdateForm({
                     );
                     if (!response.ok) {
                       const errorMsg = (await response.json()).detail;
-                      toast({
-                        title: "Failed to delete provider",
-                        description: `Error details: ${errorMsg}`,
-                        variant: "destructive",
-                      });
+                      alert(`Failed to delete provider: ${errorMsg}`);
                       return;
                     }
 
@@ -417,15 +435,9 @@ export function LLMProviderUpdateForm({
 
                     mutate(LLM_PROVIDERS_ADMIN_URL);
                     onClose();
-                    toast({
-                      title: "Provider deleted",
-                      description:
-                        "The provider has been successfully deleted.",
-                      variant: "success",
-                    });
                   }}
                 >
-                  <Trash size={16} /> Delete
+                  Delete
                 </Button>
               )}
             </div>

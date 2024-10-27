@@ -47,12 +47,10 @@ export default async function Page({
       <InstantSSRAutoRefresh />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
-      {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
-        <ApiKeyModal user={user} />
-      )}
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
+
       <AssistantsProvider
         initialAssistants={assistants}
         hasAnyConnectors={hasAnyConnectors}
@@ -63,7 +61,6 @@ export default async function Page({
             chatSessions,
             availableSources,
             availableDocumentSets: documentSets,
-            availableAssistants: assistants,
             availableTags: tags,
             llmProviders,
             folders,

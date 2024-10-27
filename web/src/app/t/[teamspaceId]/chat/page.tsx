@@ -7,6 +7,7 @@ import { ChatPage } from "./ChatPage";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { ChatProvider } from "@/context/ChatContext";
+import { AssistantsProvider } from "@/context/AssistantsContext";
 
 export default async function Page({
   params,
@@ -37,7 +38,10 @@ export default async function Page({
     defaultAssistantId,
     finalDocumentSidebarInitialWidth,
     shouldShowWelcomeModal,
+    userInputPrompts,
     shouldDisplaySourcesIncompleteModal,
+    hasAnyConnectors,
+    hasImageCompatibleModel,
   } = data;
 
   return (
@@ -45,33 +49,36 @@ export default async function Page({
       <InstantSSRAutoRefresh />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
 
-      {!shouldShowWelcomeModal && !shouldDisplaySourcesIncompleteModal && (
-        <ApiKeyModal user={user} />
-      )}
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}
 
-      <ChatProvider
-        value={{
-          user,
-          chatSessions,
-          availableSources,
-          availableDocumentSets: documentSets,
-          availableAssistants: assistants,
-          availableTags: tags,
-          llmProviders,
-          folders,
-          openedFolders,
-        }}
+      <AssistantsProvider
+        initialAssistants={assistants}
+        hasAnyConnectors={hasAnyConnectors}
+        hasImageCompatibleModel={hasImageCompatibleModel}
       >
-        <div className="h-full overflow-hidden">
-          <ChatPage
-            defaultSelectedAssistantsId={defaultAssistantId}
-            documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
-          />
-        </div>
-      </ChatProvider>
+        <ChatProvider
+          value={{
+            chatSessions,
+            availableSources,
+            availableDocumentSets: documentSets,
+            availableTags: tags,
+            llmProviders,
+            folders,
+            openedFolders,
+            userInputPrompts,
+            shouldShowWelcomeModal,
+            defaultAssistantId,
+          }}
+        >
+          <div className="h-full overflow-hidden">
+            <ChatPage
+              documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+            />
+          </div>
+        </ChatProvider>
+      </AssistantsProvider>
     </>
   );
 }

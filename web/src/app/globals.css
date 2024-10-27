@@ -122,11 +122,21 @@ h3 {
 .prose :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
   background-color: theme("colors.code-bg");
   font-size: theme("fontSize.code-sm");
+  margin: 8px 0px !important;
+  border-radius: 4px;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
-pre[class*="language-"],
+pre[class*="language-"] {
+  color: theme("colors.code-text");
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
 code[class*="language-"] {
   color: theme("colors.code-text");
+  overflow: initial; /* Removes overflow for single-line code */
 }
 
 /* Token styles */

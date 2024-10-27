@@ -82,11 +82,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         <>
           <BooleanFormField
             name="is_public"
-            label={
-              publicToWhom === "Curators"
-                ? `Make this ${objectName} Curator Accessible?`
-                : `Make this ${objectName} Public?`
-            }
+            label={`Make this ${objectName} Public?`}
             disabled={!isAdmin}
             subtext={
               <span className="block mt-2 text-sm text-gray-500">

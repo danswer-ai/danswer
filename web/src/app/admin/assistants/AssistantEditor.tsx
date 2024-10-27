@@ -1180,7 +1180,7 @@ export function AssistantEditor({
                   type="submit"
                   disabled={isSubmitting}
                 >
-                  {isUpdate ? "Update!" : "Create!"}
+                  {isUpdate ? "Update" : "Create"}
                 </Button>
               </div>
             </Form>

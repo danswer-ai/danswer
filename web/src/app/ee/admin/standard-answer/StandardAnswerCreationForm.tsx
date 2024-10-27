@@ -205,7 +205,7 @@ export const StandardAnswerCreationForm = ({
                   disabled={isSubmitting}
                   className="mx-auto w-64"
                 >
-                  {isUpdate ? "Update!" : "Create!"}
+                  {isUpdate ? "Update" : "Create"}
                 </Button>
               </div>
             </Form>

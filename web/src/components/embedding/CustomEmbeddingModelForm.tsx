@@ -1,4 +1,8 @@
-import { CloudEmbeddingModel, CloudEmbeddingProvider } from "./interfaces";
+import {
+  CloudEmbeddingModel,
+  CloudEmbeddingProvider,
+  EmbeddingProvider,
+} from "./interfaces";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { TextFormField, BooleanFormField } from "../admin/connectors/Field";
@@ -6,14 +10,16 @@ import { Dispatch, SetStateAction } from "react";
 import { Button, Text } from "@tremor/react";
 import { EmbeddingDetails } from "@/app/admin/embeddings/EmbeddingModelSelectionForm";
 
-export function LiteLLMModelForm({
+export function CustomEmbeddingModelForm({
   setShowTentativeModel,
   currentValues,
   provider,
+  embeddingType,
 }: {
   setShowTentativeModel: Dispatch<SetStateAction<CloudEmbeddingModel | null>>;
   currentValues: CloudEmbeddingModel | null;
   provider: EmbeddingDetails;
+  embeddingType: EmbeddingProvider;
 }) {
   return (
     <div>
@@ -25,7 +31,7 @@ export function LiteLLMModelForm({
             normalize: false,
             query_prefix: "",
             passage_prefix: "",
-            provider_type: "LiteLLM",
+            provider_type: embeddingType,
             api_key: "",
             enabled: true,
             api_url: provider.api_url,
@@ -58,15 +64,17 @@ export function LiteLLMModelForm({
           setShowTentativeModel(values as CloudEmbeddingModel);
         }}
       >
-        {({ isSubmitting }) => (
+        {({ isSubmitting, submitForm, errors }) => (
           <Form>
             <Text className="text-xl text-text-900 font-bold mb-4">
-              Add a new model to LiteLLM proxy at {provider.api_url}
+              Specify details for your{" "}
+              {embeddingType === EmbeddingProvider.AZURE ? "Azure" : "LiteLLM"}{" "}
+              Provider&apos;s model
             </Text>
             <TextFormField
               name="model_name"
               label="Model Name:"
-              subtext="The name of the LiteLLM model"
+              subtext={`The name of the ${embeddingType === EmbeddingProvider.AZURE ? "Azure" : "LiteLLM"} model`}
               placeholder="e.g. 'all-MiniLM-L6-v2'"
               autoCompleteDisabled={true}
             />
@@ -102,10 +110,13 @@ export function LiteLLMModelForm({
 
             <Button
               type="submit"
+              onClick={() => console.log(errors)}
               disabled={isSubmitting}
               className="w-64 mx-auto"
             >
-              Configure LiteLLM Model
+              Configure{" "}
+              {embeddingType === EmbeddingProvider.AZURE ? "Azure" : "LiteLLM"}{" "}
+              Model
             </Button>
           </Form>
         )}

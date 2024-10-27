@@ -352,13 +352,12 @@ export default function AddConnector({
     >
       {(formikProps) => {
         return (
-          <div className="w-full mx-auto mb-8">
+          <div className="w-full mx-auto pb-0">
             {popup}
 
             <div className="mb-4">
               <HealthCheckBanner />
             </div>
-
             <Button
               onClick={() => router.push("/admin/data-sources")}
               variant="ghost"
@@ -375,102 +374,107 @@ export default function AddConnector({
 
             <Stepper />
 
-            {formStep == 0 && (
-              <Card>
-                <CardContent>
-                  <h3 className="mb-2">Select a credential</h3>
+            <div className="h-full overflow-y-auto">
+              {formStep == 0 && (
+                <Card>
+                  <CardContent>
+                    <h3 className="mb-2">Select a credential</h3>
 
-                  {connector == "google_drive" ? (
-                    <GDriveMain />
-                  ) : connector == "gmail" ? (
-                    <GmailMain />
-                  ) : (
-                    <>
-                      <ModifyCredential
-                        showIfEmpty
-                        source={connector}
-                        defaultedCredential={currentCredential!}
-                        credentials={credentials}
-                        editableCredentials={editableCredentials}
-                        onDeleteCredential={onDeleteCredential}
-                        onSwitch={onSwap}
-                      />
-                      {!createConnectorToggle && (
-                        <Button
-                          className="mt-6"
-                          onClick={() =>
-                            setCreateConnectorToggle(
-                              (createConnectorToggle) => !createConnectorToggle
-                            )
-                          }
-                        >
-                          Create New
-                        </Button>
-                      )}
-
-                      {/* NOTE: connector will never be google_drive, since the ternary above will 
-    prevent that, but still keeping this here for safety in case the above changes. */}
-                      {(connector as ValidSources) !== "google_drive" &&
-                        createConnectorToggle && (
-                          <Modal
-                            className="max-w-3xl rounded-lg"
-                            onOutsideClick={() =>
-                              setCreateConnectorToggle(false)
+                    {connector == "google_drive" ? (
+                      <GDriveMain />
+                    ) : connector == "gmail" ? (
+                      <GmailMain />
+                    ) : (
+                      <>
+                        <ModifyCredential
+                          showIfEmpty
+                          source={connector}
+                          defaultedCredential={currentCredential!}
+                          credentials={credentials}
+                          editableCredentials={editableCredentials}
+                          onDeleteCredential={onDeleteCredential}
+                          onSwitch={onSwap}
+                        />
+                        {!createConnectorToggle && (
+                          <Button
+                            className="mt-6"
+                            onClick={() =>
+                              setCreateConnectorToggle(
+                                (createConnectorToggle) =>
+                                  !createConnectorToggle
+                              )
                             }
                           >
-                            <>
-                              <h3 className="mb-2">
-                                Create a {getSourceDisplayName(connector)}{" "}
-                                credential
-                              </h3>
-                              <CreateCredential
-                                close
-                                refresh={refresh}
-                                sourceType={connector}
-                                setPopup={setPopup}
-                                onSwitch={onSwap}
-                                onClose={() => setCreateConnectorToggle(false)}
-                              />
-                            </>
-                          </Modal>
+                            Create New
+                          </Button>
                         )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
-            {formStep == 1 && (
-              <Card>
-                <CardContent>
-                  <DynamicConnectionForm
-                    values={formikProps.values}
-                    config={configuration}
-                    setSelectedFiles={setSelectedFiles}
-                    selectedFiles={selectedFiles}
-                  />
+                        {/* NOTE: connector will never be google_drive, since the ternary above will 
+    prevent that, but still keeping this here for safety in case the above changes. */}
+                        {(connector as ValidSources) !== "google_drive" &&
+                          createConnectorToggle && (
+                            <Modal
+                              className="max-w-3xl rounded-lg"
+                              onOutsideClick={() =>
+                                setCreateConnectorToggle(false)
+                              }
+                            >
+                              <>
+                                <h3 className="mb-2">
+                                  Create a {getSourceDisplayName(connector)}{" "}
+                                  credential
+                                </h3>
+                                <CreateCredential
+                                  close
+                                  refresh={refresh}
+                                  sourceType={connector}
+                                  setPopup={setPopup}
+                                  onSwitch={onSwap}
+                                  onClose={() =>
+                                    setCreateConnectorToggle(false)
+                                  }
+                                />
+                              </>
+                            </Modal>
+                          )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
-                  <AccessTypeForm connector={connector} />
-                  <AccessTypeGroupSelector />
-                </CardContent>
-              </Card>
-            )}
+              {formStep == 1 && (
+                <Card>
+                  <CardContent>
+                    <DynamicConnectionForm
+                      values={formikProps.values}
+                      config={configuration}
+                      setSelectedFiles={setSelectedFiles}
+                      selectedFiles={selectedFiles}
+                    />
 
-            {formStep === 2 && (
-              <Card>
-                <CardContent>
-                  <AdvancedFormPage />
-                </CardContent>
-              </Card>
-            )}
+                    <AccessTypeForm connector={connector} />
+                    <AccessTypeGroupSelector />
+                  </CardContent>
+                </Card>
+              )}
 
-            <NavigationRow
-              activatedCredential={credentialActivated != null}
-              isValid={formikProps.isValid}
-              onSubmit={formikProps.handleSubmit}
-              noCredentials={noCredentials}
-              noAdvanced={connector == "file"}
-            />
+              {formStep === 2 && (
+                <Card>
+                  <CardContent>
+                    <AdvancedFormPage />
+                  </CardContent>
+                </Card>
+              )}
+
+              <NavigationRow
+                activatedCredential={credentialActivated != null}
+                isValid={formikProps.isValid}
+                onSubmit={formikProps.handleSubmit}
+                noCredentials={noCredentials}
+                noAdvanced={connector == "file"}
+              />
+            </div>
           </div>
         );
       }}

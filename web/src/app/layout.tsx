@@ -12,6 +12,7 @@ import Head from "next/head";
 import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
+import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -99,11 +100,13 @@ export default async function RootLayout({
         }`}
       >
         <UserProvider>
-          <SettingsProvider settings={combinedSettings}>
-            {children}
-            <Toaster />
-            <PageSwitcher />
-          </SettingsProvider>
+          <ProviderContextProvider>
+            <SettingsProvider settings={combinedSettings}>
+              {children}
+              <Toaster />
+              <PageSwitcher />
+            </SettingsProvider>
+          </ProviderContextProvider>
         </UserProvider>
       </body>
     </html>
