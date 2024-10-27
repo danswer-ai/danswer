@@ -47,8 +47,14 @@ jobs:
           # Fetch latest tags for beta and stable
           LATEST_BETA_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*-beta.[0-9]*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+-beta\.[0-9]+$" | grep -v -- "-cloud" | sort -Vr | head -n 1)
           LATEST_STABLE_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | sort -Vr | head -n 1)
-          # Increment latest beta tag
-          NEW_BETA_TAG=$(echo $LATEST_BETA_TAG | awk -F '[.-]' '{print $1 "." $2 "." $3 "-beta." ($NF+1)}')
+          
+          # Handle case where no beta tags exist
+          if [[ -z "$LATEST_BETA_TAG" ]]; then
+            NEW_BETA_TAG="v1.0.0-beta.1"
+          else
+            NEW_BETA_TAG=$(echo $LATEST_BETA_TAG | awk -F '[.-]' '{print $1 "." $2 "." $3 "-beta." ($NF+1)}')
+          fi
+          
           # Increment latest stable tag
           NEW_STABLE_TAG=$(echo $LATEST_STABLE_TAG | awk -F '.' '{print $1 "." $2 "." ($3+1)}')
           echo "latest_beta_tag=$LATEST_BETA_TAG" >> $GITHUB_OUTPUT
@@ -84,8 +90,8 @@ jobs:
           # Create new beta branch/tag
           git tag ${{ steps.list-branches.outputs.new_beta_tag }}
           # Push the changes and tag to the beta branch using PAT
-          git push origin ${{ steps.list-branches.outputs.beta }} --force
-          git push origin ${{ steps.list-branches.outputs.new_beta_tag }}  # This step does not trigger the workflow, better to do it manually for now
+          git push origin ${{ steps.list-branches.outputs.beta }}
+          git push origin ${{ steps.list-branches.outputs.new_beta_tag }}
 
           # Prepare the stable branch
           git checkout ${{ steps.list-branches.outputs.stable }}
@@ -98,5 +104,5 @@ jobs:
           # Create new stable branch/tag
           git tag ${{ steps.list-branches.outputs.new_stable_tag }}
           # Push the changes and tag to the stable branch using PAT
-          git push origin ${{ steps.list-branches.outputs.stable }} --force
-          git push origin ${{ steps.list-branches.outputs.new_stable_tag }}  # This step does not trigger the workflow, better to do it manually for now
+          git push origin ${{ steps.list-branches.outputs.stable }}
+          git push origin ${{ steps.list-branches.outputs.new_stable_tag }}
