@@ -236,7 +236,6 @@ export const ChatSidebar = ({
                   <FolderPlus size={16} />
                 </Button>
               }
-              asChild
               side="right"
             >
               Create New Folder

@@ -155,7 +155,7 @@ function ConnectorRow({
     ) {
       return (
         <Badge variant="warning">
-          <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+          <div className="w-3 h-3 bg-default rounded-full" />
           Paused
         </Badge>
       );

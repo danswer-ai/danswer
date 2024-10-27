@@ -134,6 +134,7 @@ export function AssistantsTable({
                         </Link>
                       )
                     }
+                    align="start"
                     asChild
                   >
                     {assistant.name}

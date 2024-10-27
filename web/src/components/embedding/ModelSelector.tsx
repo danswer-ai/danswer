@@ -9,6 +9,7 @@ import {
 } from "./interfaces";
 import { FiExternalLink } from "react-icons/fi";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
 
 export function ModelPreview({
   model,
@@ -46,13 +47,13 @@ export function ModelOption({
 
   return (
     <div
-      className={`p-4 w-96 border rounded-lg transition-all duration-200 ${
+      className={`p-4 md:w-96 border rounded-lg transition-all duration-200 flex flex-col justify-between ${
         selected
           ? "border-blue-500 bg-blue-50 shadow-md"
           : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
       }`}
     >
-      <div className="flex items-center justify-between mb-3">
+      <div><div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-bold">{model.model_name}</h3>
 
         {model.link && (
@@ -74,23 +75,20 @@ export function ModelOption({
       </p>
       <div className="text-xs text-gray-500">
         {model.isDefault ? "Default" : "Self-hosted"}
-      </div>
+      </div></div>
       {onSelect && (
         <div className="mt-3">
-          <button
-            className={`w-full p-2 rounded-lg text-sm ${
-              selected
-                ? "bg-background-125 border border-border cursor-not-allowed"
-                : "bg-background border border-border hover:bg-hover cursor-pointer"
-            }`}
+          <Button
+            className={`w-full`}
             onClick={(e) => {
               e.stopPropagation();
               if (!selected) onSelect(model);
             }}
             disabled={selected}
+            variant='outline'
           >
             {selected ? "Selected Model" : "Select Model"}
-          </button>
+          </Button>
         </div>
       )}
     </div>

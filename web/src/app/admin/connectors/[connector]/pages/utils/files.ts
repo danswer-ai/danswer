@@ -1,16 +1,16 @@
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { FileConfig } from "@/lib/connectors/connectors";
+import { useToast } from "@/hooks/use-toast";
 
 export const submitFiles = async (
   selectedFiles: File[],
-  setPopup: (popup: PopupSpec) => void,
   setSelectedFiles: (files: File[]) => void,
   name: string,
   isPublic: boolean,
   groups?: number[]
 ) => {
+  const { toast } = useToast();
   const formData = new FormData();
 
   selectedFiles.forEach((file) => {
@@ -23,9 +23,10 @@ export const submitFiles = async (
   });
   const responseJson = await response.json();
   if (!response.ok) {
-    setPopup({
-      message: `Unable to upload files - ${responseJson.detail}`,
-      type: "error",
+    toast({
+      title: "Error",
+      description: `Unable to upload files - ${responseJson.detail}`,
+      variant: "destructive",
     });
     return;
   }
@@ -46,9 +47,10 @@ export const submitFiles = async (
     groups: groups,
   });
   if (connectorErrorMsg || !connector) {
-    setPopup({
-      message: `Unable to create connector - ${connectorErrorMsg}`,
-      type: "error",
+    toast({
+      title: "Error",
+      description: `Unable to create connector - ${connectorErrorMsg}`,
+      variant: "destructive",
     });
     return;
   }
@@ -67,9 +69,10 @@ export const submitFiles = async (
   });
   if (!createCredentialResponse.ok) {
     const errorMsg = await createCredentialResponse.text();
-    setPopup({
-      message: `Error creating credential for CC Pair - ${errorMsg}`,
-      type: "error",
+    toast({
+      title: "Error",
+      description: `Error creating credential for CC Pair - ${errorMsg}`,
+      variant: "destructive",
     });
     return;
     false;
@@ -85,26 +88,29 @@ export const submitFiles = async (
   );
   if (!credentialResponse.ok) {
     const credentialResponseJson = await credentialResponse.json();
-    setPopup({
-      message: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
-      type: "error",
+    toast({
+      title: "Error",
+      description: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
+      variant: "destructive",
     });
     return false;
   }
 
   const runConnectorErrorMsg = await runConnector(connector.id, [0]);
   if (runConnectorErrorMsg) {
-    setPopup({
-      message: `Unable to run connector - ${runConnectorErrorMsg}`,
-      type: "error",
+    toast({
+      title: "Error",
+      description: `Unable to run connector - ${runConnectorErrorMsg}`,
+      variant: "destructive",
     });
     return false;
   }
 
   setSelectedFiles([]);
-  setPopup({
-    type: "success",
-    message: "Successfully uploaded files!",
+  toast({
+    title: "Success",
+    description: "Successfully uploaded files!",
+    variant: "success",
   });
   return true;
 };

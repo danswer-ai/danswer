@@ -1,12 +1,15 @@
 import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/types";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { useToast } from "@/hooks/use-toast";
 
 export async function setCCPairStatus(
   ccPairId: number,
   ccPairStatus: ConnectorCredentialPairStatus,
-  setPopup?: (popupSpec: PopupSpec | null) => void,
   onUpdate?: () => void
 ) {
+
+  const { toast } = useToast();
+
   try {
     const response = await fetch(
       `/api/manage/admin/cc-pair/${ccPairId}/status`,
@@ -21,28 +24,30 @@ export async function setCCPairStatus(
 
     if (!response.ok) {
       const { detail } = await response.json();
-      setPopup?.({
-        message: `Failed to update connector status - ${detail}`,
-        type: "error",
+      toast({
+        title: "Update Failed",
+        description: `Failed to update connector status - ${detail}`,
+        variant: "destructive",
       });
       return;
     }
 
-    setPopup?.({
-      message:
+    toast({
+      title: "Status Updated",
+      description:
         ccPairStatus === ConnectorCredentialPairStatus.ACTIVE
           ? "Enabled connector!"
           : "Paused connector!",
-      type: "success",
+      variant: "success",
     });
 
-    onUpdate && onUpdate();
+    if (onUpdate) onUpdate();
   } catch (error) {
     console.error("Error updating CC pair status:", error);
-    setPopup &&
-      setPopup({
-        message: "Failed to update connector status",
-        type: "error",
-      });
+    toast({
+      title: "Error",
+      description: "Failed to update connector status",
+      variant: "destructive",
+    });
   }
 }

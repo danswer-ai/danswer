@@ -3,10 +3,7 @@
 import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { ConnectorIndexingStatus } from "@/lib/types";
-import { getCurrentUser } from "@/lib/user";
-import { User, UserRole } from "@/lib/types";
 import {
   Credential,
   GmailCredentialJson,
@@ -16,7 +13,6 @@ import { GmailOAuthSection, GmailJsonUploadSection } from "./Credential";
 import { usePublicCredentials } from "@/lib/hooks";
 import { Title } from "@tremor/react";
 import { GmailConfig } from "@/lib/connectors/connectors";
-import { useState, useEffect } from "react";
 import { useUser } from "@/components/user/UserProvider";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 
@@ -51,8 +47,6 @@ export const GmailMain = () => {
     error: credentialsError,
     refreshCredentials,
   } = usePublicCredentials();
-
-  const { popup, setPopup } = usePopup();
 
   const appCredentialSuccessfullyFetched =
     appCredentialData ||
@@ -127,12 +121,10 @@ export const GmailMain = () => {
 
   return (
     <>
-      {popup}
       <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
       </Title>
       <GmailJsonUploadSection
-        setPopup={setPopup}
         appCredentialData={appCredentialData}
         serviceAccountCredentialData={serviceAccountKeyData}
         isAdmin={isAdmin}
@@ -144,7 +136,6 @@ export const GmailMain = () => {
             Step 2: Authenticate with enMedD AI
           </Title>
           <GmailOAuthSection
-            setPopup={setPopup}
             refreshCredentials={refreshCredentials}
             gmailPublicCredential={gmailPublicCredential}
             gmailServiceAccountCredential={gmailServiceAccountCredential}

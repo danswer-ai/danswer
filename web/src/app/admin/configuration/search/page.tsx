@@ -75,7 +75,7 @@ function Main() {
   }
 
   return (
-    <div className="h-screen">
+    <div className="h-full">
       {!futureEmbeddingModel ? (
         <>
           {settings?.settings.needs_reindexing && (
@@ -166,13 +166,14 @@ function Main() {
 
 function Page() {
   return (
+    <div className="w-full h-full overflow-y-auto">
     <div className="container mx-auto">
       <AdminPageTitle
         title="Search Settings"
         icon={<EmbeddingIcon size={32} className="my-auto" />}
       />
       <Main />
-    </div>
+    </div></div>
   );
 }
 

@@ -3,6 +3,7 @@ import { Modal } from "@/components/Modal";
 import { Button, Text } from "@tremor/react";
 
 import { CloudEmbeddingModel } from "../../../../components/embedding/interfaces";
+import { CustomModal } from "@/components/CustomModal";
 
 export function AlreadyPickedModal({
   model,
@@ -12,10 +13,11 @@ export function AlreadyPickedModal({
   onClose: () => void;
 }) {
   return (
-    <Modal
-      width="max-w-3xl"
+    <CustomModal
       title={`${model.model_name} already chosen`}
-      onOutsideClick={onClose}
+      onClose={onClose}
+      open={!!model}
+      trigger={null}
     >
       <div className="mb-4">
         <Text className="text-sm mb-2">
@@ -27,6 +29,6 @@ export function AlreadyPickedModal({
           </Button>
         </div>
       </div>
-    </Modal>
+    </CustomModal>
   );
 }

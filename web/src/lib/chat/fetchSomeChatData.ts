@@ -21,10 +21,6 @@ import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces"
 import { Folder } from "@/app/chat/folders/interfaces";
 import { assistantComparator } from "@/app/admin/assistants/lib";
 import { cookies } from "next/headers";
-import {
-  SIDEBAR_TOGGLED_COOKIE_NAME,
-  DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME,
-} from "@/components/resizable/constants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
 import { NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN } from "../constants";
@@ -201,19 +197,6 @@ export async function fetchSomeChatData(
   const defaultAssistantIdRaw = searchParams["assistantId"];
   result.defaultAssistantId = defaultAssistantIdRaw
     ? parseInt(defaultAssistantIdRaw)
-    : undefined;
-
-  const documentSidebarCookieInitialWidth = cookies().get(
-    DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME
-  );
-  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
-
-  result.toggleSidebar = sidebarToggled
-    ? sidebarToggled.value.toLowerCase() === "true"
-    : NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN;
-
-  result.finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
-    ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
 
   if (fetchOptions.includes("ccPairs") && result.ccPairs) {

@@ -1,4 +1,3 @@
-import { DefaultDropdown } from "@/components/Dropdown";
 import {
   AccessType,
   ValidAutoSyncSources,
@@ -9,6 +8,7 @@ import { useUser } from "@/components/user/UserProvider";
 import { useField } from "formik";
 import { AutoSyncOptions } from "./AutoSyncOptions";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { SelectorFormField } from "./Field";
 
 function isValidAutoSyncSource(
   value: ConfigurableSources
@@ -59,26 +59,18 @@ export function AccessTypeForm({
     <>
       {isPaidEnterpriseEnabled && (
         <>
-          <div>
-            <div className="flex items-center gap-x-2">
-              <label className="font-medium text-text-950">
-                Document Access
-              </label>
-            </div>
-            <p className="mb-2 text-sm text-text-500">
-              Control who has access to the documents indexed by this connector.
-            </p>
-
             {isAdmin && (
               <>
-                <DefaultDropdown
-                  options={options}
-                  selected={access_type.value}
-                  onSelect={(selected) =>
-                    access_type_helpers.setValue(selected as AccessType)
-                  }
-                  includeDefault={false}
-                />
+              <SelectorFormField
+                name="Document Access" 
+                label="Document Access" 
+                subtext="Control who has access to the documents indexed by this connector."
+                options={options}
+                onSelect={(selected: string) => 
+                  access_type_helpers.setValue(selected as AccessType)
+                }
+                includeDefault={false} 
+              />
 
                 {access_type.value === "sync" && isAutoSyncSupported && (
                   <div>
@@ -89,7 +81,6 @@ export function AccessTypeForm({
                 )}
               </>
             )}
-          </div>
         </>
       )}
     </>

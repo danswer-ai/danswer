@@ -1,6 +1,5 @@
 "use client";
 
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { StandardAnswerCategory, StandardAnswer } from "@/lib/types";
 import { Button, Card } from "@tremor/react";
 import { Form, Formik } from "formik";
@@ -19,6 +18,7 @@ import {
   SelectorFormField,
 } from "@/components/admin/connectors/Field";
 import MultiSelectDropdown from "@/components/MultiSelectDropdown";
+import { useToast } from "@/hooks/use-toast";
 
 function mapKeywordSelectToMatchAny(keywordSelect: "any" | "all"): boolean {
   return keywordSelect == "any";
@@ -35,14 +35,13 @@ export const StandardAnswerCreationForm = ({
   standardAnswerCategories: StandardAnswerCategory[];
   existingStandardAnswer?: StandardAnswer;
 }) => {
+  const { toast } = useToast()
   const isUpdate = existingStandardAnswer !== undefined;
-  const { popup, setPopup } = usePopup();
   const router = useRouter();
 
   return (
     <div>
       <Card>
-        {popup}
         <Formik
           initialValues={{
             keyword: existingStandardAnswer
@@ -97,11 +96,12 @@ export const StandardAnswerCreationForm = ({
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;
-              setPopup({
-                message: isUpdate
+              toast({
+                title: "Operation Failed",
+                description: isUpdate
                   ? `Error updating Standard Answer - ${errorMsg}`
                   : `Error creating Standard Answer - ${errorMsg}`,
-                type: "error",
+                variant: "destructive",
               });
             }
           }}

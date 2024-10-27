@@ -41,7 +41,6 @@ interface DocumentFeedbackIconProps {
   messageId: number;
   documentRank: number;
   feedbackType: DocumentFeedbackType;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 const DocumentFeedback = ({
@@ -49,7 +48,6 @@ const DocumentFeedback = ({
   messageId,
   documentRank,
   feedbackType,
-  setPopup,
 }: DocumentFeedbackIconProps) => {
   const { toast } = useToast();
   let icon = null;
@@ -85,14 +83,16 @@ const DocumentFeedback = ({
           feedbackType
         );
         if (!errorMsg) {
-          setPopup({
-            message: "Thanks for your feedback!",
-            type: "success",
+          toast({
+            title: "Feedback Submitted",
+            description: "Thanks for your feedback!",
+            variant: "success",
           });
         } else {
-          setPopup({
-            message: `Error giving feedback - ${errorMsg}`,
-            type: "error",
+          toast({
+            title: "Feedback Error",
+            description: `Error giving feedback - ${errorMsg}`,
+            variant: "destructive",
           });
         }
       }}
@@ -107,14 +107,12 @@ interface DocumentFeedbackBlockProps {
   documentId: string;
   messageId: number;
   documentRank: number;
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }
 
 export const DocumentFeedbackBlock = ({
   documentId,
   messageId,
   documentRank,
-  setPopup,
 }: DocumentFeedbackBlockProps) => {
   return (
     <div className="flex items-center gap-x-2">
@@ -123,7 +121,6 @@ export const DocumentFeedbackBlock = ({
           documentId={documentId}
           messageId={messageId}
           documentRank={documentRank}
-          setPopup={setPopup}
           feedbackType="endorse"
         />
       </CustomTooltip>
@@ -133,7 +130,6 @@ export const DocumentFeedbackBlock = ({
           messageId={messageId}
           documentRank={documentRank}
           feedbackType="reject"
-          setPopup={setPopup}
         />
       </CustomTooltip>
     </div>

@@ -69,7 +69,7 @@ export function ToolTipDetails({
   children: string | JSX.Element;
 }) {
   return (
-    <div>
+    <div className="flex pt-[1px]">
       <CustomTooltip trigger={<FiInfo size={12} />}>{children}</CustomTooltip>
     </div>
   );
@@ -91,7 +91,7 @@ export function LabelWithTooltip({
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <p className="pb-2 text-sm text-subtle">{children}</p>;
+  return <p className="text-sm text-subtle">{children}</p>;
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
@@ -198,11 +198,14 @@ export function TextFormField({
     >
       {(label || subtext) && (
         <div className="grid leading-none">
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 pb-1.5">
             {label && (
-              <Label className="text-text-950" small={small}>
-                {label}
-              </Label>
+            <ShadcnLabel
+              htmlFor={label}
+              className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
+            >
+              {label}
+            </ShadcnLabel>
             )}
             {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
           </div>
@@ -229,7 +232,7 @@ export function TextFormField({
               onFocus={onFocus}
               onBlur={onBlur}
               className={`
-                ${fontSize}
+                ${fontSize} ${defaultHeight}
                 ${disabled ? " bg-background-strong" : " bg-white"}
                 ${isCode ? " font-mono" : ""}
               `}
@@ -362,17 +365,17 @@ export const BooleanFormField = ({
 
   return (
     <div className="mb-4">
-      <label className="flex space-x-2 text-sm">
+      <label className="flex space-x-2 text-sm pb-1.5">
         <Checkbox
           id={label}
           checked={field.value}
           onCheckedChange={handleChange}
           disabled={disabled}
-          className={`${alignTop ? "mt-1" : "my-auto"}`}
+          className={`${alignTop ? "" : "my-auto"}`}
         />
 
         {!noLabel && (
-          <div className="grid leading-none">
+          <div className="grid leading-none gap-1">
             <ShadcnLabel htmlFor={label} className="font-semibold">
               {label}
             </ShadcnLabel>
@@ -488,8 +491,9 @@ export function TextArrayField<T extends Yup.AnyObject>({
 }: TextArrayFieldProps<T>) {
   return (
     <div className="pb-4">
+      <div className="grid gap-1 pb-1.5">
       <ShadcnLabel>{label}</ShadcnLabel>
-      {subtext && <SubLabel>{subtext}</SubLabel>}
+      {subtext && <SubLabel>{subtext}</SubLabel>}</div>
 
       <FieldArray
         name={name}
@@ -499,7 +503,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
               values[name].length > 0 &&
               (values[name] as string[]).map((_, index) => (
                 <div key={index} className="mt-2">
-                  <div className="flex">
+                  <div className="flex gap-4">
                     <Field name={`${name}.${index}`}>
                       {({ field }: FieldProps) => (
                         <Input
@@ -520,7 +524,6 @@ export function TextArrayField<T extends Yup.AnyObject>({
                           />
                         </Button>
                       }
-                      asChild
                     >
                       Remove
                     </CustomTooltip>
@@ -538,6 +541,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
                 arrayHelpers.push("");
               }}
               type="button"
+                    className="mt-3 "
             >
               <Plus size={16} /> Add New
             </Button>
@@ -574,6 +578,7 @@ interface SelectorFormFieldProps {
   maxHeight?: string;
   defaultValue?: string;
   onSelect?: (selected: string) => void;
+  optional?: boolean;
 }
 
 export function SelectorFormField({
@@ -586,6 +591,7 @@ export function SelectorFormField({
   maxHeight,
   defaultValue,
   onSelect,
+  optional,
 }: SelectorFormFieldProps) {
   const [field, , { setValue }] = useField<string>(name);
   const { setFieldValue, resetForm } = useFormikContext();
@@ -602,12 +608,15 @@ export function SelectorFormField({
 
   return (
     <div className="pb-4">
+
+<div className="grid gap-1 pb-1.5">
       {label && (
         <ShadcnLabel className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed">
-          {label}
+          {label} {optional && <span className="ml-1 text-text-500">(optional)</span>}
         </ShadcnLabel>
       )}
       {subtext && <SubLabel>{subtext}</SubLabel>}
+      </div>
 
       <div>
         <Select

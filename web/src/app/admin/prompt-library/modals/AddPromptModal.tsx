@@ -44,9 +44,10 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
               name="prompt"
               placeholder="Enter a prompt (e.g. 'help me rewrite the following politely and concisely for professional communication')"
               maxHeight={500}
+              defaultHeight="h-40"
             />
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full mt-6" disabled={isSubmitting}>
               Add prompt
             </Button>
           </Form>

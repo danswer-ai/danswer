@@ -13,7 +13,6 @@ interface SearchContextProps {
   tags: Tag[];
   agenticSearchEnabled: boolean;
   disabledAgentic: boolean;
-  initiallyToggled: boolean;
   shouldShowWelcomeModal: boolean;
   shouldDisplayNoSources: boolean;
 }

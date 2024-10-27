@@ -22,7 +22,6 @@ import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces"
 import { Folder } from "@/app/chat/folders/interfaces";
 import { assistantComparator } from "@/app/admin/assistants/lib";
 import { cookies } from "next/headers";
-import { DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME } from "@/components/resizable/constants";
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchAssistantsSS } from "../assistants/fetchAssistantsSS";
 import { checkLLMSupportsImageInput } from "../llm/utils";
@@ -185,13 +184,6 @@ export async function fetchChatData(
     ? parseInt(defaultAssistantIdRaw)
     : undefined;
 
-  const documentSidebarCookieInitialWidth = cookies().get(
-    DOCUMENT_SIDEBAR_WIDTH_COOKIE_NAME
-  );
-  const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
-    ? parseInt(documentSidebarCookieInitialWidth.value)
-    : undefined;
-
   const hasAnyConnectors = ccPairs.length > 0;
   const shouldShowWelcomeModal =
     !llmProviders.length &&
@@ -251,7 +243,6 @@ export async function fetchChatData(
     folders,
     openedFolders,
     defaultAssistantId,
-    finalDocumentSidebarInitialWidth,
     shouldShowWelcomeModal,
     userInputPrompts,
     shouldDisplaySourcesIncompleteModal,

@@ -121,13 +121,14 @@ function Main() {
 
 function Page() {
   return (
+    <div className="w-full h-full overflow-y-auto">
     <div className="container mx-auto">
       <AdminPageTitle
         title="Document Processing"
         icon={<DocumentIcon2 size={32} className="my-auto" />}
       />
       <Main />
-    </div>
+    </div></div>
   );
 }
 

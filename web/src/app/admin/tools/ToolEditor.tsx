@@ -265,10 +265,8 @@ function ToolForm({
                 )}
 
                 <Button
-                  type="button"
                   onClick={() => arrayHelpers.push({ key: "", value: "" })}
-                  color="blue"
-                  className="transition-colors duration-200"
+                  variant="outline"
                 >
                   Add New Header
                 </Button>
@@ -278,7 +276,7 @@ function ToolForm({
         </div>
       )}
 
-      <div className="flex pt-4">
+      <div className="flex pt-10">
         <Button
           className="mx-auto"
           type="submit"

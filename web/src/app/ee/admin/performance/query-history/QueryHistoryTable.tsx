@@ -78,7 +78,7 @@ function SelectFeedbackType({
 }) {
   return (
     <div>
-      <Label className="font-semibold">Feedback Type</Label>
+      <Label className="font-semibold pb-1.5">Feedback Type</Label>
       <div className="max-w-sm space-y-6">
         <Select
           value={value}

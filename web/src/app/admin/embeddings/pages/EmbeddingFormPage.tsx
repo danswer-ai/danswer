@@ -1,10 +1,9 @@
 "use client";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 import { EmbeddingModelSelection } from "../EmbeddingModelSelectionForm";
 import { useEffect, useState } from "react";
-import { Button, Card, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import { ArrowLeft, ArrowRight, WarningCircle } from "@phosphor-icons/react";
 import {
   CloudEmbeddingModel,
@@ -24,10 +23,15 @@ import {
 import RerankingDetailsForm from "../RerankingFormPage";
 import { useEmbeddingFormContext } from "@/context/EmbeddingContext";
 import { Modal } from "@/components/Modal";
+import { useToast } from "@/hooks/use-toast";
+import { Card,CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CustomTooltip } from "@/components/CustomTooltip";
+import { CustomModal } from "@/components/CustomModal";
 
 export default function EmbeddingForm() {
+  const { toast } = useToast();
   const { formStep, nextFormStep, prevFormStep } = useEmbeddingFormContext();
-  const { popup, setPopup } = usePopup();
 
   const [advancedEmbeddingDetails, setAdvancedEmbeddingDetails] =
     useState<AdvancedSearchConfiguration>({
@@ -172,14 +176,19 @@ export default function EmbeddingForm() {
 
     const response = await updateSearchSettings(values);
     if (response.ok) {
-      setPopup({
-        message: "Updated search settings succesffuly",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Updated search settings successfully",
+        variant: "success",
       });
       mutate("/api/search-settings/get-current-search-settings");
       return true;
     } else {
-      setPopup({ message: "Failed to update search settings", type: "error" });
+      toast({
+        title: "Error",
+        description: "Failed to update search settings",
+        variant: "destructive",
+      });
       return false;
     }
   };
@@ -227,18 +236,22 @@ export default function EmbeddingForm() {
     );
 
     if (response.ok) {
-      setPopup({
-        message: "Changed provider successfully. Redirecting to embedding page",
-        type: "success",
+      toast({
+        title: "Provider Change Successful",
+        description: "You have successfully changed the provider. Redirecting to the embedding page...",
+        variant: "success",
       });
       mutate("/api/search-settings/get-secondary-search-settings");
       setTimeout(() => {
         window.open("/admin/configuration/search", "_self");
       }, 2000);
     } else {
-      setPopup({ message: "Failed to update embedding model", type: "error" });
-
-      alert(`Failed to update embedding model - ${await response.text()}`);
+      const errorMsg = await response.text();
+      toast({
+        title: "Update Failed",
+        description: `Could not update the embedding model: ${errorMsg}`,
+        variant: "destructive",
+      });
     }
   };
 
@@ -250,26 +263,24 @@ export default function EmbeddingForm() {
   const ReIndexingButton = ({ needsReIndex }: { needsReIndex: boolean }) => {
     return needsReIndex ? (
       <div className="flex mx-auto gap-x-1 ml-auto items-center">
-        <button
-          className="enabled:cursor-pointer disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+        <Button
           onClick={async () => {
             const update = await updateSearch();
             if (update) {
               await onConfirm();
             }
           }}
+           className="w-full md:w-auto"
         >
           Re-index
-        </button>
-        <div className="relative group">
-          <WarningCircle
+        </Button>
+
+      <CustomTooltip trigger={<WarningCircle
             className="text-text-800 cursor-help"
             size={20}
             weight="fill"
-          />
-          <div className="absolute z-10 invisible group-hover:visible bg-background-800 text-text-200 text-sm rounded-md shadow-md p-2 right-0 mt-1 w-64">
-            <p className="font-semibold mb-2">Needs re-indexing due to:</p>
-            <ul className="list-disc pl-5">
+          />}>
+        <ul className="list-disc pl-5">
               {currentEmbeddingModel != selectedProvider && (
                 <li>Changed embedding provider</li>
               )}
@@ -278,29 +289,26 @@ export default function EmbeddingForm() {
                 <li>Multipass indexing modification</li>
               )}
             </ul>
-          </div>
-        </div>
+        </CustomTooltip>
       </div>
     ) : (
-      <button
-        className="enabled:cursor-pointer ml-auto disabled:bg-accent/50 disabled:cursor-not-allowed bg-accent flex mx-auto gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
-        onClick={async () => {
-          updateSearch();
-        }}
-      >
-        Update Search
-      </button>
+      <div className="flex items-center justify-center"><Button
+      onClick={async () => {
+        updateSearch();
+      }}
+       className="w-full md:w-auto"
+    >
+      Update Search
+    </Button></div>
     );
   };
 
   return (
     <div className="mx-auto mb-8 w-full">
-      {popup}
-
       <div className="mb-4">
         <HealthCheckBanner />
       </div>
-      <div className="mx-auto max-w-4xl">
+      <div className="">
         {formStep == 0 && (
           <>
             <h2 className="text-2xl font-bold mb-4 text-text-800">
@@ -314,7 +322,8 @@ export default function EmbeddingForm() {
               take hours or days. You can monitor the progress of the
               re-indexing on this page while the models are being switched.
             </Text>
-            <Card>
+            <Card className="overflow-x-auto">
+              <CardContent>
               <EmbeddingModelSelection
                 setModelTab={setModelTab}
                 modelTab={modelTab}
@@ -322,10 +331,10 @@ export default function EmbeddingForm() {
                 currentEmbeddingModel={currentEmbeddingModel}
                 updateSelectedProvider={updateSelectedProvider}
               />
+              </CardContent>
             </Card>
             <div className="mt-4 flex w-full justify-end">
-              <button
-                className="enabled:cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
+              <Button
                 onClick={() => {
                   if (
                     selectedProvider.model_name.includes("e5") &&
@@ -337,18 +346,20 @@ export default function EmbeddingForm() {
                     nextFormStep();
                   }
                 }}
+                variant='outline'
               >
                 Continue
                 <ArrowRight />
-              </button>
+              </Button>
             </div>
           </>
         )}
         {showPoorModel && (
-          <Modal
-            onOutsideClick={() => setShowPoorModel(false)}
-            width="max-w-3xl"
+          <CustomModal
+          onClose={() => setShowPoorModel(false)}
             title={`Are you sure you want to select ${selectedProvider.model_name}?`}
+      trigger={null}
+      open={showPoorModel}
           >
             <>
               <div className="text-lg">
@@ -359,7 +370,7 @@ export default function EmbeddingForm() {
                 <li>Nomic nomic-embed-text-v1 for self-hosted</li>
               </div>
               <div className="flex mt-4 justify-between">
-                <Button color="green" onClick={() => setShowPoorModel(false)}>
+                <Button variant='destructive' onClick={() => setShowPoorModel(false)}>
                   Cancel update
                 </Button>
                 <Button
@@ -372,12 +383,13 @@ export default function EmbeddingForm() {
                 </Button>
               </div>
             </>
-          </Modal>
+          </CustomModal>
         )}
 
         {formStep == 1 && (
           <>
-            <Card>
+            <Card className="overflow-x-auto">
+              <CardContent>
               <RerankingDetailsForm
                 setModelTab={setModelTab}
                 modelTab={
@@ -389,30 +401,33 @@ export default function EmbeddingForm() {
                 originalRerankingDetails={originalRerankingDetails}
                 setRerankingDetails={setRerankingDetails}
               />
+              </CardContent>
             </Card>
 
-            <div className={` mt-4 w-full grid grid-cols-3`}>
-              <button
-                className="border-border-dark mr-auto border flex gap-x-1 items-center text-text p-2.5 text-sm font-regular rounded-sm "
+            <div className={` mt-4 w-full grid md:grid-cols-3 gap-4 items-start`}>
+              <div><Button
                 onClick={() => prevFormStep()}
+                variant='outline'
+                className="w-full md:w-auto"
               >
                 <ArrowLeft />
                 Previous
-              </button>
+              </Button></div>
 
               <ReIndexingButton needsReIndex={needsReIndex} />
 
               <div className="flex w-full justify-end">
-                <button
-                  className={`enabled:cursor-pointer enabled:hover:underline disabled:cursor-not-allowed mt-auto enabled:text-text-600 disabled:text-text-400 ml-auto flex gap-x-1 items-center py-2.5 px-3.5 text-sm font-regular rounded-sm`}
+                <Button
+                variant='outline'
                   // disabled={!isFormValid}
                   onClick={() => {
                     nextFormStep();
                   }}
+                   className="w-full md:w-auto"
                 >
                   Advanced
                   <ArrowRight />
-                </button>
+                </Button>
               </div>
             </div>
           </>
@@ -420,21 +435,24 @@ export default function EmbeddingForm() {
         {formStep == 2 && (
           <>
             <Card>
+              <CardContent>
               <AdvancedEmbeddingFormPage
                 advancedEmbeddingDetails={advancedEmbeddingDetails}
                 updateAdvancedEmbeddingDetails={updateAdvancedEmbeddingDetails}
               />
+              </CardContent>
             </Card>
 
-            <div className={`mt-4 grid  grid-cols-3 w-full `}>
-              <button
-                className={`border-border-dark border mr-auto flex gap-x-1 
-                  items-center text-text py-2.5 px-3.5 text-sm font-regular rounded-sm`}
+            <div className={`mt-4 w-full grid md:grid-cols-3 gap-4 items-star`}>
+              <div>
+                <Button
                 onClick={() => prevFormStep()}
+                variant='outline'
+                className="w-full md:w-auto"
               >
                 <ArrowLeft />
                 Previous
-              </button>
+              </Button></div>
 
               <ReIndexingButton needsReIndex={needsReIndex} />
             </div>

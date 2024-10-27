@@ -1,18 +1,18 @@
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { createConnector, runConnector } from "@/lib/connector";
 import { linkCredential } from "@/lib/credential";
 import { GoogleSitesConfig } from "@/lib/connectors/connectors";
+import { useToast } from "@/hooks/use-toast";
 
 export const submitGoogleSite = async (
   selectedFiles: File[],
   base_url: any,
-  setPopup: (popup: PopupSpec) => void,
   refreshFreq: number,
   pruneFreq: number,
   indexingStart: Date,
   is_public: boolean,
   name?: string
 ) => {
+  const { toast } = useToast();
   const uploadCreateAndTriggerConnector = async () => {
     const formData = new FormData();
 
@@ -26,9 +26,10 @@ export const submitGoogleSite = async (
     });
     const responseJson = await response.json();
     if (!response.ok) {
-      setPopup({
-        message: `Unable to upload files - ${responseJson.detail}`,
-        type: "error",
+      toast({
+        title: "Error",
+        description: `Unable to upload files - ${responseJson.detail}`,
+        variant: "destructive",
       });
       return false;
     }
@@ -49,9 +50,10 @@ export const submitGoogleSite = async (
         indexing_start: indexingStart,
       });
     if (connectorErrorMsg || !connector) {
-      setPopup({
-        message: `Unable to create connector - ${connectorErrorMsg}`,
-        type: "error",
+      toast({
+        title: "Error",
+        description: `Unable to create connector - ${connectorErrorMsg}`,
+        variant: "destructive",
       });
       return false;
     }
@@ -59,24 +61,27 @@ export const submitGoogleSite = async (
     const credentialResponse = await linkCredential(connector.id, 0, base_url);
     if (!credentialResponse.ok) {
       const credentialResponseJson = await credentialResponse.json();
-      setPopup({
-        message: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
-        type: "error",
+      toast({
+        title: "Error",
+        description: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
+        variant: "destructive",
       });
       return false;
     }
 
     const runConnectorErrorMsg = await runConnector(connector.id, [0]);
     if (runConnectorErrorMsg) {
-      setPopup({
-        message: `Unable to run connector - ${runConnectorErrorMsg}`,
-        type: "error",
+      toast({
+        title: "Error",
+        description: `Unable to run connector - ${runConnectorErrorMsg}`,
+        variant: "destructive",
       });
       return false;
     }
-    setPopup({
-      type: "success",
-      message: "Successfully created Google Site connector!",
+    toast({
+      title: "Success",
+      description: "Successfully created Google Site connector!",
+      variant: "success",
     });
     return true;
   };

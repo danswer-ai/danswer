@@ -14,6 +14,7 @@ const Page = () => {
   } = useAdminInputPrompts();
 
   return (
+    <div className="w-full h-full overflow-y-auto">
     <div className="container mx-auto">
       <AdminPageTitle
         icon={<ClosedBookIcon size={32} />}
@@ -26,7 +27,7 @@ const Page = () => {
         refreshPrompts={refreshPrompts}
         isPublic={true}
       />
-    </div>
+    </div></div>
   );
 };
 export default Page;

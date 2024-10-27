@@ -50,7 +50,7 @@ export function ModelOption({
 
       {onSelect && (
         <CardFooter className="mt-auto">
-          <Button onClick={() => onSelect(model)}>Select Model</Button>
+          <Button onClick={() => onSelect(model)} variant='outline'>Select Model</Button>
         </CardFooter>
       )}
     </Card>

@@ -28,6 +28,7 @@ import {
   EMBEDDING_MODELS_ADMIN_URL,
   EMBEDDING_PROVIDERS_ADMIN_URL,
 } from "../configuration/llm/constants";
+import { AdvancedSearchConfiguration } from "./interfaces";
 
 export interface EmbeddingDetails {
   api_key?: string;
@@ -162,6 +163,7 @@ export function EmbeddingModelSelection({
             setShowTentativeOpenProvider(null);
           }}
           onCancel={() => setShowTentativeOpenProvider(null)}
+          showTentativeOpenProvider={!!showTentativeOpenProvider}
         />
       )}
 
@@ -182,6 +184,7 @@ export function EmbeddingModelSelection({
             setShowModelInQueue(null);
             setShowTentativeProvider(null);
           }}
+          showTentativeProvider={!!showTentativeProvider}
         />
       )}
 
@@ -223,6 +226,7 @@ export function EmbeddingModelSelection({
             mutateEmbeddingProviderDetails();
           }}
           onCancel={() => setShowDeleteCredentialsModal(false)}
+          showDeleteCredentialsModal={showDeleteCredentialsModal}
         />
       )}
 

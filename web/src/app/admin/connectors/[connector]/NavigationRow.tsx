@@ -23,7 +23,7 @@ const NavigationRow = ({
       <div>
         {((formStep > 0 && !noCredentials) ||
           (formStep > 1 && !noAdvanced)) && (
-          <Button onClick={prevFormStep}>
+          <Button onClick={prevFormStep} variant='outline'>
             <ArrowLeft />
             Previous
           </Button>
@@ -50,7 +50,7 @@ const NavigationRow = ({
           </Button>
         )}
         {!noAdvanced && formStep === 1 && (
-          <Button disabled={!isValid} onClick={() => nextFormStep()}>
+          <Button disabled={!isValid} onClick={() => nextFormStep()} variant='outline'>
             Advanced
             <ArrowRight />
           </Button>

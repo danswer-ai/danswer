@@ -2,7 +2,6 @@
 
 import { AdminPageTitle } from "@/components/admin/Title";
 import { ClipboardIcon, EditIcon, TrashIcon } from "@/components/icons/icons";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useStandardAnswers, useStandardAnswerCategories } from "./hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -27,6 +26,7 @@ import { FiTag } from "react-icons/fi";
 import { SelectedBubble } from "@/components/search/filtering/Filters";
 import { PageSelector } from "@/components/PageSelector";
 import { CustomCheckbox } from "@/components/CustomCheckbox";
+import { useToast } from "@/hooks/use-toast";
 
 const NUM_RESULTS_PER_PAGE = 10;
 
@@ -149,13 +149,12 @@ const StandardAnswersTable = ({
   standardAnswers,
   standardAnswerCategories,
   refresh,
-  setPopup,
 }: {
   standardAnswers: StandardAnswer[];
   standardAnswerCategories: StandardAnswerCategory[];
   refresh: () => void;
-  setPopup: (popup: PopupSpec | null) => void;
 }) => {
+  const { toast } = useToast()
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState<
@@ -208,15 +207,17 @@ const StandardAnswersTable = ({
   const handleDelete = async (id: number) => {
     const response = await deleteStandardAnswer(id);
     if (response.ok) {
-      setPopup({
-        message: `Standard answer ${id} deleted`,
-        type: "success",
+      toast({
+        title: "Standard Answer Deleted",
+        description: `Standard answer ${id} has been successfully deleted.`,
+        variant: "success",
       });
     } else {
       const errorMsg = await response.text();
-      setPopup({
-        message: `Failed to delete standard answer - ${errorMsg}`,
-        type: "error",
+      toast({
+        title: "Delete Failed",
+        description: `Failed to delete standard answer - ${errorMsg}`,
+        variant: "destructive",
       });
     }
     refresh();
@@ -346,7 +347,6 @@ const StandardAnswersTable = ({
 };
 
 const Main = () => {
-  const { popup, setPopup } = usePopup();
   const {
     data: standardAnswers,
     error: standardAnswersError,
@@ -389,8 +389,6 @@ const Main = () => {
 
   return (
     <div className="mb-8">
-      {popup}
-
       <Text className="mb-2">
         Manage the standard answers for pre-defined questions.
         <br />
@@ -415,7 +413,6 @@ const Main = () => {
           standardAnswers={standardAnswers}
           standardAnswerCategories={standardAnswerCategories}
           refresh={refreshStandardAnswers}
-          setPopup={setPopup}
         />
       </div>
     </div>

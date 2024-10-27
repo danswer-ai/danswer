@@ -8,6 +8,7 @@ import {
   LLM_PROVIDERS_ADMIN_URL,
 } from "../../configuration/llm/constants";
 import { mutate } from "swr";
+import { CustomModal } from "@/components/CustomModal";
 
 export function ChangeCredentialsModal({
   provider,
@@ -155,11 +156,11 @@ export function ChangeCredentialsModal({
   };
 
   return (
-    <Modal
-      width="max-w-3xl"
-      icon={provider.icon}
-      title={`Modify your ${provider.provider_type} ${isProxy ? "Configuration" : "key"}`}
-      onOutsideClick={onCancel}
+    <CustomModal
+      title={<div className="flex items-center gap-4">{provider.icon({ size: 24 })} Modify your ${provider.provider_type} ${isProxy ? "Configuration" : "key"}</div>}
+      onClose={onCancel}
+      open={!!provider}
+      trigger={null}
     >
       <>
         {!isAzure && (
@@ -288,6 +289,6 @@ export function ChangeCredentialsModal({
           </Callout>
         )}
       </>
-    </Modal>
+    </CustomModal>
   );
 }

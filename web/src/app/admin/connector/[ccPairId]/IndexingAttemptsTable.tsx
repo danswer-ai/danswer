@@ -217,6 +217,8 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
           <ExceptionTraceModal
             onOutsideClick={() => setIndexAttemptTracePopupId(null)}
             exceptionTrace={indexAttemptToDisplayTraceFor.full_exception_trace!}
+            isOpen={!!indexAttemptToDisplayTraceFor &&
+              !!indexAttemptToDisplayTraceFor.full_exception_trace}
           />
         )}
 

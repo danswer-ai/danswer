@@ -2,6 +2,7 @@ import React from "react";
 import NumberInput from "./ConnectorInput/NumberInput";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { TrashIcon } from "@/components/icons/icons";
+import { Button } from "@/components/ui/button";
 
 const AdvancedFormPage = () => {
   return (
@@ -34,11 +35,11 @@ const AdvancedFormPage = () => {
         label="Indexing Start Date"
         name="indexingStart"
       />
-      <div className="mt-4 flex w-full mx-auto max-w-2xl justify-start">
-        <button className="flex gap-x-1 bg-red-500 hover:bg-red-500/80 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded ">
+      <div className="flex w-full mx-auto max-w-2xl justify-start">
+        <Button variant='destructive'>
           <TrashIcon size={20} className="text-white" />
-          <div className="w-full items-center gap-x-2 flex">Reset</div>
-        </button>
+    Reset
+        </Button>
       </div>
     </div>
   );

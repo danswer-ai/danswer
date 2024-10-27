@@ -1,5 +1,5 @@
 "use client";
-import { Button, Card, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import { ModelSelector } from "../../../../components/embedding/ModelSelector";
 import {
   AVAILABLE_MODELS,
@@ -9,6 +9,8 @@ import {
 import { CustomModelForm } from "../../../../components/embedding/CustomModelForm";
 import { useState } from "react";
 import { Title } from "@tremor/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 export default function OpenEmbeddingPage({
   onSelectOpenSource,
   selectedProvider,
@@ -66,7 +68,9 @@ export default function OpenEmbeddingPage({
       {configureModel && (
         <div className="w-full flex">
           <Card className="mt-4 2xl:w-4/6 mx-auto">
-            <CustomModelForm onSubmit={onSelectOpenSource} />
+            <CardContent>
+              <CustomModelForm onSubmit={onSelectOpenSource} />
+            </CardContent>
           </Card>
         </div>
       )}

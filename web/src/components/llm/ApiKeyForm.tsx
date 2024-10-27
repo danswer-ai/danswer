@@ -1,19 +1,19 @@
-import { PopupSpec } from "../admin/connectors/Popup";
+
+
 import { useState } from "react";
-import { TabGroup, TabList, Tab, TabPanels, TabPanel } from "@tremor/react";
 import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { LLMProviderUpdateForm } from "@/app/admin/configuration/llm/LLMProviderUpdateForm";
 import { CustomLLMProviderUpdateForm } from "@/app/admin/configuration/llm/CustomLLMProviderUpdateForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Card, CardContent } from "../ui/card";
 
 export const ApiKeyForm = ({
   onSuccess,
   providerOptions,
-  setPopup,
   hideSuccess,
 }: {
   onSuccess: () => void;
   providerOptions: WellKnownLLMProviderDescriptor[];
-  setPopup: (popup: PopupSpec) => void;
   hideSuccess?: boolean;
 }) => {
   const defaultProvider = providerOptions[0]?.name;
@@ -31,48 +31,50 @@ export const ApiKeyForm = ({
   const [providerName, setProviderName] = useState<string>(defaultProvider);
 
   return (
-    <div>
-      <TabGroup
-        index={providerNameToIndexMap.get(providerName) || 0}
-        onIndexChange={(index) =>
-          setProviderName(providerIndexToNameMap.get(index) || defaultProvider)
-        }
-      >
-        <TabList className="mt-3 mb-4">
-          <>
-            {providerOptions.map((provider) => (
-              <Tab key={provider.name}>
-                {provider.display_name || provider.name}
-              </Tab>
-            ))}
-            <Tab key="custom">Custom</Tab>
-          </>
-        </TabList>
-        <TabPanels>
-          {providerOptions.map((provider) => {
-            return (
-              <TabPanel key={provider.name}>
-                <LLMProviderUpdateForm
-                  hideAdvanced
-                  llmProviderDescriptor={provider}
-                  onClose={() => onSuccess()}
-                  shouldMarkAsDefault
-                  setPopup={setPopup}
-                  hideSuccess={hideSuccess}
-                />
-              </TabPanel>
-            );
-          })}
-          <TabPanel key="custom">
-            <CustomLLMProviderUpdateForm
-              onClose={() => onSuccess()}
-              shouldMarkAsDefault
-              setPopup={setPopup}
-              hideSuccess={hideSuccess}
-            />
-          </TabPanel>
-        </TabPanels>
-      </TabGroup>
+    <div className="pb-10">
+      <Tabs
+  defaultValue={providerNameToIndexMap.get(providerName)?.toString() || "0"}
+  onValueChange={(value) =>
+    setProviderName(providerIndexToNameMap.get(Number(value)) || defaultProvider)
+  }
+>
+  <TabsList className="mt-3 mb-4">
+    {providerOptions.map((provider, index) => (
+      <TabsTrigger key={provider.name} value={index.toString()}>
+        {provider.display_name || provider.name}
+      </TabsTrigger>
+    ))}
+    <TabsTrigger key="custom" value="custom">Custom</TabsTrigger>
+  </TabsList>
+
+  {providerOptions.map((provider, index) => (
+    <TabsContent key={provider.name} value={index.toString()}>
+      <Card>
+        <CardContent>
+        <LLMProviderUpdateForm
+        hideAdvanced
+        llmProviderDescriptor={provider}
+        onClose={() => onSuccess()}
+        shouldMarkAsDefault
+        hideSuccess={hideSuccess}
+      />
+        </CardContent>
+      </Card>
+    </TabsContent>
+  ))}
+  
+  <TabsContent key="custom" value="custom">
+  <Card>
+  <CardContent>
+    <CustomLLMProviderUpdateForm
+      onClose={() => onSuccess()}
+      shouldMarkAsDefault
+      hideSuccess={hideSuccess}
+    />
+    </CardContent>
+  </Card>
+  </TabsContent>
+</Tabs>
     </div>
   );
 };

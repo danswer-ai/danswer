@@ -36,7 +36,6 @@ import {
   DISABLE_LLM_DOC_RELEVANCE,
   NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN,
 } from "@/lib/constants";
-import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { SearchProvider } from "@/context/SearchContext";
@@ -167,12 +166,7 @@ export default async function Home() {
     !shouldShowWelcomeModal &&
     (!user || user.role == "admin");
 
-  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
   const agenticSearchToggle = cookies().get(AGENTIC_SEARCH_TYPE_COOKIE_NAME);
-
-  const toggleSidebar = sidebarToggled
-    ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
-    : NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN;
 
   const agenticSearchEnabled = agenticSearchToggle
     ? agenticSearchToggle.value.toLocaleLowerCase() == "true" || false
@@ -205,7 +199,6 @@ export default async function Home() {
               tags,
               agenticSearchEnabled,
               disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
-              initiallyToggled: toggleSidebar,
               shouldShowWelcomeModal,
               shouldDisplayNoSources: shouldDisplayNoSourcesModal,
             }}

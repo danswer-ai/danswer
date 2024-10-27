@@ -1,26 +1,29 @@
-import { Modal } from "@/components/Modal";
-import { Button, Text, Callout } from "@tremor/react";
+import { Text, Callout } from "@tremor/react";
 import {
-  EmbeddingModelDescriptor,
   HostedEmbeddingModel,
 } from "../../../../components/embedding/interfaces";
+import { CustomModal } from "@/components/CustomModal";
+import { Button } from "@/components/ui/button";
 
 export function ModelSelectionConfirmationModal({
   selectedModel,
   isCustom,
   onConfirm,
   onCancel,
+  showTentativeOpenProvider
 }: {
   selectedModel: HostedEmbeddingModel;
   isCustom: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  showTentativeOpenProvider?: boolean;
 }) {
   return (
-    <Modal
-      width="max-w-3xl"
+    <CustomModal
       title="Update Embedding Model"
-      onOutsideClick={onCancel}
+      onClose={onCancel}
+      trigger={null}
+      open={showTentativeOpenProvider}
     >
       <div>
         <div className="mb-4">
@@ -53,12 +56,12 @@ export function ModelSelectionConfirmationModal({
           )}
 
           <div className="flex mt-8">
-            <Button className="mx-auto" color="green" onClick={onConfirm}>
+            <Button className="mx-auto" onClick={onConfirm}>
               Yes
             </Button>
           </div>
         </div>
       </div>
-    </Modal>
+    </CustomModal>
   );
 }

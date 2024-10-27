@@ -5,7 +5,6 @@ import { FaAccusoft } from "react-icons/fa";
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik, FormikHelpers } from "formik";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { getSourceDocLink } from "@/lib/sources";
 import GDriveMain from "@/app/admin/connectors/[connector]/pages/gdrive/GoogleDrivePage";
 import { Connector } from "@/lib/connectors/connectors";
@@ -27,6 +26,7 @@ import {
   IsPublicGroupSelector,
 } from "@/components/IsPublicGroupSelector";
 import { useUser } from "@/components/user/UserProvider";
+import { useToast } from "@/hooks/use-toast";
 
 const CreateButton = ({
   onClick,
@@ -62,7 +62,6 @@ type formType = IsPublicGroupSelectorFormType & {
 export default function CreateCredential({
   hideSource,
   sourceType,
-  setPopup,
   close,
   onClose = () => null,
   onSwitch,
@@ -74,7 +73,6 @@ export default function CreateCredential({
   hideSource?: boolean; // hides docs link
   sourceType: ValidSources;
 
-  setPopup: (popupSpec: PopupSpec | null) => void;
 
   // Optional toggle- close section after selection?
   close?: boolean;
@@ -92,6 +90,7 @@ export default function CreateCredential({
   // Mutating parent state
   refresh?: () => void;
 }) {
+  const { toast } = useToast();
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
@@ -138,12 +137,19 @@ export default function CreateCredential({
         if (action === "createAndSwap") {
           onSwap(credential, swapConnector.id);
         } else {
-          setPopup({ type: "success", message: "Created new credential!" });
-          setTimeout(() => setPopup(null), 4000);
+          toast({
+            title: "Success",
+            description: "Created new credential!",
+            variant: "success",
+          });
         }
         onClose();
       } else {
-        setPopup({ message, type: isSuccess ? "success" : "error" });
+        toast({
+          title: isSuccess ? "Success" : "Error",
+          description: message,
+          variant: isSuccess ? "success" : "destructive",
+        });
       }
 
       if (close) {
@@ -156,7 +162,11 @@ export default function CreateCredential({
       }
     } catch (error) {
       console.error("Error submitting credential:", error);
-      setPopup({ message: "Error submitting credential", type: "error" });
+      toast({
+        title: "Error",
+        description: "Error submitting credential",
+        variant: "destructive",
+      });
     } finally {
       formikHelpers.setSubmitting(false);
     }

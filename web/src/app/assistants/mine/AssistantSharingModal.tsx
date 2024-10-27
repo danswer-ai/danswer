@@ -16,6 +16,7 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { Spinner } from "@/components/Spinner";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, X } from "lucide-react";
+import { CustomModal } from "@/components/CustomModal";
 
 interface AssistantSharingModalProps {
   assistant: Assistant;
@@ -137,14 +138,16 @@ export function AssistantSharingModal({
   }
 
   return (
-    <Modal
+    <CustomModal
       title={
         <div className="flex">
           <AssistantIcon assistant={assistant} />{" "}
           <div className="ml-2 my-auto">{assistantName}</div>
         </div>
       }
-      onOutsideClick={onClose}
+      onClose={onClose}
+      trigger={null}
+      open={show}
     >
       <div className="px-4">
         {isUpdating && <Spinner />}
@@ -235,6 +238,6 @@ export function AssistantSharingModal({
           )}
         </div>
       </div>
-    </Modal>
+    </CustomModal>
   );
 }

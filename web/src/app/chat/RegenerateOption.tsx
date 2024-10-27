@@ -17,6 +17,7 @@ import { Popover } from "@/components/popover/Popover";
 import { FiStar } from "react-icons/fi";
 import { StarFeedback } from "@/components/icons/icons";
 import { IconType } from "react-icons";
+import { Star, ThumbsUp } from "lucide-react";
 
 export function RegenerateDropdown({
   options,
@@ -78,22 +79,40 @@ export function RegenerateDropdown({
     </div>
   );
 
+  // return (
+  //   <Popover
+  //     open={isOpen}
+  //     onOpenChange={(open) => setIsOpen(open)}
+  //     content={
+  //       <div onClick={() => setIsOpen(!isOpen)}>
+  //         {!alternate ? (
+  //           <Hoverable size={16} icon={StarFeedback as IconType} />
+  //         ) : (
+  //           <Hoverable
+  //             size={16}
+  //             icon={StarFeedback as IconType}
+  //             hoverText={getDisplayNameForModel(alternate)}
+  //           />
+  //         )}
+  //       </div>
+  //     }
+  //     popover={Dropdown}
+  //     align="start"
+  //     side={side}
+  //     sideOffset={5}
+  //     triggerMaxWidth
+  //   />
+  // );
+
   return (
     <Popover
       open={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
       content={
-        <div onClick={() => setIsOpen(!isOpen)}>
-          {!alternate ? (
-            <Hoverable size={16} icon={StarFeedback as IconType} />
-          ) : (
-            <Hoverable
-              size={16}
-              icon={StarFeedback as IconType}
-              hoverText={getDisplayNameForModel(alternate)}
-            />
-          )}
-        </div>
+
+<div onClick={() => setIsOpen(!isOpen)}
+className={`hover:bg-light hover:text-accent-foreground focus-visible:ring-light p-2 rounded-xs`}>
+     <Star size={16}/></div>
       }
       popover={Dropdown}
       align="start"

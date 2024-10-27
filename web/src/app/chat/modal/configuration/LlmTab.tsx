@@ -13,6 +13,8 @@ import { updateModelOverrideForChatSession } from "../../lib";
 import { GearIcon } from "@/components/icons/icons";
 import { LlmList } from "@/components/llm/LLMList";
 import { checkAssistantRequiresImageGeneration } from "@/app/admin/assistants/lib";
+import { CustomModal } from "@/components/CustomModal";
+import { Thermometer } from "lucide-react";
 
 interface LlmTabProps {
   llmOverrideManager: LlmOverrideManager;
@@ -94,16 +96,19 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
             className="flex items-center text-sm font-medium transition-colors duration-200"
             onClick={() => setIsTemperatureExpanded(!isTemperatureExpanded)}
           >
-            <span className="mr-2 text-xs text-primary">
-              {isTemperatureExpanded ? "▼" : "►"}
-            </span>
-            <span>Temperature</span>
+            <Thermometer />
+        Temperature
           </button>
 
           {isTemperatureExpanded && (
-            <>
+            <CustomModal
+            onClose={() => setIsTemperatureExpanded(false)}
+            title="Adjust the temperature of the LLM."
+            trigger={null}
+            open={isTemperatureExpanded}
+            >
               <Text className="mt-2 mb-8">
-                Adjust the temperature of the LLM. Higher temperatures will make
+                Higher temperatures will make
                 the LLM generate more creative and diverse responses, while
                 lower temperature will make the LLM generate more conservative
                 and focused responses.
@@ -135,7 +140,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
                   {localTemperature}
                 </div>
               </div>
-            </>
+            </CustomModal>
           )}
         </div>
       </div>

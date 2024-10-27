@@ -122,7 +122,7 @@ export const DocumentSetCreationForm = ({
             />
 
             <div>
-              <h3 className="mb-1 text-sm">Pick your connectors:</h3>
+              <p className="mb-1 text-sm font-semibold">Pick your connectors:</p>
               <Combobox
                 items={connectorItems}
                 onSelect={(selectedValues) => {

@@ -24,10 +24,8 @@ import { PopupSpec } from "../admin/connectors/Popup";
 
 export function FailedReIndexAttempts({
   failedIndexingStatuses,
-  setPopup,
 }: {
   failedIndexingStatuses: FailedConnectorIndexingStatus[];
-  setPopup: (popupSpec: PopupSpec | null) => void;
 }) {
   const numToDisplay = 10;
   const [page, setPage] = useState(1);

@@ -1,5 +1,5 @@
 import { LoadingAnimation } from "@/components/Loading";
-import { Button, Divider, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import {
   ArrayHelpers,
@@ -20,10 +20,16 @@ import {
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { FullLLMProvider } from "./interfaces";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import * as Yup from "yup";
 import isEqual from "lodash/isEqual";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Divider } from "@/components/Divider";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label as ShadcnLabel } from "@/components/ui/label"
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 function customConfigProcessing(customConfigsList: [string, string][]) {
   const customConfig: { [key: string]: string } = {};
@@ -37,15 +43,14 @@ export function CustomLLMProviderUpdateForm({
   onClose,
   existingLlmProvider,
   shouldMarkAsDefault,
-  setPopup,
   hideSuccess,
 }: {
   onClose: () => void;
   existingLlmProvider?: FullLLMProvider;
   shouldMarkAsDefault?: boolean;
-  setPopup?: (popup: PopupSpec) => void;
   hideSuccess?: boolean;
 }) {
+  const { toast } = useToast()
   const { mutate } = useSWRConfig();
 
   const [isTesting, setIsTesting] = useState(false);
@@ -98,14 +103,11 @@ export function CustomLLMProviderUpdateForm({
 
         if (values.model_names.length === 0) {
           const fullErrorMsg = "At least one model name is required";
-          if (setPopup) {
-            setPopup({
-              type: "error",
-              message: fullErrorMsg,
-            });
-          } else {
-            alert(fullErrorMsg);
-          }
+          toast({
+            title: "Input Error",
+            description: fullErrorMsg,
+            variant: "destructive",
+          });
           setSubmitting(false);
           return;
         }
@@ -149,14 +151,11 @@ export function CustomLLMProviderUpdateForm({
           const fullErrorMsg = existingLlmProvider
             ? `Failed to update provider: ${errorMsg}`
             : `Failed to enable provider: ${errorMsg}`;
-          if (setPopup) {
-            setPopup({
-              type: "error",
-              message: fullErrorMsg,
+            toast({
+              title: "Update Error",
+              description: fullErrorMsg,
+              variant: "destructive",
             });
-          } else {
-            alert(fullErrorMsg);
-          }
           return;
         }
 
@@ -171,14 +170,11 @@ export function CustomLLMProviderUpdateForm({
           if (!setDefaultResponse.ok) {
             const errorMsg = (await setDefaultResponse.json()).detail;
             const fullErrorMsg = `Failed to set provider as default: ${errorMsg}`;
-            if (setPopup) {
-              setPopup({
-                type: "error",
-                message: fullErrorMsg,
-              });
-            } else {
-              alert(fullErrorMsg);
-            }
+            toast({
+              title: "Default Provider Error",
+              description: fullErrorMsg,
+              variant: "destructive",
+            });
             return;
           }
         }
@@ -189,21 +185,20 @@ export function CustomLLMProviderUpdateForm({
         const successMsg = existingLlmProvider
           ? "Provider updated successfully!"
           : "Provider enabled successfully!";
-        if (!hideSuccess && setPopup) {
-          setPopup({
-            type: "success",
-            message: successMsg,
-          });
-        } else {
-          alert(successMsg);
-        }
+          if (!hideSuccess) {
+            toast({
+              title: "Success",
+              description: successMsg,
+              variant: "success", 
+            });
+          }
 
         setSubmitting(false);
       }}
     >
       {(formikProps) => {
         return (
-          <Form className="gap-y-6 mt-8">
+          <Form className="gap-y-6">
             <TextFormField
               name="name"
               label="Display Name"
@@ -294,21 +289,13 @@ export function CustomLLMProviderUpdateForm({
                         className={index === 0 ? "mt-2" : "mt-6"}
                       >
                         <div className="flex">
-                          <div className="w-full mr-6 border border-border p-3 rounded">
-                            <div>
-                              <Label>Key</Label>
-                              <Field
+                          <Card className="mr-4 w-full">
+                            <CardContent>
+                            <div className="grid gap-1.5">
+                              <ShadcnLabel 
+          className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Key</ShadcnLabel>
+                              <Input
                                 name={`custom_config_list[${index}][0]`}
-                                className={`
-                                  border 
-                                  border-border 
-                                  bg-background 
-                                  rounded 
-                                  w-full 
-                                  py-2 
-                                  px-3 
-                                  mr-4
-                                `}
                                 autoComplete="off"
                               />
                               <ErrorMessage
@@ -318,20 +305,11 @@ export function CustomLLMProviderUpdateForm({
                               />
                             </div>
 
-                            <div className="mt-3">
-                              <Label>Value</Label>
-                              <Field
+                            <div className="mt-3 grid gap-1.5">
+                              <ShadcnLabel 
+          className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Value</ShadcnLabel>
+                              <Input
                                 name={`custom_config_list[${index}][1]`}
-                                className={`
-                                  border 
-                                  border-border 
-                                  bg-background 
-                                  rounded 
-                                  w-full 
-                                  py-2 
-                                  px-3 
-                                  mr-4
-                                `}
                                 autoComplete="off"
                               />
                               <ErrorMessage
@@ -340,12 +318,14 @@ export function CustomLLMProviderUpdateForm({
                                 className="text-error text-sm mt-1"
                               />
                             </div>
-                          </div>
+                            </CardContent>
+                          </Card>
                           <div className="my-auto">
-                            <FiX
-                              className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                              onClick={() => arrayHelpers.remove(index)}
-                            />
+                            <CustomTooltip trigger={<Button variant='ghost' size="icon" onClick={() => arrayHelpers.remove(index)}><FiX
+                              
+                              /></Button>}>
+                              Remove
+                            </CustomTooltip>
                           </div>
                         </div>
                       </div>
@@ -356,13 +336,9 @@ export function CustomLLMProviderUpdateForm({
                     onClick={() => {
                       arrayHelpers.push(["", ""]);
                     }}
-                    className="mt-3"
-                    color="green"
-                    size="xs"
-                    type="button"
-                    icon={FiPlus}
+                    className="mt-3 "
                   >
-                    Add New
+                  <FiPlus />  Add New
                   </Button>
                 </div>
               )}
@@ -441,7 +417,7 @@ export function CustomLLMProviderUpdateForm({
               )}
 
               <div className="flex w-full mt-4">
-                <Button type="submit" size="xs">
+                <Button type="submit">
                   {isTesting ? (
                     <LoadingAnimation text="Testing" />
                   ) : existingLlmProvider ? (
@@ -452,11 +428,8 @@ export function CustomLLMProviderUpdateForm({
                 </Button>
                 {existingLlmProvider && (
                   <Button
-                    type="button"
-                    color="red"
+                   variant="destructive"
                     className="ml-3"
-                    size="xs"
-                    icon={FiTrash}
                     onClick={async () => {
                       const response = await fetch(
                         `${LLM_PROVIDERS_ADMIN_URL}/${existingLlmProvider.id}`,
@@ -474,7 +447,7 @@ export function CustomLLMProviderUpdateForm({
                       onClose();
                     }}
                   >
-                    Delete
+                  <FiTrash />  Delete
                   </Button>
                 )}
               </div>

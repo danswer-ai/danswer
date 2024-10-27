@@ -6,7 +6,6 @@ import {
   SearchDefaultOverrides,
   SearchResponse,
 } from "@/lib/search/interfaces";
-import { usePopup } from "../admin/connectors/Popup";
 import { AlertIcon, MagnifyingIcon, UndoIcon } from "../icons/icons";
 import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
 import { searchState } from "./SearchSection";
@@ -49,7 +48,6 @@ export const SearchResultsDisplay = ({
   defaultOverrides: SearchDefaultOverrides;
 }) => {
   const commandSymbol = KeyboardSymbol();
-  const { popup, setPopup } = usePopup();
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
@@ -162,8 +160,6 @@ export const SearchResultsDisplay = ({
 
   return (
     <>
-      {popup}
-
       {documents && documents.length > 0 && (
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
@@ -237,7 +233,6 @@ export const SearchResultsDisplay = ({
                 documentRank={ind + 1}
                 messageId={messageId}
                 isSelected={selectedDocumentIds.has(document.document_id)}
-                setPopup={setPopup}
               />
             ) : (
               <DocumentDisplay
@@ -250,7 +245,6 @@ export const SearchResultsDisplay = ({
                 documentRank={ind + 1}
                 messageId={messageId}
                 isSelected={selectedDocumentIds.has(document.document_id)}
-                setPopup={setPopup}
               />
             );
           })}

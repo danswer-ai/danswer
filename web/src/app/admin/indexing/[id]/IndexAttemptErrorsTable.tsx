@@ -1,6 +1,5 @@
 "use client";
 
-import { Modal } from "@/components/Modal";
 import { PageSelector } from "@/components/PageSelector";
 import { CheckmarkIcon, CopyIcon } from "@/components/icons/icons";
 import { localizeAndPrettify } from "@/lib/time";
@@ -15,10 +14,11 @@ import {
 } from "@tremor/react";
 import { useState } from "react";
 import { IndexAttemptError } from "./types";
+import { CustomModal } from "@/components/CustomModal";
 
 const NUM_IN_PAGE = 8;
 
-export function CustomModal({
+export function IndexingCustomModal({
   isVisible,
   onClose,
   title,
@@ -36,11 +36,11 @@ export function CustomModal({
   if (!isVisible) return null;
 
   return (
-    <Modal
-      width="w-4/6"
-      className="h-5/6 overflow-y-hidden flex flex-col"
+    <CustomModal
       title={title}
-      onOutsideClick={onClose}
+      onClose={onClose}
+      trigger={null}
+      open={isVisible}
     >
       <div className="overflow-y-auto mb-6">
         {showCopyButton && (
@@ -70,7 +70,7 @@ export function CustomModal({
         )}
         <div className="whitespace-pre-wrap">{content}</div>
       </div>
-    </Modal>
+    </CustomModal>
   );
 }
 
@@ -90,7 +90,7 @@ export function IndexAttemptErrorsTable({
   return (
     <>
       {modalData && (
-        <CustomModal
+        <IndexingCustomModal
           isVisible={!!modalData}
           onClose={closeModal}
           title={modalData.title}

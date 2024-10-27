@@ -22,6 +22,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CustomModal } from "@/components/CustomModal";
+import { Combobox } from "@/components/Combobox";
 
 const CategoryBubble = ({
   name,
@@ -65,16 +69,15 @@ const NUM_RESULTS_PER_PAGE = 10;
 export const PromptLibraryTable = ({
   promptLibrary,
   refresh,
-  setPopup,
   handleEdit,
   isPublic,
 }: {
   promptLibrary: InputPrompt[];
   refresh: () => void;
-  setPopup: (popup: PopupSpec | null) => void;
   handleEdit: (promptId: number) => void;
   isPublic: boolean;
 }) => {
+  const { toast } = useToast()
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
@@ -122,36 +125,39 @@ export const PromptLibraryTable = ({
       }
     );
     if (!response.ok) {
-      setPopup({ message: "Failed to delete input prompt", type: "error" });
+      const errorMsg = await response.text();
+      toast({
+        title: "Delete Failed",
+        description: `Error: ${errorMsg}`,
+        variant: "destructive",
+      });
     }
     refresh();
   };
 
-  const handleStatusSelect = (status: string) => {
-    setSelectedStatus((prev) => {
-      if (prev.includes(status)) {
-        return prev.filter((s) => s !== status);
-      }
-      return [...prev, status];
-    });
-  };
+  const handleStatusSelect = (newSelectedStatus: string[]) => {
+    setSelectedStatus(newSelectedStatus);
+  }
+
+  const statusOptions = [
+    { value: "Active", label: "Active" },
+    { value: "Inactive", label: "Inactive" },
+  ];
 
   const [confirmDeletionId, setConfirmDeletionId] = useState<number | null>(
     null
   );
 
   return (
-    <div className="justify-center py-2">
+    <div className="justify-center py-4">
       {confirmDeletionId != null && (
-        <Modal
-          onOutsideClick={() => setConfirmDeletionId(null)}
-          className="max-w-sm"
+        <CustomModal
+        onClose={() => setConfirmDeletionId(null)}
+      title='Are you sure you want to delete this prompt? You will not be able to recover this prompt.'
+      trigger={null}
+      open={confirmDeletionId != null}
+
         >
-          <>
-            <p className="mb-2 text-lg">
-              Are you sure you want to delete this prompt? You will not be able
-              to recover this prompt
-            </p>
             <div className="flex justify-between mt-6">
               <button
                 className="rounded py-1.5 px-2 bg-background-800 text-text-200"
@@ -170,10 +176,10 @@ export const PromptLibraryTable = ({
                 No
               </button>
             </div>
-          </>
-        </Modal>
+        </CustomModal>
       )}
 
+      <div className="w-full md:w-[500px] xl:w-[625px]">
       <div className="relative">
         <MagnifyingGlass className="absolute -translate-y-1/2 left-4 top-1/2" />
         <Input
@@ -186,26 +192,14 @@ export const PromptLibraryTable = ({
           className="pl-10"
         />
       </div>
-      <div className="my-4 border-b border-border">
-        <FilterDropdown
-          options={[
-            { key: "Active", display: "Active" },
-            { key: "Inactive", display: "Inactive" },
-          ]}
-          selected={selectedStatus}
-          handleSelect={(option) => handleStatusSelect(option.key)}
-          icon={<FiTag size={16} />}
-          defaultDisplay="All Statuses"
-        />
-        <div className="flex flex-wrap pb-4 mt-3">
-          {selectedStatus.map((status) => (
-            <CategoryBubble
-              key={status}
-              name={status}
-              onDelete={() => handleStatusSelect(status)}
-            />
-          ))}
-        </div>
+      <div className="my-4">
+<Combobox
+        items={statusOptions}
+        onSelect={handleStatusSelect}
+        placeholder="All Statuses"
+        label="All Statuses"
+      />
+      </div>
       </div>
       <div className="mx-auto overflow-x-auto">
         <Card>
@@ -224,7 +218,7 @@ export const PromptLibraryTable = ({
                     .filter((prompt) => !(!isPublic && prompt.is_public))
                     .map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell>{item.prompt}</TableCell>
+                        <TableCell><p className="w-full truncate">{item.prompt}</p></TableCell>
                         <TableCell className="max-w-xs overflow-hidden break-words text-ellipsis">
                           {item.content}
                         </TableCell>
@@ -246,7 +240,6 @@ export const PromptLibraryTable = ({
                                 <TrashIcon size={20} />
                               </Button>
                             }
-                            asChild
                           >
                             Delete
                           </CustomTooltip>
@@ -262,7 +255,6 @@ export const PromptLibraryTable = ({
                                 <EditIcon size={16} />
                               </Button>
                             }
-                            asChild
                           >
                             Edit
                           </CustomTooltip>

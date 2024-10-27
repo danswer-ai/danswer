@@ -177,6 +177,7 @@ export const GmailJsonUploadSection = ({
               });
             }
           }}
+          variant="destructive"
         >
           Delete
         </Button>

@@ -7,6 +7,8 @@ import { FaPlus } from "react-icons/fa";
 import { AdvancedSearchConfiguration } from "../interfaces";
 import { BooleanFormField } from "@/components/admin/connectors/Field";
 import NumberInput from "../../connectors/[connector]/pages/ConnectorInput/NumberInput";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface AdvancedEmbeddingFormPageProps {
   updateAdvancedEmbeddingDetails: (
@@ -55,33 +57,27 @@ const AdvancedEmbeddingFormPage = forwardRef<
                 <div className="w-full">
                   {values.multilingual_expansion.map(
                     (_: any, index: number) => (
-                      <div key={index} className="w-full flex mb-4">
-                        <Field
+                      <div key={index} className="w-full flex mb-4 gap-2">
+                        <Input
                           name={`multilingual_expansion.${index}`}
-                          className={`w-full bg-input text-sm p-2  border border-border-medium rounded-md
-                                      focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2`}
                         />
-                        <button
-                          type="button"
+                        <Button
+                        variant="destructive"
                           onClick={() => remove(index)}
-                          className={`p-2 my-auto bg-input flex-none rounded-md 
-                              bg-red-500 text-white hover:bg-red-600
-                              focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50`}
+                          size="icon"
                         >
                           <TrashIcon className="text-white my-auto" />
-                        </button>
+                        </Button>
                       </div>
                     )
                   )}
-                  <button
-                    type="button"
+                  <Button
                     onClick={() => push("")}
-                    className={`mt-2 p-2 bg-rose-500 text-xs text-white rounded-md flex items-center
-                        hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50`}
+                    className="mb-4"
                   >
                     <FaPlus className="mr-2" />
                     Add Language
-                  </button>
+                  </Button>
                 </div>
               )}
             </FieldArray>
@@ -90,11 +86,13 @@ const AdvancedEmbeddingFormPage = forwardRef<
               subtext="Enable multipass indexing for both mini and large chunks."
               label="Multipass Indexing"
               name="multipass_indexing"
+              alignTop
             />
             <BooleanFormField
               subtext="Disable reranking for streaming to improve response time."
               label="Disable Rerank for Streaming"
               name="disable_rerank_for_streaming"
+              alignTop
             />
             <NumberInput
               description="Number of results to rerank"

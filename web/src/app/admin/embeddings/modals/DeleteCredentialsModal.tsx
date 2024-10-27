@@ -2,21 +2,25 @@ import React from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text, Callout } from "@tremor/react";
 import { CloudEmbeddingProvider } from "../../../../components/embedding/interfaces";
+import { CustomModal } from "@/components/CustomModal";
 
 export function DeleteCredentialsModal({
   modelProvider,
   onConfirm,
   onCancel,
+  showDeleteCredentialsModal
 }: {
   modelProvider: CloudEmbeddingProvider;
   onConfirm: () => void;
   onCancel: () => void;
+  showDeleteCredentialsModal: boolean
 }) {
   return (
-    <Modal
-      width="max-w-3xl"
+    <CustomModal
       title={`Delete ${modelProvider.provider_type} Credentials?`}
-      onOutsideClick={onCancel}
+      onClose={onCancel}
+      trigger={null}
+      open={showDeleteCredentialsModal}
     >
       <div className="mb-4">
         <Text className="text-lg mb-2">
@@ -37,6 +41,6 @@ export function DeleteCredentialsModal({
           </Button>
         </div>
       </div>
-    </Modal>
+    </CustomModal>
   );
 }

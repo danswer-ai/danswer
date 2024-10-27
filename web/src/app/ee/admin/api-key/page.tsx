@@ -72,24 +72,18 @@ function NewApiKeyModal({
                 {isCopyClicked ? <Check size="16" /> : <Copy size="16" />}
               </Button>
             }
-            asChild
+            
           >
             {isCopyClicked ? "Copied" : "Copy"}
           </CustomTooltip>
         </div>
-        {isCopyClicked && (
-          <p className="pt-1 text-xs font-medium text-success">
-            API Key copied!
-          </p>
-        )}
       </div>
     </div>
   );
 }
 
 function Main() {
-  const { popup, setPopup } = usePopup();
-
+  const { toast } = useToast();
   const {
     data: apiKeys,
     isLoading,
@@ -215,9 +209,8 @@ function Main() {
                           onClick={() => handleEdit(apiKey)}
                         >
                           <Pencil size={16} className="shrink-0" />
-                          <p className="truncate">
-                            {apiKey.api_key_name || <i>null</i>}
-                          </p>
+                         
+                            <p className="w-full truncate mr-5">{apiKey.api_key_name || <i>null</i>}</p>
                         </div>
                       }
                       asChild
@@ -244,9 +237,10 @@ function Main() {
                         setKeyIsGenerating(false);
                         if (!response.ok) {
                           const errorMsg = await response.text();
-                          setPopup({
-                            type: "error",
-                            message: `Failed to regenerate API Key: ${errorMsg}`,
+                          toast({
+                            title: "Regeneration Failed",
+                            description: `Failed to regenerate API Key: ${errorMsg}`,
+                            variant: "destructive",
                           });
                           return;
                         }
@@ -265,9 +259,10 @@ function Main() {
                         const response = await deleteApiKey(apiKey.api_key_id);
                         if (!response.ok) {
                           const errorMsg = await response.text();
-                          setPopup({
-                            type: "error",
-                            message: `Failed to delete API Key: ${errorMsg}`,
+                          toast({
+                            title: "Deletion Failed",
+                            description: `Failed to delete API Key: ${errorMsg}`,
+                            variant: "destructive",
                           });
                           return;
                         }

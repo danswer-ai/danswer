@@ -4,14 +4,14 @@ import { ApiKeyForm } from "./ApiKeyForm";
 import { Modal } from "../Modal";
 import { useRouter } from "next/navigation";
 import { useProviderStatus } from "../chat_search/ProviderContext";
-import { PopupSpec } from "../admin/connectors/Popup";
+import { CustomModal } from "../CustomModal";
 
 export const ApiKeyModal = ({
   hide,
-  setPopup,
+  isOpen
 }: {
   hide: () => void;
-  setPopup: (popup: PopupSpec) => void;
+  isOpen?: boolean;
 }) => {
   const router = useRouter();
 
@@ -25,13 +25,14 @@ export const ApiKeyModal = ({
     return null;
   }
   return (
-    <Modal
+    <CustomModal
       title="Set an API Key!"
-      width="max-w-3xl w-full"
-      onOutsideClick={() => hide()}
+      onClose={() => hide()}
+          trigger={null}
+          open={isOpen}
     >
       <>
-        <div className="mb-5 text-sm text-gray-700">
+        <div className="text-sm text-gray-700">
           Please provide an API Key below in order to start using Danswer – you
           can always change this later.
           <br />
@@ -44,7 +45,6 @@ export const ApiKeyModal = ({
         </div>
 
         <ApiKeyForm
-          setPopup={setPopup}
           onSuccess={() => {
             router.refresh();
             refreshProviderInfo();
@@ -53,6 +53,6 @@ export const ApiKeyModal = ({
           providerOptions={providerOptions}
         />
       </>
-    </Modal>
+    </CustomModal>
   );
 };

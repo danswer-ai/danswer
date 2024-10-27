@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, Text, Title } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
 
 import {
   CloudEmbeddingProvider,
@@ -10,16 +10,19 @@ import {
   EmbeddingModelDescriptor,
   EmbeddingProvider,
   LITELLM_CLOUD_PROVIDER,
+  AZURE_CLOUD_PROVIDER,
 } from "../../../../components/embedding/interfaces";
 import { EmbeddingDetails } from "../EmbeddingModelSelectionForm";
 import { FiExternalLink, FiInfo, FiTrash } from "react-icons/fi";
-import { HoverPopup } from "@/components/HoverPopup";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { CustomEmbeddingModelForm } from "@/components/embedding/CustomEmbeddingModelForm";
 import { deleteSearchSettings } from "./utils";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { AdvancedSearchConfiguration } from "../interfaces";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import {Card, CardContent } from "@/components/ui/card";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export default function CloudEmbeddingPage({
   currentModel,
@@ -110,17 +113,9 @@ export default function CloudEmbeddingPage({
                 {provider.provider_type}{" "}
                 {provider.provider_type == "Cohere" && "(recommended)"}
               </h2>
-              <HoverPopup
-                mainContent={
-                  <FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />
-                }
-                popupContent={
-                  <div className="text-sm text-text-800 w-52">
-                    <div className="my-auto">{provider.description}</div>
-                  </div>
-                }
-                style="dark"
-              />
+              <CustomTooltip trigger={<FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />}>
+                {provider.description}
+              </CustomTooltip>
             </div>
 
             <button
@@ -174,42 +169,32 @@ export default function CloudEmbeddingPage({
               {LITELLM_CLOUD_PROVIDER.provider_type == "Cohere" &&
                 "(recommended)"}
             </h2>
-            <HoverPopup
-              mainContent={
-                <FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />
-              }
-              popupContent={
-                <div className="text-sm text-text-800 w-52">
-                  <div className="my-auto">
-                    {LITELLM_CLOUD_PROVIDER.description}
-                  </div>
-                </div>
-              }
-              style="dark"
-            />
+
+<CustomTooltip trigger={<FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />}>
+{LITELLM_CLOUD_PROVIDER.description}
+              </CustomTooltip>
+
           </div>
-          <div className="w-full flex flex-col items-start">
+          <div className="w-full flex flex-col items-start pt-4">
             {!liteLLMProvider ? (
-              <button
+              <Button
                 onClick={() => setShowTentativeProvider(LITELLM_CLOUD_PROVIDER)}
-                className="mb-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm cursor-pointer"
               >
                 Set API Configuration
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
                 onClick={() =>
                   setChangeCredentialsProvider(LITELLM_CLOUD_PROVIDER)
                 }
-                className="mb-2 hover:underline text-sm cursor-pointer"
               >
                 Modify API Configuration
-              </button>
+              </Button>
             )}
 
             {!liteLLMProvider && (
-              <Card className="mt-2 w-full max-w-4xl bg-gray-50 border border-gray-200">
-                <div className="p-4">
+         <Card className="mt-4 w-full sm:w-96">
+                <CardContent>
                   <Text className="text-lg font-semibold mb-2">
                     API URL Required
                   </Text>
@@ -219,13 +204,13 @@ export default function CloudEmbeddingPage({
                     URL&quot; button above to set up your LiteLLM configuration.
                   </Text>
                   <div className="flex items-center">
-                    <FiInfo className="text-blue-500 mr-2" size={18} />
+                    <FiInfo className="text-blue-500 mr-2 shrink-0" size={18} />
                     <Text className="text-sm text-blue-500">
                       Once configured, you&apos;ll be able to add and manage
                       your LiteLLM models here.
                     </Text>
-                  </div>
                 </div>
+                </CardContent>
               </Card>
             )}
             {liteLLMProvider && (
@@ -258,6 +243,7 @@ export default function CloudEmbeddingPage({
                       : ""
                   }`}
                 >
+                  <CardContent>
                   <CustomEmbeddingModelForm
                     embeddingType={EmbeddingProvider.LITELLM}
                     provider={liteLLMProvider}
@@ -268,6 +254,7 @@ export default function CloudEmbeddingPage({
                     }
                     setShowTentativeModel={setShowTentativeModel}
                   />
+                  </CardContent>
                 </Card>
               </>
             )}
@@ -284,34 +271,25 @@ export default function CloudEmbeddingPage({
             <h2 className="ml-2  mt-2 text-xl font-bold">
               {AZURE_CLOUD_PROVIDER.provider_type}{" "}
             </h2>
-            <HoverPopup
-              mainContent={
-                <FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />
-              }
-              popupContent={
-                <div className="text-sm text-text-800 w-52">
-                  <div className="my-auto">
-                    {AZURE_CLOUD_PROVIDER.description}
-                  </div>
-                </div>
-              }
-              style="dark"
-            />
+
+<CustomTooltip trigger={<FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />}>
+{AZURE_CLOUD_PROVIDER.description}
+              </CustomTooltip>
+
           </div>
         </div>
 
         <div className="w-full flex flex-col items-start">
           {!isAzureConfigured ? (
             <>
-              <button
+              <Button
                 onClick={() => setShowTentativeProvider(AZURE_CLOUD_PROVIDER)}
-                className="mb-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm cursor-pointer"
               >
                 Configure Azure OpenAI
-              </button>
-              <div className="mt-2 w-full max-w-4xl">
-                <Card className="p-4 border border-gray-200 rounded-lg shadow-sm">
-                  <Text className="text-base font-medium mb-2">
+              </Button>
+              <Card className="mt-4 w-full sm:w-96">
+              <CardContent>
+                <Text className="text-base font-medium mb-2">
                     Configure Azure OpenAI for Embeddings
                   </Text>
                   <Text className="text-sm text-gray-600 mb-3">
@@ -319,14 +297,13 @@ export default function CloudEmbeddingPage({
                     OpenAI for embeddings.
                   </Text>
                   <div className="flex items-center text-sm text-gray-700">
-                    <FiInfo className="text-gray-400 mr-2" size={16} />
+                    <FiInfo className="text-gray-400 mr-2 shrink-0" size={16} />
                     <Text>
                       You&apos;ll need: API version, base URL, API key, model
                       name, and deployment name.
                     </Text>
-                  </div>
+                  </div></CardContent>
                 </Card>
-              </div>
             </>
           ) : (
             <>
@@ -336,8 +313,9 @@ export default function CloudEmbeddingPage({
                 </Text>
 
                 {azureProviderDetails ? (
-                  <Card className="bg-white shadow-sm border border-gray-200 rounded-lg">
-                    <div className="p-4 space-y-3">
+                  <Card >
+                    <CardContent>
+                      <div className="p-4 space-y-3">
                       <div className="flex justify-between">
                         <span className="font-medium">API Version:</span>
                         <span>{azureProviderDetails.api_version}</span>
@@ -359,6 +337,7 @@ export default function CloudEmbeddingPage({
                     >
                       Delete Current Azure Provider
                     </button>
+                    </CardContent>
                   </Card>
                 ) : (
                   <Card className="bg-gray-50 border border-gray-200 rounded-lg">
@@ -416,42 +395,50 @@ export function CloudModelCard({
     React.SetStateAction<CloudEmbeddingProvider | null>
   >;
 }) {
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
   const [showDeleteModel, setShowDeleteModel] = useState(false);
   const enabled =
     model.model_name === currentModel.model_name &&
     model.provider_type?.toLowerCase() ==
       currentModel.provider_type?.toLowerCase();
 
-  const deleteModel = async () => {
-    if (!model.id) {
-      setPopup({ message: "Model cannot be deleted", type: "error" });
-      return;
-    }
-
-    const response = await deleteSearchSettings(model.id);
-
-    if (response.ok) {
-      setPopup({ message: "Model deleted successfully", type: "success" });
-      setShowDeleteModel(false);
-    } else {
-      setPopup({
-        message:
-          "Failed to delete model. Ensure you are not attempting to delete a curently active model.",
-        type: "error",
-      });
-    }
-  };
+      const deleteModel = async () => {
+        if (!model.id) {
+          toast({
+            title: "Deletion Error",
+            description: "Model cannot be deleted",
+            variant: "destructive",
+          });
+          return;
+        }
+      
+        const response = await deleteSearchSettings(model.id);
+      
+        if (response.ok) {
+          toast({
+            title: "Success",
+            description: "Model deleted successfully",
+            variant: "success",
+          });
+          setShowDeleteModel(false);
+        } else {
+          toast({
+            title: "Deletion Failed",
+            description: "Failed to delete model. Ensure you are not attempting to delete a currently active model.",
+            variant: "destructive",
+          });
+        }
+      };
 
   return (
     <div
-      className={`p-4 w-96 border rounded-lg transition-all duration-200 ${
+      className={`p-4 md:w-96 border rounded-lg transition-all duration-200 flex flex-col justify-between ${
         enabled
           ? "border-blue-500 bg-blue-50 shadow-md"
           : "border-gray-300 hover:border-blue-300 hover:shadow-sm"
       } ${!provider.configured && "opacity-80 hover:opacity-100"}`}
     >
-      {popup}
+      <div>
       {showDeleteModel && (
         <DeleteEntityModal
           entityName={model.model_name}
@@ -465,13 +452,13 @@ export function CloudModelCard({
         <h3 className="font-bold text-lg">{model.model_name}</h3>
         <div className="flex gap-x-2">
           {model.provider_type == EmbeddingProvider.LITELLM.toLowerCase() && (
-            <button
+            <Button
+            variant='destructive'
               onClickCapture={() => setShowDeleteModel(true)}
               onClick={(e) => e.stopPropagation()}
-              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
             >
               <FiTrash size={18} />
-            </button>
+            </Button>
           )}
           <a
             href={provider.website}
@@ -491,13 +478,11 @@ export function CloudModelCard({
           ${model.pricePerMillion}/M tokens
         </div>
       )}
-      <div className="mt-3">
-        <button
-          className={`w-full p-2 rounded-lg text-sm ${
-            enabled
-              ? "bg-background-125 border border-border cursor-not-allowed"
-              : "bg-background border border-border hover:bg-hover cursor-pointer"
-          }`}
+      </div>
+      <div className="mt-auto">
+        <Button
+          className="w-full"
+          variant='outline'
           onClick={() => {
             if (enabled) {
               setAlreadySelectedModel(model);
@@ -514,7 +499,7 @@ export function CloudModelCard({
           disabled={enabled}
         >
           {enabled ? "Selected Model" : "Select Model"}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -63,7 +63,6 @@ import { ChatPopup } from "./ChatPopup";
 
 import FunctionalHeader from "@/components/chat_search/Header";
 import { useSidebarVisibility } from "@/components/chat_search/hooks";
-import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import { SetDefaultModelModal } from "./modal/SetDefaultModelModal";
 import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
@@ -88,7 +87,6 @@ import Logo from "../../../../../public/logo-brand.png";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { StarterMessage as StarterMessageType } from "../admin/assistants/interfaces";
 import { Skeleton } from "@/components/ui/skeleton";
-import ResizableSection from "@/components/resizable/ResizableSection";
 import { AnimatePresence, motion } from "framer-motion";
 import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -298,8 +296,6 @@ export function ChatPage({
   // NOTE: this is required due to React strict mode, where all `useEffect` hooks
   // are run twice on initial load during development
   const submitOnLoadPerformed = useRef<boolean>(false);
-
-  const { popup, setPopup } = usePopup();
 
   // fetch messages for the chat session
   const [isFetchingChatMessages, setIsFetchingChatMessages] = useState(
@@ -1785,7 +1781,6 @@ export function ChatPage({
       {showApiKeyModal && !shouldShowWelcomeModal ? (
         <ApiKeyModal
           hide={() => setShowApiKeyModal(false)}
-          setPopup={setPopup}
         />
       ) : (
         noAssistants && <NoAssistantModal isAdmin={isAdmin} />
@@ -1793,8 +1788,6 @@ export function ChatPage({
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
-      {popup}
-
       <ChatPopup />
 
       <div className="relative flex overflow-x-hidden bg-background default h-full">
@@ -1815,7 +1808,6 @@ export function ChatPage({
         <div ref={masterFlexboxRef} className="flex w-full overflow-x-hidden">
           {settingsToggled && (
             <SetDefaultModelModal
-              setPopup={setPopup}
               setLlmOverride={llmOverrideManager.setGlobalDefault}
               defaultModel={user?.preferences.default_model!}
               llmProviders={llmProviders}
@@ -1827,6 +1819,7 @@ export function ChatPage({
             <ExceptionTraceModal
               onOutsideClick={() => setStackTraceModalContent(null)}
               exceptionTrace={stackTraceModalContent}
+              isOpen={!!stackTraceModalContent}
             />
           )}
 
@@ -2146,20 +2139,20 @@ export function ChatPage({
                                     currentSessionChatState == "input"
                                       ? (newQuery) => {
                                           if (!previousMessage) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
-                                                "Cannot edit query of first message - please refresh the page and try again.",
+                                            toast({
+                                              title: "Edit Error",
+                                              description: "Cannot edit query of the first message - please refresh the page and try again.",
+                                              variant: "destructive",
                                             });
                                             return;
                                           }
                                           if (
                                             previousMessage.messageId === null
                                           ) {
-                                            setPopup({
-                                              type: "error",
-                                              message:
-                                                "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                            toast({
+                                              title: "Edit Error",
+                                              description: "Cannot edit the query of a pending message - please wait a few seconds and try again.",
+                                              variant: "destructive",
                                             });
                                             return;
                                           }
@@ -2216,10 +2209,10 @@ export function ChatPage({
                                           currentAlternativeAssistant,
                                       });
                                     } else {
-                                      setPopup({
-                                        type: "error",
-                                        message:
-                                          "Failed to force search - please refresh the page and try again.",
+                                      toast({
+                                        title: "Force Search Error",
+                                        description: "Failed to force search - please refresh the page and try again.",
+                                        variant: "destructive",
                                       });
                                     }
                                   }}
@@ -2431,12 +2424,6 @@ export function ChatPage({
                             : 0,
                         }}
                       >
-                        <ResizableSection
-                          updateSidebarWidth={updateSidebarWidth}
-                          intialWidth={usedSidebarWidth}
-                          minWidth={350}
-                          maxWidth={maxDocumentSidebarWidth || undefined}
-                        >
                           <DocumentSidebar
                             initialWidth={showDocSidebar ? usedSidebarWidth : 0}
                             ref={innerSidebarElementRef}
@@ -2451,7 +2438,6 @@ export function ChatPage({
                             showDocSidebar={showDocSidebar}
                             isWide={isWide}
                           />
-                        </ResizableSection>
                       </div>
                     </>
                   ) : // Another option is to use a div with the width set to the initial width, so that the

@@ -4,29 +4,28 @@ import { Button, Text, Card } from "@tremor/react";
 import { FaNewspaper, FaPaperPlane, FaTractor, FaTrash } from "react-icons/fa";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik, FormikHelpers } from "formik";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import {
   Credential,
   getDisplayNameForCredentialKey,
 } from "@/lib/connectors/credentials";
 import { createEditingValidationSchema, createInitialValues } from "../lib";
 import { dictionaryType, formType } from "../types";
+import { useToast } from "@/hooks/use-toast";
 
 const EditCredential = ({
   credential,
   onClose,
-  setPopup,
   onUpdate,
 }: {
   credential: Credential<dictionaryType>;
   onClose: () => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   onUpdate: (
     selectedCredentialId: Credential<any>,
     details: any,
     onSuccess: () => void
   ) => Promise<void>;
 }) => {
+  const { toast } = useToast()
   const validationSchema = createEditingValidationSchema(
     credential.credential_json
   );
@@ -41,7 +40,11 @@ const EditCredential = ({
       await onUpdate(credential, values, onClose);
     } catch (error) {
       console.error("Error updating credential:", error);
-      setPopup({ message: "Error updating credential", type: "error" });
+      toast({
+        title: "Update Failed",
+        description: "Error updating credential. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       formikHelpers.setSubmitting(false);
     }

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Text, Button, Callout } from "@tremor/react";
+import { Text, Callout } from "@tremor/react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { Label, TextFormField } from "@/components/admin/connectors/Field";
@@ -10,6 +10,8 @@ import {
 } from "../../../../components/embedding/interfaces";
 import { EMBEDDING_PROVIDERS_ADMIN_URL } from "../../configuration/llm/constants";
 import { Modal } from "@/components/Modal";
+import { CustomModal } from "@/components/CustomModal";
+import { Button } from "@/components/ui/button";
 
 export function ProviderCreationModal({
   selectedProvider,
@@ -19,6 +21,7 @@ export function ProviderCreationModal({
   isProxy,
   isAzure,
   updateCurrentModel,
+  showTentativeProvider
 }: {
   updateCurrentModel: (
     newModel: string,
@@ -30,6 +33,7 @@ export function ProviderCreationModal({
   existingProvider?: CloudEmbeddingProvider;
   isProxy?: boolean;
   isAzure?: boolean;
+  showTentativeProvider?: boolean;
 }) {
   const useFileUpload = selectedProvider.provider_type == "Google";
 
@@ -172,11 +176,11 @@ export function ProviderCreationModal({
   };
 
   return (
-    <Modal
-      width="max-w-3xl"
-      title={`Configure ${selectedProvider.provider_type}`}
-      onOutsideClick={onCancel}
-      icon={selectedProvider.icon}
+    <CustomModal
+      title={<div className="flex items-center gap-4">{selectedProvider.icon({ size: 24 })} Configure {selectedProvider.provider_type}</div>}
+      onClose={onCancel}
+      trigger={null}
+      open={showTentativeProvider}
     >
       <div>
         <Formik
@@ -280,7 +284,6 @@ export function ProviderCreationModal({
 
               <Button
                 type="submit"
-                color="blue"
                 className="w-full"
                 disabled={isSubmitting}
               >
@@ -296,6 +299,6 @@ export function ProviderCreationModal({
           )}
         </Formik>
       </div>
-    </Modal>
+    </CustomModal>
   );
 }

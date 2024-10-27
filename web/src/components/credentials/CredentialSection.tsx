@@ -4,15 +4,12 @@ import { ValidSources } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { FaSwatchbook } from "react-icons/fa";
-import { NewChatIcon } from "@/components/icons/icons";
 import { useState } from "react";
-import { useTeamspaces } from "@/lib/hooks";
 import {
   deleteCredential,
   swapCredential,
   updateCredential,
 } from "@/lib/credential";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import CreateCredential from "./actions/CreateCredential";
 import { CCPairFullInfo } from "@/app/admin/connector/[ccPairId]/types";
 import ModifyCredential from "./actions/ModifyCredential";
@@ -28,6 +25,8 @@ import {
   ConfluenceCredentialJson,
   Credential,
 } from "@/lib/connectors/credentials";
+import { useToast } from "@/hooks/use-toast";
+import { CustomModal } from "../CustomModal";
 
 export default function CredentialSection({
   ccPair,
@@ -38,6 +37,7 @@ export default function CredentialSection({
   sourceType: ValidSources;
   refresh: () => void;
 }) {
+  const { toast } = useToast()
   const makeShowCreateCredential = () => {
     setShowModifyCredential(false);
     setShowCreateCredential(true);
@@ -62,9 +62,10 @@ export default function CredentialSection({
     mutate(buildSimilarCredentialInfoURL(sourceType));
     refresh();
 
-    setPopup({
-      message: "Swapped credential succesfully!",
-      type: "success",
+    toast({
+      title: "Swap Failed",
+      description: "There was an issue swapping the credential. Please try again.",
+      variant: "destructive",
     });
   };
 
@@ -75,15 +76,17 @@ export default function CredentialSection({
   ) => {
     const response = await updateCredential(selectedCredential.id, details);
     if (response.ok) {
-      setPopup({
-        message: "Updated credential",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Credential updated successfully!",
+        variant: "success",
       });
       onSucces();
     } else {
-      setPopup({
-        message: "Issue updating credential",
-        type: "error",
+      toast({
+        title: "Update Failed",
+        description: `Issue updating credential`,
+        variant: "destructive",
       });
     }
   };
@@ -116,7 +119,6 @@ export default function CredentialSection({
     setEditingCredential(null);
     setShowModifyCredential(true);
   };
-  const { popup, setPopup } = usePopup();
 
   if (!credentials || !editableCredentials) {
     return <></>;
@@ -124,8 +126,6 @@ export default function CredentialSection({
 
   return (
     <div className="flex justify-start flex-col gap-y-2">
-      {popup}
-
       <div className="flex gap-x-2">
         <p>Current credential:</p>
         <Text className="ml-1 italic font-bold my-auto">
@@ -144,10 +144,11 @@ export default function CredentialSection({
         </button>
       </div>
       {showModifyCredential && (
-        <Modal
-          onOutsideClick={closeModifyCredential}
-          className="max-w-3xl rounded-lg"
+        <CustomModal
+        onClose={closeModifyCredential}
           title="Update Credentials"
+      trigger={null}
+      open={showModifyCredential}
         >
           <ModifyCredential
             showCreate={() => {
@@ -166,38 +167,38 @@ export default function CredentialSection({
             onSwap={onSwap}
             onCreateNew={() => makeShowCreateCredential()}
           />
-        </Modal>
+        </CustomModal>
       )}
 
       {editingCredential && (
-        <Modal
-          onOutsideClick={closeEditingCredential}
-          className="max-w-3xl rounded-lg"
+        <CustomModal
+        onClose={closeEditingCredential}
           title="Edit Credential"
+      trigger={null}
+      open={!!editingCredential}
         >
           <EditCredential
             onUpdate={onUpdateCredential}
-            setPopup={setPopup}
             credential={editingCredential}
             onClose={closeEditingCredential}
           />
-        </Modal>
+        </CustomModal>
       )}
 
       {showCreateCredential && (
-        <Modal
-          onOutsideClick={closeCreateCredential}
-          className="max-w-3xl rounded-lg"
+        <CustomModal
+        onClose={closeCreateCredential}
           title={`Create ${getSourceDisplayName(sourceType)} Credential`}
+      trigger={null}
+      open={showCreateCredential}
         >
           <CreateCredential
             sourceType={sourceType}
             swapConnector={ccPair.connector}
-            setPopup={setPopup}
             onSwap={onSwap}
             onClose={closeCreateCredential}
           />
-        </Modal>
+        </CustomModal>
       )}
     </div>
   );

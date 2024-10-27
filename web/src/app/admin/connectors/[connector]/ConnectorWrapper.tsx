@@ -16,7 +16,7 @@ export default function ConnectorWrapper({
   return (
     <FormProvider connector={connector}>
       <div className="flex w-full h-full">
-        <div className="container">
+        <div className="overflow-y-auto h-full w-full"><div className="container">
           {!isValidSource(connector) ? (
             <div className="flex flex-col mx-auto gap-y-2">
               <HeaderTitle>
@@ -33,7 +33,7 @@ export default function ConnectorWrapper({
           ) : (
             <AddConnector connector={connector} />
           )}
-        </div>
+        </div></div>
       </div>
     </FormProvider>
   );

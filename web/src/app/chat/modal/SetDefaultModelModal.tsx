@@ -9,20 +9,23 @@ import { setUserDefaultModel } from "@/lib/users/UserSettings";
 import { useRouter } from "next/navigation";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { useUser } from "@/components/user/UserProvider";
+import { useToast } from "@/hooks/use-toast";
+import { CustomModal } from "@/components/CustomModal";
 
 export function SetDefaultModelModal({
-  setPopup,
   llmProviders,
   onClose,
   setLlmOverride,
   defaultModel,
+  settingsToggled
 }: {
-  setPopup: (popupSpec: PopupSpec | null) => void;
   llmProviders: LLMProviderDescriptor[];
   setLlmOverride: Dispatch<SetStateAction<LlmOverride>>;
   onClose: () => void;
   defaultModel: string | null;
+  settingsToggled?: boolean;
 }) {
+  const { toast } = useToast()
   const { refreshUser } = useUser();
   const containerRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
@@ -102,9 +105,10 @@ export function SetDefaultModelModal({
         if (defaultModel) {
           setLlmOverride(destructureValue(defaultModel));
         }
-        setPopup({
-          message: "Default model updated successfully",
-          type: "success",
+        toast({
+          title: "Default Model Updated",
+          description: "The default model has been successfully updated.",
+          variant: "success",
         });
         refreshUser();
         router.refresh();
@@ -112,9 +116,10 @@ export function SetDefaultModelModal({
         throw new Error("Failed to update default model");
       }
     } catch (error) {
-      setPopup({
-        message: "Failed to update default model",
-        type: "error",
+      toast({
+        title: "Update Failed",
+        description: "There was an issue updating the default model. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -123,17 +128,13 @@ export function SetDefaultModelModal({
   );
 
   return (
-    <ModalWrapper
+    <CustomModal
       onClose={onClose}
-      modalClassName="rounded-lg  bg-white max-w-xl"
+          title="Set Default Model"
+          trigger={null}
+          open={settingsToggled}
     >
       <>
-        <div className="flex mb-4">
-          <h2 className="text-2xl text-emphasis font-bold flex my-auto">
-            Set Default Model
-          </h2>
-        </div>
-
         <Text className="mb-4">
           Choose a Large Language Model (LLM) to serve as the default for
           assistants that don&apos;t have a default model assigned.
@@ -203,6 +204,6 @@ export function SetDefaultModelModal({
           </div>
         </div>
       </>
-    </ModalWrapper>
+    </CustomModal>
   );
 }

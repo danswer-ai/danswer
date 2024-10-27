@@ -16,17 +16,16 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ThreeDotsLoader } from "@/components/Loading";
 import CredentialSection from "@/components/credentials/CredentialSection";
 import { buildCCPairInfoUrl } from "./lib";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SourceIcon } from "@/components/SourceIcon";
 import { credentialTemplates } from "@/lib/connectors/credentials";
 import { useEffect, useRef, useState } from "react";
 import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { updateConnectorCredentialPairName } from "@/lib/connector";
 import DeletionErrorStatus from "./DeletionErrorStatus";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not
@@ -50,12 +49,13 @@ function Main({ ccPairId }: { ccPairId: number }) {
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { popup, setPopup } = usePopup();
+  const { toast } = useToast();
 
   const finishConnectorDeletion = () => {
-    setPopup({
-      message: "Connector deleted successfully",
-      type: "success",
+    toast({
+      title: "Deletion Successful",
+      description: "Connector deleted successfully",
+      variant: "success",
     });
     setTimeout(() => {
       router.push("/admin/indexing/status");
@@ -100,14 +100,16 @@ function Main({ ccPairId }: { ccPairId: number }) {
       }
       mutate(buildCCPairInfoUrl(ccPairId));
       setIsEditing(false);
-      setPopup({
-        message: "Connector name updated successfully",
-        type: "success",
+      toast({
+        title: "Update Successful",
+        description: "Connector name updated successfully",
+        variant: "success",
       });
     } catch (error) {
-      setPopup({
-        message: `Failed to update connector name`,
-        type: "error",
+      toast({
+        title: "Update Failed",
+        description: "Failed to update connector name",
+        variant: "destructive",
       });
     }
   };
@@ -148,7 +150,6 @@ function Main({ ccPairId }: { ccPairId: number }) {
   } = ccPair.connector;
   return (
     <>
-      {popup}
       <BackButton />
       <div className="flex flex-col items-start w-full gap-4 pb-5 sm:flex-row lg:items-center">
         <div className="my-auto mr-2">

@@ -30,12 +30,6 @@ import { checkLLMSupportsImageOutput, destructureValue } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@radix-ui/react-tooltip";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -65,6 +59,8 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { TooltipContent, TooltipProvider, TooltipTrigger ,Tooltip} from "@/components/ui/tooltip";
+import { Card, CardContent } from "@/components/ui/card";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -778,8 +774,8 @@ export function AssistantEditor({
                           </div>
                         </TooltipTrigger>
                         {!currentLLMSupportsImageOutput && (
-                          <TooltipContent side="top" align="center">
-                            <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                          <TooltipContent side="top" align="center" className={`!z-modal bg-primary border-none text-inverted`}>
+                            <p>
                               To use Image Generation, select GPT-4o or another
                               image compatible model as the default model for
                               this Assistant.
@@ -791,10 +787,10 @@ export function AssistantEditor({
                   )}
 
                   {searchTool && (
-                    <TooltipProvider delayDuration={50}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
+ <TooltipProvider>
+ <Tooltip>
+   <TooltipTrigger asChild>
+   <div
                             className={`w-fit ${
                               ccPairs.length === 0
                                 ? "opacity-70 cursor-not-allowed"
@@ -811,18 +807,18 @@ export function AssistantEditor({
                               disabled={ccPairs.length === 0}
                             />
                           </div>
-                        </TooltipTrigger>
-                        {ccPairs.length === 0 && (
-                          <TooltipContent side="top" align="center">
-                            <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                              To use the Search Tool, you need to have at least
-                              one Connector-Credential pair configured.
-                            </p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
+   </TooltipTrigger>
+   {ccPairs.length === 0 && (
+   <TooltipContent className={`!z-modal bg-primary border-none text-inverted`}>
+     <p>To use the Search Tool, you need to have at least
+     one Connector-Credential pair configured.</p>
+   </TooltipContent>
+    )}
+ </Tooltip>
+</TooltipProvider>
+                  )}  
+
+
 
                   {ccPairs.length > 0 && searchTool && (
                     <>
@@ -1038,7 +1034,8 @@ export function AssistantEditor({
                                     className={index === 0 ? "mt-2" : "mt-6"}
                                   >
                                     <div className="flex">
-                                      <div className="w-full p-3 mr-6 border rounded border-border">
+                                      <Card className="mr-4">
+                                        <CardContent>
                                         <div>
                                           <Label small>Name</Label>
                                           <SubLabel>
@@ -1128,14 +1125,18 @@ export function AssistantEditor({
                                             className="mt-1 text-sm text-error"
                                           />
                                         </div>
-                                      </div>
+                                        </CardContent>
+                                      </Card>
                                       <div className="my-auto">
-                                        <FiX
-                                          className="w-10 h-10 p-2 my-auto rounded cursor-pointer hover:bg-hover"
+                                        <CustomTooltip trigger={<Button variant='ghost' size='icon'>
+                                          <FiX
                                           onClick={() =>
                                             arrayHelpers.remove(index)
                                           }
                                         />
+                                        </Button>}>
+                                          Remove
+                                        </CustomTooltip>
                                       </div>
                                     </div>
                                   </div>

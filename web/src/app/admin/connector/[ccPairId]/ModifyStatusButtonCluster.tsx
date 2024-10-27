@@ -1,9 +1,6 @@
 "use client";
 
 import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
-import { usePopup } from "@/components/admin/connectors/Popup";
-import { mutate } from "swr";
-import { buildCCPairInfoUrl } from "./lib";
 import { setCCPairStatus } from "@/lib/ccPair";
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
@@ -13,10 +10,8 @@ export function ModifyStatusButtonCluster({
 }: {
   ccPair: CCPairFullInfo;
 }) {
-  const { popup, setPopup } = usePopup();
   return (
     <>
-      {popup}
       {ccPair.status === ConnectorCredentialPairStatus.PAUSED ? (
         <CustomTooltip
           trigger={
@@ -25,8 +20,6 @@ export function ModifyStatusButtonCluster({
                 setCCPairStatus(
                   ccPair.id,
                   ConnectorCredentialPairStatus.ACTIVE,
-                  setPopup,
-                  () => mutate(buildCCPairInfoUrl(ccPair.id))
                 )
               }
             >
@@ -46,8 +39,6 @@ export function ModifyStatusButtonCluster({
                 setCCPairStatus(
                   ccPair.id,
                   ConnectorCredentialPairStatus.PAUSED,
-                  setPopup,
-                  () => mutate(buildCCPairInfoUrl(ccPair.id))
                 )
               }
             >

@@ -6,7 +6,6 @@ import useSWR from "swr";
 import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { ConnectorIndexingStatus } from "@/lib/types";
 import { usePublicCredentials } from "@/lib/hooks";
 import { Title } from "@tremor/react";
@@ -53,7 +52,6 @@ const GDriveMain = ({}: {}) => {
     refreshCredentials,
   } = usePublicCredentials();
 
-  const { popup, setPopup } = usePopup();
 
   const appCredentialSuccessfullyFetched =
     appCredentialData ||
@@ -118,12 +116,10 @@ const GDriveMain = ({}: {}) => {
 
   return (
     <>
-      {popup}
       <Title className="mb-2 mt-6 ml-auto mr-auto">
         Step 1: Provide your Credentials
       </Title>
       <DriveJsonUploadSection
-        setPopup={setPopup}
         appCredentialData={appCredentialData}
         serviceAccountCredentialData={serviceAccountKeyData}
         isAdmin={isAdmin}
@@ -135,7 +131,6 @@ const GDriveMain = ({}: {}) => {
             Step 2: Authenticate with enMedD AI
           </Title>
           <DriveOAuthSection
-            setPopup={setPopup}
             refreshCredentials={refreshCredentials}
             googleDrivePublicCredential={googleDrivePublicCredential}
             googleDriveServiceAccountCredential={

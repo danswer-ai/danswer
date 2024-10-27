@@ -99,7 +99,7 @@ export function ChatSessionDisplay({
     <CustomTooltip
       trigger={
         <Link
-          className="flex relative"
+          className="flex relative w-full"
           key={chatSession.id}
           href={`/chat?chatId=${chatSession.id}`}
           scroll={false}

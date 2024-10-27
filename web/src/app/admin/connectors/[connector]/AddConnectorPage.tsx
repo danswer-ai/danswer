@@ -54,6 +54,8 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Stepper from "./Stepper";
+import { useToast } from "@/hooks/use-toast";
+import { CustomModal } from "@/components/CustomModal";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -144,7 +146,7 @@ export default function AddConnector({
   // Form context and popup management
   const { setFormStep, setAlowCreate, formStep, nextFormStep, prevFormStep } =
     useFormContext();
-  const { popup, setPopup } = usePopup();
+    const { toast } = useToast();
 
   // Hooks for Google Drive and Gmail credentials
   const { liveGDriveCredential } = useGoogleDriveCredentials();
@@ -184,15 +186,17 @@ export default function AddConnector({
   const onDeleteCredential = async (credential: Credential<any | null>) => {
     const response = await deleteCredential(credential.id, true);
     if (response.ok) {
-      setPopup({
-        message: "Credential deleted successfully!",
-        type: "success",
+      toast({
+        title: "Deletion Successful",
+        description: "Credential deleted successfully!",
+        variant: "success",
       });
     } else {
       const errorData = await response.json();
-      setPopup({
-        message: errorData.message,
-        type: "error",
+      toast({
+        title: "Deletion Failed",
+        description: errorData.message,
+        variant: "destructive",
       });
     }
   };
@@ -200,17 +204,19 @@ export default function AddConnector({
   const onSwap = async (selectedCredential: Credential<any>) => {
     setCurrentCredential(selectedCredential);
     setAlowCreate(true);
-    setPopup({
-      message: "Swapped credential successfully!",
-      type: "success",
+    toast({
+      title: "Swap Successful",
+      description: "Swapped credential successfully!",
+      variant: "success",
     });
     refresh();
   };
 
   const onSuccess = () => {
-    setPopup({
-      message: "Connector created! Redirecting to connector home page",
-      type: "success",
+    toast({
+      title: "Connector Created",
+      description: "Redirecting to connector home page",
+      variant: "success",
     });
     setTimeout(() => {
       window.open("/admin/indexing/status", "_self");
@@ -267,7 +273,6 @@ export default function AddConnector({
           const response = await submitGoogleSite(
             selectedFiles,
             values?.base_url,
-            setPopup,
             advancedConfiguration.refreshFreq,
             advancedConfiguration.pruneFreq,
             advancedConfiguration.indexingStart,
@@ -284,7 +289,6 @@ export default function AddConnector({
         if (connector == "file" && selectedFiles.length > 0) {
           const response = await submitFiles(
             selectedFiles,
-            setPopup,
             setSelectedFiles,
             name,
             access_type == "public",
@@ -317,7 +321,11 @@ export default function AddConnector({
           if (isSuccess) {
             onSuccess();
           } else {
-            setPopup({ message: message, type: "error" });
+            toast({
+              title: "Error",
+              description: message,
+              variant: "destructive",
+            });
           }
         }
 
@@ -337,15 +345,20 @@ export default function AddConnector({
             onSuccess();
           } else {
             const errorData = await linkCredentialResponse.json();
-            setPopup({
-              message: errorData.message,
-              type: "error",
+            toast({
+              title: "Error",
+              description: errorData.message,
+              variant: "destructive",
             });
           }
         } else if (isSuccess) {
           onSuccess();
         } else {
-          setPopup({ message: message, type: "error" });
+          toast({
+            title: "Error",
+            description: message,
+            variant: "destructive",
+          });
         }
         return;
       }}
@@ -353,8 +366,6 @@ export default function AddConnector({
       {(formikProps) => {
         return (
           <div className="w-full mx-auto pb-0">
-            {popup}
-
             <div className="mb-4">
               <HealthCheckBanner />
             </div>
@@ -379,7 +390,6 @@ export default function AddConnector({
                 <Card>
                   <CardContent>
                     <h3 className="mb-2">Select a credential</h3>
-
                     {connector == "google_drive" ? (
                       <GDriveMain />
                     ) : connector == "gmail" ? (
@@ -413,11 +423,15 @@ export default function AddConnector({
     prevent that, but still keeping this here for safety in case the above changes. */}
                         {(connector as ValidSources) !== "google_drive" &&
                           createConnectorToggle && (
-                            <Modal
-                              className="max-w-3xl rounded-lg"
-                              onOutsideClick={() =>
+                            <CustomModal
+                              onClose={() =>
                                 setCreateConnectorToggle(false)
                               }
+
+                              title={`Create a ${getSourceDisplayName(connector)} credential`}
+                              trigger={null}
+                              open={(connector as ValidSources) !== "google_drive" &&
+                                createConnectorToggle}
                             >
                               <>
                                 <h3 className="mb-2">
@@ -428,14 +442,13 @@ export default function AddConnector({
                                   close
                                   refresh={refresh}
                                   sourceType={connector}
-                                  setPopup={setPopup}
                                   onSwitch={onSwap}
                                   onClose={() =>
                                     setCreateConnectorToggle(false)
                                   }
                                 />
                               </>
-                            </Modal>
+                            </CustomModal>
                           )}
                       </>
                     )}
@@ -452,7 +465,6 @@ export default function AddConnector({
                       setSelectedFiles={setSelectedFiles}
                       selectedFiles={selectedFiles}
                     />
-
                     <AccessTypeForm connector={connector} />
                     <AccessTypeGroupSelector />
                   </CardContent>

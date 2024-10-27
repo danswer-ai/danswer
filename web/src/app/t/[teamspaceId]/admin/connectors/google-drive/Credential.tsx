@@ -178,6 +178,7 @@ export const DriveJsonUploadSection = ({
               });
             }
           }}
+          variant="destructive"
         >
           Delete
         </Button>
@@ -222,6 +223,7 @@ export const DriveJsonUploadSection = ({
               });
             }
           }}
+          variant="destructive"
         >
           Delete
         </Button>

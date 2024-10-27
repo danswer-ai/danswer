@@ -11,23 +11,22 @@ import {
   addAssistantToList,
   removeAssistantFromList,
 } from "@/lib/assistants/updateAssistantPreferences";
-import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { AssistantTools } from "../ToolsDisplay";
 import { classifyAssistants } from "@/lib/assistants/utils";
 import { Button } from "@tremor/react";
+import { useToast } from "@/hooks/use-toast";
 
 export function AssistantGalleryCard({
   assistant,
   user,
-  setPopup,
   selectedAssistant,
 }: {
   assistant: Assistant;
   user: User | null;
-  setPopup: (popup: PopupSpec) => void;
   selectedAssistant: boolean;
 }) {
+  const { toast } = useToast()
   const router = useRouter();
   return (
     <div
@@ -69,24 +68,27 @@ export function AssistantGalleryCard({
                     user.preferences?.chosen_assistants &&
                     user.preferences?.chosen_assistants.length === 1
                   ) {
-                    setPopup({
-                      message: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
-                      type: "error",
+                    toast({
+                      title: "Action Not Allowed",
+                      description: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
+                      variant: "destructive",
                     });
                     return;
                   }
 
                   const success = await removeAssistantFromList(assistant.id);
                   if (success) {
-                    setPopup({
-                      message: `"${assistant.name}" has been removed from your list.`,
-                      type: "success",
+                    toast({
+                      title: "Assistant Removed",
+                      description: `"${assistant.name}" has been removed from your list.`,
+                      variant: "success",
                     });
                     router.refresh();
                   } else {
-                    setPopup({
-                      message: `"${assistant.name}" could not be removed from your list.`,
-                      type: "error",
+                    toast({
+                      title: "Removal Failed",
+                      description: `"${assistant.name}" could not be removed from your list.`,
+                      variant: "destructive",
                     });
                   }
                 }}
@@ -106,15 +108,17 @@ export function AssistantGalleryCard({
                 onClick={async () => {
                   const success = await addAssistantToList(assistant.id);
                   if (success) {
-                    setPopup({
-                      message: `"${assistant.name}" has been added to your list.`,
-                      type: "success",
+                    toast({
+                      title: "Assistant Added",
+                      description: `"${assistant.name}" has been added to your list.`,
+                      variant: "success",
                     });
                     router.refresh();
                   } else {
-                    setPopup({
-                      message: `"${assistant.name}" could not be added to your list.`,
-                      type: "error",
+                    toast({
+                      title: "Addition Failed",
+                      description: `"${assistant.name}" could not be added to your list.`,
+                      variant: "destructive",
                     });
                   }
                 }}
@@ -147,7 +151,6 @@ export function AssistantsGallery({
   user: User | null;
 }) {
   const router = useRouter();
-  const { popup, setPopup } = usePopup();
   const [searchQuery, setSearchQuery] = useState("");
 
   const { visibleAssistants, hiddenAssistants: _ } = classifyAssistants(
@@ -173,7 +176,6 @@ export function AssistantsGallery({
 
   return (
     <>
-      {popup}
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>Assistant Gallery</AssistantsPageTitle>
 
@@ -271,7 +273,6 @@ export function AssistantsGallery({
                   key={assistant.id}
                   assistant={assistant}
                   user={user}
-                  setPopup={setPopup}
                 />
               ))}
             </div>
@@ -304,7 +305,6 @@ export function AssistantsGallery({
                   key={assistant.id}
                   assistant={assistant}
                   user={user}
-                  setPopup={setPopup}
                 />
               ))}
             </div>

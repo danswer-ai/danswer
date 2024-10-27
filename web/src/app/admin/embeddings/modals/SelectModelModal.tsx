@@ -2,6 +2,7 @@ import React from "react";
 import { Modal } from "@/components/Modal";
 import { Button, Text } from "@tremor/react";
 import { CloudEmbeddingModel } from "../../../../components/embedding/interfaces";
+import { CustomModal } from "@/components/CustomModal";
 
 export function SelectModelModal({
   model,
@@ -13,10 +14,11 @@ export function SelectModelModal({
   onCancel: () => void;
 }) {
   return (
-    <Modal
-      width="max-w-3xl"
-      onOutsideClick={onCancel}
+    <CustomModal
+    onClose={onCancel}
       title={`Select ${model.model_name}`}
+      trigger={null}
+      open={!!model}
     >
       <div className="mb-4">
         <Text className="text-lg mb-2">
@@ -32,6 +34,6 @@ export function SelectModelModal({
           </Button>
         </div>
       </div>
-    </Modal>
+    </CustomModal>
   );
 }

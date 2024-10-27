@@ -20,9 +20,11 @@ import {
   MixedBreadIcon,
 } from "@/components/icons/icons";
 import { Modal } from "@/components/Modal";
-import { Button } from "@tremor/react";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CustomModal } from "@/components/CustomModal";
 
 interface RerankingDetailsFormProps {
   setRerankingDetails: Dispatch<SetStateAction<RerankingDetails>>;
@@ -84,9 +86,9 @@ const RerankingDetailsForm = forwardRef<
           };
 
           return (
-            <div className="max-w-4xl p-2 mx-auto rounded-lg">
+            <div className="w-full">
               <h2 className="mb-4 text-2xl font-bold text-text-800">
-                Post-processing
+                Post-processingss
               </h2>
               <div className="flex mb-6 mr-auto text-sm divide-x-2">
                 {originalRerankingDetails.rerank_model_name && (
@@ -141,7 +143,7 @@ const RerankingDetailsForm = forwardRef<
               </div>
 
               <Form>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
                   {(modelTab
                     ? rerankingModels.filter(
                         (model) => model.cloud == (modelTab == "cloud")
@@ -243,10 +245,12 @@ const RerankingDetailsForm = forwardRef<
                   })}
                 </div>
 
-                {showGpuWarningModalModel && (
-                  <Modal
-                    onOutsideClick={() => setShowGpuWarningModalModel(null)}
-                    width="w-[500px] flex flex-col"
+             <CustomModal
+                  onClose={() => setShowGpuWarningModalModel(null)}
+                  open={!!showGpuWarningModalModel} 
+                  trigger={
+                    null
+                  }
                     title="GPU Not Enabled"
                   >
                     <>
@@ -258,26 +262,24 @@ const RerankingDetailsForm = forwardRef<
                         infrastructure or using a cloud-based alternative for
                         better performance.
                       </p>
-                      <div className="flex justify-end">
+                      <div className="flex justify-end mt-4">
                         <Button
                           onClick={() => setShowGpuWarningModalModel(null)}
-                          color="blue"
-                          size="xs"
                         >
                           Understood
                         </Button>
                       </div>
                     </>
-                  </Modal>
-                )}
-                {showLiteLLMConfigurationModal && (
-                  <Modal
-                    onOutsideClick={() => {
+                  </CustomModal> 
+
+                  <CustomModal
+                    onClose={() => {
                       resetForm();
                       setShowLiteLLMConfigurationModal(false);
                     }}
-                    width="w-[800px]"
                     title="API Key Configuration"
+                    trigger={null}
+                    open={showLiteLLMConfigurationModal}
                   >
                     <div className="flex flex-col w-full px-4 gap-y-4">
                       <TextFormField
@@ -342,19 +344,15 @@ const RerankingDetailsForm = forwardRef<
                           onClick={() => {
                             setShowLiteLLMConfigurationModal(false);
                           }}
-                          color="blue"
-                          size="xs"
                         >
                           Update
                         </Button>
                       </div>
                     </div>
-                  </Modal>
-                )}
+                  </CustomModal>
 
-                {isApiKeyModalOpen && (
-                  <Modal
-                    onOutsideClick={() => {
+                  <CustomModal
+                    onClose={() => {
                       Object.keys(originalRerankingDetails).forEach((key) => {
                         setFieldValue(
                           key,
@@ -366,8 +364,9 @@ const RerankingDetailsForm = forwardRef<
 
                       setIsApiKeyModalOpen(false);
                     }}
-                    width="w-[800px]"
                     title="API Key Configuration"
+                    trigger={null}
+                    open={isApiKeyModalOpen}
                   >
                     <div className="w-full px-4">
                       <TextFormField
@@ -391,15 +390,12 @@ const RerankingDetailsForm = forwardRef<
                       <div className="flex justify-end w-full mt-4">
                         <Button
                           onClick={() => setIsApiKeyModalOpen(false)}
-                          color="blue"
-                          size="xs"
                         >
                           Update
                         </Button>
                       </div>
                     </div>
-                  </Modal>
-                )}
+                  </CustomModal>
               </Form>
             </div>
           );

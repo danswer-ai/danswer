@@ -26,7 +26,6 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { ChatSession, SearchSession } from "@/app/chat/interfaces";
 import FunctionalHeader from "../chat_search/Header";
 import { useSidebarVisibility } from "../chat_search/hooks";
-import { SIDEBAR_TOGGLED_COOKIE_NAME } from "../resizable/constants";
 import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
@@ -46,6 +45,7 @@ import { SortSearch } from "./SortSearch";
 import { SearchHelper } from "./SearchHelper";
 import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
 import { useSearchContext } from "@/context/SearchContext";
+import { useToast } from "@/hooks/use-toast";
 
 export type searchState =
   | "input"
@@ -88,6 +88,7 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
   const [contentEnriched, setContentEnriched] = useState(false);
 
   const { teamspaceId } = useParams();
+  const { toast } = useToast();
 
   const [searchResponse, setSearchResponse] = useState<SearchResponse>({
     suggestedSearchType: null,
@@ -504,23 +505,23 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
     );
 
     if (response.ok) {
-      setPopup({
-        message: "Thanks for your feedback!",
-        type: "success",
+      toast({
+        title: "Feedback Submitted",
+        description: "Thanks for your feedback!",
+        variant: "success",
       });
     } else {
       const responseJson = await response.json();
       const errorMsg = responseJson.detail || responseJson.message;
-      setPopup({
-        message: `Failed to submit feedback - ${errorMsg}`,
-        type: "error",
+      toast({
+        title: "Submission Error",
+        description: `Failed to submit feedback - ${errorMsg}`,
+        variant: "destructive",
       });
     }
   };
 
   const chatBannerPresent = settings?.workspaces?.custom_header_content;
-
-  const { popup, setPopup } = usePopup();
 
   const shouldUseAgenticDisplay =
     agenticResults &&

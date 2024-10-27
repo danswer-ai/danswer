@@ -98,7 +98,6 @@ interface DocumentFeedbackTableProps {
   ccPairs: ConnectorIndexingStatus<any, any>[];
   refresh: () => void;
   refreshEditable: () => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   editableDocumentSets: DocumentSet[];
 }
 
@@ -107,7 +106,6 @@ const DocumentSetTable = ({
   editableDocumentSets,
   refresh,
   refreshEditable,
-  setPopup,
 }: DocumentFeedbackTableProps) => {
   const [page, setPage] = useState(1);
   const { toast } = useToast();
@@ -221,15 +219,17 @@ const DocumentSetTable = ({
                                 documentSet.id
                               );
                               if (response.ok) {
-                                setPopup({
-                                  message: `Document set "${documentSet.name}" scheduled for deletion`,
-                                  type: "success",
+                                toast({
+                                  title: "Deletion Scheduled",
+                                  description: `Document set "${documentSet.name}" scheduled for deletion.`,
+                                  variant: "success",
                                 });
                               } else {
                                 const errorMsg = (await response.json()).detail;
-                                setPopup({
-                                  message: `Failed to schedule document set for deletion - ${errorMsg}`,
-                                  type: "error",
+                                toast({
+                                  title: "Deletion Failed",
+                                  description: `Failed to schedule document set for deletion - ${errorMsg}`,
+                                  variant: "destructive",
                                 });
                               }
                               refresh();
@@ -261,7 +261,6 @@ const DocumentSetTable = ({
 };
 
 const Main = () => {
-  const { popup, setPopup } = usePopup();
   const {
     data: documentSets,
     isLoading: isDocumentSetsLoading,
@@ -325,7 +324,6 @@ const Main = () => {
             ccPairs={ccPairs}
             refresh={refreshDocumentSets}
             refreshEditable={refreshEditableDocumentSets}
-            setPopup={setPopup}
           />
         </>
       )}
