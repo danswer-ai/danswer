@@ -11,41 +11,41 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+def create_doc_from_ticket(ticket: dict, domain: str) -> Document:
+    return Document(
+        id=ticket["id"],
+        sections=Section(
+            link=f"https://{domain}.freshdesk.com/helpdesk/tickets/{int(ticket['id'])}",
+            text=json.dumps({
+                key: value
+                for key, value in ticket.items()
+                if isinstance(value, str)
+            }, default=str),
+        ),
+        source=DocumentSource.FRESHDESK,
+        semantic_identifier=ticket["subject"],
+        metadata={
+            key: value.isoformat() if isinstance(value, datetime) else str(value)
+            for key, value in ticket.items()
+            if isinstance(value, (str, datetime)) and key not in ["description", "description_text"]
+        },
+    )
 
 class FreshdeskConnector(PollConnector, LoadConnector):
     def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
         self.batch_size = batch_size
 
-    def ticket_link(self, tid: int) -> str:
-        return f"https://{self.domain}.freshdesk.com/helpdesk/tickets/{tid}"
-
-    def build_doc_sections_from_ticket(self, ticket: dict) -> List[Section]:
-        # Use list comprehension for building sections
-        return [
-            Section(
-                link=self.ticket_link(int(ticket["id"])),
-                text=json.dumps({
-                    key: value
-                    for key, value in ticket.items()
-                    if isinstance(value, str)
-                }, default=str),
-            )
-        ]
-
-    def strip_html_tags(self, html: str) -> str:
-        return parse_html_page_basic(html)
-
-    def load_credentials(self, credentials: dict[str, Any]) -> Optional[dict[str, Any]]:
+    def _load_credentials(self, credentials: dict[str, Any]) -> Optional[dict[str, Any]]:
         self.api_key = credentials.get("freshdesk_api_key")
         self.domain = credentials.get("freshdesk_domain")
         self.password = credentials.get("freshdesk_password")
         return None
     
-    def _fetch_tickets(self, start: datetime, end: datetime) -> List[dict]:
+    def _fetch_tickets(self, start: datetime | None = None, end: datetime | None = None) -> List[dict]:
         if any([self.api_key, self.domain, self.password]) is None:
             raise ConnectorMissingCredentialError("freshdesk")
         
-        start_time = start.strftime("%Y-%m-%dT%H:%M:%SZ")
+        start_time = start.isoformat() if start else None
 
         all_tickets = []
         page = 1
@@ -54,7 +54,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         while True:
             freshdesk_url = (
                 f"https://{self.domain}.freshdesk.com/api/v2/tickets"
-                f"?include=description&updated_since={start_time}"
+                f"?include=description{f"&updated_since={start_time}" if start_time else ""}"
                 f"&per_page={per_page}&page={page}"
             )
             response = requests.get(freshdesk_url, auth=(self.api_key, self.password))
@@ -74,20 +74,14 @@ class FreshdeskConnector(PollConnector, LoadConnector):
 
         return all_tickets
 
-    def _process_tickets(self, start: datetime, end: datetime) -> GenerateDocumentsOutput:
-        # Ensure start and end are in UTC
-        start = start.astimezone(timezone.utc)
-        end = end.astimezone(timezone.utc)
-        
+    def _process_tickets(self, start: datetime | None = None, end: datetime | None = None) -> GenerateDocumentsOutput:
         tickets = self._fetch_tickets(start, end)
+
         doc_batch: List[Document] = []
 
         for ticket in tickets:
-            # Convert date fields to UTC
             for date_field in ["created_at", "updated_at", "due_by"]:
-                if ticket[date_field].endswith('Z'):
-                    ticket[date_field] = ticket[date_field][:-1] + '+00:00'
-                ticket[date_field] = datetime.fromisoformat(ticket[date_field]).replace(tzinfo=timezone.utc)
+                ticket[date_field] = datetime.fromisoformat(ticket[date_field].rstrip('Z'))
 
             # Convert all other values to strings
             ticket = {
@@ -104,28 +98,12 @@ class FreshdeskConnector(PollConnector, LoadConnector):
             ticket["status"] = status_mapping.get(ticket["status"], str(ticket["status"]))
 
             # Stripping HTML tags from the description field
-            ticket["description"] = self.strip_html_tags(ticket["description"])
+            ticket["description"] = parse_html_page_basic(ticket["description"])
 
             # Remove extra white spaces from the description field
             ticket["description"] = " ".join(ticket["description"].split())
 
-            # Use list comprehension for building sections
-            sections = self.build_doc_sections_from_ticket(ticket)
-
-            created_at = ticket["created_at"]
-            if start <= created_at <= end:
-                doc = Document(
-                    id=ticket["id"],
-                    sections=sections,
-                    source=DocumentSource.FRESHDESK,
-                    semantic_identifier=ticket["subject"],
-                    metadata={
-                        key: value.isoformat() if isinstance(value, datetime) else str(value)
-                        for key, value in ticket.items()
-                        if isinstance(value, (str, datetime)) and key not in ["description", "description_text"]
-                    },
-                )
-                doc_batch.append(doc)
+            doc_batch.append(create_doc_from_ticket(ticket, self.domain))
 
             if len(doc_batch) >= self.batch_size:
                 yield doc_batch
@@ -135,7 +113,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
             yield doc_batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
-        return self._fetch_tickets()
+        return self._process_tickets()
 
     def poll_source(self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch) -> GenerateDocumentsOutput:
         start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
