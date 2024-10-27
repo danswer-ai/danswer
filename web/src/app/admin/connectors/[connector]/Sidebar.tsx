@@ -8,7 +8,7 @@ import { credentialTemplates } from "@/lib/connectors/credentials";
 import Link from "next/link";
 import { useUser } from "@/components/user/UserProvider";
 import { useContext } from "react";
-import { UserRole } from "@/lib/types";
+import { User } from "@/lib/types";
 
 function BackButton({
   isAdmin,
@@ -32,7 +32,7 @@ function BackButton({
   }
 
   return (
-    <div className="mx-3 mt-6 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
+    <div className="mx-3 mt-6 flex-col flex items-center">
       <Link
         href={"/admin/add-connector"}
         className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
