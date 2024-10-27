@@ -253,6 +253,5 @@ if __name__ == "__main__":
             "gitlab_url": os.environ["GITLAB_URL"],
         }
     )
-
     document_batches = connector.load_from_state()
     print(next(document_batches))
