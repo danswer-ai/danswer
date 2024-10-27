@@ -18,7 +18,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({
   passwordWarning,
 }) => {
   return (
-    <div className="bg-background lg:w-[300px] absolute bottom-[calc(100%_+_14px)] left-0 lg:bottom-auto top-0 lg:left-[calc(100%_+_20px)] z-popout p-4 rounded-md shadow-md space-y-3 text-sm">
+    <div className="bg-background lg:w-[300px] absolute left-0 top-full z-popout p-4 rounded-md shadow-md space-y-3 text-sm">
       <div className="space-y-2">
         <h3 className="text-base">Password must have:</h3>
         <p className="flex items-center gap-2 whitespace-nowrap">

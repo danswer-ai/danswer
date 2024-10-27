@@ -191,7 +191,9 @@ export function TextFormField({
   };
 
   return (
-    <div className={`grid pb-4 ${fullWidth ? "w-full" : ""} ${width}`}>
+    <div
+      className={`grid pb-4 ${fullWidth ? "w-full" : ""} ${width ? width : ""}`}
+    >
       {(label || subtext) && (
         <div className="grid leading-none">
           <div className="flex items-start gap-2">
