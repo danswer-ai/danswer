@@ -19,6 +19,7 @@ import { fetchAssistantData } from "@/lib/chat/fetchAssistantdata";
 import { AppProvider } from "@/components/context/AppProvider";
 import { PHProvider } from "./providers";
 import { default as dynamicImport } from "next/dynamic";
+import { getCurrentUserSS } from "@/lib/userSS";
 
 const PostHogPageView = dynamicImport(() => import("./PostHogPageView"), {
   ssr: false,
@@ -57,7 +58,11 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const combinedSettings = await fetchSettingsSS();
+  const [combinedSettings, assistantsData, user] = await Promise.all([
+    fetchSettingsSS(),
+    fetchAssistantData(),
+    getCurrentUserSS(),
+  ]);
 
   const productGating =
     combinedSettings?.settings.product_gating ?? GatingType.NONE;
@@ -165,11 +170,12 @@ export default async function RootLayout({
     );
   }
 
-  const data = await fetchAssistantData();
-  const { assistants, hasAnyConnectors, hasImageCompatibleModel } = data;
+  const { assistants, hasAnyConnectors, hasImageCompatibleModel } =
+    assistantsData;
 
   return getPageContent(
     <AppProvider
+      user={user}
       settings={combinedSettings}
       assistants={assistants}
       hasAnyConnectors={hasAnyConnectors}
