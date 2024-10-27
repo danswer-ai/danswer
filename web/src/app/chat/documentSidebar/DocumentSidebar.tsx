@@ -201,7 +201,6 @@ interface DocumentSidebarProps {
   closeSidebar: () => void;
   selectedMessage: Message | null;
   selectedDocuments: EnmeddDocument[] | null;
-  toggleDocumentSelection: (document: EnmeddDocument) => void;
   clearSelectedDocuments: () => void;
   selectedDocumentTokens: number;
   maxTokens: number;
@@ -217,7 +216,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       closeSidebar,
       selectedMessage,
       selectedDocuments,
-      toggleDocumentSelection,
       clearSelectedDocuments,
       selectedDocumentTokens,
       maxTokens,
@@ -229,9 +227,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     ref: ForwardedRef<HTMLDivElement>
   ) => {
     const selectedMessageRetrievalType = selectedMessage?.retrievalType || null;
-
-    const selectedDocumentIds =
-      selectedDocuments?.map((document) => document.document_id) || [];
 
     const currentDocuments = selectedMessage?.documents || null;
     const dedupedDocuments = removeDuplicateDocs(currentDocuments || []);
@@ -282,17 +277,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                           document={document}
                           queryEventId={null}
                           isAIPick={false}
-                          isSelected={selectedDocumentIds.includes(
-                            document.document_id
-                          )}
-                          handleSelect={(documentId) => {
-                            toggleDocumentSelection(
-                              dedupedDocuments.find(
-                                (document) =>
-                                  document.document_id === documentId
-                              )!
-                            );
-                          }}
                           tokenLimitReached={tokenLimitReached}
                         />
                       </div>
@@ -309,7 +293,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                 <div className="p-6">
                   <p>
                     When you run ask a question, the retrieved documents will
-                    show up here!
+                    show up here
                   </p>
                 </div>
               )

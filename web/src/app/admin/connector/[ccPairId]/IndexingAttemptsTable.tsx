@@ -14,7 +14,6 @@ import { InfoIcon, SearchIcon } from "@/components/icons/icons";
 import Link from "next/link";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { useRouter } from "next/navigation";
-import { Tooltip } from "@/components/tooltip/Tooltip";
 import { FiInfo } from "react-icons/fi";
 import {
   Table,
@@ -24,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 // This is the number of index attempts to display per page
 const NUM_IN_PAGE = 8;
@@ -200,7 +200,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
         color="blue"
       >
         Index attempts are scheduled in the background, and may take some time
-        to appear. Try refreshing the page in ~30 seconds!
+        to appear. Try refreshing the page in ~30 seconds.
       </Callout>
     );
   }
@@ -232,15 +232,17 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                 <TableCell>New Doc Cnt</TableCell>
                 <TableCell>
                   <div className="w-fit">
-                    <Tooltip
-                      width="max-w-sm"
-                      content="Total number of documents replaced in the index during this indexing attempt"
+                    <CustomTooltip
+                      trigger={
+                        <span className="flex items-center cursor-help">
+                          Total Doc Cnt
+                          <InfoIcon className="w-4 h-4 ml-1" />
+                        </span>
+                      }
                     >
-                      <span className="flex items-center cursor-help">
-                        Total Doc Cnt
-                        <InfoIcon className="w-4 h-4 ml-1" />
-                      </span>
-                    </Tooltip>
+                      "Total number of documents replaced in the index during
+                      this indexing attempt"
+                    </CustomTooltip>
                   </div>
                 </TableCell>
                 <TableCell>Error Message</TableCell>

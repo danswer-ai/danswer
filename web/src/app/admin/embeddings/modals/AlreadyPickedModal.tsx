@@ -21,7 +21,7 @@ export function AlreadyPickedModal({
     >
       <div className="mb-4">
         <Text className="text-sm mb-2">
-          You can select a different one if you want!
+          You can select a different one if you want
         </Text>
         <div className="flex mt-8 justify-between">
           <Button color="blue" onClick={onClose}>

@@ -4,7 +4,7 @@ import { ChatFileType, FileDescriptor } from "../interfaces";
 import { FiX, FiLoader, FiFileText } from "react-icons/fi";
 import { InputBarPreviewImage } from "./images/InputBarPreviewImage";
 import { Loader, X } from "lucide-react";
-import { Tooltip } from "@/components/tooltip/Tooltip";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 function DeleteButton({ onDelete }: { onDelete: () => void }) {
   return (
@@ -140,14 +140,20 @@ export function InputBarPreview({
           </div>
         </div>
         <div className="ml-2 relative">
-          <Tooltip content={file.name} side="top" align="start">
-            <div
-              ref={fileNameRef}
-              className={`font-medium text-sm line-clamp-1 break-all ellipses max-w-48`}
-            >
-              {file.name}
-            </div>
-          </Tooltip>
+          <CustomTooltip
+            trigger={
+              <div
+                ref={fileNameRef}
+                className={`font-medium text-sm line-clamp-1 break-all ellipses max-w-48`}
+              >
+                {file.name}
+              </div>
+            }
+            side="top"
+            align="start"
+          >
+            {file.name}
+          </CustomTooltip>
         </div>
         <button
           onClick={onDelete}

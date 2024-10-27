@@ -13,9 +13,9 @@
     /* --primary: 222.2 47.4% 11.2%; */
     --primary: #2039f3;
     --primary-foreground: #b8d7ff;
-    --secondary: rgba(128, 128, 128, 0.55);
+    --secondary: rgba(185, 185, 185, 0.55);
     /*  --secondary: #8e00c7; */
-    --secondary-foreground: rgba(128, 128, 128, 0.33);
+    --secondary-foreground: rgba(218, 218, 218, 0.76);
     /*  --secondary-foreground: #be8bfc; */
     --success: #69c57d;
     --success-foreground: rgba(27, 232, 72, 0.1);

@@ -21,6 +21,14 @@
   table tr:nth-child(2n) {
     background: #f6f8fa;
   }
+
+  div {
+    overflow-y: hidden;
+  }
+
+  code {
+    border: none;
+  }
 }
 
 pre[class*="language-"] {

@@ -22,7 +22,7 @@ function Main() {
   return (
     <div>
       <Text className="mb-8">
-        This allows you to bring your own analytics tool to enMedD AI! Copy the
+        This allows you to bring your own analytics tool to enMedD AI. Copy the
         Web snippet from your analytics provider into the box below, and
         we&apos;ll start sending usage events.
       </Text>

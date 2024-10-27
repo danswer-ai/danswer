@@ -20,7 +20,7 @@ export default function ConnectorWrapper({
           {!isValidSource(connector) ? (
             <div className="flex flex-col mx-auto gap-y-2">
               <HeaderTitle>
-                <p>&lsquo;{connector}&lsquo; is not a valid Connector Type!</p>
+                <p>&lsquo;{connector}&lsquo; is not a valid Data Source Type</p>
               </HeaderTitle>
               <Button
                 onClick={() => window.open("/admin/indexing/status", "_self")}

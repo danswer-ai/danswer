@@ -207,7 +207,7 @@ export function AssistantEditor({
           .shape({
             name: Yup.string().required("Must give the Assistant a name!"),
             description: Yup.string().required(
-              "Must give the Assistant a description!"
+              "Must give the Assistant a description."
             ),
             system_prompt: Yup.string(),
             task_prompt: Yup.string(),
@@ -286,12 +286,9 @@ export function AssistantEditor({
 
           if (imageGenerationToolEnabled) {
             if (
+              // model must support image input for image generation
+              // to work
               !checkLLMSupportsImageInput(
-                providerDisplayNameToProviderName.get(
-                  values.llm_model_provider_override || ""
-                ) ||
-                  defaultProviderName ||
-                  "",
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -356,10 +353,7 @@ export function AssistantEditor({
               shouldAddAssistantToUserPreferences &&
               user?.preferences?.chosen_assistants
             ) {
-              const success = await addAssistantToList(
-                assistantId,
-                user.preferences.chosen_assistants
-              );
+              const success = await addAssistantToList(assistantId);
               if (success) {
                 toast({
                   title: "Assistant Added",
@@ -614,9 +608,6 @@ export function AssistantEditor({
                           values.llm_model_provider_override || ""
                         ) ||
                           defaultProviderName ||
-                          "",
-                        values.llm_model_version_override ||
-                          defaultModelName ||
                           ""
                       ) && (
                         <BooleanFormField

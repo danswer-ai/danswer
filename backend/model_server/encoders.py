@@ -100,7 +100,7 @@ class CloudEmbedding:
             model = DEFAULT_OPENAI_MODEL
 
         # OpenAI does not seem to provide truncation option, however
-        # the context lengths used by Danswer currently are smaller than the max token length
+        # the context lengths used by enMedD AI currently are smaller than the max token length
         # for OpenAI embeddings so it's not a big deal
         final_embeddings: list[Embedding] = []
         try:
@@ -128,7 +128,7 @@ class CloudEmbedding:
 
         final_embeddings: list[Embedding] = []
         for text_batch in batch_list(texts, _COHERE_MAX_INPUT_LEN):
-            # Does not use the same tokenizer as the Danswer API server but it's approximately the same
+            # Does not use the same tokenizer as the enMedD AI API server but it's approximately the same
             # empirically it's only off by a very few tokens so it's not a big deal
             response = self.client.embed(
                 texts=text_batch,

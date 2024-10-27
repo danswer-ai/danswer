@@ -82,7 +82,7 @@ export const EnmeddApiKeyForm = ({
           <Form>
             <p>
               Choose a memorable name for your API key. This is optional and can
-              be added or changed later!
+              be added or changed later
             </p>
 
             <TextFormField

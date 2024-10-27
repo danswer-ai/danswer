@@ -15,7 +15,6 @@ import {
   FiLock,
   FiUnlock,
 } from "react-icons/fi";
-import { Tooltip } from "@/components/tooltip/Tooltip";
 import { SourceIcon } from "@/components/SourceIcon";
 import { getSourceDisplayName } from "@/lib/sources";
 import { Warning } from "@phosphor-icons/react";
@@ -77,18 +76,20 @@ function SummaryRow({
 
       <TableCell className="gap-y-2">
         <div className="text-gray-500">Active Connectors</div>
-        <Tooltip
-          content={`${summary.active} out of ${summary.count} connectors are active`}
-        >
-          <div className="flex items-center mt-1">
-            <div className="w-full h-2 mr-2 bg-gray-200 rounded-full">
-              <Progress value={activePercentage} />
+        <CustomTooltip
+          trigger={
+            <div className="flex items-center mt-1">
+              <div className="w-full h-2 mr-2 bg-gray-200 rounded-full">
+                <Progress value={activePercentage} />
+              </div>
+              <span className="whitespace-nowrap">
+                {summary.active} ({activePercentage.toFixed(0)}%)
+              </span>
             </div>
-            <span className="whitespace-nowrap">
-              {summary.active} ({activePercentage.toFixed(0)}%)
-            </span>
-          </div>
-        </Tooltip>
+          }
+        >
+          `${summary.active} out of ${summary.count} connectors are active`
+        </CustomTooltip>
       </TableCell>
 
       {isPaidEnterpriseFeaturesEnabled && (
@@ -201,7 +202,6 @@ function ConnectorRow({
               {ccPairsIndexingStatus.name}
             </p>
           }
-          asChild
         >
           {ccPairsIndexingStatus.name}
         </CustomTooltip>

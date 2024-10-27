@@ -396,7 +396,7 @@ const Main = () => {
         answers.
       </Text>
       {standardAnswers.length == 0 && (
-        <Text className="mb-2">Add your first standard answer below!</Text>
+        <Text className="mb-2">Add your first standard answer below.</Text>
       )}
       <div className="mb-2"></div>
 

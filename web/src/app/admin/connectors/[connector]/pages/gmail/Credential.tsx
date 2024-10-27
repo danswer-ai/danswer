@@ -334,7 +334,7 @@ export const GmailOAuthSection = ({
     return (
       <>
         <p className="mb-2 text-sm">
-          <i>Existing credential already setup!</i>
+          <i>Existing credential already setup</i>
         </p>
         <Button
           variant="destructive"

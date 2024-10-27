@@ -28,7 +28,7 @@ export function ModifyStatusButtonCluster({
           }
           asChild
         >
-          Click to start indexing again!
+          Click to start indexing again
         </CustomTooltip>
       ) : (
         <CustomTooltip

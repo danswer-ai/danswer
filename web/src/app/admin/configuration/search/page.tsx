@@ -80,7 +80,7 @@ function Main() {
         <>
           {settings?.settings.needs_reindexing && (
             <p className="max-w-3xl">
-              Your search settings are currently out of date! We recommend
+              Your search settings are currently out of date. We recommend
               updating your search settings and re-indexing.
             </p>
           )}

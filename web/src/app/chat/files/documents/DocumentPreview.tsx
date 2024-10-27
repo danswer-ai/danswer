@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Tooltip } from "@/components/tooltip/Tooltip";
 import { FileText } from "lucide-react";
 import { FiFileText } from "react-icons/fi";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export function DocumentPreview({
   fileName,
@@ -54,16 +54,22 @@ export function DocumentPreview({
         </div>
       </div>
       <div className="ml-4 relative">
-        <Tooltip content={fileName} side="top" align="start">
-          <div
-            ref={fileNameRef}
-            className={`font-medium text-sm line-clamp-1 break-all ellipses ${
-              maxWidth ? maxWidth : "max-w-48"
-            }`}
-          >
-            {fileName}
-          </div>
-        </Tooltip>
+        <CustomTooltip
+          trigger={
+            <div
+              ref={fileNameRef}
+              className={`font-medium text-sm line-clamp-1 break-all ellipses ${
+                maxWidth ? maxWidth : "max-w-48"
+              }`}
+            >
+              {fileName}
+            </div>
+          }
+          side="top"
+          align="start"
+        >
+          {fileName}
+        </CustomTooltip>
         <div className="text-subtle text-sm">Document</div>
       </div>
     </div>

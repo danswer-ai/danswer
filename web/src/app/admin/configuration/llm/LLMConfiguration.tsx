@@ -147,7 +147,7 @@ export function LLMConfiguration() {
             If multiple LLM providers are enabled, the default provider will be
             used for all &quot;Default&quot; Assistants. For user-created
             Assistants, you can select the LLM provider/model that best fits the
-            use case!
+            use case
           </p>
           <ConfiguredLLMProviderDisplay
             existingLlmProviders={existingLlmProviders}
@@ -156,7 +156,7 @@ export function LLMConfiguration() {
         </>
       ) : (
         <Callout title="No LLM providers configured yet" color="yellow">
-          Please set one up below in order to start using enMedD AI!
+          Please set one up below in order to start using enMedD AI
         </Callout>
       )}
 

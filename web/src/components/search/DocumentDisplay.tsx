@@ -9,15 +9,17 @@ import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
 import { Badge } from "../ui/badge";
-import { CustomTooltip } from "../tooltip/CustomTooltip";
 import { BookIcon, Info, Radio, Tag } from "lucide-react";
 import { PopupSpec } from "../admin/connectors/Popup";
 import { FaStar } from "react-icons/fa";
 import { SettingsContext } from "../settings/SettingsProvider";
-import { TooltipGroup } from "../tooltip/CustomTooltip";
 import { LightBulbIcon } from "../icons/icons";
 import { WarningCircle } from "@phosphor-icons/react";
-import { CustomTooltip as SchadcnTooltip } from "../CustomTooltip";
+import {
+  CustomTooltip,
+  CustomTooltip as SchadcnTooltip,
+  TooltipGroup,
+} from "../CustomTooltip";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -251,10 +253,14 @@ export const DocumentDisplay = ({
                       )
                     }
                   >
-                    <CustomTooltip showTick line content="Toggle content">
-                      <LightBulbIcon
-                        className={`${alternativeToggled ? "text-green-600" : "text-blue-600"} my-auto ml-2 h-4 w-4 cursor-pointer`}
-                      />
+                    <CustomTooltip
+                      trigger={
+                        <LightBulbIcon
+                          className={`${alternativeToggled ? "text-green-600" : "text-blue-600"} my-auto ml-2 h-4 w-4 cursor-pointer`}
+                        />
+                      }
+                    >
+                      Toggle Content
                     </CustomTooltip>
                   </button>
                 )}
@@ -345,8 +351,12 @@ export const AgenticDocumentDisplay = ({
                       )
                     }
                   >
-                    <CustomTooltip showTick line content="Toggle content">
-                      <BookIcon className="ml-2 my-auto text-blue-400" />
+                    <CustomTooltip
+                      trigger={
+                        <BookIcon className="ml-2 my-auto text-blue-400" />
+                      }
+                    >
+                      Toggle Content
                     </CustomTooltip>
                   </button>
                 )}

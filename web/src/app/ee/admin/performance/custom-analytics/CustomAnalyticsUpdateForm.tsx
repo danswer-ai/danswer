@@ -43,7 +43,7 @@ export function CustomAnalyticsUpdateForm() {
             toast({
               title: "Update Successful",
               description:
-                "Custom analytics script has been updated successfully!",
+                "Custom analytics script has been updated successfully",
               variant: "success",
             });
           } else {

@@ -76,7 +76,11 @@ export function ShareChatSessionModal({
         ) : (
           <CustomTooltip
             trigger={
-              <Button variant='ghost' size='icon' onClick={() => setIsShareModalOpen(true)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsShareModalOpen(true)}
+              >
                 <Share size={20} />
               </Button>
             }

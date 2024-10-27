@@ -16,6 +16,7 @@ export function Popover({
   matchWidth,
   requiresContentPadding,
   triggerMaxWidth,
+  asChild,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -28,6 +29,7 @@ export function Popover({
   matchWidth?: boolean;
   requiresContentPadding?: boolean;
   triggerMaxWidth?: boolean;
+  asChild?: boolean;
 }) {
   /* 
   This Popover is needed when we want to put a popup / dropdown in a component
@@ -51,7 +53,7 @@ export function Popover({
             "PopoverContent z-popout " +
             (matchWidth ? " PopoverContentMatchWidth" : "")
           }
-          asChild
+          asChild={asChild}
           side={side}
           align={align}
           sideOffset={sideOffset}
