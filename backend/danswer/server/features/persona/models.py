@@ -124,3 +124,7 @@ class PromptTemplateResponse(BaseModel):
 
 class PersonaSharedNotificationData(BaseModel):
     persona_id: int
+
+
+class ImageGenerationToolStatus(BaseModel):
+    is_available: bool
