@@ -43,7 +43,6 @@ def create_document_set(
         db_session=db_session,
         user=user,
         target_group_ids=document_set_creation_request.groups,
-        object_is_public=document_set_creation_request.is_public,
     )
     try:
         document_set_db_model, _ = insert_document_set(
@@ -66,7 +65,6 @@ def patch_document_set(
         db_session=db_session,
         user=user,
         target_group_ids=document_set_update_request.groups,
-        object_is_public=document_set_update_request.is_public,
     )
     try:
         update_document_set(

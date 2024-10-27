@@ -144,12 +144,17 @@ def query_validation(
 def get_user_search_sessions(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
+    teamspace_id: int | None = None,
 ) -> ChatSessionsResponse:
     user_id = user.id if user is not None else None
 
     try:
         search_sessions = get_chat_sessions_by_user(
-            user_id=user_id, deleted=False, db_session=db_session, only_one_shot=True
+            user_id=user_id,
+            deleted=False,
+            db_session=db_session,
+            only_one_shot=True,
+            teamspace_id=teamspace_id,
         )
     except ValueError:
         raise HTTPException(

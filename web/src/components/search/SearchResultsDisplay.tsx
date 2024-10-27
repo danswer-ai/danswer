@@ -10,9 +10,9 @@ import { AlertIcon, MagnifyingIcon, UndoIcon } from "../icons/icons";
 import { AgenticDocumentDisplay, DocumentDisplay } from "./DocumentDisplay";
 import { searchState } from "./SearchSection";
 import { useEffect, useState } from "react";
-import { Tooltip } from "../tooltip/Tooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
 import { DISABLE_LLM_DOC_RELEVANCE } from "@/lib/constants";
+import { CustomTooltip } from "../CustomTooltip";
 
 const getSelectedDocumentIds = (
   documents: SearchEnmeddDocument[],
@@ -159,50 +159,53 @@ export const SearchResultsDisplay = ({
   console.log(selectedDocumentIds);
 
   return (
-    <>
+    <div>
       {documents && documents.length > 0 && (
         <div className="mt-4">
           <div className="font-bold flex justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
             <p>Results</p>
             {!DISABLE_LLM_DOC_RELEVANCE &&
               (contentEnriched || searchResponse.additional_relevance) && (
-                <Tooltip
+                <CustomTooltip
                   delayDuration={1000}
-                  content={<div className="flex">{commandSymbol}O</div>}
-                >
-                  <button
-                    onClick={() => {
-                      performSweep();
-                      if (agenticResults) {
-                        setShowAll((showAll) => !showAll);
-                      }
-                    }}
-                    className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-20 h-8 ${
-                      !sweep
-                        ? "bg-background-agentic-toggled text-text-agentic-toggled"
-                        : "bg-background-agentic-untoggled text-text-agentic-untoggled"
-                    }`}
-                  >
-                    <div className={`flex items-center`}>
-                      <span></span>
-                      {!sweep
-                        ? agenticResults
-                          ? "Show All"
-                          : "Focus"
-                        : agenticResults
-                          ? "Focus"
-                          : "Show All"}
+                  asChild
+                  trigger={
+                    <button
+                      onClick={() => {
+                        performSweep();
+                        if (agenticResults) {
+                          setShowAll((showAll) => !showAll);
+                        }
+                      }}
+                      className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-20 h-8 ${
+                        !sweep
+                          ? "bg-background-agentic-toggled text-text-agentic-toggled"
+                          : "bg-background-agentic-untoggled text-text-agentic-untoggled"
+                      }`}
+                    >
+                      <div className={`flex items-center`}>
+                        <span></span>
+                        {!sweep
+                          ? agenticResults
+                            ? "Show All"
+                            : "Focus"
+                          : agenticResults
+                            ? "Focus"
+                            : "Show All"}
 
-                      <span className="ml-1">
-                        {!sweep ? (
-                          <MagnifyingIcon className="h-4 w-4" />
-                        ) : (
-                          <UndoIcon className="h-4 w-4" />
-                        )}
-                      </span>
-                    </div>
-                  </button>
-                </Tooltip>
+                        <span className="ml-1">
+                          {!sweep ? (
+                            <MagnifyingIcon className="h-4 w-4" />
+                          ) : (
+                            <UndoIcon className="h-4 w-4" />
+                          )}
+                        </span>
+                      </div>
+                    </button>
+                  }
+                >
+                  <div className="flex">{commandSymbol} O</div>
+                </CustomTooltip>
               )}
           </div>
 
@@ -252,7 +255,7 @@ export const SearchResultsDisplay = ({
       )}
 
       <div className="h-[100px]" />
-    </>
+    </div>
   );
 };
 

@@ -214,6 +214,7 @@ export const ChatSidebar = ({
           </Link>
           <div>
             <CustomTooltip
+              asChild
               trigger={
                 <Button
                   onClick={() =>

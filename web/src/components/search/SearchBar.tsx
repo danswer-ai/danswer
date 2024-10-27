@@ -40,6 +40,7 @@ export const AnimatedToggle = ({
 
   return (
     <CustomTooltip
+      variant="white"
       trigger={
         <div
           ref={containerRef}

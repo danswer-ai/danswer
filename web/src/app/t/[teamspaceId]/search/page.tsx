@@ -165,9 +165,6 @@ export default async function Home({
       <div className="relative flex h-full">
         <BarLayout user={user} BarComponent={SearchSidebar} />
         {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-        {!shouldShowWelcomeModal &&
-          !shouldDisplayNoSourcesModal &&
-          !shouldDisplaySourcesIncompleteModal && <ApiKeyModal user={user} />}
         {shouldDisplayNoSourcesModal && <NoSourcesModal />}
         {shouldDisplaySourcesIncompleteModal && (
           <NoCompleteSourcesModal ccPairs={ccPairs} />

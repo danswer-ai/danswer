@@ -162,6 +162,7 @@ export function WhitelabelingForm() {
             <div className="pt-2" />
 
             <TextFormField
+              optional
               label="Description"
               name="workspace_description"
               subtext={`The custom description metadata you are giving ${
@@ -367,8 +368,9 @@ export function WhitelabelingForm() {
               </div>
             )} */}
 
-
-            <Button type="submit" className="mt-6">Update</Button>
+            <Button type="submit" className="mt-6">
+              Update
+            </Button>
           </Form>
         )}
       </Formik>

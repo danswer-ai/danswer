@@ -46,8 +46,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CustomTooltip } from "@/components/CustomTooltip";
 import { CustomModal } from "@/components/CustomModal";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -417,11 +417,10 @@ export function ChatInputBar({
                   <div className="flex gap-x-1 ml-auto">
                     <CustomTooltip
                       trigger={
-                        <button>
+                        <>
                           <Hoverable icon={FiInfo} />
-                        </button>
+                        </>
                       }
-                      asChild
                     >
                       <p className="max-w-xs flex flex-wrap">
                         {alternativeAssistant.description}
@@ -530,21 +529,31 @@ export function ChatInputBar({
             />
             <div className="flex items-center justify-between py-4 overflow-hidden border-t border-border-light">
               <div className="flex w-auto items-center">
-                <CustomModal title="Change Assistant"  open={isModalOpen}   onClose={closeModal} trigger={<Button  variant="ghost" className="mr-2 border" 
-          onClick={openModal} >
+                <CustomModal
+                  title="Change Assistant"
+                  open={isModalOpen}
+                  onClose={closeModal}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      className="mr-2 border"
+                      onClick={openModal}
+                    >
                       <Cpu size={16} className="shrink-0" />
                       {selectedAssistant
                         ? selectedAssistant.name
                         : "Assistants"}
-                    </Button>}>
-                <AssistantsTab
-                      llmProviders={llmProviders}
-                      selectedAssistant={selectedAssistant}
-                      onSelect={(assistant) => {
-                        setSelectedAssistant(assistant);
-                        closeModal();
-                      }}
-                    />
+                    </Button>
+                  }
+                >
+                  <AssistantsTab
+                    llmProviders={llmProviders}
+                    selectedAssistant={selectedAssistant}
+                    onSelect={(assistant) => {
+                      setSelectedAssistant(assistant);
+                      closeModal();
+                    }}
+                  />
                 </CustomModal>
                 {/* <Popover>
                   <PopoverTrigger>
@@ -609,7 +618,7 @@ export function ChatInputBar({
                     };
                     input.click();
                   }}
-                  variant="ghost"  size='icon' className="mr-2"
+                  variant="ghost"
                 >
                   <Paperclip size={16} />
                   File

@@ -1872,6 +1872,7 @@ export function ChatPage({
 
                             {retrievalEnabled && (
                               <CustomTooltip
+                                asChild
                                 trigger={
                                   <Button
                                     onClick={toggleSidebar}
@@ -1885,7 +1886,6 @@ export function ChatPage({
                                     )}
                                   </Button>
                                 }
-                                
                               >
                                 {showDocSidebar ? "Hide Docs" : "Show Docs"}
                               </CustomTooltip>
@@ -2145,7 +2145,8 @@ export function ChatPage({
                                           if (!previousMessage) {
                                             toast({
                                               title: "Edit Error",
-                                              description: "Cannot edit query of the first message - please refresh the page and try again.",
+                                              description:
+                                                "Cannot edit query of the first message - please refresh the page and try again.",
                                               variant: "destructive",
                                             });
                                             return;
@@ -2155,7 +2156,8 @@ export function ChatPage({
                                           ) {
                                             toast({
                                               title: "Pending Message",
-                                              description: "Cannot edit query of a pending message - please wait a few seconds and try again.",
+                                              description:
+                                                "Cannot edit query of a pending message - please wait a few seconds and try again.",
                                               variant: "destructive",
                                             });
                                             return;
@@ -2215,7 +2217,8 @@ export function ChatPage({
                                     } else {
                                       toast({
                                         title: "Force Search Error",
-                                        description: "Failed to force search - please refresh the page and try again.",
+                                        description:
+                                          "Failed to force search - please refresh the page and try again.",
                                         variant: "destructive",
                                       });
                                     }
@@ -2428,20 +2431,19 @@ export function ChatPage({
                             : 0,
                         }}
                       >
-                          <DocumentSidebar
-                            initialWidth={showDocSidebar ? usedSidebarWidth : 0}
-                            ref={innerSidebarElementRef}
-                            closeSidebar={() => toggleSidebar()}
-                            selectedMessage={aiMessage}
-                            selectedDocuments={selectedDocuments}
-                            toggleDocumentSelection={toggleDocumentSelection}
-                            clearSelectedDocuments={clearSelectedDocuments}
-                            selectedDocumentTokens={selectedDocumentTokens}
-                            maxTokens={maxTokens}
-                            isLoading={isFetchingChatMessages}
-                            showDocSidebar={showDocSidebar}
-                            isWide={isWide}
-                          />
+                        <DocumentSidebar
+                          initialWidth={showDocSidebar ? usedSidebarWidth : 0}
+                          ref={innerSidebarElementRef}
+                          closeSidebar={() => toggleSidebar()}
+                          selectedMessage={aiMessage}
+                          selectedDocuments={selectedDocuments}
+                          clearSelectedDocuments={clearSelectedDocuments}
+                          selectedDocumentTokens={selectedDocumentTokens}
+                          maxTokens={maxTokens}
+                          isLoading={isFetchingChatMessages}
+                          showDocSidebar={showDocSidebar}
+                          isWide={isWide}
+                        />
                       </div>
                     </div>
                   ) : // Another option is to use a div with the width set to the initial width, so that the

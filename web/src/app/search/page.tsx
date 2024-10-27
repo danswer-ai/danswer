@@ -178,9 +178,6 @@ export default async function Home() {
       <div className="relative flex h-full">
         <BarLayout user={user} BarComponent={SearchSidebar} />
         {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-        {!shouldShowWelcomeModal &&
-          !shouldDisplayNoSourcesModal &&
-          !shouldDisplaySourcesIncompleteModal && <ApiKeyModal user={user} />}
         {shouldDisplayNoSourcesModal && <NoSourcesModal />}
         {shouldDisplaySourcesIncompleteModal && (
           <NoCompleteSourcesModal ccPairs={ccPairs} />
@@ -189,7 +186,7 @@ export default async function Home() {
       Only used in the EE version of the app. */}
         <ChatPopup />
         <InstantSSRAutoRefresh />
-        <div className="pt-20 lg:pt-14 lg:px-14 container h-screen overflow-hidden">
+        <div className="pt-20 lg:pt-14 lg:px-14 container min-h-screen overflow-y-auto overflow-x-hidden">
           <SearchProvider
             value={{
               querySessions,

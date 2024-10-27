@@ -122,7 +122,6 @@ export const DocumentFeedbackBlock = ({
             documentId={documentId}
             messageId={messageId}
             documentRank={documentRank}
-            setPopup={setPopup}
             feedbackType="endorse"
           />
         }
@@ -137,7 +136,6 @@ export const DocumentFeedbackBlock = ({
             messageId={messageId}
             documentRank={documentRank}
             feedbackType="reject"
-            setPopup={setPopup}
           />
         }
         asChild

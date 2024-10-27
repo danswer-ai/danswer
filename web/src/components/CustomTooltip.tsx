@@ -32,6 +32,12 @@ export const TooltipGroup: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+const TooltipVariants = {
+  primary: "bg-primary text-inverted",
+  destructive: "bg-destructive text-inverted",
+  white: "bg-white text-base",
+};
+
 export function CustomTooltip({
   children,
   trigger,
@@ -49,16 +55,18 @@ export function CustomTooltip({
   delayDuration?: number;
   style?: string;
   asChild?: boolean;
-  variant?: "destructive" | "secondary" | "primary";
+  variant?: keyof typeof TooltipVariants;
 }) {
+  // Get the variant class based on the prop
+  const classString = TooltipVariants[variant] || TooltipVariants.primary;
   return (
     <TooltipProvider>
       <Tooltip delayDuration={delayDuration}>
-        <TooltipTrigger asChild={asChild} className="w-fit">{trigger}</TooltipTrigger>
+        <TooltipTrigger asChild={asChild}>{trigger}</TooltipTrigger>
         <TooltipContent
           align={align}
           side={side}
-          className={`!z-modal ${style} bg-${variant} border-none text-inverted flex items-center`}
+          className={`!z-modal ${style} ${classString} border-none flex items-center break-words`}
         >
           {children}
         </TooltipContent>
