@@ -85,7 +85,7 @@ jobs:
           git tag ${{ steps.list-branches.outputs.new_beta_tag }}
           # Push the changes and tag to the beta branch using PAT
           git push origin ${{ steps.list-branches.outputs.beta }} --force
-          #git push origin ${{ steps.list-branches.outputs.new_beta_tag }}  # This step does not trigger the workflow, better to do it manually for now
+          git push origin ${{ steps.list-branches.outputs.new_beta_tag }}  # This step does not trigger the workflow, better to do it manually for now
 
           # Prepare the stable branch
           git checkout ${{ steps.list-branches.outputs.stable }}
@@ -99,4 +99,4 @@ jobs:
           git tag ${{ steps.list-branches.outputs.new_stable_tag }}
           # Push the changes and tag to the stable branch using PAT
           git push origin ${{ steps.list-branches.outputs.stable }} --force
-          #git push origin ${{ steps.list-branches.outputs.new_stable_tag }}  # This step does not trigger the workflow, better to do it manually for now
+          git push origin ${{ steps.list-branches.outputs.new_stable_tag }}  # This step does not trigger the workflow, better to do it manually for now
