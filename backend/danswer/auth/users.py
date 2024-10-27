@@ -49,6 +49,7 @@ from httpx_oauth.oauth2 import BaseOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
 from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy import text
 from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
 
@@ -366,6 +367,10 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     }
 
                     user = await self.user_db.create(user_dict)
+
+                    # Explicitly set the Postgres schema for this session to ensure
+                    # OAuth account creation happens in the correct tenant schema
+                    await db_session.execute(text(f'SET search_path = "{tenant_id}"'))
                     user = await self.user_db.add_oauth_account(
                         user, oauth_account_dict
                     )

@@ -57,7 +57,10 @@ async def get_user_count() -> int:
 
 # Need to override this because FastAPI Users doesn't give flexibility for backend field creation logic in OAuth flow
 class SQLAlchemyUserAdminDB(SQLAlchemyUserDatabase):
-    async def create(self, create_dict: Dict[str, Any]) -> UP:
+    async def create(
+        self,
+        create_dict: Dict[str, Any],
+    ) -> UP:
         user_count = await get_user_count()
         if user_count == 0 or create_dict["email"] in get_default_admin_user_emails():
             create_dict["role"] = UserRole.ADMIN
