@@ -32,7 +32,10 @@ import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "../admin/configuration/llm/interfaces";
 import { AssistantsProvider } from "@/components/context/AssistantsContext";
 import { headers } from "next/headers";
-import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
+import {
+  hasCompletedWelcomeFlowSS,
+  WelcomeModal,
+} from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 
 export default async function Home({
   searchParams,
@@ -180,6 +183,7 @@ export default async function Home({
     <>
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
+      {shouldShowWelcomeModal && <WelcomeModal user={user} />}
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       <ChatPopup />
