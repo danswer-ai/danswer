@@ -1,7 +1,7 @@
 name: Build and Push Backend Image on Tag
 
 on:
-  push:
+  create:
     tags:
       - '*'
 
