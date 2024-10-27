@@ -77,6 +77,9 @@ jobs:
           set -e
           echo "Backporting to beta ${{ steps.list-branches.outputs.beta }} and stable ${{ steps.list-branches.outputs.stable }}"
           
+          # Echo the merge commit SHA
+          echo "Merge commit SHA: ${{ github.event.pull_request.merge_commit_sha }}"
+          
           # Fetch all history for all branches and tags
           git fetch --prune
 
