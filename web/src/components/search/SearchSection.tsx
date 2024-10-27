@@ -44,6 +44,7 @@ import UnconfiguredProviderText from "../chat_search/UnconfiguredProviderText";
 import { DateRangePickerValue } from "@tremor/react";
 import { Tag } from "@/lib/types";
 import { isEqual } from "lodash";
+import { WelcomeModal } from "../initialSetup/welcome/WelcomeModalWrapper";
 
 export type searchState =
   | "input"
@@ -783,6 +784,7 @@ export const SearchSection = ({
                     </div>
 
                     <UnconfiguredProviderText
+                      noSources={shouldDisplayNoSources}
                       showConfigureAPIKey={() => setShowApiKeyModal(true)}
                     />
 

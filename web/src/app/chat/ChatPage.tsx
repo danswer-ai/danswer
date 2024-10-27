@@ -135,7 +135,9 @@ export function ChatPage({
 
   const { assistants: availableAssistants, finalAssistants } = useAssistants();
 
-  const [showApiKeyModal, setShowApiKeyModal] = useState(true);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(
+    !shouldShowWelcomeModal
+  );
 
   const { user, isAdmin, isLoadingUser } = useUser();
 
