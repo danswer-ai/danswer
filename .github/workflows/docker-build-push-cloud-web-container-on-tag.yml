@@ -1,12 +1,13 @@
 name: Build and Push Cloud Web Image on Tag
+# Identical to the web container build, but with correct image tag and build args
 
 on:
   push:
     tags:
-      - 'cloud*'
+      - '*'
 
 env:
-  REGISTRY_IMAGE: danswer/danswer-web-server
+  REGISTRY_IMAGE: danswer/danswer-cloud-web-server
   LATEST_TAG: ${{ contains(github.ref_name, 'latest') }}
   
 jobs:
@@ -64,7 +65,6 @@ jobs:
             NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY }}
             NEXT_PUBLIC_POSTHOG_HOST=${{ secrets.POSTHOG_HOST }}
             NEXT_PUBLIC_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
-            NEXT_PUBLIC_SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
           # needed due to weird interactions with the builds for different platforms  
           no-cache: true
           labels: ${{ steps.meta.outputs.labels }}
