@@ -7,7 +7,6 @@ on:
 permissions:
   contents: write
   actions: write
-  workflows: write
 
 jobs:
   backport:
@@ -97,3 +96,5 @@ jobs:
           # Push the changes and tag to the stable branch using PAT
           git push origin ${{ steps.list-branches.outputs.stable }} --force
           git push origin ${{ steps.list-branches.outputs.new_stable_tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.YUHONG_GH_ACTIONS }}
