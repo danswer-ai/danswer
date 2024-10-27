@@ -20,9 +20,6 @@ from danswer.connectors.google_drive.constants import BASE_SCOPES
 from danswer.connectors.google_drive.constants import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
 )
-from danswer.connectors.google_drive.constants import (
-    DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
-)
 from danswer.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
 from danswer.connectors.google_drive.constants import FETCH_GROUPS_SCOPES
 from danswer.connectors.google_drive.constants import FETCH_PERMISSIONS_SCOPES
@@ -84,6 +81,45 @@ def _get_google_drive_creds_for_service_account(
     return creds if creds.valid else None
 
 
+def get_service_account_credentials(
+    credentials: dict[str, str],
+    scopes: list[str] = build_gdrive_scopes(),
+) -> ServiceAccountCredentials:
+    service_account_key_json_str = credentials[KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY]
+    service_creds = _get_google_drive_creds_for_service_account(
+        service_account_key_json_str=service_account_key_json_str,
+        scopes=scopes,
+    )
+
+    # "Impersonate" a user if one is specified
+    delegated_user_email = cast(
+        str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
+    )
+    if delegated_user_email:
+        service_creds = (
+            service_creds.with_subject(delegated_user_email) if service_creds else None
+        )
+    return service_creds
+
+
+def get_oauth_credentials(
+    credentials: dict[str, str],
+    scopes: list[str] = build_gdrive_scopes(),
+) -> tuple[OAuthCredentials | None, dict[str, str] | None]:
+    new_creds_dict = None
+    access_token_json_str = cast(str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY])
+    oauth_creds = get_google_drive_creds_for_authorized_user(
+        token_json_str=access_token_json_str, scopes=scopes
+    )
+
+    # tell caller to update token stored in DB if it has changed
+    # (e.g. the token has been refreshed)
+    new_creds_json_str = oauth_creds.to_json() if oauth_creds else ""
+    if new_creds_json_str != access_token_json_str:
+        new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
+    return oauth_creds, new_creds_dict
+
+
 def get_google_drive_creds(
     credentials: dict[str, str], scopes: list[str] = build_gdrive_scopes()
 ) -> tuple[ServiceAccountCredentials | OAuthCredentials, dict[str, str] | None]:
@@ -102,10 +138,8 @@ def get_google_drive_creds(
         if new_creds_json_str != access_token_json_str:
             new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
 
-    elif DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
-        service_account_key_json_str = credentials[
-            DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
-        ]
+    elif KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY in credentials:
+        service_account_key_json_str = credentials[KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY]
         service_creds = _get_google_drive_creds_for_service_account(
             service_account_key_json_str=service_account_key_json_str,
             scopes=scopes,
@@ -189,7 +223,7 @@ def build_service_account_creds(
     service_account_key = get_service_account_key()
 
     credential_dict = {
-        DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY: service_account_key.json(),
+        KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY: service_account_key.json(),
     }
     if delegated_user_email:
         credential_dict[DB_CREDENTIALS_DICT_DELEGATED_USER_KEY] = delegated_user_email
