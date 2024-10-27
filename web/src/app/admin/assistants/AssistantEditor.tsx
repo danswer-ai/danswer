@@ -140,7 +140,6 @@ export function AssistantEditor({
   const defaultProvider = llmProviders.find(
     (llmProvider) => llmProvider.is_default_provider
   );
-  const defaultProviderName = defaultProvider?.provider;
   const defaultModelName = defaultProvider?.default_model_name;
   const providerDisplayNameToProviderName = new Map<string, string>();
   llmProviders.forEach((llmProvider) => {
