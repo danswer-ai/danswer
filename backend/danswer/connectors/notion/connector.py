@@ -134,8 +134,10 @@ class NotionConnector(LoadConnector, PollConnector):
                     f"This is likely due to the block not being shared "
                     f"with the Danswer integration. Exact exception:\n\n{e}"
                 )
-
-            logger.exception(f"Error fetching blocks - {res.json()}")
+            else:
+                logger.exception(
+                    f"Error fetching blocks with status code {res.status_code}: {res.json()}"
+                )
 
             # This can occasionally happen, the reason is unknown and cannot be reproduced on our internal Notion
             # Assuming this will not be a critical loss of data
