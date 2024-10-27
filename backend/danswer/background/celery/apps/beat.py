@@ -78,6 +78,7 @@ tasks_to_schedule = [
     },
 ]
 
+
 # Build the celery beat schedule dynamically
 beat_schedule = {}
 

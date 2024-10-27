@@ -184,7 +184,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         # If we are multi-tenant, we need to only set up initial public tables
         with Session(engine) as db_session:
-            setup_danswer(db_session)
+            setup_danswer(db_session, None)
     else:
         setup_multitenant_danswer()
 

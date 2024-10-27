@@ -59,7 +59,7 @@ def create_tenant(
         run_alembic_migrations(tenant_id)
 
         with get_session_with_tenant(tenant_id) as db_session:
-            setup_danswer(db_session)
+            setup_danswer(db_session, tenant_id)
 
         add_users_to_tenant([email], tenant_id)
 
