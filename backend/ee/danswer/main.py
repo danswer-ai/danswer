@@ -5,7 +5,6 @@ from danswer.auth.users import auth_backend
 from danswer.auth.users import create_danswer_oauth_router
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
@@ -43,6 +42,7 @@ from ee.danswer.server.token_rate_limits.api import (
 )
 from ee.danswer.server.user_group.api import router as user_group_router
 from ee.danswer.utils.encryption import test_encryption
+from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
 

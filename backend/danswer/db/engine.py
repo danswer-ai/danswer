@@ -25,7 +25,6 @@ from sqlalchemy.orm import sessionmaker
 
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
 from danswer.configs.app_configs import POSTGRES_DB
@@ -37,10 +36,11 @@ from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
-from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
+from shared_configs.configs import TENANT_ID_PREFIX
 
 logger = setup_logger()
 
