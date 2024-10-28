@@ -11,7 +11,6 @@ from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
-from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerRedisLocks
@@ -141,8 +140,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
                     f"search_settings={search_settings.id}"
                 )
 
-        rcp = RedisConnectorPruning(cc_pair_id)
-        if r.get(rcp.fence_key):
+        if redis_connector.is_pruning():
             raise TaskDependencyError(
                 f"Connector deletion - Delayed (pruning in progress): "
                 f"cc_pair={cc_pair_id}"

@@ -15,7 +15,6 @@ import danswer.background.celery.apps.app_base as app_base
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
-from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
@@ -133,17 +132,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
         RedisConnector.deletion_cleanup(r)
 
-        for key in r.scan_iter(RedisConnectorPruning.TASKSET_PREFIX + "*"):
-            r.delete(key)
-
-        for key in r.scan_iter(RedisConnectorPruning.GENERATOR_COMPLETE_PREFIX + "*"):
-            r.delete(key)
-
-        for key in r.scan_iter(RedisConnectorPruning.GENERATOR_PROGRESS_PREFIX + "*"):
-            r.delete(key)
-
-        for key in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
-            r.delete(key)
+        RedisConnector.pruning_cleanup(r)
 
         for key in r.scan_iter(RedisConnectorIndexing.TASKSET_PREFIX + "*"):
             r.delete(key)

@@ -21,9 +21,46 @@ class RedisConnectorDeletionFenceData(BaseModel):
     submitted: datetime
 
 
+# class RedisConnectorStop:
+#     FENCE_PREFIX = "connectorstop_fence"
+
+#     def __init__(self, id: int, redis: redis.Redis) -> None:
+#         self.redis = redis
+#         self.fence_key = f"{RedisConnectorStop.FENCE_PREFIX}_{id}"
+
+
+#     @property
+#     def signaled(self) -> bool:
+#         if self.redis.exists(self.fence_key):
+#             return True
+
+#         return False
+
+#     @signaled.setter
+#     def signaled(self, value: bool) -> None:
+#         if value:
+#             self.redis.set(self.fence_key, 0)
+#             return
+
+#         self.redis.delete(self.fence_key)
+
+#     def cleanup(self) -> None:
+#         for key in self.redis.scan_iter(RedisConnectorStop.FENCE_PREFIX + "*"):
+#             self.redis.delete(key)
+
+
 class RedisConnector:
     PRUNING = "connectorpruning"
-    PRUNING_FENCE = PRUNING + "_fence"
+    PRUNING_SUBTASK = PRUNING + "+sub"  # connectorpruning+sub
+    PRUNING_GENERATORTASK = PRUNING + "+generator"  # connectorpruning+generator
+    PRUNING_FENCE = PRUNING + "_fence"  # connectorpruning_fence
+    PRUNING_GENERATOR_PROGRESS = (
+        PRUNING + "_generator_progress"
+    )  # connectorpruning_generator_progress
+    PRUNING_GENERATOR_COMPLETE = (
+        PRUNING + "_generator_complete"
+    )  # connectorpruning_generator_complete
+    PRUNING_TASKSET = PRUNING + "_taskset"  # connectorpruning_taskset
 
     INDEXING = "connectorindexing"
     INDEXING_FENCE = INDEXING + "_fence"
@@ -39,17 +76,19 @@ class RedisConnector:
         self.id: int = id
         self.redis: redis.Redis = get_redis_client(tenant_id=tenant_id)
 
+        # self.stop = RedisConnectorStop(self.redis)
+
     def is_indexing(self) -> bool:
         if self.redis.exists(self.get_indexing_fence_key()):
             return True
 
         return False
 
-    # def is_pruning(self) -> bool:
-    #     if self.redis.exists(self.fence_key):
-    #         return True
+    def is_pruning(self) -> bool:
+        if self.redis.exists(self.get_pruning_fence_key()):
+            return True
 
-    #     return False
+        return False
 
     def is_deleting(self) -> bool:
         if self.redis.exists(self.get_deletion_fence_key()):
@@ -74,6 +113,21 @@ class RedisConnector:
 
     def _get_deletion_taskset_key(self) -> str:
         return f"{self.DELETION_TASKSET}_{self.id}"
+
+    def get_pruning_fence_key(self) -> str:
+        return f"{self.PRUNING_FENCE}_{self.id}"
+
+    def _get_pruning_subtask_key(self) -> str:
+        return f"{self.PRUNING_SUBTASK}_{self.id}"
+
+    def _get_pruning_taskset_key(self) -> str:
+        return f"{self.PRUNING_TASKSET}_{self.id}"
+
+    def get_pruning_generator_progress_key(self) -> str:
+        return f"{self.PRUNING_GENERATOR_PROGRESS}_{self.id}"
+
+    def _get_pruning_generator_complete_key(self) -> str:
+        return f"{self.PRUNING_GENERATOR_COMPLETE}_{self.id}"
 
     def _get_deletion_task_id(self) -> str:
         # celery's default task id format is "dd32ded3-00aa-4884-8b21-42f8332e7fac"
@@ -170,9 +224,102 @@ class RedisConnector:
         self.redis.delete(self.get_stop_fence_key())
         return
 
+    def pruning_taskset_clear(self) -> None:
+        self.redis.delete(self._get_pruning_taskset_key())
+
+    def pruning_generator_clear(self) -> None:
+        self.redis.delete(self.get_pruning_generator_progress_key())
+        self.redis.delete(self._get_pruning_generator_complete_key())
+
+    def pruning_generator_complete_set(self, num_tasks: int) -> None:
+        self.redis.set(self._get_pruning_generator_complete_key(), num_tasks)
+        return
+
+    def pruning_fence_clear(self) -> None:
+        self.redis.delete(self.get_pruning_fence_key())
+        return
+
+    def pruning_fence_set(self) -> None:
+        self.redis.set(self.get_pruning_fence_key(), 1)
+        return
+
+    def pruning_get_initial(self) -> int | None:
+        generator_value = self.redis.get(self._get_pruning_generator_complete_key())
+        if generator_value is None:
+            return None
+
+        initial_count = int(cast(int, generator_value))
+        return initial_count
+
+    def pruning_get_remaining(self) -> int:
+        remaining = cast(int, self.redis.scard(self._get_pruning_taskset_key()))
+        return remaining
+
+    def pruning_get_count(self) -> int:
+        count = 0
+        for key in self.redis.scan_iter(RedisConnector.PRUNING_FENCE + "*"):
+            count += 1
+        return count
+
+    def pruning_generate_tasks(
+        self,
+        documents_to_prune: set[str],
+        celery_app: Celery,
+        db_session: Session,
+        lock: redis.lock.Lock | None,
+        tenant_id: str | None,
+    ) -> int | None:
+        last_lock_time = time.monotonic()
+
+        async_results = []
+        cc_pair = get_connector_credential_pair_from_id(int(self.id), db_session)
+        if not cc_pair:
+            return None
+
+        for doc_id in documents_to_prune:
+            current_time = time.monotonic()
+            if lock and current_time - last_lock_time >= (
+                CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT / 4
+            ):
+                lock.reacquire()
+                last_lock_time = current_time
+
+            # celery's default task id format is "dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            # the actual redis key is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            # we prefix the task id so it's easier to keep track of who created the task
+            # aka "documentset_1_6dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            custom_task_id = f"{self._get_pruning_subtask_key()}_{uuid4()}"
+
+            # add to the tracking taskset in redis BEFORE creating the celery task.
+            self.redis.sadd(self._get_pruning_taskset_key(), custom_task_id)
+
+            # Priority on sync's triggered by new indexing should be medium
+            result = celery_app.send_task(
+                "document_by_cc_pair_cleanup_task",
+                kwargs=dict(
+                    document_id=doc_id,
+                    connector_id=cc_pair.connector_id,
+                    credential_id=cc_pair.credential_id,
+                    tenant_id=tenant_id,
+                ),
+                queue=DanswerCeleryQueues.CONNECTOR_DELETION,
+                task_id=custom_task_id,
+                priority=DanswerCeleryPriority.MEDIUM,
+            )
+
+            async_results.append(result)
+
+        return len(async_results)
+
     @staticmethod
     def deletion_taskset_remove(id: int, task_id: str, r: redis.Redis) -> None:
         taskset_key = f"{RedisConnector.DELETION_TASKSET}_{id}"
+        r.srem(taskset_key, task_id)
+        return
+
+    @staticmethod
+    def pruning_taskset_remove(id: int, task_id: str, r: redis.Redis) -> None:
+        taskset_key = f"{RedisConnector.PRUNING_TASKSET}_{id}"
         r.srem(taskset_key, task_id)
         return
 
@@ -182,6 +329,20 @@ class RedisConnector:
             r.delete(key)
 
         for key in r.scan_iter(RedisConnector.DELETION_FENCE + "*"):
+            r.delete(key)
+
+    @staticmethod
+    def pruning_cleanup(r: redis.Redis) -> None:
+        for key in r.scan_iter(RedisConnector.PRUNING_TASKSET + "*"):
+            r.delete(key)
+
+        for key in r.scan_iter(RedisConnector.PRUNING_GENERATOR_COMPLETE + "*"):
+            r.delete(key)
+
+        for key in r.scan_iter(RedisConnector.PRUNING_GENERATOR_PROGRESS + "*"):
+            r.delete(key)
+
+        for key in r.scan_iter(RedisConnector.PRUNING_FENCE + "*"):
             r.delete(key)
 
     @staticmethod

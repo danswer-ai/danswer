@@ -15,7 +15,6 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 from danswer.background.celery.apps.task_formatters import CeleryTaskColoredFormatter
 from danswer.background.celery.apps.task_formatters import CeleryTaskPlainFormatter
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
-from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
@@ -124,11 +123,10 @@ def on_task_postrun(
             RedisConnector.deletion_taskset_remove(int(cc_pair_id), task_id, r)
         return
 
-    if task_id.startswith(RedisConnectorPruning.SUBTASK_PREFIX):
-        cc_pair_id = RedisConnectorPruning.get_id_from_task_id(task_id)
+    if task_id.startswith(RedisConnector.PRUNING_SUBTASK):
+        cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
-            rcp = RedisConnectorPruning(int(cc_pair_id))
-            r.srem(rcp.taskset_key, task_id)
+            RedisConnector.pruning_taskset_remove(int(cc_pair_id), task_id, r)
         return
 
 

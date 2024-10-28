@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
-from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.background.celery.tasks.pruning.tasks import (
     try_creating_prune_generator_task,
@@ -39,6 +38,7 @@ from danswer.db.models import User
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.tasks import check_task_is_live_and_not_timed_out
 from danswer.db.tasks import get_latest_task
+from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import CCStatusUpdateRequest
@@ -263,8 +263,9 @@ def prune_cc_pair(
         )
 
     r = get_redis_client(tenant_id=tenant_id)
-    rcp = RedisConnectorPruning(cc_pair_id)
-    if rcp.is_pruning(r):
+
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    if redis_connector.is_pruning():
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail="Pruning task already in progress.",

@@ -19,7 +19,6 @@ from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import celery_get_queue_length
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
-from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
@@ -396,7 +395,7 @@ def monitor_document_set_taskset(
 
 
 def monitor_connector_deletion_taskset(
-    key_bytes: bytes, r: Redis, tenant_id: str | None
+    tenant_id: str | None, key_bytes: bytes, r: Redis
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
     cc_pair_id_str = RedisConnector.get_id_from_fence_key(fence_key)
@@ -507,10 +506,10 @@ def monitor_connector_deletion_taskset(
 
 
 def monitor_ccpair_pruning_taskset(
-    key_bytes: bytes, r: Redis, db_session: Session
+    tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    cc_pair_id_str = RedisConnectorPruning.get_id_from_fence_key(fence_key)
+    cc_pair_id_str = RedisConnector.get_id_from_fence_key(fence_key)
     if cc_pair_id_str is None:
         task_logger.warning(
             f"monitor_ccpair_pruning_taskset: could not parse cc_pair_id from {fence_key}"
@@ -519,27 +518,19 @@ def monitor_ccpair_pruning_taskset(
 
     cc_pair_id = int(cc_pair_id_str)
 
-    rcp = RedisConnectorPruning(cc_pair_id)
-
-    fence_value = r.get(rcp.fence_key)
-    if fence_value is None:
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    if not redis_connector.is_pruning():
         return
 
-    generator_value = r.get(rcp.generator_complete_key)
-    if generator_value is None:
+    initial = redis_connector.pruning_get_initial()
+    if initial is None:
         return
 
-    try:
-        initial_count = int(cast(int, generator_value))
-    except ValueError:
-        task_logger.error("The value is not an integer.")
-        return
-
-    count = cast(int, r.scard(rcp.taskset_key))
+    remaining = redis_connector.pruning_get_remaining()
     task_logger.info(
-        f"Connector pruning progress: cc_pair_id={cc_pair_id} remaining={count} initial={initial_count}"
+        f"Connector pruning progress: cc_pair={cc_pair_id} remaining={remaining} initial={initial}"
     )
-    if count > 0:
+    if remaining > 0:
         return
 
     mark_ccpair_as_pruned(int(cc_pair_id), db_session)
@@ -547,10 +538,9 @@ def monitor_ccpair_pruning_taskset(
         f"Successfully pruned connector credential pair. cc_pair_id={cc_pair_id}"
     )
 
-    r.delete(rcp.taskset_key)
-    r.delete(rcp.generator_progress_key)
-    r.delete(rcp.generator_complete_key)
-    r.delete(rcp.fence_key)
+    redis_connector.pruning_taskset_clear()
+    redis_connector.pruning_generator_clear()
+    redis_connector.pruning_fence_clear()
 
 
 def monitor_ccpair_indexing_taskset(
@@ -743,7 +733,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
         lock_beat.reacquire()
         for key_bytes in r.scan_iter(RedisConnector.DELETION_FENCE + "*"):
             lock_beat.reacquire()
-            monitor_connector_deletion_taskset(key_bytes, r, tenant_id)
+            monitor_connector_deletion_taskset(tenant_id, key_bytes, r)
 
         lock_beat.reacquire()
         for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
@@ -763,10 +753,10 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                 monitor_usergroup_taskset(key_bytes, r, db_session)
 
         lock_beat.reacquire()
-        for key_bytes in r.scan_iter(RedisConnectorPruning.FENCE_PREFIX + "*"):
+        for key_bytes in r.scan_iter(RedisConnector.PRUNING_FENCE + "*"):
             lock_beat.reacquire()
             with get_session_with_tenant(tenant_id) as db_session:
-                monitor_ccpair_pruning_taskset(key_bytes, r, db_session)
+                monitor_ccpair_pruning_taskset(tenant_id, key_bytes, r, db_session)
 
         lock_beat.reacquire()
         for key_bytes in r.scan_iter(RedisConnectorIndexing.FENCE_PREFIX + "*"):
