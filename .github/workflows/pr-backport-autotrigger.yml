@@ -18,16 +18,14 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.YUHONG_GH_ACTIONS }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for all branches and tags
+          ssh-key: "${{ secrets.RKUO_DEPLOY_KEY }}"
 
-      - name: Set up Git
+      - name: Set up Git user
         run: |
-          git config --global user.name "yuhongsun96"
-          git config --global user.email "yuhongsun96@gmail.com"
-          # Configure Git to use the PAT for authentication
-          git remote set-url origin https://yuhongsun96:${{ secrets.YUHONG_GH_ACTIONS }}@github.com/${{ github.repository }}.git
+          git config user.name "Richard Kuo [bot]"
+          git config user.email "rkuo[bot]@danswer.ai"
       
       - name: Check for Backport Checkbox
         id: checkbox-check
