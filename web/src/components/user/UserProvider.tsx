@@ -31,10 +31,13 @@ export function UserProvider({
     if (!posthog) return;
 
     if (user?.id) {
-      posthog.identify(user.id, {
+      const identifyData: Record<string, any> = {
         email: user.email,
-        organization_name: user.organization_name,
-      });
+      };
+      if (user.organization_name) {
+        identifyData.organization_name = user.organization_name;
+      }
+      posthog.identify(user.id, identifyData);
     } else {
       posthog.reset();
     }
