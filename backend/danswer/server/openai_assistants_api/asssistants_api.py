@@ -9,6 +9,7 @@ from fastapi import Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer.auth.users import current_user
 from danswer.db.engine import get_session
 from danswer.db.models import Persona
 from danswer.db.models import User
@@ -18,7 +19,6 @@ from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import upsert_persona
 from danswer.db.persona import upsert_prompt
 from danswer.search.enums import RecencyBiasSetting
-from danswer.server.danswer_api.ingestion import api_key_dep
 
 router = APIRouter(prefix="/assistants")
 
@@ -99,7 +99,7 @@ def persona_to_assistant(persona: Persona) -> AssistantObject:
 @router.post("")
 def create_assistant(
     request: CreateAssistantRequest,
-    user: User | None = Depends(api_key_dep),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> AssistantObject:
     prompt = None
@@ -147,7 +147,7 @@ def create_assistant(
 @router.get("/{assistant_id}")
 def retrieve_assistant(
     assistant_id: int,
-    user: User | None = Depends(api_key_dep),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> AssistantObject:
     try:
@@ -169,7 +169,7 @@ def retrieve_assistant(
 def modify_assistant(
     assistant_id: int,
     request: ModifyAssistantRequest,
-    user: User | None = Depends(api_key_dep),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> AssistantObject:
     persona = get_persona_by_id(
@@ -195,7 +195,7 @@ def modify_assistant(
 @router.delete("/{assistant_id}")
 def delete_assistant(
     assistant_id: int,
-    user: User | None = Depends(api_key_dep),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> DeleteAssistantResponse:
     try:
@@ -215,7 +215,7 @@ def list_assistants(
     order: str = Query("desc", regex="^(asc|desc)$"),
     after: Optional[int] = None,
     before: Optional[int] = None,
-    user: User | None = Depends(api_key_dep),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> ListAssistantsResponse:
     personas = list(
