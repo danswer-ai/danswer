@@ -35,6 +35,7 @@ from danswer.connectors.gmail.connector_auth import (
 )
 from danswer.connectors.gmail.connector_auth import upsert_google_app_gmail_cred
 from danswer.connectors.google_drive.connector_auth import build_service_account_creds
+from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_TOKEN_KEY
 from danswer.connectors.google_drive.connector_auth import delete_google_app_cred
 from danswer.connectors.google_drive.connector_auth import delete_service_account_key
 from danswer.connectors.google_drive.connector_auth import get_auth_url
@@ -49,7 +50,6 @@ from danswer.connectors.google_drive.connector_auth import (
 from danswer.connectors.google_drive.connector_auth import upsert_google_app_cred
 from danswer.connectors.google_drive.connector_auth import upsert_service_account_key
 from danswer.connectors.google_drive.connector_auth import verify_csrf
-from danswer.connectors.google_drive.constants import DB_CREDENTIALS_DICT_TOKEN_KEY
 from danswer.db.connector import create_connector
 from danswer.db.connector import delete_connector
 from danswer.db.connector import fetch_connector_by_id

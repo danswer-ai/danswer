@@ -202,40 +202,25 @@ export const connectorConfigs: Record<
   },
   google_drive: {
     description: "Configure Google Drive connector",
-    values: [
+    values: [],
+    advanced_values: [
       {
         type: "list",
-        query: "Enter folder paths:",
-        label: "Folder Paths",
-        name: "folder_paths",
+        query: "Enter the URLs of the shared folders or drives to index:",
+        label: "Parent URLs To Index",
+        name: "parent_urls",
         optional: true,
       },
       {
         type: "checkbox",
-        query: "Include shared files?",
-        label: "Include Shared",
-        name: "include_shared",
-        optional: false,
-        default: false,
-      },
-      {
-        type: "checkbox",
-        query: "Follow shortcuts?",
-        label: "Follow Shortcuts",
-        name: "follow_shortcuts",
-        optional: false,
-        default: false,
-      },
-      {
-        type: "checkbox",
-        query: "Only include organization public files?",
-        label: "Only Org Public",
-        name: "only_org_public",
+        query:
+          "Include personal drives? (Note: This should only be used if you use permissions sync)",
+        label: "Include personal",
+        name: "include_personal",
         optional: false,
         default: false,
       },
     ],
-    advanced_values: [],
   },
   gmail: {
     description: "Configure Gmail connector",
@@ -1030,7 +1015,7 @@ export interface GitlabConfig {
 }
 
 export interface GoogleDriveConfig {
-  folder_paths?: string[];
+  parent_urls?: string[];
   include_shared?: boolean;
   follow_shortcuts?: boolean;
   only_org_public?: boolean;

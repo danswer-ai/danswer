@@ -18,10 +18,10 @@ from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
-from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
-from danswer.connectors.google_drive.constants import (
+from danswer.connectors.google_drive.connector_auth import (
     DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
 )
+from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -44,10 +44,8 @@ DRIVE_FOLDER_TYPE = "application/vnd.google-apps.folder"
 DRIVE_SHORTCUT_TYPE = "application/vnd.google-apps.shortcut"
 UNSUPPORTED_FILE_TYPE_CONTENT = ""  # keep empty for now
 
-FILE_FIELDS = "nextPageToken, files(mimeType, id, name, permissions, modifiedTime, webViewLink, shortcutDetails)"
-SLIM_FILE_FIELDS = (
-    "nextPageToken, files(permissions(emailAddress, type), webViewLink), permissionIds"
-)
+FILE_FIELDS = "nextPageToken, files(mimeType, id, name, permissions, modifiedTime, webViewLink, shortcutDetails, owners)"
+SLIM_FILE_FIELDS = "nextPageToken, files(id, permissions(emailAddress, type), permissionIds, webViewLink)"
 FOLDER_FIELDS = "nextPageToken, files(id, name, permissions, modifiedTime, webViewLink, shortcutDetails)"
 
 # these errors don't represent a failure in the connector, but simply files
@@ -58,8 +56,6 @@ ERRORS_TO_CONTINUE_ON = [
     "cannotDownloadFile",
 ]
 _SLIM_BATCH_SIZE = 500
-
-_TRAVERSED_PARENT_IDS: set[str] = set()
 
 
 class GDriveMimeType(str, Enum):
@@ -83,7 +79,7 @@ GoogleDriveFileType = dict[str, Any]
 add_retries = retry_builder(tries=50, max_delay=30)
 
 
-def _execute_paginated_retrieval(
+def execute_paginated_retrieval(
     retrieval_function: Callable[..., Any],
     list_key: str,
     **kwargs: Any,
@@ -93,7 +89,6 @@ def _execute_paginated_retrieval(
         retrieval_function: The specific list function to call (e.g., service.files().list)
         **kwargs: Arguments to pass to the list function
     """
-    print("\n -------------------------------")
     next_page_token = ""
     while next_page_token is not None:
         request_kwargs = kwargs.copy()
@@ -205,7 +200,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
         self,
         parent_urls: list[str] | None = None,
-        include_personal: bool = True,
+        include_personal: bool | None = True,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.batch_size = batch_size
@@ -213,7 +208,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         self.parent_ids = (
             _extract_parent_ids_from_urls(parent_urls) if parent_urls else []
         )
-        self.include_personal = include_personal
+        self.include_personal = include_personal or True
 
         self.service_account_email: str | None = None
         self.service_account_domain: str | None = None
@@ -223,6 +218,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
 
         self.is_slim: bool = False
 
+        self._TRAVERSED_PARENT_IDS: set[str] = set()
+
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
         """Checks for two different types of credentials.
         (1) A credential which holds a token acquired via a user going thorough
@@ -230,6 +227,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         (2) A credential which holds a service account key JSON file, which
         can then be used to impersonate any user in the workspace.
         """
+        self.credentials_json = credentials
 
         creds, new_creds_dict = get_google_drive_creds(credentials)
         if KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY in credentials:
@@ -242,6 +240,22 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         else:
             self.oauth_creds = creds
         return new_creds_dict
+
+    def get_admin_service(
+        self,
+        service_name: str = "drive",
+        service_version: str = "v3",
+        user_email: str | None = None,
+    ) -> Resource:
+        if self.service_account_creds:
+            creds = self.service_account_creds.with_subject(
+                user_email or self.service_account_email
+            )
+            service = build(service_name, service_version, credentials=creds)
+        else:
+            service = build(service_name, service_version, credentials=self.oauth_creds)
+
+        return service
 
     def _get_folders_in_parent(
         self,
@@ -257,12 +271,12 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         if parent_id:
             query += f" and '{parent_id}' in parents"
 
-        for file in _execute_paginated_retrieval(
+        for file in execute_paginated_retrieval(
             retrieval_function=service.files().list,
             list_key="files",
-            corpora="user" if personal_drive else "domain",
-            supportsAllDrives=personal_drive,
-            includeItemsFromAllDrives=personal_drive,
+            corpora="user" if personal_drive else "allDrives",
+            supportsAllDrives=not personal_drive,
+            includeItemsFromAllDrives=not personal_drive,
             fields=FOLDER_FIELDS,
             q=query,
         ):
@@ -284,12 +298,12 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             time_stop = datetime.utcfromtimestamp(time_range_end).isoformat() + "Z"
             query += f" and modifiedTime <= '{time_stop}'"
 
-        for file in _execute_paginated_retrieval(
+        for file in execute_paginated_retrieval(
             retrieval_function=service.files().list,
             list_key="files",
-            corpora="user" if personal_drive else "domain",
-            supportsAllDrives=True,
-            includeItemsFromAllDrives=True,
+            corpora="user" if personal_drive else "allDrives",
+            supportsAllDrives=not personal_drive,
+            includeItemsFromAllDrives=not personal_drive,
             fields=SLIM_FILE_FIELDS if self.is_slim else FILE_FIELDS,
             q=query,
         ):
@@ -306,11 +320,11 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         """Gets all files matching the criteria specified by the args from Google Drive
         in batches of size `batch_size`.
         """
-        if parent_id in _TRAVERSED_PARENT_IDS:
+        if parent_id in self._TRAVERSED_PARENT_IDS:
             logger.debug(f"Skipping subfolder since already traversed: {parent_id}")
             return
 
-        _TRAVERSED_PARENT_IDS.add(parent_id)
+        self._TRAVERSED_PARENT_IDS.add(parent_id)
 
         yield from self._get_files_in_parent(
             service=service,
@@ -335,15 +349,15 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             )
 
     def _get_all_user_emails(self) -> list[str]:
-        if not self.service_account_creds:
-            raise PermissionError("No service account credentials found")
+        # if not self.service_account_creds:
+        #     raise PermissionError("No service account credentials found")
 
         admin_creds = self.service_account_creds.with_subject(
             self.service_account_email
         )
         admin_service = build("admin", "directory_v1", credentials=admin_creds)
         emails = []
-        for user in _execute_paginated_retrieval(
+        for user in execute_paginated_retrieval(
             retrieval_function=admin_service.users().list,
             list_key="users",
             domain=self.service_account_domain,
@@ -358,13 +372,12 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
         # admin_creds = self.service_account_creds.with_subject(self.service_account_email)
-        admin_creds = self.get_primary_user_credentials()
-        admin_drive_service = build("drive", "v3", credentials=admin_creds)
+        admin_drive_service = self.get_admin_service()
 
         parent_ids = self.parent_ids
         if not parent_ids:
             # if no parent ids are specified, get all shared drives using the admin account
-            for drive in _execute_paginated_retrieval(
+            for drive in execute_paginated_retrieval(
                 retrieval_function=admin_drive_service.drives().list,
                 list_key="drives",
                 useDomainAdminAccess=True,
@@ -374,64 +387,58 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
 
         # crawl all the shared parent ids for files
         for parent_id in parent_ids:
-            yield from self._crawl_drive_for_files(
+            for file in self._crawl_drive_for_files(
                 service=admin_drive_service,
                 parent_id=parent_id,
                 personal_drive=False,
                 time_range_start=start,
                 time_range_end=end,
-            )
-
+            ):
+                print(file)
+                yield file
+        logger.info(f"Fetching personal files: {self.include_personal}")
         # get all personal docs from each users' personal drive
         if self.include_personal:
-            if self.service_account_creds:
-                all_user_emails = self._get_all_user_emails()
-                for email in all_user_emails:
-                    user_creds = self.service_account_creds.with_subject(email)
-                    user_drive_service = build("drive", "v3", credentials=user_creds)
-                    # we dont paginate here because there is only one root folder per user
-                    # https://developers.google.com/drive/api/guides/v2-to-v3-reference
-                    id = (
-                        user_drive_service.files()
-                        .get(fileId="root", fields="id")
-                        .execute()["id"]
-                    )
+            all_user_emails = self._get_all_user_emails()
+            for email in all_user_emails:
+                logger.info(f"Fetching personal files for user: {email}")
+                user_creds = self.service_account_creds.with_subject(email)
+                user_drive_service = build("drive", "v3", credentials=user_creds)
+                # we dont paginate here because there is only one root folder per user
+                # https://developers.google.com/drive/api/guides/v2-to-v3-reference
+                id = (
+                    user_drive_service.files()
+                    .get(fileId="root", fields="id")
+                    .execute()["id"]
+                )
 
-                    yield from self._crawl_drive_for_files(
-                        service=user_drive_service,
-                        parent_id=id,
-                        personal_drive=True,
-                        time_range_start=start,
-                        time_range_end=end,
-                    )
-
-    def get_primary_user_credentials(
-        self,
-    ) -> OAuthCredentials | ServiceAccountCredentials:
-        if self.service_account_creds:
-            creds = self.service_account_creds.with_subject(self.service_account_email)
-            service = build("drive", "v3", credentials=creds)
-        else:
-            service = build("drive", "v3", credentials=self.oauth_creds)
-
-        return service
+                yield from self._crawl_drive_for_files(
+                    service=user_drive_service,
+                    parent_id=id,
+                    personal_drive=True,
+                    time_range_start=start,
+                    time_range_end=end,
+                )
 
     def _fetch_docs_from_drive(
         self,
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> GenerateDocumentsOutput:
-        if self.oauth_creds is None and self.service_account_creds is None:
-            raise PermissionError("No credentials found")
-
-        service = self.get_primary_user_credentials()
+        # if self.oauth_creds is None and self.service_account_creds is None:
+        #     raise PermissionError("No credentials found")
 
         doc_batch = []
         for file in self._fetch_drive_items(
             start=start,
             end=end,
         ):
-            if doc := _convert_drive_item_to_document(file, service):
+            user_email = file.get("owners", [{}])[0].get("emailAddress")
+            service = self.get_admin_service(user_email=user_email)
+            if doc := _convert_drive_item_to_document(
+                file=file,
+                service=service,
+            ):
                 doc_batch.append(doc)
             if len(doc_batch) >= self.batch_size:
                 yield doc_batch
@@ -453,10 +460,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 SlimDocument(
                     id=file["webViewLink"],
                     perm_sync_data={
+                        "doc_id": file.get("id"),
                         "permissions": file.get("permissions", []),
-                        "permission_ids": [
-                            perm["id"] for perm in file.get("permissionIds", [])
-                        ],
+                        "permission_ids": file.get("permissionIds", []),
                     },
                 )
             )

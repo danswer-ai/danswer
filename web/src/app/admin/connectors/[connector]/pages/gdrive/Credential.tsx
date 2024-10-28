@@ -372,7 +372,9 @@ export const DriveOAuthSection = ({
             google_drive_delegated_user: "",
           }}
           validationSchema={Yup.object().shape({
-            google_drive_delegated_user: Yup.string().optional(),
+            google_drive_delegated_user: Yup.string().required(
+              "User email is required"
+            ),
           })}
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
@@ -409,8 +411,8 @@ export const DriveOAuthSection = ({
             <Form>
               <TextFormField
                 name="google_drive_delegated_user"
-                label="[Optional] User email to impersonate:"
-                subtext="If left blank, Danswer will use the service account itself."
+                label="User email to impersonate:"
+                subtext="Enter the email of the user whose Google Drive access you want to delegate to the service account."
               />
               <div className="flex">
                 <TremorButton type="submit" disabled={isSubmitting}>
