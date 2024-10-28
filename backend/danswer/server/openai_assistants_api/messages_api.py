@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 from typing import Literal
 from typing import Optional
 
@@ -11,6 +12,7 @@ from pydantic import Field
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
+from danswer.configs.constants import MessageType
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import get_chat_message
 from danswer.db.chat import get_chat_messages_by_session
@@ -18,8 +20,9 @@ from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_or_create_root_message
 from danswer.db.engine import get_session
 from danswer.db.models import User
+from danswer.llm.utils import check_number_of_tokens
 
-router = APIRouter(prefix="/messages")
+router = APIRouter(prefix="")
 
 
 Role = Literal["user", "assistant"]
@@ -40,7 +43,7 @@ class Message(BaseModel):
     file_ids: list[str] = []
     assistant_id: Optional[str] = None
     run_id: Optional[str] = None
-    metadata: Optional[dict] = None
+    metadata: Optional[dict[str, Any]] = None  # Change this line to use dict[str, Any]
 
 
 class CreateMessageRequest(BaseModel):
@@ -58,7 +61,7 @@ class ListMessagesResponse(BaseModel):
     has_more: bool
 
 
-@router.post("/{thread_id}/messages")
+@router.post("/threads/{thread_id}/messages")
 def create_message(
     thread_id: str,
     message: CreateMessageRequest,
@@ -76,19 +79,27 @@ def create_message(
     except ValueError:
         raise HTTPException(status_code=404, detail="Chat session not found")
 
-    root_message = get_or_create_root_message(
-        chat_session_id=chat_session.id, db_session=db_session
+    chat_messages = get_chat_messages_by_session(
+        chat_session_id=chat_session.id,
+        user_id=user.id if user else None,
+        db_session=db_session,
+    )
+    latest_message = (
+        chat_messages[-1]
+        if chat_messages
+        else get_or_create_root_message(chat_session.id, db_session)
     )
 
     new_message = create_new_chat_message(
         chat_session_id=chat_session.id,
-        parent_message=root_message,
+        parent_message=latest_message,
         message=message.content,
-        # TODO: fix
-        token_count=len(message.content.split()),  # Simple token count estimation
-        message_type=message.role,
+        prompt_id=chat_session.persona.prompts[0].id,
+        token_count=check_number_of_tokens(message.content),
+        message_type=MessageType(
+            message.role.upper()
+        ),  # Convert string role to MessageType enum
         db_session=db_session,
-        prompt_id=None,
     )
 
     return Message(
@@ -101,7 +112,7 @@ def create_message(
     )
 
 
-@router.get("/{thread_id}/messages")
+@router.get("/threads/{thread_id}/messages")
 def list_messages(
     thread_id: str,
     limit: int = 20,
@@ -130,9 +141,9 @@ def list_messages(
 
     # Apply filtering based on after and before
     if after:
-        messages = [m for m in messages if str(m.id) > after]
+        messages = [m for m in messages if str(m.id) >= after]
     if before:
-        messages = [m for m in messages if str(m.id) < before]
+        messages = [m for m in messages if str(m.id) <= before]
 
     # Apply ordering
     messages = sorted(messages, key=lambda m: m.id, reverse=(order == "desc"))
@@ -159,7 +170,7 @@ def list_messages(
     )
 
 
-@router.get("/{thread_id}/messages/{message_id}")
+@router.get("/threads/{thread_id}/messages/{message_id}")
 def retrieve_message(
     thread_id: str,
     message_id: int,
@@ -190,7 +201,7 @@ class ModifyMessageRequest(BaseModel):
     metadata: dict
 
 
-@router.post("/{thread_id}/messages/{message_id}")
+@router.post("/threads/{thread_id}/messages/{message_id}")
 def modify_message(
     thread_id: str,
     message_id: int,
@@ -210,8 +221,9 @@ def modify_message(
         raise HTTPException(status_code=404, detail="Message not found")
 
     # Update metadata
-    chat_message.metadata = request.metadata
-    db_session.commit()
+    # TODO: Uncomment this once we have metadata in the chat message
+    # chat_message.metadata = request.metadata
+    # db_session.commit()
 
     return Message(
         id=str(chat_message.id),

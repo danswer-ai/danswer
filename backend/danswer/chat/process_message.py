@@ -295,7 +295,6 @@ def stream_chat_message_objects(
     max_document_percentage: float = CHAT_TARGET_CHUNK_PERCENTAGE,
     # if specified, uses the last user message and does not create a new user message based
     # on the `new_msg_req.message`. Currently, requires a state where the last message is a
-    use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
     custom_tool_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
@@ -307,6 +306,9 @@ def stream_chat_message_objects(
     3. [always] A set of streamed LLM tokens or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
     """
+    use_existing_user_message = new_msg_req.use_existing_user_message
+    existing_assistant_message_id = new_msg_req.existing_assistant_message_id
+
     # Currently surrounding context is not supported for chat
     # Chat is already token heavy and harder for the model to process plus it would roll history over much faster
     new_msg_req.chunks_above = 0
@@ -428,12 +430,20 @@ def stream_chat_message_objects(
             final_msg, history_msgs = create_chat_chain(
                 chat_session_id=chat_session_id, db_session=db_session
             )
-            if final_msg.message_type != MessageType.USER:
-                raise RuntimeError(
-                    "The last message was not a user message. Cannot call "
-                    "`stream_chat_message_objects` with `is_regenerate=True` "
-                    "when the last message is not a user message."
-                )
+            if existing_assistant_message_id is None:
+                if final_msg.message_type != MessageType.USER:
+                    raise RuntimeError(
+                        "The last message was not a user message. Cannot call "
+                        "`stream_chat_message_objects` with `is_regenerate=True` "
+                        "when the last message is not a user message."
+                    )
+            else:
+                if final_msg.id != existing_assistant_message_id:
+                    raise RuntimeError(
+                        "The last message was not the existing assistant message. "
+                        f"Final message id: {final_msg.id}, "
+                        f"existing assistant message id: {existing_assistant_message_id}"
+                    )
 
         # Disable Query Rephrasing for the first message
         # This leads to a better first response since the LLM rephrasing the question
@@ -504,13 +514,19 @@ def stream_chat_message_objects(
                 ),
                 max_window_percentage=max_document_percentage,
             )
-        reserved_message_id = reserve_message_id(
-            db_session=db_session,
-            chat_session_id=chat_session_id,
-            parent_message=user_message.id
-            if user_message is not None
-            else parent_message.id,
-            message_type=MessageType.ASSISTANT,
+
+        # we don't need to reserve a message id if we're using an existing assistant message
+        reserved_message_id = (
+            final_msg.id
+            if existing_assistant_message_id is not None
+            else reserve_message_id(
+                db_session=db_session,
+                chat_session_id=chat_session_id,
+                parent_message=user_message.id
+                if user_message is not None
+                else parent_message.id,
+                message_type=MessageType.ASSISTANT,
+            )
         )
         yield MessageResponseIDInfo(
             user_message_id=user_message.id if user_message else None,
@@ -525,7 +541,13 @@ def stream_chat_message_objects(
         partial_response = partial(
             create_new_chat_message,
             chat_session_id=chat_session_id,
-            parent_message=final_msg,
+            # if we're using an existing assistant message, then this will just be an
+            # update operation, in which case the parent should be the parent of
+            # the latest. If we're creating a new assistant message, then the parent
+            # should be the latest message (latest user message)
+            parent_message=(
+                final_msg if existing_assistant_message_id is None else parent_message
+            ),
             prompt_id=prompt_id,
             overridden_model=overridden_model,
             # message=,
@@ -537,6 +559,7 @@ def stream_chat_message_objects(
             # reference_docs=,
             db_session=db_session,
             commit=False,
+            reserved_message_id=reserved_message_id,
         )
 
         if not final_msg.prompt:
@@ -871,7 +894,6 @@ def stream_chat_message_objects(
                 tool_name_to_tool_id[tool.name] = tool_id
 
         gen_ai_response_message = partial_response(
-            reserved_message_id=reserved_message_id,
             message=answer.llm_answer,
             rephrased_query=(
                 qa_docs_response.rephrased_query if qa_docs_response else None
@@ -879,9 +901,11 @@ def stream_chat_message_objects(
             reference_docs=reference_db_search_docs,
             files=ai_message_files,
             token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-            citations=message_specific_citations.citation_map
-            if message_specific_citations
-            else None,
+            citations=(
+                message_specific_citations.citation_map
+                if message_specific_citations
+                else None
+            ),
             error=None,
             tool_call=(
                 ToolCall(
@@ -915,7 +939,6 @@ def stream_chat_message_objects(
 def stream_chat_message(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
-    use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
     custom_tool_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
@@ -925,7 +948,6 @@ def stream_chat_message(
             new_msg_req=new_msg_req,
             user=user,
             db_session=db_session,
-            use_existing_user_message=use_existing_user_message,
             litellm_additional_headers=litellm_additional_headers,
             custom_tool_additional_headers=custom_tool_additional_headers,
             is_connected=is_connected,

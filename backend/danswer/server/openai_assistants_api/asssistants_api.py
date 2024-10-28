@@ -17,6 +17,7 @@ from danswer.db.persona import get_personas
 from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import upsert_persona
 from danswer.db.persona import upsert_prompt
+from danswer.search.enums import RecencyBiasSetting
 from danswer.server.danswer_api.ingestion import api_key_dep
 
 router = APIRouter(prefix="/assistants")
@@ -24,7 +25,7 @@ router = APIRouter(prefix="/assistants")
 
 # Base models
 class AssistantObject(BaseModel):
-    id: str
+    id: int
     object: str = "assistant"
     created_at: int
     name: Optional[str] = None
@@ -57,7 +58,7 @@ class ModifyAssistantRequest(BaseModel):
 
 
 class DeleteAssistantResponse(BaseModel):
-    id: str
+    id: int
     object: str = "assistant.deleted"
     deleted: bool
 
@@ -65,14 +66,14 @@ class DeleteAssistantResponse(BaseModel):
 class ListAssistantsResponse(BaseModel):
     object: str = "list"
     data: list[AssistantObject]
-    first_id: Optional[str] = None
-    last_id: Optional[str] = None
+    first_id: Optional[int] = None
+    last_id: Optional[int] = None
     has_more: bool
 
 
 def persona_to_assistant(persona: Persona) -> AssistantObject:
     return AssistantObject(
-        id=str(persona.id),
+        id=persona.id,
         created_at=0,
         name=persona.name,
         description=persona.description,
@@ -122,7 +123,7 @@ def create_assistant(
         num_chunks=10,  # Default value
         llm_relevance_filter=True,
         llm_filter_extraction=True,
-        recency_bias="auto",
+        recency_bias=RecencyBiasSetting.AUTO,
         llm_model_provider_override=None,
         llm_model_version_override=request.model,
         starter_messages=None,
@@ -193,7 +194,7 @@ def modify_assistant(
 
 @router.delete("/{assistant_id}")
 def delete_assistant(
-    assistant_id: str,
+    assistant_id: int,
     user: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
 ) -> DeleteAssistantResponse:
@@ -217,11 +218,13 @@ def list_assistants(
     user: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
 ) -> ListAssistantsResponse:
-    personas = get_personas(
-        user=user,
-        db_session=db_session,
-        get_editable=False,
-        joinedload_all=True,
+    personas = list(
+        get_personas(
+            user=user,
+            db_session=db_session,
+            get_editable=False,
+            joinedload_all=True,
+        )
     )
 
     # Apply filtering based on after and before
@@ -240,7 +243,7 @@ def list_assistants(
 
     return ListAssistantsResponse(
         data=assistants,
-        first_id=str(assistants[0].id) if assistants else None,
-        last_id=str(assistants[-1].id) if assistants else None,
+        first_id=assistants[0].id if assistants else None,
+        last_id=assistants[-1].id if assistants else None,
         has_more=len(personas) == limit,
     )

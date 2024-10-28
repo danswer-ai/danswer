@@ -1,23 +1,13 @@
 from uuid import UUID
 
-import pytest
 import requests
 
 from danswer.db.models import ChatSessionSharedStatus
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.managers.user import UserManager
 from tests.integration.common_utils.test_models import DATestUser
 
 THREADS_URL = f"{API_SERVER_URL}/openai-assistants/threads"
-
-
-@pytest.fixture
-def admin_user():
-    try:
-        return UserManager.create(name="admin_user")
-    except Exception:
-        return None
 
 
 def test_create_thread(admin_user: DATestUser | None) -> None:

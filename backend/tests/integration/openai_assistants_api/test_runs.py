@@ -5,38 +5,33 @@ import requests
 
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.managers.user import UserManager
+from tests.integration.common_utils.test_models import DATestLLMProvider
 from tests.integration.common_utils.test_models import DATestUser
 
-RUNS_URL = f"{API_SERVER_URL}/openai-assistants/runs"
+BASE_URL = f"{API_SERVER_URL}/openai-assistants"
 
 
 @pytest.fixture
-def admin_user():
-    try:
-        return UserManager.create(name="admin_user")
-    except Exception:
-        return None
-
-
-@pytest.fixture
-def thread_id(admin_user: DATestUser | None) -> UUID:
-    # Create a thread to use in the tests
+def run_id(admin_user: DATestUser | None, thread_id: UUID) -> str:
+    """Create a run and return its ID."""
     response = requests.post(
-        f"{API_SERVER_URL}/openai-assistants/threads",
-        json={},
+        f"{BASE_URL}/threads/{thread_id}/runs",
+        json={
+            "assistant_id": "test_assistant",
+        },
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
     assert response.status_code == 200
-    return UUID(response.json()["id"])
+    return response.json()["id"]
 
 
-def test_create_run(admin_user: DATestUser | None, thread_id: UUID) -> None:
+def test_create_run(
+    admin_user: DATestUser | None, thread_id: UUID, llm_provider: DATestLLMProvider
+) -> None:
     response = requests.post(
-        f"{RUNS_URL}/create",
+        f"{BASE_URL}/threads/{thread_id}/runs",
         json={
             "assistant_id": "test_assistant",
-            "thread_id": str(thread_id),
             "model": "gpt-3.5-turbo",
             "instructions": "Test instructions",
         },
@@ -55,22 +50,14 @@ def test_create_run(admin_user: DATestUser | None, thread_id: UUID) -> None:
     assert response_json["instructions"] == "Test instructions"
 
 
-def test_retrieve_run(admin_user: DATestUser | None, thread_id: UUID) -> None:
-    # First, create a run
-    create_response = requests.post(
-        f"{RUNS_URL}/create",
-        json={
-            "assistant_id": "test_assistant",
-            "thread_id": str(thread_id),
-        },
-        headers=admin_user.headers if admin_user else GENERAL_HEADERS,
-    )
-    assert create_response.status_code == 200
-    run_id = create_response.json()["id"]
-
-    # Now, retrieve the run
+def test_retrieve_run(
+    admin_user: DATestUser | None,
+    thread_id: UUID,
+    run_id: str,
+    llm_provider: DATestLLMProvider,
+) -> None:
     retrieve_response = requests.get(
-        f"{RUNS_URL}/{run_id}",
+        f"{BASE_URL}/threads/{thread_id}/runs/{run_id}",
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
     assert retrieve_response.status_code == 200
@@ -82,22 +69,14 @@ def test_retrieve_run(admin_user: DATestUser | None, thread_id: UUID) -> None:
     assert UUID(response_json["thread_id"]) == thread_id
 
 
-def test_cancel_run(admin_user: DATestUser | None, thread_id: UUID) -> None:
-    # First, create a run
-    create_response = requests.post(
-        f"{RUNS_URL}/create",
-        json={
-            "assistant_id": "test_assistant",
-            "thread_id": str(thread_id),
-        },
-        headers=admin_user.headers if admin_user else GENERAL_HEADERS,
-    )
-    assert create_response.status_code == 200
-    run_id = create_response.json()["id"]
-
-    # Now, cancel the run
+def test_cancel_run(
+    admin_user: DATestUser | None,
+    thread_id: UUID,
+    run_id: str,
+    llm_provider: DATestLLMProvider,
+) -> None:
     cancel_response = requests.post(
-        f"{RUNS_URL}/{run_id}/cancel",
+        f"{BASE_URL}/threads/{thread_id}/runs/{run_id}/cancel",
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
     assert cancel_response.status_code == 200
@@ -107,21 +86,22 @@ def test_cancel_run(admin_user: DATestUser | None, thread_id: UUID) -> None:
     assert response_json["status"] == "cancelled"
 
 
-def test_list_runs(admin_user: DATestUser | None, thread_id: UUID) -> None:
+def test_list_runs(
+    admin_user: DATestUser | None, thread_id: UUID, llm_provider: DATestLLMProvider
+) -> None:
     # Create a few runs
     for _ in range(3):
         requests.post(
-            f"{RUNS_URL}/create",
+            f"{BASE_URL}/threads/{thread_id}/runs",
             json={
                 "assistant_id": "test_assistant",
-                "thread_id": str(thread_id),
             },
             headers=admin_user.headers if admin_user else GENERAL_HEADERS,
         )
 
     # Now, list the runs
     list_response = requests.get(
-        f"{RUNS_URL}/thread/{thread_id}/runs",
+        f"{BASE_URL}/threads/{thread_id}/runs",
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
     assert list_response.status_code == 200
@@ -139,22 +119,14 @@ def test_list_runs(admin_user: DATestUser | None, thread_id: UUID) -> None:
         assert "model" in run
 
 
-def test_list_run_steps(admin_user: DATestUser | None, thread_id: UUID) -> None:
-    # First, create a run
-    create_response = requests.post(
-        f"{RUNS_URL}/create",
-        json={
-            "assistant_id": "test_assistant",
-            "thread_id": str(thread_id),
-        },
-        headers=admin_user.headers if admin_user else GENERAL_HEADERS,
-    )
-    assert create_response.status_code == 200
-    run_id = create_response.json()["id"]
-
-    # Now, list the run steps
+def test_list_run_steps(
+    admin_user: DATestUser | None,
+    thread_id: UUID,
+    run_id: str,
+    llm_provider: DATestLLMProvider,
+) -> None:
     steps_response = requests.get(
-        f"{RUNS_URL}/{run_id}/steps",
+        f"{BASE_URL}/threads/{thread_id}/runs/{run_id}/steps",
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
     assert steps_response.status_code == 200

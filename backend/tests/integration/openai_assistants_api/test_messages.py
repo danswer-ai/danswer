@@ -6,25 +6,15 @@ import requests
 
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.managers.user import UserManager
 from tests.integration.common_utils.test_models import DATestUser
 
-THREADS_URL = f"{API_SERVER_URL}/openai-assistants/threads"
-MESSAGES_URL = f"{API_SERVER_URL}/openai-assistants/messages"
-
-
-@pytest.fixture
-def admin_user() -> Optional[DATestUser]:
-    try:
-        return UserManager.create(name="admin_user")
-    except Exception:
-        return None
+BASE_URL = f"{API_SERVER_URL}/openai-assistants/threads"
 
 
 @pytest.fixture
 def thread_id(admin_user: Optional[DATestUser]) -> str:
     response = requests.post(
-        THREADS_URL,
+        BASE_URL,
         json={},
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
@@ -34,7 +24,7 @@ def thread_id(admin_user: Optional[DATestUser]) -> str:
 
 def test_create_message(admin_user: Optional[DATestUser], thread_id: str) -> None:
     response = requests.post(
-        f"{MESSAGES_URL}/{thread_id}/messages",
+        f"{BASE_URL}/{thread_id}/messages",  # URL structure matches API
         json={
             "role": "user",
             "content": "Hello, world!",
@@ -56,14 +46,14 @@ def test_create_message(admin_user: Optional[DATestUser], thread_id: str) -> Non
 def test_list_messages(admin_user: Optional[DATestUser], thread_id: str) -> None:
     # Create a message first
     requests.post(
-        f"{MESSAGES_URL}/{thread_id}/messages",
+        f"{BASE_URL}/{thread_id}/messages",
         json={"role": "user", "content": "Test message"},
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
 
     # Now, list the messages
     response = requests.get(
-        f"{MESSAGES_URL}/{thread_id}/messages",
+        f"{BASE_URL}/{thread_id}/messages",
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
     assert response.status_code == 200
@@ -80,7 +70,7 @@ def test_list_messages(admin_user: Optional[DATestUser], thread_id: str) -> None
 def test_retrieve_message(admin_user: Optional[DATestUser], thread_id: str) -> None:
     # Create a message first
     create_response = requests.post(
-        f"{MESSAGES_URL}/{thread_id}/messages",
+        f"{BASE_URL}/{thread_id}/messages",
         json={"role": "user", "content": "Test message"},
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
@@ -88,7 +78,7 @@ def test_retrieve_message(admin_user: Optional[DATestUser], thread_id: str) -> N
 
     # Now, retrieve the message
     response = requests.get(
-        f"{MESSAGES_URL}/{thread_id}/messages/{message_id}",
+        f"{BASE_URL}/{thread_id}/messages/{message_id}",
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
     assert response.status_code == 200
@@ -103,7 +93,7 @@ def test_retrieve_message(admin_user: Optional[DATestUser], thread_id: str) -> N
 def test_modify_message(admin_user: Optional[DATestUser], thread_id: str) -> None:
     # Create a message first
     create_response = requests.post(
-        f"{MESSAGES_URL}/{thread_id}/messages",
+        f"{BASE_URL}/{thread_id}/messages",
         json={"role": "user", "content": "Test message"},
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
@@ -111,7 +101,7 @@ def test_modify_message(admin_user: Optional[DATestUser], thread_id: str) -> Non
 
     # Now, modify the message
     response = requests.post(
-        f"{MESSAGES_URL}/{thread_id}/messages/{message_id}",
+        f"{BASE_URL}/{thread_id}/messages/{message_id}",
         json={"metadata": {"new_key": "new_value"}},
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
@@ -129,7 +119,7 @@ def test_error_handling(admin_user: Optional[DATestUser]) -> None:
 
     # Test with non-existent thread
     response = requests.post(
-        f"{MESSAGES_URL}/{non_existent_thread_id}/messages",
+        f"{BASE_URL}/{non_existent_thread_id}/messages",
         json={"role": "user", "content": "Test message"},
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
@@ -137,7 +127,7 @@ def test_error_handling(admin_user: Optional[DATestUser]) -> None:
 
     # Test with non-existent message
     response = requests.get(
-        f"{MESSAGES_URL}/{non_existent_thread_id}/messages/{non_existent_message_id}",
+        f"{BASE_URL}/{non_existent_thread_id}/messages/{non_existent_message_id}",
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
     assert response.status_code == 404

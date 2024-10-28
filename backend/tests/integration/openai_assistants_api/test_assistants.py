@@ -1,23 +1,13 @@
-import pytest
 import requests
 
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
-from tests.integration.common_utils.managers.user import UserManager
 from tests.integration.common_utils.test_models import DATestUser
 
 ASSISTANTS_URL = f"{API_SERVER_URL}/openai-assistants/assistants"
 
 
-@pytest.fixture
-def admin_user():
-    try:
-        return UserManager.create(name="admin_user")
-    except Exception:
-        return None
-
-
-def test_create_assistant(admin_user: DATestUser | None):
+def test_create_assistant(admin_user: DATestUser | None) -> None:
     response = requests.post(
         ASSISTANTS_URL,
         json={
@@ -36,7 +26,7 @@ def test_create_assistant(admin_user: DATestUser | None):
     assert data["instructions"] == "You are a helpful assistant."
 
 
-def test_retrieve_assistant(admin_user: DATestUser | None):
+def test_retrieve_assistant(admin_user: DATestUser | None) -> None:
     # First, create an assistant
     create_response = requests.post(
         ASSISTANTS_URL,
@@ -57,7 +47,7 @@ def test_retrieve_assistant(admin_user: DATestUser | None):
     assert data["name"] == "Retrieve Test"
 
 
-def test_modify_assistant(admin_user: DATestUser | None):
+def test_modify_assistant(admin_user: DATestUser | None) -> None:
     # First, create an assistant
     create_response = requests.post(
         ASSISTANTS_URL,
@@ -80,7 +70,7 @@ def test_modify_assistant(admin_user: DATestUser | None):
     assert data["instructions"] == "New instructions"
 
 
-def test_delete_assistant(admin_user: DATestUser | None):
+def test_delete_assistant(admin_user: DATestUser | None) -> None:
     # First, create an assistant
     create_response = requests.post(
         ASSISTANTS_URL,
@@ -101,7 +91,7 @@ def test_delete_assistant(admin_user: DATestUser | None):
     assert data["deleted"] is True
 
 
-def test_list_assistants(admin_user: DATestUser | None):
+def test_list_assistants(admin_user: DATestUser | None) -> None:
     # Create multiple assistants
     for i in range(3):
         requests.post(
@@ -122,7 +112,7 @@ def test_list_assistants(admin_user: DATestUser | None):
     assert all(assistant["object"] == "assistant" for assistant in data["data"])
 
 
-def test_list_assistants_pagination(admin_user: DATestUser | None):
+def test_list_assistants_pagination(admin_user: DATestUser | None) -> None:
     # Create 5 assistants
     for i in range(5):
         requests.post(
@@ -152,7 +142,7 @@ def test_list_assistants_pagination(admin_user: DATestUser | None):
     assert len(data["data"]) == 2
 
 
-def test_assistant_not_found(admin_user: DATestUser | None):
+def test_assistant_not_found(admin_user: DATestUser | None) -> None:
     non_existent_id = -99
     response = requests.get(
         f"{ASSISTANTS_URL}/{non_existent_id}",
