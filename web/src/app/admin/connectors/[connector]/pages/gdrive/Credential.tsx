@@ -356,15 +356,13 @@ export const DriveOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-6">
-          When using a Google Drive Service Account, you can either have Danswer
-          act as the service account itself OR you can specify an account for
-          the service account to impersonate.
+          When using a Google Drive Service Account, you must speicify the email
+          of the primary admin that you would like the service account to
+          impersonate.
           <br />
           <br />
-          If you want to use the service account itself, leave the{" "}
-          <b>&apos;User email to impersonate&apos;</b> field blank when
-          submitting. If you do choose this option, make sure you have shared
-          the documents you want to index with the service account.
+          Ideally, this account should be the owner of the Google Organization
+          that owns the Google Drive you want to index.
         </p>
 
         <Formik
