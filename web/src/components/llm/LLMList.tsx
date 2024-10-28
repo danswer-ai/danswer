@@ -5,6 +5,7 @@ import {
   getProviderIcon,
   LLMProviderDescriptor,
 } from "@/app/admin/configuration/llm/interfaces";
+import { Checkbox } from "@/components/ui/checkbox"; // Update the path as needed
 
 interface LlmListProps {
   llmProviders: LLMProviderDescriptor[];
@@ -62,39 +63,33 @@ export const LlmList: React.FC<LlmListProps> = ({
 
   return (
     <div
-      className={`${scrollable ? "max-h-[200px] include-scrollbar" : "max-h-[300px]"} bg-background-175 flex flex-col gap-y-1 overflow-y-scroll`}
+      className={`max-h-[300px] overflow-y-auto bg-background-175 flex flex-col gap-y-1`}
     >
       {userDefault && (
-        <button
-          type="button"
-          key={-1}
-          className={`w-full py-1.5 px-2 text-sm ${
-            currentLlm == null
-              ? "bg-background-200"
-              : "bg-background hover:bg-background-100"
-          } text-left rounded`}
-          onClick={() => onSelect(null)}
-        >
-          User Default (currently {getDisplayNameForModel(userDefault)})
-        </button>
+        <div>
+          <Checkbox
+            key={-1}
+            checked={currentLlm == null}
+            onCheckedChange={(checked) => onSelect(checked ? null : currentLlm)}
+          />
+          <span>
+            User Default (currently {getDisplayNameForModel(userDefault)})
+          </span>
+        </div>
       )}
 
       {llmOptions.map(({ name, icon, value }, index) => {
         if (!requiresImageGeneration || checkLLMSupportsImageInput(name)) {
           return (
-            <button
-              type="button"
-              key={index}
-              className={`w-full py-1.5 flex  gap-x-2 px-2 text-sm ${
-                currentLlm == name
-                  ? "bg-background-200"
-                  : "bg-background hover:bg-background-100"
-              } text-left rounded`}
-              onClick={() => onSelect(value)}
-            >
+            <div className="flex items-center gap-2">
+              <Checkbox
+                key={index}
+                checked={currentLlm == name}
+                onCheckedChange={(checked) => onSelect(checked ? value : null)}
+              />
               {icon({ size: 16 })}
-              {getDisplayNameForModel(name)}
-            </button>
+              <span>{getDisplayNameForModel(name)}</span>
+            </div>
           );
         }
       })}

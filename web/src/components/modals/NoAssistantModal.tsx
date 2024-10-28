@@ -1,30 +1,34 @@
 import { ModalWrapper } from "@/components/modals/ModalWrapper";
+import { CustomModal } from "../CustomModal";
+import { Button } from "../ui/button";
 
-export const NoAssistantModal = ({ isAdmin }: { isAdmin: boolean }) => {
+export const NoAssistantModal = ({ isAdmin, open, onClose }: { isAdmin: boolean; open?:boolean; onClose?: ()=>void; }) => {
   return (
-    <ModalWrapper modalClassName="bg-white max-w-2xl rounded-lg shadow-xl text-center">
+    <CustomModal 
+      title='No Assistant Available'
+      trigger={null}
+      open={open}
+      onClose={onClose}
+    >
       <>
-        <h2 className="text-3xl font-bold text-gray-800 mb-4">
-          No Assistant Available
-        </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-4">
           You currently have no assistant configured. To use this feature, you
           need to take action.
         </p>
         {isAdmin ? (
           <>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-4">
               As an administrator, you can create a new assistant by visiting
               the admin panel.
             </p>
-            <button
+            <Button
               onClick={() => {
                 window.location.href = "/admin/assistants";
               }}
-              className="inline-flex flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-background-800 text-center focus:outline-none focus:ring-2 focus:ring-offset-2 "
+              className="w-full"
             >
               Go to Admin Panel
-            </button>
+            </Button>
           </>
         ) : (
           <p className="text-gray-600 mb-2">
@@ -32,6 +36,6 @@ export const NoAssistantModal = ({ isAdmin }: { isAdmin: boolean }) => {
           </p>
         )}
       </>
-    </ModalWrapper>
+    </CustomModal>
   );
 };

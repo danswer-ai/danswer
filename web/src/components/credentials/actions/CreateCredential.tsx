@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Button, Card } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
 import { FaAccusoft } from "react-icons/fa";
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
@@ -27,6 +26,8 @@ import {
 } from "@/components/IsPublicGroupSelector";
 import { useUser } from "@/components/user/UserProvider";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const CreateButton = ({
   onClick,
@@ -41,15 +42,12 @@ const CreateButton = ({
 }) => (
   <div className="flex justify-end w-full">
     <Button
-      className="enabled:cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-200 bg-blue-400 flex gap-x-1 items-center text-white py-2.5 px-3.5 text-sm font-regular rounded-sm"
       onClick={onClick}
       type="button"
       disabled={isSubmitting || (!isAdmin && groups.length === 0)}
     >
-      <div className="flex items-center gap-x-1">
         <PlusCircleIcon size={16} className="text-indigo-100" />
         Create
-      </div>
     </Button>
   </div>
 );
@@ -72,7 +70,6 @@ export default function CreateCredential({
   // Source information
   hideSource?: boolean; // hides docs link
   sourceType: ValidSources;
-
 
   // Optional toggle- close section after selection?
   close?: boolean;
@@ -211,74 +208,73 @@ export default function CreateCredential({
               for information on setting up this connector.
             </p>
           )}
-          <Card className="!border-0 mt-4 flex flex-col gap-y-6">
-            <TextFormField
-              name="name"
-              placeholder="(Optional) credential name.."
-              label="Name:"
-            />
-            {Object.entries(credentialTemplate).map(([key, val]) => (
+          <Card className="mt-4">
+            <CardContent>
               <TextFormField
-                key={key}
-                name={key}
-                placeholder={val}
-                label={getDisplayNameForCredentialKey(key)}
-                type={
-                  key.toLowerCase().includes("token") ||
-                  key.toLowerCase().includes("password")
-                    ? "password"
-                    : "text"
-                }
+                name="name"
+                placeholder="(Optional) credential name.."
+                label="Name:"
               />
-            ))}
-            {!swapConnector && (
-              <div className="mt-4 flex flex-col sm:flex-row justify-between items-end">
-                <div className="w-full sm:w-3/4 mb-4 sm:mb-0">
-                  {isPaidEnterpriseFeaturesEnabled && (
-                    <div className="flex flex-col items-start">
-                      {isAdmin && (
-                        <AdvancedOptionsToggle
-                          showAdvancedOptions={showAdvancedOptions}
-                          setShowAdvancedOptions={setShowAdvancedOptions}
-                        />
-                      )}
-                      {(showAdvancedOptions || !isAdmin) && (
-                        <IsPublicGroupSelector
-                          formikProps={formikProps}
-                          objectName="credential"
-                          publicToWhom="Curators"
-                        />
-                      )}
-                    </div>
-                  )}
+              {Object.entries(credentialTemplate).map(([key, val]) => (
+                <TextFormField
+                  key={key}
+                  name={key}
+                  placeholder={val}
+                  label={getDisplayNameForCredentialKey(key)}
+                  type={
+                    key.toLowerCase().includes("token") ||
+                    key.toLowerCase().includes("password")
+                      ? "password"
+                      : "text"
+                  }
+                />
+              ))}
+              {!swapConnector && (
+                <div className="mt-4 flex flex-col sm:flex-row justify-between items-end">
+                  <div className="w-full sm:w-3/4 mb-4 sm:mb-0">
+                    {isPaidEnterpriseFeaturesEnabled && (
+                      <div className="flex flex-col items-start">
+                        {isAdmin && (
+                          <AdvancedOptionsToggle
+                            showAdvancedOptions={showAdvancedOptions}
+                            setShowAdvancedOptions={setShowAdvancedOptions}
+                          />
+                        )}
+                        {(showAdvancedOptions || !isAdmin) && (
+                          <IsPublicGroupSelector
+                            formikProps={formikProps}
+                            objectName="credential"
+                            publicToWhom="Curators"
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="w-full sm:w-1/4">
+                    <CreateButton
+                      onClick={() =>
+                        handleSubmit(formikProps.values, formikProps, "create")
+                      }
+                      isSubmitting={formikProps.isSubmitting}
+                      isAdmin={isAdmin}
+                      groups={formikProps.values.groups}
+                    />
+                  </div>
                 </div>
-                <div className="w-full sm:w-1/4">
-                  <CreateButton
-                    onClick={() =>
-                      handleSubmit(formikProps.values, formikProps, "create")
-                    }
-                    isSubmitting={formikProps.isSubmitting}
-                    isAdmin={isAdmin}
-                    groups={formikProps.values.groups}
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </CardContent>
           </Card>
           {swapConnector && (
             <div className="flex gap-x-4 w-full mt-8 justify-end">
               <Button
-                className="bg-rose-500 hover:bg-rose-400 border-rose-800"
                 onClick={() =>
                   handleSubmit(formikProps.values, formikProps, "createAndSwap")
                 }
                 type="button"
                 disabled={formikProps.isSubmitting}
               >
-                <div className="flex gap-x-2 items-center w-full border-none">
                   <FaAccusoft />
-                  <p>Create</p>
-                </div>
+                  Create
               </Button>
             </div>
           )}

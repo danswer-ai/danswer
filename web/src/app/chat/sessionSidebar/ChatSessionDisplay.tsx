@@ -55,6 +55,7 @@ export function ChatSessionDisplay({
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
   const settings = useContext(SettingsContext);
   const { toast } = useToast();
+  const [openDeleteModal, setOpenDeleteModal] = useState(false)
 
   useEffect(() => {
     if (skipGradient) {
@@ -208,7 +209,6 @@ export function ChatSessionDisplay({
                                 </PopoverContent>
                               </Popover>
                             }
-                            asChild
                           >
                             More
                           </CustomTooltip>
@@ -218,13 +218,17 @@ export function ChatSessionDisplay({
                       <CustomTooltip
                         trigger={
                           <DeleteChatModal
+                          open={openDeleteModal}
+                            openDeleteModal={()=>setOpenDeleteModal(true)}
+                            onClose={()=>setOpenDeleteModal(false)}
                             onSubmit={async () => {
                               const response = await deleteChatSession(
                                 chatSession.id
                               );
                               if (response.ok) {
                                 // go back to the main page
-                                router.push("/chat");
+                                router.refresh();
+                                setOpenDeleteModal(false)
                                 toast({
                                   title: "Chat session deleted",
                                   description:

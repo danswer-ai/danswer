@@ -1,26 +1,34 @@
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
-import { CustomModal } from "@/components/CustomModal";
 import { BasicClickable } from "../BasicClickable";
 import { FiTrash } from "react-icons/fi";
 import { ModalWrapper } from "./ModalWrapper";
+import { CustomModal } from "../CustomModal";
 
 export const DeleteChatModal = ({
   chatSessionName,
   onSubmit,
+  open,
+  openDeleteModal,
+  onClose
 }: {
   chatSessionName: string;
   onSubmit: () => void;
   additionalDetails?: string;
+  open?: boolean;
+  openDeleteModal?: () => void;
+  onClose?: () => void;
 }) => {
   return (
     <CustomModal
       trigger={
-        <div className="hover:bg-background-inverted/10 p-1 rounded">
+        <div className="hover:bg-background-inverted/10 p-1 rounded" onClick={openDeleteModal}>
           <Trash size={16} />
         </div>
       }
       title="Delete chat?"
+      open={open}
+      onClose={onClose}
     >
       <div>
         <div className="pt-2">
@@ -48,18 +56,25 @@ export const DeleteEntityModal = ({
   entityType,
   entityName,
   additionalDetails,
+  showDeleteModel
 }: {
   entityType: string;
   entityName: string;
   onClose: () => void;
   onSubmit: () => void;
   additionalDetails?: string;
+  showDeleteModel?: boolean
 }) => {
   return (
-    <ModalWrapper onClose={onClose}>
+    <CustomModal 
+      onClose={onClose}
+      title={`Delete ${entityType}?`}
+      trigger={null}
+      open={showDeleteModel}
+      >
       <>
         <div className="flex mb-4">
-          <h2 className="my-auto text-2xl font-bold">Delete {entityType}?</h2>
+          <h2 className="my-auto text-2xl font-bold"></h2>
         </div>
         <p className="mb-4">
           Click below to confirm that you want to delete{" "}
@@ -77,6 +92,6 @@ export const DeleteEntityModal = ({
           </div>
         </div>
       </>
-    </ModalWrapper>
+    </CustomModal>
   );
 };

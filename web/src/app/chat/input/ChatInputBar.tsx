@@ -618,7 +618,7 @@ export function ChatInputBar({
                     };
                     input.click();
                   }}
-                  variant="ghost"
+                  variant="ghost"  size='icon' className="mr-2"
                 >
                   <Paperclip size={16} />
                   File

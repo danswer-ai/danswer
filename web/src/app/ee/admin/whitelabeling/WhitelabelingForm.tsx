@@ -368,9 +368,8 @@ export function WhitelabelingForm() {
               </div>
             )} */}
 
-            <Button type="submit" className="mt-6">
-              Update
-            </Button>
+
+            <Button type="submit" className="mt-6">Update</Button>
           </Form>
         )}
       </Formik>

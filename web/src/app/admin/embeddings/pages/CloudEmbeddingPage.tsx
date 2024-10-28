@@ -445,6 +445,7 @@ export function CloudModelCard({
           entityType="embedding model configuration"
           onSubmit={() => deleteModel()}
           onClose={() => setShowDeleteModel(false)}
+          showDeleteModel={showDeleteModel}
         />
       )}
 

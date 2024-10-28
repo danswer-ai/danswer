@@ -60,6 +60,11 @@ export const DocumentSetCreationForm = ({
     label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
   }));
 
+  const initialSelectedItems = teamspaces?.map(space => ({
+    value: space.id.toString(), 
+    label: space.name,         
+  }));
+
   return (
     <div>
       <Formik<DocumentSetCreationRequest>
@@ -142,7 +147,9 @@ export const DocumentSetCreationForm = ({
             />
 
             <div>
-              <p className="mb-1 text-sm font-semibold">Pick your connectors:</p>
+              <p className="mb-1 text-sm font-semibold">
+                Pick your connectors:
+              </p>
               <Combobox
                 items={connectorItems}
                 onSelect={(selectedValues) => {
@@ -170,6 +177,7 @@ export const DocumentSetCreationForm = ({
                       the specified teamspace will be able to see it.
                     </>
                   }
+                  alignTop
                 />
 
                 <Divider />

@@ -1812,6 +1812,7 @@ export function ChatPage({
               defaultModel={user?.preferences.default_model!}
               llmProviders={llmProviders}
               onClose={() => setSettingsToggled(false)}
+              settingsToggled={settingsToggled}
             />
           )}
 

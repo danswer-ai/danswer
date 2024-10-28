@@ -156,7 +156,7 @@ export const TeamspaceCreationForm = ({
       >
         {({ isSubmitting, values, setFieldValue }) => (
           <Form>
-            <div className="pt-8 space-y-6">
+            <div className="space-y-6">
               <div className="flex flex-col justify-between gap-2 lg:flex-row">
                 <p className="w-1/2 font-semibold whitespace-nowrap">Name</p>
                 <TextFormField

@@ -23,7 +23,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CustomModal } from "@/components/CustomModal";
 import { Combobox } from "@/components/Combobox";
 
@@ -77,7 +83,7 @@ export const PromptLibraryTable = ({
   handleEdit: (promptId: number) => void;
   isPublic: boolean;
 }) => {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
@@ -137,7 +143,7 @@ export const PromptLibraryTable = ({
 
   const handleStatusSelect = (newSelectedStatus: string[]) => {
     setSelectedStatus(newSelectedStatus);
-  }
+  };
 
   const statusOptions = [
     { value: "Active", label: "Active" },
@@ -152,54 +158,51 @@ export const PromptLibraryTable = ({
     <div className="justify-center py-4">
       {confirmDeletionId != null && (
         <CustomModal
-        onClose={() => setConfirmDeletionId(null)}
-      title='Are you sure you want to delete this prompt? You will not be able to recover this prompt.'
-      trigger={null}
-      open={confirmDeletionId != null}
-
+          onClose={() => setConfirmDeletionId(null)}
+          title="Are you sure you want to delete this prompt? You will not be able to recover this prompt."
+          trigger={null}
+          open={confirmDeletionId != null}
         >
-            <div className="flex justify-between mt-6">
-              <button
-                className="rounded py-1.5 px-2 bg-background-800 text-text-200"
-                onClick={async () => {
-                  await handleDelete(confirmDeletionId);
-                  setConfirmDeletionId(null);
-                }}
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setConfirmDeletionId(null)}
-                className="rounded py-1.5 px-2 bg-background-150 text-text-800"
-              >
-                {" "}
-                No
-              </button>
-            </div>
+          <div className="flex justify-center items-center gap-2">
+            <Button
+              onClick={() => setConfirmDeletionId(null)}
+              variant="destructive"
+            >
+              No
+            </Button>
+            <Button
+              onClick={async () => {
+                await handleDelete(confirmDeletionId);
+                setConfirmDeletionId(null);
+              }}
+            >
+              Yes
+            </Button>
+          </div>
         </CustomModal>
       )}
 
       <div className="w-full md:w-[500px] xl:w-[625px]">
-      <div className="relative">
-        <MagnifyingGlass className="absolute -translate-y-1/2 left-4 top-1/2" />
-        <Input
-          placeholder="Find prompts..."
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setCurrentPage(1);
-          }}
-          className="pl-10"
-        />
-      </div>
-      <div className="my-4">
-<Combobox
-        items={statusOptions}
-        onSelect={handleStatusSelect}
-        placeholder="All Statuses"
-        label="All Statuses"
-      />
-      </div>
+        <div className="relative">
+          <MagnifyingGlass className="absolute -translate-y-1/2 left-4 top-1/2" />
+          <Input
+            placeholder="Find prompts..."
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setCurrentPage(1);
+            }}
+            className="pl-10"
+          />
+        </div>
+        <div className="my-4">
+          <Combobox
+            items={statusOptions}
+            onSelect={handleStatusSelect}
+            placeholder="All Statuses"
+            label="All Statuses"
+          />
+        </div>
       </div>
       <div className="mx-auto overflow-x-auto">
         <Card>
@@ -218,7 +221,9 @@ export const PromptLibraryTable = ({
                     .filter((prompt) => !(!isPublic && prompt.is_public))
                     .map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell><p className="w-full truncate">{item.prompt}</p></TableCell>
+                        <TableCell>
+                          <p className="w-full truncate">{item.prompt}</p>
+                        </TableCell>
                         <TableCell className="max-w-xs overflow-hidden break-words text-ellipsis">
                           {item.content}
                         </TableCell>

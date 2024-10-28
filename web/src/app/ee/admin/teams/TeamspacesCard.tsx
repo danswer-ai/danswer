@@ -155,12 +155,12 @@ export const TeamspacesCard = ({
           className="p-10"
         ></CardHeader>
         <CardContent className="relative flex flex-col justify-between min-h-48 bg-muted/50">
-          <div className="absolute top-0 w-12 h-12 -translate-y-1/2 right-4">
+          <div className="absolute top-0 w-12 h-12 -translate-y-1/2 right-4 flex items-center justify-center">
             {teamspace.is_custom_logo ? (
               <Image
                 src={`/api/teamspace/logo?teamspace_id=${teamspace.id}&t=${Date.now()}`}
                 alt="Teamspace Logo"
-                className="object-cover w-10 h-10 rounded-md shrink-0"
+                className="object-cover w-10 h-10 rounded-md shrink-0 ring-[5px] ring-inverted"
                 width={40}
                 height={40}
               />

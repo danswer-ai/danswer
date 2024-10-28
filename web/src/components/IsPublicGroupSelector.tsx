@@ -92,6 +92,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                 this {objectName} (e.g. via a User Group) will have access.
               </span>
             }
+            alignTop
           />
         </>
       )}
@@ -122,7 +123,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                 )}
               </Text>
             )}
-            <FieldArray
+            {/* <FieldArray
               name="groups"
               render={(arrayHelpers: ArrayHelpers) => (
                 <div className="flex flex-wrap gap-2 mb-4">
@@ -167,9 +168,9 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                   )}
                 </div>
               )}
-            />
+            /> */}
 
-            {/*  <Combobox
+         <Combobox
               items={teamspaces.map((teamspace) => ({
                 value: teamspace.id.toString(),
                 label: teamspace.name,
@@ -182,7 +183,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
               }}
               placeholder="Select teamspaces"
               label="Teamspaces"
-            /> */}
+            /> 
             <ErrorMessage
               name="groups"
               component="div"

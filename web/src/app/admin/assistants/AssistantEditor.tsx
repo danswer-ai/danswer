@@ -61,6 +61,8 @@ import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { TooltipContent, TooltipProvider, TooltipTrigger ,Tooltip} from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -649,11 +651,12 @@ export function AssistantEditor({
                     searchToolEnabled()
                   );
                 }}
+                defaultHeight="h-40"
                 error={finalPromptError}
               />
 
               <div>
-                <div className="flex items-center gap-x-2">
+                <div className="flex items-center gap-x-2 pt-6">
                   <div className="block text-base font-medium">
                     Default AI Model{" "}
                   </div>
@@ -662,7 +665,7 @@ export function AssistantEditor({
                     this Assistant
                   </CustomTooltip>
                 </div>
-                <p className="my-1 text-base font-description text-text-400">
+                <p className="my-1 text-sm text-subtle">
                   Your assistant will use the user&apos;s set default unless
                   otherwise specified below.
                   {admin &&
@@ -738,7 +741,7 @@ export function AssistantEditor({
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-x-2">
+                <div className="flex items-center gap-x-2 pt-6">
                   <div className="block text-base font-medium">
                     Capabilities{" "}
                   </div>
@@ -751,7 +754,7 @@ export function AssistantEditor({
                   </div>
                 </div>
 
-                <div className="flex flex-col mt-4 ml-1 gap-y-4">
+                <div className="flex flex-col pt-6 ml-1 gap-y-4">
                   {imageGenerationTool && (
                     <TooltipProvider delayDuration={50}>
                       <Tooltip>
@@ -1003,6 +1006,7 @@ export function AssistantEditor({
                             searchToolEnabled()
                           );
                         }}
+                        defaultHeight='h-40'
                         explanationText="Learn about prompting in our docs!"
                         explanationLink="https://docs.danswer.dev/guides/assistants"
                       />
@@ -1043,18 +1047,8 @@ export function AssistantEditor({
                                             for this Starter Message. For
                                             example, &quot;Write an email&quot;.
                                           </SubLabel>
-                                          <Field
+                                          <Input
                                             name={`starter_messages[${index}].name`}
-                                            className={`
-                                            border 
-                                            border-border 
-                                            bg-background 
-                                            rounded 
-                                            w-full 
-                                            py-2 
-                                            px-3 
-                                            mr-4
-                                          `}
                                             autoComplete="off"
                                           />
                                           <ErrorMessage
@@ -1073,18 +1067,8 @@ export function AssistantEditor({
                                             &quot;to a client about a new
                                             feature&quot;
                                           </SubLabel>
-                                          <Field
+                                          <Input
                                             name={`starter_messages.${index}.description`}
-                                            className={`
-                                            border 
-                                            border-border 
-                                            bg-background 
-                                            rounded 
-                                            w-full 
-                                            py-2 
-                                            px-3 
-                                            mr-4
-                                          `}
                                             autoComplete="off"
                                           />
                                           <ErrorMessage
@@ -1104,20 +1088,10 @@ export function AssistantEditor({
                                             a client about a new billing feature
                                             we just released.&quot;
                                           </SubLabel>
-                                          <Field
+                                          <Textarea
                                             name={`starter_messages[${index}].message`}
-                                            className={`
-                                              border 
-                                              border-border 
-                                              bg-background 
-                                              rounded 
-                                              w-full 
-                                              py-2 
-                                              px-3 
-                                              mr-4
-                                          `}
-                                            as="textarea"
                                             autoComplete="off"
+                                            className="min-h-40"
                                           />
                                           <ErrorMessage
                                             name={`starter_messages[${index}].message`}
@@ -1175,7 +1149,7 @@ export function AssistantEditor({
                 </>
               )}
 
-              <div className="flex">
+              <div className="flex pt-6">
                 <Button
                   className="mx-auto"
                   type="submit"
