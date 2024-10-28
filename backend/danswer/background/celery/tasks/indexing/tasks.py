@@ -175,7 +175,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     )
                     if attempt_id:
                         task_logger.info(
-                            f"Indexing queued: cc_pair_id={cc_pair.id} index_attempt_id={attempt_id}"
+                            f"Indexing queued: cc_pair={cc_pair.id} index_attempt={attempt_id}"
                         )
                         tasks_created += 1
     except SoftTimeLimitExceeded:
@@ -183,7 +183,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
             "Soft time limit exceeded, task is being terminated gracefully."
         )
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
         if lock_beat.owned():
             lock_beat.release()
@@ -366,7 +366,12 @@ def try_creating_indexing_task(
         r.set(rci.fence_key, fence_value.model_dump_json())
     except Exception:
         r.delete(rci.fence_key)
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(
+            f"Unexpected exception: "
+            f"tenant={tenant_id} "
+            f"cc_pair={cc_pair.id} "
+            f"search_settings={search_settings.id}"
+        )
         return None
     finally:
         if lock.owned():
@@ -470,10 +475,9 @@ def connector_indexing_task(
         # read related data and evaluate/print task progress
         fence_value = cast(bytes, r.get(rci.fence_key))
         if fence_value is None:
-            task_logger.info(
+            raise ValueError(
                 f"connector_indexing_task: fence_value not found: fence={rci.fence_key}"
             )
-            raise RuntimeError(f"Fence not found: fence={rci.fence_key}")
 
         try:
             fence_json = fence_value.decode("utf-8")

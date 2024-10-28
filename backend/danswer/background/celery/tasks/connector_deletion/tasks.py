@@ -81,7 +81,7 @@ def check_for_connector_deletion_task(self: Task, *, tenant_id: str | None) -> N
             "Soft time limit exceeded, task is being terminated gracefully."
         )
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
         if lock_beat.owned():
             lock_beat.release()
