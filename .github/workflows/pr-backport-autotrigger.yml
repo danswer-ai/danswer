@@ -83,8 +83,13 @@ jobs:
           # Fetch all history for all branches and tags
           git fetch --prune
 
-          # Prepare the beta branch
+          # Reset and prepare the beta branch
           git checkout ${{ steps.list-branches.outputs.beta }}
+          git reset --hard origin/${{ steps.list-branches.outputs.beta }}
+          echo "Last 5 commits on beta branch:"
+          git log -n 5 --pretty=format:"%H"
+
+          # Cherry-pick the merge commit from the merged PR
           git cherry-pick -m 1 ${{ github.event.pull_request.merge_commit_sha }} || {
             echo "Cherry-pick to beta failed due to conflicts."
             exit 1
@@ -96,8 +101,12 @@ jobs:
           git push origin ${{ steps.list-branches.outputs.beta }}
           git push origin ${{ steps.list-branches.outputs.new_beta_tag }}
 
-          # Prepare the stable branch
+          # Reset and prepare the stable branch
           git checkout ${{ steps.list-branches.outputs.stable }}
+          git reset --hard origin/${{ steps.list-branches.outputs.stable }}
+          echo "Last 5 commits on stable branch:"
+          git log -n 5 --pretty=format:"%H"
+
           # Cherry-pick the merge commit from the merged PR
           git cherry-pick -m 1 ${{ github.event.pull_request.merge_commit_sha }} || {
             echo "Cherry-pick to stable failed due to conflicts."
