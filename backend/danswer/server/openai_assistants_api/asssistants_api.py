@@ -18,7 +18,12 @@ from danswer.db.persona import get_personas
 from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import upsert_persona
 from danswer.db.persona import upsert_prompt
+from danswer.db.tools import get_tool_by_name
 from danswer.search.enums import RecencyBiasSetting
+from danswer.utils.logger import setup_logger
+
+logger = setup_logger()
+
 
 router = APIRouter(prefix="/assistants")
 
@@ -116,6 +121,22 @@ def create_assistant(
             db_session=db_session,
         )
 
+    tool_ids = []
+    for tool in request.tools or []:
+        tool_type = tool.get("type")
+        if not tool_type:
+            continue
+
+        try:
+            tool_db = get_tool_by_name(tool_type, db_session)
+            tool_ids.append(tool_db.id)
+        except ValueError:
+            # Skip tools that don't exist in the database
+            logger.error(f"Tool {tool_type} not found in database")
+            raise HTTPException(
+                status_code=404, detail=f"Tool {tool_type} not found in database"
+            )
+
     persona = upsert_persona(
         user=user,
         name=request.name or f"Assistant-{uuid4()}",
@@ -131,7 +152,7 @@ def create_assistant(
         db_session=db_session,
         prompt_ids=[prompt.id] if prompt else [0],
         document_set_ids=[],
-        tool_ids=[],  # TODO: Convert OpenAI tools to Danswer tools
+        tool_ids=tool_ids,
         icon_color=None,
         icon_shape=None,
         is_visible=True,

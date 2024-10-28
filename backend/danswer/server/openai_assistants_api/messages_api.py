@@ -96,9 +96,9 @@ def create_message(
         message=message.content,
         prompt_id=chat_session.persona.prompts[0].id,
         token_count=check_number_of_tokens(message.content),
-        message_type=MessageType(
-            message.role.upper()
-        ),  # Convert string role to MessageType enum
+        message_type=(
+            MessageType.USER if message.role == "user" else MessageType.ASSISTANT
+        ),
         db_session=db_session,
     )
 
