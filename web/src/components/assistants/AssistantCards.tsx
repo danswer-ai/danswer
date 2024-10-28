@@ -142,6 +142,7 @@ export function DisplayAssistantCard({
         <div className="space-y-2">
           <h3 className="text-base font-medium text-text-900">Capabilities:</h3>
           <ul className="space-y-.5">
+            {/* display all tools */}
             {selectedPersona.tools.map((tool, index) => (
               <li
                 key={index}
@@ -151,6 +152,7 @@ export function DisplayAssistantCard({
                 {tool.display_name}
               </li>
             ))}
+            {/* Built in capabilities */}
             {selectedPersona.llm_relevance_filter && (
               <li className="flex items-center text-sm text-text-700">
                 <span className="mr-2 text-text-500 opacity-70">•</span>{" "}

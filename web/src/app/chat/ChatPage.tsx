@@ -2022,27 +2022,32 @@ export function ChatPage({
                                       justify-center
                                       mt-2
                                       h-40
+                                      items-start
                                       mb-6`}
                                 >
-                                  <Divider className="mx-2" />
                                   {currentPersona?.starter_messages &&
                                     currentPersona.starter_messages.length >
-                                      0 &&
-                                    currentPersona.starter_messages
-                                      .slice(0, 4)
-                                      .map((starterMessage, i) => (
-                                        <div key={i} className="w-1/2">
-                                          <StarterMessage
-                                            starterMessage={starterMessage}
-                                            onClick={() =>
-                                              onSubmit({
-                                                messageOverride:
-                                                  starterMessage.message,
-                                              })
-                                            }
-                                          />
-                                        </div>
-                                      ))}
+                                      0 && (
+                                      <>
+                                        <Divider className="mx-2" />
+
+                                        {currentPersona.starter_messages
+                                          .slice(0, 4)
+                                          .map((starterMessage, i) => (
+                                            <div key={i} className="w-1/2">
+                                              <StarterMessage
+                                                starterMessage={starterMessage}
+                                                onClick={() =>
+                                                  onSubmit({
+                                                    messageOverride:
+                                                      starterMessage.message,
+                                                  })
+                                                }
+                                              />
+                                            </div>
+                                          ))}
+                                      </>
+                                    )}
                                 </div>
                               </div>
                             )}
