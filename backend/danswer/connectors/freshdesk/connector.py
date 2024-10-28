@@ -5,7 +5,8 @@ from typing import Any, List, Optional, Iterator
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import GenerateDocumentsOutput, PollConnector, LoadConnector, SecondsSinceUnixEpoch
+from danswer.connectors.interfaces import GenerateDocumentsOutput, SecondsSinceUnixEpoch
+from danswer.connectors.interfaces import PollConnector, LoadConnector
 from danswer.connectors.models import ConnectorMissingCredentialError, Document, Section
 from danswer.utils.logger import setup_logger
 
@@ -23,18 +24,15 @@ def _create_doc_from_ticket(ticket: dict, domain: str) -> Document:
     }
 
     # Checking for overdue tickets
-    today = datetime.now(timezone.utc)
-    ticket["overdue"] = "true" if today > ticket["due_by"] else "false"
+    ticket["overdue"] = datetime.now(timezone.utc) > ticket["due_by"]
 
-    # Mapping the status field values
+    # Map ticket status codes to human readable values
     status_mapping = {2: "open", 3: "pending", 4: "resolved", 5: "closed"}
-    ticket["status"] = status_mapping.get(ticket["status"], str(ticket["status"]))
+    if status_string := status_mapping.get(ticket.get("status")):
+        ticket["status"] = status_string
 
-    # Stripping HTML tags from the description field
+    # Parse HTML from the description field
     ticket["description"] = parse_html_page_basic(ticket["description"])
-
-    # Remove extra white spaces from the description field
-    ticket["description"] = " ".join(ticket["description"].split())
 
     return Document(
         id=ticket["id"],
@@ -66,6 +64,10 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         return None
     
     def _fetch_tickets(self, start: datetime | None = None, end: datetime | None = None) -> Iterator[List[dict]]:
+        #"end" is not currently used, so we may double fetch tickets created after the indexing starts but before the actual call is made. 
+        #To use "end" would require us to use the search endpoint but it has limitations, 
+        #namely having to fetch all IDs and then individually fetch each ticket because there is no "include" field available for this endpoint:
+        #https://developers.freshdesk.com/api/#filter_tickets
         if any([self.api_key, self.domain, self.password]) is None:
             raise ConnectorMissingCredentialError("freshdesk")
         
