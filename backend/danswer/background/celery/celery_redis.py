@@ -541,27 +541,27 @@ class RedisConnectorIndexing(RedisObjectHelper):
         return False
 
 
-class RedisConnectorStop(RedisObjectHelper):
-    """Used to signal any running tasks for a connector to stop. We should refactor
-    connector related redis helpers into a single class.
-    """
+# class RedisConnectorStop(RedisObjectHelper):
+#     """Used to signal any running tasks for a connector to stop. We should refactor
+#     connector related redis helpers into a single class.
+#     """
 
-    PREFIX = "connectorstop"
-    FENCE_PREFIX = PREFIX + "_fence"  # a fence for the entire indexing process
-    TASKSET_PREFIX = PREFIX + "_taskset"  # stores a list of prune tasks id's
+#     PREFIX = "connectorstop"
+#     FENCE_PREFIX = PREFIX + "_fence"  # a fence for the entire indexing process
+#     TASKSET_PREFIX = PREFIX + "_taskset"  # stores a list of prune tasks id's
 
-    def __init__(self, id: int) -> None:
-        super().__init__(str(id))
+#     def __init__(self, id: int) -> None:
+#         super().__init__(str(id))
 
-    def generate_tasks(
-        self,
-        celery_app: Celery,
-        db_session: Session,
-        redis_client: Redis,
-        lock: redis.lock.Lock | None,
-        tenant_id: str | None,
-    ) -> int | None:
-        return None
+#     def generate_tasks(
+#         self,
+#         celery_app: Celery,
+#         db_session: Session,
+#         redis_client: Redis,
+#         lock: redis.lock.Lock | None,
+#         tenant_id: str | None,
+#     ) -> int | None:
+#         return None
 
 
 def celery_get_queue_length(queue: str, r: Redis) -> int:

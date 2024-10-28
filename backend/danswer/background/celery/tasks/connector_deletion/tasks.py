@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
-from danswer.background.celery.celery_redis import RedisConnectorStop
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerRedisLocks
@@ -62,7 +61,7 @@ def check_for_connector_deletion_task(self: Task, *, tenant_id: str | None) -> N
         # try running cleanup on the cc_pair_ids
         for cc_pair_id in cc_pair_ids:
             with get_session_with_tenant(tenant_id) as db_session:
-                rcs = RedisConnectorStop(cc_pair_id)
+                redis_connector = RedisConnector(tenant_id, cc_pair_id)
                 try:
                     try_generate_document_cc_pair_cleanup_tasks(
                         self.app, cc_pair_id, db_session, r, lock_beat, tenant_id
@@ -71,10 +70,10 @@ def check_for_connector_deletion_task(self: Task, *, tenant_id: str | None) -> N
                     # this means we wanted to start deleting but dependent tasks were running
                     # Leave a stop signal to clear indexing and pruning tasks more quickly
                     task_logger.info(str(e))
-                    r.set(rcs.fence_key, cc_pair_id)
+                    redis_connector.stop_fence_set(cc_pair_id)
                 else:
                     # clear the stop signal if it exists ... no longer needed
-                    r.delete(rcs.fence_key)
+                    redis_connector.stop_fence_clear()
 
     except SoftTimeLimitExceeded:
         task_logger.info(

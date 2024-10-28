@@ -57,14 +57,17 @@ class RedisConnector:
 
         return False
 
-    # def is_stopping(self) -> bool:
-    #     if self.redis.exists(self.fence_key):
-    #         return True
+    def is_stopping(self) -> bool:
+        if self.redis.exists(self.get_stop_fence_key()):
+            return True
 
-    #     return False
+        return False
 
     def get_indexing_fence_key(self) -> str:
         return f"{self.INDEXING_FENCE}_{self.id}"
+
+    def get_stop_fence_key(self) -> str:
+        return f"{self.STOP_FENCE}_{self.id}"
 
     def get_deletion_fence_key(self) -> str:
         return f"{self.DELETION_FENCE}_{self.id}"
@@ -159,6 +162,14 @@ class RedisConnector:
         remaining = cast(int, self.redis.scard(self._get_deletion_taskset_key()))
         return remaining
 
+    def stop_fence_set(self, fence_value: int) -> None:
+        self.redis.set(self.get_stop_fence_key(), fence_value)
+        return
+
+    def stop_fence_clear(self) -> None:
+        self.redis.delete(self.get_stop_fence_key())
+        return
+
     @staticmethod
     def deletion_taskset_remove(id: int, task_id: str, r: redis.Redis) -> None:
         taskset_key = f"{RedisConnector.DELETION_TASKSET}_{id}"
@@ -171,6 +182,11 @@ class RedisConnector:
             r.delete(key)
 
         for key in r.scan_iter(RedisConnector.DELETION_FENCE + "*"):
+            r.delete(key)
+
+    @staticmethod
+    def stop_cleanup(r: redis.Redis) -> None:
+        for key in r.scan_iter(RedisConnector.STOP_FENCE + "*"):
             r.delete(key)
 
     @staticmethod

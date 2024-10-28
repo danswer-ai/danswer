@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
-from danswer.background.celery.celery_redis import RedisConnectorStop
 from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
     RedisConnectorIndexingFenceData,
 )
@@ -437,12 +436,11 @@ def connector_indexing_task(
             f"fence={redis_connector.get_deletion_fence_key()}"
         )
 
-    rcs = RedisConnectorStop(cc_pair_id)
-    if r.exists(rcs.fence_key):
+    if redis_connector.is_stopping():
         raise RuntimeError(
             f"Indexing will not start because a connector stop signal was detected: "
             f"cc_pair={cc_pair_id} "
-            f"fence={rcs.fence_key}"
+            f"fence={redis_connector.get_stop_fence_key()}"
         )
 
     rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
@@ -526,7 +524,10 @@ def connector_indexing_task(
 
             # define a callback class
             callback = RunIndexingCallback(
-                rcs.fence_key, rci.generator_progress_key, lock, r
+                redis_connector.get_stop_fence_key(),
+                rci.generator_progress_key,
+                lock,
+                r,
             )
 
             run_indexing_entrypoint(

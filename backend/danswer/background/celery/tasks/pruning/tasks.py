@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import RedisConnectorPruning
-from danswer.background.celery.celery_redis import RedisConnectorStop
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
 from danswer.background.celery.tasks.indexing.tasks import RunIndexingCallback
 from danswer.configs.app_configs import ALLOW_SIMULTANEOUS_PRUNING
@@ -232,6 +231,8 @@ def connector_pruning_generator_task(
 
     r = get_redis_client(tenant_id=tenant_id)
 
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+
     rcp = RedisConnectorPruning(cc_pair_id)
 
     lock = r.lock(
@@ -268,10 +269,11 @@ def connector_pruning_generator_task(
                 cc_pair.credential,
             )
 
-            rcs = RedisConnectorStop(cc_pair_id)
-
             callback = RunIndexingCallback(
-                rcs.fence_key, rcp.generator_progress_key, lock, r
+                redis_connector.get_stop_fence_key(),
+                rcp.generator_progress_key,
+                lock,
+                r,
             )
             # a list of docs in the source
             all_connector_doc_ids: set[str] = extract_ids_from_runnable_connector(
