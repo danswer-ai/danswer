@@ -103,6 +103,7 @@ import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import BlurBackground from "./shared_chat_search/BlurBackground";
 import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
 import { useAssistants } from "@/components/context/AssistantsContext";
+import { Divider } from "@tremor/react";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -194,10 +195,10 @@ export function ChatPage({
           (assistant) => assistant.id === existingChatSessionAssistantId
         )
       : defaultAssistantId !== undefined
-        ? availableAssistants.find(
-            (assistant) => assistant.id === defaultAssistantId
-          )
-        : undefined
+      ? availableAssistants.find(
+          (assistant) => assistant.id === defaultAssistantId
+        )
+      : undefined
   );
   // Gather default temperature settings
   const search_param_temperature = searchParams.get(
@@ -207,12 +208,12 @@ export function ChatPage({
   const defaultTemperature = search_param_temperature
     ? parseFloat(search_param_temperature)
     : selectedAssistant?.tools.some(
-          (tool) =>
-            tool.in_code_tool_id === "SearchTool" ||
-            tool.in_code_tool_id === "InternetSearchTool"
-        )
-      ? 0
-      : 0.7;
+        (tool) =>
+          tool.in_code_tool_id === "SearchTool" ||
+          tool.in_code_tool_id === "InternetSearchTool"
+      )
+    ? 0
+    : 0.7;
 
   const setSelectedAssistantFromId = (assistantId: number) => {
     // NOTE: also intentionally look through available assistants here, so that
@@ -741,12 +742,6 @@ export function ChatPage({
   }, [liveAssistant]);
 
   const filterManager = useFilters();
-  const [finalAvailableSources, finalAvailableDocumentSets] =
-    computeAvailableFilters({
-      selectedPersona: selectedAssistant,
-      availableSources,
-      availableDocumentSets,
-    });
 
   const [currentFeedback, setCurrentFeedback] = useState<
     [FeedbackType, number] | null
@@ -1089,8 +1084,8 @@ export function ChatPage({
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
       : alternativeAssistant
-        ? alternativeAssistant.id
-        : liveAssistant.id;
+      ? alternativeAssistant.id
+      : liveAssistant.id;
 
     resetInputBar();
     let messageUpdates: Message[] | null = null;
@@ -2013,10 +2008,8 @@ export function ChatPage({
                             currentSessionChatState == "input" &&
                             !loadingError && (
                               <div className="h-full flex flex-col justify-center items-center">
-                                <ChatIntro
-                                  availableSources={finalAvailableSources}
-                                  selectedPersona={liveAssistant}
-                                />
+                                <ChatIntro selectedPersona={liveAssistant} />
+
                                 <div
                                   key={-4}
                                   className={`
@@ -2027,17 +2020,18 @@ export function ChatPage({
                                       flex 
                                       flex-wrap
                                       justify-center
-                                      mt-4 
+                                      mt-2
                                       h-40
                                       mb-6`}
                                 >
+                                  <Divider className="mx-2" />
                                   {currentPersona?.starter_messages &&
                                     currentPersona.starter_messages.length >
                                       0 &&
                                     currentPersona.starter_messages
                                       .slice(0, 4)
                                       .map((starterMessage, i) => (
-                                        <div key={i} className="w-1/4">
+                                        <div key={i} className="w-1/2">
                                           <StarterMessage
                                             starterMessage={starterMessage}
                                             onClick={() =>

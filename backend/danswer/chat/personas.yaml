@@ -46,8 +46,8 @@ personas:
         description: "Ask about available information"
         message: "Hello! I'm interested in learning more about the information available here. Could you give me an overview of the types of data or documents that might be accessible?"
       - name: "Specific Topic Search"
-        description: "Find information on a particular subject"
-        message: "Hi there! I'm looking for information on a specific topic. How can I best search for detailed information about [insert your topic of interest]?"
+        description: "Search for specific information"
+        message: "Hi! I'd like to learn more about a specific topic. Could you help me find relevant documents and information?"
       - name: "Recent Updates"
         description: "Inquire about latest additions"
         message: "Hello! I'm curious about any recent updates or additions to the knowledge base. Can you tell me what new information has been added lately?"
@@ -73,16 +73,16 @@ personas:
     starter_messages:
       - name: "Open Discussion"
         description: "Start an open-ended conversation"
-        message: "Hi there! I'm interested in having a discussion about recent advancements in artificial intelligence. What are some key developments you think are worth exploring?"
+        message: "Hi! Can you help me write a professional email?"
       - name: "Problem Solving"
         description: "Get help with a challenge"
-        message: "Hello! I'm facing a challenge with time management in my daily work. Do you have any strategies or techniques you could suggest to help me improve my productivity?"
+        message: "Hello! I need help managing my daily tasks better. Do you have any simple tips?"
       - name: "Learn Something New"
         description: "Explore a new topic"
-        message: "Hi! I've been hearing a lot about quantum computing lately, but I don't really understand it. Could you give me an introduction to the basic concepts?"
+        message: "Hi! Could you explain what project management is in simple terms?"
       - name: "Creative Brainstorming"
         description: "Generate creative ideas"
-        message: "Hello! I'm trying to come up with ideas for a new mobile app that helps people reduce their carbon footprint. Do you have any suggestions or innovative features we could consider?"
+        message: "Hello! I need to brainstorm some team building activities. Do you have any fun suggestions?"
 
   - id: 2
     name: "Paraphrase"
@@ -101,17 +101,17 @@ personas:
     is_visible: false
     starter_messages:
       - name: "Document Search"
-        description: "Find specific information"
-        message: "Hi, I'm looking for information about our company's mission statement. Can you find the exact wording from our official documents?"
-      - name: "Policy Verification"
-        description: "Check company policies"
-        message: "Hello! I need to verify our company's policy on remote work. Can you find and quote the specific section that outlines this policy?"
-      - name: "Technical Specifications"
-        description: "Retrieve technical details"
-        message: "Hi there! I need the exact system requirements for our main software product. Can you locate and provide the full list from our technical documentation?"
-      - name: "Legal Clause Lookup"
-        description: "Find legal information"
-        message: "Hello! I'm trying to find the exact wording of our data privacy policy in our terms of service. Can you locate and quote the relevant clause?"
+        description: "Find exact information"
+        message: "Hi! Could you help me find information about our team structure and reporting lines from our internal documents?"
+      - name: "Process Verification"
+        description: "Find exact quotes"
+        message: "Hello! I need to understand our project approval process. Could you find the exact steps from our documentation?"
+      - name: "Technical Documentation"
+        description: "Search technical details"
+        message: "Hi there! I'm looking for information about our deployment procedures. Can you find the specific steps from our technical guides?"
+      - name: "Policy Reference"
+        description: "Check official policies"
+        message: "Hello! Could you help me find our official guidelines about client communication? I need the exact wording from our documentation."
 
   - id: 3
     name: "Art"
@@ -124,9 +124,9 @@ personas:
     llm_filter_extraction: false
     recency_bias: "no_decay"
     document_sets: []
-    icon_shape: 234124 
+    icon_shape: 234124
     icon_color: "#9B59B6"
-    image_generation: true 
+    image_generation: true
     display_priority: 3
     is_visible: true
     starter_messages:
