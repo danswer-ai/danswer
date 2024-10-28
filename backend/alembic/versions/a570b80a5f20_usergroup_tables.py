@@ -21,6 +21,11 @@ def upgrade() -> None:
         "teamspace",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
+        sa.Column(
+            "creator_id",
+            fastapi_users_db_sqlalchemy.generics.GUID(),
+            nullable=False,
+        ),
         sa.Column("is_up_to_date", sa.Boolean(), nullable=False),
         sa.Column("is_up_for_deletion", sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint("id"),

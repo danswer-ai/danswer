@@ -185,6 +185,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     workspace: Mapped[list["Workspace"]] = relationship(
         "Workspace", secondary="workspace__users", back_populates="users", lazy="joined"
     )
+    teamspace = relationship("Teamspace", back_populates="users")
 
 
 class InputPrompt(Base):
@@ -1670,6 +1671,9 @@ class Teamspace(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
+    creator_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+    )
     # whether or not changes to the Teamspace have been propagated to Vespa
     is_up_to_date: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     # tell the sync job to clean up the group
@@ -1677,7 +1681,7 @@ class Teamspace(Base):
         Boolean, nullable=False, default=False
     )
     is_custom_logo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
+    creator: Mapped[User] = relationship("User", back_populates="teamspace")
     users: Mapped[list[User]] = relationship(
         "User", secondary=User__Teamspace.__table__, viewonly=True
     )

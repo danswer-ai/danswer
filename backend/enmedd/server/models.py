@@ -34,6 +34,13 @@ class MinimalUserSnapshot(BaseModel):
     is_custom_profile: bool = False
 
 
+class MinimalUserwithNameSnapshot(BaseModel):
+    id: UUID
+    email: str
+    full_name: str
+    is_custom_profile: bool = False
+
+
 class FullUserSnapshot(BaseModel):
     id: UUID
     full_name: str

@@ -14,6 +14,7 @@ from enmedd.server.features.document_set.models import DocumentSet
 from enmedd.server.manage.models import UserInfo
 from enmedd.server.manage.models import UserPreferences
 from enmedd.server.models import MinimalTeamspaceSnapshot
+from enmedd.server.models import MinimalUserwithNameSnapshot
 from enmedd.server.models import MinimalWorkspaceSnapshot
 from enmedd.server.query_and_chat.models import ChatSessionDetails
 from enmedd.server.settings.models import TeamspaceSettings
@@ -23,6 +24,7 @@ from enmedd.server.token_rate_limits.models import TokenRateLimitDisplay
 class Teamspace(BaseModel):
     id: int
     name: str
+    creator: MinimalUserwithNameSnapshot
     users: list[UserInfo]
     cc_pairs: list[ConnectorCredentialPairDescriptor]
     document_sets: list[DocumentSet]
@@ -40,6 +42,11 @@ class Teamspace(BaseModel):
         return cls(
             id=teamspace_model.id,
             name=teamspace_model.name,
+            creator=MinimalUserwithNameSnapshot(
+                id=teamspace_model.creator.id,
+                email=teamspace_model.creator.email,
+                full_name=teamspace_model.creator.full_name,
+            ),
             users=[
                 UserInfo(
                     id=str(user.id),
@@ -110,6 +117,7 @@ class Teamspace(BaseModel):
             ],
             is_up_to_date=teamspace_model.is_up_to_date,
             is_up_for_deletion=teamspace_model.is_up_for_deletion,
+            is_custom_logo=teamspace_model.is_custom_logo,
             workspace=[
                 MinimalWorkspaceSnapshot(
                     id=workspace.id, workspace_name=workspace.workspace_name
