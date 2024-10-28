@@ -162,8 +162,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         for key in r.scan_iter(RedisConnectorIndexing.FENCE_PREFIX + "*"):
             r.delete(key)
 
-    for key in r.scan_iter(RedisConnectorStop.FENCE_PREFIX + "*"):
-        r.delete(key)
+        for key in r.scan_iter(RedisConnectorStop.FENCE_PREFIX + "*"):
+            r.delete(key)
 
 
 # @worker_process_init.connect
