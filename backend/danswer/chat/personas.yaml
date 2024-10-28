@@ -41,6 +41,19 @@ personas:
     icon_color: "#6FB1FF"
     display_priority: 1
     is_visible: true
+    starter_messages:
+      - name: "General Information"
+        description: "Ask about available information"
+        message: "Hello! I'm interested in learning more about the information available here. Could you give me an overview of the types of data or documents that might be accessible?"
+      - name: "Specific Topic Search"
+        description: "Search for specific information"
+        message: "Hi! I'd like to learn more about a specific topic. Could you help me find relevant documents and information?"
+      - name: "Recent Updates"
+        description: "Inquire about latest additions"
+        message: "Hello! I'm curious about any recent updates or additions to the knowledge base. Can you tell me what new information has been added lately?"
+      - name: "Cross-referencing Information"
+        description: "Connect information from different sources"
+        message: "Hi! I'm working on a project that requires connecting information from multiple sources. How can I effectively cross-reference data across different documents or categories?"
 
   - id: 1
     name: "General"
@@ -57,6 +70,19 @@ personas:
     icon_color: "#FF6F6F"
     display_priority: 0
     is_visible: true
+    starter_messages:
+      - name: "Open Discussion"
+        description: "Start an open-ended conversation"
+        message: "Hi! Can you help me write a professional email?"
+      - name: "Problem Solving"
+        description: "Get help with a challenge"
+        message: "Hello! I need help managing my daily tasks better. Do you have any simple tips?"
+      - name: "Learn Something New"
+        description: "Explore a new topic"
+        message: "Hi! Could you explain what project management is in simple terms?"
+      - name: "Creative Brainstorming"
+        description: "Generate creative ideas"
+        message: "Hello! I need to brainstorm some team building activities. Do you have any fun suggestions?"
 
   - id: 2
     name: "Paraphrase"
@@ -73,7 +99,19 @@ personas:
     icon_color: "#6FFF8D"
     display_priority: 2
     is_visible: false
-
+    starter_messages:
+      - name: "Document Search"
+        description: "Find exact information"
+        message: "Hi! Could you help me find information about our team structure and reporting lines from our internal documents?"
+      - name: "Process Verification"
+        description: "Find exact quotes"
+        message: "Hello! I need to understand our project approval process. Could you find the exact steps from our documentation?"
+      - name: "Technical Documentation"
+        description: "Search technical details"
+        message: "Hi there! I'm looking for information about our deployment procedures. Can you find the specific steps from our technical guides?"
+      - name: "Policy Reference"
+        description: "Check official policies"
+        message: "Hello! Could you help me find our official guidelines about client communication? I need the exact wording from our documentation."
 
   - id: 3
     name: "Art"
@@ -86,8 +124,21 @@ personas:
     llm_filter_extraction: false
     recency_bias: "no_decay"
     document_sets: []
-    icon_shape: 234124 
+    icon_shape: 234124
     icon_color: "#9B59B6"
-    image_generation: true 
+    image_generation: true
     display_priority: 3
     is_visible: true
+    starter_messages:
+      - name: "Landscape"
+        description: "Generate a landscape image"
+        message: "Create an image of a serene mountain lake at sunset, with snow-capped peaks reflected in the calm water and a small wooden cabin on the shore."
+      - name: "Character"
+        description: "Generate a character image"
+        message: "Generate an image of a futuristic robot with glowing blue eyes, sleek metallic body, and intricate circuitry visible through transparent panels on its chest and arms."
+      - name: "Abstract"
+        description: "Create an abstract image"
+        message: "Create an abstract image representing the concept of time, using swirling clock hands, fragmented hourglasses, and streaks of light to convey the passage of moments and eras."
+      - name: "Urban Scene"
+        description: "Generate an urban landscape"
+        message: "Generate an image of a bustling futuristic cityscape at night, with towering skyscrapers, flying vehicles, holographic advertisements, and a mix of neon and bioluminescent lighting."

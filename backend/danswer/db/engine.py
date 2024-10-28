@@ -25,7 +25,6 @@ from sqlalchemy.orm import sessionmaker
 
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
 from danswer.configs.app_configs import POSTGRES_DB
@@ -35,12 +34,13 @@ from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
 from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
 from danswer.configs.app_configs import POSTGRES_PORT
 from danswer.configs.app_configs import POSTGRES_USER
-from danswer.configs.app_configs import SECRET_JWT_KEY
+from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
-from danswer.configs.constants import TENANT_ID_PREFIX
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
+from shared_configs.configs import TENANT_ID_PREFIX
 
 logger = setup_logger()
 
@@ -263,17 +263,20 @@ def get_current_tenant_id(request: Request) -> str:
         CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
         return tenant_id
 
-    token = request.cookies.get("tenant_details")
+    token = request.cookies.get("fastapiusersauth")
     if not token:
         current_value = CURRENT_TENANT_ID_CONTEXTVAR.get()
         # If no token is present, use the default schema or handle accordingly
         return current_value
 
     try:
-        payload = jwt.decode(token, SECRET_JWT_KEY, algorithms=["HS256"])
-        tenant_id = payload.get("tenant_id")
-        if not tenant_id:
-            return CURRENT_TENANT_ID_CONTEXTVAR.get()
+        payload = jwt.decode(
+            token,
+            USER_AUTH_SECRET,
+            audience=["fastapi-users:auth"],
+            algorithms=["HS256"],
+        )
+        tenant_id = payload.get("tenant_id", POSTGRES_DEFAULT_SCHEMA)
         if not is_valid_schema_name(tenant_id):
             raise HTTPException(status_code=400, detail="Invalid tenant ID format")
         CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)

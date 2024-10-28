@@ -77,13 +77,13 @@ def check_for_pruning(self: Task, *, tenant_id: str | None) -> None:
                 if not tasks_created:
                     continue
 
-                task_logger.info(f"Pruning queued: cc_pair_id={cc_pair.id}")
+                task_logger.info(f"Pruning queued: cc_pair={cc_pair.id}")
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."
         )
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
         if lock_beat.owned():
             lock_beat.release()
@@ -197,7 +197,7 @@ def try_creating_prune_generator_task(
         # set this only after all tasks have been added
         redis_connector.pruning_fence_set()
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: cc_pair={cc_pair.id}")
         return None
     finally:
         if lock.owned():

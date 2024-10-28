@@ -134,7 +134,6 @@ try:
 except ValueError:
     INDEX_BATCH_SIZE = 16
 
-
 # Below are intended to match the env variables names used by the official postgres docker image
 # https://hub.docker.com/_/postgres
 POSTGRES_USER = os.environ.get("POSTGRES_USER") or "postgres"
@@ -438,7 +437,7 @@ CUSTOM_ANSWER_VALIDITY_CONDITIONS = json.loads(
     os.environ.get("CUSTOM_ANSWER_VALIDITY_CONDITIONS", "[]")
 )
 
-VESPA_REQUEST_TIMEOUT = int(os.environ.get("VESPA_REQUEST_TIMEOUT") or "5")
+VESPA_REQUEST_TIMEOUT = int(os.environ.get("VESPA_REQUEST_TIMEOUT") or "15")
 
 SYSTEM_RECURSION_LIMIT = int(os.environ.get("SYSTEM_RECURSION_LIMIT") or "1000")
 
@@ -462,20 +461,12 @@ AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE")
 AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
 
 
-# Cloud configuration
-
-# Multi-tenancy configuration
-MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
-
 # Use managed Vespa (Vespa Cloud). If set, must also set VESPA_CLOUD_URL, VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH
 MANAGED_VESPA = os.environ.get("MANAGED_VESPA", "").lower() == "true"
 
 ENABLE_EMAIL_INVITES = os.environ.get("ENABLE_EMAIL_INVITES", "").lower() == "true"
 
 # Security and authentication
-SECRET_JWT_KEY = os.environ.get(
-    "SECRET_JWT_KEY", ""
-)  # Used for encryption of the JWT token for user's tenant context
 DATA_PLANE_SECRET = os.environ.get(
     "DATA_PLANE_SECRET", ""
 )  # Used for secure communication between the control and data plane

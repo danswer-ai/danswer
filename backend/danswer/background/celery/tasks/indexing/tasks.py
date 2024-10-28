@@ -45,10 +45,16 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import SearchSettings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
+from danswer.db.swap_index import check_index_swap
+from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
+from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
+from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
+from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
+from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
 
@@ -96,6 +102,21 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
         # these tasks should never overlap
         if not lock_beat.acquire(blocking=False):
             return None
+
+        with get_session_with_tenant(tenant_id=tenant_id) as db_session:
+            check_index_swap(db_session=db_session)
+            current_search_settings = get_current_search_settings(db_session)
+            # So that the first time users aren't surprised by really slow speed of first
+            # batch of documents indexed
+            if current_search_settings.provider_type is None and not MULTI_TENANT:
+                embedding_model = EmbeddingModel.from_db_model(
+                    search_settings=current_search_settings,
+                    server_host=INDEXING_MODEL_SERVER_HOST,
+                    server_port=INDEXING_MODEL_SERVER_PORT,
+                )
+                warm_up_bi_encoder(
+                    embedding_model=embedding_model,
+                )
 
         cc_pair_ids: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
@@ -153,7 +174,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     )
                     if attempt_id:
                         task_logger.info(
-                            f"Indexing queued: cc_pair_id={cc_pair.id} index_attempt_id={attempt_id}"
+                            f"Indexing queued: cc_pair={cc_pair.id} index_attempt={attempt_id}"
                         )
                         tasks_created += 1
     except SoftTimeLimitExceeded:
@@ -161,7 +182,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
             "Soft time limit exceeded, task is being terminated gracefully."
         )
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
         if lock_beat.owned():
             lock_beat.release()
@@ -345,7 +366,12 @@ def try_creating_indexing_task(
         r.set(rci.fence_key, fence_value.model_dump_json())
     except Exception:
         r.delete(rci.fence_key)
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(
+            f"Unexpected exception: "
+            f"tenant={tenant_id} "
+            f"cc_pair={cc_pair.id} "
+            f"search_settings={search_settings.id}"
+        )
         return None
     finally:
         if lock.owned():
@@ -449,10 +475,9 @@ def connector_indexing_task(
         # read related data and evaluate/print task progress
         fence_value = cast(bytes, r.get(rci.fence_key))
         if fence_value is None:
-            task_logger.info(
+            raise ValueError(
                 f"connector_indexing_task: fence_value not found: fence={rci.fence_key}"
             )
-            raise RuntimeError(f"Fence not found: fence={rci.fence_key}")
 
         try:
             fence_json = fence_value.decode("utf-8")

@@ -5,9 +5,11 @@ import { ProviderContextProvider } from "../chat_search/ProviderContext";
 import { SettingsProvider } from "../settings/SettingsProvider";
 import { AssistantsProvider } from "./AssistantsContext";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { User } from "@/lib/types";
 
 interface AppProviderProps {
   children: React.ReactNode;
+  user: User | null;
   settings: CombinedSettings;
   assistants: Persona[];
   hasAnyConnectors: boolean;
@@ -16,13 +18,14 @@ interface AppProviderProps {
 
 export const AppProvider = ({
   children,
+  user,
   settings,
   assistants,
   hasAnyConnectors,
   hasImageCompatibleModel,
 }: AppProviderProps) => {
   return (
-    <UserProvider>
+    <UserProvider user={user}>
       <ProviderContextProvider>
         <SettingsProvider settings={settings}>
           <AssistantsProvider

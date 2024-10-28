@@ -32,7 +32,6 @@ from danswer.configs.app_configs import APP_PORT
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import LOG_ENDPOINT_LATENCY
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
@@ -94,7 +93,9 @@ from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import global_version
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import CORS_ALLOWED_ORIGIN
+from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import SENTRY_DSN
+
 
 logger = setup_logger()
 
@@ -183,7 +184,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
         # If we are multi-tenant, we need to only set up initial public tables
         with Session(engine) as db_session:
-            setup_danswer(db_session)
+            setup_danswer(db_session, None)
     else:
         setup_multitenant_danswer()
 
@@ -213,7 +214,7 @@ def get_application() -> FastAPI:
         sentry_sdk.init(
             dsn=SENTRY_DSN,
             integrations=[StarletteIntegration(), FastApiIntegration()],
-            traces_sample_rate=0.5,
+            traces_sample_rate=0.1,
         )
         logger.info("Sentry initialized")
     else:

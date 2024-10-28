@@ -552,11 +552,6 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     ],
     advanced_values: [],
   },
-  requesttracker: {
-    description: "Configure HubSpot connector",
-    values: [],
-    advanced_values: [],
-  },
   hubspot: {
     description: "Configure HubSpot connector",
     values: [],
@@ -1115,8 +1110,6 @@ export interface NotionConfig {
 }
 
 export interface HubSpotConfig {}
-
-export interface RequestTrackerConfig {}
 
 export interface Document360Config {
   workspace: string;

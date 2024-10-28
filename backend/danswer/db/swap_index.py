@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.constants import KV_REINDEX_KEY
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.connector_credential_pair import resync_cc_pair
@@ -15,6 +14,7 @@ from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.search_settings import update_search_settings_status
 from danswer.key_value_store.factory import get_kv_store
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import MULTI_TENANT
 
 
 logger = setup_logger()
@@ -42,6 +42,7 @@ def check_index_swap(db_session: Session) -> SearchSettings | None:
         logger.error("More unique indexings than cc pairs, should not occur")
 
     if cc_pair_count == 0 or cc_pair_count == unique_cc_indexings:
+        # Swap indices
         now_old_search_settings = get_current_search_settings(db_session)
         update_search_settings_status(
             search_settings=now_old_search_settings,
@@ -68,6 +69,4 @@ def check_index_swap(db_session: Session) -> SearchSettings | None:
 
             if MULTI_TENANT:
                 return now_old_search_settings
-    else:
-        logger.warning("No need to swap indices")
     return None

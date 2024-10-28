@@ -27,6 +27,7 @@ from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import SENTRY_DSN
 
+
 logger = setup_logger()
 
 task_logger = get_task_logger(__name__)
@@ -35,7 +36,7 @@ if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[CeleryIntegration()],
-        traces_sample_rate=0.5,
+        traces_sample_rate=0.1,
     )
     logger.info("Sentry initialized")
 else:
@@ -77,7 +78,7 @@ def on_task_postrun(
     if not task:
         return
 
-    task_logger.debug(f"Task {task.name} (ID: {task_id}) completed with state: {state}")
+    task_logger.info(f"Task {task.name} (ID: {task_id}) completed with state: {state}")
 
     if state not in READY_STATES:
         return
