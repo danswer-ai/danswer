@@ -104,6 +104,7 @@ class TenantRedis(redis.Redis):
             "startswith",
             "sadd",
             "srem",
+            "scard",
         ]  # Regular methods that need simple prefixing
 
         if item == "scan_iter":
