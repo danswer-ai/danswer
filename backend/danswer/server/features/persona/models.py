@@ -16,6 +16,13 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+# More minimal request for generating a persona prompt
+class GeneratePersonaPromptRequest(BaseModel):
+    name: str
+    description: str
+    document_set_ids: list[int]
+
+
 class CreatePersonaRequest(BaseModel):
     name: str
     description: str

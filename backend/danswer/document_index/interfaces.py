@@ -6,6 +6,7 @@ from typing import Any
 from danswer.access.models import DocumentAccess
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.search.models import IndexFilters
+from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceChunkUncleaned
 from shared_configs.model_server_models import Embedding
 
@@ -363,6 +364,19 @@ class AdminCapable(abc.ABC):
         raise NotImplementedError
 
 
+class RandomCapable(abc.ABC):
+    """Class must implement random document retrieval capability"""
+
+    @abc.abstractmethod
+    def random_retrieval(
+        self,
+        filters: IndexFilters,
+        num_to_retrieve: int = 10,
+    ) -> list[InferenceChunk]:
+        """Retrieve random chunks matching the filters"""
+        raise NotImplementedError
+
+
 class BaseIndex(
     Verifiable,
     Indexable,
@@ -370,6 +384,7 @@ class BaseIndex(
     Deletable,
     AdminCapable,
     IdRetrievalCapable,
+    RandomCapable,
     abc.ABC,
 ):
     """

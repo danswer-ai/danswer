@@ -57,6 +57,7 @@ import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { buildImgUrl } from "@/app/chat/files/images/utils";
 import { LlmList } from "@/components/llm/LLMList";
 import { useAssistants } from "@/components/context/AssistantsContext";
+import { debounce } from "lodash";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -213,6 +214,43 @@ export function AssistantEditor({
     // EE Only
     groups: existingPersona?.groups ?? [],
   };
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  interface AssistantPrompt {
+    message: string;
+    description: string;
+    name: string;
+  }
+
+  // Create debounced refresh function
+  const debouncedRefreshPrompts = debounce(
+    async (values: any, setFieldValue: any) => {
+      setIsRefreshing(true);
+      try {
+        const response = await fetch("/api/persona/assistant-prompt-refresh", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: values.name,
+            description: values.description,
+            document_set_ids: values.document_set_ids || [],
+          }),
+        });
+
+        const data: AssistantPrompt = await response.json();
+        if (response.ok) {
+          setFieldValue("starter_messages", data);
+        }
+      } catch (error) {
+        console.error("Failed to refresh prompts:", error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    },
+    1000
+  );
 
   const [isRequestSuccessful, setIsRequestSuccessful] = useState(false);
 
@@ -407,6 +445,8 @@ export function AssistantEditor({
           isSubmitting,
           values,
           setFieldValue,
+          errors,
+
           ...formikProps
         }: FormikProps<any>) => {
           function toggleToolInValues(toolId: number) {
@@ -428,6 +468,22 @@ export function AssistantEditor({
           const currentLLMSupportsImageOutput = checkLLMSupportsImageInput(
             values.llm_model_version_override || defaultModelName || ""
           );
+
+          useEffect(() => {
+            // Only refresh if we have required fields and no errors
+            if (
+              values.name &&
+              values.description &&
+              Object.keys(errors).length === 0
+            ) {
+              debouncedRefreshPrompts(values, setFieldValue);
+            }
+          }, [
+            values.name,
+            values.description,
+            values.document_set_ids,
+            errors,
+          ]);
 
           return (
             <Form className="w-full text-text-950">
@@ -627,7 +683,10 @@ export function AssistantEditor({
                   otherwise specified below.
                   {admin &&
                     user?.preferences.default_model &&
-                    `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
+                    `  Your current (user-specific) default model is ${getDisplayNameForModel(
+                      destructureValue(user?.preferences?.default_model!)
+                        .modelName
+                    )}`}
                 </p>
                 {admin ? (
                   <div className="mb-2 flex items-starts">
@@ -972,6 +1031,162 @@ export function AssistantEditor({
                   )}
                 </div>
               </div>
+
+              <div className="mb-6 flex flex-col">
+                <div className="flex gap-x-2 items-center">
+                  <div className="block font-medium text-base">
+                    Starter Messages
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="xs"
+                  onClick={() => debouncedRefreshPrompts(values, setFieldValue)}
+                  disabled={isRefreshing || Object.keys(errors).length > 0}
+                >
+                  {isRefreshing ? "Refreshing..." : "Refresh Messages"}
+                </Button>
+
+                <SubLabel>
+                  Add pre-defined messages to help users get started. Only the
+                  first 4 will be displayed.
+                </SubLabel>
+                <FieldArray
+                  name="starter_messages"
+                  render={(arrayHelpers: ArrayHelpers<StarterMessage[]>) => (
+                    <div>
+                      {values.starter_messages &&
+                        values.starter_messages.length > 0 &&
+                        values.starter_messages.map(
+                          (starterMessage: StarterMessage, index: number) => {
+                            return (
+                              <div
+                                key={index}
+                                className={index === 0 ? "mt-2" : "mt-6"}
+                              >
+                                <div className="flex">
+                                  <div className="w-full mr-6 border border-border p-3 rounded">
+                                    <div>
+                                      <Label small>Name</Label>
+                                      <SubLabel>
+                                        Shows up as the &quot;title&quot; for
+                                        this Starter Message. For example,
+                                        &quot;Write an email&quot;.
+                                      </SubLabel>
+                                      <Field
+                                        name={`starter_messages[${index}].name`}
+                                        className={`
+                                            border 
+                                            border-border 
+                                            bg-background 
+                                            rounded 
+                                            w-full 
+                                            py-2 
+                                            px-3 
+                                            mr-4
+                                          `}
+                                        autoComplete="off"
+                                      />
+                                      <ErrorMessage
+                                        name={`starter_messages[${index}].name`}
+                                        component="div"
+                                        className="text-error text-sm mt-1"
+                                      />
+                                    </div>
+
+                                    <div className="mt-3">
+                                      <Label small>Description</Label>
+                                      <SubLabel>
+                                        A description which tells the user what
+                                        they might want to use this Starter
+                                        Message for. For example &quot;to a
+                                        client about a new feature&quot;
+                                      </SubLabel>
+                                      <Field
+                                        name={`starter_messages.${index}.description`}
+                                        className={`
+                                            border 
+                                            border-border 
+                                            bg-background 
+                                            rounded 
+                                            w-full 
+                                            py-2 
+                                            px-3 
+                                            mr-4
+                                          `}
+                                        autoComplete="off"
+                                      />
+                                      <ErrorMessage
+                                        name={`starter_messages[${index}].description`}
+                                        component="div"
+                                        className="text-error text-sm mt-1"
+                                      />
+                                    </div>
+
+                                    <div className="mt-3">
+                                      <Label small>Message</Label>
+                                      <SubLabel>
+                                        The actual message to be sent as the
+                                        initial user message if a user selects
+                                        this starter prompt. For example,
+                                        &quot;Write me an email to a client
+                                        about a new billing feature we just
+                                        released.&quot;
+                                      </SubLabel>
+                                      <Field
+                                        name={`starter_messages[${index}].message`}
+                                        className={`
+                                              border 
+                                              border-border 
+                                              bg-background 
+                                              rounded 
+                                              w-full 
+                                              py-2 
+                                              px-3 
+                                              mr-4
+                                          `}
+                                        as="textarea"
+                                        autoComplete="off"
+                                      />
+                                      <ErrorMessage
+                                        name={`starter_messages[${index}].message`}
+                                        component="div"
+                                        className="text-error text-sm mt-1"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="my-auto">
+                                    <FiX
+                                      className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
+                                      onClick={() => arrayHelpers.remove(index)}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                        )}
+
+                      <Button
+                        onClick={() => {
+                          arrayHelpers.push({
+                            name: "",
+                            description: "",
+                            message: "",
+                          });
+                        }}
+                        className="text-white mt-3"
+                        size="xs"
+                        type="button"
+                        icon={FiPlus}
+                        color="green"
+                      >
+                        Add New
+                      </Button>
+                    </div>
+                  )}
+                />
+              </div>
               <Divider />
               <AdvancedOptionsToggle
                 showAdvancedOptions={showAdvancedOptions}
@@ -995,161 +1210,6 @@ export function AssistantEditor({
                       />
                     </>
                   )}
-
-                  <div className="mb-6 flex flex-col">
-                    <div className="flex gap-x-2 items-center">
-                      <div className="block font-medium text-base">
-                        Starter Messages (Optional){" "}
-                      </div>
-                    </div>
-                    <SubLabel>
-                      Add pre-defined messages to help users get started. Only
-                      the first 4 will be displayed.
-                    </SubLabel>
-                    <FieldArray
-                      name="starter_messages"
-                      render={(
-                        arrayHelpers: ArrayHelpers<StarterMessage[]>
-                      ) => (
-                        <div>
-                          {values.starter_messages &&
-                            values.starter_messages.length > 0 &&
-                            values.starter_messages.map(
-                              (
-                                starterMessage: StarterMessage,
-                                index: number
-                              ) => {
-                                return (
-                                  <div
-                                    key={index}
-                                    className={index === 0 ? "mt-2" : "mt-6"}
-                                  >
-                                    <div className="flex">
-                                      <div className="w-full mr-6 border border-border p-3 rounded">
-                                        <div>
-                                          <Label small>Name</Label>
-                                          <SubLabel>
-                                            Shows up as the &quot;title&quot;
-                                            for this Starter Message. For
-                                            example, &quot;Write an email&quot;.
-                                          </SubLabel>
-                                          <Field
-                                            name={`starter_messages[${index}].name`}
-                                            className={`
-                                            border 
-                                            border-border 
-                                            bg-background 
-                                            rounded 
-                                            w-full 
-                                            py-2 
-                                            px-3 
-                                            mr-4
-                                          `}
-                                            autoComplete="off"
-                                          />
-                                          <ErrorMessage
-                                            name={`starter_messages[${index}].name`}
-                                            component="div"
-                                            className="text-error text-sm mt-1"
-                                          />
-                                        </div>
-
-                                        <div className="mt-3">
-                                          <Label small>Description</Label>
-                                          <SubLabel>
-                                            A description which tells the user
-                                            what they might want to use this
-                                            Starter Message for. For example
-                                            &quot;to a client about a new
-                                            feature&quot;
-                                          </SubLabel>
-                                          <Field
-                                            name={`starter_messages.${index}.description`}
-                                            className={`
-                                            border 
-                                            border-border 
-                                            bg-background 
-                                            rounded 
-                                            w-full 
-                                            py-2 
-                                            px-3 
-                                            mr-4
-                                          `}
-                                            autoComplete="off"
-                                          />
-                                          <ErrorMessage
-                                            name={`starter_messages[${index}].description`}
-                                            component="div"
-                                            className="text-error text-sm mt-1"
-                                          />
-                                        </div>
-
-                                        <div className="mt-3">
-                                          <Label small>Message</Label>
-                                          <SubLabel>
-                                            The actual message to be sent as the
-                                            initial user message if a user
-                                            selects this starter prompt. For
-                                            example, &quot;Write me an email to
-                                            a client about a new billing feature
-                                            we just released.&quot;
-                                          </SubLabel>
-                                          <Field
-                                            name={`starter_messages[${index}].message`}
-                                            className={`
-                                              border 
-                                              border-border 
-                                              bg-background 
-                                              rounded 
-                                              w-full 
-                                              py-2 
-                                              px-3 
-                                              mr-4
-                                          `}
-                                            as="textarea"
-                                            autoComplete="off"
-                                          />
-                                          <ErrorMessage
-                                            name={`starter_messages[${index}].message`}
-                                            component="div"
-                                            className="text-error text-sm mt-1"
-                                          />
-                                        </div>
-                                      </div>
-                                      <div className="my-auto">
-                                        <FiX
-                                          className="my-auto w-10 h-10 cursor-pointer hover:bg-hover rounded p-2"
-                                          onClick={() =>
-                                            arrayHelpers.remove(index)
-                                          }
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              }
-                            )}
-
-                          <Button
-                            onClick={() => {
-                              arrayHelpers.push({
-                                name: "",
-                                description: "",
-                                message: "",
-                              });
-                            }}
-                            className="text-white mt-3"
-                            size="xs"
-                            type="button"
-                            icon={FiPlus}
-                            color="green"
-                          >
-                            Add New
-                          </Button>
-                        </div>
-                      )}
-                    />
-                  </div>
 
                   <IsPublicGroupSelector
                     formikProps={{

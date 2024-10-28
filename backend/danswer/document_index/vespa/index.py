@@ -69,6 +69,7 @@ from danswer.document_index.vespa_constants import YQL_BASE
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.key_value_store.factory import get_kv_store
 from danswer.search.models import IndexFilters
+from danswer.search.models import InferenceChunk
 from danswer.search.models import InferenceChunkUncleaned
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
@@ -898,6 +899,41 @@ class VespaIndex(DocumentIndex):
                             # Optionally, implement retry logic or error handling here
 
         logger.info("Batch deletion completed")
+
+    def random_retrieval(
+        self,
+        filters: IndexFilters,
+        num_to_retrieve: int = 10,
+    ) -> list[InferenceChunk]:
+        """Retrieve random chunks matching the filters"""
+        vespa_where_clauses = build_vespa_filters(filters)
+
+        # Remove trailing 'and' if it exists
+        if vespa_where_clauses.strip().endswith("and"):
+            vespa_where_clauses = vespa_where_clauses.strip()[:-3].strip()
+
+        # Add a true condition if we only have hidden filter
+        if vespa_where_clauses == "!(hidden=true)":
+            vespa_where_clauses += " and true"
+
+        yql = YQL_BASE.format(index_name=self.index_name) + vespa_where_clauses
+
+        import random
+
+        params: dict[str, str | int | float] = {
+            "yql": yql,
+            "hits": num_to_retrieve
+            * 10,  # Request more hits to get better randomization
+            "timeout": VESPA_TIMEOUT,
+            "ranking.softtimeout.enable": "false",  # Ensure we get all results
+        }
+
+        results = query_vespa(params)
+
+        # Randomly sample from the results
+        if len(results) > num_to_retrieve:
+            return random.sample(results, num_to_retrieve)
+        return results
 
 
 class _VespaDeleteRequest:

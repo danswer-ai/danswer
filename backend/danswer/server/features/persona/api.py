@@ -14,6 +14,7 @@ from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import NotificationType
+from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.notification import create_notification
@@ -26,10 +27,16 @@ from danswer.db.persona import update_all_personas_display_priority
 from danswer.db.persona import update_persona_public_status
 from danswer.db.persona import update_persona_shared_users
 from danswer.db.persona import update_persona_visibility
+from danswer.document_index.document_index_utils import get_both_index_names
+from danswer.document_index.factory import get_default_document_index
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
 from danswer.llm.answering.prompts.utils import build_dummy_prompt
+from danswer.llm.factory import get_default_llms
+from danswer.search.models import IndexFilters
+from danswer.search.models import InferenceChunk
 from danswer.server.features.persona.models import CreatePersonaRequest
+from danswer.server.features.persona.models import GeneratePersonaPromptRequest
 from danswer.server.features.persona.models import ImageGenerationToolStatus
 from danswer.server.features.persona.models import PersonaSharedNotificationData
 from danswer.server.features.persona.models import PersonaSnapshot
@@ -299,3 +306,68 @@ def build_final_template_prompt(
             retrieval_disabled=retrieval_disabled,
         )
     )
+
+
+class StarterMessage(BaseModel):
+    name: str
+    description: str
+    message: str
+
+
+def get_random_chunks_from_doc_sets(
+    doc_set_ids: list[str], num_chunks: int, db_session: Session
+) -> list[InferenceChunk]:
+    # Get the document index
+    curr_ind_name, sec_ind_name = get_both_index_names(db_session)
+    document_index = get_default_document_index(curr_ind_name, sec_ind_name)
+
+    # Create filters to only get chunks from specified document sets
+    filters = IndexFilters(document_set_ids=doc_set_ids, access_control_list=None)
+
+    # Get random chunks directly from Vespa
+    return document_index.random_retrieval(filters=filters, num_to_retrieve=num_chunks)
+
+
+# Based on an assistant schema, generates 4 prompts
+@basic_router.post("/assistant-prompt-refresh")
+def build_assistant_prompts(
+    generate_persona_prompt_request: GeneratePersonaPromptRequest,
+    db_session: Session = Depends(get_session),
+    _: User | None = Depends(current_user),
+) -> list[StarterMessage]:
+    document_sets = get_document_sets_by_ids(
+        document_set_ids=generate_persona_prompt_request.document_set_ids,
+        db_session=db_session,
+    )
+    print(document_sets)
+    llm, fast_llm = get_default_llms(temperature=1.0)
+    chunks = get_random_chunks_from_doc_sets(
+        doc_set_ids=generate_persona_prompt_request.document_set_ids,
+        num_chunks=4,
+        db_session=db_session,
+    )
+    random_content = "".join([chunk.content for chunk in chunks])
+    prompt = (
+        "Based on the following content sample, create a natural, engaging starter message for a chatbot. "
+        "The message should demonstrate knowledge of the content domain while inviting user interaction. "
+        "and 'message' (the actual conversation starter). Content sample: "
+        + random_content
+    )
+    prompts: StarterMessage = []
+    for _ in range(4):
+        import json
+
+        response = json.loads(
+            fast_llm.invoke(prompt, structured_response_format=StarterMessage).content
+        )
+        # Convert the LLM response into a StarterMessage object
+        starter_message = StarterMessage(
+            name=response["name"],
+            description=response["description"],
+            message=response["message"],
+        )
+        prompts.append(starter_message)
+
+    return prompts
+
+    # return build_assistant_prompts(assistant_schema=assistant_schema)
