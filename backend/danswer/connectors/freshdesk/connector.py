@@ -74,7 +74,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         base_url = f"https://{self.domain}.freshdesk.com/api/v2/tickets"
         params = {
             "include": "description",
-            "per_page": 3,
+            "per_page": 50,
             "page": 1
         }
         
