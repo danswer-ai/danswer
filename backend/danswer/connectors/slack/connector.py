@@ -441,6 +441,7 @@ if __name__ == "__main__":
 
     current = time.time()
     one_day_ago = current - 24 * 60 * 60  # 1 day
+
     document_batches = connector.poll_source(one_day_ago, current)
 
     print(next(document_batches))
