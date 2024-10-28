@@ -28,6 +28,16 @@ jobs:
           git config --global user.email "yuhongsun96@gmail.com"
           # Configure Git to use the PAT for authentication
           git remote set-url origin https://yuhongsun96:${{ secrets.YUHONG_GH_ACTIONS }}@github.com/${{ github.repository }}.git
+      
+      - name: Check for Backport Checkbox
+        id: checkbox-check
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          if [[ "$PR_BODY" == *"[x] This PR should be backported"* ]]; then
+            echo "backport=true" >> $GITHUB_OUTPUT
+          else
+            echo "backport=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: List and sort release branches
         id: list-branches
