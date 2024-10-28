@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole } from "@/lib/types";
 import { getCurrentUser } from "@/lib/user";
+import { usePostHog } from "posthog-js/react";
 
 interface UserContextType {
   user: User | null;
@@ -23,6 +24,24 @@ export function UserProvider({
 }) {
   const [upToDateUser, setUpToDateUser] = useState<User | null>(user);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
+
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    if (!posthog) return;
+
+    if (user?.id) {
+      const identifyData: Record<string, any> = {
+        email: user.email,
+      };
+      if (user.organization_name) {
+        identifyData.organization_name = user.organization_name;
+      }
+      posthog.identify(user.id, identifyData);
+    } else {
+      posthog.reset();
+    }
+  }, [posthog, user]);
 
   const fetchUser = async () => {
     try {
