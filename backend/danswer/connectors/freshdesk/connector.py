@@ -15,7 +15,7 @@ logger = setup_logger()
 def _create_doc_from_ticket(ticket: dict, domain: str) -> Document:
     # Process date fields
     for date_field in ["created_at", "updated_at", "due_by"]:
-        ticket[date_field] = datetime.fromisoformat(ticket[date_field].rstrip('Z')).replace(tzinfo=timezone.utc)
+        ticket[date_field] = datetime.fromisoformat(ticket[date_field].replace('Z', '+00:00'))
 
     # Convert all other values to strings
     ticket = {
@@ -74,7 +74,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         base_url = f"https://{self.domain}.freshdesk.com/api/v2/tickets"
         params = {
             "include": "description",
-            "per_page": 50,
+            "per_page": 3,
             "page": 1
         }
         
