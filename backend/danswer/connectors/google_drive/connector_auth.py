@@ -29,8 +29,6 @@ GOOGLE_DRIVE_SCOPES = [
     "https://www.googleapis.com/auth/drive.readonly",
     "https://www.googleapis.com/auth/drive.metadata.readonly",
     "https://www.googleapis.com/auth/admin.directory.group.readonly",
-]
-SERVICE_ACCOUNT_SCOPES = GOOGLE_DRIVE_SCOPES + [
     "https://www.googleapis.com/auth/admin.directory.user.readonly",
 ]
 DB_CREDENTIALS_DICT_TOKEN_KEY = "google_drive_tokens"
@@ -102,7 +100,7 @@ def get_google_drive_creds_for_authorized_user(
 
 
 def get_google_drive_creds(
-    credentials: dict[str, str], scopes: list[str] = SERVICE_ACCOUNT_SCOPES
+    credentials: dict[str, str], scopes: list[str] = GOOGLE_DRIVE_SCOPES
 ) -> tuple[ServiceAccountCredentials | OAuthCredentials, dict[str, str] | None]:
     oauth_creds = None
     service_creds = None
@@ -159,7 +157,7 @@ def get_auth_url(credential_id: int) -> str:
     credential_json = json.loads(creds_str)
     flow = InstalledAppFlow.from_client_config(
         credential_json,
-        scopes=SERVICE_ACCOUNT_SCOPES,
+        scopes=GOOGLE_DRIVE_SCOPES,
         redirect_uri=_build_frontend_google_drive_redirect(),
     )
     auth_url, _ = flow.authorization_url(prompt="consent")
@@ -182,7 +180,7 @@ def update_credential_access_tokens(
     app_credentials = get_google_app_cred()
     flow = InstalledAppFlow.from_client_config(
         app_credentials.model_dump(),
-        scopes=SERVICE_ACCOUNT_SCOPES,
+        scopes=GOOGLE_DRIVE_SCOPES,
         redirect_uri=_build_frontend_google_drive_redirect(),
     )
     flow.fetch_token(code=auth_code)
