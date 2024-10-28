@@ -50,10 +50,10 @@ export function AssistantIcon({
                 size === "large"
                   ? "w-10 h-10"
                   : size === "header"
-                  ? "w-14 h-14"
-                  : size === "medium"
-                  ? "w-8 h-8"
-                  : "w-6 h-6"
+                    ? "w-14 h-14"
+                    : size === "medium"
+                      ? "w-8 h-8"
+                      : "w-6 h-6"
               }`}
             src={buildImgUrl(assistant.uploaded_image_id)}
             loading="lazy"
@@ -66,10 +66,10 @@ export function AssistantIcon({
                     size === "large"
                       ? "w-10 h-10"
                       : size === "header"
-                      ? "w-14 h-14"
-                      : size === "medium"
-                      ? "w-8 h-8"
-                      : "w-6 h-6"
+                        ? "w-14 h-14"
+                        : size === "medium"
+                          ? "w-8 h-8"
+                          : "w-6 h-6"
                   } `}
           >
             {createSVG(
@@ -78,10 +78,10 @@ export function AssistantIcon({
               size === "large"
                 ? 40
                 : size === "header"
-                ? 56
-                : size === "medium"
-                ? 32
-                : 24
+                  ? 56
+                  : size === "medium"
+                    ? 32
+                    : 24
             )}
           </div>
         ) : (
