@@ -11,6 +11,10 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.utils.text_processing import is_valid_email
 
 
+T = TypeVar("T")
+U = TypeVar("U")
+
+
 def datetime_to_utc(dt: datetime) -> datetime:
     if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
         dt = dt.replace(tzinfo=timezone.utc)
@@ -47,10 +51,6 @@ def get_experts_stores_representations(
 
     reps = [basic_expert_info_representation(owner) for owner in experts]
     return [owner for owner in reps if owner is not None]
-
-
-T = TypeVar("T")
-U = TypeVar("U")
 
 
 def process_in_batches(
