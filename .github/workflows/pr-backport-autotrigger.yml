@@ -14,26 +14,20 @@ jobs:
   backport:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.YUHONG_GH_ACTIONS }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
-          ssh-key: "${{ secrets.RKUO_DEPLOY_KEY }}"
+          fetch-depth: 0  # Fetch all history for all branches and tags
 
-      - name: Set up Git user
+      - name: Set up Git
         run: |
-          git config user.name "Richard Kuo [bot]"
-          git config user.email "rkuo[bot]@danswer.ai"
-
-      - name: Check for Backport Checkbox
-        id: checkbox-check
-        run: |
-          PR_BODY="${{ github.event.pull_request.body }}"
-          if [[ "$PR_BODY" == *"[x] This PR should be backported"* ]]; then
-            echo "backport=true" >> $GITHUB_OUTPUT
-          else
-            echo "backport=false" >> $GITHUB_OUTPUT
-          fi
+          git config --global user.name "yuhongsun96"
+          git config --global user.email "yuhongsun96@gmail.com"
+          # Configure Git to use the PAT for authentication
+          git remote set-url origin https://yuhongsun96:${{ secrets.YUHONG_GH_ACTIONS }}@github.com/${{ github.repository }}.git
 
       - name: List and sort release branches
         id: list-branches
