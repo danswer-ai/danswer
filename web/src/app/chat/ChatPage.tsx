@@ -2512,7 +2512,7 @@ export function ChatPage({
               )}
             </div>
           </div>
-          <FixedLogo />
+          <FixedLogo chat />
         </div>
       </div>
       <DocumentSidebar
