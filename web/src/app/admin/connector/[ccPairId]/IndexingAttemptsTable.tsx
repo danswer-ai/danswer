@@ -266,7 +266,6 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                 <TableCell>
                   <IndexAttemptStatus
                     status={indexAttempt.status || "not_started"}
-                    size="xs"
                   />
                   {docsPerMinute ? (
                     <div className="text-xs mt-1">
