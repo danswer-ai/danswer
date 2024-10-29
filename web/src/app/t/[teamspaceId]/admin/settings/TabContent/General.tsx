@@ -136,7 +136,7 @@ export default function General({
   const handleRemoveLogo = async () => {
     try {
       const response = await fetch(
-        `/api/manage/admin/teamspace/logo?teamspace_id=${teamspaceId}`,
+        `/api/manage/admin/teamspace/${teamspaceId}/logo`,
         {
           method: "DELETE",
         }

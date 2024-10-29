@@ -114,9 +114,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     company_email: Mapped[str] = mapped_column(String, nullable=True)
     company_billing: Mapped[str] = mapped_column(Text, nullable=True)
     billing_email_address: Mapped[str] = mapped_column(String, nullable=True)
-    is_custom_profile: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False
-    )
+    profile: Mapped[str] = mapped_column(String, nullable=True)
     vat: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -1680,7 +1678,7 @@ class Teamspace(Base):
     is_up_for_deletion: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
-    is_custom_logo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    logo: Mapped[str] = mapped_column(String, nullable=True)
     creator: Mapped[User] = relationship("User", back_populates="teamspace")
     users: Mapped[list[User]] = relationship(
         "User", secondary=User__Teamspace.__table__, viewonly=True

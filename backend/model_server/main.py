@@ -24,8 +24,8 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
 # Change cache paths to the desired directory
-HF_CACHE_PATH = Path("/root/.cache/huggingface/")
-TEMP_HF_CACHE_PATH = Path("/root/.cache/temp_huggingface/")
+HF_CACHE_PATH = Path("/home/andreyaa/Documents/GitHub/huggingface_cache/")
+TEMP_HF_CACHE_PATH = Path("/home/andreyaa/Documents/GitHub/huggingface_cache/temp/")
 
 
 transformer_logging.set_verbosity_error()

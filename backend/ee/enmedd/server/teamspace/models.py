@@ -32,7 +32,7 @@ class Teamspace(BaseModel):
     chat_sessions: list[ChatSessionDetails]
     is_up_to_date: bool
     is_up_for_deletion: bool
-    is_custom_logo: bool = False
+    logo: Optional[str] = None
     workspace: list[MinimalWorkspaceSnapshot]
     token_rate_limit: Optional[TokenRateLimitDisplay] = None
     settings: Optional[TeamspaceSettings] = None
@@ -46,6 +46,7 @@ class Teamspace(BaseModel):
                 id=teamspace_model.creator.id,
                 email=teamspace_model.creator.email,
                 full_name=teamspace_model.creator.full_name,
+                profile=teamspace_model.creator.profile,
             ),
             users=[
                 UserInfo(
@@ -54,6 +55,7 @@ class Teamspace(BaseModel):
                     is_active=user.is_active,
                     is_superuser=user.is_superuser,
                     is_verified=user.is_verified,
+                    profile=user.profile,
                     role=user.role,
                     preferences=UserPreferences(
                         chosen_assistants=user.chosen_assistants
@@ -117,7 +119,7 @@ class Teamspace(BaseModel):
             ],
             is_up_to_date=teamspace_model.is_up_to_date,
             is_up_for_deletion=teamspace_model.is_up_for_deletion,
-            is_custom_logo=teamspace_model.is_custom_logo,
+            logo=teamspace_model.logo,
             workspace=[
                 MinimalWorkspaceSnapshot(
                     id=workspace.id, workspace_name=workspace.workspace_name

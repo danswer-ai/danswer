@@ -192,23 +192,23 @@ def put_teamspace_logo(
     upload_teamspace_logo(teamspace_id=teamspace_id, file=file, db_session=db_session)
 
 
-@admin_router.delete("/admin/teamspace/logo")
+@admin_router.delete("/admin/teamspace/{teamspace_id}/logo")
 def remove_teamspace_logo(
     teamspace_id: int,
-    _: User = Depends(current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
+    _: User = Depends(current_teamspace_admin_user),
 ) -> None:
     try:
-        teamspace = db_session.query(Teamspace).filter_by(id=teamspace_id).first()
-        if not teamspace:
-            raise HTTPException(status_code=404, detail="Teamspace not found")
-
-        file_name = f"{teamspace_id}/{_LOGO_FILENAME}"
+        file_name = f"{teamspace_id}{_LOGO_FILENAME}"
 
         file_store = get_default_file_store(db_session)
         file_store.delete_file(file_name)
 
-        teamspace.is_custom_logo = False
+        teamspace = db_session.query(TeamspaceModel).filter_by(id=teamspace_id).first()
+        if not teamspace:
+            raise HTTPException(status_code=404, detail="Teamspace not found")
+
+        teamspace.logo = None
         db_session.merge(teamspace)
         db_session.commit()
 
@@ -226,7 +226,7 @@ def fetch_teamspace_logo(
     db_session: Session = Depends(get_session),
 ) -> Response:
     try:
-        file_path = f"{teamspace_id}/{_LOGO_FILENAME}"
+        file_path = f"{teamspace_id}{_LOGO_FILENAME}"
 
         file_store = get_default_file_store(db_session)
         file_io = file_store.read_file(file_path, mode="b")

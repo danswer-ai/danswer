@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -43,7 +44,7 @@ class UserInfo(BaseModel):
     is_active: bool
     is_superuser: bool
     is_verified: bool
-    is_custom_profile: bool = False
+    profile: Optional[str]
     role: UserRole
     full_name: str | None = None
     company_name: str | None = None
@@ -71,7 +72,7 @@ class UserInfo(BaseModel):
             is_active=user.is_active,
             is_superuser=user.is_superuser,
             is_verified=user.is_verified,
-            is_custom_profile=user.is_custom_profile,
+            profile=user.profile,
             role=user.role,
             full_name=user.full_name,
             company_name=user.company_name,
@@ -95,7 +96,7 @@ class UserInfo(BaseModel):
                 TeamspaceResponse(
                     id=group.id,
                     name=group.name,
-                    is_custom_logo=group.is_custom_logo,
+                    logo=group.logo,
                 )
                 for group in user.groups
             ],

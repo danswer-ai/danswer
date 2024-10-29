@@ -175,7 +175,7 @@ def upload_profile(db_session: Session, file: UploadFile | str, user: User) -> b
         file_origin=FileOrigin.OTHER,
         file_type=file_type,
     )
-    user.is_custom_profile = True
+    user.profile = file_name
     db_session.merge(user)
     db_session.commit()
 
@@ -233,7 +233,7 @@ def upload_teamspace_logo(
             logger.error(f"Error processing image: {e}")
             raise HTTPException(status_code=400, detail="Invalid image file.")
 
-    file_name = f"{teamspace_id}/{_LOGO_FILENAME}"
+    file_name = f"{teamspace_id}{_LOGO_FILENAME}"
 
     file_store = get_default_file_store(db_session)
     file_store.save_file(
@@ -244,7 +244,7 @@ def upload_teamspace_logo(
         file_type=file_type,
     )
 
-    teamspace.is_custom_logo = True
+    teamspace.logo = file_name
     db_session.merge(teamspace)
     db_session.commit()
 

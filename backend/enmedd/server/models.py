@@ -31,14 +31,14 @@ class IdReturn(BaseModel):
 class MinimalUserSnapshot(BaseModel):
     id: UUID
     email: str
-    is_custom_profile: bool = False
+    profile: Optional[str]
 
 
 class MinimalUserwithNameSnapshot(BaseModel):
     id: UUID
     email: str
     full_name: str
-    is_custom_profile: bool = False
+    profile: Optional[str]
 
 
 class FullUserSnapshot(BaseModel):
@@ -48,7 +48,7 @@ class FullUserSnapshot(BaseModel):
     company_email: Optional[EmailStr]
     company_billing: Optional[str]
     billing_email_address: Optional[EmailStr]
-    is_custom_profile: bool = False
+    profile: Optional[str]
     vat: Optional[str]
     email: str
     role: UserRole
@@ -78,7 +78,7 @@ class MinimalTeamspaceSnapshot(BaseModel):
 class TeamspaceResponse(BaseModel):
     id: int
     name: Optional[str] = None
-    is_custom_logo: bool = False
+    logo: Optional[str] = None
 
 
 class WorkspaceResponse(BaseModel):

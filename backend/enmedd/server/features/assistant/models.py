@@ -87,7 +87,7 @@ class AssistantSnapshot(BaseModel):
                 MinimalUserSnapshot(
                     id=assistant.user.id,
                     email=assistant.user.email,
-                    is_custom_profile=assistant.user.is_custom_profile,
+                    profile=assistant.user.profile,
                 )
                 if assistant.user
                 else None
@@ -114,7 +114,7 @@ class AssistantSnapshot(BaseModel):
                 MinimalUserSnapshot(
                     id=user.id,
                     email=user.email,
-                    is_custom_profile=user.is_custom_profile,
+                    profile=user.profile,
                 )
                 for user in assistant.users
             ],
