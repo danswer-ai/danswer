@@ -10,14 +10,12 @@ import { fetchSS } from "@/lib/utilsSS";
 import { CCPairBasicInfo, DocumentSet, Tag, User } from "@/lib/types";
 import { cookies } from "next/headers";
 import { SearchType } from "@/lib/search/interfaces";
-import { Assistant } from "../admin/assistants/interfaces";
 import {
   WelcomeModal,
   hasCompletedWelcomeFlowSS,
 } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { assistantComparator } from "../admin/assistants/lib";
 import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { ChatPopup } from "@/app/chat/ChatPopup";
@@ -39,6 +37,8 @@ import {
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { SearchProvider } from "@/context/SearchContext";
+import { Assistant } from "@/app/admin/assistants/interfaces";
+import { assistantComparator } from "@/app/admin/assistants/lib";
 
 export default async function Home({
   params,
