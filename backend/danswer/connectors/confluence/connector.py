@@ -50,10 +50,6 @@ _RESTRICTIONS_EXPANSION_FIELDS = [
     "restrictions.read.restrictions.group",
 ]
 
-_NO_PARENT_OR_NO_PERMISSIONS_ERROR_STR = (
-    "No parent or not permitted to view content with id"
-)
-
 
 class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
@@ -123,21 +119,16 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         comment_cql += self.cql_label_filter
 
         expand = ",".join(_COMMENT_EXPANSION_FIELDS)
-        try:
-            for comments in self.confluence_client.paginated_cql_page_retrieval(
-                cql=comment_cql,
-                expand=expand,
-            ):
-                for comment in comments:
-                    comment_string += "\nComment:\n"
-                    comment_string += extract_text_from_confluence_html(
-                        confluence_client=self.confluence_client,
-                        confluence_object=comment,
-                    )
-        except Exception as e:
-            logger.exception("error fetching comments: \n")
-            if _NO_PARENT_OR_NO_PERMISSIONS_ERROR_STR not in str(e):
-                raise
+        for comments in self.confluence_client.paginated_cql_page_retrieval(
+            cql=comment_cql,
+            expand=expand,
+        ):
+            for comment in comments:
+                comment_string += "\nComment:\n"
+                comment_string += extract_text_from_confluence_html(
+                    confluence_client=self.confluence_client,
+                    confluence_object=comment,
+                )
 
         return comment_string
 
