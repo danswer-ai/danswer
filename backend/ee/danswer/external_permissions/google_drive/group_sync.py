@@ -23,13 +23,13 @@ def gdrive_group_sync(
     if google_drive_connector.service_account_creds is None:
         raise ValueError("Service account credentials not found")
 
-    admin_service = google_drive_connector.get_admin_service("admin", "directory_v1")
+    admin_service = google_drive_connector.get_google_resource("admin", "directory_v1")
 
     danswer_groups: list[ExternalUserGroup] = []
     for group in execute_paginated_retrieval(
         admin_service.groups().list,
         list_key="groups",
-        domain=google_drive_connector.service_account_domain,
+        domain=google_drive_connector.google_domain,
         fields="groups(email)",
     ):
         # The id is the group email

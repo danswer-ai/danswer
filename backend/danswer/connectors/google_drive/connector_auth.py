@@ -32,7 +32,7 @@ GOOGLE_DRIVE_SCOPES = [
     "https://www.googleapis.com/auth/admin.directory.user.readonly",
 ]
 DB_CREDENTIALS_DICT_TOKEN_KEY = "google_drive_tokens"
-DB_CREDENTIALS_DICT_DELEGATED_USER_KEY = "google_drive_delegated_user"
+DB_CREDENTIALS_PRIMARY_ADMIN_KEY = "google_drive_delegated_user"
 
 
 def _build_frontend_google_drive_redirect() -> str:
@@ -60,48 +60,15 @@ def get_google_drive_creds_for_authorized_user(
     return None
 
 
-# def get_service_account_credentials(
-#     credentials: dict[str, str],
-#     scopes: list[str],
-# ) -> ServiceAccountCredentials:
-#     service_account_key_json_str = credentials[KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY]
-#     service_creds = _get_google_drive_creds_for_service_account(
-#         service_account_key_json_str=service_account_key_json_str,
-#         scopes=scopes,
-#     )
-
-#     # "Impersonate" a user if one is specified
-#     delegated_user_email = cast(
-#         str | None, credentials.get(DB_CREDENTIALS_DICT_DELEGATED_USER_KEY)
-#     )
-#     if delegated_user_email:
-#         service_creds = (
-#             service_creds.with_subject(delegated_user_email) if service_creds else None
-#         )
-#     return service_creds
-
-
-# def get_oauth_credentials(
-#     credentials: dict[str, str],
-#     scopes: list[str]
-# ) -> tuple[OAuthCredentials | None, dict[str, str] | None]:
-#     new_creds_dict = None
-#     access_token_json_str = cast(str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY])
-#     oauth_creds = get_google_drive_creds_for_authorized_user(
-#         token_json_str=access_token_json_str, scopes=scopes
-#     )
-
-#     # tell caller to update token stored in DB if it has changed
-#     # (e.g. the token has been refreshed)
-#     new_creds_json_str = oauth_creds.to_json() if oauth_creds else ""
-#     if new_creds_json_str != access_token_json_str:
-#         new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
-#     return oauth_creds, new_creds_dict
-
-
 def get_google_drive_creds(
     credentials: dict[str, str], scopes: list[str] = GOOGLE_DRIVE_SCOPES
 ) -> tuple[ServiceAccountCredentials | OAuthCredentials, dict[str, str] | None]:
+    """Checks for two different types of credentials.
+    (1) A credential which holds a token acquired via a user going thorough
+    the Google OAuth flow.
+    (2) A credential which holds a service account key JSON file, which
+    can then be used to impersonate any user in the workspace.
+    """
     oauth_creds = None
     service_creds = None
     new_creds_dict = None
@@ -203,7 +170,7 @@ def build_service_account_creds(
         KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY: service_account_key.json(),
     }
     if delegated_user_email:
-        credential_dict[DB_CREDENTIALS_DICT_DELEGATED_USER_KEY] = delegated_user_email
+        credential_dict[DB_CREDENTIALS_PRIMARY_ADMIN_KEY] = delegated_user_email
 
     return CredentialBase(
         credential_json=credential_dict,

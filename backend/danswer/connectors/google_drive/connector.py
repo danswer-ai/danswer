@@ -16,10 +16,9 @@ from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
-from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
 from danswer.connectors.cross_connector_utils.retry_wrapper import retry_builder
 from danswer.connectors.google_drive.connector_auth import (
-    DB_CREDENTIALS_DICT_DELEGATED_USER_KEY,
+    DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
 from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -40,17 +39,26 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-DRIVE_FOLDER_TYPE = "application/vnd.google-apps.folder"
-DRIVE_SHORTCUT_TYPE = "application/vnd.google-apps.shortcut"
-UNSUPPORTED_FILE_TYPE_CONTENT = ""  # keep empty for now
+_DRIVE_FOLDER_TYPE = "application/vnd.google-apps.folder"
+_DRIVE_SHORTCUT_TYPE = "application/vnd.google-apps.shortcut"
+_UNSUPPORTED_FILE_TYPE_CONTENT = ""  # keep empty for now
 
-FILE_FIELDS = "nextPageToken, files(mimeType, id, name, permissions, modifiedTime, webViewLink, shortcutDetails, owners)"
-SLIM_FILE_FIELDS = "nextPageToken, files(id, permissions(emailAddress, type), permissionIds, webViewLink)"
-FOLDER_FIELDS = "nextPageToken, files(id, name, permissions, modifiedTime, webViewLink, shortcutDetails)"
+_FILE_FIELDS = "nextPageToken, files(mimeType, id, name, permissions, modifiedTime, webViewLink, shortcutDetails, owners)"
+_SLIM_FILE_FIELDS = "nextPageToken, files(id, permissions(emailAddress, type), permissionIds, webViewLink)"
+_FOLDER_FIELDS = "nextPageToken, files(id, name, permissions, modifiedTime, webViewLink, shortcutDetails)"
+_USER_FIELDS = "nextPageToken, users(primaryEmail)"
 
+# This is a substring of the error google returns when the user doesn't have the correct scopes.
+_MISSING_SCOPES_ERROR_STR = "client not authorized for any of the scopes requested"
+
+_SCOPE_DOC_URL = "https://docs.danswer.dev/connectors/google_drive/overview"
+_ONYX_SCOPE_INSTRUCTIONS = (
+    "You have upgraded Danswer without updating the Google Drive scopes. "
+    f"Please refer to the documentation to learn how to update the scopes: {_SCOPE_DOC_URL}"
+)
 # these errors don't represent a failure in the connector, but simply files
 # that can't / shouldn't be indexed
-ERRORS_TO_CONTINUE_ON = [
+_ERRORS_TO_CONTINUE_ON = [
     "cannotExportFile",
     "exportSizeLimitExceeded",
     "cannotDownloadFile",
@@ -107,7 +115,7 @@ def extract_text(file: dict[str, str], service: Resource) -> str:
 
     if mime_type not in set(item.value for item in GDriveMimeType):
         # Unsupported file types can still have a title, finding this way is still useful
-        return UNSUPPORTED_FILE_TYPE_CONTENT
+        return _UNSUPPORTED_FILE_TYPE_CONTENT
 
     if mime_type in [
         GDriveMimeType.DOC.value,
@@ -149,7 +157,7 @@ def extract_text(file: dict[str, str], service: Resource) -> str:
         elif mime_type == GDriveMimeType.POWERPOINT.value:
             return pptx_to_text(file=io.BytesIO(response))
 
-    return UNSUPPORTED_FILE_TYPE_CONTENT
+    return _UNSUPPORTED_FILE_TYPE_CONTENT
 
 
 def _convert_drive_item_to_document(
@@ -157,7 +165,7 @@ def _convert_drive_item_to_document(
 ) -> Document | None:
     try:
         # Skip files that are shortcuts
-        if file.get("mimeType") == DRIVE_SHORTCUT_TYPE:
+        if file.get("mimeType") == _DRIVE_SHORTCUT_TYPE:
             logger.info("Ignoring Drive Shortcut Filetype")
             return None
         try:
@@ -165,7 +173,7 @@ def _convert_drive_item_to_document(
         except HttpError as e:
             reason = e.error_details[0]["reason"] if e.error_details else e.reason
             message = e.error_details[0]["message"] if e.error_details else e.reason
-            if e.status_code == 403 and reason in ERRORS_TO_CONTINUE_ON:
+            if e.status_code == 403 and reason in _ERRORS_TO_CONTINUE_ON:
                 logger.warning(
                     f"Could not export file '{file['name']}' due to '{message}', skipping..."
                 )
@@ -192,10 +200,6 @@ def _convert_drive_item_to_document(
     return None
 
 
-def _extract_parent_ids_from_urls(urls: list[str]) -> list[str]:
-    return [url.split("/")[-1] for url in urls]
-
-
 class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
         self,
@@ -205,55 +209,40 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     ) -> None:
         self.batch_size = batch_size
 
-        self.parent_ids = (
-            _extract_parent_ids_from_urls(parent_urls) if parent_urls else []
-        )
+        self.initial_parent_ids = []
+        if parent_urls:
+            self.initial_parent_ids = [url.split("/")[-1] for url in parent_urls]
         self.include_personal = include_personal or True
 
-        self.service_account_email: str | None = None
-        self.service_account_domain: str | None = None
-        self.service_account_creds: ServiceAccountCredentials | None = None
+        self.primary_admin_email: str | None = None
+        self.google_domain: str | None = None
 
-        self.oauth_creds: OAuthCredentials | None = None
+        self.creds: OAuthCredentials | ServiceAccountCredentials | None = None
 
         self.is_slim: bool = False
 
         self._TRAVERSED_PARENT_IDS: set[str] = set()
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
-        """Checks for two different types of credentials.
-        (1) A credential which holds a token acquired via a user going thorough
-        the Google OAuth flow.
-        (2) A credential which holds a service account key JSON file, which
-        can then be used to impersonate any user in the workspace.
-        """
-        self.credentials_json = credentials
+        self.primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
+        self.google_domain = self.primary_admin_email.split("@")[1]
 
-        creds, new_creds_dict = get_google_drive_creds(credentials)
-        if KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY in credentials:
-            self.service_account_creds = creds
-            self.service_account_email = credentials[
-                DB_CREDENTIALS_DICT_DELEGATED_USER_KEY
-            ]
-            if self.service_account_email:
-                self.service_account_domain = self.service_account_email.split("@")[1]
-        else:
-            self.oauth_creds = creds
+        self.creds, new_creds_dict = get_google_drive_creds(credentials)
         return new_creds_dict
 
-    def get_admin_service(
+    def get_google_resource(
         self,
         service_name: str = "drive",
         service_version: str = "v3",
         user_email: str | None = None,
     ) -> Resource:
-        if self.service_account_creds:
-            creds = self.service_account_creds.with_subject(
-                user_email or self.service_account_email
-            )
+        if isinstance(self.creds, ServiceAccountCredentials):
+            creds = self.creds.with_subject(user_email or self.primary_admin_email)
             service = build(service_name, service_version, credentials=creds)
+        elif isinstance(self.creds, OAuthCredentials):
+            service = build(service_name, service_version, credentials=self.creds)
         else:
-            service = build(service_name, service_version, credentials=self.oauth_creds)
+            raise PermissionError("No credentials found")
 
         return service
 
@@ -264,9 +253,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         personal_drive: bool = False,
     ) -> Iterator[GoogleDriveFileType]:
         # Follow shortcuts to folders
-        query = (
-            f"(mimeType = '{DRIVE_FOLDER_TYPE}' or mimeType = '{DRIVE_SHORTCUT_TYPE}')"
-        )
+        query = f"(mimeType = '{_DRIVE_FOLDER_TYPE}' or mimeType = '{_DRIVE_SHORTCUT_TYPE}')"
 
         if parent_id:
             query += f" and '{parent_id}' in parents"
@@ -277,7 +264,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             corpora="user" if personal_drive else "allDrives",
             supportsAllDrives=not personal_drive,
             includeItemsFromAllDrives=not personal_drive,
-            fields=FOLDER_FIELDS,
+            fields=_FOLDER_FIELDS,
             q=query,
         ):
             yield file
@@ -290,7 +277,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         time_range_start: SecondsSinceUnixEpoch | None = None,
         time_range_end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
-        query = f"mimeType != '{DRIVE_FOLDER_TYPE}' and '{parent_id}' in parents"
+        query = f"mimeType != '{_DRIVE_FOLDER_TYPE}' and '{parent_id}' in parents"
         if time_range_start is not None:
             time_start = datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
             query += f" and modifiedTime >= '{time_start}'"
@@ -304,7 +291,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             corpora="user" if personal_drive else "allDrives",
             supportsAllDrives=not personal_drive,
             includeItemsFromAllDrives=not personal_drive,
-            fields=SLIM_FILE_FIELDS if self.is_slim else FILE_FIELDS,
+            fields=_SLIM_FILE_FIELDS if self.is_slim else _FILE_FIELDS,
             q=query,
         ):
             yield file
@@ -349,18 +336,13 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             )
 
     def _get_all_user_emails(self) -> list[str]:
-        # if not self.service_account_creds:
-        #     raise PermissionError("No service account credentials found")
-
-        admin_creds = self.service_account_creds.with_subject(
-            self.service_account_email
-        )
-        admin_service = build("admin", "directory_v1", credentials=admin_creds)
+        admin_service = self.get_google_resource("admin", "directory_v1")
         emails = []
         for user in execute_paginated_retrieval(
             retrieval_function=admin_service.users().list,
             list_key="users",
-            domain=self.service_account_domain,
+            fields=_USER_FIELDS,
+            domain=self.google_domain,
         ):
             if email := user.get("primaryEmail"):
                 emails.append(email)
@@ -371,10 +353,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
-        # admin_creds = self.service_account_creds.with_subject(self.service_account_email)
-        admin_drive_service = self.get_admin_service()
+        admin_drive_service = self.get_google_resource()
 
-        parent_ids = self.parent_ids
+        parent_ids = self.initial_parent_ids
         if not parent_ids:
             # if no parent ids are specified, get all shared drives using the admin account
             for drive in execute_paginated_retrieval(
@@ -394,16 +375,16 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 time_range_start=start,
                 time_range_end=end,
             ):
-                print(file)
                 yield file
-        logger.info(f"Fetching personal files: {self.include_personal}")
+
         # get all personal docs from each users' personal drive
         if self.include_personal:
+            logger.info("Checking My Drives for documents")
             all_user_emails = self._get_all_user_emails()
             for email in all_user_emails:
                 logger.info(f"Fetching personal files for user: {email}")
-                user_creds = self.service_account_creds.with_subject(email)
-                user_drive_service = build("drive", "v3", credentials=user_creds)
+                user_drive_service = self.get_google_resource(user_email=email)
+
                 # we dont paginate here because there is only one root folder per user
                 # https://developers.google.com/drive/api/guides/v2-to-v3-reference
                 id = (
@@ -425,16 +406,13 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> GenerateDocumentsOutput:
-        # if self.oauth_creds is None and self.service_account_creds is None:
-        #     raise PermissionError("No credentials found")
-
         doc_batch = []
         for file in self._fetch_drive_items(
             start=start,
             end=end,
         ):
             user_email = file.get("owners", [{}])[0].get("emailAddress")
-            service = self.get_admin_service(user_email=user_email)
+            service = self.get_google_resource(user_email=user_email)
             if doc := _convert_drive_item_to_document(
                 file=file,
                 service=service,
@@ -447,12 +425,22 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         yield doc_batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
-        yield from self._fetch_docs_from_drive()
+        try:
+            yield from self._fetch_docs_from_drive()
+        except Exception as e:
+            if _MISSING_SCOPES_ERROR_STR in str(e):
+                raise PermissionError(_ONYX_SCOPE_INSTRUCTIONS) from e
+            raise e
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        yield from self._fetch_docs_from_drive(start, end)
+        try:
+            yield from self._fetch_docs_from_drive(start, end)
+        except Exception as e:
+            if _MISSING_SCOPES_ERROR_STR in str(e):
+                raise PermissionError(_ONYX_SCOPE_INSTRUCTIONS) from e
+            raise e
 
     def _fetch_slim_docs_from_drive(
         self,
@@ -485,4 +473,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         end: SecondsSinceUnixEpoch | None = None,
     ) -> GenerateSlimDocumentOutput:
         self.is_slim = True
-        return self._fetch_slim_docs_from_drive(start, end)
+        try:
+            yield from self._fetch_slim_docs_from_drive(start, end)
+        except Exception as e:
+            if _MISSING_SCOPES_ERROR_STR in str(e):
+                raise PermissionError(_ONYX_SCOPE_INSTRUCTIONS) from e
+            raise e

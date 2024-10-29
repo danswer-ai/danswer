@@ -140,14 +140,14 @@ def gdrive_doc_sync(
         raise ValueError("Service account credentials not found")
 
     slim_docs = _get_slim_docs(cc_pair, google_drive_connector)
-    admin_service = google_drive_connector.get_admin_service()
+    admin_service = google_drive_connector.get_google_resource()
 
     for slim_doc in slim_docs:
         ext_access = _fetch_google_permissions_for_slim_doc(
             db_session=db_session,
             admin_service=admin_service,
             slim_doc=slim_doc,
-            company_domain=google_drive_connector.service_account_domain,
+            company_domain=google_drive_connector.google_domain,
         )
         upsert_document_external_perms__no_commit(
             db_session=db_session,
