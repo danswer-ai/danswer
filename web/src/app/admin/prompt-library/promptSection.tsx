@@ -128,7 +128,7 @@ export const PromptSection = ({
       <Button
         onClick={() => setNewPrompt(true)}
         className={centering ? "mx-auto" : ""}
-        variant="success"
+        variant="navigate"
         size="sm"
       >
         New Prompt

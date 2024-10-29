@@ -158,7 +158,7 @@ export const CreateRateLimitModal = ({
             />
             <Button
               type="submit"
-              variant="success"
+              variant="submit"
               size="sm"
               disabled={isSubmitting}
             >

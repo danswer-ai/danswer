@@ -272,7 +272,7 @@ export function SettingsForm() {
           />
           <Button
             onClick={handleSetChatRetention}
-            variant="success"
+            variant="submit"
             size="sm"
             className="mr-3"
           >

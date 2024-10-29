@@ -404,7 +404,7 @@ const Main = () => {
       <div className="mb-2"></div>
 
       <Link className="flex mb-3 mt-2 w-fit" href="/admin/standard-answer/new">
-        <Button className="my-auto" variant="success" size="sm">
+        <Button className="my-auto" variant="submit" size="sm">
           New Standard Answer
         </Button>
       </Link>

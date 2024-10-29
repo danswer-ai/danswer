@@ -23,7 +23,7 @@ export function AlreadyPickedModal({
           You can select a different one if you want!
         </Text>
         <div className="flex mt-8 justify-between">
-          <Button variant="success" onClick={onClose}>
+          <Button variant="submit" onClick={onClose}>
             Close
           </Button>
         </div>

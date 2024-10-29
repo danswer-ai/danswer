@@ -38,7 +38,7 @@ const AddUserFormRenderer = ({
     )}
     <Button
       className="mx-auto"
-      variant="success"
+      variant="submit"
       size="sm"
       type="submit"
       disabled={isSubmitting}

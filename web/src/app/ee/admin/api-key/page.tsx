@@ -116,7 +116,7 @@ function Main() {
 
   const newApiKeyButton = (
     <Button
-      variant="success"
+      variant="submit"
       size="sm"
       className="mt-3"
       onClick={() => setShowCreateUpdateForm(true)}

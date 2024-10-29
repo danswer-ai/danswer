@@ -129,7 +129,7 @@ export const UserGroupCreationForm = ({
                   <Button
                     type="submit"
                     size="sm"
-                    variant="success"
+                    variant="submit"
                     disabled={isSubmitting}
                     className="mx-auto w-64"
                   >

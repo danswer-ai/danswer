@@ -264,7 +264,7 @@ export function ChangeCredentialsModal({
 
               <Button
                 className="mr-auto mt-4"
-                variant="success"
+                variant="submit"
                 onClick={() => handleSubmit()}
                 disabled={!apiKey}
               >

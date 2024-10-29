@@ -28,7 +28,7 @@ export function SelectModelModal({
           Are you sure?
         </Text>
         <div className="flex mt-8 justify-end">
-          <Button variant="success" onClick={onConfirm}>
+          <Button variant="submit" onClick={onConfirm}>
             Yes
           </Button>
         </div>

@@ -61,7 +61,7 @@ const Main = () => {
       {popup}
       {isAdmin && (
         <div className="my-3">
-          <Button size="sm" variant="success" onClick={() => setShowForm(true)}>
+          <Button size="sm" variant="submit" onClick={() => setShowForm(true)}>
             Create New User Group
           </Button>
         </div>

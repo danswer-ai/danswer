@@ -121,7 +121,7 @@ export function AssistantGalleryCard({
                   }
                 }}
                 size="sm"
-                variant="success"
+                variant="submit"
               >
                 Add
               </Button>

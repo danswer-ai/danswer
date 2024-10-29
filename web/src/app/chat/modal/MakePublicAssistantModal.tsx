@@ -62,7 +62,7 @@ export function MakePublicAssistantModal({
                 onClose();
               }}
               size="sm"
-              variant="success"
+              variant="submit"
             >
               Make Assistant Public
             </Button>

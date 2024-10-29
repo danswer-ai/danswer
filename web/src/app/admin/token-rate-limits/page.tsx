@@ -145,7 +145,7 @@ function Main() {
       </ul>
 
       <Button
-        variant="success"
+        variant="submit"
         size="sm"
         className="mt-3"
         onClick={() => setModalIsOpen(true)}

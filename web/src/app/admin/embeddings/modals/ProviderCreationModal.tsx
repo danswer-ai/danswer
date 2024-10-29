@@ -286,7 +286,7 @@ export function ProviderCreationModal({
 
               <Button
                 type="submit"
-                variant="success"
+                variant="submit"
                 className="w-full"
                 disabled={isSubmitting}
               >

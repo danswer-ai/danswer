@@ -110,7 +110,7 @@ export const DanswerApiKeyForm = ({
               <Button
                 type="submit"
                 size="sm"
-                variant="success"
+                variant="submit"
                 disabled={isSubmitting}
               >
                 {isUpdate ? "Update!" : "Create!"}

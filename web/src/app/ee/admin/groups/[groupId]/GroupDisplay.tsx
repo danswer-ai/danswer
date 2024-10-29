@@ -248,7 +248,7 @@ export const GroupDisplay = ({
       <Button
         className="mt-3"
         size="sm"
-        variant="success"
+        variant="submit"
         onClick={() => setAddMemberFormVisible(true)}
         disabled={!userGroup.is_up_to_date}
       >
@@ -348,7 +348,7 @@ export const GroupDisplay = ({
         className="mt-3"
         onClick={() => setAddConnectorFormVisible(true)}
         size="sm"
-        variant="success"
+        variant="submit"
         disabled={!userGroup.is_up_to_date}
       >
         Add Connectors
@@ -435,7 +435,7 @@ export const GroupDisplay = ({
 
       {isAdmin && (
         <Button
-          variant="success"
+          variant="submit"
           size="sm"
           className="mt-3"
           onClick={() => setAddRateLimitFormVisible(true)}

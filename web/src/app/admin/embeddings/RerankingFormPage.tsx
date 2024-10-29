@@ -269,7 +269,7 @@ const RerankingDetailsForm = forwardRef<
                       <div className="flex justify-end">
                         <Button
                           onClick={() => setShowGpuWarningModalModel(null)}
-                          variant="success"
+                          variant="submit"
                         >
                           Understood
                         </Button>
@@ -349,7 +349,7 @@ const RerankingDetailsForm = forwardRef<
                           onClick={() => {
                             setShowLiteLLMConfigurationModal(false);
                           }}
-                          variant="success"
+                          variant="submit"
                         >
                           Update
                         </Button>
@@ -397,7 +397,7 @@ const RerankingDetailsForm = forwardRef<
                       <div className="flex w-full justify-end mt-4">
                         <Button
                           onClick={() => setIsApiKeyModalOpen(false)}
-                          variant="success"
+                          variant="submit"
                         >
                           Update
                         </Button>
