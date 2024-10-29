@@ -60,10 +60,7 @@ export const DocumentSetCreationForm = ({
     label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
   }));
 
-  const initialSelectedItems = teamspaces?.map(space => ({
-    value: space.id.toString(), 
-    label: space.name,         
-  }));
+  console.log(existingDocumentSet)
 
   return (
     <div>
@@ -87,6 +84,7 @@ export const DocumentSetCreationForm = ({
           cc_pair_ids: Yup.array()
             .of(Yup.number().required())
             .required("Please select at least one connector"),
+          groups: Yup.array().of(Yup.number()),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
@@ -160,6 +158,7 @@ export const DocumentSetCreationForm = ({
                 }}
                 placeholder="Search connectors"
                 label="Select connectors"
+                selected={values.cc_pair_ids.map((id) => id.toString())}
               />
             </div>
 
@@ -203,6 +202,7 @@ export const DocumentSetCreationForm = ({
                       }}
                       placeholder="Select teamspaces"
                       label="Teamspaces"
+                      selected={values.groups.map((group) => group.id.toString())}
                     />
                   </>
                 ) : (

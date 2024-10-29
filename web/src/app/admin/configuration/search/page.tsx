@@ -89,7 +89,7 @@ function Main() {
           {currentEmeddingModel ? (
             <ModelPreview model={currentEmeddingModel} display />
           ) : (
-            <Title className="mt-8 mb-4">Choose your Embedding Model</Title>
+            <Title className="mt-8 mb-2">Choose your Embedding Model</Title>
           )}
 
           <Title className="mb-2 mt-8 !text-2xl">Post-processing</Title>

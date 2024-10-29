@@ -123,53 +123,6 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
                 )}
               </Text>
             )}
-            {/* <FieldArray
-              name="groups"
-              render={(arrayHelpers: ArrayHelpers) => (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {teamspacesIsLoading ? (
-                    <div className="w-32 h-8 bg-gray-200 rounded animate-pulse"></div>
-                  ) : (
-                    teamspaces &&
-                    teamspaces.map((teamspace: Teamspace) => {
-                      const ind = formikProps.values.groups.indexOf(
-                        teamspace.id
-                      );
-                      let isSelected = ind !== -1;
-                      return (
-                        <div
-                          key={teamspace.id}
-                          className={`
-                        px-3 
-                        py-1
-                        rounded-lg 
-                        border
-                        border-border 
-                        w-fit 
-                        flex 
-                        cursor-pointer 
-                        ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
-                      `}
-                          onClick={() => {
-                            if (isSelected) {
-                              arrayHelpers.remove(ind);
-                            } else {
-                              arrayHelpers.push(teamspace.id);
-                            }
-                          }}
-                        >
-                          <div className="flex my-auto">
-                            <FiUsers className="my-auto mr-2" />{" "}
-                            {teamspace.name}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              )}
-            /> */}
-
             <Combobox
               items={teamspaces.map((teamspace) => ({
                 value: teamspace.id.toString(),
@@ -183,6 +136,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
               }}
               placeholder="Select teamspaces"
               label="Teamspaces"
+              selected={formikProps.values.groups.map((id) => id.toString())}
             />
             <ErrorMessage
               name="groups"

@@ -74,7 +74,7 @@ export function AdvancedConfigDisplay({
 
   return (
     <>
-      <h3 className="mt-8 mb-4">Advanced Configuration</h3>
+      <h3 className="mt-8 mb-2">Advanced Configuration</h3>
       <Card>
         <CardContent>
           <ul className="flex flex-col gap-4">
@@ -119,7 +119,7 @@ export function ConfigDisplay({
 
   return (
     <>
-      <h3 className="mt-12 mb-4">Configuration</h3>
+      <h3 className="mt-12 mb-2">Configuration</h3>
       <Card>
         <CardContent>
           <ul className="flex flex-col gap-4">

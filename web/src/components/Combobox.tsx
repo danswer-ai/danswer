@@ -21,6 +21,7 @@ interface ComboboxProps {
   onSelect?: (selectedValue: string[]) => void;
   placeholder?: string;
   label?: string;
+  selected?: string[];
 }
 
 export function Combobox({
@@ -28,11 +29,15 @@ export function Combobox({
   onSelect,
   placeholder = "Select an item...",
   label = "Select item",
+  selected = []
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
+
   const [selectedItems, setSelectedItems] = React.useState<
     { value: string; label: string }[]
-  >([]);
+  >(
+    items?.filter((item) => selected.includes(item.value)) || [] 
+  );
 
   const handleSelect = (currentValue: string) => {
     const selectedItem = items?.find((item) => item.label === currentValue);

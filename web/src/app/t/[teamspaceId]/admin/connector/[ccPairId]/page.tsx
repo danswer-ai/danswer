@@ -88,7 +88,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
       />
       {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
         to render these conditionally.*/}
-      <div className="flex items-start justify-between sm:items-center flex-col sm:flex-row gap-2 mt-12 mb-4">
+      <div className="flex items-start justify-between sm:items-center flex-col sm:flex-row gap-2 mt-12 mb-2">
         <h3>Indexing Attempts</h3>
 
         {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(

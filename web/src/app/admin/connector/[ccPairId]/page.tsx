@@ -266,7 +266,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
       {/* NOTE: no divider / title here for `ConfigDisplay` since it is optional and we need
         to render these conditionally.*/}
       <div className="mt-6">
-        <div className="flex pb-4">
+        <div className="flex pb-2">
           <h3>Indexing Attempts</h3>
         </div>
         <IndexingAttemptsTable ccPair={ccPair} />

@@ -69,8 +69,6 @@ function Main({ documentSetId }: { documentSetId: number }) {
 
   return (
     <div>
-      <BackButton />
-
       <AdminPageTitle icon={<Bookmark size={32} />} title={documentSet.name} />
 
       <Card>

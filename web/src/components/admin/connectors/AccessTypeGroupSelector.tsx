@@ -7,6 +7,7 @@ import { Teamspace, User, UserRole } from "@/lib/types";
 import { useTeamspaces } from "@/lib/hooks";
 import { AccessType } from "@/lib/types";
 import { useUser } from "@/components/user/UserProvider";
+import { Combobox } from "@/components/Combobox";
 
 // This should be included for all forms that require groups / public access
 // to be set, and access to this / permissioning should be handled within this component itself.
@@ -97,49 +98,19 @@ export function AccessTypeGroupSelector({}: {}) {
                 )}
               </Text>
             )}
-            <FieldArray
-              name="groups"
-              render={(arrayHelpers: ArrayHelpers) => (
-                <div className="flex gap-2 flex-wrap mb-4">
-                  {teamspacesIsLoading ? (
-                    <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
-                  ) : (
-                    teamspaces &&
-                    teamspaces.map((teamspace: Teamspace) => {
-                      const ind = groups.value.indexOf(teamspace.id);
-                      let isSelected = ind !== -1;
-                      return (
-                        <div
-                          key={teamspace.id}
-                          className={`
-                            px-3 
-                            py-1
-                            rounded-lg 
-                            border
-                            border-border 
-                            w-fit 
-                            flex 
-                            cursor-pointer 
-                            ${isSelected ? "bg-background-strong" : "hover:bg-hover"}
-                        `}
-                          onClick={() => {
-                            if (isSelected) {
-                              arrayHelpers.remove(ind);
-                            } else {
-                              arrayHelpers.push(teamspace.id);
-                            }
-                          }}
-                        >
-                          <div className="my-auto flex">
-                            <FiUsers className="my-auto mr-2" />{" "}
-                            {teamspace.name}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              )}
+            <Combobox
+              items={teamspaces.map((teamspace) => ({
+                value: teamspace.id.toString(),
+                label: teamspace.name,
+              }))}
+              onSelect={(selectedTeamspaceIds) => {
+                const selectedIds = selectedTeamspaceIds.map((val) =>
+                  parseInt(val, 10)
+                );
+                groups_helpers.setValue(selectedIds);
+              }}
+              placeholder="Select teamspaces"
+              label="Teamspaces"
             />
             <ErrorMessage
               name="groups"

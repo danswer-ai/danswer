@@ -23,13 +23,15 @@ export const TeamspaceBubble = ({ teamspace, link }: TeamspaceBubbleProps) => {
       trigger={
         <Link href={`/${link}`} className="relative flex items-center">
           {teamspace.is_custom_logo ? (
-            <Image
-              src={`/api/teamspace/logo?teamspace_id=${teamspace.id}&t=${Date.now()}`}
-              alt="Teamspace Logo"
-              className="object-cover shrink-0 rounded-md w-10 h-10"
-              width={40}
-              height={40}
-            />
+            <div className="rounded-md w-10 h-10 bg-background overflow-hidden">
+              <Image
+                src={`/api/teamspace/logo?teamspace_id=${teamspace.id}&t=${Date.now()}`}
+                alt="Teamspace Logo"
+                className="object-cover shrink-0 w-full h-full"
+                width={40}
+                height={40}
+              />
+            </div>
           ) : (
             <div
               style={{ background: generateGradient(teamspace.name) }}

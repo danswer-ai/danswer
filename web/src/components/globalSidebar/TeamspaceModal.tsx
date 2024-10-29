@@ -39,6 +39,7 @@ export const TeamspaceModal = ({
               variant="ghost"
               size="icon"
               onClick={() => setIsModalVisible(true)}
+              className="w-full"
             >
               <Ellipsis size={16} />
             </Button>
@@ -62,13 +63,15 @@ export const TeamspaceModal = ({
             href={`/t/${team.id}/${defaultPage}`}
           >
             {team.is_custom_logo ? (
-              <Image
-                src={`/api/teamspace/logo?teamspace_id=${team.id}&t=${Date.now()}`}
-                alt="Teamspace Logo"
-                className="object-cover shrink-0 rounded-md w-10 h-10"
-                width={40}
-                height={40}
-              />
+              <div className="rounded-md w-10 h-10 bg-background overflow-hidden">
+                <Image
+                  src={`/api/teamspace/logo?teamspace_id=${team.id}&t=${Date.now()}`}
+                  alt="Teamspace Logo"
+                  className="object-cover shrink-0 w-full h-full"
+                  width={40}
+                  height={40}
+                />
+              </div>
             ) : (
               <div
                 style={{ background: generateGradient(team.name) }}
