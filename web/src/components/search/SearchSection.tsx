@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { FullSearchBar, SearchBar } from "./SearchBar";
+import { FullSearchBar } from "./SearchBar";
 import { SearchResultsDisplay } from "./SearchResultsDisplay";
 import { SourceSelector } from "./filtering/Filters";
 import {
@@ -17,35 +17,24 @@ import {
 } from "@/lib/search/interfaces";
 import { searchRequestStreamed } from "@/lib/search/streamingQa";
 import { CancellationToken, cancellable } from "@/lib/search/cancellable";
-import { useFilters, useObjectState } from "@/lib/hooks";
+import { useFilters } from "@/lib/hooks";
 import { Assistant } from "@/app/admin/assistants/interfaces";
-import { AssistantSelector } from "./AssistantSelector";
 import { computeAvailableFilters } from "@/lib/filters";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { SettingsContext } from "../settings/SettingsProvider";
-import { ChatSession, SearchSession } from "@/app/chat/interfaces";
-import FunctionalHeader from "../chat_search/Header";
-import { useSidebarVisibility } from "../chat_search/hooks";
 import { AGENTIC_SEARCH_TYPE_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
-import FixedLogo from "@/app/chat/shared_chat_search/FixedLogo";
-import { usePopup } from "../admin/connectors/Popup";
 import { FeedbackType } from "@/app/chat/types";
-import { FeedbackModal } from "@/app/chat/modal/FeedbackModal";
-import { deleteChatSession, handleChatFeedback } from "@/app/chat/lib";
 import SearchAnswer from "./SearchAnswer";
-import { DeleteEntityModal } from "../modals/DeleteEntityModal";
-import { ApiKeyModal } from "../llm/ApiKeyModal";
 import { useUser } from "../user/UserProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Filter } from "lucide-react";
 import { Button } from "../ui/button";
 import { DateRangeSearchSelector } from "./DateRangeSearchSelector";
 import { SortSearch } from "./SortSearch";
-import { SearchHelper } from "./SearchHelper";
-import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
 import { useSearchContext } from "@/context/SearchContext";
 import { useToast } from "@/hooks/use-toast";
+import { SearchSession } from "@/app/chat/interfaces";
 
 export type searchState =
   | "input"
@@ -72,15 +61,12 @@ interface SearchSectionProps {
 
 export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
   const {
-    querySessions,
     ccPairs,
     documentSets,
     assistants,
     tags,
-    shouldShowWelcomeModal,
     agenticSearchEnabled,
     disabledAgentic,
-    shouldDisplayNoSources,
   } = useSearchContext();
 
   const [query, setQuery] = useState<string>("");
@@ -460,12 +446,6 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
     router.push(teamspaceId ? `/t/${teamspaceId}/chat` : "/chat");
   }
 
-  const handleTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
-    if (e.propertyName === "opacity" && !firstSearch) {
-      const target = e.target as HTMLDivElement;
-      target.style.display = "none";
-    }
-  };
   const [sweep, setSweep] = useState(false);
   const performSweep = () => {
     setSweep((sweep) => !sweep);
@@ -490,36 +470,6 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
   const [currentFeedback, setCurrentFeedback] = useState<
     [FeedbackType, number] | null
   >(null);
-
-  const onFeedback = async (
-    messageId: number,
-    feedbackType: FeedbackType,
-    feedbackDetails: string,
-    predefinedFeedback: string | undefined
-  ) => {
-    const response = await handleChatFeedback(
-      messageId,
-      feedbackType,
-      feedbackDetails,
-      predefinedFeedback
-    );
-
-    if (response.ok) {
-      toast({
-        title: "Feedback Submitted",
-        description: "Thanks for your feedback!",
-        variant: "success",
-      });
-    } else {
-      const responseJson = await response.json();
-      const errorMsg = responseJson.detail || responseJson.message;
-      toast({
-        title: "Submission Error",
-        description: `Failed to submit feedback - ${errorMsg}`,
-        variant: "destructive",
-      });
-    }
-  };
 
   const chatBannerPresent = settings?.workspaces?.custom_header_content;
 

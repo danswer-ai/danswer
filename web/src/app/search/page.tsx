@@ -184,7 +184,7 @@ export default async function Home() {
         )}
         {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
-        <ChatPopup />
+        {/* <ChatPopup /> */}
         <InstantSSRAutoRefresh />
         <div className="pt-20 lg:pt-14 lg:px-14 container min-h-screen overflow-y-auto overflow-x-hidden">
           <SearchProvider
