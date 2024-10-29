@@ -136,7 +136,7 @@ def get_google_drive_creds(
     creds: ServiceAccountCredentials | OAuthCredentials | None = (
         oauth_creds or service_creds
     )
-    if service_creds is None:
+    if creds is None:
         raise PermissionError(
             "Unable to access Google Drive - unknown credential structure."
         )

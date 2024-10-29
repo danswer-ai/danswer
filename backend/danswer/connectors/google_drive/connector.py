@@ -446,6 +446,14 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
 
         yield doc_batch
 
+    def load_from_state(self) -> GenerateDocumentsOutput:
+        yield from self._fetch_docs_from_drive()
+
+    def poll_source(
+        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+    ) -> GenerateDocumentsOutput:
+        yield from self._fetch_docs_from_drive(start, end)
+
     def _fetch_slim_docs_from_drive(
         self,
         start: SecondsSinceUnixEpoch | None = None,
@@ -471,9 +479,6 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 slim_batch = []
         yield slim_batch
 
-    def load_from_state(self) -> GenerateDocumentsOutput:
-        yield from self._fetch_docs_from_drive()
-
     def retrieve_all_slim_documents(
         self,
         start: SecondsSinceUnixEpoch | None = None,
@@ -481,8 +486,3 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     ) -> GenerateSlimDocumentOutput:
         self.is_slim = True
         return self._fetch_slim_docs_from_drive(start, end)
-
-    def poll_source(
-        self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
-    ) -> GenerateDocumentsOutput:
-        yield from self._fetch_docs_from_drive(start, end)
