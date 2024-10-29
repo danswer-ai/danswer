@@ -1,7 +1,8 @@
 import { PersonasTable } from "./PersonaTable";
 import { FiPlusSquare } from "react-icons/fi";
 import Link from "next/link";
-import { Divider, Text, Title } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
 import { AssistantsIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/admin/Title";
 
@@ -25,7 +26,7 @@ export default async function Page() {
       </div>
 
       <div>
-        <Divider />
+        <Separator />
 
         <Title>Create an Assistant</Title>
         <Link
@@ -38,7 +39,7 @@ export default async function Page() {
           </div>
         </Link>
 
-        <Divider />
+        <Separator />
 
         <Title>Existing Assistants</Title>
         <PersonasTable />

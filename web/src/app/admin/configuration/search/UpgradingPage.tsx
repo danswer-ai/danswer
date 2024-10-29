@@ -6,7 +6,8 @@ import {
   FailedConnectorIndexingStatus,
   ValidStatuses,
 } from "@/lib/types";
-import { Button, Text, Title } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { useMemo, useState } from "react";
 import useSWR, { mutate } from "swr";
 import { ReindexingProgressTable } from "../../../../components/embedding/ReindexingProgressTable";
@@ -111,7 +112,7 @@ export default function UpgradingPage({
               be lost.
             </div>
             <div className="flex">
-              <Button onClick={onCancel} className="mt-3 mx-auto" color="green">
+              <Button onClick={onCancel} variant="submit">
                 Confirm
               </Button>
             </div>
@@ -129,8 +130,7 @@ export default function UpgradingPage({
             </div>
 
             <Button
-              color="red"
-              size="xs"
+              variant="destructive"
               className="mt-4"
               onClick={() => setIsCancelling(true)}
             >

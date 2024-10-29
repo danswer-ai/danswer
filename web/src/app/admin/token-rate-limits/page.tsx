@@ -1,8 +1,8 @@
 "use client";
 
 import { AdminPageTitle } from "@/components/admin/Title";
+import { Button } from "@/components/ui/button";
 import {
-  Button,
   Tab,
   TabGroup,
   TabList,
@@ -145,8 +145,8 @@ function Main() {
       </ul>
 
       <Button
-        color="green"
-        size="xs"
+        variant="success"
+        size="sm"
         className="mt-3"
         onClick={() => setModalIsOpen(true)}
       >

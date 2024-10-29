@@ -12,8 +12,10 @@ import {
   useUsers,
 } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { Button, Divider } from "@tremor/react";
+import { Button } from "@/components/ui/button";
+
 import { useUser } from "@/components/user/UserProvider";
+import { Separator } from "@/components/ui/separator";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -59,14 +61,14 @@ const Main = () => {
       {popup}
       {isAdmin && (
         <div className="my-3">
-          <Button size="xs" color="green" onClick={() => setShowForm(true)}>
+          <Button size="sm" variant="success" onClick={() => setShowForm(true)}>
             Create New User Group
           </Button>
         </div>
       )}
       {data.length > 0 && (
         <div>
-          {isAdmin && <Divider />}
+          {isAdmin && <Separator />}
           <UserGroupsTable
             userGroups={data}
             setPopup={setPopup}

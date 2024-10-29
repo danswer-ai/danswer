@@ -6,8 +6,8 @@ import {
   ConnectorIndexingStatus,
   FailedConnectorIndexingStatus,
 } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 import {
-  Button,
   Table,
   TableBody,
   TableCell,
@@ -108,8 +108,8 @@ export function FailedReIndexAttempts({
                     </TableCell>
                     <TableCell>
                       <Button
-                        size="xs"
-                        color="red"
+                        size="sm"
+                        variant="destructive"
                         onClick={() =>
                           deleteCCPair(
                             reindexingProgress.connector_id,

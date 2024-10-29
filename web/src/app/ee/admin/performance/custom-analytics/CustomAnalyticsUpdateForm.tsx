@@ -3,7 +3,9 @@
 import { Label, SubLabel } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { Button, Callout, Text } from "@tremor/react";
+import { Button } from "@/components/ui/button";
+import { Callout } from "@tremor/react";
+import { Text } from "@tremor/react";
 import { useContext, useState } from "react";
 
 export function CustomAnalyticsUpdateForm() {

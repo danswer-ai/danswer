@@ -1,4 +1,4 @@
-import { Button } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import {
   ArrayHelpers,
   ErrorMessage,
@@ -539,7 +539,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
               }}
               className="mt-3"
               color="green"
-              size="xs"
+              size="sm"
               type="button"
               icon={FiPlus}
             >

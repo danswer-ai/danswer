@@ -6,9 +6,9 @@ import { KeyIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { mutate } from "swr";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
-  Button,
-  Divider,
   TableBody,
   TableCell,
   TableHead,
@@ -116,8 +116,8 @@ function Main() {
 
   const newApiKeyButton = (
     <Button
-      color="green"
-      size="xs"
+      variant="success"
+      size="sm"
       className="mt-3"
       onClick={() => setShowCreateUpdateForm(true)}
     >
@@ -166,7 +166,7 @@ function Main() {
       <Text>{API_KEY_TEXT}</Text>
       {newApiKeyButton}
 
-      <Divider />
+      <Separator />
 
       <Title className="mt-6">Existing API Keys</Title>
       <Table className="overflow-visible">

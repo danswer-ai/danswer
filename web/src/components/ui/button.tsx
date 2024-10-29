@@ -9,6 +9,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        success:
+          "bg-green-500 text-neutral-50 hover:bg-green-500/90 dark:bg-green-900 dark:text-neutral-50 dark:hover:bg-green-900/90",
         default:
           "bg-neutral-900 text-neutral-50 hover:bg-neutral-900/90 dark:bg-neutral-50 dark:text-neutral-900 dark:hover:bg-neutral-50/90",
         destructive:
@@ -20,6 +22,14 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
         link: "text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-50",
+        submit:
+          "bg-neutral-800 text-neutral-50 hover:bg-neutral-800/90 dark:bg-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-700/90",
+        navigate:
+          "bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 border border-neutral-200 dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80 dark:border-neutral-700",
+        edit: "bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80",
+        update:
+          "bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80",
+        next: "bg-neutral-700 text-neutral-50 hover:bg-neutral-700/90 dark:bg-neutral-600 dark:text-neutral-50 dark:hover:bg-neutral-600/90",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -39,18 +49,47 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  icon?: React.ElementType;
+  tooltip?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      icon: Icon,
+      tooltip,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : "button";
-    return (
+    const button = (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}
-      />
+      >
+        {Icon && <Icon />}
+        {props.children}
+      </Comp>
     );
+
+    if (tooltip) {
+      return (
+        <div className="relative group">
+          {button}
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-neutral-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            {tooltip}
+          </div>
+        </div>
+      );
+    }
+
+    return button;
   }
 );
 Button.displayName = "Button";

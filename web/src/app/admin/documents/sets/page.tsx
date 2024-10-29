@@ -13,9 +13,10 @@ import {
   Title,
   Divider,
   Badge,
-  Button,
   Text,
 } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { ConnectorIndexingStatus, DocumentSet } from "@/lib/types";
 import { useState } from "react";
@@ -322,15 +323,13 @@ const Main = () => {
 
       <div className="flex mb-6">
         <Link href="/admin/documents/sets/new">
-          <Button size="xs" color="green" className="ml-2 my-auto">
-            New Document Set
-          </Button>
+          <Button variant="success">New Document Set</Button>
         </Link>
       </div>
 
       {documentSets.length > 0 && (
         <>
-          <Divider />
+          <Separator />
           <DocumentSetTable
             documentSets={documentSets}
             editableDocumentSets={editableDocumentSets}

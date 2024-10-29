@@ -1,5 +1,5 @@
 import { useQueryHistory } from "../lib";
-
+import { Separator } from "@/components/ui/separator";
 import {
   Card,
   Table,
@@ -9,7 +9,6 @@ import {
   TableBody,
   TableCell,
   Text,
-  Divider,
   Select,
   SelectItem,
 } from "@tremor/react";
@@ -127,7 +126,7 @@ export function QueryHistoryTable() {
 
             <DownloadAsCSV />
           </div>
-          <Divider />
+          <Separator />
           <Table className="mt-5">
             <TableHead>
               <TableRow>

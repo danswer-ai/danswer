@@ -6,8 +6,8 @@ import {
   TableBody,
   TableCell,
   Badge,
-  Button,
 } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { IndexAttemptStatus } from "@/components/Status";
 import { timeAgo } from "@/lib/time";
 import {

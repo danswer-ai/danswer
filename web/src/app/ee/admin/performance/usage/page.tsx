@@ -8,7 +8,7 @@ import { useTimeRange } from "../lib";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { FiActivity } from "react-icons/fi";
 import UsageReports from "./UsageReports";
-import { Divider } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
@@ -26,7 +26,7 @@ export default function AnalyticsPage() {
       <QueryPerformanceChart timeRange={timeRange} />
       <FeedbackChart timeRange={timeRange} />
       <DanswerBotChart timeRange={timeRange} />
-      <Divider />
+      <Separator />
       <UsageReports />
     </main>
   );

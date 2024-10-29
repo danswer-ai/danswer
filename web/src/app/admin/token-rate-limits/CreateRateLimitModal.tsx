@@ -1,7 +1,7 @@
 "use client";
 
 import * as Yup from "yup";
-import { Button } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Form, Formik } from "formik";
@@ -158,8 +158,8 @@ export const CreateRateLimitModal = ({
             />
             <Button
               type="submit"
-              size="xs"
-              color="green"
+              variant="success"
+              size="sm"
               disabled={isSubmitting}
             >
               Create!

@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Button, Divider, Text } from "@tremor/react";
+import { Text } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { Modal } from "../../Modal";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";

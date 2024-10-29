@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
-import { Button, Callout, Divider, Text } from "@tremor/react";
+import { Button } from "@/components/ui/button";
+import { Callout } from "@tremor/react";
+
+import { Text } from "@tremor/react";
 import { Spinner } from "@/components/Spinner";
 import { ChatSessionSharedStatus } from "../interfaces";
 import { FiCopy } from "react-icons/fi";
@@ -9,6 +12,7 @@ import { SEARCH_PARAM_NAMES } from "../searchParams";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { destructureValue, structureValue } from "@/lib/llm/utils";
 import { LlmOverride } from "@/lib/hooks";
+import { Separator } from "@radix-ui/react-separator";
 
 function buildShareLink(chatSessionId: string) {
   const baseUrl = `${window.location.protocol}//${window.location.host}`;
@@ -53,7 +57,9 @@ async function generateCloneLink(
       : ""
   }${
     model
-      ? `${message || assistantId ? "&" : "?"}${SEARCH_PARAM_NAMES.STRUCTURED_MODEL}=${encodeURIComponent(model)}`
+      ? `${message || assistantId ? "&" : "?"}${
+          SEARCH_PARAM_NAMES.STRUCTURED_MODEL
+        }=${encodeURIComponent(model)}`
       : ""
   }${message ? `&${SEARCH_PARAM_NAMES.SEND_ON_LOAD}=true` : ""}`;
 }
@@ -126,7 +132,7 @@ export function ShareChatSessionModal({
                   </a>
                 </div>
 
-                <Divider />
+                <Separator />
 
                 <Text className="mb-4">
                   Click the button below to make the chat private again.
@@ -142,8 +148,8 @@ export function ShareChatSessionModal({
                       alert("Failed to delete share link");
                     }
                   }}
-                  size="xs"
-                  color="red"
+                  size="sm"
+                  variant="destructive"
                 >
                   Delete Share Link
                 </Button>
@@ -176,8 +182,8 @@ export function ShareChatSessionModal({
                         console.error(e);
                       }
                     }}
-                    size="xs"
-                    color="green"
+                    size="sm"
+                    variant="success"
                   >
                     Generate and Copy Share Link
                   </Button>
@@ -186,7 +192,7 @@ export function ShareChatSessionModal({
             )}
           </div>
 
-          <Divider className="my-4" />
+          <Separator className="my-4" />
           <div className="mb-4">
             <Callout title="Clone Chat" color="blue">
               Generate a link to clone this chat session with the current query.
@@ -223,8 +229,8 @@ export function ShareChatSessionModal({
                   alert("Failed to generate or copy link.");
                 }
               }}
-              size="xs"
-              color="blue"
+              size="sm"
+              variant="secondary"
             >
               Generate and Copy Clone Link
             </Button>

@@ -16,7 +16,9 @@ import {
   isPersonaASlackBotPersona,
   updateSlackBotConfig,
 } from "./lib";
-import { Button, Card, Divider } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
+import { Card } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Persona } from "../assistants/interfaces";
 import { useState } from "react";
@@ -259,7 +261,7 @@ export const SlackBotCreationForm = ({
                   </div>
                 </div>
 
-                <Divider />
+                <Separator />
 
                 <AdvancedOptionsToggle
                   showAdvancedOptions={showAdvancedOptions}

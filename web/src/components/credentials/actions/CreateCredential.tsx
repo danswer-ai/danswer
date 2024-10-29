@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Button, Card } from "@tremor/react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ValidSources } from "@/lib/types";
 import { FaAccusoft } from "react-icons/fa";
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";

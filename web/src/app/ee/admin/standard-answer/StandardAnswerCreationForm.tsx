@@ -2,7 +2,8 @@
 
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { StandardAnswerCategory, StandardAnswer } from "@/lib/types";
-import { Button, Card } from "@tremor/react";
+import { Card } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";

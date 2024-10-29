@@ -2,8 +2,8 @@ import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { Modal } from "@/components/Modal";
-import { Button, Textarea, TextInput } from "@tremor/react";
-
+import { Textarea, TextInput } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { useInputPrompt } from "../hooks";
 import { EditPromptModalProps } from "../interfaces";
 
@@ -118,7 +118,6 @@ const EditPromptModal = ({
             <div className="mt-6">
               <Button
                 type="submit"
-                className="w-full"
                 disabled={
                   isSubmitting ||
                   (values.prompt === promptData.prompt &&

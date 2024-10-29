@@ -4,7 +4,8 @@ import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { SlackBotTokens } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { setSlackBotTokens } from "./lib";
-import { Button, Card } from "@tremor/react";
+import { Card } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 
 interface SlackBotTokensFormProps {
   onClose: () => void;
@@ -57,7 +58,7 @@ export const SlackBotTokensForm = ({
               type="password"
             />
             <div className="flex">
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} variant="submit">
                 Set Tokens
               </Button>
             </div>

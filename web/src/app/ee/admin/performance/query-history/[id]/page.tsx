@@ -1,6 +1,7 @@
 "use client";
 
-import { Bold, Text, Card, Title, Divider } from "@tremor/react";
+import { Bold, Text, Card, Title } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
 import { ChatSessionSnapshot, MessageSnapshot } from "../../usage/types";
 import { FiBook } from "react-icons/fi";
 import { timestampToReadableDate } from "@/lib/dateUtils";
@@ -55,7 +56,7 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
           </div>
         </div>
       )}
-      <Divider />
+      <Separator />
     </div>
   );
 }
@@ -97,7 +98,7 @@ export default function QueryPage({ params }: { params: { id: string } }) {
           {chatSessionSnapshot.flow_type}
         </Text>
 
-        <Divider />
+        <Separator />
 
         <div className="flex flex-col">
           {chatSessionSnapshot.messages.map((message) => {

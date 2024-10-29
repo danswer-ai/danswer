@@ -16,8 +16,8 @@ import {
   TableRow,
   Text,
   Title,
-  Button,
 } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import { useState } from "react";
 import { UsageReport } from "./types";
@@ -26,6 +26,7 @@ import Link from "next/link";
 import { humanReadableFormat, humanReadableFormatWithTime } from "@/lib/time";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PageSelector } from "@/components/PageSelector";
+import { Separator } from "@radix-ui/react-separator";
 
 function GenerateReportInput() {
   const [dateRange, setDateRange] = useState<DateRangePickerValue | undefined>(
@@ -134,8 +135,7 @@ function GenerateReportInput() {
       <Button
         color={"blue"}
         icon={FiDownloadCloud}
-        size="xs"
-        loading={isLoading}
+        size="sm"
         disabled={isLoading}
         onClick={() => requestReport()}
       >
@@ -256,7 +256,7 @@ export default function UsageReports() {
   return (
     <div className="mx-auto container">
       <GenerateReportInput />
-      <Divider />
+      <Separator />
       <UsageReportsTable />
     </div>
   );

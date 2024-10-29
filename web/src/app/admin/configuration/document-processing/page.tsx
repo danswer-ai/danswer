@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card } from "@tremor/react";
+import { Card } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { DocumentIcon2 } from "@/components/icons/icons";
 import useSWR from "swr";
 import { ThreeDotsLoader } from "@/components/Loading";
@@ -99,12 +100,7 @@ function Main() {
           <div className="flex space-x-4 mt-6">
             {isApiKeySet ? (
               <>
-                <Button
-                  color="red"
-                  onClick={handleDelete}
-                  variant="secondary"
-                  className="bg-red-100 text-red-600 hover:bg-red-400 transition duration-200"
-                >
+                <Button onClick={handleDelete} variant="destructive">
                   Delete API Key
                 </Button>
                 <p className="text-text-600 my-auto">

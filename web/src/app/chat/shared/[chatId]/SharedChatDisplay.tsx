@@ -9,12 +9,14 @@ import {
   processRawChatHistory,
 } from "../../lib";
 import { AIMessage, HumanMessage } from "../../message/Messages";
-import { Button, Callout, Divider } from "@tremor/react";
+import { Callout } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { Button } from "@/components/ui/button";
 
 function BackToDanswerButton() {
   const router = useRouter();
@@ -74,7 +76,7 @@ export function SharedChatDisplay({
                 {humanReadableFormat(chatSession.time_created)}
               </p>
 
-              <Divider />
+              <Separator />
             </div>
             {isReady ? (
               <div className="w-full pb-16">

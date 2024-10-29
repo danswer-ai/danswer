@@ -1,6 +1,8 @@
 import React, { useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
-import { Button, Text, Callout, Subtitle, Divider } from "@tremor/react";
+import { Text, Callout, Subtitle } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/admin/connectors/Field";
 import { CloudEmbeddingProvider } from "../../../../components/embedding/interfaces";
 import {
@@ -142,7 +144,9 @@ export function ChangeCredentialsModal({
         const errorData = await updateResponse.json();
         throw new Error(
           errorData.detail ||
-            `Failed to update provider- check your ${isProxy ? "API URL" : "API key"}`
+            `Failed to update provider- check your ${
+              isProxy ? "API URL" : "API key"
+            }`
         );
       }
 
@@ -157,7 +161,9 @@ export function ChangeCredentialsModal({
     <Modal
       width="max-w-3xl"
       icon={provider.icon}
-      title={`Modify your ${provider.provider_type} ${isProxy ? "Configuration" : "key"}`}
+      title={`Modify your ${provider.provider_type} ${
+        isProxy ? "Configuration" : "key"
+      }`}
       onOutsideClick={onCancel}
     >
       <>
@@ -258,14 +264,14 @@ export function ChangeCredentialsModal({
 
               <Button
                 className="mr-auto mt-4"
-                color="blue"
+                variant="success"
                 onClick={() => handleSubmit()}
                 disabled={!apiKey}
               >
                 Update Configuration
               </Button>
 
-              <Divider />
+              <Separator />
             </div>
           </>
         )}
@@ -278,7 +284,11 @@ export function ChangeCredentialsModal({
           embedding type!
         </Text>
 
-        <Button className="mr-auto" onClick={handleDelete} color="red">
+        <Button
+          className="mr-auto"
+          onClick={handleDelete}
+          variant="destructive"
+        >
           Delete Configuration
         </Button>
         {deletionError && (

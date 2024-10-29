@@ -11,7 +11,6 @@ import { deleteSlackBotConfig, isPersonaASlackBotPersona } from "./lib";
 import { SlackBotTokensForm } from "./SlackBotTokensForm";
 import { AdminPageTitle } from "@/components/admin/Title";
 import {
-  Button,
   Table,
   TableBody,
   TableCell,
@@ -25,6 +24,7 @@ import { FiArrowUpRight, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import Link from "next/link";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { ErrorCallout } from "@/components/ErrorCallout";
+import { Button } from "@/components/ui/button";
 
 const numToDisplay = 50;
 
@@ -235,8 +235,7 @@ const Main = () => {
             onClick={() => {
               setSlackBotTokensModalIsOpen(!slackBotTokensModalIsOpen);
             }}
-            color="blue"
-            size="xs"
+            variant="edit"
             className="mt-2"
             icon={slackBotTokensModalIsOpen ? FiChevronUp : FiChevronDown}
           >
@@ -268,7 +267,7 @@ const Main = () => {
           <div className="mb-2"></div>
 
           <Link className="flex mb-3 w-fit" href="/admin/bot/new">
-            <Button className="my-auto" color="green" size="xs">
+            <Button className="my-auto" variant="next">
               New Slack Bot Configuration
             </Button>
           </Link>

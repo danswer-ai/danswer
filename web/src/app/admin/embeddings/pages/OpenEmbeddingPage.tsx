@@ -1,5 +1,7 @@
 "use client";
-import { Button, Card, Text, Title } from "@tremor/react";
+
+import { Button } from "@/components/ui/button";
+import { Card, Text, Title } from "@tremor/react";
 import { ModelSelector } from "../../../../components/embedding/ModelSelector";
 import {
   AVAILABLE_MODELS,
@@ -58,7 +60,11 @@ export default function OpenEmbeddingPage({
         to the Danswer team.
       </Text>
       {!configureModel && (
-        <Button onClick={() => setConfigureModel(true)} className="mt-4">
+        <Button
+          onClick={() => setConfigureModel(true)}
+          className="mt-4"
+          variant="secondary"
+        >
           Configure custom model
         </Button>
       )}

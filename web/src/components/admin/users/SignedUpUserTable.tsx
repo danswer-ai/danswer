@@ -12,10 +12,10 @@ import {
   TableHeaderCell,
   TableBody,
   TableCell,
-  Button,
   Select,
   SelectItem,
 } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { GenericConfirmModal } from "@/components/modals/GenericConfirmModal";
 import { useState } from "react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
@@ -102,8 +102,14 @@ const UserRoleDropdown = ({
       {showConfirmModal && (
         <GenericConfirmModal
           title="Change Curator Role"
-          message={`Warning: Switching roles from Curator to ${USER_ROLE_LABELS[pendingRole as UserRole] ?? USER_ROLE_LABELS[user.role]} will remove their status as individual curators from all groups.`}
-          confirmText={`Switch Role to ${USER_ROLE_LABELS[pendingRole as UserRole] ?? USER_ROLE_LABELS[user.role]}`}
+          message={`Warning: Switching roles from Curator to ${
+            USER_ROLE_LABELS[pendingRole as UserRole] ??
+            USER_ROLE_LABELS[user.role]
+          } will remove their status as individual curators from all groups.`}
+          confirmText={`Switch Role to ${
+            USER_ROLE_LABELS[pendingRole as UserRole] ??
+            USER_ROLE_LABELS[user.role]
+          }`}
           onClose={() => setShowConfirmModal(false)}
           onConfirm={handleConfirm}
         />
@@ -145,7 +151,7 @@ const DeactivaterButton = ({
       className="w-min"
       onClick={() => trigger({ user_email: user.email })}
       disabled={isMutating}
-      size="xs"
+      size="sm"
     >
       {deactivate ? "Deactivate" : "Activate"}
     </Button>
@@ -197,8 +203,8 @@ const DeleteUserButton = ({
         className="w-min"
         onClick={() => setShowDeleteModal(true)}
         disabled={isMutating}
-        size="xs"
-        color="red"
+        size="sm"
+        variant="destructive"
       >
         Delete
       </Button>

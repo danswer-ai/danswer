@@ -14,6 +14,7 @@ import {
   USER_ROLE_LABELS,
 } from "@/lib/types";
 import { AddConnectorForm } from "./AddConnectorForm";
+import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableHead,
@@ -21,12 +22,11 @@ import {
   TableHeaderCell,
   TableBody,
   TableCell,
-  Divider,
-  Button,
   Text,
   Select,
   SelectItem,
 } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { DeleteButton } from "@/components/DeleteButton";
 import { Bubble } from "@/components/Bubble";
 import { BookmarkIcon, RobotIcon } from "@/components/icons/icons";
@@ -151,7 +151,7 @@ export const GroupDisplay = ({
         )}
       </div>
 
-      <Divider />
+      <Separator />
 
       <div className="flex w-full">
         <h2 className="text-xl font-bold">Users</h2>
@@ -247,8 +247,8 @@ export const GroupDisplay = ({
 
       <Button
         className="mt-3"
-        size="xs"
-        color="green"
+        size="sm"
+        variant="success"
         onClick={() => setAddMemberFormVisible(true)}
         disabled={!userGroup.is_up_to_date}
       >
@@ -267,7 +267,7 @@ export const GroupDisplay = ({
         />
       )}
 
-      <Divider />
+      <Separator />
 
       <h2 className="text-xl font-bold mt-8">Connectors</h2>
       <div className="mt-2">
@@ -347,8 +347,8 @@ export const GroupDisplay = ({
       <Button
         className="mt-3"
         onClick={() => setAddConnectorFormVisible(true)}
-        size="xs"
-        color="green"
+        size="sm"
+        variant="success"
         disabled={!userGroup.is_up_to_date}
       >
         Add Connectors
@@ -366,7 +366,7 @@ export const GroupDisplay = ({
         />
       )}
 
-      <Divider />
+      <Separator />
 
       <h2 className="text-xl font-bold mt-8 mb-2">Document Sets</h2>
 
@@ -391,7 +391,7 @@ export const GroupDisplay = ({
         )}
       </div>
 
-      <Divider />
+      <Separator />
 
       <h2 className="text-xl font-bold mt-8 mb-2">Assistants</h2>
 
@@ -416,7 +416,7 @@ export const GroupDisplay = ({
         )}
       </div>
 
-      <Divider />
+      <Separator />
 
       <h2 className="text-xl font-bold mt-8 mb-2">Token Rate Limits</h2>
 
@@ -435,8 +435,8 @@ export const GroupDisplay = ({
 
       {isAdmin && (
         <Button
-          color="green"
-          size="xs"
+          variant="success"
+          size="sm"
           className="mt-3"
           onClick={() => setAddRateLimitFormVisible(true)}
         >

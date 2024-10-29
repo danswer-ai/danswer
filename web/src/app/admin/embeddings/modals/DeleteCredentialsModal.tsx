@@ -1,6 +1,7 @@
 import React from "react";
 import { Modal } from "@/components/Modal";
-import { Button, Text, Callout } from "@tremor/react";
+import { Text, Callout } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { CloudEmbeddingProvider } from "../../../../components/embedding/interfaces";
 
 export function DeleteCredentialsModal({
@@ -29,10 +30,10 @@ export function DeleteCredentialsModal({
           className="mt-4"
         ></Callout>
         <div className="flex mt-8 justify-between">
-          <Button color="gray" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel}>
             Keep Credentaisl
           </Button>
-          <Button color="red" onClick={onConfirm}>
+          <Button variant="destructive" onClick={onConfirm}>
             Delete Credentials
           </Button>
         </div>

@@ -6,9 +6,9 @@ import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useStandardAnswers, useStandardAnswerCategories } from "./hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
-  Button,
-  Divider,
   Text,
   Table,
   TableHead,
@@ -404,12 +404,12 @@ const Main = () => {
       <div className="mb-2"></div>
 
       <Link className="flex mb-3 mt-2 w-fit" href="/admin/standard-answer/new">
-        <Button className="my-auto" color="green" size="xs">
+        <Button className="my-auto" variant="success" size="sm">
           New Standard Answer
         </Button>
       </Link>
 
-      <Divider />
+      <Separator />
 
       <div>
         <StandardAnswersTable

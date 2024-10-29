@@ -7,8 +7,8 @@ import {
   TableHeaderCell,
   TableBody,
   TableCell,
-  Button,
 } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import CenteredPageSelector from "./CenteredPageSelector";
 import { type PageSelectorProps } from "@/components/PageSelector";

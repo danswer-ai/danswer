@@ -3,7 +3,8 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Button, Card, Text, Title } from "@tremor/react";
+import { Card, Text, Title } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import { ModelPreview } from "../../../../components/embedding/ModelSelector";
 import {
@@ -157,7 +158,9 @@ function Main() {
           </Card>
 
           <Link href="/admin/embeddings">
-            <Button className="mt-8">Update Search Settings</Button>
+            <Button variant="update" className="mt-8">
+              Update Search Settings
+            </Button>
           </Link>
         </>
       ) : (

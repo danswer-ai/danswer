@@ -2,7 +2,8 @@ import { ToolsTable } from "./ToolsTable";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { FiPlusSquare } from "react-icons/fi";
 import Link from "next/link";
-import { Divider, Text, Title } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
+import { Text, Title } from "@tremor/react";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { AdminPageTitle } from "@/components/admin/Title";
@@ -34,7 +35,7 @@ export default async function Page() {
       </Text>
 
       <div>
-        <Divider />
+        <Separator />
 
         <Title>Create a Tool</Title>
         <Link
@@ -59,7 +60,7 @@ export default async function Page() {
           </div>
         </Link>
 
-        <Divider />
+        <Separator />
 
         <Title>Existing Tools</Title>
         <ToolsTable tools={tools} />

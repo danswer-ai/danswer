@@ -4,7 +4,8 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 import { EmbeddingModelSelection } from "../EmbeddingModelSelectionForm";
 import { useEffect, useMemo, useState } from "react";
-import { Button, Card, Text } from "@tremor/react";
+import { Card, Text } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, WarningCircle } from "@phosphor-icons/react";
 import {
   CloudEmbeddingModel,
@@ -360,7 +361,10 @@ export default function EmbeddingForm() {
                 <li>Nomic nomic-embed-text-v1 for self-hosted</li>
               </div>
               <div className="flex mt-4 justify-between">
-                <Button color="green" onClick={() => setShowPoorModel(false)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowPoorModel(false)}
+                >
                   Cancel update
                 </Button>
                 <Button

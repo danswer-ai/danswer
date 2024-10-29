@@ -1,7 +1,7 @@
 import React from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { Button } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 
 import { BookstackIcon } from "@/components/icons/icons";
 import { AddPromptModalProps } from "../interfaces";
@@ -51,7 +51,12 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
               placeholder="Enter a prompt (e.g. 'help me rewrite the following politely and concisely for professional communication')"
             />
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting}
+              variant="secondary"
+            >
               Add prompt
             </Button>
           </Form>

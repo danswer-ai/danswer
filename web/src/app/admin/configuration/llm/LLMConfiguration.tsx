@@ -4,7 +4,8 @@ import { Modal } from "@/components/Modal";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { useState } from "react";
 import useSWR from "swr";
-import { Button, Callout, Text, Title } from "@tremor/react";
+import { Callout, Text, Title } from "@tremor/react";
+import { Button } from "@/components/ui/button";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
@@ -76,7 +77,7 @@ function DefaultLLMProviderDisplay({
         </div>
 
         <div className="ml-auto">
-          <Button color="blue" size="xs" onClick={() => setFormIsVisible(true)}>
+          <Button variant="next" onClick={() => setFormIsVisible(true)}>
             Set up
           </Button>
         </div>
@@ -117,7 +118,7 @@ function AddCustomLLMProvider({
   }
 
   return (
-    <Button size="xs" onClick={() => setFormIsVisible(true)}>
+    <Button variant="next" onClick={() => setFormIsVisible(true)}>
       Add Custom LLM Provider
     </Button>
   );

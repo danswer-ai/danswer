@@ -3,7 +3,9 @@
 import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
-import { Button, Divider, Italic } from "@tremor/react";
+import { Italic } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
   ArrayHelpers,
@@ -627,7 +629,10 @@ export function AssistantEditor({
                   otherwise specified below.
                   {admin &&
                     user?.preferences.default_model &&
-                    `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
+                    `  Your current (user-specific) default model is ${getDisplayNameForModel(
+                      destructureValue(user?.preferences?.default_model!)
+                        .modelName
+                    )}`}
                 </p>
                 {admin ? (
                   <div className="mb-2 flex items-starts">
@@ -972,7 +977,7 @@ export function AssistantEditor({
                   )}
                 </div>
               </div>
-              <Divider />
+              <Separator />
               <AdvancedOptionsToggle
                 showAdvancedOptions={showAdvancedOptions}
                 setShowAdvancedOptions={setShowAdvancedOptions}
@@ -1138,11 +1143,8 @@ export function AssistantEditor({
                                 message: "",
                               });
                             }}
-                            className="text-white mt-3"
-                            size="xs"
-                            type="button"
-                            icon={FiPlus}
-                            color="green"
+                            size="sm"
+                            variant="next"
                           >
                             Add New
                           </Button>
@@ -1166,9 +1168,7 @@ export function AssistantEditor({
 
               <div className="flex">
                 <Button
-                  className="mx-auto"
-                  color="green"
-                  size="md"
+                  variant="submit"
                   type="submit"
                   disabled={isSubmitting || isRequestSuccessful}
                 >
