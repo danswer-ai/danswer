@@ -191,11 +191,8 @@ export const TeamspacesCard = ({
                 {teamspace.is_up_to_date ? "Active" : "Syncing"}
               </CustomTooltip>
             </h2>
-            {/* TODO: replace with teamspace creator  */}
-            {/* <span className="text-sm text-subtle">@mrquilbot</span> */}
-
             <span className="text-sm text-subtle">
-              {teamspace.users.length > 0 ? teamspace.users[0].full_name : ""}
+              {teamspace.creator.full_name}
             </span>
           </div>
 

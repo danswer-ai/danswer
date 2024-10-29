@@ -562,7 +562,7 @@ def fetch_profile(
     current_user: User = Depends(current_user),
 ) -> Response:
     try:
-        file_path = f"{current_user.id}/{_PROFILE_FILENAME}"
+        file_path = f"{current_user.id}{_PROFILE_FILENAME}"
 
         file_store = get_default_file_store(db_session)
         file_io = file_store.read_file(file_path, mode="b")
@@ -578,7 +578,7 @@ def remove_profile(
     current_user: User = Depends(current_user),  # Get the current user
 ) -> dict:
     try:
-        file_name = f"{current_user.id}/{_PROFILE_FILENAME}"
+        file_name = f"{current_user.id}{_PROFILE_FILENAME}"
 
         file_store = get_default_file_store(db_session)
 

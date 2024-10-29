@@ -6,7 +6,6 @@ import React, { useContext } from "react";
 
 import { HeaderWrapper } from "./HeaderWrapper";
 import { SettingsContext } from "../settings/SettingsProvider";
-import { UserDropdown } from "../UserDropdown";
 import Logo from "../../../public/logo-brand.png";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED } from "@/lib/constants";
 import { SideBar } from "../SideBar";
@@ -97,12 +96,6 @@ export function Header({ user }: HeaderProps) {
             </Link>
           </>
         )}
-
-        <div className="flex flex-col h-full ml-auto">
-          <div className="my-auto">
-            <UserDropdown user={user} />
-          </div>
-        </div>
       </div>
     </HeaderWrapper>
   );

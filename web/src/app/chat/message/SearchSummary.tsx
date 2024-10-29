@@ -1,10 +1,3 @@
-import {
-  BasicClickable,
-  EmphasizedClickable,
-} from "@/components/BasicClickable";
-import { HoverPopup } from "@/components/HoverPopup";
-import { Hoverable } from "@/components/Hoverable";
-import { Tooltip } from "@/components/tooltip/Tooltip";
 import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { X, Check, Pencil, Search } from "lucide-react";

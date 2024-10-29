@@ -30,7 +30,6 @@ import {
 } from "@radix-ui/react-tooltip";
 import { Plus, X } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
-import { Tooltip as SchadcnTooltip } from "@/components/tooltip/Tooltip";
 import { FiInfo } from "react-icons/fi";
 import { useState } from "react";
 import { FaMarkdown } from "react-icons/fa";
@@ -200,12 +199,12 @@ export function TextFormField({
         <div className="grid leading-none">
           <div className="flex items-start gap-2 pb-1.5">
             {label && (
-            <ShadcnLabel
-              htmlFor={label}
-              className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
-            >
-              {label}
-            </ShadcnLabel>
+              <ShadcnLabel
+                htmlFor={label}
+                className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed"
+              >
+                {label}
+              </ShadcnLabel>
             )}
             {tooltip && <ToolTipDetails>{tooltip}</ToolTipDetails>}
           </div>
@@ -492,8 +491,9 @@ export function TextArrayField<T extends Yup.AnyObject>({
   return (
     <div className="pb-4">
       <div className="grid gap-1 pb-1.5">
-      <ShadcnLabel>{label}</ShadcnLabel>
-      {subtext && <SubLabel>{subtext}</SubLabel>}</div>
+        <ShadcnLabel>{label}</ShadcnLabel>
+        {subtext && <SubLabel>{subtext}</SubLabel>}
+      </div>
 
       <FieldArray
         name={name}
@@ -541,7 +541,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
                 arrayHelpers.push("");
               }}
               type="button"
-                    className="mt-3 "
+              className="mt-3 "
             >
               <Plus size={16} /> Add New
             </Button>
@@ -608,14 +608,14 @@ export function SelectorFormField({
 
   return (
     <div className="pb-4">
-
-<div className="grid gap-1 pb-1.5">
-      {label && (
-        <ShadcnLabel className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed">
-          {label} {optional && <span className="ml-1 text-text-500">(optional)</span>}
-        </ShadcnLabel>
-      )}
-      {subtext && <SubLabel>{subtext}</SubLabel>}
+      <div className="grid gap-1 pb-1.5">
+        {label && (
+          <ShadcnLabel className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed">
+            {label}{" "}
+            {optional && <span className="ml-1 text-text-500">(optional)</span>}
+          </ShadcnLabel>
+        )}
+        {subtext && <SubLabel>{subtext}</SubLabel>}
       </div>
 
       <div>

@@ -1,6 +1,5 @@
 "use client";
 import { User } from "@/lib/types";
-import { UserDropdown } from "../UserDropdown";
 import { FiShare2 } from "react-icons/fi";
 import { SetStateAction, useContext, useEffect } from "react";
 import { NewChatIcon } from "../icons/icons";
@@ -108,9 +107,6 @@ export default function FunctionalHeader({
             </div>
           )}
 
-          <div className="mobile:hidden flex my-auto">
-            <UserDropdown user={user} />
-          </div>
           <Link
             className="desktop:hidden my-auto"
             href={

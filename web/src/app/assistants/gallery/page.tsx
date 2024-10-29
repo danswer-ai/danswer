@@ -43,7 +43,6 @@ export default async function GalleryPage({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availableAssistants: assistants,
           availableTags: tags,
           llmProviders,
           folders,

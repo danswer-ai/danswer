@@ -165,7 +165,7 @@ def upload_profile(db_session: Session, file: UploadFile | str, user: User) -> b
             logger.error(f"Error processing image: {e}")
             raise HTTPException(status_code=400, detail="Invalid image file.")
 
-    file_name = f"{user.id}/{_PROFILE_FILENAME}"
+    file_name = f"{user.id}{_PROFILE_FILENAME}"
 
     file_store = get_default_file_store(db_session)
     file_store.save_file(

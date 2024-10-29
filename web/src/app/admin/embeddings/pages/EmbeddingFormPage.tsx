@@ -24,7 +24,7 @@ import RerankingDetailsForm from "../RerankingFormPage";
 import { useEmbeddingFormContext } from "@/context/EmbeddingContext";
 import { Modal } from "@/components/Modal";
 import { useToast } from "@/hooks/use-toast";
-import { Card,CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { CustomModal } from "@/components/CustomModal";
@@ -166,6 +166,13 @@ export default function EmbeddingForm() {
     return <ErrorCallout errorTitle="Failed to fetch embedding model status" />;
   }
 
+  const updateCurrentModel = (newModel: string) => {
+    setAdvancedEmbeddingDetails((values) => ({
+      ...values,
+      model_name: newModel,
+    }));
+  };
+
   const updateSearch = async () => {
     let values: SavedSearchSettings = {
       ...rerankingDetails,
@@ -238,7 +245,8 @@ export default function EmbeddingForm() {
     if (response.ok) {
       toast({
         title: "Provider Change Successful",
-        description: "You have successfully changed the provider. Redirecting to the embedding page...",
+        description:
+          "You have successfully changed the provider. Redirecting to the embedding page...",
         variant: "success",
       });
       mutate("/api/search-settings/get-secondary-search-settings");
@@ -270,36 +278,42 @@ export default function EmbeddingForm() {
               await onConfirm();
             }
           }}
-           className="w-full md:w-auto"
+          className="w-full md:w-auto"
         >
           Re-index
         </Button>
 
-      <CustomTooltip trigger={<WarningCircle
-            className="text-text-800 cursor-help"
-            size={20}
-            weight="fill"
-          />}>
-        <ul className="list-disc pl-5">
-              {currentEmbeddingModel != selectedProvider && (
-                <li>Changed embedding provider</li>
-              )}
-              {searchSettings?.multipass_indexing !=
-                advancedEmbeddingDetails.multipass_indexing && (
-                <li>Multipass indexing modification</li>
-              )}
-            </ul>
+        <CustomTooltip
+          trigger={
+            <WarningCircle
+              className="text-text-800 cursor-help"
+              size={20}
+              weight="fill"
+            />
+          }
+        >
+          <ul className="list-disc pl-5">
+            {currentEmbeddingModel != selectedProvider && (
+              <li>Changed embedding provider</li>
+            )}
+            {searchSettings?.multipass_indexing !=
+              advancedEmbeddingDetails.multipass_indexing && (
+              <li>Multipass indexing modification</li>
+            )}
+          </ul>
         </CustomTooltip>
       </div>
     ) : (
-      <div className="flex items-center justify-center"><Button
-      onClick={async () => {
-        updateSearch();
-      }}
-       className="w-full md:w-auto"
-    >
-      Update Search
-    </Button></div>
+      <div className="flex items-center justify-center">
+        <Button
+          onClick={async () => {
+            updateSearch();
+          }}
+          className="w-full md:w-auto"
+        >
+          Update Search
+        </Button>
+      </div>
     );
   };
 
@@ -324,13 +338,15 @@ export default function EmbeddingForm() {
             </Text>
             <Card className="overflow-x-auto">
               <CardContent>
-              <EmbeddingModelSelection
-                setModelTab={setModelTab}
-                modelTab={modelTab}
-                selectedProvider={selectedProvider}
-                currentEmbeddingModel={currentEmbeddingModel}
-                updateSelectedProvider={updateSelectedProvider}
-              />
+                <EmbeddingModelSelection
+                  updateCurrentModel={updateCurrentModel}
+                  setModelTab={setModelTab}
+                  modelTab={modelTab}
+                  selectedProvider={selectedProvider}
+                  currentEmbeddingModel={currentEmbeddingModel}
+                  updateSelectedProvider={updateSelectedProvider}
+                  advancedEmbeddingDetails={advancedEmbeddingDetails}
+                />
               </CardContent>
             </Card>
             <div className="mt-4 flex w-full justify-end">
@@ -346,7 +362,7 @@ export default function EmbeddingForm() {
                     nextFormStep();
                   }
                 }}
-                variant='outline'
+                variant="outline"
               >
                 Continue
                 <ArrowRight />
@@ -356,10 +372,10 @@ export default function EmbeddingForm() {
         )}
         {showPoorModel && (
           <CustomModal
-          onClose={() => setShowPoorModel(false)}
+            onClose={() => setShowPoorModel(false)}
             title={`Are you sure you want to select ${selectedProvider.model_name}?`}
-      trigger={null}
-      open={showPoorModel}
+            trigger={null}
+            open={showPoorModel}
           >
             <>
               <div className="text-lg">
@@ -370,7 +386,10 @@ export default function EmbeddingForm() {
                 <li>Nomic nomic-embed-text-v1 for self-hosted</li>
               </div>
               <div className="flex mt-4 justify-between">
-                <Button variant='destructive' onClick={() => setShowPoorModel(false)}>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowPoorModel(false)}
+                >
                   Cancel update
                 </Button>
                 <Button
@@ -390,40 +409,44 @@ export default function EmbeddingForm() {
           <>
             <Card className="overflow-x-auto">
               <CardContent>
-              <RerankingDetailsForm
-                setModelTab={setModelTab}
-                modelTab={
-                  originalRerankingDetails.rerank_model_name
-                    ? modelTab
-                    : modelTab || "cloud"
-                }
-                currentRerankingDetails={rerankingDetails}
-                originalRerankingDetails={originalRerankingDetails}
-                setRerankingDetails={setRerankingDetails}
-              />
+                <RerankingDetailsForm
+                  setModelTab={setModelTab}
+                  modelTab={
+                    originalRerankingDetails.rerank_model_name
+                      ? modelTab
+                      : modelTab || "cloud"
+                  }
+                  currentRerankingDetails={rerankingDetails}
+                  originalRerankingDetails={originalRerankingDetails}
+                  setRerankingDetails={setRerankingDetails}
+                />
               </CardContent>
             </Card>
 
-            <div className={` mt-4 w-full grid md:grid-cols-3 gap-4 items-start`}>
-              <div><Button
-                onClick={() => prevFormStep()}
-                variant='outline'
-                className="w-full md:w-auto"
-              >
-                <ArrowLeft />
-                Previous
-              </Button></div>
+            <div
+              className={` mt-4 w-full grid md:grid-cols-3 gap-4 items-start`}
+            >
+              <div>
+                <Button
+                  onClick={() => prevFormStep()}
+                  variant="outline"
+                  className="w-full md:w-auto"
+                >
+                  <ArrowLeft />
+                  Previous
+                </Button>
+              </div>
 
               <ReIndexingButton needsReIndex={needsReIndex} />
 
               <div className="flex w-full justify-end">
                 <Button
-                variant='outline'
+                  variant="outline"
                   // disabled={!isFormValid}
                   onClick={() => {
                     nextFormStep();
                   }}
-                   className="w-full md:w-auto"
+                  className="w-full md:w-auto"
                 >
                   Advanced
                   <ArrowRight />
@@ -436,23 +459,26 @@ export default function EmbeddingForm() {
           <>
             <Card>
               <CardContent>
-              <AdvancedEmbeddingFormPage
-                advancedEmbeddingDetails={advancedEmbeddingDetails}
-                updateAdvancedEmbeddingDetails={updateAdvancedEmbeddingDetails}
-              />
+                <AdvancedEmbeddingFormPage
+                  advancedEmbeddingDetails={advancedEmbeddingDetails}
+                  updateAdvancedEmbeddingDetails={
+                    updateAdvancedEmbeddingDetails
+                  }
+                />
               </CardContent>
             </Card>
 
             <div className={`mt-4 w-full grid md:grid-cols-3 gap-4 items-star`}>
               <div>
                 <Button
-                onClick={() => prevFormStep()}
-                variant='outline'
-                className="w-full md:w-auto"
-              >
-                <ArrowLeft />
-                Previous
-              </Button></div>
+                  onClick={() => prevFormStep()}
+                  variant="outline"
+                  className="w-full md:w-auto"
+                >
+                  <ArrowLeft />
+                  Previous
+                </Button>
+              </div>
 
               <ReIndexingButton needsReIndex={needsReIndex} />
             </div>

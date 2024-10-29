@@ -81,7 +81,7 @@ export const LlmList: React.FC<LlmListProps> = ({
       {llmOptions.map(({ name, icon, value }, index) => {
         if (!requiresImageGeneration || checkLLMSupportsImageInput(name)) {
           return (
-            <div className="flex items-center gap-2">
+            <div key={index} className="flex items-center gap-2">
               <Checkbox
                 key={index}
                 checked={currentLlm == name}

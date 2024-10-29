@@ -1,5 +1,4 @@
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
-import { UserDropdown } from "@/components/UserDropdown";
 import { ChatProvider } from "@/context/ChatContext";
 import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
@@ -46,7 +45,6 @@ export default async function GalleryPage({
           chatSessions,
           availableSources,
           availableDocumentSets: documentSets,
-          availableAssistants: assistants,
           availableTags: tags,
           llmProviders,
           folders,

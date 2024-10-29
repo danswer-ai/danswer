@@ -7,11 +7,11 @@ import {
   NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT,
 } from "@/lib/constants";
 import { LeftToLineIcon, NewChatIcon, RightToLineIcon } from "../icons/icons";
-import { Tooltip } from "../tooltip/Tooltip";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { Logo } from "../Logo";
 import { HeaderTitle } from "./HeaderTitle";
 import Link from "next/link";
+import { CustomTooltip } from "../CustomTooltip";
 
 export default function LogoType({
   toggleSidebar,
@@ -72,47 +72,55 @@ export default function LogoType({
       </div>
 
       {page == "chat" && !showArrow && (
-        <Tooltip delayDuration={1000} content="New Chat">
-          <Link
-            className="my-auto mobile:hidden"
-            href={
-              `/${page}` +
-              (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT && assistantId
-                ? `?assistantId=${assistantId}`
-                : "")
-            }
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey) {
-                return;
+        <CustomTooltip
+          delayDuration={1000}
+          asChild
+          trigger={
+            <Link
+              className="my-auto mobile:hidden"
+              href={
+                `/${page}` +
+                (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT && assistantId
+                  ? `?assistantId=${assistantId}`
+                  : "")
               }
-              if (handleNewChat) {
-                handleNewChat();
-              }
-            }}
-          >
-            <div className="cursor-pointer ml-2 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
-              <NewChatIcon size={20} />
-            </div>
-          </Link>
-        </Tooltip>
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey) {
+                  return;
+                }
+                if (handleNewChat) {
+                  handleNewChat();
+                }
+              }}
+            >
+              <div className="cursor-pointer ml-2 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
+                <NewChatIcon size={20} />
+              </div>
+            </Link>
+          }
+        >
+          New Chat
+        </CustomTooltip>
       )}
       {showArrow && toggleSidebar && (
-        <Tooltip
+        <CustomTooltip
           delayDuration={0}
-          content={toggled ? `Unpin sidebar` : "Pin sidebar"}
+          trigger={
+            <button
+              className="mr-3 my-auto ml-auto"
+              onClick={() => {
+                toggleSidebar();
+                if (toggled) {
+                  explicitlyUntoggle();
+                }
+              }}
+            >
+              <LeftToLineIcon />
+            </button>
+          }
         >
-          <button
-            className="mr-3 my-auto ml-auto"
-            onClick={() => {
-              toggleSidebar();
-              if (toggled) {
-                explicitlyUntoggle();
-              }
-            }}
-          >
-            <LeftToLineIcon />
-          </button>
-        </Tooltip>
+          {toggled ? `Unpin sidebar` : "Pin sidebar"}
+        </CustomTooltip>
       )}
     </div>
   );

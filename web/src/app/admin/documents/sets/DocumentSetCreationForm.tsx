@@ -60,7 +60,7 @@ export const DocumentSetCreationForm = ({
     label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
   }));
 
-  console.log(existingDocumentSet)
+  console.log(existingDocumentSet);
 
   return (
     <div>
@@ -190,9 +190,9 @@ export const DocumentSetCreationForm = ({
                       visible to all users.
                     </p>
                     <Combobox
-                      items={teamspaces.map((groups) => ({
-                        value: groups.id.toString(),
-                        label: groups.name,
+                      items={teamspaces.map((teams) => ({
+                        value: teams.id.toString(),
+                        label: teams.name,
                       }))}
                       onSelect={(selectedTeamspaceIds) => {
                         const selectedIds = selectedTeamspaceIds.map((val) =>
@@ -202,7 +202,10 @@ export const DocumentSetCreationForm = ({
                       }}
                       placeholder="Select teamspaces"
                       label="Teamspaces"
-                      selected={values.groups.map((group) => group.id.toString())}
+                      selected={values.groups.map((group) =>
+                        // @ts-ignore
+                        group.id.toString()
+                      )}
                     />
                   </>
                 ) : (
