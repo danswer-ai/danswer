@@ -265,7 +265,7 @@ def prune_cc_pair(
     r = get_redis_client(tenant_id=tenant_id)
 
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
-    if redis_connector.is_pruning():
+    if redis_connector.prune.signaled:
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail="Pruning task already in progress.",

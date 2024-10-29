@@ -462,11 +462,11 @@ def connector_indexing_task(
             f"fence={redis_connector.get_deletion_fence_key()}"
         )
 
-    if redis_connector.is_stopping():
+    if redis_connector.stop.signaled:
         raise RuntimeError(
             f"Indexing will not start because a connector stop signal was detected: "
             f"cc_pair={cc_pair_id} "
-            f"fence={redis_connector.get_stop_fence_key()}"
+            f"fence={redis_connector.stop.fence_key}"
         )
 
     rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
@@ -549,7 +549,7 @@ def connector_indexing_task(
 
             # define a callback class
             callback = RunIndexingCallback(
-                redis_connector.get_stop_fence_key(),
+                redis_connector.stop.fence_key,
                 rci.generator_progress_key,
                 lock,
                 r,

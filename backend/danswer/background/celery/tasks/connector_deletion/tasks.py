@@ -69,10 +69,10 @@ def check_for_connector_deletion_task(self: Task, *, tenant_id: str | None) -> N
                     # this means we wanted to start deleting but dependent tasks were running
                     # Leave a stop signal to clear indexing and pruning tasks more quickly
                     task_logger.info(str(e))
-                    redis_connector.stop_fence_set(cc_pair_id)
+                    redis_connector.stop.signaled = True
                 else:
                     # clear the stop signal if it exists ... no longer needed
-                    redis_connector.stop_fence_clear()
+                    redis_connector.stop.signaled = False
 
     except SoftTimeLimitExceeded:
         task_logger.info(
@@ -140,7 +140,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
                     f"search_settings={search_settings.id}"
                 )
 
-        if redis_connector.is_pruning():
+        if redis_connector.prune.signaled:
             raise TaskDependencyError(
                 f"Connector deletion - Delayed (pruning in progress): "
                 f"cc_pair={cc_pair_id}"

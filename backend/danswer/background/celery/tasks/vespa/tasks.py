@@ -524,14 +524,14 @@ def monitor_ccpair_pruning_taskset(
     cc_pair_id = int(cc_pair_id_str)
 
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
-    if not redis_connector.is_pruning():
+    if not redis_connector.prune.signaled:
         return
 
-    initial = redis_connector.pruning_get_initial()
+    initial = redis_connector.prune.generator_complete
     if initial is None:
         return
 
-    remaining = redis_connector.pruning_get_remaining()
+    remaining = redis_connector.prune.get_remaining()
     task_logger.info(
         f"Connector pruning progress: cc_pair={cc_pair_id} remaining={remaining} initial={initial}"
     )
@@ -543,9 +543,9 @@ def monitor_ccpair_pruning_taskset(
         f"Successfully pruned connector credential pair. cc_pair={cc_pair_id}"
     )
 
-    redis_connector.pruning_taskset_clear()
-    redis_connector.pruning_generator_clear()
-    redis_connector.pruning_fence_clear()
+    redis_connector.prune.taskset_clear()
+    redis_connector.prune.generator_clear()
+    redis_connector.prune.signaled = False
 
 
 def monitor_ccpair_indexing_taskset(

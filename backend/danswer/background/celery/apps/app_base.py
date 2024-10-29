@@ -127,7 +127,9 @@ def on_task_postrun(
     if task_id.startswith(RedisConnector.PRUNING_SUBTASK):
         cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
-            RedisConnector.pruning_taskset_remove(int(cc_pair_id), task_id, r)
+            RedisConnector.RedisConnectorPrune.remove_from_taskset(
+                int(cc_pair_id), task_id, r
+            )
         return
 
 
