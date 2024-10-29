@@ -81,7 +81,7 @@ export async function updateModelOverrideForChatSession(
 export async function createChatSession(
   assistantId: number,
   description: string | null,
-  teamspaceId?: string | string[]
+  teamspaceId?: string
 ): Promise<number> {
   const url =
     teamspaceId && Number(teamspaceId) > 0

@@ -62,7 +62,7 @@ export function CustomTooltip({
   return (
     <TooltipProvider>
       <Tooltip delayDuration={delayDuration}>
-        <TooltipTrigger asChild={asChild} className="w-fit">{trigger}</TooltipTrigger>
+        <TooltipTrigger asChild={asChild}>{trigger}</TooltipTrigger>
         <TooltipContent
           align={align}
           side={side}

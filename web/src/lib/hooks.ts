@@ -66,10 +66,11 @@ const INDEXING_STATUS_URL = "/api/manage/admin/connector/indexing-status";
 
 export const useConnectorCredentialIndexingStatus = (
   refreshInterval = 30000, // 30 seconds
-  getEditable = false
+  getEditable = false,
+  teamspaceId?: string | string[]
 ) => {
   const { mutate } = useSWRConfig();
-  const url = `${INDEXING_STATUS_URL}${getEditable ? "?get_editable=true" : ""}`;
+  const url = `${INDEXING_STATUS_URL}${getEditable ? "?get_editable=true" : ""}${teamspaceId ? `?teamspace_id=${teamspaceId}` : ""}`;
   const swrResponse = useSWR<ConnectorIndexingStatus<any, any>[]>(
     url,
     errorHandlingFetcher,

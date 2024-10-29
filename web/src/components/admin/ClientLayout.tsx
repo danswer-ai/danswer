@@ -38,6 +38,7 @@ export function ClientLayout({
   children: React.ReactNode;
   enableEnterprise: boolean;
 }) {
+  // TODO: remove this
   const isCurator =
     user?.role === UserRole.CURATOR || user?.role === UserRole.GLOBAL_CURATOR;
   const pathname = usePathname();

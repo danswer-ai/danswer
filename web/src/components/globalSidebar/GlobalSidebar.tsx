@@ -63,14 +63,7 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
           <div className="flex flex-col items-center gap-4 pt-4">
             <CustomTooltip
               trigger={
-                <Link
-                  href={
-                    teamspaceId
-                      ? `/t/${teamspaceId}/${defaultPage}`
-                      : `/${defaultPage}`
-                  }
-                  className="flex items-center"
-                >
+                <Link href={`/${defaultPage}`} className="flex items-center">
                   <Logo />
                 </Link>
               }
@@ -103,7 +96,7 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
           )}
         </div>
         <div className="flex flex-col items-center gap-4 mt-5">
-          <UserSettingsButton user={user} defaultPage={defaultPage} />
+          <UserSettingsButton defaultPage={defaultPage} />
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { Globe, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 interface TeamspaceDocumentSetProps {
   teamspace: Teamspace & { gradient: string };
@@ -217,14 +218,22 @@ export const TeamspaceDocumentSet = ({
           </div>
 
           {teamspace.document_sets.length > 0 ? (
-            <div className="pt-8 flex flex-wrap -space-x-3 pointer-events-none">
+            <div className="pt-8 flex flex-wrap -space-x-3">
               {currentDocumentSets.slice(0, 8).map((documentSet) => (
-                <div
+                <CustomTooltip
+                  variant="white"
                   key={documentSet.id}
-                  className="bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase"
+                  trigger={
+                    <div
+                      key={documentSet.id}
+                      className="bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase border-[1px] border-white"
+                    >
+                      {documentSet.name!.charAt(0)}
+                    </div>
+                  }
                 >
-                  {documentSet.name!.charAt(0)}
-                </div>
+                  {documentSet.name}
+                </CustomTooltip>
               ))}
               {currentDocumentSets.length > 8 && (
                 <div className="bg-background w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold">

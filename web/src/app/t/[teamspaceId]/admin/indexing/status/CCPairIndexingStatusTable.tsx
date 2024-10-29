@@ -114,7 +114,7 @@ export function CCPairIndexingStatusTable({
   teamspaceId,
 }: {
   ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
-  teamspaceId: string | string[];
+  teamspaceId: string;
 }) {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");

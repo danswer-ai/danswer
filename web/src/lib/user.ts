@@ -15,6 +15,19 @@ export const getCurrentUser = async (): Promise<User | null> => {
   return user;
 };
 
+export const getCurrentTeamspaceUser = async (
+  teamspaceId: string
+): Promise<User | null> => {
+  const response = await fetch(`/api/me?teamspace_id=${teamspaceId}`, {
+    credentials: "include",
+  });
+  if (!response.ok) {
+    return null;
+  }
+  const user = await response.json();
+  return user;
+};
+
 export const logout = async (): Promise<Response> => {
   const response = await fetch("/auth/logout", {
     method: "POST",

@@ -11,6 +11,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 interface TeamspaceAssistantProps {
   teamspace: Teamspace & { gradient: string };
@@ -228,14 +229,22 @@ export const TeamspaceAssistant = ({
           </div>
 
           {teamspace.assistants.length > 0 ? (
-            <div className="pt-8 flex flex-wrap -space-x-3 pointer-events-none">
+            <div className="pt-8 flex flex-wrap -space-x-3">
               {currentAssistants.slice(0, 8).map((assistant) => (
-                <div
+                <CustomTooltip
+                  variant="white"
                   key={assistant.id}
-                  className="bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase"
+                  trigger={
+                    <div
+                      key={assistant.id}
+                      className="bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase border-[1px] border-white"
+                    >
+                      {assistant.name!.charAt(0)}
+                    </div>
+                  }
                 >
-                  {assistant.name!.charAt(0)}
-                </div>
+                  {assistant.name}
+                </CustomTooltip>
               ))}
               {currentAssistants.length > 8 && (
                 <div className="bg-background w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold">

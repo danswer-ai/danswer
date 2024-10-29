@@ -18,7 +18,7 @@ export type AccessTypeGroupSelectorFormType = {
 
 export function AccessTypeGroupSelector({}: {}) {
   const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
-  const { isAdmin, user, isLoadingUser, isCurator } = useUser();
+  const { isAdmin, user, isLoadingUser } = useUser();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const [shouldHideContent, setShouldHideContent] = useState(false);
 
@@ -70,7 +70,7 @@ export function AccessTypeGroupSelector({}: {}) {
 
   return (
     <div>
-      {(access_type.value === "private" || isCurator) &&
+      {access_type.value === "private" &&
         teamspaces &&
         teamspaces?.length > 0 && (
           <>

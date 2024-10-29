@@ -23,10 +23,12 @@ import { Logo } from "@/components/Logo";
 export const SearchSidebar = ({
   isExpanded,
   openSidebar,
+  teamspaceId,
   toggleSideBar,
 }: {
   isExpanded?: boolean;
   openSidebar?: boolean;
+  teamspaceId?: string;
   toggleSideBar?: () => void;
 }) => {
   const combinedSettings = useContext(SettingsContext);
@@ -73,7 +75,7 @@ export const SearchSidebar = ({
               <>
                 <Separator className="mb-4" />
                 <Link
-                  href="/search"
+                  href={teamspaceId ? `/t/${teamspaceId}/search` : "/search"}
                   className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer bg-primary text-white items-center gap-2 justify-between`}
                 >
                   <div className="flex items-center gap-2">
@@ -89,7 +91,7 @@ export const SearchSidebar = ({
             {settings.chat_page_enabled && (
               <>
                 <Link
-                  href="/chat"
+                  href={teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"}
                   className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 justify-between`}
                 >
                   <div className="flex items-center gap-2">

@@ -127,16 +127,22 @@ export function InputDocumentPreview({
         </div>
       </div>
       <div className="ml-2 relative">
-        <Tooltip content={fileName} side="top" align="start">
-          <div
-            ref={fileNameRef}
-            className={`font-medium text-sm line-clamp-1 break-all ellipses ${
-              maxWidth ? maxWidth : "max-w-48"
-            }`}
-          >
-            {fileName}
-          </div>
-        </Tooltip>
+        <CustomTooltip
+          trigger={
+            <div
+              ref={fileNameRef}
+              className={`font-medium text-sm line-clamp-1 break-all ellipses ${
+                maxWidth ? maxWidth : "max-w-48"
+              }`}
+            >
+              {fileName}
+            </div>
+          }
+          side="top"
+          align="start"
+        >
+          {fileName}
+        </CustomTooltip>
       </div>
     </div>
   );

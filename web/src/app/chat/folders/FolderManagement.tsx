@@ -1,8 +1,16 @@
 import { useState, useEffect, FC } from "react";
 
 // Function to create a new folder
-export async function createFolder(folderName: string): Promise<number> {
-  const response = await fetch("/api/folder", {
+export async function createFolder(
+  folderName: string,
+  teamspaceId?: string
+): Promise<number> {
+  const url =
+    teamspaceId || teamspaceId !== undefined
+      ? `/api/folder?teamspace_id=${teamspaceId}`
+      : "/api/folder";
+
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

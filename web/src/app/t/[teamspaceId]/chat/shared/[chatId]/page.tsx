@@ -7,11 +7,12 @@ import {
 } from "@/lib/userSS";
 import { fetchSS } from "@/lib/utilsSS";
 import { redirect } from "next/navigation";
-import { BackendChatSession } from "../../interfaces";
-import { SharedChatDisplay } from "./SharedChatDisplay";
+import { BackendChatSession } from "@/app/chat/interfaces";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { ChatProvider } from "@/context/ChatContext";
 import { Assistant } from "@/app/admin/assistants/interfaces";
+import { fetchAssistantsSS } from "@/lib/assistants/fetchAssistantsSS";
+import { SharedChatDisplay } from "@/app/chat/shared/[chatId]/SharedChatDisplay";
 
 async function getSharedChat(chatId: string) {
   const response = await fetchSS(
@@ -53,13 +54,15 @@ export default async function Page({
     llmProviders,
     folders,
     openedFolders,
+    shouldShowWelcomeModal,
+    userInputPrompts,
   } = data;
 
   const tasks = [
     getAuthTypeMetadataSS(),
     getCurrentUserSS(),
     getSharedChat(params.chatId),
-    getCurrentTeamspaceUserSS(params.teamspaceId),
+    fetchAssistantsSS(params.teamspaceId),
   ];
 
   // catch cases where the backend is completely unreachable here
@@ -77,11 +80,9 @@ export default async function Page({
     console.log(`Some fetch failed for the main search page - ${e}`);
   }
   const authTypeMetadata = results[0] as AuthTypeMetadata | null;
-  const user = params.teamspaceId
-    ? (results[1] as User | null)
-    : (results[3] as User | null);
+  const user = results[1] as User | null;
   const chatSession = results[2] as BackendChatSession | null;
-  const availableAssistants = results[4] as Assistant[] | null;
+  const [availableAssistants, _] = results[3] as [Assistant[], string | null];
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -95,15 +96,14 @@ export default async function Page({
   return (
     <ChatProvider
       value={{
-        user,
         chatSessions,
         availableSources,
         availableDocumentSets: documentSets,
-        availableAssistants: assistants,
         availableTags: tags,
         llmProviders,
         folders,
         openedFolders,
+        userInputPrompts,
       }}
     >
       <div className="flex relative bg-background overflow-hidden h-full">

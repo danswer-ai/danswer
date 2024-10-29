@@ -127,8 +127,10 @@ const SYSTEM_MESSAGE_ID = -3;
 
 export function ChatPage({
   documentSidebarInitialWidth,
+  teamspaceId,
 }: {
   documentSidebarInitialWidth?: number;
+  teamspaceId?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1008,7 +1010,8 @@ export function ChatPage({
     if (isNewSession) {
       currChatSessionId = await createChatSession(
         liveAssistant?.id || 0,
-        searchParamBasedChatSessionName
+        searchParamBasedChatSessionName,
+        teamspaceId
       );
     } else {
       currChatSessionId = chatSessionIdRef.current as number;
@@ -1763,7 +1766,8 @@ export function ChatPage({
       });
     };
   }
-  const [showNoAssistantModal, setShowNoAssistantModal] = useState(noAssistants);
+  const [showNoAssistantModal, setShowNoAssistantModal] =
+    useState(noAssistants);
   const [openSidebar, setOpenSidebar] = useState(false);
 
   const toggleLeftSideBar = () => {
@@ -1780,9 +1784,14 @@ export function ChatPage({
           isOpen={showApiKeyModal && !shouldShowWelcomeModal}
         />
       ) : (
-        showNoAssistantModal && <NoAssistantModal isAdmin={isAdmin} open={showNoAssistantModal}  onClose={() => setShowNoAssistantModal(false)} />
+        showNoAssistantModal && (
+          <NoAssistantModal
+            isAdmin={isAdmin}
+            open={showNoAssistantModal}
+            onClose={() => setShowNoAssistantModal(false)}
+          />
+        )
       )}
-
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
@@ -1801,6 +1810,7 @@ export function ChatPage({
             folders={folders}
             openedFolders={openedFolders}
             toggleSideBar={toggleLeftSideBar}
+            teamspaceId={teamspaceId}
           />
         </DynamicSidebar>
 

@@ -94,7 +94,6 @@ export default async function Page({ params }: { params: { chatId: string } }) {
         chatSessions,
         availableSources,
         availableDocumentSets: documentSets,
-        availableAssistants: assistants,
         availableTags: tags,
         llmProviders,
         folders,

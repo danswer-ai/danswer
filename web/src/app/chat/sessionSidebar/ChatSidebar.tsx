@@ -38,6 +38,7 @@ export const ChatSidebar = ({
   openedFolders,
   toggleSideBar,
   isAssistant,
+  teamspaceId,
 }: {
   existingChats: ChatSession[];
   currentChatSession: ChatSession | null | undefined;
@@ -45,6 +46,7 @@ export const ChatSidebar = ({
   openedFolders: { [key: number]: boolean };
   toggleSideBar?: () => void;
   isAssistant?: boolean;
+  teamspaceId?: string;
 }) => {
   const router = useRouter();
   const { toast } = useToast();
@@ -62,7 +64,7 @@ export const ChatSidebar = ({
       key: "k",
       handler: () => {
         router.push(
-          "/chat" +
+          `${teamspaceId ? `/t/${teamspaceId}` : ""}/chat` +
             (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT &&
             currentChatSession
               ? `?assistantId=${currentChatSession.assistant_id}`
@@ -135,7 +137,7 @@ export const ChatSidebar = ({
             <Separator className="mb-4" />
             {settings.search_page_enabled && (
               <Link
-                href="/search"
+                href={teamspaceId ? `/t/${teamspaceId}/search` : "/search"}
                 className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2 justify-between"
               >
                 <div className="flex items-center gap-2">
@@ -150,7 +152,7 @@ export const ChatSidebar = ({
             {settings.chat_page_enabled && (
               <>
                 <Link
-                  href="/chat"
+                  href={teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"}
                   className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 justify-between ${
                     !isAssistant
                       ? "bg-primary text-white"
@@ -196,7 +198,7 @@ export const ChatSidebar = ({
         <div className="flex items-center gap-3 px-4 pt-5 mt-auto">
           <Link
             href={
-              "/chat" +
+              `${teamspaceId ? `/t/${teamspaceId}` : ""}/chat` +
               (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT &&
               currentChatSession
                 ? `?assistantId=${currentChatSession.assistant_id}`
@@ -218,7 +220,7 @@ export const ChatSidebar = ({
               trigger={
                 <Button
                   onClick={() =>
-                    createFolder("New Folder")
+                    createFolder("New Folder", teamspaceId)
                       .then((folderId) => {
                         console.log(`Folder created with ID: ${folderId}`);
                         router.refresh();

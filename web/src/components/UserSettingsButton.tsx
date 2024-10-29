@@ -11,20 +11,16 @@ import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
 import { SettingsContext } from "./settings/SettingsProvider";
 import { UserProfile } from "./UserProfile";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "./user/UserProvider";
 
-export function UserSettingsButton({
-  user,
-  defaultPage,
-}: {
-  user?: UserTypes | null;
-  defaultPage?: string;
-}) {
+export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const { toast } = useToast();
   const userInfoRef = useRef<HTMLDivElement>(null);
   const settings = useContext(SettingsContext);
   const router = useRouter();
   const { teamspaceId } = useParams();
+  const { user, isAdmin, isLoadingUser, isTeamspaceAdmin } = useUser();
 
   const handleLogout = () => {
     logout().then((isSuccess) => {
@@ -39,7 +35,6 @@ export function UserSettingsButton({
     });
   };
 
-  const showAdminPanel = !user || user.role === "admin";
   const showLogout =
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
@@ -102,40 +97,30 @@ export function UserSettingsButton({
               />
               Chat & Search
             </Link>
-
-            {showAdminPanel && (
-              <>
-                {teamspaceId && (
-                  <Link
-                    href={`/t/${teamspaceId}/admin/indexing/status`}
-                    className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
-                  >
-                    <Wrench
-                      className="my-auto mr-3"
-                      size={24}
-                      strokeWidth={1.5}
-                    />
-                    Teamspace Admin Panel
-                  </Link>
-                )}
-                <Link
-                  href="/admin/indexing/status"
-                  className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
-                >
-                  <Wrench
-                    className="my-auto mr-3"
-                    size={24}
-                    strokeWidth={1.5}
-                  />
-                  Workspace Admin Panel
-                </Link>
-              </>
+            {isTeamspaceAdmin && (
+              <Link
+                href={`/t/${teamspaceId}/admin/indexing/status`}
+                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+              >
+                <Wrench className="my-auto mr-3" size={24} strokeWidth={1.5} />
+                Teamspace Admin Panel
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                href="/admin/indexing/status"
+                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+              >
+                <Wrench className="my-auto mr-3" size={24} strokeWidth={1.5} />
+                Workspace Admin Panel
+              </Link>
             )}
             {showLogout && (
               <>
-                {showAdminPanel && (
-                  <div className="my-1 border-t border-border" />
-                )}
+                {isAdmin ||
+                  (isTeamspaceAdmin && (
+                    <div className="my-1 border-t border-border" />
+                  ))}
                 <div
                   onClick={handleLogout}
                   className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-destructive hover:text-inverted rounded-regular"

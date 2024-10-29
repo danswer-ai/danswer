@@ -19,7 +19,6 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { User } from "@/lib/types";
 import { useUser } from "@/components/user/UserProvider";
 
-// TODO: replace the component name
 function BackToEnmeddButton() {
   const router = useRouter();
 

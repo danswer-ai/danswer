@@ -39,6 +39,7 @@ export function ChatSessionDisplay({
   isSelected,
   skipGradient,
   toggleSideBar,
+  teamspaceId,
 }: {
   chatSession: ChatSession;
   isSelected: boolean;
@@ -47,6 +48,7 @@ export function ChatSessionDisplay({
   // if not set, the gradient will still be applied and cause weirdness
   skipGradient?: boolean;
   toggleSideBar?: () => void;
+  teamspaceId?: string;
 }) {
   const router = useRouter();
   const combinedSettings = useContext(SettingsContext);
@@ -55,7 +57,7 @@ export function ChatSessionDisplay({
   const [delayedSkipGradient, setDelayedSkipGradient] = useState(skipGradient);
   const settings = useContext(SettingsContext);
   const { toast } = useToast();
-  const [openDeleteModal, setOpenDeleteModal] = useState(false)
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
 
   useEffect(() => {
     if (skipGradient) {
@@ -102,7 +104,11 @@ export function ChatSessionDisplay({
         <Link
           className="flex relative w-full"
           key={chatSession.id}
-          href={`/chat?chatId=${chatSession.id}`}
+          href={
+            teamspaceId
+              ? `/t/${teamspaceId}/chat?chatId=${chatSession.id}`
+              : `/chat?chatId=${chatSession.id}`
+          }
           scroll={false}
           draggable="true"
           onDragStart={(event) => {
@@ -218,9 +224,9 @@ export function ChatSessionDisplay({
                       <CustomTooltip
                         trigger={
                           <DeleteChatModal
-                          open={openDeleteModal}
-                            openDeleteModal={()=>setOpenDeleteModal(true)}
-                            onClose={()=>setOpenDeleteModal(false)}
+                            open={openDeleteModal}
+                            openDeleteModal={() => setOpenDeleteModal(true)}
+                            onClose={() => setOpenDeleteModal(false)}
                             onSubmit={async () => {
                               const response = await deleteChatSession(
                                 chatSession.id
@@ -228,7 +234,7 @@ export function ChatSessionDisplay({
                               if (response.ok) {
                                 // go back to the main page
                                 router.refresh();
-                                setOpenDeleteModal(false)
+                                setOpenDeleteModal(false);
                                 toast({
                                   title: "Chat session deleted",
                                   description:

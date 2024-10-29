@@ -59,6 +59,13 @@ export interface MinimalUserSnapshot {
   email: string;
 }
 
+export interface MinimalUserwithNameSnapshot {
+  id: string;
+  email: string;
+  full_name: string;
+  is_custom_profile: boolean;
+}
+
 export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
@@ -202,6 +209,7 @@ export interface MinimalWorkspaceSnapshot {
 export interface Teamspace {
   id: number;
   name: string;
+  creator: MinimalUserwithNameSnapshot;
   users: User[];
   curator_ids: string[];
   cc_pairs: CCPairDescriptor<any, any>[];

@@ -37,22 +37,22 @@ export const TeamspaceSidebarContent = ({
     <>
       <div style={{ background: teamspace.gradient }} className="h-40 relative">
         <div className="absolute top-full -translate-y-1/2 left-1/2 -translate-x-1/2">
-{teamspace.is_custom_logo ? (
-              <Image
-                src={`/api/teamspace/logo?teamspace_id=${teamspace.id}&t=${Date.now()}`}
-                alt="Teamspace Logo"
-                className="object-cover w-16 h-16 rounded-md shrink-0"
-                width={40}
-                height={40}
-              />
-            ) : (
-              <span
-            style={{ background: teamspace.gradient }}
-            className="text-3xl uppercase font-bold min-w-16 min-h-16 flex items-center justify-center rounded-xl text-inverted border-[5px] border-inverted"
-          >
-            {teamspace.name.charAt(0)}
-          </span> 
-            )}
+          {teamspace.is_custom_logo ? (
+            <Image
+              src={`/api/teamspace/logo?teamspace_id=${teamspace.id}&t=${Date.now()}`}
+              alt="Teamspace Logo"
+              className="object-cover w-16 h-16 rounded-md shrink-0"
+              width={40}
+              height={40}
+            />
+          ) : (
+            <span
+              style={{ background: teamspace.gradient }}
+              className="text-3xl uppercase font-bold min-w-16 min-h-16 flex items-center justify-center rounded-xl text-inverted border-[5px] border-inverted"
+            >
+              {teamspace.name.charAt(0)}
+            </span>
+          )}
         </div>
       </div>
 
@@ -62,9 +62,9 @@ export const TeamspaceSidebarContent = ({
             {teamspace.name}
           </h1>
           {/* TODO: Replace with the owner */}
-          {/* <span className="text-center text-primary pt-1 font-medium text-sm">
-            @mrquilbot
-          </span> */}
+          <span className="text-center text-primary pt-1 font-medium text-sm">
+            {teamspace.creator.email}
+          </span>
           <span className="text-center pt-4 font-bold text-sm flex items-center gap-1">
             <Shield size={16} />
             {tokenRate

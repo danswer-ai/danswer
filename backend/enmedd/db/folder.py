@@ -15,7 +15,13 @@ def get_user_folders(
     user_id: UUID | None,
     db_session: Session,
 ) -> list[ChatFolder]:
-    return db_session.query(ChatFolder).filter(ChatFolder.user_id == user_id).all()
+    return (
+        db_session.query(ChatFolder)
+        .outerjoin(ChatFolder__Teamspace)
+        .filter(ChatFolder.user_id == user_id)
+        .filter(ChatFolder__Teamspace.teamspace_id.is_(None))
+        .all()
+    )
 
 
 def get_user_folders_in_teamspace(

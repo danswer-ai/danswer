@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Divider } from "@/components/Divider";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label as ShadcnLabel } from "@/components/ui/label"
+import { Label as ShadcnLabel } from "@/components/ui/label";
 import { CustomTooltip } from "@/components/CustomTooltip";
 
 function customConfigProcessing(customConfigsList: [string, string][]) {
@@ -50,7 +50,7 @@ export function CustomLLMProviderUpdateForm({
   shouldMarkAsDefault?: boolean;
   hideSuccess?: boolean;
 }) {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const { mutate } = useSWRConfig();
 
   const [isTesting, setIsTesting] = useState(false);
@@ -151,11 +151,11 @@ export function CustomLLMProviderUpdateForm({
           const fullErrorMsg = existingLlmProvider
             ? `Failed to update provider: ${errorMsg}`
             : `Failed to enable provider: ${errorMsg}`;
-            toast({
-              title: "Update Error",
-              description: fullErrorMsg,
-              variant: "destructive",
-            });
+          toast({
+            title: "Update Error",
+            description: fullErrorMsg,
+            variant: "destructive",
+          });
           return;
         }
 
@@ -185,13 +185,13 @@ export function CustomLLMProviderUpdateForm({
         const successMsg = existingLlmProvider
           ? "Provider updated successfully!"
           : "Provider enabled successfully!";
-          if (!hideSuccess) {
-            toast({
-              title: "Success",
-              description: successMsg,
-              variant: "success", 
-            });
-          }
+        if (!hideSuccess) {
+          toast({
+            title: "Success",
+            description: successMsg,
+            variant: "success",
+          });
+        }
 
         setSubmitting(false);
       }}
@@ -291,39 +291,50 @@ export function CustomLLMProviderUpdateForm({
                         <div className="flex">
                           <Card className="mr-4 w-full">
                             <CardContent>
-                            <div className="grid gap-1.5">
-                              <ShadcnLabel 
-          className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Key</ShadcnLabel>
-                              <Input
-                                name={`custom_config_list[${index}][0]`}
-                                autoComplete="off"
-                              />
-                              <ErrorMessage
-                                name={`custom_config_list[${index}][0]`}
-                                component="div"
-                                className="text-error text-sm mt-1"
-                              />
-                            </div>
+                              <div className="grid gap-1.5">
+                                <ShadcnLabel className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                  Key
+                                </ShadcnLabel>
+                                <Input
+                                  name={`custom_config_list[${index}][0]`}
+                                  autoComplete="off"
+                                />
+                                <ErrorMessage
+                                  name={`custom_config_list[${index}][0]`}
+                                  component="div"
+                                  className="text-error text-sm mt-1"
+                                />
+                              </div>
 
-                            <div className="mt-3 grid gap-1.5">
-                              <ShadcnLabel 
-          className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Value</ShadcnLabel>
-                              <Input
-                                name={`custom_config_list[${index}][1]`}
-                                autoComplete="off"
-                              />
-                              <ErrorMessage
-                                name={`custom_config_list[${index}][1]`}
-                                component="div"
-                                className="text-error text-sm mt-1"
-                              />
-                            </div>
+                              <div className="mt-3 grid gap-1.5">
+                                <ShadcnLabel className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                  Value
+                                </ShadcnLabel>
+                                <Input
+                                  name={`custom_config_list[${index}][1]`}
+                                  autoComplete="off"
+                                />
+                                <ErrorMessage
+                                  name={`custom_config_list[${index}][1]`}
+                                  component="div"
+                                  className="text-error text-sm mt-1"
+                                />
+                              </div>
                             </CardContent>
                           </Card>
                           <div className="my-auto">
-                            <CustomTooltip trigger={<Button variant='ghost' size="icon" onClick={() => arrayHelpers.remove(index)}><FiX
-                              
-                              /></Button>}>
+                            <CustomTooltip
+                              asChild
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => arrayHelpers.remove(index)}
+                                >
+                                  <FiX />
+                                </Button>
+                              }
+                            >
                               Remove
                             </CustomTooltip>
                           </div>
@@ -338,7 +349,7 @@ export function CustomLLMProviderUpdateForm({
                     }}
                     className="mt-3 "
                   >
-                  <FiPlus />  Add New
+                    <FiPlus /> Add New
                   </Button>
                 </div>
               )}
@@ -428,7 +439,7 @@ export function CustomLLMProviderUpdateForm({
                 </Button>
                 {existingLlmProvider && (
                   <Button
-                   variant="destructive"
+                    variant="destructive"
                     className="ml-3"
                     onClick={async () => {
                       const response = await fetch(
@@ -447,7 +458,7 @@ export function CustomLLMProviderUpdateForm({
                       onClose();
                     }}
                   >
-                  <FiTrash />  Delete
+                    <FiTrash /> Delete
                   </Button>
                 )}
               </div>

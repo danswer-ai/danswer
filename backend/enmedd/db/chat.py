@@ -145,6 +145,10 @@ def get_chat_sessions_by_user(
         stmt = stmt.join(ChatSession__Teamspace).where(
             ChatSession__Teamspace.teamspace_id == teamspace_id
         )
+    else:
+        stmt = stmt.outerjoin(ChatSession__Teamspace).where(
+            ChatSession__Teamspace.teamspace_id.is_(None)
+        )
 
     if only_one_shot:
         stmt = stmt.where(ChatSession.one_shot.is_(True))

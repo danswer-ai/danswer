@@ -28,7 +28,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   enforceGroupSelection?: boolean;
 }) => {
   const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
-  const { isAdmin, user, isLoadingUser, isCurator } = useUser();
+  const { isAdmin, user, isLoadingUser } = useUser();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const [shouldHideContent, setShouldHideContent] = useState(false);
 
@@ -97,7 +97,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         </>
       )}
 
-      {(!formikProps.values.is_public || isCurator) &&
+      {!formikProps.values.is_public &&
         teamspaces &&
         teamspaces?.length > 0 && (
           <>
@@ -170,7 +170,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
               )}
             /> */}
 
-         <Combobox
+            <Combobox
               items={teamspaces.map((teamspace) => ({
                 value: teamspace.id.toString(),
                 label: teamspace.name,
@@ -183,7 +183,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
               }}
               placeholder="Select teamspaces"
               label="Teamspaces"
-            /> 
+            />
             <ErrorMessage
               name="groups"
               component="div"

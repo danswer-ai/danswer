@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
-import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
-import { ChatPage } from "./ChatPage";
+import { ChatPage } from "@/app/chat/ChatPage";
 import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompleteSourceModal";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { ChatProvider } from "@/context/ChatContext";
@@ -75,6 +74,7 @@ export default async function Page({
           <div className="h-full overflow-hidden">
             <ChatPage
               documentSidebarInitialWidth={finalDocumentSidebarInitialWidth}
+              teamspaceId={params.teamspaceId}
             />
           </div>
         </ChatProvider>

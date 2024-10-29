@@ -2,13 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole } from "@/lib/types";
-import { getCurrentUser } from "@/lib/user";
+import { getCurrentTeamspaceUser, getCurrentUser } from "@/lib/user";
+import { useParams } from "next/navigation";
 
 interface UserContextType {
   user: User | null;
   isLoadingUser: boolean;
   isAdmin: boolean;
-  isCurator: boolean;
+  isTeamspaceAdmin: boolean;
   refreshUser: () => Promise<void>;
 }
 
@@ -18,16 +19,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isCurator, setIsCurator] = useState(false);
+  const [isTeamspaceAdmin, setIsTeamspaceAdmin] = useState(false);
+  const { teamspaceId } = useParams();
 
   const fetchUser = async () => {
     try {
       const user = await getCurrentUser();
       setUser(user);
       setIsAdmin(user?.role === UserRole.ADMIN);
-      setIsCurator(
-        user?.role === UserRole.CURATOR || user?.role == UserRole.GLOBAL_CURATOR
-      );
+      if (teamspaceId) {
+        const teamspaceUser = await getCurrentTeamspaceUser(teamspaceId[0]);
+        setIsTeamspaceAdmin(teamspaceUser?.role === UserRole.ADMIN);
+      }
     } catch (error) {
       console.error("Error fetching current user:", error);
     } finally {
@@ -37,7 +40,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [teamspaceId]);
 
   const refreshUser = async () => {
     await fetchUser();
@@ -45,7 +48,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <UserContext.Provider
-      value={{ user, isLoadingUser, isAdmin, refreshUser, isCurator }}
+      value={{ user, isLoadingUser, isAdmin, isTeamspaceAdmin, refreshUser }}
     >
       {children}
     </UserContext.Provider>
