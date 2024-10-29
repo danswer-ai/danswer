@@ -91,12 +91,13 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 cql_page_query += f" and id='{page_id}'"
 
         self.cql_page_query = cql_page_query
-        self.cql_label_filter = ""
         self.cql_time_filter = ""
+
+        self.cql_label_filter = ""
         if labels_to_skip:
             labels_to_skip = list(set(labels_to_skip))
-            comma_separated_labels = ",".join(labels_to_skip)
-            self.cql_label_filter = f"&label not in ({comma_separated_labels})"
+            comma_separated_labels = ",".join(f"'{label}'" for label in labels_to_skip)
+            self.cql_label_filter = f" and label not in ({comma_separated_labels})"
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
@@ -125,7 +126,8 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             for comment in comments:
                 comment_string += "\nComment:\n"
                 comment_string += extract_text_from_confluence_html(
-                    confluence_client=self.confluence_client, confluence_object=comment
+                    confluence_client=self.confluence_client,
+                    confluence_object=comment,
                 )
 
         return comment_string

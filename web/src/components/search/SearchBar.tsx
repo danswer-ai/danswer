@@ -68,8 +68,8 @@ export const AnimatedToggle = ({
           {/* Toggle switch */}
           <div
             className={`
-            w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300 ease-in-out
-            ${isOn ? "bg-background-400" : "bg-background-200"}
+            w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300 ease-in-out 
+            ${isOn ? "bg-toggled-background" : "bg-untoggled-background"}
           `}
           >
             <div
@@ -178,10 +178,14 @@ export const FullSearchBar = ({
         suppressContentEditableWarning={true}
       />
       <div
-        className={`flex flex-nowrap ${showingSidebar ? " 2xl:justify-between" : "2xl:justify-end"} justify-between 4xl:justify-end w-full max-w-full items-center space-x-3 py-3 px-4`}
+        className={`flex flex-nowrap ${
+          showingSidebar ? " 2xl:justify-between" : "2xl:justify-end"
+        } justify-between 4xl:justify-end w-full max-w-full items-center space-x-3 py-3 px-4`}
       >
         <div
-          className={`-my-1 flex-grow 4xl:hidden ${!showingSidebar && "2xl:hidden"}`}
+          className={`-my-1 flex-grow 4xl:hidden ${
+            !showingSidebar && "2xl:hidden"
+          }`}
         >
           {(ccPairs.length > 0 || documentSets.length > 0) && (
             <HorizontalSourceSelector
@@ -208,7 +212,11 @@ export const FullSearchBar = ({
             >
               <SendIcon
                 size={28}
-                className={`text-emphasis ${disabled || !query ? "bg-disabled-submit-background" : "bg-submit-background"} text-white p-1 rounded-full`}
+                className={`text-emphasis ${
+                  disabled || !query
+                    ? "bg-disabled-submit-background"
+                    : "bg-submit-background"
+                } text-white p-1 rounded-full`}
               />
             </button>
           </div>

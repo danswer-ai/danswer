@@ -61,11 +61,11 @@ class DanswerLoggingAdapter(logging.LoggerAdapter):
     ) -> tuple[str, MutableMapping[str, Any]]:
         # If this is an indexing job, add the attempt ID to the log message
         # This helps filter the logs for this specific indexing
-        attempt_id = IndexAttemptSingleton.get_index_attempt_id()
+        index_attempt_id = IndexAttemptSingleton.get_index_attempt_id()
         cc_pair_id = IndexAttemptSingleton.get_connector_credential_pair_id()
 
-        if attempt_id is not None:
-            msg = f"[Attempt: {attempt_id}] {msg}"
+        if index_attempt_id is not None:
+            msg = f"[Index Attempt: {index_attempt_id}] {msg}"
 
         if cc_pair_id is not None:
             msg = f"[CC Pair: {cc_pair_id}] {msg}"
