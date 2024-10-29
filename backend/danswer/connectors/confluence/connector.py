@@ -135,7 +135,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                     )
         except Exception as e:
             logger.exception("error fetching comments: \n")
-            if _NO_PARENT_OR_NO_PERMISSIONS_ERROR_STR in str(e):
+            if _NO_PARENT_OR_NO_PERMISSIONS_ERROR_STR not in str(e):
                 raise
 
         return comment_string
