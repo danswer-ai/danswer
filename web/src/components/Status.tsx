@@ -1,7 +1,7 @@
 "use client";
 
 import { ValidStatuses } from "@/lib/types";
-import { Badge } from "@tremor/react";
+import { Badge } from "@/components/ui/badge";
 import {
   FiAlertTriangle,
   FiCheckCircle,
@@ -14,17 +14,15 @@ import { HoverPopup } from "./HoverPopup";
 export function IndexAttemptStatus({
   status,
   errorMsg,
-  size = "md",
 }: {
   status: ValidStatuses | null;
   errorMsg?: string | null;
-  size?: "xs" | "sm" | "md" | "lg";
 }) {
   let badge;
 
   if (status === "failed") {
     const icon = (
-      <Badge size={size} color="red" icon={FiAlertTriangle}>
+      <Badge color="red" icon={FiAlertTriangle}>
         Failed
       </Badge>
     );
@@ -44,7 +42,7 @@ export function IndexAttemptStatus({
     }
   } else if (status === "completed_with_errors") {
     const icon = (
-      <Badge size={size} color="yellow" icon={FiAlertTriangle}>
+      <Badge color="yellow" icon={FiAlertTriangle}>
         Completed with errors
       </Badge>
     );
@@ -54,7 +52,7 @@ export function IndexAttemptStatus({
         popupContent={
           <div className="w-64 p-2 break-words overflow-hidden whitespace-normal">
             The indexing attempt completed, but some errors were encountered
-            during the run.
+            during the rrun.
             <br />
             <br />
             Click View Errors for more details.
@@ -64,25 +62,25 @@ export function IndexAttemptStatus({
     );
   } else if (status === "success") {
     badge = (
-      <Badge size={size} color="green" icon={FiCheckCircle}>
+      <Badge color="green" icon={FiCheckCircle}>
         Succeeded
       </Badge>
     );
   } else if (status === "in_progress") {
     badge = (
-      <Badge size={size} color="amber" icon={FiClock}>
+      <Badge color="amber" icon={FiClock}>
         In Progress
       </Badge>
     );
   } else if (status === "not_started") {
     badge = (
-      <Badge size={size} color="fuchsia" icon={FiClock}>
+      <Badge color="fuchsia" icon={FiClock}>
         Scheduled
       </Badge>
     );
   } else {
     badge = (
-      <Badge size={size} color="gray" icon={FiMinus}>
+      <Badge color="gray" icon={FiMinus}>
         None
       </Badge>
     );
@@ -106,25 +104,25 @@ export function CCPairStatus({
 
   if (isDeleting) {
     badge = (
-      <Badge size={size} color="red" icon={FiAlertTriangle}>
+      <Badge color="red" icon={FiAlertTriangle}>
         Deleting
       </Badge>
     );
   } else if (disabled) {
     badge = (
-      <Badge size={size} color="yellow" icon={FiPauseCircle}>
+      <Badge color="yellow" icon={FiPauseCircle}>
         Paused
       </Badge>
     );
   } else if (status === "failed") {
     badge = (
-      <Badge size={size} color="red" icon={FiAlertTriangle}>
+      <Badge color="red" icon={FiAlertTriangle}>
         Error
       </Badge>
     );
   } else {
     badge = (
-      <Badge size={size} color="green" icon={FiCheckCircle}>
+      <Badge color="green" icon={FiCheckCircle}>
         Active
       </Badge>
     );

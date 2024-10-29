@@ -5,8 +5,8 @@ import {
   TableHeaderCell,
   TableBody,
   TableCell,
-  Badge,
 } from "@tremor/react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IndexAttemptStatus } from "@/components/Status";
 import { timeAgo } from "@/lib/time";
@@ -261,7 +261,6 @@ function ConnectorRow({
         <IndexAttemptStatus
           status={ccPairsIndexingStatus.last_finished_status || null}
           errorMsg={ccPairsIndexingStatus?.latest_index_attempt?.error_msg}
-          size="xs"
         />
       </TableCell>
       <TableCell>

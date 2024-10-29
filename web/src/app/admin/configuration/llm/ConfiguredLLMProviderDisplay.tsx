@@ -6,7 +6,7 @@ import { CustomLLMProviderUpdateForm } from "./CustomLLMProviderUpdateForm";
 import { useState } from "react";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
 import { mutate } from "swr";
-import { Badge } from "@tremor/react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import isEqual from "lodash/isEqual";
 
@@ -113,13 +113,9 @@ function LLMProviderDisplay({
         {existingLlmProvider && (
           <div className="my-auto ml-3">
             {existingLlmProvider.is_default_provider ? (
-              <Badge color="orange" size="xs">
-                Default
-              </Badge>
+              <Badge color="orange">Default</Badge>
             ) : (
-              <Badge color="green" size="xs">
-                Enabled
-              </Badge>
+              <Badge color="green">Enabled</Badge>
             )}
           </div>
         )}

@@ -323,7 +323,7 @@ const Main = () => {
 
       <div className="flex mb-6">
         <Link href="/admin/documents/sets/new">
-          <Button variant="success">New Document Set</Button>
+          <Button variant="navigate">New Document Set</Button>
         </Link>
       </div>
 

@@ -1,5 +1,5 @@
+import { Badge } from "@/components/ui/badge";
 import { Feedback } from "@/lib/types";
-import { Badge } from "@tremor/react";
 
 export function FeedbackBadge({
   feedback,
