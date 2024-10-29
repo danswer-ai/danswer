@@ -59,7 +59,7 @@ $COMPOSE_CMD -f docker-compose.prod.yml run --name enmedd-stack --rm --entrypoin
 echo
 
 echo "### Building and starting nginx ..."
-$COMPOSE_CMD -f docker-compose.prod.yml -p enmedd-stack up --build --force-recreate -d nginx
+$COMPOSE_CMD -f docker-compose.prod.yml -p enmedd-stack up -d --build --force-recreate nginx
 echo
 
 echo "Waiting for nginx to be ready, this may take a minute..."
@@ -119,4 +119,4 @@ $COMPOSE_CMD -f docker-compose.prod.yml run --name enmedd-stack --rm --entrypoin
   done'" certbot
 
 echo "### Reloading nginx ..."
-$COMPOSE_CMD -f docker-compose.prod.yml -p enmedd-stack up --build --force-recreate -d
+$COMPOSE_CMD -f docker-compose.prod.yml -p enmedd-stack up -d --build --force-recreate 

@@ -15,11 +15,17 @@ logger = setup_logger()
 
 def monitor_teamspace_taskset(key_bytes: bytes, r: Redis, db_session: Session) -> None:
     """This function is likely to move in the worker refactor happening next."""
-    key = key_bytes.decode("utf-8")
-    teamspace_id = RedisTeamspace.get_id_from_fence_key(key)
-    if not teamspace_id:
-        task_logger.warning("Could not parse teamspace id from {key}")
+    fence_key = key_bytes.decode("utf-8")
+    teamspace_id_str = RedisTeamspace.get_id_from_fence_key(fence_key)
+    if not teamspace_id_str:
+        task_logger.warning(f"Could not parse teamspace id from {fence_key}")
         return
+
+    try:
+        teamspace_id = int(teamspace_id_str)
+    except ValueError:
+        task_logger.exception(f"teamspace_id ({teamspace_id_str}) is not an integer!")
+        raise
 
     rug = RedisTeamspace(teamspace_id)
     fence_value = r.get(rug.fence_key)
@@ -34,7 +40,7 @@ def monitor_teamspace_taskset(key_bytes: bytes, r: Redis, db_session: Session) -
 
     count = cast(int, r.scard(rug.taskset_key))
     task_logger.info(
-        f"User group sync progress: teamspace_id={teamspace_id} remaining={count} initial={initial_count}"
+        f"Teamspace sync progress: teamspace_id={teamspace_id} remaining={count} initial={initial_count}"
     )
     if count > 0:
         return

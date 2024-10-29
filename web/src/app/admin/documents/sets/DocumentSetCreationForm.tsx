@@ -86,7 +86,11 @@ export const DocumentSetCreationForm = ({
           formikHelpers.setSubmitting(true);
           const processedValues = {
             ...values,
-            groups: teamspaceId ? [Number(teamspaceId)] : (values.is_public ? [] : values.groups)
+            groups: teamspaceId
+              ? [Number(teamspaceId)]
+              : values.is_public
+                ? []
+                : values.groups,
           };
 
           let response;
