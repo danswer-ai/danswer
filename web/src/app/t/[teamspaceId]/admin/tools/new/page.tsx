@@ -5,8 +5,10 @@ import { BackButton } from "@/components/BackButton";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Card, CardContent } from "@/components/ui/card";
 import { Wrench } from "lucide-react";
+import { useParams } from "next/navigation";
 
 export default function NewToolPage() {
+  const { teamspaceId } = useParams();
   return (
     <div className="h-full w-full overflow-y-auto">
       <div className="container">
@@ -19,7 +21,7 @@ export default function NewToolPage() {
 
         <Card>
           <CardContent>
-            <ToolEditor />
+            <ToolEditor teamspaceId={teamspaceId} />
           </CardContent>
         </Card>
       </div>

@@ -1,10 +1,8 @@
 "use client";
 
 import { Bold, Text, Title } from "@tremor/react";
-import { ChatSessionSnapshot, MessageSnapshot } from "../../usage/types";
 import { timestampToReadableDate } from "@/lib/dateUtils";
 import { BackButton } from "@/components/BackButton";
-import { FeedbackBadge } from "../FeedbackBadge";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR from "swr";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -12,6 +10,8 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Book } from "lucide-react";
+import { FeedbackBadge } from "@/app/ee/admin/performance/query-history/FeedbackBadge";
+import { ChatSessionSnapshot, MessageSnapshot } from "@/app/ee/admin/performance/usage/types";
 
 function MessageDisplay({ message }: { message: MessageSnapshot }) {
   return (
@@ -56,7 +56,9 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
         <div className="mt-6 space-y-2">
           <h3>Feedback</h3>
           {message.feedback_text && <Text>{message.feedback_text}</Text>}
-          <FeedbackBadge feedback={message.feedback_type} />
+          <div className="mt-1">
+            <FeedbackBadge feedback={message.feedback_type} />
+          </div>
         </div>
       )}
     </div>

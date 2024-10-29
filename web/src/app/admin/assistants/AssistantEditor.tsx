@@ -3,7 +3,7 @@
 import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
-import { Divider, Italic } from "@tremor/react";
+import { Divider } from "@tremor/react";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
   ArrayHelpers,
@@ -33,7 +33,7 @@ import { checkUserIsNoAuthUser } from "@/lib/user";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiInfo, FiPlus, FiX } from "react-icons/fi";
+import { FiInfo, FiX } from "react-icons/fi";
 import * as Yup from "yup";
 import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
@@ -59,7 +59,12 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
-import { TooltipContent, TooltipProvider, TooltipTrigger ,Tooltip} from "@/components/ui/tooltip";
+import {
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  Tooltip,
+} from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -91,6 +96,7 @@ export function AssistantEditor({
   tools,
   shouldAddAssistantToUserPreferences,
   admin,
+  teamspaceId,
 }: {
   existingAssistant?: Assistant | null;
   ccPairs: CCPairBasicInfo[];
@@ -102,6 +108,7 @@ export function AssistantEditor({
   tools: ToolSnapshot[];
   shouldAddAssistantToUserPreferences?: boolean;
   admin?: boolean;
+  teamspaceId?: string | string[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -274,15 +281,26 @@ export function AssistantEditor({
             llm_model_provider_override: Yup.string().nullable(),
             starter_messages: Yup.array().of(
               Yup.object().shape({
-                name: Yup.string().required(
-                  "Each starter message must have a name"
-                ),
-                description: Yup.string().required(
-                  "Each starter message must have a description"
-                ),
-                message: Yup.string().required(
-                  "Each starter message must have a message"
-                ),
+                name: Yup.string().when("$isSubmitting", {
+                  is: true,
+                  then: (schema) =>
+                    schema.required("Each starter message must have a name"),
+                  otherwise: (schema) => schema.notRequired(),
+                }),
+                description: Yup.string().when("$isSubmitting", {
+                  is: true,
+                  then: (schema) =>
+                    schema.required(
+                      "Each starter message must have a description"
+                    ),
+                  otherwise: (schema) => schema.notRequired(),
+                }),
+                message: Yup.string().when("$isSubmitting", {
+                  is: true,
+                  then: (schema) =>
+                    schema.required("Each starter message must have a message"),
+                  otherwise: (schema) => schema.notRequired(),
+                }),
               })
             ),
             search_start_date: Yup.date().nullable(),
@@ -369,7 +387,11 @@ export function AssistantEditor({
           const numChunks = searchToolEnabled ? values.num_chunks || 10 : 0;
 
           // don't set teamspace if marked as public
-          const groups = values.is_public ? [] : values.groups;
+          const groups = teamspaceId
+            ? [Number(teamspaceId)]
+            : values.is_public
+              ? []
+              : values.groups;
 
           let promptResponse;
           let assistantResponse;
@@ -444,11 +466,16 @@ export function AssistantEditor({
                 });
               }
             }
-            router.push(
+            const redirectUrl =
               redirectType === SuccessfulAssistantUpdateRedirectType.ADMIN
-                ? `/admin/assistants?u=${Date.now()}`
-                : `/chat?assistantId=${assistantId}`
-            );
+                ? teamspaceId
+                  ? `/t/${teamspaceId}/admin/assistants?u=${Date.now()}`
+                  : `/admin/assistants?u=${Date.now()}`
+                : teamspaceId
+                  ? `/t/${teamspaceId}/chat?assistantId=${assistantId}`
+                  : `/chat?assistantId=${assistantId}`;
+
+            router.push(redirectUrl);
             setIsRequestSuccessful(true);
           }
         }}
@@ -777,7 +804,11 @@ export function AssistantEditor({
                           </div>
                         </TooltipTrigger>
                         {!currentLLMSupportsImageOutput && (
-                          <TooltipContent side="top" align="center" className={`!z-modal bg-primary border-none text-inverted`}>
+                          <TooltipContent
+                            side="top"
+                            align="center"
+                            className={`!z-modal bg-primary border-none text-inverted`}
+                          >
                             <p>
                               To use Image Generation, select GPT-4o or another
                               image compatible model as the default model for
@@ -790,10 +821,10 @@ export function AssistantEditor({
                   )}
 
                   {searchTool && (
- <TooltipProvider>
- <Tooltip>
-   <TooltipTrigger asChild>
-   <div
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
                             className={`w-fit ${
                               ccPairs.length === 0
                                 ? "opacity-70 cursor-not-allowed"
@@ -810,18 +841,20 @@ export function AssistantEditor({
                               disabled={ccPairs.length === 0}
                             />
                           </div>
-   </TooltipTrigger>
-   {ccPairs.length === 0 && (
-   <TooltipContent className={`!z-modal bg-primary border-none text-inverted`}>
-     <p>To use the Search Tool, you need to have at least
-     one Connector-Credential pair configured.</p>
-   </TooltipContent>
-    )}
- </Tooltip>
-</TooltipProvider>
-                  )}  
-
-
+                        </TooltipTrigger>
+                        {ccPairs.length === 0 && (
+                          <TooltipContent
+                            className={`!z-modal bg-primary border-none text-inverted`}
+                          >
+                            <p>
+                              To use the Search Tool, you need to have at least
+                              one Connector-Credential pair configured.
+                            </p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
 
                   {ccPairs.length > 0 && searchTool && (
                     <>
@@ -837,7 +870,11 @@ export function AssistantEditor({
                                       Select which{" "}
                                       {!user || user.role === "admin" ? (
                                         <Link
-                                          href="/admin/documents/sets"
+                                          href={
+                                            teamspaceId
+                                              ? `/t/${teamspaceId}/admin/documents/sets"`
+                                              : "/admin/documents/sets"
+                                          }
                                           className="text-blue-500"
                                           target="_blank"
                                         >
@@ -1006,7 +1043,7 @@ export function AssistantEditor({
                             searchToolEnabled()
                           );
                         }}
-                        defaultHeight='h-40'
+                        defaultHeight="h-40"
                         explanationText="Learn about prompting in our docs!"
                         explanationLink="https://docs.danswer.dev/guides/assistants"
                       />
@@ -1016,7 +1053,7 @@ export function AssistantEditor({
                   <div className="flex flex-col mb-6">
                     <div className="flex items-center gap-x-2">
                       <div className="block text-base font-medium">
-                        Starter Messages (Optional){" "}
+                        Starter Messages (Optional)
                       </div>
                     </div>
                     <FieldArray
@@ -1040,75 +1077,80 @@ export function AssistantEditor({
                                     <div className="flex">
                                       <Card className="mr-4">
                                         <CardContent>
-                                        <div>
-                                          <Label small>Name</Label>
-                                          <SubLabel>
-                                            Shows up as the &quot;title&quot;
-                                            for this Starter Message. For
-                                            example, &quot;Write an email&quot;.
-                                          </SubLabel>
-                                          <Input
-                                            name={`starter_messages[${index}].name`}
-                                            autoComplete="off"
-                                          />
-                                          <ErrorMessage
-                                            name={`starter_messages[${index}].name`}
-                                            component="div"
-                                            className="mt-1 text-sm text-error"
-                                          />
-                                        </div>
+                                          <div>
+                                            <Label small>Name</Label>
+                                            <SubLabel>
+                                              Shows up as the &quot;title&quot;
+                                              for this Starter Message. For
+                                              example, &quot;Write an
+                                              email&quot;.
+                                            </SubLabel>
+                                            <Input
+                                              name={`starter_messages[${index}].name`}
+                                              autoComplete="off"
+                                            />
+                                            <ErrorMessage
+                                              name={`starter_messages[${index}].name`}
+                                              component="div"
+                                              className="mt-1 text-sm text-error"
+                                            />
+                                          </div>
 
-                                        <div className="mt-3">
-                                          <Label small>Description</Label>
-                                          <SubLabel>
-                                            A description which tells the user
-                                            what they might want to use this
-                                            Starter Message for. For example
-                                            &quot;to a client about a new
-                                            feature&quot;
-                                          </SubLabel>
-                                          <Input
-                                            name={`starter_messages.${index}.description`}
-                                            autoComplete="off"
-                                          />
-                                          <ErrorMessage
-                                            name={`starter_messages[${index}].description`}
-                                            component="div"
-                                            className="mt-1 text-sm text-error"
-                                          />
-                                        </div>
+                                          <div className="mt-3">
+                                            <Label small>Description</Label>
+                                            <SubLabel>
+                                              A description which tells the user
+                                              what they might want to use this
+                                              Starter Message for. For example
+                                              &quot;to a client about a new
+                                              feature&quot;
+                                            </SubLabel>
+                                            <Input
+                                              name={`starter_messages.${index}.description`}
+                                              autoComplete="off"
+                                            />
+                                            <ErrorMessage
+                                              name={`starter_messages[${index}].description`}
+                                              component="div"
+                                              className="mt-1 text-sm text-error"
+                                            />
+                                          </div>
 
-                                        <div className="mt-3">
-                                          <Label small>Message</Label>
-                                          <SubLabel>
-                                            The actual message to be sent as the
-                                            initial user message if a user
-                                            selects this starter prompt. For
-                                            example, &quot;Write me an email to
-                                            a client about a new billing feature
-                                            we just released.&quot;
-                                          </SubLabel>
-                                          <Textarea
-                                            name={`starter_messages[${index}].message`}
-                                            autoComplete="off"
-                                            className="min-h-40"
-                                          />
-                                          <ErrorMessage
-                                            name={`starter_messages[${index}].message`}
-                                            component="div"
-                                            className="mt-1 text-sm text-error"
-                                          />
-                                        </div>
+                                          <div className="mt-3">
+                                            <Label small>Message</Label>
+                                            <SubLabel>
+                                              The actual message to be sent as
+                                              the initial user message if a user
+                                              selects this starter prompt. For
+                                              example, &quot;Write me an email
+                                              to a client about a new billing
+                                              feature we just released.&quot;
+                                            </SubLabel>
+                                            <Textarea
+                                              name={`starter_messages[${index}].message`}
+                                              autoComplete="off"
+                                              className="min-h-40"
+                                            />
+                                            <ErrorMessage
+                                              name={`starter_messages[${index}].message`}
+                                              component="div"
+                                              className="mt-1 text-sm text-error"
+                                            />
+                                          </div>
                                         </CardContent>
                                       </Card>
                                       <div className="my-auto">
-                                        <CustomTooltip trigger={<Button variant='ghost' size='icon'>
-                                          <FiX
-                                          onClick={() =>
-                                            arrayHelpers.remove(index)
+                                        <CustomTooltip
+                                          trigger={
+                                            <Button variant="ghost" size="icon">
+                                              <FiX
+                                                onClick={() =>
+                                                  arrayHelpers.remove(index)
+                                                }
+                                              />
+                                            </Button>
                                           }
-                                        />
-                                        </Button>}>
+                                        >
                                           Remove
                                         </CustomTooltip>
                                       </div>
@@ -1136,16 +1178,18 @@ export function AssistantEditor({
                     />
                   </div>
 
-                  <IsPublicGroupSelector
-                    formikProps={{
-                      values,
-                      isSubmitting,
-                      setFieldValue,
-                      ...formikProps,
-                    }}
-                    objectName="assistant"
-                    enforceGroupSelection={false}
-                  />
+                  {!teamspaceId && (
+                    <IsPublicGroupSelector
+                      formikProps={{
+                        values,
+                        isSubmitting,
+                        setFieldValue,
+                        ...formikProps,
+                      }}
+                      objectName="assistant"
+                      enforceGroupSelection={false}
+                    />
+                  )}
                 </>
               )}
 

@@ -1,36 +1,38 @@
-import { AssistantsTable } from "./AssistantTable";
 import Link from "next/link";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Assistant } from "./interfaces";
 import { RobotIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button } from "@/components/ui/button";
 import { SquarePlus } from "lucide-react";
+import { Assistant } from "@/app/admin/assistants/interfaces";
+import { AssistantsTable } from "@/app/admin/assistants/AssistantTable";
 
-export default async function Page({
-  params,
-}: {
-  params: { teamspaceId: string };
-}) {
-  const assistantResponse = await fetchSS(
-    `/admin/assistant?teamspace_id=${params.teamspaceId}`
+export default async function Page({ params }: { params: { teamspaceId: string } }) {
+  const allAssistantResponse = await fetchSS(`/admin/assistant?teamspace_id=${params.teamspaceId}`);
+  const editableAssistantResponse = await fetchSS(
+    `/admin/assistant?get_editable=true&teamspace_id=${params.teamspaceId}`
   );
 
-  if (!assistantResponse.ok) {
+  if (!allAssistantResponse.ok || !editableAssistantResponse.ok) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch assistants - ${await assistantResponse.text()}`}
+        errorMsg={`Failed to fetch assistants - ${
+          (await allAssistantResponse.text()) ||
+          (await editableAssistantResponse.text())
+        }`}
       />
     );
   }
 
-  const assistants = (await assistantResponse.json()) as Assistant[];
+  const allAssistants = (await allAssistantResponse.json()) as Assistant[];
+  const editableAssistants =
+    (await editableAssistantResponse.json()) as Assistant[];
 
   return (
-    <div className="h-full w-full overflow-y-auto">
-      <div className="container">
+    <div className="w-full h-full overflow-y-auto">
+      <div className="container mx-auto">
         <AdminPageTitle icon={<RobotIcon size={32} />} title="Assistants" />
 
         <p className="mb-2">
@@ -38,7 +40,7 @@ export default async function Page({
           experiences for different use cases.
         </p>
         <h3 className="mt-2">They allow you to customize:</h3>
-        <ul className="list-disc mt-2 ml-4 text-sm">
+        <ul className="mt-2 ml-4 text-sm list-disc">
           <li>
             The prompt used by your LLM of choice to respond to the user query
           </li>
@@ -46,7 +48,7 @@ export default async function Page({
         </ul>
 
         <h3 className="pt-4">Create an Assistant</h3>
-        <Link href="/admin/assistants/new" className="flex items-center">
+        <Link href={`/t/${params.teamspaceId}/admin/assistants/new`} className="flex items-center">
           <Button className="mt-2">
             <SquarePlus size={16} />
             New Assistant
@@ -54,7 +56,11 @@ export default async function Page({
         </Link>
 
         <h3 className="pt-6">Existing Assistants</h3>
-        <AssistantsTable assistants={assistants} />
+        <AssistantsTable
+          allAssistants={allAssistants}
+          editableAssistants={editableAssistants}
+          teamspaceId={params.teamspaceId}
+        />
       </div>
     </div>
   );

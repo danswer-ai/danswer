@@ -1,14 +1,17 @@
-import { ToolsTable } from "./ToolsTable";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import Link from "next/link";
-import { Divider } from "@tremor/react";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button } from "@/components/ui/button";
 import { SquarePlus, Wrench } from "lucide-react";
+import { ToolsTable } from "@/app/admin/tools/ToolsTable";
 
-export default async function Page() {
+export default async function Page({
+  params,
+}: {
+  params: { teamspaceId: string };
+}) {
   const toolResponse = await fetchSS("/tool");
 
   if (!toolResponse.ok) {
@@ -34,7 +37,7 @@ export default async function Page() {
 
         <div className="pt-10">
           <h3 className="pb-2">Create a Tool</h3>
-          <Link href="/admin/tools/new">
+          <Link href={`/t/${params.teamspaceId}/admin/tools/new`}>
             <Button>
               <SquarePlus size={14} />
               New Tool
@@ -44,7 +47,7 @@ export default async function Page() {
 
         <div className="pt-10">
           <h3 className="pb-4">Existing Tools</h3>
-          <ToolsTable tools={tools} />
+          <ToolsTable tools={tools} teamspaceId={params.teamspaceId} />
         </div>
       </div>
     </div>

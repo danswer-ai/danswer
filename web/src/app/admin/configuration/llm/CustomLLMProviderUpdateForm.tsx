@@ -240,6 +240,7 @@ export function CustomLLMProviderUpdateForm({
               label="[Optional] API Key"
               placeholder="API Key"
               type="password"
+              optional
             />
 
             {existingLlmProvider?.deployment_name && (
@@ -247,6 +248,7 @@ export function CustomLLMProviderUpdateForm({
                 name="deployment_name"
                 label="[Optional] Deployment Name"
                 placeholder="Deployment Name"
+                optional
               />
             )}
 
@@ -254,12 +256,14 @@ export function CustomLLMProviderUpdateForm({
               name="api_base"
               label="[Optional] API Base"
               placeholder="API Base"
+              optional
             />
 
             <TextFormField
               name="api_version"
               label="[Optional] API Version"
               placeholder="API Version"
+              optional
             />
 
             <Label>[Optional] Custom Configs</Label>

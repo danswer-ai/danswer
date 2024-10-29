@@ -32,11 +32,15 @@ const NUM_IN_PAGE = 20;
 
 function QueryHistoryTableRow({
   chatSessionMinimal,
+  teamspaceId,
 }: {
   chatSessionMinimal: ChatSessionMinimal;
+  teamspaceId?: string | string[];
 }) {
   const handleRowClick = () => {
-    window.location.href = `/admin/performance/query-history/${chatSessionMinimal.id}`;
+    window.location.href = teamspaceId
+      ? `/t/${teamspaceId}/admin/performance/query-history/${chatSessionMinimal.id}`
+      : `/admin/performance/query-history/${chatSessionMinimal.id}`;
   };
 
   return (
@@ -104,14 +108,18 @@ function SelectFeedbackType({
   );
 }
 
-export function QueryHistoryTable() {
+export function QueryHistoryTable({
+  teamspaceId,
+}: {
+  teamspaceId?: string | string[];
+}) {
   const {
     data: chatSessionData,
     selectedFeedbackType,
     setSelectedFeedbackType,
     timeRange,
     setTimeRange,
-  } = useQueryHistory();
+  } = useQueryHistory(teamspaceId);
 
   const [page, setPage] = useState(1);
 
@@ -154,6 +162,7 @@ export function QueryHistoryTable() {
                       <QueryHistoryTableRow
                         key={chatSessionMinimal.id}
                         chatSessionMinimal={chatSessionMinimal}
+                        teamspaceId={teamspaceId}
                       />
                     ))}
                 </TableBody>

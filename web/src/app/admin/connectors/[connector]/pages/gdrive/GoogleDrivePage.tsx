@@ -18,8 +18,10 @@ import {
 import { GoogleDriveConfig } from "@/lib/connectors/connectors";
 import { useUser } from "@/components/user/UserProvider";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
+import { useParams } from "next/navigation";
 
 const GDriveMain = ({}: {}) => {
+  const { teamspaceId } = useParams();
   const { isLoadingUser, isAdmin } = useUser();
 
   const {
@@ -44,7 +46,7 @@ const GDriveMain = ({}: {}) => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: connectorIndexingStatusesError,
-  } = useConnectorCredentialIndexingStatus();
+  } = useConnectorCredentialIndexingStatus(undefined, false, teamspaceId);
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,

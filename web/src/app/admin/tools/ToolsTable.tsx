@@ -19,7 +19,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
 
-export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
+export function ToolsTable({
+  tools,
+  teamspaceId,
+}: {
+  tools: ToolSnapshot[];
+  teamspaceId?: string | string;
+}) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -51,7 +57,9 @@ export function ToolsTable({ tools }: { tools: ToolSnapshot[] }) {
                             size="icon"
                             onClick={() =>
                               router.push(
-                                `/admin/tools/edit/${tool.id}?u=${Date.now()}`
+                                teamspaceId
+                                  ? `/t/${teamspaceId}/admin/tools/edit/${tool.id}?u=${Date.now()}`
+                                  : `/admin/tools/edit/${tool.id}?u=${Date.now()}`
                               )
                             }
                           >

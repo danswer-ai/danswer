@@ -6,8 +6,7 @@ import { useMemo, useState } from "react";
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { DraggableTable } from "@/components/table/DraggableTable";
 import { deleteAssistant, assistantComparator } from "./lib";
-import { TrashIcon } from "@/components/icons/icons";
-import { Pencil, Trash, X } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,9 +31,11 @@ function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
 export function AssistantsTable({
   allAssistants,
   editableAssistants,
+  teamspaceId
 }: {
   allAssistants: Assistant[];
   editableAssistants: Assistant[];
+  teamspaceId?: string | string[]
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -124,7 +125,7 @@ export function AssistantsTable({
                         </div>
                       ) : (
                         <Link
-                          href={`/admin/assistants/${assistant.id}?u=${Date.now()}`}
+                          href={`/t/${teamspaceId}/admin/assistants/${assistant.id}?u=${Date.now()}`}
                           className="flex items-center w-full gap-2 truncate"
                         >
                           <Pencil size={16} className="shrink-0" />

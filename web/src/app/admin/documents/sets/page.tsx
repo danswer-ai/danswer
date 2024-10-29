@@ -36,7 +36,6 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { FiEdit2 } from "react-icons/fi";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
-import { TableHeaderCell } from "@tremor/react";
 
 const numToDisplay = 50;
 
@@ -135,11 +134,11 @@ const DocumentSetTable = ({
           <Table>
             <TableHeader className="h-12">
               <TableRow>
-                <TableHeaderCell>Name</TableHeaderCell>
-                <TableHeaderCell>Connectors</TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
-                <TableHeaderCell>Public</TableHeaderCell>
-                <TableHeaderCell>Delete</TableHeaderCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Connectors</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Public</TableHead>
+                <TableHead>Delete</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

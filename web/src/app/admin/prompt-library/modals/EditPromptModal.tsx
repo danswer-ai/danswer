@@ -1,5 +1,5 @@
 import React from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field, ErrorMessage, FieldProps } from "formik";
 import * as Yup from "yup";
 import { useInputPrompt } from "../hooks";
 import { EditPromptModalProps } from "../interfaces";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Pencil } from "lucide-react";
 
 const EditPromptSchema = Yup.object().shape({
   prompt: Yup.string().required("Title is required"),
@@ -30,7 +31,7 @@ const EditPromptModal = ({
     if (error) {
       return <p>Failed to load prompt data</p>;
     }
-    
+
     if (!promptData) {
       return <p>Loading...</p>;
     }
@@ -48,7 +49,7 @@ const EditPromptModal = ({
           refreshInputPrompt();
         }}
       >
-        {({ isSubmitting, values }) => (
+        {({ isSubmitting, setFieldValue, values }) => (
           <Form>
             <div className="space-y-4">
               <div>
@@ -62,6 +63,8 @@ const EditPromptModal = ({
                   id="prompt"
                   name="prompt"
                   placeholder="Title (e.g. 'Draft email')"
+                  value={values.prompt}
+                  onChange={(e) => setFieldValue("prompt", e.target.value)}
                 />
                 <ErrorMessage
                   name="prompt"
@@ -82,6 +85,8 @@ const EditPromptModal = ({
                   name="content"
                   placeholder="Enter prompt content (e.g. 'Write a professional-sounding email about the following content')"
                   rows={4}
+                  value={values.content}
+                  onChange={(e) => setFieldValue("content", e.target.value)}
                 />
                 <ErrorMessage
                   name="content"
@@ -92,7 +97,11 @@ const EditPromptModal = ({
 
               <div>
                 <div className="flex items-center gap-2">
-                  <Checkbox name="active" />
+                  <Field name="active">
+                    {({ field }: FieldProps) => (
+                      <Checkbox {...field} checked={field.value} />
+                    )}
+                  </Field>
                   <label className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Active prompt
                   </label>
@@ -124,10 +133,8 @@ const EditPromptModal = ({
     <CustomModal
       onClose={onClose}
       title={
-        <div className="flex items-center">
-          <svg className="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-          </svg>
+        <div className="flex items-center gap-2">
+          <Pencil />
           Edit prompt
         </div>
       }

@@ -1,7 +1,6 @@
 import { createConnector, runConnector } from "@/lib/connector";
 import { linkCredential } from "@/lib/credential";
 import { GoogleSitesConfig } from "@/lib/connectors/connectors";
-import { useToast } from "@/hooks/use-toast";
 
 export const submitGoogleSite = async (
   selectedFiles: File[],
@@ -12,7 +11,6 @@ export const submitGoogleSite = async (
   is_public: boolean,
   name?: string
 ) => {
-  const { toast } = useToast();
   const uploadCreateAndTriggerConnector = async () => {
     const formData = new FormData();
 
@@ -26,11 +24,7 @@ export const submitGoogleSite = async (
     });
     const responseJson = await response.json();
     if (!response.ok) {
-      toast({
-        title: "Error",
-        description: `Unable to upload files - ${responseJson.detail}`,
-        variant: "destructive",
-      });
+      console.log(`Unable to upload files - ${responseJson.detail}`);
       return false;
     }
 
@@ -50,39 +44,25 @@ export const submitGoogleSite = async (
         indexing_start: indexingStart,
       });
     if (connectorErrorMsg || !connector) {
-      toast({
-        title: "Error",
-        description: `Unable to create connector - ${connectorErrorMsg}`,
-        variant: "destructive",
-      });
+      console.log(`Unable to create connector - ${connectorErrorMsg}`);
       return false;
     }
 
     const credentialResponse = await linkCredential(connector.id, 0, base_url);
     if (!credentialResponse.ok) {
       const credentialResponseJson = await credentialResponse.json();
-      toast({
-        title: "Error",
-        description: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
-        variant: "destructive",
-      });
+      console.log(
+        `Unable to link connector to credential - ${credentialResponseJson.detail}`
+      );
       return false;
     }
 
     const runConnectorErrorMsg = await runConnector(connector.id, [0]);
     if (runConnectorErrorMsg) {
-      toast({
-        title: "Error",
-        description: `Unable to run connector - ${runConnectorErrorMsg}`,
-        variant: "destructive",
-      });
+      console.log(`Unable to run connector - ${runConnectorErrorMsg}`);
       return false;
     }
-    toast({
-      title: "Success",
-      description: "Successfully created Google Site connector!",
-      variant: "success",
-    });
+
     return true;
   };
 

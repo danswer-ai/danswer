@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CustomTooltip } from "./CustomTooltip";
 import { MinimalTeamspaceSnapshot } from "@/lib/types";
 import Image from "next/image";
+import { buildImgUrl } from "@/app/chat/files/images/utils";
 
 interface TeamspaceBubbleProps {
   teamspace?: MinimalTeamspaceSnapshot | undefined;
@@ -22,10 +23,10 @@ export const TeamspaceBubble = ({ teamspace, link }: TeamspaceBubbleProps) => {
     <CustomTooltip
       trigger={
         <Link href={`/${link}`} className="relative flex items-center">
-          {teamspace.is_custom_logo ? (
+          {teamspace.logo ? (
             <div className="rounded-md w-10 h-10 bg-background overflow-hidden">
               <Image
-                src={`/api/teamspace/logo?teamspace_id=${teamspace.id}&t=${Date.now()}`}
+                src={buildImgUrl(teamspace.logo)}
                 alt="Teamspace Logo"
                 className="object-cover shrink-0 w-full h-full"
                 width={40}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
+import { Form, Formik } from "formik";
 import * as Yup from "yup";
 import { ConnectorIndexingStatus, DocumentSet, Teamspace } from "@/lib/types";
 import {
@@ -12,14 +12,10 @@ import {
   BooleanFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import { ConnectorTitle } from "@/components/admin/connectors/ConnectorTitle";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Users } from "lucide-react";
 import { Divider } from "@/components/Divider";
 import { useUser } from "@/components/user/UserProvider";
 import { Combobox } from "@/components/Combobox";
@@ -29,6 +25,7 @@ interface SetCreationPopupProps {
   teamspaces: Teamspace[] | undefined;
   onClose: () => void;
   existingDocumentSet?: DocumentSet;
+  teamspaceId?: string | string[];
 }
 
 export const DocumentSetCreationForm = ({
@@ -36,6 +33,7 @@ export const DocumentSetCreationForm = ({
   teamspaces,
   onClose,
   existingDocumentSet,
+  teamspaceId,
 }: SetCreationPopupProps) => {
   const { toast } = useToast();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
@@ -59,8 +57,6 @@ export const DocumentSetCreationForm = ({
     value: ccPair.cc_pair_id.toString(),
     label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
   }));
-
-  console.log(existingDocumentSet);
 
   return (
     <div>
@@ -88,10 +84,9 @@ export const DocumentSetCreationForm = ({
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
-          // If the document set is public, then we don't want to send any teamspace
           const processedValues = {
             ...values,
-            groups: values.is_public ? [] : values.groups,
+            groups: teamspaceId ? [Number(teamspaceId)] : (values.is_public ? [] : values.groups)
           };
 
           let response;
@@ -162,7 +157,7 @@ export const DocumentSetCreationForm = ({
               />
             </div>
 
-            {teamspaces && teamspaces.length > 0 && (
+            {teamspaces && teamspaces.length > 0 && !teamspaceId && (
               <div>
                 <Divider />
 

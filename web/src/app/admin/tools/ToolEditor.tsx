@@ -306,7 +306,13 @@ const ToolSchema = Yup.object().shape({
     .default([]),
 });
 
-export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
+export function ToolEditor({
+  tool,
+  teamspaceId,
+}: {
+  tool?: ToolSnapshot;
+  teamspaceId?: string | string[];
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [definitionError, setDefinitionError] = useState<string | null>(null);
@@ -357,7 +363,11 @@ export function ToolEditor({ tool }: { tool?: ToolSnapshot }) {
           });
           return;
         }
-        router.push(`/admin/tools?u=${Date.now()}`);
+        router.push(
+          teamspaceId
+            ? `/t/${teamspaceId}/admin/tools?u=${Date.now()}`
+            : `/admin/tools?u=${Date.now()}`
+        );
       }}
     >
       {({ isSubmitting, values, setFieldValue }) => {

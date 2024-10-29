@@ -36,9 +36,9 @@ const AdvancedFormPage = () => {
         name="indexingStart"
       />
       <div className="flex w-full mx-auto max-w-2xl justify-start">
-        <Button variant='destructive'>
+        <Button variant="destructive">
           <TrashIcon size={20} className="text-white" />
-    Reset
+          Reset
         </Button>
       </div>
     </div>

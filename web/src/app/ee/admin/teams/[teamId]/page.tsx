@@ -5,12 +5,13 @@ import { GroupDisplay } from "./GroupDisplay";
 import { useSpecificTeamspace } from "./hook";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { useConnectorCredentialIndexingStatus, useUsers } from "@/lib/hooks";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { BackButton } from "@/components/BackButton";
 import { AdminPageTitle } from "@/components/admin/Title";
 
 const Page = ({ params }: { params: { teamId: string } }) => {
   const router = useRouter();
+  const { teamspaceId } = useParams();
 
   const {
     teamspace,
@@ -27,7 +28,7 @@ const Page = ({ params }: { params: { teamId: string } }) => {
     data: ccPairs,
     isLoading: isCCPairsLoading,
     error: ccPairsError,
-  } = useConnectorCredentialIndexingStatus();
+  } = useConnectorCredentialIndexingStatus(undefined, false, teamspaceId);
 
   if (teamspaceIsLoading || userIsLoading || isCCPairsLoading) {
     return (

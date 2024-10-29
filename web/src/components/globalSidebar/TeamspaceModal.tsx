@@ -8,6 +8,7 @@ import { useState } from "react";
 import { MinimalTeamspaceSnapshot } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
+import { buildImgUrl } from "@/app/chat/files/images/utils";
 
 interface TeamspaceModalProps {
   teamspace?: MinimalTeamspaceSnapshot[] | undefined;
@@ -62,10 +63,10 @@ export const TeamspaceModal = ({
             className="flex items-center gap-4 border rounded-md p-4 cursor-pointer"
             href={`/t/${team.id}/${defaultPage}`}
           >
-            {team.is_custom_logo ? (
+            {team.logo ? (
               <div className="rounded-md w-10 h-10 bg-background overflow-hidden">
                 <Image
-                  src={`/api/teamspace/logo?teamspace_id=${team.id}&t=${Date.now()}`}
+                  src={buildImgUrl(team.logo)}
                   alt="Teamspace Logo"
                   className="object-cover shrink-0 w-full h-full"
                   width={40}

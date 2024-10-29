@@ -1,10 +1,12 @@
 "use client";
 
+import { QueryHistoryTable } from "@/app/ee/admin/performance/query-history/QueryHistoryTable";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { QueryHistoryTable } from "./QueryHistoryTable";
 import { DatabaseIcon } from "@/components/icons/icons";
+import { useParams } from "next/navigation";
 
 export default function QueryHistoryPage() {
+  const { teamspaceId } = useParams();
   return (
     <div className="h-full w-full overflow-y-auto">
       <div className="container">
@@ -13,7 +15,7 @@ export default function QueryHistoryPage() {
           icon={<DatabaseIcon size={32} />}
         />
 
-        <QueryHistoryTable />
+        <QueryHistoryTable teamspaceId={teamspaceId} />
       </div>
     </div>
   );

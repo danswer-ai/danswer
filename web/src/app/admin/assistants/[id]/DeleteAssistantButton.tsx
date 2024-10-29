@@ -10,9 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 export function DeleteAssistantButton({
   assistantId,
   redirectType,
+  teamspaceId,
 }: {
   assistantId: number;
   redirectType: SuccessfulAssistantUpdateRedirectType;
+  teamspaceId?: string | string[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -27,11 +29,16 @@ export function DeleteAssistantButton({
             description: "The assistant has been successfully deleted.",
             variant: "success",
           });
-          router.push(
+          const redirectUrl =
             redirectType === SuccessfulAssistantUpdateRedirectType.ADMIN
-              ? `/admin/assistants?u=${Date.now()}`
-              : `/chat`
-          );
+              ? teamspaceId
+                ? `/t/${teamspaceId}/admin/assistants?u=${Date.now()}`
+                : `/admin/assistants?u=${Date.now()}`
+              : teamspaceId
+                ? `/t/${teamspaceId}/chat`
+                : `/chat`;
+
+          router.push(redirectUrl);
         } else {
           toast({
             title: "Failed to delete assistant",

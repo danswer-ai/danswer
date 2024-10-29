@@ -11,7 +11,7 @@ import { getCurrentTeamspaceUserSS, getCurrentUserSS } from "../userSS";
 
 export async function fetchAssistantEditorInfoSS(
   assistantId?: number | string,
-  teamspaceId?: string
+  teamspaceId?: string | string[]
 ): Promise<
   | [
       {

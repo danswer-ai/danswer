@@ -426,6 +426,7 @@ export const GmailOAuthSection = ({
                   name="gmail_delegated_user"
                   label="[Optional] User email to impersonate:"
                   subtext="If left blank, enMedD AI will use the service account itself."
+                  optional
                 />
                 <div className="flex">
                   <Button

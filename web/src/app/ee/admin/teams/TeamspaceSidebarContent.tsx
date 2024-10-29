@@ -8,6 +8,7 @@ import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import Image from "next/image";
+import { buildImgUrl } from "@/app/chat/files/images/utils";
 
 interface TeamspaceSidebarContentProps {
   teamspace: Teamspace & { gradient: string };
@@ -37,10 +38,10 @@ export const TeamspaceSidebarContent = ({
     <>
       <div style={{ background: teamspace.gradient }} className="h-40 relative">
         <div className="absolute top-full -translate-y-1/2 left-1/2 -translate-x-1/2">
-          {teamspace.is_custom_logo ? (
+          {teamspace.logo ? (
             <div className="rounded-md w-16 h-16 bg-background rounded-md overflow-hidden">
               <Image
-                src={`/api/teamspace/logo?teamspace_id=${teamspace.id}&t=${Date.now()}`}
+                src={buildImgUrl(teamspace.logo)}
                 alt="Teamspace Logo"
                 className="object-cover w-full h-full"
                 width={40}
@@ -73,12 +74,6 @@ export const TeamspaceSidebarContent = ({
               ? `${tokenRate.token_budget} Token Rate`
               : "No Token Rate"}
           </span>
-          {/* <p className="text-center text-subtle pt-4 text-sm line-clamp">
-            Lorem ipsum dolor, sit amet consectetur adipisicing elit.
-            Perferendis omnis nesciunt est saepe sequi nam cum ratione
-            aspernatur reprehenderit, ducimus illo eveniet et quidem itaque
-            ipsam error nobis, dolores accusamus!
-          </p> */}
         </div>
 
         <div className="w-full flex flex-col gap-4 pt-14">

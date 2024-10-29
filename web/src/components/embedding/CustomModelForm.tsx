@@ -88,6 +88,7 @@ export function CustomModelForm({
               }
               placeholder="E.g. 'query: '"
               autoCompleteDisabled={true}
+              optional
             />
 
             <div className="pt-2" />
@@ -105,6 +106,7 @@ export function CustomModelForm({
               }
               placeholder="E.g. 'passage: '"
               autoCompleteDisabled={true}
+              optional
             />
 
             <div className="pt-2" />

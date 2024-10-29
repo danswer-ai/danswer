@@ -19,6 +19,7 @@ import { CustomModal } from "@/components/CustomModal";
 import { useState } from "react";
 import Image from "next/image";
 import "../../../../components/loading.css";
+import { buildImgUrl } from "@/app/chat/files/images/utils";
 
 interface TeamspaceWithGradient extends Teamspace {
   gradient?: string;
@@ -155,10 +156,10 @@ export const TeamspacesCard = ({
         ></CardHeader>
         <CardContent className="relative flex flex-col justify-between min-h-48 bg-muted/50">
           <div className="absolute top-0 w-12 h-12 -translate-y-1/2 right-4 flex items-center justify-center">
-            {teamspace.is_custom_logo ? (
+            {teamspace.logo ? (
               <div className="rounded-md w-10 h-10 bg-background rounded-md overflow-hidden">
                 <Image
-                  src={`/api/teamspace/logo?teamspace_id=${teamspace.id}&t=${Date.now()}`}
+                  src={buildImgUrl(teamspace.logo)}
                   alt="Teamspace Logo"
                   className="object-cover w-full h-full shrink-0"
                   width={40}

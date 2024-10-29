@@ -11,6 +11,7 @@ import {
 } from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { useDocumentSets } from "@/app/admin/documents/sets/hooks";
+import { useParams } from "next/navigation";
 
 const generateGradient = (teamspaceName: string) => {
   const colors = ["#f9a8d4", "#8b5cf6", "#34d399", "#60a5fa", "#f472b6"];
@@ -21,6 +22,7 @@ const generateGradient = (teamspaceName: string) => {
 };
 
 export const Main = ({ assistants }: { assistants: Assistant[] }) => {
+  const { teamspaceId } = useParams();
   const [selectedTeamspaceId, setSelectedTeamspaceId] = useState<number | null>(
     null
   );
@@ -31,7 +33,7 @@ export const Main = ({ assistants }: { assistants: Assistant[] }) => {
     data: ccPairs,
     isLoading: isCCPairsLoading,
     error: ccPairsError,
-  } = useConnectorCredentialIndexingStatus();
+  } = useConnectorCredentialIndexingStatus(undefined, false, teamspaceId);
 
   const {
     data: users,

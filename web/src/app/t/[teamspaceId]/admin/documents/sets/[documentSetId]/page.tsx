@@ -1,19 +1,18 @@
 "use client";
 
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { refreshDocumentSets, useDocumentSets } from "../hooks";
 import {
   useConnectorCredentialIndexingStatus,
   useTeamspaces,
 } from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
-import { BookmarkIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
-import { DocumentSetCreationForm } from "../DocumentSetCreationForm";
 import { useParams, useRouter } from "next/navigation";
 import { Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { DocumentSetCreationForm } from "@/app/admin/documents/sets/DocumentSetCreationForm";
+import { refreshDocumentSets, useDocumentSets } from "@/app/admin/documents/sets/hooks";
 
 function Main({ documentSetId }: { documentSetId: number }) {
   const router = useRouter();
@@ -23,13 +22,13 @@ function Main({ documentSetId }: { documentSetId: number }) {
     data: documentSets,
     isLoading: isDocumentSetsLoading,
     error: documentSetsError,
-  } = useDocumentSets();
+  } = useDocumentSets(false, teamspaceId);
 
   const {
     data: ccPairs,
     isLoading: isCCPairsLoading,
     error: ccPairsError,
-  } = useConnectorCredentialIndexingStatus();
+  } = useConnectorCredentialIndexingStatus(undefined, false, teamspaceId);
 
   // EE only
   const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
@@ -70,8 +69,6 @@ function Main({ documentSetId }: { documentSetId: number }) {
 
   return (
     <div>
-      <BackButton />
-
       <AdminPageTitle icon={<Bookmark size={32} />} title={documentSet.name} />
 
       <Card>
@@ -80,10 +77,11 @@ function Main({ documentSetId }: { documentSetId: number }) {
             ccPairs={ccPairs}
             teamspaces={teamspaces}
             onClose={() => {
-              refreshDocumentSets(teamspaceId);
+              refreshDocumentSets();
               router.push(`/t/${teamspaceId}/admin/documents/sets`);
             }}
             existingDocumentSet={documentSet}
+            teamspaceId={teamspaceId}
           />
         </CardContent>
       </Card>

@@ -250,19 +250,21 @@ export const PromptLibraryTable = ({
                           </CustomTooltip>
                         </TableCell>
                         <TableCell>
-                          <CustomTooltip
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEdit(item.id)}
-                              >
-                                <EditIcon size={16} />
-                              </Button>
-                            }
-                          >
-                            Edit
-                          </CustomTooltip>
+                          {item.id > 0 && (
+                            <CustomTooltip
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(item.id)}
+                                >
+                                  <EditIcon size={16} />
+                                </Button>
+                              }
+                            >
+                              Edit
+                            </CustomTooltip>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))

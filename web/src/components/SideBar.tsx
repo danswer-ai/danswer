@@ -134,56 +134,67 @@ export const SideBar: React.FC<SideBarProps> = ({ isTeamspace }) => {
                   ? `/t/${teamspaceId}/admin/tools`
                   : `/admin/tools`,
               },
-              {
-                name: (
-                  <div className="flex">
-                    <ClosedBookIcon
-                      className="text-icon-settings-sidebar"
-                      size={18}
-                    />
-                    <div className="ml-1">Prompt Library</div>
-                  </div>
-                ),
-                link: "/admin/prompt-library",
-              },
+
+              ...(!teamspaceId
+                ? [
+                    {
+                      name: (
+                        <div className="flex">
+                          <ClosedBookIcon
+                            className="text-icon-settings-sidebar"
+                            size={18}
+                          />
+                          <div className="ml-1">Prompt Library</div>
+                        </div>
+                      ),
+                      link: "/admin/prompt-library",
+                    },
+                  ]
+                : []),
+              // {
             ],
           },
-          {
-            name: "Configuration",
-            items: [
-              {
-                name: (
-                  <div className="flex">
-                    <CpuIconSkeleton
-                      className="text-icon-settings-sidebar"
-                      size={18}
-                    />
-                    <div className="ml-1">LLM</div>
-                  </div>
-                ),
-                link: "/admin/configuration/llm",
-              },
-              {
-                error: dynamicSettings?.settings.needs_reindexing,
-                name: (
-                  <div className="flex">
-                    <Search size={16} />
-                    <div className="ml-1">Search Settings</div>
-                  </div>
-                ),
-                link: "/admin/configuration/search",
-              },
-              {
-                name: (
-                  <div className="flex">
-                    <DocumentIcon2 className="text-icon-settings-sidebar" />
-                    <div className="ml-1">Document Processing</div>
-                  </div>
-                ),
-                link: "/admin/configuration/document-processing",
-              },
-            ],
-          },
+
+          ...(!teamspaceId
+            ? [
+                {
+                  name: "Configuration",
+                  items: [
+                    {
+                      name: (
+                        <div className="flex">
+                          <CpuIconSkeleton
+                            className="text-icon-settings-sidebar"
+                            size={18}
+                          />
+                          <div className="ml-1">LLM</div>
+                        </div>
+                      ),
+                      link: "/admin/configuration/llm",
+                    },
+                    {
+                      error: dynamicSettings?.settings.needs_reindexing,
+                      name: (
+                        <div className="flex">
+                          <Search size={16} />
+                          <div className="ml-1">Search Settings</div>
+                        </div>
+                      ),
+                      link: "/admin/configuration/search",
+                    },
+                    {
+                      name: (
+                        <div className="flex">
+                          <DocumentIcon2 className="text-icon-settings-sidebar" />
+                          <div className="ml-1">Document Processing</div>
+                        </div>
+                      ),
+                      link: "/admin/configuration/document-processing",
+                    },
+                  ],
+                },
+              ]
+            : []),
           {
             name: "User Management",
             items: [

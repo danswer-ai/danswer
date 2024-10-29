@@ -253,9 +253,11 @@ function ConnectorRow({
 export function CCPairIndexingStatusTable({
   ccPairsIndexingStatuses,
   editableCcPairsIndexingStatuses,
+  teamspaceId,
 }: {
   ccPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
   editableCcPairsIndexingStatuses: ConnectorIndexingStatus<any, any>[];
+  teamspaceId?: string;
 }) {
   const [searchTerm, setSearchTerm] = useState("");
 

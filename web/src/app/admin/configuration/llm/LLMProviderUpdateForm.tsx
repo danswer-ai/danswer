@@ -260,6 +260,7 @@ export function LLMProviderUpdateForm({
                     : `[Optional] ${customConfigKey.name}`
                 }
                 subtext={customConfigKey.description || undefined}
+                optional
               />
             </div>
           ))}
@@ -311,6 +312,7 @@ export function LLMProviderUpdateForm({
                     }))}
                     includeDefault
                     maxHeight="max-h-56"
+                    optional
                   />
                 ) : (
                   <TextFormField
@@ -320,6 +322,7 @@ export function LLMProviderUpdateForm({
                 the Default Model configured above.`}
                     label="[Optional] Fast Model"
                     placeholder="E.g. gpt-4"
+                    optional
                   />
                 ))}
 

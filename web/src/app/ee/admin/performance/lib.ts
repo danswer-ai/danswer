@@ -49,16 +49,21 @@ export const useUserAnalytics = (timeRange: DateRange) => {
   };
 };
 
-export const useQueryHistory = () => {
+export const useQueryHistory = (teamspaceId?: string | string[]) => {
   const [selectedFeedbackType, setSelectedFeedbackType] =
     useState<Feedback | null>(null);
   const [timeRange, setTimeRange] = useTimeRange();
 
-  const url = buildApiPath("/api/admin/chat-session-history", {
-    feedback_type: selectedFeedbackType,
-    start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
-    end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
-  });
+  const url = buildApiPath(
+    teamspaceId
+      ? `/api/admin/chat-session-history?teamspace_id=${teamspaceId}`
+      : "/api/admin/chat-session-history",
+    {
+      feedback_type: selectedFeedbackType,
+      start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
+      end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
+    }
+  );
   const swrResponse = useSWR<ChatSessionMinimal[]>(url, errorHandlingFetcher);
 
   return {

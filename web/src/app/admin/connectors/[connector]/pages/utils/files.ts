@@ -1,7 +1,6 @@
 import { createConnector, runConnector } from "@/lib/connector";
 import { createCredential, linkCredential } from "@/lib/credential";
 import { FileConfig } from "@/lib/connectors/connectors";
-import { useToast } from "@/hooks/use-toast";
 
 export const submitFiles = async (
   selectedFiles: File[],
@@ -10,7 +9,6 @@ export const submitFiles = async (
   isPublic: boolean,
   groups?: number[]
 ) => {
-  const { toast } = useToast();
   const formData = new FormData();
 
   selectedFiles.forEach((file) => {
@@ -23,11 +21,7 @@ export const submitFiles = async (
   });
   const responseJson = await response.json();
   if (!response.ok) {
-    toast({
-      title: "Error",
-      description: `Unable to upload files - ${responseJson.detail}`,
-      variant: "destructive",
-    });
+    console.log(`Unable to upload files - ${responseJson.detail}`)
     return;
   }
 
@@ -47,11 +41,7 @@ export const submitFiles = async (
     groups: groups,
   });
   if (connectorErrorMsg || !connector) {
-    toast({
-      title: "Error",
-      description: `Unable to create connector - ${connectorErrorMsg}`,
-      variant: "destructive",
-    });
+    console.log(`Unable to create connector - ${connectorErrorMsg}`)
     return;
   }
 
@@ -69,11 +59,7 @@ export const submitFiles = async (
   });
   if (!createCredentialResponse.ok) {
     const errorMsg = await createCredentialResponse.text();
-    toast({
-      title: "Error",
-      description: `Error creating credential for CC Pair - ${errorMsg}`,
-      variant: "destructive",
-    });
+    console.log(`Error creating credential for CC Pair - ${errorMsg}`)
     return;
     false;
   }
@@ -88,29 +74,16 @@ export const submitFiles = async (
   );
   if (!credentialResponse.ok) {
     const credentialResponseJson = await credentialResponse.json();
-    toast({
-      title: "Error",
-      description: `Unable to link connector to credential - ${credentialResponseJson.detail}`,
-      variant: "destructive",
-    });
+    console.log(`Unable to link connector to credential - ${credentialResponseJson.detail}`)
     return false;
   }
 
   const runConnectorErrorMsg = await runConnector(connector.id, [0]);
   if (runConnectorErrorMsg) {
-    toast({
-      title: "Error",
-      description: `Unable to run connector - ${runConnectorErrorMsg}`,
-      variant: "destructive",
-    });
+    console.log(`Unable to run connector - ${runConnectorErrorMsg}`)
     return false;
   }
 
   setSelectedFiles([]);
-  toast({
-    title: "Success",
-    description: "Successfully uploaded files!",
-    variant: "success",
-  });
   return true;
 };

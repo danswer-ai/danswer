@@ -70,7 +70,12 @@ export const useConnectorCredentialIndexingStatus = (
   teamspaceId?: string | string[]
 ) => {
   const { mutate } = useSWRConfig();
-  const url = `${INDEXING_STATUS_URL}${getEditable ? "?get_editable=true" : ""}${teamspaceId ? `?teamspace_id=${teamspaceId}` : ""}`;
+  const url =
+    `${INDEXING_STATUS_URL}?${getEditable ? "get_editable=true" : ""}${getEditable && teamspaceId ? "&" : ""}${teamspaceId ? `teamspace_id=${teamspaceId}` : ""}`.replace(
+      /&$/,
+      ""
+    );
+    
   const swrResponse = useSWR<ConnectorIndexingStatus<any, any>[]>(
     url,
     errorHandlingFetcher,

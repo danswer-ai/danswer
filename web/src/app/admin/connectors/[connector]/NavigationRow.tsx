@@ -32,7 +32,7 @@ const NavigationRow = ({
 
       <div className="flex justify-center">
         {(formStep > 0 || noCredentials) && (
-          <Button disabled={!isValid} onClick={onSubmit}>
+          <Button disabled={!isValid} onClick={onSubmit} type="submit">
             Create Connector
             <FiPlus className="w-4 h-4" />
           </Button>

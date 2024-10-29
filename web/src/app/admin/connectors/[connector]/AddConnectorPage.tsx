@@ -1,13 +1,10 @@
 "use client";
 
-import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
+import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
-
-import { Title } from "@tremor/react";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { useFormContext } from "@/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
@@ -30,7 +27,6 @@ import {
   defaultRefreshFreqMinutes,
   isLoadState,
 } from "@/lib/connectors/connectors";
-import { Modal } from "@/components/Modal";
 import GDriveMain from "./pages/gdrive/GoogleDrivePage";
 import { GmailMain } from "./pages/gmail/GmailPage";
 import {
@@ -48,7 +44,6 @@ export interface AdvancedConfig {
   indexingStart: string;
 }
 import { Connector, ConnectorBase } from "@/lib/connectors/connectors";
-import { ChartLegendContent } from "@/components/ui/chart";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -116,9 +111,12 @@ export async function submitConnector<T>(
 
 export default function AddConnector({
   connector,
+  teamspaceId,
 }: {
   connector: ConfigurableSources;
+  teamspaceId?: string | string[];
 }) {
+  const { toast } = useToast();
   const router = useRouter();
   // State for managing credentials and files
   const [currentCredential, setCurrentCredential] =
@@ -146,7 +144,6 @@ export default function AddConnector({
   // Form context and popup management
   const { setFormStep, setAlowCreate, formStep, nextFormStep, prevFormStep } =
     useFormContext();
-    const { toast } = useToast();
 
   // Hooks for Google Drive and Gmail credentials
   const { liveGDriveCredential } = useGoogleDriveCredentials();
@@ -219,7 +216,12 @@ export default function AddConnector({
       variant: "success",
     });
     setTimeout(() => {
-      window.open("/admin/indexing/status", "_self");
+      window.open(
+        teamspaceId
+          ? `/t/${teamspaceId}/admin/indexing/status`
+          : "/admin/indexing/status",
+        "_self"
+      );
     }, 1000);
   };
 
@@ -280,7 +282,18 @@ export default function AddConnector({
             name
           );
           if (response) {
+            toast({
+              title: "Google Site Submitted",
+              description: "Your Google site has been successfully submitted!",
+              variant: "success", 
+            });
             onSuccess();
+          } else {
+            toast({
+              title: "Error",
+              description: response,
+              variant: "destructive",
+            });
           }
           return;
         }
@@ -294,8 +307,20 @@ export default function AddConnector({
             access_type == "public",
             groups
           );
+          console.log(response);
           if (response) {
             onSuccess();
+            toast({
+              title: "Success",
+              description: "Successfully uploaded files!",
+              variant: "success",
+            });
+          } else {
+            toast({
+              title: "Error",
+              description: response,
+              variant: "destructive",
+            });
           }
           return;
         }
@@ -370,7 +395,13 @@ export default function AddConnector({
               <HealthCheckBanner />
             </div>
             <Button
-              onClick={() => router.push("/admin/data-sources")}
+              onClick={() =>
+                router.push(
+                  teamspaceId
+                    ? `/t/${teamspaceId}/admin/data-sources`
+                    : "/admin/data-sources"
+                )
+              }
               variant="ghost"
               className="mb-5"
             >
@@ -424,14 +455,13 @@ export default function AddConnector({
                         {(connector as ValidSources) !== "google_drive" &&
                           createConnectorToggle && (
                             <CustomModal
-                              onClose={() =>
-                                setCreateConnectorToggle(false)
-                              }
-
+                              onClose={() => setCreateConnectorToggle(false)}
                               title={`Create a ${getSourceDisplayName(connector)} credential`}
                               trigger={null}
-                              open={(connector as ValidSources) !== "google_drive" &&
-                                createConnectorToggle}
+                              open={
+                                (connector as ValidSources) !==
+                                  "google_drive" && createConnectorToggle
+                              }
                             >
                               <>
                                 <h3 className="mb-2">

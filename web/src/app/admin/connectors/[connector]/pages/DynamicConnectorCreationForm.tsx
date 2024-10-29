@@ -4,9 +4,11 @@ import CredentialSubText, {
 } from "@/components/credentials/CredentialFields";
 import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { ConnectionConfiguration } from "@/lib/connectors/connectors";
-import SelectInput from "./ConnectorInput/SelectInput";
 import NumberInput from "./ConnectorInput/NumberInput";
-import { SelectorFormField, TextFormField } from "@/components/admin/connectors/Field";
+import {
+  SelectorFormField,
+  TextFormField,
+} from "@/components/admin/connectors/Field";
 import ListInput from "./ConnectorInput/ListInput";
 import FileInput from "./ConnectorInput/FileInput";
 
@@ -46,6 +48,7 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
             <div key={field.name}>
               {field.type == "file" ? (
                 <FileUpload
+                  name={field.name}
                   selectedFiles={selectedFiles}
                   setSelectedFiles={setSelectedFiles}
                 />
@@ -61,13 +64,13 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
               ) : field.type === "list" ? (
                 <ListInput field={field} />
               ) : field.type === "select" ? (
-                  <SelectorFormField
-                    name={field.name}
-                    optional={field.optional}
-                    subtext={field.description}
-                    options={field.options || []}
-                    label={field.label}
-                 />
+                <SelectorFormField
+                  name={field.name}
+                  optional={field.optional}
+                  subtext={field.description}
+                  options={field.options || []}
+                  label={field.label}
+                />
               ) : field.type === "number" ? (
                 <NumberInput
                   label={field.label}

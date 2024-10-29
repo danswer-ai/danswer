@@ -1,5 +1,6 @@
+
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { useFormikContext } from "formik";
 import { FC, useState } from "react";
 import React from "react";
 import Dropzone from "react-dropzone";
@@ -8,14 +9,17 @@ interface FileUploadProps {
   selectedFiles: File[];
   setSelectedFiles: (files: File[]) => void;
   message?: string;
+  name?: string;
 }
 
 export const FileUpload: FC<FileUploadProps> = ({
+  name,
   selectedFiles,
   setSelectedFiles,
   message,
 }) => {
   const [dragActive, setDragActive] = useState(false);
+  const { setFieldValue } = useFormikContext();
 
   return (
     <div className="pb-6">
@@ -23,6 +27,9 @@ export const FileUpload: FC<FileUploadProps> = ({
         onDrop={(acceptedFiles) => {
           setSelectedFiles(acceptedFiles);
           setDragActive(false);
+          if (name) {
+            setFieldValue(name, acceptedFiles);
+          }
         }}
         onDragLeave={() => setDragActive(false)}
         onDragEnter={() => setDragActive(true)}
@@ -48,21 +55,11 @@ export const FileUpload: FC<FileUploadProps> = ({
 
       {selectedFiles.length > 0 && (
         <div className="mt-4">
-          <span className="text-sm font-semibold">Uploaded image:</span>
+          <h2 className="text-sm font-bold">Selected Files</h2>
           <ul>
             {selectedFiles.map((file) => (
-              <div key={file.name} className="flex items-center mt-2">
-                {file.type.startsWith("image/") ? (
-                  <Image
-                    src={URL.createObjectURL(file)}
-                    alt={file.name}
-                    className="object-cover"
-                    width={150}
-                    height={150}
-                  />
-                ) : (
-                  <p className="mr-2 text-sm">{file.name}</p>
-                )}
+              <div key={file.name} className="flex">
+                <p className="text-sm mr-2">{file.name}</p>
               </div>
             ))}
           </ul>

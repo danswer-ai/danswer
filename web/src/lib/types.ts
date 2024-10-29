@@ -51,7 +51,7 @@ export interface User {
   current_token_expiry_length?: number;
   oidc_expiry?: Date;
   groups?: MinimalTeamspaceSnapshot[];
-  is_custom_profile?: boolean;
+  profile?: string
 }
 
 export interface MinimalUserSnapshot {
@@ -63,7 +63,6 @@ export interface MinimalUserwithNameSnapshot {
   id: string;
   email: string;
   full_name: string;
-  is_custom_profile: boolean;
 }
 
 export type ValidInputTypes = "load_state" | "poll" | "event";
@@ -217,19 +216,19 @@ export interface Teamspace {
   assistants: Assistant[];
   is_up_to_date: boolean;
   is_up_for_deletion: boolean;
-  is_custom_logo: boolean;
+  logo?: string;
 }
 
 export interface MinimalTeamspaceSnapshot {
   id: number;
   name: string;
-  is_custom_logo: boolean;
+  logo?: string;
 }
 
 export interface MinimalTeamspaceSnapshot {
   id: number;
   name: string;
-  is_custom_logo: boolean;
+  logo?: string;
 }
 
 const validSources = [

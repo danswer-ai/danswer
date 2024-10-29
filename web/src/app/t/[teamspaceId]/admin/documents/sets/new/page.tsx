@@ -1,26 +1,28 @@
 "use client";
 
 import { AdminPageTitle } from "@/components/admin/Title";
-import { DocumentSetCreationForm } from "../DocumentSetCreationForm";
-import { useTeamspaces } from "@/lib/hooks";
+import {
+  useConnectorCredentialIndexingStatus,
+  useTeamspaces,
+} from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { useParams, useRouter } from "next/navigation";
-import { refreshDocumentSets } from "../hooks";
 import { Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useConnectorCredentialIndexingStatus } from "@/app/t/[teamspaceId]/lib/hooks";
+import { DocumentSetCreationForm } from "@/app/admin/documents/sets/DocumentSetCreationForm";
+import { refreshDocumentSets } from "@/app/admin/documents/sets/hooks";
 
 function Main() {
-  const router = useRouter();
   const { teamspaceId } = useParams();
+  const router = useRouter();
 
   const {
     data: ccPairs,
     isLoading: isCCPairsLoading,
     error: ccPairsError,
-  } = useConnectorCredentialIndexingStatus();
+  } = useConnectorCredentialIndexingStatus(undefined, false, teamspaceId);
 
   // EE only
   const { data: teamspaces, isLoading: teamspacesIsLoading } = useTeamspaces();
@@ -46,9 +48,10 @@ function Main() {
             ccPairs={ccPairs}
             teamspaces={teamspaces}
             onClose={() => {
-              refreshDocumentSets(teamspaceId);
+              refreshDocumentSets();
               router.push(`/t/${teamspaceId}/admin/documents/sets`);
             }}
+            teamspaceId={teamspaceId}
           />
         </CardContent>
       </Card>

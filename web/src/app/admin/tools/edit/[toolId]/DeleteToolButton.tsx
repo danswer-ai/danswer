@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export function DeleteToolButton({ toolId }: { toolId: number }) {
+export function DeleteToolButton({
+  toolId,
+  teamspaceId,
+}: {
+  toolId: number;
+  teamspaceId?: string | string[];
+}) {
   const router = useRouter();
   const { toast } = useToast();
 
@@ -15,7 +21,11 @@ export function DeleteToolButton({ toolId }: { toolId: number }) {
       onClick={async () => {
         const response = await deleteCustomTool(toolId);
         if (response.data) {
-          router.push(`/admin/tools?u=${Date.now()}`);
+          router.push(
+            teamspaceId
+              ? `/t/${teamspaceId}/admin/tools?u=${Date.now()}`
+              : `/admin/tools?u=${Date.now()}`
+          );
           toast({
             title: "Tool deleted",
             description: "The tool has been successfully deleted.",

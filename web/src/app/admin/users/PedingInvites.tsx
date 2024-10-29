@@ -48,7 +48,13 @@ const RemoveUserButton = ({
   );
 };
 
-export const PendingInvites = ({ q }: { q: string }) => {
+export const PendingInvites = ({
+  q,
+  teamspaceId,
+}: {
+  q: string;
+  teamspaceId?: string | string[];
+}) => {
   const { toast } = useToast();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [invitedPage, setInvitedPage] = useState(1);
@@ -56,9 +62,13 @@ export const PendingInvites = ({ q }: { q: string }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCancelModalVisible, setIsCancelModalVisible] = useState(false);
   const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
-    `/api/manage/users?q=${encodeURI(q)}&accepted_page=${
-      acceptedPage - 1
-    }&invited_page=${invitedPage - 1}`,
+    teamspaceId
+      ? `/api/manage/users?q=${encodeURI(q)}&accepted_page=${
+          acceptedPage - 1
+        }&invited_page=${invitedPage - 1}&teamspace_id=${teamspaceId}`
+      : `/api/manage/users?q=${encodeURI(q)}&accepted_page=${
+          acceptedPage - 1
+        }&invited_page=${invitedPage - 1}`,
     errorHandlingFetcher
   );
   const {

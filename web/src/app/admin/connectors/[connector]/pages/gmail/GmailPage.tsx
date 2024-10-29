@@ -15,8 +15,10 @@ import { Title } from "@tremor/react";
 import { GmailConfig } from "@/lib/connectors/connectors";
 import { useUser } from "@/components/user/UserProvider";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
+import { useParams } from "next/navigation";
 
 export const GmailMain = () => {
+  const { teamspaceId } = useParams();
   const { isLoadingUser, isAdmin } = useUser();
 
   const {
@@ -39,7 +41,7 @@ export const GmailMain = () => {
     data: connectorIndexingStatuses,
     isLoading: isConnectorIndexingStatusesLoading,
     error: connectorIndexingStatusesError,
-  } = useConnectorCredentialIndexingStatus();
+  } = useConnectorCredentialIndexingStatus(undefined, false, teamspaceId);
 
   const {
     data: credentialsData,

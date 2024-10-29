@@ -150,7 +150,7 @@ export const processCookies = (cookies: ReadonlyRequestCookies): string => {
 };
 
 export const getCurrentTeamspaceUserSS = async (
-  teamspaceId: string
+  teamspaceId: string | string[]
 ): Promise<User | null> => {
   try {
     const response = await fetch(buildUrl(`/me?teamspace_id=${teamspaceId}`), {

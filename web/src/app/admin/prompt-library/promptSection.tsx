@@ -106,6 +106,7 @@ export const PromptSection = ({
 
   const handleEdit = (promptId: number) => {
     setNewPromptId(promptId);
+    console.log(promptId)
   };
 
   return (
