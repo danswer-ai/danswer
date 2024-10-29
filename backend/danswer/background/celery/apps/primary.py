@@ -166,19 +166,6 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
             r.delete(key)
 
 
-# @worker_process_init.connect
-# def on_worker_process_init(sender: Any, **kwargs: Any) -> None:
-#     """This only runs inside child processes when the worker is in pool=prefork mode.
-#     This may be technically unnecessary since we're finding prefork pools to be
-#     unstable and currently aren't planning on using them."""
-#     logger.info("worker_process_init signal received.")
-#     SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_INDEXING_CHILD_APP_NAME)
-#     SqlEngine.init_engine(pool_size=5, max_overflow=0)
-
-#     # https://stackoverflow.com/questions/43944787/sqlalchemy-celery-with-scoped-session-error
-#     SqlEngine.get_engine().dispose(close=False)
-
-
 @worker_ready.connect
 def on_worker_ready(sender: Any, **kwargs: Any) -> None:
     app_base.on_worker_ready(sender, **kwargs)
