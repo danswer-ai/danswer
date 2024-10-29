@@ -189,6 +189,7 @@
     /* gray-50 */
     --dark-tremor-content-inverted: #000000;
     /* black */
+    --radius: 0.5rem;
   }
 }
 
