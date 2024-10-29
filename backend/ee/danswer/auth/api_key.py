@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from danswer.auth.schemas import UserRole
 from ee.danswer.configs.app_configs import API_KEY_HASH_ROUNDS
 
-
+_DANSWER_API_KEY_HEADER_NAME = "Danswer-Authorization"
 _API_KEY_HEADER_NAME = "Authorization"
 _BEARER_PREFIX = "Bearer "
 _API_KEY_PREFIX = "dn_"
@@ -43,7 +43,10 @@ def build_displayable_api_key(api_key: str) -> str:
 
 
 def get_hashed_api_key_from_request(request: Request) -> str | None:
-    raw_api_key_header = request.headers.get(_API_KEY_HEADER_NAME)
+    # Try both Authorization and Danswer-Authorization headers
+    raw_api_key_header = request.headers.get(
+        _API_KEY_HEADER_NAME
+    ) or request.headers.get(_DANSWER_API_KEY_HEADER_NAME)
     if raw_api_key_header is None:
         return None
 
