@@ -165,10 +165,10 @@ def try_creating_prune_generator_task(
         return None
 
     try:
-        if redis_connector.prune.signaled:  # skip pruning if already pruning
+        if redis_connector.prune.fenced:  # skip pruning if already pruning
             return None
 
-        if redis_connector.is_deleting():  # skip pruning if the cc_pair is deleting
+        if redis_connector.delete.fenced:  # skip pruning if the cc_pair is deleting
             return None
 
         db_session.refresh(cc_pair)
@@ -179,7 +179,7 @@ def try_creating_prune_generator_task(
         redis_connector.prune.generator_clear()
         redis_connector.prune.taskset_clear()
 
-        custom_task_id = f"{redis_connector.PRUNING_GENERATORTASK}_{uuid4()}"
+        custom_task_id = f"{redis_connector.prune.generator_task_key}_{uuid4()}"
 
         celery_app.send_task(
             "connector_pruning_generator_task",
@@ -195,7 +195,7 @@ def try_creating_prune_generator_task(
         )
 
         # set this only after all tasks have been added
-        redis_connector.prune.signaled = True
+        redis_connector.prune.set_fence(True)
     except Exception:
         task_logger.exception(f"Unexpected exception: cc_pair={cc_pair.id}")
         return None
@@ -308,7 +308,7 @@ def connector_pruning_generator_task(
                 f"cc_pair={cc_pair_id} tasks_generated={tasks_generated}"
             )
 
-            redis_connector.prune.generator_finished = tasks_generated
+            redis_connector.prune.generator_complete = tasks_generated
     except Exception as e:
         task_logger.exception(
             f"Failed to run pruning: cc_pair={cc_pair_id} connector={connector_id}"
@@ -316,7 +316,7 @@ def connector_pruning_generator_task(
 
         redis_connector.prune.generator_clear()
         redis_connector.prune.taskset_clear()
-        redis_connector.prune.signaled = False
+        redis_connector.prune.set_fence(False)
         raise e
     finally:
         if lock.owned():

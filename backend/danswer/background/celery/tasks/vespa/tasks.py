@@ -412,13 +412,18 @@ def monitor_connector_deletion_taskset(
 
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
 
-    fence_data = redis_connector.deletion_fence_read()
+    fence_data = redis_connector.delete.payload
+    if not fence_data:
+        task_logger.warning(
+            f"Connector deletion - fence payload invalid: cc_pair={cc_pair_id}"
+        )
+        return
 
     if fence_data.num_tasks is None:
         # the fence is setting up but isn't ready yet
         return
 
-    remaining = redis_connector.deletion_get_remaining()
+    remaining = redis_connector.delete.get_remaining()
     task_logger.info(
         f"Connector deletion progress: cc_pair={cc_pair_id} remaining={remaining} initial={fence_data.num_tasks}"
     )
@@ -506,8 +511,8 @@ def monitor_connector_deletion_taskset(
         f"docs_deleted={fence_data.num_tasks}"
     )
 
-    redis_connector.deletion_taskset_clear()
-    redis_connector.deletion_fence_clear()
+    redis_connector.delete.taskset_clear()
+    redis_connector.delete.set_fence(None)
 
 
 def monitor_ccpair_pruning_taskset(
@@ -524,7 +529,7 @@ def monitor_ccpair_pruning_taskset(
     cc_pair_id = int(cc_pair_id_str)
 
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
-    if not redis_connector.prune.signaled:
+    if not redis_connector.prune.fenced:
         return
 
     initial = redis_connector.prune.generator_complete
@@ -545,7 +550,7 @@ def monitor_ccpair_pruning_taskset(
 
     redis_connector.prune.taskset_clear()
     redis_connector.prune.generator_clear()
-    redis_connector.prune.signaled = False
+    redis_connector.prune.set_fence(False)
 
 
 def monitor_ccpair_indexing_taskset(
@@ -736,7 +741,9 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
             monitor_connector_taskset(r)
 
         lock_beat.reacquire()
-        for key_bytes in r.scan_iter(RedisConnector.DELETION_FENCE + "*"):
+        for key_bytes in r.scan_iter(
+            RedisConnector.RedisConnectorDelete.FENCE_PREFIX + "*"
+        ):
             lock_beat.reacquire()
             monitor_connector_deletion_taskset(tenant_id, key_bytes, r)
 
@@ -758,7 +765,9 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                 monitor_usergroup_taskset(key_bytes, r, db_session)
 
         lock_beat.reacquire()
-        for key_bytes in r.scan_iter(RedisConnector.PRUNING_FENCE + "*"):
+        for key_bytes in r.scan_iter(
+            RedisConnector.RedisConnectorPrune.FENCE_PREFIX + "*"
+        ):
             lock_beat.reacquire()
             with get_session_with_tenant(tenant_id) as db_session:
                 monitor_ccpair_pruning_taskset(tenant_id, key_bytes, r, db_session)

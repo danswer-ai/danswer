@@ -69,10 +69,10 @@ def check_for_connector_deletion_task(self: Task, *, tenant_id: str | None) -> N
                     # this means we wanted to start deleting but dependent tasks were running
                     # Leave a stop signal to clear indexing and pruning tasks more quickly
                     task_logger.info(str(e))
-                    redis_connector.stop.signaled = True
+                    redis_connector.stop.set_fence(True)
                 else:
                     # clear the stop signal if it exists ... no longer needed
-                    redis_connector.stop.signaled = False
+                    redis_connector.stop.set_fence(False)
 
     except SoftTimeLimitExceeded:
         task_logger.info(
@@ -107,7 +107,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
 
     # don't generate sync tasks if tasks are still pending
-    if redis_connector.is_deleting():
+    if redis_connector.delete.fenced:
         return None
 
     # we need to load the state of the object inside the fence
@@ -121,12 +121,12 @@ def try_generate_document_cc_pair_cleanup_tasks(
         return None
 
     # set a basic fence to start
-    fence_value = RedisConnectorDeletionFenceData(
+    fence_payload = RedisConnectorDeletionFenceData(
         num_tasks=None,
         submitted=datetime.now(timezone.utc),
     )
 
-    redis_connector.deletion_fence_set(fence_value.model_dump_json())
+    redis_connector.delete.set_fence(fence_payload)
 
     try:
         # do not proceed if connector indexing or connector pruning are running
@@ -140,30 +140,30 @@ def try_generate_document_cc_pair_cleanup_tasks(
                     f"search_settings={search_settings.id}"
                 )
 
-        if redis_connector.prune.signaled:
+        if redis_connector.prune.fenced:
             raise TaskDependencyError(
                 f"Connector deletion - Delayed (pruning in progress): "
                 f"cc_pair={cc_pair_id}"
             )
 
         # add tasks to celery and build up the task set to monitor in redis
-        redis_connector.deletion_taskset_clear()
+        redis_connector.delete.taskset_clear()
 
         # Add all documents that need to be updated into the queue
         task_logger.info(
             f"RedisConnectorDeletion.generate_tasks starting. cc_pair={cc_pair_id}"
         )
-        tasks_generated = redis_connector.deletion_generate_tasks(
-            app, db_session, lock_beat, tenant_id
+        tasks_generated = redis_connector.delete.generate_tasks(
+            app, db_session, lock_beat
         )
         if tasks_generated is None:
             raise ValueError("RedisConnectorDeletion.generate_tasks returned None")
     except TaskDependencyError:
-        redis_connector.deletion_fence_clear()
+        redis_connector.delete.set_fence(None)
         raise
     except Exception:
         task_logger.exception("Unexpected exception")
-        redis_connector.deletion_fence_clear()
+        redis_connector.delete.set_fence(None)
         return None
     else:
         # Currently we are allowing the sync to proceed with 0 tasks.
@@ -178,7 +178,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
         )
 
         # set this only after all tasks have been added
-        fence_value.num_tasks = tasks_generated
-        redis_connector.deletion_fence_set(fence_value.model_dump_json())
+        fence_payload.num_tasks = tasks_generated
+        redis_connector.delete.set_fence(fence_payload)
 
     return tasks_generated

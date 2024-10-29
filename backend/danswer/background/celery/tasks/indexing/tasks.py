@@ -312,7 +312,7 @@ def try_creating_indexing_task(
             return None
 
         # skip indexing if the cc_pair is deleting
-        if redis_connector.is_deleting():
+        if redis_connector.delete.fenced:
             return None
 
         db_session.refresh(cc_pair)
@@ -455,14 +455,14 @@ def connector_indexing_task(
 
     r = get_redis_client(tenant_id=tenant_id)
 
-    if redis_connector.is_deleting():
+    if redis_connector.delete.fenced:
         raise RuntimeError(
             f"Indexing will not start because connector deletion is in progress: "
             f"cc_pair={cc_pair_id} "
-            f"fence={redis_connector.get_deletion_fence_key()}"
+            f"fence={redis_connector.delete.fence_key}"
         )
 
-    if redis_connector.stop.signaled:
+    if redis_connector.stop.fenced:
         raise RuntimeError(
             f"Indexing will not start because a connector stop signal was detected: "
             f"cc_pair={cc_pair_id} "

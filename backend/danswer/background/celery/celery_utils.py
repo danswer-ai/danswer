@@ -41,12 +41,12 @@ def _get_deletion_status(
         return None
 
     redis_connector = RedisConnector(tenant_id, cc_pair.id)
-    if not redis_connector.is_deleting():
+    if not redis_connector.delete.fenced:
         return None
 
     return TaskQueueState(
         task_id="",
-        task_name=redis_connector.get_deletion_fence_key(),
+        task_name=redis_connector.delete.fence_key,
         status=TaskStatus.STARTED,
     )
 

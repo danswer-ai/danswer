@@ -118,13 +118,15 @@ def on_task_postrun(
             r.srem(rug.taskset_key, task_id)
         return
 
-    if task_id.startswith(RedisConnector.DELETION):
+    if task_id.startswith(RedisConnector.RedisConnectorDelete.PREFIX):
         cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
-            RedisConnector.deletion_taskset_remove(int(cc_pair_id), task_id, r)
+            RedisConnector.RedisConnectorDelete.remove_from_taskset(
+                int(cc_pair_id), task_id, r
+            )
         return
 
-    if task_id.startswith(RedisConnector.PRUNING_SUBTASK):
+    if task_id.startswith(RedisConnector.RedisConnectorPrune.SUBTASK_PREFIX):
         cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
             RedisConnector.RedisConnectorPrune.remove_from_taskset(
