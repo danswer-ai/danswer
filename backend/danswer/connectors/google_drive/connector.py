@@ -224,8 +224,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         self._TRAVERSED_PARENT_IDS: set[str] = set()
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
-        self.primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
-        self.google_domain = self.primary_admin_email.split("@")[1]
+        primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
+        self.google_domain = primary_admin_email.split("@")[1]
+        self.primary_admin_email = primary_admin_email
 
         self.creds, new_creds_dict = get_google_drive_creds(credentials)
         return new_creds_dict

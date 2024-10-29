@@ -44,6 +44,7 @@ from danswer.connectors.google_drive.connector_auth import (
     get_google_drive_creds_for_authorized_user,
 )
 from danswer.connectors.google_drive.connector_auth import get_service_account_key
+from danswer.connectors.google_drive.connector_auth import GOOGLE_DRIVE_SCOPES
 from danswer.connectors.google_drive.connector_auth import (
     update_credential_access_tokens,
 )
@@ -348,7 +349,8 @@ def check_drive_tokens(
         return AuthStatus(authenticated=False)
     token_json_str = str(db_credentials.credential_json[DB_CREDENTIALS_DICT_TOKEN_KEY])
     google_drive_creds = get_google_drive_creds_for_authorized_user(
-        token_json_str=token_json_str
+        token_json_str=token_json_str,
+        scopes=GOOGLE_DRIVE_SCOPES,
     )
     if google_drive_creds is None:
         return AuthStatus(authenticated=False)

@@ -22,7 +22,7 @@ _PERMISSION_ID_PERMISSION_MAP: dict[str, dict[str, Any]] = {}
 def _get_slim_docs(
     cc_pair: ConnectorCredentialPair,
     google_drive_connector: GoogleDriveConnector,
-) -> tuple[list[SlimDocument], GoogleDriveConnector]:
+) -> list[SlimDocument]:
     current_time = datetime.now(timezone.utc)
     start_time = (
         cc_pair.last_time_perm_sync.replace(tzinfo=timezone.utc).timestamp()
@@ -135,9 +135,6 @@ def gdrive_doc_sync(
         **cc_pair.connector.connector_specific_config
     )
     google_drive_connector.load_credentials(cc_pair.credential.credential_json)
-
-    if google_drive_connector.service_account_creds is None:
-        raise ValueError("Service account credentials not found")
 
     slim_docs = _get_slim_docs(cc_pair, google_drive_connector)
     admin_service = google_drive_connector.get_google_resource()

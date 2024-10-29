@@ -20,9 +20,6 @@ def gdrive_group_sync(
     )
     google_drive_connector.load_credentials(cc_pair.credential.credential_json)
 
-    if google_drive_connector.service_account_creds is None:
-        raise ValueError("Service account credentials not found")
-
     admin_service = google_drive_connector.get_google_resource("admin", "directory_v1")
 
     danswer_groups: list[ExternalUserGroup] = []
