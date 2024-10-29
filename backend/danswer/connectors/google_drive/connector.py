@@ -36,6 +36,7 @@ from danswer.file_processing.extract_file_text import read_pdf_file
 from danswer.file_processing.unstructured import get_unstructured_api_key
 from danswer.file_processing.unstructured import unstructured_to_text
 from danswer.utils.logger import setup_logger
+from danswer.utils.retry_wrapper import retry_builder
 
 logger = setup_logger()
 

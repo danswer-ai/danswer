@@ -58,6 +58,10 @@ export function _WelcomeModal({ user }: { user: User | null }) {
       {popup}
 
       <Modal
+        onOutsideClick={() => {
+          setWelcomeFlowComplete();
+          router.refresh();
+        }}
         title={"Welcome to Danswer!"}
         width="w-full max-h-[900px] overflow-y-scroll max-w-3xl"
       >

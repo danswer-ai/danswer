@@ -1,7 +1,6 @@
 from danswer.background.celery.apps.primary import celery_app
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.configs.app_configs import JOB_TIMEOUT
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.db.chat import delete_chat_sessions_older_than
 from danswer.db.engine import get_session_with_tenant
 from danswer.server.settings.store import load_settings
@@ -30,6 +29,7 @@ from ee.danswer.external_permissions.permission_sync import (
 )
 from ee.danswer.server.reporting.usage_export_generation import create_new_usage_report
 from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
 

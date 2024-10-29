@@ -195,6 +195,8 @@ def index_doc_batch_prepare(
     db_session: Session,
     ignore_time_skip: bool = False,
 ) -> DocumentBatchPrepareContext | None:
+    """This sets up the documents in the relational DB (source of truth) for permissions, metadata, etc.
+    This preceeds indexing it into the actual document index."""
     documents = []
     for document in document_batch:
         empty_contents = not any(section.text.strip() for section in document.sections)

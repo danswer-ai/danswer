@@ -45,12 +45,7 @@ import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
-import {
-  buildFinalPrompt,
-  createPersona,
-  providersContainImageGeneratingSupport,
-  updatePersona,
-} from "./lib";
+import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
 import { Popover } from "@/components/popover/Popover";
 import {
   CameraIcon,
@@ -61,6 +56,7 @@ import {
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { buildImgUrl } from "@/app/chat/files/images/utils";
 import { LlmList } from "@/components/llm/LLMList";
+import { useAssistants } from "@/components/context/AssistantsContext";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -105,6 +101,7 @@ export function AssistantEditor({
   shouldAddAssistantToUserPreferences?: boolean;
   admin?: boolean;
 }) {
+  const { refreshAssistants, isImageGenerationAvailable } = useAssistants();
   const router = useRouter();
 
   const { popup, setPopup } = usePopup();
@@ -136,42 +133,13 @@ export function AssistantEditor({
 
   const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
 
-  const [finalPrompt, setFinalPrompt] = useState<string | null>("");
-  const [finalPromptError, setFinalPromptError] = useState<string>("");
   const [removePersonaImage, setRemovePersonaImage] = useState(false);
-
-  const triggerFinalPromptUpdate = async (
-    systemPrompt: string,
-    taskPrompt: string,
-    retrievalDisabled: boolean
-  ) => {
-    const response = await buildFinalPrompt(
-      systemPrompt,
-      taskPrompt,
-      retrievalDisabled
-    );
-    if (response.ok) {
-      setFinalPrompt((await response.json()).final_prompt_template);
-    }
-  };
 
   const isUpdate = existingPersona !== undefined && existingPersona !== null;
   const existingPrompt = existingPersona?.prompts[0] ?? null;
-
-  useEffect(() => {
-    if (isUpdate && existingPrompt) {
-      triggerFinalPromptUpdate(
-        existingPrompt.system_prompt,
-        existingPrompt.task_prompt,
-        existingPersona.num_chunks === 0
-      );
-    }
-  }, [isUpdate, existingPrompt, existingPersona?.num_chunks]);
-
   const defaultProvider = llmProviders.find(
     (llmProvider) => llmProvider.is_default_provider
   );
-  const defaultProviderName = defaultProvider?.provider;
   const defaultModelName = defaultProvider?.default_model_name;
   const providerDisplayNameToProviderName = new Map<string, string>();
   llmProviders.forEach((llmProvider) => {
@@ -312,14 +280,6 @@ export function AssistantEditor({
             }
           )}
         onSubmit={async (values, formikHelpers) => {
-          if (finalPromptError) {
-            setPopup({
-              type: "error",
-              message: "Cannot submit while there are errors in the form",
-            });
-            return;
-          }
-
           if (
             values.llm_model_provider_override &&
             !values.llm_model_version_override
@@ -433,6 +393,7 @@ export function AssistantEditor({
                 });
               }
             }
+            await refreshAssistants();
             router.push(
               redirectType === SuccessfulPersonaUpdateRedirectType.ADMIN
                 ? `/admin/assistants?u=${Date.now()}`
@@ -639,13 +600,7 @@ export function AssistantEditor({
                 placeholder="e.g. 'You are a professional email writing assistant that always uses a polite enthusiastic tone, emphasizes action items, and leaves blanks for the human to fill in when you have unknowns'"
                 onChange={(e) => {
                   setFieldValue("system_prompt", e.target.value);
-                  triggerFinalPromptUpdate(
-                    e.target.value,
-                    values.task_prompt,
-                    searchToolEnabled()
-                  );
                 }}
-                error={finalPromptError}
               />
 
               <div>
@@ -772,7 +727,8 @@ export function AssistantEditor({
                         <TooltipTrigger asChild>
                           <div
                             className={`w-fit ${
-                              !currentLLMSupportsImageOutput
+                              !currentLLMSupportsImageOutput ||
+                              !isImageGenerationAvailable
                                 ? "opacity-70 cursor-not-allowed"
                                 : ""
                             }`}
@@ -784,11 +740,14 @@ export function AssistantEditor({
                               onChange={() => {
                                 toggleToolInValues(imageGenerationTool.id);
                               }}
-                              disabled={!currentLLMSupportsImageOutput}
+                              disabled={
+                                !currentLLMSupportsImageOutput ||
+                                !isImageGenerationAvailable
+                              }
                             />
                           </div>
                         </TooltipTrigger>
-                        {!currentLLMSupportsImageOutput && (
+                        {!currentLLMSupportsImageOutput ? (
                           <TooltipContent side="top" align="center">
                             <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                               To use Image Generation, select GPT-4o or another
@@ -796,6 +755,15 @@ export function AssistantEditor({
                               this Assistant.
                             </p>
                           </TooltipContent>
+                        ) : (
+                          !isImageGenerationAvailable && (
+                            <TooltipContent side="top" align="center">
+                              <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
+                                Image Generation requires an OpenAI or Azure
+                                Dalle configuration.
+                              </p>
+                            </TooltipContent>
+                          )
                         )}
                       </Tooltip>
                     </TooltipProvider>
@@ -1021,11 +989,6 @@ export function AssistantEditor({
                         placeholder="e.g. 'Remember to reference all of the points mentioned in my message to you and focus on identifying action items that can move things forward'"
                         onChange={(e) => {
                           setFieldValue("task_prompt", e.target.value);
-                          triggerFinalPromptUpdate(
-                            values.system_prompt,
-                            e.target.value,
-                            searchToolEnabled()
-                          );
                         }}
                         explanationText="Learn about prompting in our docs!"
                         explanationLink="https://docs.danswer.dev/guides/assistants"
@@ -1039,6 +1002,10 @@ export function AssistantEditor({
                         Starter Messages (Optional){" "}
                       </div>
                     </div>
+                    <SubLabel>
+                      Add pre-defined messages to help users get started. Only
+                      the first 4 will be displayed.
+                    </SubLabel>
                     <FieldArray
                       name="starter_messages"
                       render={(

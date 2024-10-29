@@ -81,12 +81,14 @@ export function BasicSelectable({
   children,
   selected,
   hasBorder,
+  chat,
   fullWidth = false,
   padding = "normal",
 }: {
   children: string | JSX.Element;
   selected: boolean;
   hasBorder?: boolean;
+  chat?: boolean;
   fullWidth?: boolean;
   padding?: "none" | "normal" | "extra";
 }) {
@@ -100,7 +102,15 @@ export function BasicSelectable({
         ${padding == "extra" && "p-1.5"}
         select-none
         ${hasBorder ? "border border-border" : ""}
-        ${selected ? "bg-hover" : "hover:bg-hover"}
+        ${
+          selected
+            ? chat
+              ? "bg-background-chat-selected"
+              : "bg-hover"
+            : chat
+              ? "bg-background-chat-hover"
+              : "hover:bg-hover"
+        }
         ${fullWidth ? "w-full" : ""}`}
     >
       {children}

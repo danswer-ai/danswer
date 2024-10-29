@@ -12,6 +12,7 @@ from danswer.connectors.models import SlimDocument
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
+from danswer.utils.retry_wrapper import retry_builder
 from ee.danswer.db.document import upsert_document_external_perms__no_commit
 
 logger = setup_logger()

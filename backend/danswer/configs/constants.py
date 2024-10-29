@@ -31,9 +31,6 @@ DISABLED_GEN_AI_MSG = (
     "You can still use Danswer as a search engine."
 )
 
-# Prefix used for all tenant ids
-TENANT_ID_PREFIX = "tenant_"
-
 # Postgres connection constants for application_name
 POSTGRES_WEB_APP_NAME = "web"
 POSTGRES_INDEXER_APP_NAME = "indexer"
@@ -70,6 +67,7 @@ KV_CUSTOMER_UUID_KEY = "customer_uuid"
 KV_INSTANCE_DOMAIN_KEY = "instance_domain"
 KV_ENTERPRISE_SETTINGS_KEY = "danswer_enterprise_settings"
 KV_CUSTOM_ANALYTICS_SCRIPT_KEY = "__custom_analytics_script__"
+KV_DOCUMENTS_SEEDED_KEY = "documents_seeded"
 
 CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT = 60
 CELERY_PRIMARY_WORKER_LOCK_TIMEOUT = 120

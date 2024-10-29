@@ -103,6 +103,9 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
         self,
         chunks: list[DocAwareChunk],
     ) -> list[IndexChunk]:
+        """Adds embeddings to the chunks, the title and metadata suffixes are added to the chunk as well
+        if they exist. If there is no space for it, it would have been thrown out at the chunking step.
+        """
         # All chunks at this point must have some non-empty content
         flat_chunk_texts: list[str] = []
         large_chunks_present = False
@@ -121,6 +124,11 @@ class DefaultIndexingEmbedder(IndexingEmbedder):
             flat_chunk_texts.append(chunk_text)
 
             if chunk.mini_chunk_texts:
+                if chunk.large_chunk_reference_ids:
+                    # A large chunk does not contain mini chunks, if it matches the large chunk
+                    # with a high score, then mini chunks would not be used anyway
+                    # otherwise it should match the normal chunk
+                    raise RuntimeError("Large chunk contains mini chunks")
                 flat_chunk_texts.extend(chunk.mini_chunk_texts)
 
         embeddings = self.embedding_model.encode(

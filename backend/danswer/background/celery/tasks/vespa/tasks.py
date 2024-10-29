@@ -4,6 +4,7 @@ from datetime import timezone
 from http import HTTPStatus
 from typing import cast
 
+import httpx
 import redis
 from celery import Celery
 from celery import shared_task
@@ -13,6 +14,7 @@ from celery.result import AsyncResult
 from celery.states import READY_STATES
 from redis import Redis
 from sqlalchemy.orm import Session
+from tenacity import RetryError
 
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.apps.app_base import task_logger
@@ -23,9 +25,15 @@ from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
+from danswer.background.celery.tasks.shared.RedisConnectorDeletionFenceData import (
+    RedisConnectorDeletionFenceData,
+)
 from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
     RedisConnectorIndexingFenceData,
 )
+from danswer.background.celery.tasks.shared.RetryDocumentIndex import RetryDocumentIndex
+from danswer.background.celery.tasks.shared.tasks import LIGHT_SOFT_TIME_LIMIT
+from danswer.background.celery.tasks.shared.tasks import LIGHT_TIME_LIMIT
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
@@ -149,7 +157,7 @@ def check_for_vespa_sync_task(self: Task, *, tenant_id: str | None) -> None:
             "Soft time limit exceeded, task is being terminated gracefully."
         )
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
         if lock_beat.owned():
             lock_beat.release()
@@ -368,7 +376,7 @@ def monitor_document_set_taskset(
 
     count = cast(int, r.scard(rds.taskset_key))
     task_logger.info(
-        f"Document set sync progress: document_set_id={document_set_id} "
+        f"Document set sync progress: document_set={document_set_id} "
         f"remaining={count} initial={initial_count}"
     )
     if count > 0:
@@ -383,12 +391,12 @@ def monitor_document_set_taskset(
             # if there are no connectors, then delete the document set.
             delete_document_set(document_set_row=document_set, db_session=db_session)
             task_logger.info(
-                f"Successfully deleted document set with ID: '{document_set_id}'!"
+                f"Successfully deleted document set: document_set={document_set_id}"
             )
         else:
             mark_document_set_as_synced(document_set_id, db_session)
             task_logger.info(
-                f"Successfully synced document set with ID: '{document_set_id}'!"
+                f"Successfully synced document set: document_set={document_set_id}"
             )
 
     r.delete(rds.taskset_key)
@@ -408,19 +416,29 @@ def monitor_connector_deletion_taskset(
 
     rcd = RedisConnectorDeletion(cc_pair_id)
 
-    fence_value = r.get(rcd.fence_key)
+    # read related data and evaluate/print task progress
+    fence_value = cast(bytes, r.get(rcd.fence_key))
     if fence_value is None:
         return
 
     try:
-        initial_count = int(cast(int, fence_value))
+        fence_json = fence_value.decode("utf-8")
+        fence_data = RedisConnectorDeletionFenceData.model_validate_json(
+            cast(str, fence_json)
+        )
     except ValueError:
-        task_logger.error("The value is not an integer.")
+        task_logger.exception(
+            "monitor_ccpair_indexing_taskset: fence_data not decodeable."
+        )
+        raise
+
+    # the fence is setting up but isn't ready yet
+    if fence_data.num_tasks is None:
         return
 
     count = cast(int, r.scard(rcd.taskset_key))
     task_logger.info(
-        f"Connector deletion progress: cc_pair={cc_pair_id} remaining={count} initial={initial_count}"
+        f"Connector deletion progress: cc_pair={cc_pair_id} remaining={count} initial={fence_data.num_tasks}"
     )
     if count > 0:
         return
@@ -483,7 +501,7 @@ def monitor_connector_deletion_taskset(
             )
             if not connector or not len(connector.credentials):
                 task_logger.info(
-                    "Found no credentials left for connector, deleting connector"
+                    "Connector deletion - Found no credentials left for connector, deleting connector"
                 )
                 db_session.delete(connector)
             db_session.commit()
@@ -493,17 +511,17 @@ def monitor_connector_deletion_taskset(
             error_message = f"Error: {str(e)}\n\nStack Trace:\n{stack_trace}"
             add_deletion_failure_message(db_session, cc_pair_id, error_message)
             task_logger.exception(
-                f"Failed to run connector_deletion. "
+                f"Connector deletion exceptioned: "
                 f"cc_pair={cc_pair_id} connector={cc_pair.connector_id} credential={cc_pair.credential_id}"
             )
             raise e
 
     task_logger.info(
-        f"Successfully deleted cc_pair: "
+        f"Connector deletion succeeded: "
         f"cc_pair={cc_pair_id} "
         f"connector={cc_pair.connector_id} "
         f"credential={cc_pair.credential_id} "
-        f"docs_deleted={initial_count}"
+        f"docs_deleted={fence_data.num_tasks}"
     )
 
     r.delete(rcd.taskset_key)
@@ -618,6 +636,7 @@ def monitor_ccpair_indexing_taskset(
         return
 
     # Read result state BEFORE generator_complete_key to avoid a race condition
+    # never use any blocking methods on the result from inside a task!
     result: AsyncResult = AsyncResult(fence_data.celery_task_id)
     result_state = result.state
 
@@ -795,21 +814,21 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 @shared_task(
     name="vespa_metadata_sync_task",
     bind=True,
-    soft_time_limit=45,
-    time_limit=60,
+    soft_time_limit=LIGHT_SOFT_TIME_LIMIT,
+    time_limit=LIGHT_TIME_LIMIT,
     max_retries=3,
 )
 def vespa_metadata_sync_task(
     self: Task, document_id: str, tenant_id: str | None
 ) -> bool:
-    task_logger.info(f"document_id={document_id}")
-
     try:
         with get_session_with_tenant(tenant_id) as db_session:
             curr_ind_name, sec_ind_name = get_both_index_names(db_session)
-            document_index = get_default_document_index(
+            doc_index = get_default_document_index(
                 primary_index_name=curr_ind_name, secondary_index_name=sec_ind_name
             )
+
+            retry_index = RetryDocumentIndex(doc_index)
 
             doc = get_document(document_id, db_session)
             if not doc:
@@ -832,19 +851,43 @@ def vespa_metadata_sync_task(
             )
 
             # update Vespa. OK if doc doesn't exist. Raises exception otherwise.
-            chunks_affected = document_index.update_single(document_id, fields=fields)
+            chunks_affected = retry_index.update_single(document_id, fields)
 
             # update db last. Worst case = we crash right before this and
             # the sync might repeat again later
             mark_document_as_synced(document_id, db_session)
 
             task_logger.info(
-                f"document_id={document_id} action=sync chunks={chunks_affected}"
+                f"tenant={tenant_id} doc={document_id} action=sync chunks={chunks_affected}"
             )
     except SoftTimeLimitExceeded:
-        task_logger.info(f"SoftTimeLimitExceeded exception. doc_id={document_id}")
-    except Exception as e:
-        task_logger.exception("Unexpected exception")
+        task_logger.info(
+            f"SoftTimeLimitExceeded exception. tenant={tenant_id} doc={document_id}"
+        )
+    except Exception as ex:
+        if isinstance(ex, RetryError):
+            task_logger.warning(f"Retry failed: {ex.last_attempt.attempt_number}")
+
+            # only set the inner exception if it is of type Exception
+            e_temp = ex.last_attempt.exception()
+            if isinstance(e_temp, Exception):
+                e = e_temp
+        else:
+            e = ex
+
+        if isinstance(e, httpx.HTTPStatusError):
+            if e.response.status_code == HTTPStatus.BAD_REQUEST:
+                task_logger.exception(
+                    f"Non-retryable HTTPStatusError: "
+                    f"tenant={tenant_id} "
+                    f"doc={document_id} "
+                    f"status={e.response.status_code}"
+                )
+            return False
+
+        task_logger.exception(
+            f"Unexpected exception: tenant={tenant_id} doc={document_id}"
+        )
 
         # Exponential backoff from 2^4 to 2^6 ... i.e. 16, 32, 64
         countdown = 2 ** (self.request.retries + 4)

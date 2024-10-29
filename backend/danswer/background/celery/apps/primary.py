@@ -17,6 +17,7 @@ from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
 from danswer.background.celery.celery_redis import RedisConnectorDeletion
 from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisConnectorPruning
+from danswer.background.celery.celery_redis import RedisConnectorStop
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
@@ -78,6 +79,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     logger.info("Running as the primary celery worker.")
 
+    sender.primary_worker_locks = {}
+
     # This is singleton work that should be done on startup exactly once
     # by the primary worker
     tenant_ids = get_all_tenant_ids()
@@ -106,6 +109,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
             logger.error("Primary worker lock: Acquire failed!")
             raise WorkerShutdown("Primary worker lock could not be acquired!")
 
+        # tacking on our own user data to the sender
         sender.primary_worker_locks[tenant_id] = lock
 
         # As currently designed, when this worker starts as "primary", we reinitialize redis
@@ -158,18 +162,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         for key in r.scan_iter(RedisConnectorIndexing.FENCE_PREFIX + "*"):
             r.delete(key)
 
-
-# @worker_process_init.connect
-# def on_worker_process_init(sender: Any, **kwargs: Any) -> None:
-#     """This only runs inside child processes when the worker is in pool=prefork mode.
-#     This may be technically unnecessary since we're finding prefork pools to be
-#     unstable and currently aren't planning on using them."""
-#     logger.info("worker_process_init signal received.")
-#     SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_INDEXING_CHILD_APP_NAME)
-#     SqlEngine.init_engine(pool_size=5, max_overflow=0)
-
-#     # https://stackoverflow.com/questions/43944787/sqlalchemy-celery-with-scoped-session-error
-#     SqlEngine.get_engine().dispose(close=False)
+        for key in r.scan_iter(RedisConnectorStop.FENCE_PREFIX + "*"):
+            r.delete(key)
 
 
 @worker_ready.connect
