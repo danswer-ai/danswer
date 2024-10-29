@@ -10,7 +10,7 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { BookmarkIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
-import { Card } from "@tremor/react";
+import CardSection from "@/components/admin/CardSection";
 import { DocumentSetCreationForm } from "../DocumentSetCreationForm";
 import { useRouter } from "next/navigation";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -77,7 +77,7 @@ function Main({ documentSetId }: { documentSetId: number }) {
         title={documentSet.name}
       />
 
-      <Card>
+      <CardSection>
         <DocumentSetCreationForm
           ccPairs={ccPairs}
           userGroups={userGroups}
@@ -88,7 +88,7 @@ function Main({ documentSetId }: { documentSetId: number }) {
           setPopup={setPopup}
           existingDocumentSet={documentSet}
         />
-      </Card>
+      </CardSection>
     </div>
   );
 }

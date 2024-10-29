@@ -7,6 +7,7 @@ import {
   Text,
   DateRangePickerValue,
 } from "@tremor/react";
+import CardSection from "@/components/admin/CardSection";
 
 export function DanswerBotChart({
   timeRange,
@@ -69,10 +70,10 @@ export function DanswerBotChart({
   }
 
   return (
-    <Card className="mt-8">
+    <CardSection className="mt-8">
       <Title>Slack Bot</Title>
       <Text>Total Queries vs Auto Resolved</Text>
       {chart}
-    </Card>
+    </CardSection>
   );
 }

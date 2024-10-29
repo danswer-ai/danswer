@@ -23,6 +23,7 @@ import { PageSelector } from "@/components/PageSelector";
 import Link from "next/link";
 import { FeedbackBadge } from "./FeedbackBadge";
 import { DownloadAsCSV } from "./DownloadAsCSV";
+import CardSection from "@/components/admin/CardSection";
 
 const NUM_IN_PAGE = 20;
 
@@ -108,7 +109,7 @@ export function QueryHistoryTable() {
   const [page, setPage] = useState(1);
 
   return (
-    <Card className="mt-8">
+    <CardSection className="mt-8">
       {chatSessionData ? (
         <>
           <div className="flex">
@@ -172,6 +173,6 @@ export function QueryHistoryTable() {
           <ThreeDotsLoader />
         </div>
       )}
-    </Card>
+    </CardSection>
   );
 }

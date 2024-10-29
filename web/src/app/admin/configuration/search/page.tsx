@@ -29,6 +29,7 @@ import { SavedSearchSettings } from "../../embeddings/interfaces";
 import UpgradingPage from "./UpgradingPage";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import CardSection from "@/components/admin/CardSection";
 
 function Main() {
   const settings = useContext(SettingsContext);
@@ -102,7 +103,7 @@ function Main() {
 
           <Title className="mb-2 mt-8 !text-2xl">Post-processing</Title>
 
-          <Card className="!mr-auto mt-8 !w-96">
+          <CardSection className="!mr-auto mt-8 !w-96">
             {searchSettings && (
               <>
                 <div className="px-1 w-full rounded-lg">
@@ -155,7 +156,7 @@ function Main() {
                 </div>
               </>
             )}
-          </Card>
+          </CardSection>
 
           <Link href="/admin/embeddings">
             <Button variant="update" className="mt-8">

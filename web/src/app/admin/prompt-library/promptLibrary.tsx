@@ -174,7 +174,7 @@ export const PromptLibraryTable = ({
           icon={<FiTag size={16} />}
           defaultDisplay="All Statuses"
         />
-        <div className="flex flex-wrap pb-4 mt-3">
+        <div className="flex flex-col items-stretch w-full flex-wrap pb-4 mt-3">
           {selectedStatus.map((status) => (
             <CategoryBubble
               key={status}

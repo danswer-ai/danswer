@@ -7,6 +7,7 @@ import {
   Text,
   DateRangePickerValue,
 } from "@tremor/react";
+import CardSection from "@/components/admin/CardSection";
 
 export function FeedbackChart({
   timeRange,
@@ -66,10 +67,10 @@ export function FeedbackChart({
   }
 
   return (
-    <Card className="mt-8">
+    <CardSection className="mt-8">
       <Title>Feedback</Title>
       <Text>Thumbs Up / Thumbs Down over time</Text>
       {chart}
-    </Card>
+    </CardSection>
   );
 }

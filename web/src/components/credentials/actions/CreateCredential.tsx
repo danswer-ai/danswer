@@ -28,6 +28,7 @@ import {
   IsPublicGroupSelector,
 } from "@/components/IsPublicGroupSelector";
 import { useUser } from "@/components/user/UserProvider";
+import CardSection from "@/components/admin/CardSection";
 
 const CreateButton = ({
   onClick,
@@ -202,7 +203,7 @@ export default function CreateCredential({
               for information on setting up this connector.
             </p>
           )}
-          <Card className="!border-0 mt-4 flex flex-col gap-y-6">
+          <CardSection className="!border-0 mt-4 flex flex-col gap-y-6">
             <TextFormField
               name="name"
               placeholder="(Optional) credential name.."
@@ -255,7 +256,7 @@ export default function CreateCredential({
                 </div>
               </div>
             )}
-          </Card>
+          </CardSection>
           {swapConnector && (
             <div className="flex gap-x-4 w-full mt-8 justify-end">
               <Button

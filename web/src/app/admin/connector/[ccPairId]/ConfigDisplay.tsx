@@ -1,3 +1,4 @@
+import CardSection from "@/components/admin/CardSection";
 import { getNameFromPath } from "@/lib/fileUtils";
 import { ValidSources } from "@/lib/types";
 import { List, ListItem, Card, Title } from "@tremor/react";
@@ -73,7 +74,7 @@ export function AdvancedConfigDisplay({
   return (
     <>
       <Title className="mt-8 mb-2">Advanced Configuration</Title>
-      <Card>
+      <CardSection>
         <List>
           {pruneFreq && (
             <ListItem key={0}>
@@ -94,7 +95,7 @@ export function AdvancedConfigDisplay({
             </ListItem>
           )}
         </List>
-      </Card>
+      </CardSection>
     </>
   );
 }
@@ -116,7 +117,7 @@ export function ConfigDisplay({
   return (
     <>
       <Title className="mb-2">Configuration</Title>
-      <Card>
+      <CardSection>
         <List>
           {configEntries.map(([key, value]) => (
             <ListItem key={key}>
@@ -125,7 +126,7 @@ export function ConfigDisplay({
             </ListItem>
           ))}
         </List>
-      </Card>
+      </CardSection>
     </>
   );
 }

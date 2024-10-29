@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card } from "@tremor/react";
+import CardSection from "@/components/admin/CardSection";
 import { Button } from "@/components/ui/button";
 import { DocumentIcon2 } from "@/components/icons/icons";
 import useSWR from "swr";
@@ -54,7 +54,7 @@ function Main() {
   }
   return (
     <div className="container mx-auto p-4">
-      <Card className="mb-8 max-w-2xl bg-white text-text shadow-lg rounded-lg">
+      <CardSection className="mb-8 max-w-2xl bg-white text-text shadow-lg rounded-lg">
         <h3 className="text-2xl text-text-800 font-bold mb-4 text-text border-b border-b-border pb-2">
           Process with Unstructured API
         </h3>
@@ -117,7 +117,7 @@ function Main() {
             )}
           </div>
         </div>
-      </Card>
+      </CardSection>
     </div>
   );
 }

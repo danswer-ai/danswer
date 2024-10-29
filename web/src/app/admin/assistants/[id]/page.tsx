@@ -7,6 +7,7 @@ import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorI
 import { SuccessfulPersonaUpdateRedirectType } from "../enums";
 import { RobotIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/admin/Title";
+import CardSection from "@/components/admin/CardSection";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);
@@ -19,13 +20,13 @@ export default async function Page({ params }: { params: { id: string } }) {
   } else {
     body = (
       <>
-        <Card>
+        <CardSection>
           <AssistantEditor
             {...values}
             defaultPublic={true}
             redirectType={SuccessfulPersonaUpdateRedirectType.ADMIN}
           />
-        </Card>
+        </CardSection>
 
         <div className="mt-12">
           <Title>Delete Assistant</Title>

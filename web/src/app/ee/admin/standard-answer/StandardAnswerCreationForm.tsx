@@ -2,7 +2,7 @@
 
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { StandardAnswerCategory, StandardAnswer } from "@/lib/types";
-import { Card } from "@tremor/react";
+import CardSection from "@/components/admin/CardSection";
 import { Button } from "@/components/ui/button";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
@@ -42,7 +42,7 @@ export const StandardAnswerCreationForm = ({
 
   return (
     <div>
-      <Card>
+      <CardSection>
         {popup}
         <Formik
           initialValues={{
@@ -213,7 +213,7 @@ export const StandardAnswerCreationForm = ({
             </Form>
           )}
         </Formik>
-      </Card>
+      </CardSection>
     </div>
   );
 };

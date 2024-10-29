@@ -1,5 +1,6 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Card, Text, Title } from "@tremor/react";
+import { Text, Title } from "@tremor/react";
+import CardSection from "@/components/admin/CardSection";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
 import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enums";
@@ -22,14 +23,14 @@ export default async function Page({ params }: { params: { id: string } }) {
       <div className="w-full my-16">
         <div className="px-32">
           <div className="mx-auto container">
-            <Card>
+            <CardSection>
               <AssistantEditor
                 {...values}
                 admin
                 defaultPublic={false}
                 redirectType={SuccessfulPersonaUpdateRedirectType.CHAT}
               />
-            </Card>
+            </CardSection>
             <Title className="mt-12">Delete Assistant</Title>
             <Text>
               Click the button below to permanently delete this assistant.

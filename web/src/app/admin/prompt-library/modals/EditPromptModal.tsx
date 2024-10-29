@@ -33,13 +33,13 @@ const EditPromptModal = ({
 
   if (!promptData)
     return (
-      <Modal onOutsideClick={onClose} width="max-w-xl">
+      <Modal onOutsideClick={onClose} width="w-full max-w-xl">
         <p>Loading...</p>
       </Modal>
     );
 
   return (
-    <Modal onOutsideClick={onClose} width="max-w-xl">
+    <Modal onOutsideClick={onClose} width="w-full max-w-xl">
       <Formik
         initialValues={{
           prompt: promptData.prompt,

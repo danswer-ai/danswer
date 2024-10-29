@@ -11,6 +11,7 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR from "swr";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ThreeDotsLoader } from "@/components/Loading";
+import CardSection from "@/components/admin/CardSection";
 
 function MessageDisplay({ message }: { message: MessageSnapshot }) {
   return (
@@ -88,7 +89,7 @@ export default function QueryPage({ params }: { params: { id: string } }) {
     <main className="pt-4 mx-auto container">
       <BackButton />
 
-      <Card className="mt-4">
+      <CardSection className="mt-4">
         <Title>Chat Session Details</Title>
 
         <Text className="flex flex-wrap whitespace-normal mt-1 text-xs">
@@ -107,7 +108,7 @@ export default function QueryPage({ params }: { params: { id: string } }) {
             );
           })}
         </div>
-      </Card>
+      </CardSection>
     </main>
   );
 }

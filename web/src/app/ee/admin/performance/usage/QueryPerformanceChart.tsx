@@ -9,6 +9,7 @@ import {
 } from "@tremor/react";
 import { getDatesList, useQueryAnalytics, useUserAnalytics } from "../lib";
 import { ThreeDotsLoader } from "@/components/Loading";
+import CardSection from "@/components/admin/CardSection";
 
 export function QueryPerformanceChart({
   timeRange,
@@ -85,10 +86,10 @@ export function QueryPerformanceChart({
   }
 
   return (
-    <Card className="mt-8">
+    <CardSection className="mt-8">
       <Title>Usage</Title>
       <Text>Usage over time</Text>
       {chart}
-    </Card>
+    </CardSection>
   );
 }

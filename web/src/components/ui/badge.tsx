@@ -48,21 +48,21 @@ function Badge({
     | "purple";
 }) {
   const colorClasses = {
-    red: "bg-red-100 text-red-500 hover:bg-red-100/90 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-900/90",
+    red: "bg-red-100 text-red-700 hover:bg-red-100/90 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-900/90",
     yellow:
-      "bg-yellow-100 text-yellow-500 hover:bg-yellow-100/90 dark:bg-yellow-900 dark:text-yellow-300 dark:hover:bg-yellow-900/90",
+      "bg-yellow-100 text-yellow-700 hover:bg-yellow-100/90 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-900/90",
     green:
-      "bg-green-100 text-green-500 hover:bg-green-100/90 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-900/90",
+      "bg-green-100 text-green-700 hover:bg-green-100/90 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-900/90",
     amber:
-      "bg-amber-100 text-amber-500 hover:bg-amber-100/90 dark:bg-amber-900 dark:text-amber-300 dark:hover:bg-amber-900/90",
+      "bg-amber-100 text-amber-700 hover:bg-amber-100/90 dark:bg-amber-900 dark:text-amber-200 dark:hover:bg-amber-900/90",
     fuchsia:
-      "bg-fuchsia-100 text-fuchsia-500 hover:bg-fuchsia-100/90 dark:bg-fuchsia-900 dark:text-fuchsia-300 dark:hover:bg-fuchsia-900/90",
-    gray: "bg-gray-100 text-gray-500 hover:bg-gray-100/90 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-900/90",
-    blue: "bg-blue-100 text-blue-500 hover:bg-blue-100/90 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-900/90",
+      "bg-fuchsia-100 text-fuchsia-700 hover:bg-fuchsia-100/90 dark:bg-fuchsia-900 dark:text-fuchsia-200 dark:hover:bg-fuchsia-900/90",
+    gray: "bg-gray-100 text-gray-700 hover:bg-gray-100/90 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-900/90",
+    blue: "bg-blue-100 text-blue-700 hover:bg-blue-100/90 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-900/90",
     orange:
-      "bg-orange-100 text-orange-500 hover:bg-orange-100/90 dark:bg-orange-900 dark:text-orange-300 dark:hover:bg-orange-900/90",
+      "bg-orange-100 text-orange-700 hover:bg-orange-100/90 dark:bg-orange-900 dark:text-orange-200 dark:hover:bg-orange-900/90",
     purple:
-      "bg-purple-100 text-purple-500 hover:bg-purple-100/90 dark:bg-purple-900 dark:text-purple-300 dark:hover:bg-purple-900/90",
+      "bg-purple-100 text-purple-700 hover:bg-purple-100/90 dark:bg-purple-900 dark:text-purple-200 dark:hover:bg-purple-900/90",
   };
 
   const sizeClasses = {
