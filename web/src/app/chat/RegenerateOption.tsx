@@ -69,7 +69,7 @@ export function RegenerateDropdown({
                 py-1.5 
                 "
       >
-        Pick a model
+        Regenerate with
       </p>
       {options.map((option, ind) => {
         const isSelected = option.value === selected;
