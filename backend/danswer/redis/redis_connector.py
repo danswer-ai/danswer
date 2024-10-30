@@ -8,6 +8,9 @@ from celery import Celery
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
+    RedisConnectorIndexingFenceData,
+)
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
@@ -40,6 +43,7 @@ class RedisConnector:
         self.stop = self.RedisConnectorStop(tenant_id, id, self.redis)
         self.prune = self.RedisConnectorPrune(tenant_id, id, self.redis)
         self.delete = self.RedisConnectorDelete(tenant_id, id, self.redis)
+        self.index = self.RedisConnectorIndex(tenant_id, id, self.redis)
 
     def is_indexing(self) -> bool:
         if self.redis.exists(self.get_indexing_fence_key()):
@@ -135,7 +139,7 @@ class RedisConnector:
             self.redis.set(self.fence_key, 0)
 
         @staticmethod
-        def reset(r: redis.Redis) -> None:
+        def reset_all(r: redis.Redis) -> None:
             for key in r.scan_iter(
                 RedisConnector.RedisConnectorStop.FENCE_PREFIX + "*"
             ):
@@ -165,7 +169,7 @@ class RedisConnector:
 
             self.fence_key: str = f"{self.FENCE_PREFIX}_{id}"
             self.generator_task_key = f"{self.GENERATORTASK_PREFIX}_{id}"
-            self.generator_progress = f"{self.GENERATOR_PROGRESS_PREFIX}_{id}"
+            self.generator_progress_key = f"{self.GENERATOR_PROGRESS_PREFIX}_{id}"
             self.generator_complete_key = f"{self.GENERATOR_COMPLETE_PREFIX}_{id}"
 
             self.taskset_key = f"{self.TASKSET_PREFIX}_{id}"
@@ -176,7 +180,7 @@ class RedisConnector:
             self.redis.delete(self.taskset_key)
 
         def generator_clear(self) -> None:
-            self.redis.delete(self.generator_progress)
+            self.redis.delete(self.generator_progress_key)
             self.redis.delete(self.generator_complete_key)
 
         def get_remaining(self) -> int:
@@ -284,7 +288,7 @@ class RedisConnector:
             return
 
         @staticmethod
-        def reset(r: redis.Redis) -> None:
+        def reset_all(r: redis.Redis) -> None:
             """Deletes all redis values for all connectors"""
             for key in r.scan_iter(
                 RedisConnector.RedisConnectorPrune.TASKSET_PREFIX + "*"
@@ -326,15 +330,6 @@ class RedisConnector:
             # todo: move into fence
             remaining = cast(int, self.redis.scard(self.taskset_key))
             return remaining
-
-        def get_active_task_count(self) -> int:
-            """Count of active pruning tasks"""
-            count = 0
-            for key in self.redis.scan_iter(
-                RedisConnector.RedisConnectorPrune.FENCE_PREFIX + "*"
-            ):
-                count += 1
-            return count
 
         @property
         def fenced(self) -> bool:
@@ -428,7 +423,211 @@ class RedisConnector:
             return
 
         @staticmethod
-        def reset(r: redis.Redis) -> None:
+        def reset_all(r: redis.Redis) -> None:
+            """Deletes all redis values for all connectors"""
+            for key in r.scan_iter(
+                RedisConnector.RedisConnectorDelete.TASKSET_PREFIX + "*"
+            ):
+                r.delete(key)
+
+            for key in r.scan_iter(
+                RedisConnector.RedisConnectorDelete.FENCE_PREFIX + "*"
+            ):
+                r.delete(key)
+
+    class RedisConnectorIndex:
+        PREFIX = "connectorindexing"
+        FENCE_PREFIX = f"{PREFIX}_fence"  # "connectorindexing_fence"
+        GENERATOR_TASK_PREFIX = (
+            PREFIX + "+generator"
+        )  # "connectorindexing+generator_fence"
+        GENERATOR_PROGRESS_PREFIX = (
+            PREFIX + "_generator_progress"
+        )  # connectorindexing_generator_progress
+        GENERATOR_COMPLETE_PREFIX = (
+            PREFIX + "_generator_complete"
+        )  # connectorindexing_generator_complete
+
+        GENERATOR_LOCK_PREFIX = "da_lock:indexing"
+
+        def __init__(self, tenant_id: str | None, id: int, redis: redis.Redis) -> None:
+            self.tenant_id: str | None = tenant_id
+            self.id = id
+            self.redis = redis
+
+            self.partial_fence_key: str = f"{self.FENCE_PREFIX}_{id}"
+            self.partial_generator_progress_key = (
+                f"{self.GENERATOR_PROGRESS_PREFIX}_{id}"
+            )
+            self.partial_generator_complete_key = (
+                f"{self.GENERATOR_COMPLETE_PREFIX}_{id}"
+            )
+            self.partial_generator_lock_key = f"{self.GENERATOR_LOCK_PREFIX}_{id}"
+
+            self.partial_generator_task_key = f"{self.GENERATOR_TASK_PREFIX}_{id}"
+
+        @classmethod
+        def fence_key_with_ids(cls, cc_pair_id: int, search_settings_id: int) -> str:
+            return f"{cls.FENCE_PREFIX}_{cc_pair_id}/{search_settings_id}"
+
+        def fence_key(self, search_settings_id: int) -> str:
+            return f"{self.partial_fence_key}/{search_settings_id}"
+
+        def generator_progress_key(self, search_settings_id: int) -> str:
+            return f"{self.partial_generator_progress_key}/{search_settings_id}"
+
+        def generator_complete_key(self, search_settings_id: int) -> str:
+            return f"{self.partial_generator_complete_key}/{search_settings_id}"
+
+        def generator_lock_key(self, search_settings_id: int) -> str:
+            return f"{self.partial_generator_lock_key}/{search_settings_id}"
+
+        def generate_generator_task_id(self, search_settings_id: int) -> str:
+            # celery's default task id format is "dd32ded3-00aa-4884-8b21-42f8332e7fac"
+            # we prefix the task id so it's easier to keep track of who created the task
+            # aka "connectorindexing+generator_1_6dd32ded3-00aa-4884-8b21-42f8332e7fac"
+
+            return f"{self.partial_generator_task_key}/{search_settings_id}_{uuid4()}"
+
+        def fenced(self, search_settings_id: int) -> bool:
+            if self.redis.exists(self.fence_key(search_settings_id)):
+                return True
+
+            return False
+
+        def payload(
+            self, search_settings_id: int
+        ) -> RedisConnectorIndexingFenceData | None:
+            # read related data and evaluate/print task progress
+            fence_bytes = cast(
+                bytes, self.redis.get(self.fence_key(search_settings_id))
+            )
+            if fence_bytes is None:
+                return None
+
+            fence_str = fence_bytes.decode("utf-8")
+            payload = RedisConnectorIndexingFenceData.model_validate_json(
+                cast(str, fence_str)
+            )
+
+            return payload
+
+        def set_fence(
+            self,
+            search_settings_id: int,
+            payload: RedisConnectorIndexingFenceData | None,
+        ) -> None:
+            if not payload:
+                self.redis.delete(self.fence_key(search_settings_id))
+                return
+
+            self.redis.set(
+                self.fence_key(search_settings_id), payload.model_dump_json()
+            )
+
+        def set_generator_complete(
+            self, search_settings_id: int, payload: int | None
+        ) -> None:
+            if not payload:
+                self.redis.delete(self.generator_complete_key(search_settings_id))
+                return
+
+            self.redis.set(self.generator_complete_key(search_settings_id), payload)
+
+        def generator_clear(self, search_settings_id: int) -> None:
+            self.redis.delete(self.generator_progress_key(search_settings_id))
+            self.redis.delete(self.generator_complete_key(search_settings_id))
+
+        def get_progress(self, search_settings_id: int) -> int | None:
+            """"""
+            # TODO: move into fence?
+            bytes = self.redis.get(self.generator_progress_key(search_settings_id))
+            if bytes is None:
+                return None
+
+            progress = int(cast(int, bytes))
+            return progress
+
+        def get_completion(self, search_settings_id: int) -> int | None:
+            # TODO: move into fence?
+            bytes = self.redis.get(self.generator_complete_key(search_settings_id))
+            if bytes is None:
+                return None
+
+            status = int(cast(int, bytes))
+            return status
+
+        def reset(self, search_settings_id: int) -> None:
+            self.redis.delete(self.generator_lock_key(search_settings_id))
+            self.redis.delete(self.generator_progress_key(search_settings_id))
+            self.redis.delete(self.generator_complete_key(search_settings_id))
+            self.redis.delete(self.fence_key(search_settings_id))
+
+        # def _generate_task_id(self) -> str:
+        #     # celery's default task id format is "dd32ded3-00aa-4884-8b21-42f8332e7fac"
+        #     # we prefix the task id so it's easier to keep track of who created the task
+        #     # aka "connectordeletion_1_6dd32ded3-00aa-4884-8b21-42f8332e7fac"
+
+        #     return f"{self.PREFIX}_{self.id}_{uuid4()}"
+
+        # def generate_tasks(
+        #     self,
+        #     celery_app: Celery,
+        #     db_session: Session,
+        #     lock: redis.lock.Lock,
+        # ) -> int | None:
+        #     """Returns None if the cc_pair doesn't exist.
+        #     Otherwise, returns an int with the number of generated tasks."""
+        #     last_lock_time = time.monotonic()
+
+        #     async_results = []
+        #     cc_pair = get_connector_credential_pair_from_id(int(self.id), db_session)
+        #     if not cc_pair:
+        #         return None
+
+        #     stmt = construct_document_select_for_connector_credential_pair(
+        #         cc_pair.connector_id, cc_pair.credential_id
+        #     )
+        #     for doc in db_session.scalars(stmt).yield_per(1):
+        #         current_time = time.monotonic()
+        #         if current_time - last_lock_time >= (
+        #             CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT / 4
+        #         ):
+        #             lock.reacquire()
+        #             last_lock_time = current_time
+
+        #         custom_task_id = self._generate_task_id()
+
+        #         # add to the tracking taskset in redis BEFORE creating the celery task.
+        #         # note that for the moment we are using a single taskset key, not differentiated by cc_pair id
+        #         self.redis.sadd(self.taskset_key, custom_task_id)
+
+        #         # Priority on sync's triggered by new indexing should be medium
+        #         result = celery_app.send_task(
+        #             "document_by_cc_pair_cleanup_task",
+        #             kwargs=dict(
+        #                 document_id=doc.id,
+        #                 connector_id=cc_pair.connector_id,
+        #                 credential_id=cc_pair.credential_id,
+        #                 tenant_id=self.tenant_id,
+        #             ),
+        #             queue=DanswerCeleryQueues.CONNECTOR_DELETION,
+        #             task_id=custom_task_id,
+        #             priority=DanswerCeleryPriority.MEDIUM,
+        #         )
+
+        #         async_results.append(result)
+
+        #     return len(async_results)
+
+        # @staticmethod
+        # def remove_from_taskset(id: int, task_id: str, r: redis.Redis) -> None:
+        #     taskset_key = f"{RedisConnector.RedisConnectorDelete.TASKSET_PREFIX}_{id}"
+        #     r.srem(taskset_key, task_id)
+        #     return
+
+        @staticmethod
+        def reset_all(r: redis.Redis) -> None:
             """Deletes all redis values for all connectors"""
             for key in r.scan_iter(
                 RedisConnector.RedisConnectorDelete.TASKSET_PREFIX + "*"

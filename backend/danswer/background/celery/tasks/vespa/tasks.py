@@ -20,12 +20,8 @@ from danswer.access.access import get_access_for_document
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import celery_get_queue_length
 from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
-from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
-from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
-    RedisConnectorIndexingFenceData,
-)
 from danswer.background.celery.tasks.shared.RetryDocumentIndex import RetryDocumentIndex
 from danswer.background.celery.tasks.shared.tasks import LIGHT_SOFT_TIME_LIMIT
 from danswer.background.celery.tasks.shared.tasks import LIGHT_TIME_LIMIT
@@ -554,11 +550,11 @@ def monitor_ccpair_pruning_taskset(
 
 
 def monitor_ccpair_indexing_taskset(
-    key_bytes: bytes, r: Redis, db_session: Session
+    tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     # if the fence doesn't exist, there's nothing to do
     fence_key = key_bytes.decode("utf-8")
-    composite_id = RedisConnectorIndexing.get_id_from_fence_key(fence_key)
+    composite_id = RedisConnector.get_id_from_fence_key(fence_key)
     if composite_id is None:
         task_logger.warning(
             f"monitor_ccpair_indexing_taskset: could not parse composite_id from {fence_key}"
@@ -573,53 +569,36 @@ def monitor_ccpair_indexing_taskset(
     cc_pair_id = int(parts[0])
     search_settings_id = int(parts[1])
 
-    rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
-
-    # read related data and evaluate/print task progress
-    fence_value = cast(bytes, r.get(rci.fence_key))
-    if fence_value is None:
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    if not redis_connector.index.fenced(search_settings_id):
         return
 
-    try:
-        fence_json = fence_value.decode("utf-8")
-        fence_data = RedisConnectorIndexingFenceData.model_validate_json(
-            cast(str, fence_json)
+    payload = redis_connector.index.payload(search_settings_id)
+    if not payload:
+        return
+
+    elapsed_submitted = datetime.now(timezone.utc) - payload.submitted
+
+    progress = redis_connector.index.get_progress(search_settings_id)
+    if progress is not None:
+        task_logger.info(
+            f"Connector indexing progress: cc_pair_id={cc_pair_id} "
+            f"search_settings_id={search_settings_id} "
+            f"progress={progress} "
+            f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
         )
-    except ValueError:
-        task_logger.exception(
-            "monitor_ccpair_indexing_taskset: fence_data not decodeable."
-        )
-        raise
 
-    elapsed_submitted = datetime.now(timezone.utc) - fence_data.submitted
-
-    generator_progress_value = r.get(rci.generator_progress_key)
-    if generator_progress_value is not None:
-        try:
-            progress_count = int(cast(int, generator_progress_value))
-
-            task_logger.info(
-                f"Connector indexing progress: cc_pair_id={cc_pair_id} "
-                f"search_settings_id={search_settings_id} "
-                f"progress={progress_count} "
-                f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
-            )
-        except ValueError:
-            task_logger.error(
-                "monitor_ccpair_indexing_taskset: generator_progress_value is not an integer."
-            )
-
-    if fence_data.index_attempt_id is None or fence_data.celery_task_id is None:
+    if payload.index_attempt_id is None or payload.celery_task_id is None:
         # the task is still setting up
         return
 
     # Read result state BEFORE generator_complete_key to avoid a race condition
     # never use any blocking methods on the result from inside a task!
-    result: AsyncResult = AsyncResult(fence_data.celery_task_id)
+    result: AsyncResult = AsyncResult(payload.celery_task_id)
     result_state = result.state
 
-    generator_complete_value = r.get(rci.generator_complete_key)
-    if generator_complete_value is None:
+    status_int = redis_connector.index.get_completion(search_settings_id)
+    if status_int is None:
         if result_state in READY_STATES:
             # IF the task state is READY, THEN generator_complete should be set
             # if it isn't, then the worker crashed
@@ -630,7 +609,7 @@ def monitor_ccpair_indexing_taskset(
                 f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
             )
 
-            index_attempt = get_index_attempt(db_session, fence_data.index_attempt_id)
+            index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
             if index_attempt:
                 mark_attempt_failed(
                     index_attempt=index_attempt,
@@ -638,22 +617,10 @@ def monitor_ccpair_indexing_taskset(
                     failure_reason="Connector indexing aborted or exceptioned.",
                 )
 
-            r.delete(rci.generator_lock_key)
-            r.delete(rci.taskset_key)
-            r.delete(rci.generator_progress_key)
-            r.delete(rci.generator_complete_key)
-            r.delete(rci.fence_key)
+            redis_connector.index.reset(search_settings_id)
         return
 
-    status_enum = HTTPStatus.INTERNAL_SERVER_ERROR
-    try:
-        status_value = int(cast(int, generator_complete_value))
-        status_enum = HTTPStatus(status_value)
-    except ValueError:
-        task_logger.error(
-            f"monitor_ccpair_indexing_taskset: "
-            f"generator_complete_value=f{generator_complete_value} could not be parsed."
-        )
+    status_enum = HTTPStatus(status_int)
 
     task_logger.info(
         f"Connector indexing finished: cc_pair_id={cc_pair_id} "
@@ -662,11 +629,7 @@ def monitor_ccpair_indexing_taskset(
         f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
     )
 
-    r.delete(rci.generator_lock_key)
-    r.delete(rci.taskset_key)
-    r.delete(rci.generator_progress_key)
-    r.delete(rci.generator_complete_key)
-    r.delete(rci.fence_key)
+    redis_connector.index.reset(search_settings_id)
 
 
 @shared_task(name="monitor_vespa_sync", soft_time_limit=300, bind=True)
@@ -729,11 +692,12 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 
             for a in attempts:
                 # if attempts exist in the db but we don't detect them in redis, mark them as failed
-                rci = RedisConnectorIndexing(
-                    a.connector_credential_pair_id, a.search_settings_id
-                )
                 failure_reason = f"Unknown index attempt {a.id}. Might be left over from a process restart."
-                if not r.exists(rci.fence_key):
+                if not r.exists(
+                    RedisConnector.RedisConnectorIndex.fence_key_with_ids(
+                        a.connector_credential_pair_id, a.search_settings_id
+                    )
+                ):
                     mark_attempt_failed(a, db_session, failure_reason=failure_reason)
 
         lock_beat.reacquire()
@@ -773,10 +737,12 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                 monitor_ccpair_pruning_taskset(tenant_id, key_bytes, r, db_session)
 
         lock_beat.reacquire()
-        for key_bytes in r.scan_iter(RedisConnectorIndexing.FENCE_PREFIX + "*"):
+        for key_bytes in r.scan_iter(
+            RedisConnector.RedisConnectorIndex.FENCE_PREFIX + "*"
+        ):
             lock_beat.reacquire()
             with get_session_with_tenant(tenant_id) as db_session:
-                monitor_ccpair_indexing_taskset(key_bytes, r, db_session)
+                monitor_ccpair_indexing_taskset(tenant_id, key_bytes, r, db_session)
 
         # uncomment for debugging if needed
         # r_celery = celery_app.broker_connection().channel().client

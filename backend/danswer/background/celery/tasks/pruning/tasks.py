@@ -265,7 +265,7 @@ def connector_pruning_generator_task(
 
             callback = RunIndexingCallback(
                 redis_connector.stop.fence_key,
-                redis_connector.prune.generator_progress,
+                redis_connector.prune.generator_progress_key,
                 lock,
                 r,
             )

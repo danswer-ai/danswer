@@ -10,7 +10,6 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
-from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerRedisLocks
@@ -132,8 +131,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
         # do not proceed if connector indexing or connector pruning are running
         search_settings_list = get_all_search_settings(db_session)
         for search_settings in search_settings_list:
-            rci = RedisConnectorIndexing(cc_pair_id, search_settings.id)
-            if r.get(rci.fence_key):
+            if redis_connector.index.fenced(search_settings.id):
                 raise TaskDependencyError(
                     f"Connector deletion - Delayed (indexing in progress): "
                     f"cc_pair={cc_pair_id} "

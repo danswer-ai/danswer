@@ -129,13 +129,13 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
             r.delete(key)
 
-        RedisConnector.RedisConnectorDelete.reset(r)
+        RedisConnector.RedisConnectorDelete.reset_all(r)
 
-        RedisConnector.RedisConnectorPrune.reset(r)
+        RedisConnector.RedisConnectorPrune.reset_all(r)
 
         RedisConnector.indexing_cleanup(r)
 
-        RedisConnector.RedisConnectorStop.reset(r)
+        RedisConnector.RedisConnectorStop.reset_all(r)
 
 
 @worker_ready.connect

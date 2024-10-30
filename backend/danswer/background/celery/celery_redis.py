@@ -474,71 +474,71 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
 #         return False
 
 
-class RedisConnectorIndexing(RedisObjectHelper):
-    """Celery will kick off a long running indexing task to crawl the connector and
-    find any new or updated docs docs, which will each then get a new sync task or be
-    indexed inline.
+# class RedisConnectorIndexing(RedisObjectHelper):
+#     """Celery will kick off a long running indexing task to crawl the connector and
+#     find any new or updated docs docs, which will each then get a new sync task or be
+#     indexed inline.
 
-    ID should be a concatenation of cc_pair_id and search_setting_id, delimited by "/".
-    e.g. "2/5"
-    """
+#     ID should be a concatenation of cc_pair_id and search_setting_id, delimited by "/".
+#     e.g. "2/5"
+#     """
 
-    PREFIX = "connectorindexing"
-    FENCE_PREFIX = PREFIX + "_fence"  # a fence for the entire indexing process
-    GENERATOR_TASK_PREFIX = PREFIX + "+generator"
+#     PREFIX = "connectorindexing"
+#     FENCE_PREFIX = PREFIX + "_fence"  # a fence for the entire indexing process
+#     GENERATOR_TASK_PREFIX = PREFIX + "+generator"
 
-    TASKSET_PREFIX = PREFIX + "_taskset"  # stores a list of prune tasks id's
-    SUBTASK_PREFIX = PREFIX + "+sub"
+#     TASKSET_PREFIX = PREFIX + "_taskset"  # stores a list of prune tasks id's
+#     SUBTASK_PREFIX = PREFIX + "+sub"
 
-    GENERATOR_LOCK_PREFIX = "da_lock:indexing"
-    GENERATOR_PROGRESS_PREFIX = (
-        PREFIX + "_generator_progress"
-    )  # a signal that contains generator progress
-    GENERATOR_COMPLETE_PREFIX = (
-        PREFIX + "_generator_complete"
-    )  # a signal that the generator has finished
+#     GENERATOR_LOCK_PREFIX = "da_lock:indexing"
+#     GENERATOR_PROGRESS_PREFIX = (
+#         PREFIX + "_generator_progress"
+#     )  # a signal that contains generator progress
+#     GENERATOR_COMPLETE_PREFIX = (
+#         PREFIX + "_generator_complete"
+#     )  # a signal that the generator has finished
 
-    def __init__(self, cc_pair_id: int, search_settings_id: int) -> None:
-        super().__init__(f"{cc_pair_id}/{search_settings_id}")
+#     def __init__(self, cc_pair_id: int, search_settings_id: int) -> None:
+#         super().__init__(f"{cc_pair_id}/{search_settings_id}")
 
-    @property
-    def generator_lock_key(self) -> str:
-        return f"{self.GENERATOR_LOCK_PREFIX}_{self._id}"
+#     @property
+#     def generator_lock_key(self) -> str:
+#         return f"{self.GENERATOR_LOCK_PREFIX}_{self._id}"
 
-    @property
-    def generator_task_id_prefix(self) -> str:
-        return f"{self.GENERATOR_TASK_PREFIX}_{self._id}"
+#     @property
+#     def generator_task_id_prefix(self) -> str:
+#         return f"{self.GENERATOR_TASK_PREFIX}_{self._id}"
 
-    @property
-    def generator_progress_key(self) -> str:
-        # example: connectorpruning_generator_progress_1
-        return f"{self.GENERATOR_PROGRESS_PREFIX}_{self._id}"
+#     @property
+#     def generator_progress_key(self) -> str:
+#         # example: connectorpruning_generator_progress_1
+#         return f"{self.GENERATOR_PROGRESS_PREFIX}_{self._id}"
 
-    @property
-    def generator_complete_key(self) -> str:
-        # example: connectorpruning_generator_complete_1
-        return f"{self.GENERATOR_COMPLETE_PREFIX}_{self._id}"
+#     @property
+#     def generator_complete_key(self) -> str:
+#         # example: connectorpruning_generator_complete_1
+#         return f"{self.GENERATOR_COMPLETE_PREFIX}_{self._id}"
 
-    @property
-    def subtask_id_prefix(self) -> str:
-        return f"{self.SUBTASK_PREFIX}_{self._id}"
+#     @property
+#     def subtask_id_prefix(self) -> str:
+#         return f"{self.SUBTASK_PREFIX}_{self._id}"
 
-    def generate_tasks(
-        self,
-        celery_app: Celery,
-        db_session: Session,
-        redis_client: Redis,
-        lock: redis.lock.Lock | None,
-        tenant_id: str | None,
-    ) -> int | None:
-        return None
+#     def generate_tasks(
+#         self,
+#         celery_app: Celery,
+#         db_session: Session,
+#         redis_client: Redis,
+#         lock: redis.lock.Lock | None,
+#         tenant_id: str | None,
+#     ) -> int | None:
+#         return None
 
-    def is_indexing(self, redis_client: Redis) -> bool:
-        """A single example of a helper method being refactored into the redis helper"""
-        if redis_client.exists(self.fence_key):
-            return True
+#     def is_indexing(self, redis_client: Redis) -> bool:
+#         """A single example of a helper method being refactored into the redis helper"""
+#         if redis_client.exists(self.fence_key):
+#             return True
 
-        return False
+#         return False
 
 
 # class RedisConnectorStop(RedisObjectHelper):
