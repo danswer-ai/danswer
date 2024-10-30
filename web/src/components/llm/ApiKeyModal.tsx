@@ -5,6 +5,7 @@ import { Modal } from "../Modal";
 import { useRouter } from "next/navigation";
 import { useProviderStatus } from "../chat_search/ProviderContext";
 import { PopupSpec } from "../admin/connectors/Popup";
+import { useTranslation } from "react-i18next";
 
 export const ApiKeyModal = ({
   hide,
@@ -14,6 +15,7 @@ export const ApiKeyModal = ({
   setPopup: (popup: PopupSpec) => void;
 }) => {
   const router = useRouter();
+  const { t } = useTranslation("modal");
 
   const {
     shouldShowConfigurationNeeded,
@@ -26,18 +28,17 @@ export const ApiKeyModal = ({
   }
   return (
     <Modal
-      title="Configure a Generative AI Model"
+      title={t("Configure a Generative AI Model")}
       width="max-w-3xl w-full"
       onOutsideClick={() => hide()}
     >
       <>
         <div className="mb-5 text-sm text-gray-700">
-          Please provide an API Key – you can always change this or switch
-          models later.
+          {t("Please provide an API Key – you can always change this or switch models later.")}
           <br />
-          If you would rather look around first, you can{" "}
+          {t("If you would rather look around first, you can")}{" "}
           <strong onClick={() => hide()} className="text-link cursor-pointer">
-            skip this step
+            {t("skip this step")}
           </strong>
           .
         </div>

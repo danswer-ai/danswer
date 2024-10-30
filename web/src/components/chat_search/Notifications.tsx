@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/[locale]/admin/assistants/interfaces";
 import {
   Notification,
   NotificationType,
-} from "@/app/admin/settings/interfaces";
+} from "@/app/[locale]/admin/settings/interfaces";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";

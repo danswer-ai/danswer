@@ -14,7 +14,7 @@ import {
   LikeFeedbackIcon,
   ToggleDown,
 } from "../icons/icons";
-import { FeedbackType } from "@/app/chat/types";
+import { FeedbackType } from "@/app/[locale]/chat/types";
 import { searchState } from "./SearchSection";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { AnswerSection } from "./results/AnswerSection";

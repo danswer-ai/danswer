@@ -1,0 +1,8 @@
+{
+    "Add Connector": "Connector hinzufügen",
+    "Description 1": "Verknüpfe Danswer mit den Datenquellen deiner Organisation. Wir synchronisieren die Daten dann automatisch mit Danswer, damit du alles an einem Platz finden kannst.",
+    "Import Knowledge": "Wissen importieren",
+    "Import Knowledge - Description": "Verknüpfe wissen dass ausserhalb deiner Organisation liegt. Lade Dateien hoch, scrape Webseiten, oder verbinde dich mit der Google Site deiner Organisation..",
+    "Setup Auto-Syncing from Apps": "Auto-Synchronisierung von Apps einrichten",
+    "Setup Auto-Syncing from Apps - Description": "Richte die automatische Synchronsierung von Apps ein. Sofern das während der Einrichtung des Connectors nicht anders angegeben wurdr, wird das alle 10 Minuten passieren."
+}

@@ -1,10 +1,10 @@
 "use server";
-import { CombinedSettings } from "@/app/admin/settings/interfaces";
+import { CombinedSettings } from "@/app/[locale]/admin/settings/interfaces";
 import { UserProvider } from "../user/UserProvider";
 import { ProviderContextProvider } from "../chat_search/ProviderContext";
 import { SettingsProvider } from "../settings/SettingsProvider";
 import { AssistantsProvider } from "./AssistantsContext";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/[locale]/admin/assistants/interfaces";
 import { User } from "@/lib/types";
 
 interface AppProviderProps {

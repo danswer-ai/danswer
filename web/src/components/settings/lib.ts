@@ -3,7 +3,7 @@ import {
   EnterpriseSettings,
   GatingType,
   Settings,
-} from "@/app/admin/settings/interfaces";
+} from "@/app/[locale]/admin/settings/interfaces";
 import {
   CUSTOM_ANALYTICS_ENABLED,
   SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED,

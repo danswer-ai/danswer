@@ -1,7 +1,7 @@
 import { CSS } from "@dnd-kit/utilities";
 
-import { Persona } from "@/app/admin/assistants/interfaces";
-import { AssistantTools } from "@/app/assistants/ToolsDisplay";
+import { Persona } from "@/app/[locale]/admin/assistants/interfaces";
+import { AssistantTools } from "@/app/[locale]/assistants/ToolsDisplay";
 import { Bubble } from "@/components/Bubble";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { getDisplayNameForModel } from "@/lib/hooks";

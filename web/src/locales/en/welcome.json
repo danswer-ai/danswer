@@ -1,0 +1,19 @@
+{
+  "Welcome to Danswer": "Welcome to Danswer",
+  "Get Started":"Get Started",
+  "How are you planning on using Danswer?": "How are you planning on using Danswer?",
+  "Search / Chat with Knowledge": "Search / Chat with Knowledge",
+  "Search / Chat with Knowledge - Description": "If you&apos;re looking to search through, chat with, or ask direct questions of your organization&apos;s knowledge, then this is the option for you!",
+  "Secure ChatGPT": "Secure ChatGPT",
+  "Secure ChatGPT - Description": "If you&apos;re looking for a pure ChatGPT-like experience, then this is the option for you!",
+  "Step 1: Setup an LLM": "Step 1: Setup an LLM",
+  "LLM setup complete!": "LLM setup complete!",
+  "If you want to change the key later, you&apos;ll be able to easily to do so in the Admin Panel.": "If you want to change the key later, you&apos;ll be able to easily to do so in the Admin Panel.",
+  "Step 2: Connect Data Sources": "Step 2: Connect Data Sources",
+  "Step 2: Connect Data Sources - Description": "Connectors are the way that Danswer gets data from your organization's various data sources. Once setup, we'll automatically sync data from your apps and docs into Danswer, so you can search through all of them in one place.",
+  "Setup your first connector!": "Setup your first connector!",
+  "Step 2: Start Chatting!": "Step 2: Start Chatting!",
+  "Step 2: Staet Chatting! - Description": "Click the button below to start chatting with the LLM setup above! Don&apos;t worry, if you do decide later on you want to connect your organization&apos;s knowledge, you can always do that in the",
+  "Admin Panel": "Admin Panel",
+  "Start chatting!": "Start chatting!"
+}

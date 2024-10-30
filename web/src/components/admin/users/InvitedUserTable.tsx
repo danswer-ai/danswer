@@ -1,5 +1,5 @@
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { HidableSection } from "@/app/admin/assistants/HidableSection";
+import { HidableSection } from "@/app/[locale]/admin/assistants/HidableSection";
 import {
   Table,
   TableHead,

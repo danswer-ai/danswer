@@ -1,0 +1,10 @@
+{
+    "New Assistant": "New Assistant",
+    "Existing Assistants": "Existing Assistants",
+    "Assistants are a way to build custom search/question-answering experiences for different use cases.": "Assistants are a way to build custom search/question-answering experiences for different use cases.",
+    "Assistants": "Assistants",
+    "They allow you to customize:": "They allow you to customize:",
+    "The prompt used by your LLM of choice to respond to the user query": "The prompt used by your LLM of choice to respond to the user query",
+    "The documents that are used as context": "The documents that are used as context",
+    "Create an Assistant": "Create an Assistant"
+}
