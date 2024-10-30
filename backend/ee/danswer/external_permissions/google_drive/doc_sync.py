@@ -6,13 +6,12 @@ from googleapiclient.discovery import Resource  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
-from danswer.connectors.google_drive.connector import execute_paginated_retrieval
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
+from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
 from danswer.connectors.models import SlimDocument
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
-from danswer.utils.retry_wrapper import retry_builder
 from ee.danswer.db.document import upsert_document_external_perms__no_commit
 
 logger = setup_logger()
