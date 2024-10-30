@@ -851,10 +851,7 @@ export const SearchSection = ({
           </div>
         </div>
       </div>
-      <FixedLogo
-        onApplicationPage
-        backgroundToggled={toggledSidebar || showDocSidebar}
-      />
+      <FixedLogo backgroundToggled={toggledSidebar || showDocSidebar} />
     </>
   );
 };

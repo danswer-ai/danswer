@@ -58,7 +58,7 @@ export function ClientLayout({
   return (
     <div className="h-screen overflow-y-hidden">
       <div className="flex h-full">
-        <div className="flex-none text-text-settings-sidebar bg-background-settings-sidebar w-[250px] z-20 pt-4 pb-8 h-full border-r border-border miniscroll overflow-auto">
+        <div className="flex-none text-text-settings-sidebar bg-background-sidebar w-[250px] z-20 pt-4 pb-8 h-full border-r border-border miniscroll overflow-auto">
           <AdminSidebar
             collections={[
               {

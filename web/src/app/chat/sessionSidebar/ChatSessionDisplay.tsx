@@ -122,12 +122,7 @@ export function ChatSessionDisplay({
           );
         }}
       >
-        <BasicSelectable
-          onApplicationPage
-          padding="extra"
-          fullWidth
-          selected={isSelected}
-        >
+        <BasicSelectable padding="extra" fullWidth selected={isSelected}>
           <>
             <div className="flex relative">
               {isRenamingChat ? (
