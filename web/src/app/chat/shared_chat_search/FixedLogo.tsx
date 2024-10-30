@@ -9,7 +9,9 @@ import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 
 export default function FixedLogo({
+  // Whether the logo is on the application page or not
   applicationPage,
+  // Whether the sidebar is toggled or not
   backgroundToggled,
 }: {
   applicationPage?: boolean;
