@@ -58,6 +58,7 @@ export interface GmailCredentialJson {
 
 export interface GoogleDriveCredentialJson {
   google_drive_tokens: string;
+  google_drive_primary_admin: string;
 }
 
 export interface GmailServiceAccountCredentialJson {
@@ -67,7 +68,7 @@ export interface GmailServiceAccountCredentialJson {
 
 export interface GoogleDriveServiceAccountCredentialJson {
   google_drive_service_account_key: string;
-  google_drive_delegated_user: string;
+  google_drive_primary_admin: string;
 }
 
 export interface SlabCredentialJson {
@@ -331,7 +332,7 @@ export const credentialDisplayNames: Record<string, string> = {
 
   // Google Drive Service Account
   google_drive_service_account_key: "Google Drive Service Account Key",
-  google_drive_delegated_user: "Google Drive Delegated User",
+  google_drive_primary_admin: "Google Drive Delegated User",
 
   // Slab
   slab_bot_token: "Slab Bot Token",

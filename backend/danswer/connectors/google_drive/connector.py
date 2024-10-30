@@ -11,6 +11,9 @@ from danswer.connectors.google_drive.connector_auth import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
 from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
+from danswer.connectors.google_drive.constants import MISSING_SCOPES_ERROR_STR
+from danswer.connectors.google_drive.constants import ONYX_SCOPE_INSTRUCTIONS
+from danswer.connectors.google_drive.constants import SLIM_BATCH_SIZE
 from danswer.connectors.google_drive.constants import USER_FIELDS
 from danswer.connectors.google_drive.doc_conversion import (
     convert_drive_item_to_document,
@@ -31,23 +34,13 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
-# This is a substring of the error google returns when the user doesn't have the correct scopes.
-_MISSING_SCOPES_ERROR_STR = "client not authorized for any of the scopes requested"
-
-_SCOPE_DOC_URL = "https://docs.danswer.dev/connectors/google_drive/overview"
-_ONYX_SCOPE_INSTRUCTIONS = (
-    "You have upgraded Danswer without updating the Google Drive scopes. "
-    f"Please refer to the documentation to learn how to update the scopes: {_SCOPE_DOC_URL}"
-)
-_SLIM_BATCH_SIZE = 500
-
 
 class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
         self,
         include_shared_drives: bool = True,
-        include_my_drives: bool = True,
         shared_drive_ids: list[str] | None = None,
+        include_my_drives: bool = True,
         my_drive_emails: list[str] | None = None,
         folder_ids: list[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
@@ -55,9 +48,11 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         self.batch_size = batch_size
 
         self.include_shared_drives = include_shared_drives
-        self.include_my_drives = include_my_drives
         self.shared_drive_ids = shared_drive_ids or []
+
+        self.include_my_drives = include_my_drives
         self.my_drive_emails = my_drive_emails or []
+
         self.folder_ids = folder_ids or []
 
         self.primary_admin_email: str | None = None
@@ -191,8 +186,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         try:
             yield from self._extract_docs_from_google_drive()
         except Exception as e:
-            if _MISSING_SCOPES_ERROR_STR in str(e):
-                raise PermissionError(_ONYX_SCOPE_INSTRUCTIONS) from e
+            if MISSING_SCOPES_ERROR_STR in str(e):
+                raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
             raise e
 
     def poll_source(
@@ -201,8 +196,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         try:
             yield from self._extract_docs_from_google_drive(start, end)
         except Exception as e:
-            if _MISSING_SCOPES_ERROR_STR in str(e):
-                raise PermissionError(_ONYX_SCOPE_INSTRUCTIONS) from e
+            if MISSING_SCOPES_ERROR_STR in str(e):
+                raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
             raise e
 
     def _extract_slim_docs_from_google_drive(
@@ -226,7 +221,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                     },
                 )
             )
-            if len(slim_batch) >= _SLIM_BATCH_SIZE:
+            if len(slim_batch) >= SLIM_BATCH_SIZE:
                 yield slim_batch
                 slim_batch = []
         yield slim_batch
@@ -239,6 +234,6 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         try:
             yield from self._extract_slim_docs_from_google_drive(start, end)
         except Exception as e:
-            if _MISSING_SCOPES_ERROR_STR in str(e):
-                raise PermissionError(_ONYX_SCOPE_INSTRUCTIONS) from e
+            if MISSING_SCOPES_ERROR_STR in str(e):
+                raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
             raise e

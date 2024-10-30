@@ -8,6 +8,7 @@ from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
+from googleapiclient.discovery import build
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import WEB_DOMAIN
@@ -15,6 +16,8 @@ from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import KV_CRED_KEY
 from danswer.configs.constants import KV_GOOGLE_DRIVE_CRED_KEY
 from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
+from danswer.connectors.google_drive.constants import MISSING_SCOPES_ERROR_STR
+from danswer.connectors.google_drive.constants import ONYX_SCOPE_INSTRUCTIONS
 from danswer.db.credentials import update_credential_json
 from danswer.db.models import User
 from danswer.key_value_store.factory import get_kv_store
@@ -32,7 +35,7 @@ GOOGLE_DRIVE_SCOPES = [
     "https://www.googleapis.com/auth/admin.directory.user.readonly",
 ]
 DB_CREDENTIALS_DICT_TOKEN_KEY = "google_drive_tokens"
-DB_CREDENTIALS_PRIMARY_ADMIN_KEY = "google_drive_delegated_user"
+DB_CREDENTIALS_PRIMARY_ADMIN_KEY = "google_drive_primary_admin"
 
 
 def _build_frontend_google_drive_redirect() -> str:
@@ -153,7 +156,28 @@ def update_credential_access_tokens(
     flow.fetch_token(code=auth_code)
     creds = flow.credentials
     token_json_str = creds.to_json()
-    new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: token_json_str}
+
+    # Get user email from Google API so we know who
+    # the primary admin is for this connector
+    try:
+        admin_service = build("drive", "v3", credentials=creds)
+        user_info = (
+            admin_service.about()
+            .get(
+                fields="user(emailAddress)",
+            )
+            .execute()
+        )
+        email = user_info.get("user", {}).get("emailAddress")
+    except Exception as e:
+        if MISSING_SCOPES_ERROR_STR in str(e):
+            raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
+        raise e
+
+    new_creds_dict = {
+        DB_CREDENTIALS_DICT_TOKEN_KEY: token_json_str,
+        DB_CREDENTIALS_PRIMARY_ADMIN_KEY: email,
+    }
 
     if not update_credential_json(credential_id, new_creds_dict, user, db_session):
         return None
@@ -162,15 +186,15 @@ def update_credential_access_tokens(
 
 def build_service_account_creds(
     source: DocumentSource,
-    delegated_user_email: str | None = None,
+    primary_admin_email: str | None = None,
 ) -> CredentialBase:
     service_account_key = get_service_account_key()
 
     credential_dict = {
         KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY: service_account_key.json(),
     }
-    if delegated_user_email:
-        credential_dict[DB_CREDENTIALS_PRIMARY_ADMIN_KEY] = delegated_user_email
+    if primary_admin_email:
+        credential_dict[DB_CREDENTIALS_PRIMARY_ADMIN_KEY] = primary_admin_email
 
     return CredentialBase(
         credential_json=credential_dict,

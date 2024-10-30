@@ -9,6 +9,7 @@ from fastapi import Query
 from fastapi import Request
 from fastapi import Response
 from fastapi import UploadFile
+from google.oauth2.credentials import Credentials
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -295,7 +296,7 @@ def upsert_service_account_credential(
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GOOGLE_DRIVE,
-            delegated_user_email=service_account_credential_request.google_drive_delegated_user,
+            primary_admin_email=service_account_credential_request.google_drive_primary_admin,
         )
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -321,7 +322,7 @@ def upsert_gmail_service_account_credential(
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GMAIL,
-            delegated_user_email=service_account_credential_request.gmail_delegated_user,
+            primary_admin_email=service_account_credential_request.gmail_delegated_user,
         )
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -357,18 +358,18 @@ def check_drive_tokens(
     return AuthStatus(authenticated=True)
 
 
-@router.get("/admin/connector/google-drive/authorize/{credential_id}")
-def admin_google_drive_auth(
-    response: Response, credential_id: str, _: User = Depends(current_admin_user)
-) -> AuthUrl:
-    # set a cookie that we can read in the callback (used for `verify_csrf`)
-    response.set_cookie(
-        key=_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME,
-        value=credential_id,
-        httponly=True,
-        max_age=600,
-    )
-    return AuthUrl(auth_url=get_auth_url(credential_id=int(credential_id)))
+# @router.get("/admin/connector/google-drive/authorize/{credential_id}")
+# def admin_google_drive_auth(
+#     response: Response, credential_id: str, _: User = Depends(current_admin_user)
+# ) -> AuthUrl:
+#     # set a cookie that we can read in the callback (used for `verify_csrf`)
+#     response.set_cookie(
+#         key=_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME,
+#         value=credential_id,
+#         httponly=True,
+#         max_age=600,
+#     )
+#     return AuthUrl(auth_url=get_auth_url(credential_id=int(credential_id)))
 
 
 @router.post("/admin/connector/file/upload")
@@ -953,10 +954,11 @@ def google_drive_callback(
         )
     credential_id = int(credential_id_cookie)
     verify_csrf(credential_id, callback.state)
-    if (
-        update_credential_access_tokens(callback.code, credential_id, user, db_session)
-        is None
-    ):
+
+    credentials: Credentials | None = update_credential_access_tokens(
+        callback.code, credential_id, user, db_session
+    )
+    if credentials is None:
         raise HTTPException(
             status_code=500, detail="Unable to fetch Google Drive access tokens"
         )
