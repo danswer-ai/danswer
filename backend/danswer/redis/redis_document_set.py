@@ -86,12 +86,12 @@ class RedisDocumentSet(RedisObjectHelper):
 
         return len(async_results)
 
-    def reset(self):
+    def reset(self) -> None:
         self.redis.delete(self.taskset_key)
         self.redis.delete(self.fence_key)
 
     @staticmethod
-    def reset_all(r: redis.Redis):
+    def reset_all(r: redis.Redis) -> None:
         for key in r.scan_iter(RedisDocumentSet.TASKSET_PREFIX + "*"):
             r.delete(key)
 
