@@ -4,11 +4,11 @@ import React from "react";
 
 export function HeaderTitle({
   children,
-  applicationPage,
+  onApplicationPage,
   backgroundToggled,
 }: {
   children: JSX.Element | string;
-  applicationPage?: boolean;
+  onApplicationPage?: boolean;
   backgroundToggled?: boolean;
 }) {
   const isString = typeof children === "string";
@@ -17,7 +17,7 @@ export function HeaderTitle({
   return (
     <h1
       className={`${textSize} ${
-        applicationPage
+        onApplicationPage
           ? backgroundToggled
             ? "text-text-sidebar-toggled-header"
             : "text-text-sidebar-header"

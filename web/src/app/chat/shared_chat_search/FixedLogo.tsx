@@ -10,11 +10,11 @@ import { FiSidebar } from "react-icons/fi";
 
 export default function FixedLogo({
   // Whether the logo is on the application page or not
-  applicationPage,
+  onApplicationPage,
   // Whether the sidebar is toggled or not
   backgroundToggled,
 }: {
-  applicationPage?: boolean;
+  onApplicationPage?: boolean;
   backgroundToggled?: boolean;
 }) {
   const combinedSettings = useContext(SettingsContext);
@@ -38,7 +38,7 @@ export default function FixedLogo({
               <div>
                 <HeaderTitle
                   backgroundToggled={backgroundToggled}
-                  applicationPage={applicationPage}
+                  onApplicationPage={onApplicationPage}
                 >
                   {enterpriseSettings.application_name}
                 </HeaderTitle>
@@ -49,7 +49,7 @@ export default function FixedLogo({
             ) : (
               <HeaderTitle
                 backgroundToggled={backgroundToggled}
-                applicationPage={applicationPage}
+                onApplicationPage={onApplicationPage}
               >
                 Danswer
               </HeaderTitle>

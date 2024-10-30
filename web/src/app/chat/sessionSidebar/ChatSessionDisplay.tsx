@@ -123,7 +123,7 @@ export function ChatSessionDisplay({
         }}
       >
         <BasicSelectable
-          applicationPage
+          onApplicationPage
           padding="extra"
           fullWidth
           selected={isSelected}

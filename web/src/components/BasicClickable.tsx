@@ -81,14 +81,14 @@ export function BasicSelectable({
   children,
   selected,
   hasBorder,
-  applicationPage,
+  onApplicationPage,
   fullWidth = false,
   padding = "normal",
 }: {
   children: string | JSX.Element;
   selected: boolean;
   hasBorder?: boolean;
-  applicationPage?: boolean;
+  onApplicationPage?: boolean;
   fullWidth?: boolean;
   padding?: "none" | "normal" | "extra";
 }) {
@@ -104,10 +104,10 @@ export function BasicSelectable({
         ${hasBorder ? "border border-border" : ""}
         ${
           selected
-            ? applicationPage
+            ? onApplicationPage
               ? "bg-background-chat-selected"
               : "bg-hover"
-            : applicationPage
+            : onApplicationPage
               ? "hover:bg-background-chat-hover"
               : "hover:bg-hover"
         }
