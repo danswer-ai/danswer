@@ -483,7 +483,7 @@ def connector_indexing_task(
     that the task transitioned to a "READY" state but the generator_complete_key doesn't exist.
     This will cause the primary worker to abort the indexing attempt and clean up.
     """
-    task_logger.info(
+    logger.info(
         f"Indexing spawned task starting: attempt={index_attempt_id} "
         f"tenant={tenant_id} "
         f"cc_pair={cc_pair_id} "
@@ -527,19 +527,19 @@ def connector_indexing_task(
                 cast(str, fence_json)
             )
         except ValueError:
-            task_logger.exception(
+            logger.exception(
                 f"connector_indexing_task: fence_data not decodeable: fence={rci.fence_key}"
             )
             raise
 
         if fence_data.index_attempt_id is None or fence_data.celery_task_id is None:
-            task_logger.info(
+            logger.info(
                 f"connector_indexing_task - Waiting for fence: fence={rci.fence_key}"
             )
             sleep(1)
             continue
 
-        task_logger.info(
+        logger.info(
             f"connector_indexing_task - Fence found, continuing...: fence={rci.fence_key}"
         )
         break
@@ -551,7 +551,7 @@ def connector_indexing_task(
 
     acquired = lock.acquire(blocking=False)
     if not acquired:
-        task_logger.warning(
+        logger.warning(
             f"Indexing task already running, exiting...: "
             f"cc_pair={cc_pair_id} search_settings={search_settings_id}"
         )
@@ -594,7 +594,7 @@ def connector_indexing_task(
                 rcs.fence_key, rci.generator_progress_key, lock, r
             )
 
-            task_logger.info(
+            logger.info(
                 f"Indexing spawned task running entrypoint: attempt={index_attempt_id} "
                 f"tenant={tenant_id} "
                 f"cc_pair={cc_pair_id} "
@@ -619,7 +619,7 @@ def connector_indexing_task(
 
             r.set(rci.generator_complete_key, HTTPStatus.OK.value)
     except Exception as e:
-        task_logger.exception(
+        logger.exception(
             f"Indexing spawned task failed: attempt={index_attempt_id} "
             f"tenant={tenant_id} "
             f"cc_pair={cc_pair_id} "
@@ -638,7 +638,7 @@ def connector_indexing_task(
         if lock.owned():
             lock.release()
 
-    task_logger.info(
+    logger.info(
         f"Indexing spawned task finished: attempt={index_attempt_id} "
         f"tenant={tenant_id} "
         f"cc_pair={cc_pair_id} "
