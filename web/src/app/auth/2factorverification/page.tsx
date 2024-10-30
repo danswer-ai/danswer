@@ -100,6 +100,13 @@ const Page = () => {
     setIsLoading(false);
   };
 
+  const handleInputChange = (newValue: string) => {
+    setValue(newValue);
+    if (newValue.length === 6) {
+      handleContinue();
+    }
+  };
+
   return (
     <main className="h-full">
       {isLoading && <Spinner />}
@@ -133,7 +140,7 @@ const Page = () => {
               <InputOTP
                 maxLength={6}
                 value={value}
-                onChange={(value) => setValue(value)}
+                onChange={handleInputChange}
               >
                 <InputOTPGroup>
                   <InputOTPSlot

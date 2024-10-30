@@ -214,6 +214,7 @@ function Main() {
                         </div>
                       }
                       asChild
+                      align='start'
                     >
                       {apiKey.api_key_name || <i>null</i>}
                     </CustomTooltip>

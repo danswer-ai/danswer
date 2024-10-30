@@ -245,6 +245,7 @@ export const PromptLibraryTable = ({
                                 <TrashIcon size={20} />
                               </Button>
                             }
+                            variant="destructive"
                           >
                             Delete
                           </CustomTooltip>

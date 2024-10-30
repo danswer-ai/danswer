@@ -21,6 +21,7 @@ export function DeleteButton({
           <Trash className="shrink-0" size={16} />
         </Button>
       }
+      variant="destructive"
     >
       Delete
     </CustomTooltip>

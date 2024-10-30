@@ -1,16 +1,15 @@
-import { useState } from "react";
 import Link from "next/link";
 import { CustomTooltip } from "./CustomTooltip";
 import { MinimalTeamspaceSnapshot } from "@/lib/types";
-import Image from "next/image";
 import { buildImgUrl } from "@/app/chat/files/images/utils";
 
 interface TeamspaceBubbleProps {
   teamspace?: MinimalTeamspaceSnapshot | undefined;
   link: string;
+  teamspaceId?: string | string[]
 }
 
-export const TeamspaceBubble = ({ teamspace, link }: TeamspaceBubbleProps) => {
+export const TeamspaceBubble = ({ teamspace, link, teamspaceId }: TeamspaceBubbleProps) => {
   if (!teamspace) return null;
 
   const generateGradient = (teamspaceName: string) => {
@@ -24,11 +23,11 @@ export const TeamspaceBubble = ({ teamspace, link }: TeamspaceBubbleProps) => {
       trigger={
         <Link href={`/${link}`} className="relative flex items-center">
           {teamspace.logo ? (
-            <div className="rounded-md w-10 h-10 bg-background overflow-hidden">
+            <div className={`rounded-md w-10 h-10 overflow-hidden flex items-center justify-center ${Number(teamspaceId) === teamspace.id ? "bg-secondary" : ""}`}>
               <img
                 src={buildImgUrl(teamspace.logo)}
                 alt="Teamspace Logo"
-                className="object-cover shrink-0 w-full h-full"
+                className={`object-cover shrink-0 ${Number(teamspaceId) === teamspace.id ? "w-8 h-8 rounded-sm" : "w-full h-full"}`}
                 width={40}
                 height={40}
               />

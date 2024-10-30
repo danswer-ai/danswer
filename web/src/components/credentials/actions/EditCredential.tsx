@@ -67,6 +67,7 @@ const EditCredential = ({
               name="name"
               placeholder={credential.name || ""}
               label="Name (optional):"
+              optional
             />
 
             {Object.entries(credential.credential_json).map(([key, value]) => (

@@ -1,5 +1,4 @@
 import { User } from "lucide-react";
-import Image from "next/image";
 import React from "react";
 import { User as UserTypes } from "@/lib/types";
 import { buildImgUrl } from "@/app/chat/files/images/utils";

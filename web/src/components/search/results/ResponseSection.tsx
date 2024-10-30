@@ -70,7 +70,7 @@ export const ResponseSection = ({
         }}
       >
         <div className="my-auto">{icon}</div>
-        <div className="my-auto text-sm text-gray-200 italic max-w-full truncate">
+        <div className="my-auto text-sm text-subtle italic max-w-full truncate">
           {header}
         </div>
 
@@ -84,7 +84,7 @@ export const ResponseSection = ({
           </div>
         )}
       </div>
-      {finalIsOpen && <div className="pb-1 mx-2 text-sm mb-1">{body}</div>}
+      {finalIsOpen && <div className="pb-2 text-sm">{body}</div>}
     </div>
   );
 };

@@ -89,6 +89,7 @@ export const EnmeddApiKeyForm = ({
               name="name"
               label="Name (optional):"
               autoCompleteDisabled={true}
+              optional
             />
 
             <BooleanFormField

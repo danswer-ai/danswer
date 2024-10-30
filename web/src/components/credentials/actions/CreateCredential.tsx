@@ -214,6 +214,7 @@ export default function CreateCredential({
                 name="name"
                 placeholder="(Optional) credential name.."
                 label="Name:"
+                optional
               />
               {Object.entries(credentialTemplate).map(([key, val]) => (
                 <TextFormField

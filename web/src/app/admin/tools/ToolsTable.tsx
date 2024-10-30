@@ -123,6 +123,7 @@ export function ToolsTable({
                           </Button>
                         }
                         asChild
+                        variant="destructive"
                       >
                         Delete
                       </CustomTooltip>

@@ -564,7 +564,7 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
           </div>
         </div>
 
-        <div className="min-w-[220px] lg:min-w-[300px] xl:min-w-[320px] max-w-[320px] hidden lg:flex flex-col">
+        <div className="min-w-[220px] xl:min-w-[320px] max-w-[320px] hidden lg:flex flex-col">
           {(ccPairs.length > 0 || documentSets.length > 0) && (
             <SourceSelector
               {...filterManager}

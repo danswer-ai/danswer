@@ -20,6 +20,8 @@ import { SettingsContext } from "../settings/SettingsProvider";
 import { AnswerSection } from "./results/AnswerSection";
 import { Quote, SearchResponse } from "@/lib/search/interfaces";
 import { QuotesSection } from "./results/QuotesSection";
+import { Button } from "../ui/button";
+import { CustomTooltip } from "../CustomTooltip";
 
 export default function SearchAnswer({
   searchAnswerExpanded,
@@ -70,7 +72,7 @@ export default function SearchAnswer({
   return (
     <div
       ref={answerContainerRef}
-      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"} ${!searchAnswerExpanded && searchAnswerOverflowing && "overflow-y-hidden"} p-4 border border-border-medium rounded-lg relative`}
+      className={`my-4 ${searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"} ${!searchAnswerExpanded && searchAnswerOverflowing ? "overflow-y-hidden" : ""} p-4 border border-border-medium rounded-lg relative overflow-y-auto`}
     >
       <div>
         <div className="flex gap-x-2">
@@ -128,38 +130,63 @@ export default function SearchAnswer({
           )}
 
           {searchResponse.messageId !== null && (
-            <div className="absolute flex right-3 bottom-3">
-              <HoverableIcon
-                icon={<LikeFeedbackIcon />}
-                onClick={() =>
-                  handleFeedback("like", searchResponse?.messageId as number)
+            <div className="flex justify-end">
+              <CustomTooltip
+                trigger={
+                  <Button
+                    onClick={() =>
+                      handleFeedback(
+                        "like",
+                        searchResponse?.messageId as number
+                      )
+                    }
+                    variant="ghost"
+                    size="icon"
+                  >
+                    <LikeFeedbackIcon />
+                  </Button>
                 }
-              />
-              <HoverableIcon
-                icon={<DislikeFeedbackIcon />}
-                onClick={() =>
-                  handleFeedback("dislike", searchResponse?.messageId as number)
+                side="bottom"
+              >
+                Like
+              </CustomTooltip>
+              <CustomTooltip
+                trigger={
+                  <Button
+                    onClick={() =>
+                      handleFeedback(
+                        "dislike",
+                        searchResponse?.messageId as number
+                      )
+                    }
+                    variant="ghost"
+                    size="icon"
+                  >
+                    <DislikeFeedbackIcon />
+                  </Button>
                 }
-              />
+                side="bottom"
+              >
+                Dislike
+              </CustomTooltip>
             </div>
           )}
         </div>
       </div>
+
+
+      {!searchAnswerExpanded && searchAnswerOverflowing && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center content-center w-full h-12 px-4 z-10">
+          <Button onClick={() => setSearchAnswerExpanded(true)} variant='secondary'>
+            Show more
+            <ToggleDown className="stroke-white" />
+          </Button>
+        </div>
+      )}
       {!searchAnswerExpanded && searchAnswerOverflowing && (
         <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-b from-background/5 via-background/60 to-background/90"></div>
       )}
 
-      {!searchAnswerExpanded && searchAnswerOverflowing && (
-        <div className="absolute bottom-0 left-0 flex items-center content-center w-full h-12 px-4">
-          <button
-            onClick={() => setSearchAnswerExpanded(true)}
-            className="flex items-center justify-center w-full max-w-sm py-2 mx-auto text-sm border rounded-full cursor-pointer gap-x-1 hover:bg-background-100 bg-background"
-          >
-            Show more
-            <ToggleDown />
-          </button>
-        </div>
-      )}
     </div>
   );
 }

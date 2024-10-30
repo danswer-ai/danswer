@@ -177,7 +177,7 @@ export default async function Home({
     : false;
 
   return (
-    <div className="h-full">
+    <div className="h-full overflow-y-auto">
       <HealthCheckBanner />
       <div className="relative flex h-full">
         <BarLayout user={user} BarComponent={SearchSidebar} />
@@ -190,22 +190,24 @@ export default async function Home({
       Only used in the EE version of the app. */}
         <ChatPopup />
         <InstantSSRAutoRefresh />
-        <div className="pt-20 lg:pt-14 lg:px-14 container min-h-screen overflow-y-auto overflow-x-hidden">
-          <SearchProvider
-            value={{
-              querySessions,
-              ccPairs,
-              documentSets,
-              assistants,
-              tags,
-              agenticSearchEnabled,
-              disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
-              shouldShowWelcomeModal,
-              shouldDisplayNoSources: shouldDisplayNoSourcesModal,
-            }}
-          >
-            <SearchSection defaultSearchType={searchTypeDefault} />
-          </SearchProvider>
+        <div className="w-full h-full overflow-hidden overflow-y-auto min-h-screen">
+          <div className="pt-20 lg:pt-14 lg:px-14 container">
+            <SearchProvider
+              value={{
+                querySessions,
+                ccPairs,
+                documentSets,
+                assistants,
+                tags,
+                agenticSearchEnabled,
+                disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
+                shouldShowWelcomeModal,
+                shouldDisplayNoSources: shouldDisplayNoSourcesModal,
+              }}
+            >
+              <SearchSection defaultSearchType={searchTypeDefault} />
+            </SearchProvider>
+          </div>
         </div>
       </div>
       <HelperFab />

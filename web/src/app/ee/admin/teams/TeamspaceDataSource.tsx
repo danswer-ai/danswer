@@ -229,7 +229,7 @@ export const TeamspaceDataSource = ({
                 </Badge>
               ))}
               {teamspace.cc_pairs.length > 8 && (
-                <div className="bg-background w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold">
+                <div className="bg-background w-10 h-full rounded-full flex items-center justify-center text-sm font-semibold">
                   +{teamspace.cc_pairs.length - 8}
                 </div>
               )}

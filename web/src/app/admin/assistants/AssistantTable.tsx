@@ -31,11 +31,11 @@ function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
 export function AssistantsTable({
   allAssistants,
   editableAssistants,
-  teamspaceId
+  teamspaceId,
 }: {
   allAssistants: Assistant[];
   editableAssistants: Assistant[];
-  teamspaceId?: string | string[]
+  teamspaceId?: string | string[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -125,7 +125,11 @@ export function AssistantsTable({
                         </div>
                       ) : (
                         <Link
-                          href={`/t/${teamspaceId}/admin/assistants/${assistant.id}?u=${Date.now()}`}
+                          href={
+                            teamspaceId
+                              ? `/t/${teamspaceId}/admin/assistants/${assistant.id}?u=${Date.now()}`
+                              : `/admin/assistants/${assistant.id}?u=${Date.now()}`
+                          }
                           className="flex items-center w-full gap-2 truncate"
                         >
                           <Pencil size={16} className="shrink-0" />
@@ -222,6 +226,7 @@ export function AssistantsTable({
                             </Button>
                           }
                           asChild
+                          variant="destructive"
                         >
                           Delete
                         </CustomTooltip>

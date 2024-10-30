@@ -13,6 +13,7 @@ import { CustomLLMProviderUpdateForm } from "./CustomLLMProviderUpdateForm";
 import { ConfiguredLLMProviderDisplay } from "./ConfiguredLLMProviderDisplay";
 import { Button } from "@/components/ui/button";
 import { CustomModal } from "@/components/CustomModal";
+import { Card, CardContent } from "@/components/ui/card";
 
 function LLMProviderUpdateModal({
   llmProviderDescriptor,
@@ -155,12 +156,15 @@ export function LLMConfiguration() {
           />
         </>
       ) : (
-        <Callout title="No LLM providers configured yet" color="yellow">
-          Please set one up below in order to start using enMedD AI
-        </Callout>
+        <Card className="md:w-96 flex border rounded shadow-sm border-border md:w-96">
+          <CardContent className="p-3">
+            <h3>No LLM providers configured yet</h3>
+            <p className="text-subtle text-sm pt-2">Please set one up below in order to start using enMedD AI</p>
+          </CardContent>
+        </Card>
       )}
 
-      <h3 className="pb-1.5">Add LLM Provider</h3>
+      <h3 className="pb-1.5 pt-6">Add LLM Provider</h3>
       <p className="pb-4 text-sm">
         Add a new LLM provider by either selecting from one of the default
         providers or by specifying your own custom LLM provider.

@@ -138,6 +138,7 @@ export default function SelectInput({
         as="select"
         name={name}
         className="w-full p-2 bg-black border rounded-md bg-input border-border-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        optional={optional}
       >
         <option value="">Select an option</option>
         {options?.map((option: any) => (

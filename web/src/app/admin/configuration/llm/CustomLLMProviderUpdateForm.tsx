@@ -406,6 +406,7 @@ export function CustomLLMProviderUpdateForm({
                 the Default Model configured above.`}
                 label="[Optional] Fast Model"
                 placeholder="E.g. gpt-4"
+                optional
               />
             )}
 

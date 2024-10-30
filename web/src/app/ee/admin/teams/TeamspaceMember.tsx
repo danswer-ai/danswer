@@ -239,6 +239,7 @@ export const TeamspaceMember = ({
                             </Button>
                           }
                           asChild
+                          variant="destructive"
                         >
                           Delete
                         </CustomTooltip>

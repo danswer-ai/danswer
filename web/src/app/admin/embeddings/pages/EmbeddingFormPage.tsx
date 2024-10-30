@@ -424,9 +424,9 @@ export default function EmbeddingForm() {
             </Card>
 
             <div
-              className={` mt-4 w-full grid md:grid-cols-3 gap-4 items-start`}
+              className={` mt-5 w-full flex justify-between gap-4 items-start flex-col md:flex-row`}
             >
-              <div>
+              <div className="w-full flex">
                 <Button
                   onClick={() => prevFormStep()}
                   variant="outline"

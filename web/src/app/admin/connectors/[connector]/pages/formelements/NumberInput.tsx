@@ -36,6 +36,7 @@ export default function NumberInput({
                 disabled:bg-gray-50 disabled:text-gray-500 disabled:border-gray-200 disabled:shadow-none
                 invalid:border-pink-500 invalid:text-pink-600
                 focus:invalid:border-pink-500 focus:invalid:ring-pink-500`}
+        optional={optional}
       />
     </div>
   );

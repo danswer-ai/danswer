@@ -700,23 +700,7 @@ export const ToggleDown = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 16 16"
-    >
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
+  return <ChevronDown size={size} className={className} />;
 };
 
 export const ToggleUp = ({
@@ -724,21 +708,7 @@ export const ToggleUp = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return (
-    <svg
-      style={{ width: `${size}px`, height: `${size}px` }}
-      className={`w-[${size}px] h-[${size}px] ` + className}
-      xmlns="http://www.w3.org/2000/svg"
-      width="200"
-      height="200"
-      viewBox="0 0 16 16"
-    >
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        d="M11.78 9.78a.75.75 0 0 1-1.06 0L8 7.06L5.28 9.78a.75.75 0 0 1-1.06-1.06l3.25-3.25a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06"
-        clipRule="evenodd"
-      />
-    </svg>
+    <ChevronUp size={size} className={className} />
   );
 };
 
@@ -2157,9 +2127,7 @@ export const DatabaseIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <Database  size={size} className={className} />
-  );
+  return <Database size={size} className={className} />;
 };
 export const SettingsIconSkeleton = ({
   size = 16,

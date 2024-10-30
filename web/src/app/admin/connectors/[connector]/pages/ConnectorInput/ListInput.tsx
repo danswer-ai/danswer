@@ -35,6 +35,7 @@ export default function ListInput({
               <Field
                 name={`${field.name}.${index}`}
                 className="w-full bg-input text-sm p-2 border border-border-medium rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
+                optional={field.optional}
               />
               <button
                 className="p-2 my-auto bg-input flex-none rounded-md bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"

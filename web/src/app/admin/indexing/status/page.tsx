@@ -72,7 +72,7 @@ function Main() {
 
 export default function Status() {
   return (
-    <div className="w-full h-full overflow-y-auto">
+    <div className="w-full h-full overflow-hidden overflow-y-auto">
       <div className="container">
         <AdminPageTitle
           icon={<NotebookIcon size={32} />}

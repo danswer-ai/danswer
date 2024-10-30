@@ -253,6 +253,7 @@ export function ChatSessionDisplay({
                             chatSessionName={chatSession.name}
                           />
                         }
+                        variant="destructive"
                       >
                         Delete
                       </CustomTooltip>

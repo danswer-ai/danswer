@@ -524,6 +524,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
                           />
                         </Button>
                       }
+                      variant="destructive"
                     >
                       Remove
                     </CustomTooltip>

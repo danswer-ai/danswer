@@ -49,7 +49,7 @@ import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
       return (
         <p>
           It looks like you don&apos;t have any connectors setup yet. Visit the{" "}
-          <Link className="text-link" href="/admin/data-sources">
+          <Link className="text-link" href={`/t/${teamspaceId}/admin/data-sources`}>
             Add Data Sources
           </Link>{" "}
           page to get started!
@@ -79,7 +79,7 @@ import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 export default function Status() {
   const { teamspaceId } = useParams();
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div className="h-full w-full overflow-hidden overflow-y-auto">
       <div className="container">
         <AdminPageTitle
           icon={<NotebookIcon size={32} />}

@@ -2,12 +2,8 @@ import { buildCCPairInfoUrl } from "@/app/admin/connector/[ccPairId]/lib";
 import { PageSelector } from "@/components/PageSelector";
 import { IndexAttemptStatus } from "@/components/Status";
 import { deleteCCPair } from "@/lib/documentDeletion";
+import { FailedConnectorIndexingStatus } from "@/lib/types";
 import {
-  ConnectorIndexingStatus,
-  FailedConnectorIndexingStatus,
-} from "@/lib/types";
-import {
-  Button,
   Table,
   TableBody,
   TableCell,
@@ -18,9 +14,9 @@ import {
 } from "@tremor/react";
 import Link from "next/link";
 import { useState } from "react";
-import { FiLink, FiMaximize2, FiTrash, FiTrash2 } from "react-icons/fi";
+import { FiLink, FiMaximize2, FiTrash } from "react-icons/fi";
 import { mutate } from "swr";
-import { PopupSpec } from "../admin/connectors/Popup";
+import { Button } from "../ui/button";
 
 export function FailedReIndexAttempts({
   failedIndexingStatuses,
@@ -106,8 +102,7 @@ export function FailedReIndexAttempts({
                     </TableCell>
                     <TableCell>
                       <Button
-                        size="xs"
-                        color="red"
+                        variant="destructive"
                         onClick={() =>
                           deleteCCPair(
                             reindexingProgress.connector_id,
@@ -120,10 +115,9 @@ export function FailedReIndexAttempts({
                               )
                           )
                         }
-                        icon={FiTrash}
                         disabled={reindexingProgress.is_deletable}
                       >
-                        Delete
+                        <FiTrash size={16} /> Delete
                       </Button>
                     </TableCell>
                   </TableRow>

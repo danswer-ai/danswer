@@ -64,9 +64,9 @@ function LLMProviderDisplay({
   };
 
   return (
-    <div className="flex p-3 border rounded shadow-sm border-border md:w-96">
+    <div className="flex flex-col sm:flex-row p-3 border rounded shadow-sm border-border md:w-96 gap-3">
       <div className="my-auto">
-        <div className="font-bold">{providerName} </div>
+        <div className="font-bold truncate max-w-52">{providerName} </div>
         <div className="text-xs italic">({existingLlmProvider.provider})</div>
         {!existingLlmProvider.is_default_provider && (
           <div
@@ -102,7 +102,7 @@ function LLMProviderDisplay({
       </div>
 
       {existingLlmProvider && (
-        <div className="my-auto ml-3">
+        <div className="my-auto">
           {existingLlmProvider.is_default_provider ? (
             <Badge variant="outline">Default</Badge>
           ) : (
@@ -111,12 +111,13 @@ function LLMProviderDisplay({
         </div>
       )}
 
-      <div className="ml-auto">
+      <div className="ml-auto w-full sm:w-auto">
         <CustomModal
           trigger={
             <Button
               variant={existingLlmProvider ? "outline" : "default"}
               onClick={() => setFormIsVisible(true)}
+              className="w-full sm:w-auto"
             >
               {existingLlmProvider ? "Edit" : "Set up"}
             </Button>

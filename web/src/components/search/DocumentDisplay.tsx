@@ -9,7 +9,7 @@ import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
 import { Badge } from "../ui/badge";
-import { BookIcon, Info, Radio, Tag } from "lucide-react";
+import { BookIcon, Info, Radio, Star, Tag } from "lucide-react";
 import { PopupSpec } from "../admin/connectors/Popup";
 import { FaStar } from "react-icons/fa";
 import { SettingsContext } from "../settings/SettingsProvider";
@@ -194,7 +194,7 @@ export const DocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className="text-sm border-b border-border px-4 py-8 break-words break-all"
+      className="text-sm border-b border-border px-4 py-8 break-words break-all relative"
       onMouseEnter={() => {
         setIsHovered(true);
       }}
@@ -204,19 +204,17 @@ export const DocumentDisplay = ({
       }}
     >
       <div
-        className={`absolute top-6 overflow-y-auto -translate-y-2/4 flex ${
-          isSelected ? "-left-14 w-14" : "-left-10 w-10"
-        }`}
+        className={`absolute overflow-y-auto flex top-2 right-2`}
       >
         {!hide && (document.is_relevant || additional_relevance?.relevant) && (
-          <FaStar
+          <Star
             size={16}
-            className="h-full text-xs text-star-indicator rounded w-fit my-auto select-none ml-auto mr-2"
+            className="shrink-0"
           />
         )}
       </div>
       <div
-        className={`collapsible ${
+        className={`collapsible space-y-2.5 ${
           hide ? "collapsible-closed overflow-y-auto border-transparent" : ""
         }`}
       >
@@ -267,13 +265,13 @@ export const DocumentDisplay = ({
             </TooltipGroup>
           </div>
         </div>
-        <div className="mt-1">
+        <div >
           <DocumentMetadataBlock document={document} />
         </div>
 
         <p
           style={{ transition: "height 0.30s ease-in-out" }}
-          className="pl-1 pt-2 pb-3 break-words text-wrap"
+          className="pl-1 break-words text-wrap"
         >
           {alternativeToggled && (contentEnriched || additional_relevance)
             ? relevance_explanation
