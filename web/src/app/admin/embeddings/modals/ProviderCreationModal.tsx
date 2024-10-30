@@ -280,7 +280,7 @@ export function ProviderCreationModal({
               </div>
 
               {errorMsg && (
-                <Callout title="Error" color="red">
+                <Callout title="Error" type="danger">
                   {errorMsg}
                 </Callout>
               )}

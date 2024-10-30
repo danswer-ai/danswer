@@ -1,12 +1,12 @@
 "use client";
 
-import { DateRangePickerValue } from "@tremor/react";
-import Text from "@/components/ui/text";
-import Title from "@/components/ui/title";
+import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
 import { getDatesList, useQueryAnalytics, useUserAnalytics } from "../lib";
 import { ThreeDotsLoader } from "@/components/Loading";
-import CardSection from "@/components/admin/CardSection";
 import { AreaChartDisplay } from "@/components/ui/areaChart";
+import Title from "@/components/ui/title";
+import Text from "@/components/ui/text";
+import CardSection from "@/components/admin/CardSection";
 
 export function QueryPerformanceChart({
   timeRange,
@@ -61,27 +61,8 @@ export function QueryPerformanceChart({
 
     chart = (
       <AreaChartDisplay
-        chartConfig={{
-          height: 30,
-          margin: { top: 20, right: 20, bottom: 20, left: 40 },
-          xAxis: {
-            type: "category",
-            dataKey: "Day",
-            tickLine: true,
-            axisLine: true,
-          },
-          yAxis: {
-            type: "number",
-            tickLine: true,
-            axisLine: true,
-          },
-          tooltip: {
-            trigger: "axis",
-            formatter: (value: any) => `${value}`,
-          },
-        }}
-        className="h-80"
-        chartData={dateRange.map((dateStr) => {
+        className="mt-4"
+        data={dateRange.map((dateStr) => {
           const queryAnalyticsForDate = dateToQueryAnalytics.get(dateStr);
           const userAnalyticsForDate = dateToUserAnalytics.get(dateStr);
           return {
@@ -92,11 +73,11 @@ export function QueryPerformanceChart({
         })}
         categories={["Queries", "Unique Users"]}
         index="Day"
-        // colors={["indigo", "fuchsia"]}
-        // valueFormatter={(number: number) =>
-        //   `${Intl.NumberFormat("us").format(number).toString()}`
-        // }
-        // yAxisWidth={60}
+        colors={["indigo", "fuchsia"]}
+        valueFormatter={(number: number) =>
+          `${Intl.NumberFormat("us").format(number).toString()}`
+        }
+        yAxisWidth={60}
       />
     );
   }

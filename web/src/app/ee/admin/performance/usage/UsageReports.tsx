@@ -1,5 +1,6 @@
 "use client";
 
+import { format } from "date-fns";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 
 import { FiDownload, FiDownloadCloud } from "react-icons/fi";
@@ -24,7 +25,15 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { PageSelector } from "@/components/PageSelector";
 import { Separator } from "@radix-ui/react-separator";
 import { DateRangePickerValue } from "../DateRangeSelector";
-import { DateRangePicker, DateRangePickerItem } from "@tremor/react";
+import { DateRangeSelector } from "../DateRangeSelector";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 function GenerateReportInput() {
   const [dateRange, setDateRange] = useState<DateRangePickerValue | undefined>(
@@ -100,36 +109,105 @@ function GenerateReportInput() {
       <Text className="mb-8">
         Generate usage statistics for users in the workspace.
       </Text>
-      <DateRangePicker
-        maxDate={new Date()}
-        defaultValue={{
-          from: undefined,
-          to: undefined,
-          selectValue: "allTime",
-        }}
-        className="mb-3"
-        enableClear={false}
-        selectPlaceholder="Range"
-        value={dateRange}
-        onValueChange={setDateRange}
-      >
-        <DateRangePickerItem key="lastWeek" value="lastWeek" from={lastWeek}>
-          Last 7 days
-        </DateRangePickerItem>
-        <DateRangePickerItem key="lastMonth" value="lastMonth" from={lastMonth}>
-          Last 30 days
-        </DateRangePickerItem>
-        <DateRangePickerItem key="lastYear" value="lastYear" from={lastYear}>
-          Last year
-        </DateRangePickerItem>
-        <DateRangePickerItem
-          key="allTime"
-          value="allTime"
-          from={new Date(1970, 0, 1)}
-        >
-          All time
-        </DateRangePickerItem>
-      </DateRangePicker>
+      <div className="grid gap-2 mb-3">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-[300px] justify-start text-left font-normal",
+                !dateRange && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "LLL dd, y")} -{" "}
+                    {format(dateRange.to, "LLL dd, y")}
+                  </>
+                ) : (
+                  format(dateRange.from, "LLL dd, y")
+                )
+              ) : (
+                <span>Pick a date range</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={(range) =>
+                range?.from &&
+                setDateRange({
+                  from: range.from,
+                  to: range.to ?? range.from,
+                  selectValue: "custom",
+                })
+              }
+              numberOfMonths={2}
+              disabled={(date) => date > new Date()}
+            />
+            <div className="border-t p-3">
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  setDateRange({
+                    from: lastWeek,
+                    to: new Date(),
+                    selectValue: "lastWeek",
+                  });
+                }}
+              >
+                Last 7 days
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  setDateRange({
+                    from: lastMonth,
+                    to: new Date(),
+                    selectValue: "lastMonth",
+                  });
+                }}
+              >
+                Last 30 days
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  setDateRange({
+                    from: lastYear,
+                    to: new Date(),
+                    selectValue: "lastYear",
+                  });
+                }}
+              >
+                Last year
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  setDateRange({
+                    from: new Date(1970, 0, 1),
+                    to: new Date(),
+                    selectValue: "allTime",
+                  });
+                }}
+              >
+                All time
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
       <Button
         color={"blue"}
         icon={FiDownloadCloud}

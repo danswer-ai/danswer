@@ -3,7 +3,8 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Text, Title } from "@tremor/react";
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
 import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import { ModelPreview } from "../../../../components/embedding/ModelSelector";

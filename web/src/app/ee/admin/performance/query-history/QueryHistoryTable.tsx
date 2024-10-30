@@ -6,6 +6,7 @@ import {
   TableRow,
   TableBody,
   TableCell,
+  TableHeader,
 } from "@/components/ui/table";
 import Text from "@/components/ui/text";
 
@@ -78,7 +79,6 @@ function SelectFeedbackType({
         <Select
           value={value}
           onValueChange={onValueChange as (value: string) => void}
-          enableClear={false}
         >
           <SelectItem value="all" icon={FiMinus}>
             Any
@@ -119,7 +119,14 @@ export function QueryHistoryTable() {
 
               <DateRangeSelector
                 value={timeRange}
-                onValueChange={setTimeRange}
+                onValueChange={(value) => {
+                  if (value) {
+                    setTimeRange({
+                      ...value,
+                      selectValue: timeRange.selectValue,
+                    });
+                  }
+                }}
               />
             </div>
 

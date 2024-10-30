@@ -42,7 +42,7 @@ export function IndexAttemptStatus({
     }
   } else if (status === "completed_with_errors") {
     const icon = (
-      <Badge color="yellow" icon={FiAlertTriangle}>
+      <Badge variant="secondary" icon={FiAlertTriangle}>
         Completed with errors
       </Badge>
     );

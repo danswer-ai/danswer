@@ -1,45 +1,74 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import React from "react";
+import {
+  Area,
+  AreaChart as ReChartsAreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 
-export const description = "A stacked area chart";
-
-export function AreaChartDisplay({
-  chartConfig,
-  chartData,
-  title,
-  description,
-  categories,
-  index,
-  // colors,
-  // valueFormatter,
-  // yAxisWidth,
-  className,
-}: {
-  chartConfig: any;
-  chartData: any;
+interface AreaChartProps {
+  data?: any[];
+  categories?: string[];
+  index?: string;
+  colors?: string[];
+  valueFormatter?: (value: number) => string;
+  startEndOnly?: boolean;
+  showXAxis?: boolean;
+  showYAxis?: boolean;
+  yAxisWidth?: number;
+  showAnimation?: boolean;
+  showTooltip?: boolean;
+  showLegend?: boolean;
+  showGridLines?: boolean;
+  showGradient?: boolean;
+  autoMinValue?: boolean;
+  minValue?: number;
+  maxValue?: number;
+  connectNulls?: boolean;
+  allowDecimals?: boolean;
+  className?: string;
   title?: string;
   description?: string;
-  categories: string[];
-  className?: string;
-  index: string;
-}) {
+}
+
+export function AreaChartDisplay({
+  data = [],
+  categories = [],
+  index,
+  colors = ["indigo", "fuchsia"],
+  valueFormatter = (number: number) =>
+    `${Intl.NumberFormat("us").format(number).toString()}`,
+  startEndOnly = false,
+  showXAxis = true,
+  showYAxis = true,
+  yAxisWidth = 56,
+  showAnimation = true,
+  showTooltip = true,
+  showLegend = false,
+  showGridLines = true,
+  showGradient = true,
+  autoMinValue = false,
+  minValue,
+  maxValue,
+  connectNulls = false,
+  allowDecimals = true,
+  className,
+  title,
+  description,
+}: AreaChartProps) {
   return (
     <Card className={className}>
       <CardHeader>
@@ -47,55 +76,54 @@ export function AreaChartDisplay({
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
-          <AreaChart
-            accessibilityLayer
-            data={chartData}
-            margin={{
-              left: 12,
-              right: 12,
-            }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey={index}
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 3)}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="dot" />}
-            />
-            {categories.map((category: string, ind: number) => {
-              return (
-                <Area
-                  key={ind}
-                  dataKey={category}
-                  type="natural"
-                  fill="var(--color-mobile)"
-                  fillOpacity={0.4}
-                  stroke="var(--color-mobile)"
-                  stackId="a"
+        <div className="h-[350px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <ReChartsAreaChart
+              data={data}
+              margin={{
+                top: 10,
+                right: 30,
+                left: 0,
+                bottom: 0,
+              }}
+            >
+              {showGridLines && <CartesianGrid strokeDasharray="3 3" />}
+              {showXAxis && (
+                <XAxis
+                  dataKey={index}
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => value.slice(0, 3)}
                 />
-              );
-            })}
-          </AreaChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 font-medium leading-none">
-              Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              January - June 2024
-            </div>
-          </div>
+              )}
+              {showYAxis && (
+                <YAxis
+                  width={yAxisWidth}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={valueFormatter}
+                  allowDecimals={allowDecimals}
+                />
+              )}
+              {showTooltip && <Tooltip />}
+              {categories.map((category, ind) => (
+                <Area
+                  key={category}
+                  type="monotone"
+                  dataKey={category}
+                  stackId="1"
+                  stroke={colors[ind % colors.length]}
+                  fill={colors[ind % colors.length]}
+                  fillOpacity={0.3}
+                  isAnimationActive={showAnimation}
+                  connectNulls={connectNulls}
+                />
+              ))}
+            </ReChartsAreaChart>
+          </ResponsiveContainer>
         </div>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 }
