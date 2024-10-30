@@ -219,7 +219,7 @@ export function TextFormField({
             ${small && "text-sm"}
             border 
             border-border 
-            rounded-lg
+            rounded-md
             w-full 
             py-2 
             px-3 

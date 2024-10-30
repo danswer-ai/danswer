@@ -1143,6 +1143,7 @@ export function AssistantEditor({
                                 message: "",
                               });
                             }}
+                            className="mt-3"
                             size="sm"
                             variant="next"
                           >

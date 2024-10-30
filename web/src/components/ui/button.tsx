@@ -26,7 +26,7 @@ const buttonVariants = cva(
           "bg-blue-600 text-neutral-50 hover:bg-blue-600/80 dark:bg-blue-600 dark:text-neutral-50 dark:hover:bg-blue-600/90",
         navigate:
           "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:hover:bg-blue-800 dark:border-blue-700",
-        edit: "bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80",
+        edit: "border border-neutral-200 bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80",
         update:
           "bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80",
         next: "bg-neutral-700 text-neutral-50 hover:bg-neutral-700/90 dark:bg-neutral-600 dark:text-neutral-50 dark:hover:bg-neutral-600/90",
