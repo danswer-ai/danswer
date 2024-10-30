@@ -122,7 +122,7 @@ function LLMProviderDisplay({
 
         <div className="ml-auto">
           <Button
-            variant={existingLlmProvider ? "edit" : "next"}
+            variant={existingLlmProvider ? "outline" : "next"}
             onClick={() => setFormIsVisible(true)}
           >
             {existingLlmProvider ? "Edit" : "Set up"}

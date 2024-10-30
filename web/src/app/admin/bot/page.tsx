@@ -235,7 +235,7 @@ const Main = () => {
             onClick={() => {
               setSlackBotTokensModalIsOpen(!slackBotTokensModalIsOpen);
             }}
-            variant="edit"
+            variant="outline"
             className="mt-2"
             icon={slackBotTokensModalIsOpen ? FiChevronUp : FiChevronDown}
           >

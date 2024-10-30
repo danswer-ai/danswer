@@ -10,7 +10,13 @@ import {
 } from "@/components/ui/table";
 import Text from "@/components/ui/text";
 
-import { Select, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectItem,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+} from "@/components/ui/select";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { ChatSessionMinimal } from "../usage/types";
 import { timestampToReadableDate } from "@/lib/dateUtils";
@@ -80,15 +86,29 @@ function SelectFeedbackType({
           value={value}
           onValueChange={onValueChange as (value: string) => void}
         >
-          <SelectItem value="all" icon={FiMinus}>
-            Any
-          </SelectItem>
-          <SelectItem value="like" icon={FiSmile}>
-            Like
-          </SelectItem>
-          <SelectItem value="dislike" icon={FiFrown}>
-            Dislike
-          </SelectItem>
+          <SelectTrigger>
+            <SelectValue placeholder="Select feedback type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              <div className="flex items-center gap-2">
+                <FiMinus className="h-4 w-4" />
+                <span>Any</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="like">
+              <div className="flex items-center gap-2">
+                <FiSmile className="h-4 w-4" />
+                <span>Like</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="dislike">
+              <div className="flex items-center gap-2">
+                <FiFrown className="h-4 w-4" />
+                <span>Dislike</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
         </Select>
       </div>
     </div>

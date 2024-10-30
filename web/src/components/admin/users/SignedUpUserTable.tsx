@@ -13,7 +13,13 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
-import { Select, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { GenericConfirmModal } from "@/components/modals/GenericConfirmModal";
 import { useState } from "react";
@@ -77,26 +83,33 @@ const UserRoleDropdown = ({
         onValueChange={handleChange}
         disabled={isSettingRole}
       >
-        {Object.entries(USER_ROLE_LABELS).map(([role, label]) =>
-          !isPaidEnterpriseFeaturesEnabled &&
-          (role === UserRole.CURATOR ||
-            role === UserRole.GLOBAL_CURATOR) ? null : (
-            <SelectItem
-              key={role}
-              value={role}
-              className={
-                role === UserRole.CURATOR ? "opacity-30 cursor-not-allowed" : ""
-              }
-              title={
-                role === UserRole.CURATOR
-                  ? "Curator role must be assigned in the Groups tab"
-                  : ""
-              }
-            >
-              {label}
-            </SelectItem>
-          )
-        )}
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {Object.entries(USER_ROLE_LABELS).map(([role, label]) =>
+            !isPaidEnterpriseFeaturesEnabled &&
+            (role === UserRole.CURATOR ||
+              role === UserRole.GLOBAL_CURATOR) ? null : (
+              <SelectItem
+                key={role}
+                value={role}
+                className={
+                  role === UserRole.CURATOR
+                    ? "opacity-30 cursor-not-allowed"
+                    : ""
+                }
+                title={
+                  role === UserRole.CURATOR
+                    ? "Curator role must be assigned in the Groups tab"
+                    : ""
+                }
+              >
+                {label}
+              </SelectItem>
+            )
+          )}
+        </SelectContent>
       </Select>
       {showConfirmModal && (
         <GenericConfirmModal
@@ -258,7 +271,7 @@ const SignedUpUserTable = ({
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>
+                <TableCell className="w-40 ">
                   <UserRoleDropdown
                     user={user}
                     onSuccess={onRoleChangeSuccess}

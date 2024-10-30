@@ -79,7 +79,7 @@ function DefaultLLMProviderDisplay({
         </div>
 
         <div className="ml-auto">
-          <Button variant="next" onClick={() => setFormIsVisible(true)}>
+          <Button variant="navigate" onClick={() => setFormIsVisible(true)}>
             Set up
           </Button>
         </div>

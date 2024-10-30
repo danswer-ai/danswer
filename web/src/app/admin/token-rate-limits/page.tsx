@@ -141,7 +141,7 @@ function Main() {
       <Button
         variant="submit"
         size="sm"
-        className="mt-3"
+        className="my-3"
         onClick={() => setModalIsOpen(true)}
       >
         Create a Token Rate Limit

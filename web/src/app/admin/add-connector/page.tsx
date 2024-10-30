@@ -100,7 +100,7 @@ export default function Page() {
         title="Add Connector"
         farRightElement={
           <Link href="/admin/indexing/status">
-            <Button variant="next">See Connectors</Button>
+            <Button variant="navigate">See Connectors</Button>
           </Link>
         }
       />

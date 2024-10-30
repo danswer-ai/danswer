@@ -291,7 +291,7 @@ const StandardAnswersTable = ({
         </div>
       </div>
       <div className="mx-auto">
-        <Table>
+        <Table className="w-full flex items-stretch">
           <TableHeader>
             <TableRow>
               {columns.map((column) => (

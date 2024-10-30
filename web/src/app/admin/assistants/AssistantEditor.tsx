@@ -874,7 +874,7 @@ export function AssistantEditor({
                                     )}
                                   />
                                 ) : (
-                                  <Italic className="text-sm">
+                                  <p className="text-sm italic">
                                     No Document Sets available.{" "}
                                     {user?.role !== "admin" && (
                                       <>
@@ -883,7 +883,7 @@ export function AssistantEditor({
                                         Danswer for assistance.
                                       </>
                                     )}
-                                  </Italic>
+                                  </p>
                                 )}
 
                                 <div className="mt-4  flex flex-col gap-y-4">

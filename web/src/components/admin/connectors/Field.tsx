@@ -538,7 +538,7 @@ export function TextArrayField<T extends Yup.AnyObject>({
                 arrayHelpers.push("");
               }}
               className="mt-3"
-              variant="success"
+              variant="update"
               size="sm"
               type="button"
               icon={FiPlus}
