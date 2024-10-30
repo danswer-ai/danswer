@@ -77,12 +77,6 @@ RUN apt-get update && \
 RUN python -c "from tokenizers import Tokenizer; \
 Tokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1')"
 
-# Add custom CA certificate
-COPY /path/to/volume/mount/my-ca.crt /usr/local/share/ca-certificates/my-ca.crt
-RUN chmod 644 /usr/local/share/ca-certificates/my-ca.crt && \
-    update-ca-certificates
-
-
 # Pre-downloading NLTK for setups with limited egress
 RUN python -c "import nltk; \
 nltk.download('stopwords', quiet=True); \
@@ -106,15 +100,12 @@ COPY supervisord.conf /usr/etc/supervisord.conf
 
 # Escape hatch
 COPY ./scripts/force_delete_connector_by_id.py /app/scripts/force_delete_connector_by_id.py
+COPY ./scripts/initialize_ca_cert.py /app/scripts/initialize_ca_cert.py
 
 # Put logo in assets
 COPY ./assets /app/assets
 
 ENV PYTHONPATH=/app
-
-
-COPY scripts/initialize_ca_cert.py /app/scripts/initialize_ca_cert.py
-RUN chmod +x /app/scripts/initialize_ca_cert.py
 
 # Default command which does nothing
 # This container is used by api server and background which specify their own CMD

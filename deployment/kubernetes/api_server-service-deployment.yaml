@@ -34,6 +34,9 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
+              if [ -f /usr/local/share/ca-certificates/my-ca.crt ]; then
+                update-ca-certificates;
+              fi &&
               alembic upgrade head &&
               echo "Starting Danswer Api Server" &&
               uvicorn danswer.main:app --host 0.0.0.0 --port 8080
@@ -59,7 +62,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: env-configmap
-          # Optional volume mount for CA certificate
+          # Optional volume mount for CA certificate - feel free to comment out
+          # If not necessary
           volumeMounts:
             - name: my-ca-cert-volume
               mountPath: /etc/ssl/certs/my-ca.crt

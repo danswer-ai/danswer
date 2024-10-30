@@ -5,7 +5,11 @@ services:
       context: ../../backend
       dockerfile: Dockerfile
     command: >
-      /bin/sh -c "alembic upgrade head &&
+      /bin/sh -c "
+      if [ -f /usr/local/share/ca-certificates/my-ca.crt ]; then
+        update-ca-certificates;
+      fi &&
+      alembic upgrade head &&
       echo \"Starting Danswer Api Server\" &&
       uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
     depends_on:
@@ -32,14 +36,19 @@ services:
     # Optional volume mount for CA certificate
     volumes:
       # Uncomment the following line if you need to include a custom CA certificate
-      # - ./my-ca.crt:/etc/ssl/certs/my-ca.crt
+      # - ${CA_CERT_PATH:-./my-ca.crt}:/usr/local/share/ca-certificates/my-ca.crt:ro
 
   background:
     image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
-    command: /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+    command: >
+      /bin/sh -c "
+      if [ -f /usr/local/share/ca-certificates/my-ca.crt ]; then
+        update-ca-certificates;
+      fi &&
+      /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
     depends_on:
       - relational_db
       - index
@@ -66,7 +75,7 @@ services:
     # Optional volume mount for CA certificate
     volumes:
       # Uncomment the following line if you need to include a custom CA certificate
-      # - ./my-ca.crt:/etc/ssl/certs/my-ca.crt
+      # - ${CA_CERT_PATH:-./my-ca.crt}:/usr/local/share/ca-certificates/my-ca.crt:ro
 
   web_server:
     image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
