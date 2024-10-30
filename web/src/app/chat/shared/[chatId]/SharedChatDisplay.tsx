@@ -27,7 +27,6 @@ function BackToDanswerButton() {
           Back to {enterpriseSettings?.application_name || "Danswer Chat"}
         </Button>
       </div>
-      pr
     </div>
   );
 }
