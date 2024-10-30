@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useEffect, useRef } from "react";
 import { Modal } from "@/components/Modal";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { getDisplayNameForModel, LlmOverride } from "@/lib/hooks";
 import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 
@@ -166,7 +166,9 @@ export function SetDefaultModelModal({
                 <td className="p-2">
                   System default{" "}
                   {defaultProvider?.default_model_name &&
-                    `(${getDisplayNameForModel(defaultProvider?.default_model_name)})`}
+                    `(${getDisplayNameForModel(
+                      defaultProvider?.default_model_name
+                    )})`}
                 </td>
               }
             </div>

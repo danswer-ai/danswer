@@ -15,17 +15,16 @@ import {
 } from "@/lib/types";
 import { AddConnectorForm } from "./AddConnectorForm";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectItem } from "@/components/ui/select";
+import Text from "@/components/ui/text";
 import {
   Table,
-  TableHead,
-  TableRow,
-  TableHeaderCell,
   TableBody,
   TableCell,
-  Text,
-  Select,
-  SelectItem,
-} from "@tremor/react";
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DeleteButton } from "@/components/DeleteButton";
 import { Bubble } from "@/components/Bubble";
@@ -161,15 +160,15 @@ export const GroupDisplay = ({
         {userGroup.users.length > 0 ? (
           <>
             <Table className="overflow-visible">
-              <TableHead>
+              <TableHeader>
                 <TableRow>
-                  <TableHeaderCell>Email</TableHeaderCell>
-                  <TableHeaderCell>Role</TableHeaderCell>
-                  <TableHeaderCell className="flex w-full">
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="flex w-full">
                     <div className="ml-auto">Remove User</div>
-                  </TableHeaderCell>
+                  </TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {userGroup.users.map((groupMember) => {
                   return (
@@ -274,14 +273,14 @@ export const GroupDisplay = ({
         {userGroup.cc_pairs.length > 0 ? (
           <>
             <Table className="overflow-visible">
-              <TableHead>
+              <TableHeader>
                 <TableRow>
-                  <TableHeaderCell>Connector</TableHeaderCell>
-                  <TableHeaderCell className="flex w-full">
+                  <TableHead>Connector</TableHead>
+                  <TableHead className="flex w-full">
                     <div className="ml-auto">Remove Connector</div>
-                  </TableHeaderCell>
+                  </TableHead>
                 </TableRow>
-              </TableHead>
+              </TableHeader>
               <TableBody>
                 {userGroup.cc_pairs.map((ccPair) => {
                   return (

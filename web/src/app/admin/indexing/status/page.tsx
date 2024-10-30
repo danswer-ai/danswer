@@ -5,7 +5,7 @@ import { NotebookIcon } from "@/components/icons/icons";
 import { CCPairIndexingStatusTable } from "./CCPairIndexingStatusTable";
 import { AdminPageTitle } from "@/components/admin/Title";
 import Link from "next/link";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { usePopupFromQuery } from "@/components/popup/PopupFromQuery";
 import { Button } from "@/components/ui/button";
@@ -92,12 +92,11 @@ export default function Status() {
         title="Existing Connectors"
         farRightElement={
           <Link href="/admin/add-connector">
-            <Button size="sm" className="bg-neutral-800">
-              Add Connector
-            </Button>
+            <Button variant="navigate">Add Connector</Button>
           </Link>
         }
       />
+
       <Main />
     </div>
   );

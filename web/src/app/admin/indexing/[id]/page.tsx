@@ -4,7 +4,7 @@ import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Title } from "@tremor/react";
+import Title from "@/components/ui/title";
 import useSWR from "swr";
 import { IndexAttemptErrorsTable } from "./IndexAttemptErrorsTable";
 import { buildIndexingErrorsUrl } from "./lib";

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { Modal } from "./Modal";
 import Link from "next/link";
 

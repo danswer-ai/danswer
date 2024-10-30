@@ -4,7 +4,7 @@ import { HealthCheckBanner } from "@/components/health/healthcheck";
 
 import { EmbeddingModelSelection } from "../EmbeddingModelSelectionForm";
 import { useEffect, useMemo, useState } from "react";
-import { Card, Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, WarningCircle } from "@phosphor-icons/react";
 import {

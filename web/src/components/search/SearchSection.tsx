@@ -41,10 +41,9 @@ import { ApiKeyModal } from "../llm/ApiKeyModal";
 import { useSearchContext } from "../context/SearchContext";
 import { useUser } from "../user/UserProvider";
 import UnconfiguredProviderText from "../chat_search/UnconfiguredProviderText";
-import { DateRangePickerValue } from "@tremor/react";
+import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
 import { Tag } from "@/lib/types";
 import { isEqual } from "lodash";
-import { WelcomeModal } from "../initialSetup/welcome/WelcomeModalWrapper";
 
 export type searchState =
   | "input"

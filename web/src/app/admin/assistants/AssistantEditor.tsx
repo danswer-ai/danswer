@@ -3,7 +3,7 @@
 import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
-import { Italic } from "@tremor/react";
+import Italic from "@/components/ui/italic";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
@@ -41,13 +41,13 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiInfo, FiPlus, FiX } from "react-icons/fi";
+import { FiInfo, FiX } from "react-icons/fi";
 import * as Yup from "yup";
 import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
-import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
+import { createPersona, updatePersona } from "./lib";
 import { Popover } from "@/components/popover/Popover";
 import {
   CameraIcon,

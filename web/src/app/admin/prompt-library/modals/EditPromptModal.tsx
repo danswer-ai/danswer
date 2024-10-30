@@ -2,10 +2,11 @@ import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { Modal } from "@/components/Modal";
-import { Textarea, TextInput } from "@tremor/react";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useInputPrompt } from "../hooks";
 import { EditPromptModalProps } from "../interfaces";
+import { Input } from "@/components/ui/input";
 
 const EditPromptSchema = Yup.object().shape({
   prompt: Yup.string().required("Title is required"),
@@ -74,7 +75,7 @@ const EditPromptModal = ({
                   Title
                 </label>
                 <Field
-                  as={TextInput}
+                  as={Input}
                   id="prompt"
                   name="prompt"
                   placeholder="Title (e.g. 'Draft email')"

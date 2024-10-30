@@ -1,5 +1,6 @@
 import { Modal } from "@/components/Modal";
-import { Text, Callout } from "@tremor/react";
+import Text from "@/components/ui/text";
+import { Callout } from "@/components/ui/callout";
 import { Button } from "@/components/ui/button";
 import { HostedEmbeddingModel } from "../../../../components/embedding/interfaces";
 
@@ -39,7 +40,7 @@ export function ModelSelectionConfirmationModal({
           </Text>
 
           {isCustom && (
-            <Callout title="IMPORTANT" color="yellow" className="mt-4">
+            <Callout type="warning" title="IMPORTANT" className="mt-4">
               We&apos;ve detected that this is a custom-specified embedding
               model. Since we have to download the model files before verifying
               the configuration&apos;s correctness, we won&apos;t be able to let

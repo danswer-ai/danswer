@@ -1,7 +1,8 @@
 import { PersonasTable } from "./PersonaTable";
 import { FiPlusSquare } from "react-icons/fi";
 import Link from "next/link";
-import { Text, Title } from "@tremor/react";
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
 import { Separator } from "@/components/ui/separator";
 import { AssistantsIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/admin/Title";

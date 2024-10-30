@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, Text, Title } from "@tremor/react";
-
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
 import {
   CloudEmbeddingProvider,
   CloudEmbeddingModel,

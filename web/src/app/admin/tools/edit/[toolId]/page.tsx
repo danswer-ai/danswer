@@ -1,5 +1,6 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Text, Title } from "@tremor/react";
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
 import CardSection from "@/components/admin/CardSection";
 import { ToolEditor } from "@/app/admin/tools/ToolEditor";
 import { fetchToolByIdSS } from "@/lib/tools/fetchTools";

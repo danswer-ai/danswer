@@ -1,17 +1,15 @@
 import { useQueryHistory } from "../lib";
 import { Separator } from "@/components/ui/separator";
 import {
-  Card,
   Table,
   TableHead,
   TableRow,
-  TableHeaderCell,
   TableBody,
   TableCell,
-  Text,
-  Select,
-  SelectItem,
-} from "@tremor/react";
+} from "@/components/ui/table";
+import Text from "@/components/ui/text";
+
+import { Select, SelectItem } from "@/components/ui/select";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { ChatSessionMinimal } from "../usage/types";
 import { timestampToReadableDate } from "@/lib/dateUtils";
@@ -129,16 +127,16 @@ export function QueryHistoryTable() {
           </div>
           <Separator />
           <Table className="mt-5">
-            <TableHead>
+            <TableHeader>
               <TableRow>
-                <TableHeaderCell>First User Message</TableHeaderCell>
-                <TableHeaderCell>First AI Response</TableHeaderCell>
-                <TableHeaderCell>Feedback</TableHeaderCell>
-                <TableHeaderCell>User</TableHeaderCell>
-                <TableHeaderCell>Persona</TableHeaderCell>
-                <TableHeaderCell>Date</TableHeaderCell>
+                <TableHead>First User Message</TableHead>
+                <TableHead>First AI Response</TableHead>
+                <TableHead>Feedback</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Persona</TableHead>
+                <TableHead>Date</TableHead>
               </TableRow>
-            </TableHead>
+            </TableHeader>
             <TableBody>
               {chatSessionData
                 .slice(NUM_IN_PAGE * (page - 1), NUM_IN_PAGE * page)

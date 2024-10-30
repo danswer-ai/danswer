@@ -4,7 +4,9 @@ import { Modal } from "@/components/Modal";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { useState } from "react";
 import useSWR from "swr";
-import { Callout, Text, Title } from "@tremor/react";
+import { Callout } from "@/components/ui/callout";
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
 import { Button } from "@/components/ui/button";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { FullLLMProvider, WellKnownLLMProviderDescriptor } from "./interfaces";
@@ -155,7 +157,7 @@ export function LLMConfiguration() {
           />
         </>
       ) : (
-        <Callout title="No LLM providers configured yet" color="yellow">
+        <Callout type="warning" title="No LLM providers configured yet">
           Please set one up below in order to start using Danswer!
         </Callout>
       )}

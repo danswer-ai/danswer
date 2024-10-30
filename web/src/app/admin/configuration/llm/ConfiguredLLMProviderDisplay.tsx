@@ -113,9 +113,9 @@ function LLMProviderDisplay({
         {existingLlmProvider && (
           <div className="my-auto ml-3">
             {existingLlmProvider.is_default_provider ? (
-              <Badge color="orange">Default</Badge>
+              <Badge variant="orange">Default</Badge>
             ) : (
-              <Badge color="green">Enabled</Badge>
+              <Badge variant="success">Enabled</Badge>
             )}
           </div>
         )}

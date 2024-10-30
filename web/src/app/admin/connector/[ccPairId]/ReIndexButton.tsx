@@ -3,7 +3,7 @@
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { runConnector } from "@/lib/connector";
 import { Button } from "@/components/ui/button";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
 import { useState } from "react";

@@ -22,7 +22,7 @@ export function IndexAttemptStatus({
 
   if (status === "failed") {
     const icon = (
-      <Badge color="red" icon={FiAlertTriangle}>
+      <Badge variant="destructive" icon={FiAlertTriangle}>
         Failed
       </Badge>
     );
@@ -62,25 +62,25 @@ export function IndexAttemptStatus({
     );
   } else if (status === "success") {
     badge = (
-      <Badge color="green" icon={FiCheckCircle}>
+      <Badge variant="success" icon={FiCheckCircle}>
         Succeeded
       </Badge>
     );
   } else if (status === "in_progress") {
     badge = (
-      <Badge color="amber" icon={FiClock}>
+      <Badge variant="in_progress" icon={FiClock}>
         In Progress
       </Badge>
     );
   } else if (status === "not_started") {
     badge = (
-      <Badge color="fuchsia" icon={FiClock}>
+      <Badge variant="purple" icon={FiClock}>
         Scheduled
       </Badge>
     );
   } else {
     badge = (
-      <Badge color="gray" icon={FiMinus}>
+      <Badge variant="outline" icon={FiMinus}>
         None
       </Badge>
     );
@@ -104,25 +104,25 @@ export function CCPairStatus({
 
   if (isDeleting) {
     badge = (
-      <Badge color="red" icon={FiAlertTriangle}>
+      <Badge variant="destructive" icon={FiAlertTriangle}>
         Deleting
       </Badge>
     );
   } else if (disabled) {
     badge = (
-      <Badge color="yellow" icon={FiPauseCircle}>
+      <Badge variant="secondary" icon={FiPauseCircle}>
         Paused
       </Badge>
     );
   } else if (status === "failed") {
     badge = (
-      <Badge color="red" icon={FiAlertTriangle}>
+      <Badge variant="destructive" icon={FiAlertTriangle}>
         Error
       </Badge>
     );
   } else {
     badge = (
-      <Badge color="green" icon={FiCheckCircle}>
+      <Badge variant="success" icon={FiCheckCircle}>
         Active
       </Badge>
     );

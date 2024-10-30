@@ -1,5 +1,5 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Text, Title } from "@tremor/react";
+import Text from "@/components/ui/text";
 import CardSection from "@/components/admin/CardSection";
 import { HeaderWrapper } from "@/components/header/HeaderWrapper";
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
@@ -7,6 +7,7 @@ import { SuccessfulPersonaUpdateRedirectType } from "@/app/admin/assistants/enum
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { DeletePersonaButton } from "@/app/admin/assistants/[id]/DeletePersonaButton";
 import { LargeBackButton } from "../../LargeBackButton";
+import Title from "@/components/ui/title";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);

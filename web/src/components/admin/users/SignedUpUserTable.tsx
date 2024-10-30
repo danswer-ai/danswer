@@ -9,17 +9,17 @@ import {
   Table,
   TableHead,
   TableRow,
-  TableHeaderCell,
   TableBody,
   TableCell,
-  Select,
-  SelectItem,
-} from "@tremor/react";
+} from "@/components/ui/table";
+
+import { Select, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { GenericConfirmModal } from "@/components/modals/GenericConfirmModal";
 import { useState } from "react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
+import { TableHeader } from "@/components/ui/table";
 
 interface Props {
   users: Array<User>;
@@ -76,7 +76,6 @@ const UserRoleDropdown = ({
         value={user.role}
         onValueChange={handleChange}
         disabled={isSettingRole}
-        className="w-40 mx-auto"
       >
         {Object.entries(USER_ROLE_LABELS).map(([role, label]) =>
           !isPaidEnterpriseFeaturesEnabled &&
@@ -243,18 +242,18 @@ const SignedUpUserTable = ({
           />
         ) : null}
         <Table className="overflow-visible">
-          <TableHead>
+          <TableHeader>
             <TableRow>
-              <TableHeaderCell>Email</TableHeaderCell>
-              <TableHeaderCell className="text-center">Role</TableHeaderCell>
-              <TableHeaderCell className="text-center">Status</TableHeaderCell>
-              <TableHeaderCell>
+              <TableHead>Email</TableHead>
+              <TableHead className="text-center">Role</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead>
                 <div className="flex">
                   <div className="ml-auto">Actions</div>
                 </div>
-              </TableHeaderCell>
+              </TableHead>
             </TableRow>
-          </TableHead>
+          </TableHeader>
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>

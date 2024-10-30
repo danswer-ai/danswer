@@ -1,7 +1,7 @@
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 
 export function MakePublicAssistantModal({
   isPublic,

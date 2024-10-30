@@ -2,7 +2,7 @@
 
 import { Label, SubLabel } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { Title } from "@tremor/react";
+import Title from "@/components/ui/title";
 import { Button } from "@/components/ui/button";
 import { Settings } from "./interfaces";
 import { useRouter } from "next/navigation";

@@ -20,9 +20,7 @@ export default function AnalyticsPage() {
         title="Usage Statistics"
         icon={<FiActivity size={32} />}
       />
-
       <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
-
       <QueryPerformanceChart timeRange={timeRange} />
       <FeedbackChart timeRange={timeRange} />
       <DanswerBotChart timeRange={timeRange} />

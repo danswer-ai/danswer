@@ -13,7 +13,7 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { Button } from "@/components/ui/button";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { ImageUpload } from "./ImageUpload";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import Link from "next/link";

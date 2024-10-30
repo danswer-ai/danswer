@@ -1,5 +1,5 @@
 import { LoadingAnimation } from "@/components/Loading";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";

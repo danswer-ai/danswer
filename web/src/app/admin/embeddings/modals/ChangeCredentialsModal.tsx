@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Modal } from "@/components/Modal";
-import { Text, Callout, Subtitle } from "@tremor/react";
+import { Callout } from "@/components/ui/callout";
+import Text from "@/components/ui/text";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/admin/connectors/Field";
@@ -227,7 +228,7 @@ export function ChangeCredentialsModal({
                   />
 
                   {deletionError && (
-                    <Callout title="Error" color="red" className="mt-4">
+                    <Callout type="danger" title="Error" className="mt-4">
                       {deletionError}
                     </Callout>
                   )}
@@ -257,7 +258,7 @@ export function ChangeCredentialsModal({
               )}
 
               {testError && (
-                <Callout title="Error" color="red" className="my-4">
+                <Callout type="danger" title="Error" className="my-4">
                   {testError}
                 </Callout>
               )}
@@ -276,9 +277,9 @@ export function ChangeCredentialsModal({
           </>
         )}
 
-        <Subtitle className="mt-4 font-bold text-lg mb-2">
+        <Text className="mt-4 font-bold text-lg mb-2">
           You can delete your configuration.
-        </Subtitle>
+        </Text>
         <Text className="mb-2">
           This is only possible if you have already switched to a different
           embedding type!
@@ -292,7 +293,7 @@ export function ChangeCredentialsModal({
           Delete Configuration
         </Button>
         {deletionError && (
-          <Callout title="Error" color="red" className="mt-4">
+          <Callout type="danger" title="Error" className="mt-4">
             {deletionError}
           </Callout>
         )}

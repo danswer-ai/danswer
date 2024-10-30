@@ -7,14 +7,11 @@ import {
   Table,
   TableHead,
   TableRow,
-  TableHeaderCell,
   TableBody,
   TableCell,
-  Title,
-  Divider,
-  Badge,
-  Text,
-} from "@tremor/react";
+} from "@/components/ui/table";
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
@@ -36,6 +33,8 @@ import {
 import { DeleteButton } from "@/components/DeleteButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { TableHeader } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 const numToDisplay = 50;
 
@@ -135,15 +134,15 @@ const DocumentSetTable = ({
     <div>
       <Title>Existing Document Sets</Title>
       <Table className="overflow-visible mt-2">
-        <TableHead>
+        <TableHeader>
           <TableRow>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell>Connectors</TableHeaderCell>
-            <TableHeaderCell>Status</TableHeaderCell>
-            <TableHeaderCell>Public</TableHeaderCell>
-            <TableHeaderCell>Delete</TableHeaderCell>
+            <TableHead>Name</TableHead>
+            <TableHead>Connectors</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Public</TableHead>
+            <TableHead>Delete</TableHead>
           </TableRow>
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {sortedDocumentSets
             .slice((page - 1) * numToDisplay, page * numToDisplay)
@@ -189,15 +188,19 @@ const DocumentSetTable = ({
                   </TableCell>
                   <TableCell>
                     {documentSet.is_up_to_date ? (
-                      <Badge size="md" color="green" icon={FiCheckCircle}>
+                      <Badge size="md" variant="success" icon={FiCheckCircle}>
                         Up to Date
                       </Badge>
                     ) : documentSet.cc_pair_descriptors.length > 0 ? (
-                      <Badge size="md" color="amber" icon={FiClock}>
+                      <Badge size="md" variant="in_progress" icon={FiClock}>
                         Syncing
                       </Badge>
                     ) : (
-                      <Badge size="md" color="red" icon={FiAlertTriangle}>
+                      <Badge
+                        size="md"
+                        variant="destructive"
+                        icon={FiAlertTriangle}
+                      >
                         Deleting
                       </Badge>
                     )}
@@ -206,7 +209,7 @@ const DocumentSetTable = ({
                     {documentSet.is_public ? (
                       <Badge
                         size="md"
-                        color={isEditable ? "green" : "gray"}
+                        variant={isEditable ? "success" : "outline"}
                         icon={FiUnlock}
                       >
                         Public
@@ -214,7 +217,7 @@ const DocumentSetTable = ({
                     ) : (
                       <Badge
                         size="md"
-                        color={isEditable ? "blue" : "gray"}
+                        variant={isEditable ? "purple" : "outline"}
                         icon={FiLock}
                       >
                         Private

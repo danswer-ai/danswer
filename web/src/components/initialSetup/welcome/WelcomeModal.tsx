@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Modal } from "../../Modal";
 import Cookies from "js-cookie";

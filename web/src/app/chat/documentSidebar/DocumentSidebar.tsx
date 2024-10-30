@@ -1,5 +1,5 @@
 import { DanswerDocument } from "@/lib/search/interfaces";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { removeDuplicateDocs } from "@/lib/documentUtils";

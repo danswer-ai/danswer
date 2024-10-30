@@ -8,7 +8,7 @@ import { createApiKey, updateApiKey } from "./lib";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { UserRole } from "@/lib/types";
 import { APIKey } from "./types";
 

@@ -13,7 +13,7 @@ import { credentialTemplates } from "@/lib/connectors/credentials";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ValidSources } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Title } from "@tremor/react";
+import Title from "@/components/ui/title";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";

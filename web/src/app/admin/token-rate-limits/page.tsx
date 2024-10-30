@@ -2,14 +2,8 @@
 
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button } from "@/components/ui/button";
-import {
-  Tab,
-  TabGroup,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Text,
-} from "@tremor/react";
+import { Tabs, TablList } from "@/components/ui/tabs";
+import Text from "@/components/ui/text";
 import { useState } from "react";
 import { FiGlobe, FiUser, FiUsers } from "react-icons/fi";
 import {

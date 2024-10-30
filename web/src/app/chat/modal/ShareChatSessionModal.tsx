@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
-import { Callout } from "@tremor/react";
+import { Callout } from "@/components/ui/callout";
 
-import { Text } from "@tremor/react";
-import { Spinner } from "@/components/Spinner";
+import Text from "@/components/ui/text";
+
 import { ChatSessionSharedStatus } from "../interfaces";
 import { FiCopy } from "react-icons/fi";
 import { CopyButton } from "@/components/CopyButton";
 import { SEARCH_PARAM_NAMES } from "../searchParams";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { destructureValue, structureValue } from "@/lib/llm/utils";
+import { structureValue } from "@/lib/llm/utils";
 import { LlmOverride } from "@/lib/hooks";
 import { Separator } from "@radix-ui/react-separator";
 
@@ -156,7 +156,7 @@ export function ShareChatSessionModal({
               </div>
             ) : (
               <div>
-                <Callout title="Warning" color="yellow" className="mb-4">
+                <Callout type="warning" title="Warning" className="mb-4">
                   Ensure that all content in the chat is safe to share with the
                   whole organization. The content of the retrieved documents
                   will not be visible, but the names of cited documents as well
@@ -194,7 +194,7 @@ export function ShareChatSessionModal({
 
           <Separator className="my-4" />
           <div className="mb-4">
-            <Callout title="Clone Chat" color="blue">
+            <Callout type="notice" title="Clone Chat">
               Generate a link to clone this chat session with the current query.
               This allows others to start a new chat with the same initial
               message and settings.

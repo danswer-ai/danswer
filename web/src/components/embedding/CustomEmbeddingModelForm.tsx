@@ -3,7 +3,7 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { TextFormField, BooleanFormField } from "../admin/connectors/Field";
 import { Dispatch, SetStateAction } from "react";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { EmbeddingDetails } from "@/app/admin/embeddings/EmbeddingModelSelectionForm";
 

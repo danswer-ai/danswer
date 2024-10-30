@@ -15,11 +15,11 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableHeaderCell,
+  TableHeader,
   TableRow,
-  Text,
-  Title,
-} from "@tremor/react";
+} from "@/components/ui/table";
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
 import { FiArrowUpRight, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import Link from "next/link";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
@@ -53,14 +53,14 @@ const SlackBotConfigsTable = ({
   return (
     <div>
       <Table>
-        <TableHead>
+        <TableHeader>
           <TableRow>
-            <TableHeaderCell>Channels</TableHeaderCell>
-            <TableHeaderCell>Assistant</TableHeaderCell>
-            <TableHeaderCell>Document Sets</TableHeaderCell>
-            <TableHeaderCell>Delete</TableHeaderCell>
+            <TableHead>Channels</TableHead>
+            <TableHead>Assistant</TableHead>
+            <TableHead>Document Sets</TableHead>
+            <TableHead>Delete</TableHead>
           </TableRow>
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {slackBotConfigs
             .slice(numToDisplay * (page - 1), numToDisplay * page)

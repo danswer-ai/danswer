@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
-import { Text, Callout } from "@tremor/react";
+import Text from "@/components/ui/text";
+import { Callout } from "@/components/ui/callout";
 import { Button } from "@/components/ui/button";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";

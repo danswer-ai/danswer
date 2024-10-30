@@ -1,7 +1,7 @@
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import React, { useState, useEffect } from "react";
 import { FormikProps, FieldArray, ArrayHelpers, ErrorMessage } from "formik";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { FiUsers } from "react-icons/fi";
 import { Separator } from "@/components/ui/separator";
 import { UserGroup, UserRole } from "@/lib/types";

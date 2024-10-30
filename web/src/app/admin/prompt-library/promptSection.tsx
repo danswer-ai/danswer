@@ -5,7 +5,7 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Text } from "@tremor/react";
+import Text from "@/components/ui/text";
 import { useState } from "react";
 import AddPromptModal from "./modals/AddPromptModal";
 import EditPromptModal from "./modals/EditPromptModal";

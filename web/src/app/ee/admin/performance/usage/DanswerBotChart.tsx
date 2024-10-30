@@ -1,12 +1,9 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { getDatesList, useDanswerBotAnalytics } from "../lib";
-import {
-  AreaChart,
-  Card,
-  Title,
-  Text,
-  DateRangePickerValue,
-} from "@tremor/react";
+import { AreaChart } from "@tremor/react";
+import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
 import CardSection from "@/components/admin/CardSection";
 
 export function DanswerBotChart({
