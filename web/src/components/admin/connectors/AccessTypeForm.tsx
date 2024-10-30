@@ -75,12 +75,13 @@ export function AccessTypeForm({
     <>
       {isPaidEnterpriseEnabled && isAdmin && (
         <>
-          <div className="flex gap-x-2 items-center">
+          <div>
             <label className="text-text-950 font-medium">Document Access</label>
+            <p className="text-sm text-text-500">
+              Control who has access to the documents indexed by this connector.
+            </p>
           </div>
-          <p className="text-sm text-text-500 mb-2">
-            Control who has access to the documents indexed by this connector.
-          </p>
+
           <DefaultDropdown
             options={options}
             selected={access_type.value}
@@ -91,11 +92,9 @@ export function AccessTypeForm({
           />
 
           {access_type.value === "sync" && isAutoSyncSupported && (
-            <div>
-              <AutoSyncOptions
-                connectorType={connector as ValidAutoSyncSources}
-              />
-            </div>
+            <AutoSyncOptions
+              connectorType={connector as ValidAutoSyncSources}
+            />
           )}
         </>
       )}
