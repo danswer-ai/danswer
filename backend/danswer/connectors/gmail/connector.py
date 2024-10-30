@@ -1,4 +1,8 @@
+import re
+import time
 from base64 import urlsafe_b64decode
+from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import cast
 from typing import Dict
@@ -6,6 +10,7 @@ from typing import Dict
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 from googleapiclient import discovery  # type: ignore
+from googleapiclient.errors import HttpError  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -32,6 +37,43 @@ from danswer.connectors.models import Section
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+def _execute_with_retry(request: Any) -> Any:
+    try:
+        return request.execute()
+    except HttpError as error:
+        if error.resp.status == 429:
+            # Attempt to get 'Retry-After' from headers
+            retry_after = error.resp.get("Retry-After")
+            if retry_after:
+                sleep_time = int(retry_after)
+            else:
+                # Extract 'Retry after' timestamp from error message
+                match = re.search(
+                    r"Retry after (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)",
+                    str(error),
+                )
+                if match:
+                    retry_after_timestamp = match.group(1)
+                    retry_after_dt = datetime.strptime(
+                        retry_after_timestamp, "%Y-%m-%dT%H:%M:%S.%fZ"
+                    )
+                    sleep_time = max(
+                        int(
+                            (
+                                retry_after_dt - datetime.now(timezone.utc)
+                            ).total_seconds()
+                        ),
+                        0,
+                    )
+                else:
+                    sleep_time = 60
+
+            logger.info(f"Rate limit exceeded. Sleeping for {sleep_time} seconds.")
+            time.sleep(sleep_time)
+        else:
+            raise
 
 
 class GmailConnector(LoadConnector, PollConnector):
@@ -156,7 +198,7 @@ class GmailConnector(LoadConnector, PollConnector):
         query = GmailConnector._build_time_range_query(time_range_start, time_range_end)
         service = discovery.build("gmail", "v1", credentials=self.creds)
         while page_token is not None:
-            result = (
+            result = _execute_with_retry(
                 service.users()
                 .messages()
                 .list(
@@ -165,18 +207,17 @@ class GmailConnector(LoadConnector, PollConnector):
                     q=query,
                     maxResults=self.batch_size,
                 )
-                .execute()
             )
+
             page_token = result.get("nextPageToken")
             messages = result.get("messages", [])
             doc_batch = []
             for message in messages:
                 message_id = message["id"]
-                msg = (
+                msg = _execute_with_retry(
                     service.users()
                     .messages()
                     .get(userId="me", id=message_id, format="full")
-                    .execute()
                 )
                 doc = self._email_to_document(msg)
                 doc_batch.append(doc)
