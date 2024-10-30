@@ -65,7 +65,7 @@ export const TeamspaceModal = ({
           >
             {team.logo ? (
               <div className="rounded-md w-10 h-10 bg-background overflow-hidden">
-                <Image
+                <img
                   src={buildImgUrl(team.logo)}
                   alt="Teamspace Logo"
                   className="object-cover shrink-0 w-full h-full"

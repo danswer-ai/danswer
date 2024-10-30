@@ -15,7 +15,7 @@ export function InMessageImage({ fileId }: { fileId: string }) {
         onOpenChange={(open) => setFullImageShowing(open)}
       />
 
-      <Image
+      <img
         alt={fileId}
         className={`
           max-w-lg 

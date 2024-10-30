@@ -57,7 +57,7 @@ export function UserProfile({
       onClick={onClick}
     >
       {user?.profile ? (
-        <Image
+        <img
           src={buildImgUrl(user.profile)}
           alt="User profile"
           className="w-full h-full object-cover rounded-full"

@@ -25,7 +25,7 @@ export const TeamspaceBubble = ({ teamspace, link }: TeamspaceBubbleProps) => {
         <Link href={`/${link}`} className="relative flex items-center">
           {teamspace.logo ? (
             <div className="rounded-md w-10 h-10 bg-background overflow-hidden">
-              <Image
+              <img
                 src={buildImgUrl(teamspace.logo)}
                 alt="Teamspace Logo"
                 className="object-cover shrink-0 w-full h-full"

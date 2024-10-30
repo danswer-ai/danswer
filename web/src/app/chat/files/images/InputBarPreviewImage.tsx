@@ -30,7 +30,7 @@ export function InputBarPreviewImage({ fileId }: { fileId: string }) {
           h-10
       `}
       >
-        <Image
+        <img
           alt="preview image input"
           onClick={() => setFullImageShowing(true)}
           className="h-16 w-16 object-cover rounded-regular bg-background cursor-pointer"
