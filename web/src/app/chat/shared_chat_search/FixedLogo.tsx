@@ -9,10 +9,10 @@ import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 
 export default function FixedLogo({
-  chat,
+  applicationPage,
   backgroundToggled,
 }: {
-  chat?: boolean;
+  applicationPage?: boolean;
   backgroundToggled?: boolean;
 }) {
   const combinedSettings = useContext(SettingsContext);
@@ -34,7 +34,10 @@ export default function FixedLogo({
           <div className="w-full">
             {enterpriseSettings && enterpriseSettings.application_name ? (
               <div>
-                <HeaderTitle backgroundToggled={backgroundToggled} chat={chat}>
+                <HeaderTitle
+                  backgroundToggled={backgroundToggled}
+                  applicationPage={applicationPage}
+                >
                   {enterpriseSettings.application_name}
                 </HeaderTitle>
                 {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
@@ -42,7 +45,10 @@ export default function FixedLogo({
                 )}
               </div>
             ) : (
-              <HeaderTitle backgroundToggled={backgroundToggled} chat={chat}>
+              <HeaderTitle
+                backgroundToggled={backgroundToggled}
+                applicationPage={applicationPage}
+              >
                 Danswer
               </HeaderTitle>
             )}
