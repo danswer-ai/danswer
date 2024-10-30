@@ -107,8 +107,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def _fetch_drive_items(
         self,
         is_slim: bool,
-        time_range_start: SecondsSinceUnixEpoch | None = None,
-        time_range_end: SecondsSinceUnixEpoch | None = None,
+        start: SecondsSinceUnixEpoch | None = None,
+        end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
         admin_drive_service = self.get_google_resource()
 
@@ -130,8 +130,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                     service=admin_drive_service,
                     drive_id=shared_drive_id,
                     is_slim=is_slim,
-                    time_range_start=time_range_start,
-                    time_range_end=time_range_end,
+                    start=start,
+                    end=end,
                 ):
                     yield file
 
@@ -141,8 +141,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                     service=admin_drive_service,
                     parent_id=folder_id,
                     personal_drive=False,
-                    time_range_start=time_range_start,
-                    time_range_end=time_range_end,
+                    start=start,
+                    end=end,
                 )
 
         # get all personal docs from each users' personal drive
@@ -159,8 +159,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                     service=user_drive_service,
                     email=email,
                     is_slim=is_slim,
-                    time_range_start=time_range_start,
-                    time_range_end=time_range_end,
+                    start=start,
+                    end=end,
                 )
 
     def _extract_docs_from_google_drive(

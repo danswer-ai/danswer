@@ -17,15 +17,15 @@ logger = setup_logger()
 
 
 def _generate_time_range_filter(
-    time_range_start: SecondsSinceUnixEpoch | None = None,
-    time_range_end: SecondsSinceUnixEpoch | None = None,
+    start: SecondsSinceUnixEpoch | None = None,
+    end: SecondsSinceUnixEpoch | None = None,
 ) -> str:
     time_range_filter = ""
-    if time_range_start is not None:
-        time_start = datetime.utcfromtimestamp(time_range_start).isoformat() + "Z"
+    if start is not None:
+        time_start = datetime.utcfromtimestamp(start).isoformat() + "Z"
         time_range_filter += f" and modifiedTime >= '{time_start}'"
-    if time_range_end is not None:
-        time_stop = datetime.utcfromtimestamp(time_range_end).isoformat() + "Z"
+    if end is not None:
+        time_stop = datetime.utcfromtimestamp(end).isoformat() + "Z"
         time_range_filter += f" and modifiedTime <= '{time_stop}'"
     return time_range_filter
 
@@ -57,12 +57,12 @@ def _get_files_in_parent(
     service: Resource,
     parent_id: str,
     personal_drive: bool,
-    time_range_start: SecondsSinceUnixEpoch | None = None,
-    time_range_end: SecondsSinceUnixEpoch | None = None,
+    start: SecondsSinceUnixEpoch | None = None,
+    end: SecondsSinceUnixEpoch | None = None,
     is_slim: bool = False,
 ) -> Iterator[GoogleDriveFileType]:
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}' and '{parent_id}' in parents"
-    query += _generate_time_range_filter(time_range_start, time_range_end)
+    query += _generate_time_range_filter(start, end)
 
     for file in execute_paginated_retrieval(
         retrieval_function=service.files().list,
@@ -83,8 +83,8 @@ def crawl_folders_for_files(
     service: Resource,
     parent_id: str,
     personal_drive: bool,
-    time_range_start: SecondsSinceUnixEpoch | None = None,
-    time_range_end: SecondsSinceUnixEpoch | None = None,
+    start: SecondsSinceUnixEpoch | None = None,
+    end: SecondsSinceUnixEpoch | None = None,
 ) -> Iterator[GoogleDriveFileType]:
     """
     This one can start crawling from any folder. It is slower though.
@@ -98,8 +98,8 @@ def crawl_folders_for_files(
     yield from _get_files_in_parent(
         service=service,
         personal_drive=personal_drive,
-        time_range_start=time_range_start,
-        time_range_end=time_range_end,
+        start=start,
+        end=end,
         parent_id=parent_id,
     )
 
@@ -113,8 +113,8 @@ def crawl_folders_for_files(
             service=service,
             parent_id=subfolder["id"],
             personal_drive=personal_drive,
-            time_range_start=time_range_start,
-            time_range_end=time_range_end,
+            start=start,
+            end=end,
         )
 
 
@@ -122,19 +122,19 @@ def get_files_in_shared_drive(
     service: Resource,
     drive_id: str,
     is_slim: bool = False,
-    time_range_start: SecondsSinceUnixEpoch | None = None,
-    time_range_end: SecondsSinceUnixEpoch | None = None,
+    start: SecondsSinceUnixEpoch | None = None,
+    end: SecondsSinceUnixEpoch | None = None,
 ) -> Iterator[GoogleDriveFileType]:
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}'"
-    query += _generate_time_range_filter(time_range_start, time_range_end)
+    query += _generate_time_range_filter(start, end)
     for file in execute_paginated_retrieval(
         retrieval_function=service.files().list,
         list_key="files",
         corpora="drive",
-        drive_id=drive_id,
+        driveId=drive_id,
         supportsAllDrives=True,
         includeItemsFromAllDrives=True,
-        fields=FILE_FIELDS if is_slim else SLIM_FILE_FIELDS,
+        fields=SLIM_FILE_FIELDS if is_slim else FILE_FIELDS,
         q=query,
     ):
         yield file
@@ -144,16 +144,16 @@ def get_files_in_my_drive(
     service: Resource,
     email: str,
     is_slim: bool = False,
-    time_range_start: SecondsSinceUnixEpoch | None = None,
-    time_range_end: SecondsSinceUnixEpoch | None = None,
+    start: SecondsSinceUnixEpoch | None = None,
+    end: SecondsSinceUnixEpoch | None = None,
 ) -> Iterator[GoogleDriveFileType]:
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}' and '{email}' in owners"
-    query += _generate_time_range_filter(time_range_start, time_range_end)
+    query += _generate_time_range_filter(start, end)
     for file in execute_paginated_retrieval(
         retrieval_function=service.files().list,
         list_key="files",
         corpora="user",
-        fields=FILE_FIELDS if is_slim else SLIM_FILE_FIELDS,
+        fields=SLIM_FILE_FIELDS if is_slim else FILE_FIELDS,
         q=query,
     ):
         yield file
