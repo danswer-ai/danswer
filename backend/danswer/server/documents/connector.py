@@ -358,20 +358,6 @@ def check_drive_tokens(
     return AuthStatus(authenticated=True)
 
 
-# @router.get("/admin/connector/google-drive/authorize/{credential_id}")
-# def admin_google_drive_auth(
-#     response: Response, credential_id: str, _: User = Depends(current_admin_user)
-# ) -> AuthUrl:
-#     # set a cookie that we can read in the callback (used for `verify_csrf`)
-#     response.set_cookie(
-#         key=_GOOGLE_DRIVE_CREDENTIAL_ID_COOKIE_NAME,
-#         value=credential_id,
-#         httponly=True,
-#         max_age=600,
-#     )
-#     return AuthUrl(auth_url=get_auth_url(credential_id=int(credential_id)))
-
-
 @router.post("/admin/connector/file/upload")
 def upload_files(
     files: list[UploadFile],
