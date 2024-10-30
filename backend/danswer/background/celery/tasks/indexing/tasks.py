@@ -12,9 +12,6 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
-from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
-    RedisConnectorIndexingFenceData,
-)
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.background.indexing.run_indexing import RunIndexingCallbackInterface
@@ -46,6 +43,7 @@ from danswer.db.swap_index import check_index_swap
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector_index import RedisConnectorIndexingFenceData
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version

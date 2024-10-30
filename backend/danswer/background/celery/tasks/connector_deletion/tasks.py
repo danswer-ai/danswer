@@ -19,9 +19,7 @@ from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.search_settings import get_all_search_settings
 from danswer.redis.redis_connector import RedisConnector
-from danswer.redis.redis_connector import (
-    RedisConnectorDeletionFenceData,
-)
+from danswer.redis.redis_connector_delete import RedisConnectorDeletionFenceData
 from danswer.redis.redis_pool import get_redis_client
 
 

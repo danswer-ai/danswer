@@ -22,7 +22,10 @@ from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
 from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import SqlEngine
-from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector_delete import RedisConnectorDelete
+from danswer.redis.redis_connector_index import RedisConnectorIndex
+from danswer.redis.redis_connector_prune import RedisConnectorPrune
+from danswer.redis.redis_connector_stop import RedisConnectorStop
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 
@@ -129,13 +132,13 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
             r.delete(key)
 
-        RedisConnector.RedisConnectorDelete.reset_all(r)
+        RedisConnectorDelete.reset_all(r)
 
-        RedisConnector.RedisConnectorPrune.reset_all(r)
+        RedisConnectorPrune.reset_all(r)
 
-        RedisConnector.indexing_cleanup(r)
+        RedisConnectorIndex.reset_all(r)
 
-        RedisConnector.RedisConnectorStop.reset_all(r)
+        RedisConnectorStop.reset_all(r)
 
 
 @worker_ready.connect

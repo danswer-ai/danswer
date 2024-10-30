@@ -21,6 +21,8 @@ from danswer.background.celery.celery_utils import celery_is_worker_primary
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.engine import get_all_tenant_ids
 from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector_delete import RedisConnectorDelete
+from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
@@ -118,20 +120,16 @@ def on_task_postrun(
             r.srem(rug.taskset_key, task_id)
         return
 
-    if task_id.startswith(RedisConnector.RedisConnectorDelete.PREFIX):
+    if task_id.startswith(RedisConnectorDelete.PREFIX):
         cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
-            RedisConnector.RedisConnectorDelete.remove_from_taskset(
-                int(cc_pair_id), task_id, r
-            )
+            RedisConnectorDelete.remove_from_taskset(int(cc_pair_id), task_id, r)
         return
 
-    if task_id.startswith(RedisConnector.RedisConnectorPrune.SUBTASK_PREFIX):
+    if task_id.startswith(RedisConnectorPrune.SUBTASK_PREFIX):
         cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
-            RedisConnector.RedisConnectorPrune.remove_from_taskset(
-                int(cc_pair_id), task_id, r
-            )
+            RedisConnectorPrune.remove_from_taskset(int(cc_pair_id), task_id, r)
         return
 
 

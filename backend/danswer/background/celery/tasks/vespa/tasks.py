@@ -59,6 +59,9 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector_delete import RedisConnectorDelete
+from danswer.redis.redis_connector_index import RedisConnectorIndex
+from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
@@ -694,7 +697,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                 # if attempts exist in the db but we don't detect them in redis, mark them as failed
                 failure_reason = f"Unknown index attempt {a.id}. Might be left over from a process restart."
                 if not r.exists(
-                    RedisConnector.RedisConnectorIndex.fence_key_with_ids(
+                    RedisConnectorIndex.fence_key_with_ids(
                         a.connector_credential_pair_id, a.search_settings_id
                     )
                 ):
@@ -705,9 +708,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
             monitor_connector_taskset(r)
 
         lock_beat.reacquire()
-        for key_bytes in r.scan_iter(
-            RedisConnector.RedisConnectorDelete.FENCE_PREFIX + "*"
-        ):
+        for key_bytes in r.scan_iter(RedisConnectorDelete.FENCE_PREFIX + "*"):
             lock_beat.reacquire()
             monitor_connector_deletion_taskset(tenant_id, key_bytes, r)
 
@@ -729,17 +730,13 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                 monitor_usergroup_taskset(key_bytes, r, db_session)
 
         lock_beat.reacquire()
-        for key_bytes in r.scan_iter(
-            RedisConnector.RedisConnectorPrune.FENCE_PREFIX + "*"
-        ):
+        for key_bytes in r.scan_iter(RedisConnectorPrune.FENCE_PREFIX + "*"):
             lock_beat.reacquire()
             with get_session_with_tenant(tenant_id) as db_session:
                 monitor_ccpair_pruning_taskset(tenant_id, key_bytes, r, db_session)
 
         lock_beat.reacquire()
-        for key_bytes in r.scan_iter(
-            RedisConnector.RedisConnectorIndex.FENCE_PREFIX + "*"
-        ):
+        for key_bytes in r.scan_iter(RedisConnectorIndex.FENCE_PREFIX + "*"):
             lock_beat.reacquire()
             with get_session_with_tenant(tenant_id) as db_session:
                 monitor_ccpair_indexing_taskset(tenant_id, key_bytes, r, db_session)
