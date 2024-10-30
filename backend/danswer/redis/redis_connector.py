@@ -8,6 +8,9 @@ from danswer.redis.redis_pool import get_redis_client
 
 
 class RedisConnector:
+    """Composes several classes to simplify interacting with a connector and its
+    associated background tasks / associated redis interactions."""
+
     def __init__(self, tenant_id: str | None, id: int) -> None:
         self.tenant_id: str | None = tenant_id
         self.id: int = id
@@ -16,7 +19,11 @@ class RedisConnector:
         self.stop = RedisConnectorStop(tenant_id, id, self.redis)
         self.prune = RedisConnectorPrune(tenant_id, id, self.redis)
         self.delete = RedisConnectorDelete(tenant_id, id, self.redis)
-        self.index = RedisConnectorIndex(tenant_id, id, self.redis)
+
+    def new_index(self, search_settings_id: int) -> RedisConnectorIndex:
+        return RedisConnectorIndex(
+            self.tenant_id, self.id, search_settings_id, self.redis
+        )
 
     @staticmethod
     def get_id_from_fence_key(key: str) -> str | None:

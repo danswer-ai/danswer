@@ -129,7 +129,8 @@ def try_generate_document_cc_pair_cleanup_tasks(
         # do not proceed if connector indexing or connector pruning are running
         search_settings_list = get_all_search_settings(db_session)
         for search_settings in search_settings_list:
-            if redis_connector.index.fenced(search_settings.id):
+            redis_connector_index = redis_connector.new_index(search_settings.id)
+            if redis_connector_index.fenced:
                 raise TaskDependencyError(
                     f"Connector deletion - Delayed (indexing in progress): "
                     f"cc_pair={cc_pair_id} "

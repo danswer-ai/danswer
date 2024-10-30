@@ -13,6 +13,9 @@ from danswer.db.connector_credential_pair import get_connector_credential_pair_f
 
 
 class RedisConnectorPrune:
+    """Manages interactions with redis for pruning tasks. Should only be accessed
+    through RedisConnector."""
+
     PREFIX = "connectorpruning"
 
     FENCE_PREFIX = f"{PREFIX}_fence"

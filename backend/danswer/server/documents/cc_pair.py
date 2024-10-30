@@ -130,8 +130,10 @@ def get_cc_pair_full_info(
         only_finished=False,
     )
 
-    redis_connector = RedisConnector(tenant_id, cc_pair_id)
     search_settings = get_current_search_settings(db_session)
+
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    redis_connector_index = redis_connector.new_index(search_settings.id)
 
     return CCPairFullInfo.from_models(
         cc_pair_model=cc_pair,
@@ -148,7 +150,7 @@ def get_cc_pair_full_info(
         ),
         num_docs_indexed=documents_indexed,
         is_editable_for_current_user=is_editable_for_current_user,
-        indexing=redis_connector.index.fenced(search_settings.id),
+        indexing=redis_connector_index.fenced,
     )
 
 

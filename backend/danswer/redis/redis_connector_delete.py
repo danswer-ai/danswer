@@ -21,6 +21,9 @@ class RedisConnectorDeletionFenceData(BaseModel):
 
 
 class RedisConnectorDelete:
+    """Manages interactions with redis for deletion tasks. Should only be accessed
+    through RedisConnector."""
+
     PREFIX = "connectordeletion"
     FENCE_PREFIX = f"{PREFIX}_fence"  # "connectordeletion_fence"
     TASKSET_PREFIX = f"{PREFIX}_taskset"  # "connectordeletion_taskset"

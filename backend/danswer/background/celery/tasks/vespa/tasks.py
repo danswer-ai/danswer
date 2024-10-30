@@ -573,16 +573,17 @@ def monitor_ccpair_indexing_taskset(
     search_settings_id = int(parts[1])
 
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
-    if not redis_connector.index.fenced(search_settings_id):
+    redis_connector_index = redis_connector.new_index(search_settings_id)
+    if not redis_connector_index.fenced:
         return
 
-    payload = redis_connector.index.payload(search_settings_id)
+    payload = redis_connector_index.payload
     if not payload:
         return
 
     elapsed_submitted = datetime.now(timezone.utc) - payload.submitted
 
-    progress = redis_connector.index.get_progress(search_settings_id)
+    progress = redis_connector_index.get_progress()
     if progress is not None:
         task_logger.info(
             f"Connector indexing progress: cc_pair_id={cc_pair_id} "
@@ -600,7 +601,7 @@ def monitor_ccpair_indexing_taskset(
     result: AsyncResult = AsyncResult(payload.celery_task_id)
     result_state = result.state
 
-    status_int = redis_connector.index.get_completion(search_settings_id)
+    status_int = redis_connector_index.get_completion()
     if status_int is None:
         if result_state in READY_STATES:
             # IF the task state is READY, THEN generator_complete should be set
@@ -620,7 +621,7 @@ def monitor_ccpair_indexing_taskset(
                     failure_reason="Connector indexing aborted or exceptioned.",
                 )
 
-            redis_connector.index.reset(search_settings_id)
+            redis_connector_index.reset()
         return
 
     status_enum = HTTPStatus(status_int)
@@ -632,7 +633,7 @@ def monitor_ccpair_indexing_taskset(
         f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
     )
 
-    redis_connector.index.reset(search_settings_id)
+    redis_connector_index.reset()
 
 
 @shared_task(name="monitor_vespa_sync", soft_time_limit=300, bind=True)

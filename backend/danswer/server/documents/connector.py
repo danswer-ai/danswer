@@ -568,7 +568,8 @@ def get_connector_indexing_status(
         in_progress = False
         if search_settings:
             redis_connector = RedisConnector(tenant_id, cc_pair.id)
-            if redis_connector.index.fenced(search_settings.id):
+            redis_connector_index = redis_connector.new_index(search_settings.id)
+            if redis_connector_index.fenced:
                 in_progress = True
 
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(

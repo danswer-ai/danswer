@@ -2,6 +2,9 @@ import redis
 
 
 class RedisConnectorStop:
+    """Manages interactions with redis for stop signaling. Should only be accessed
+    through RedisConnector."""
+
     FENCE_PREFIX = "connectorstop_fence"
 
     def __init__(self, tenant_id: str | None, id: int, redis: redis.Redis) -> None:
