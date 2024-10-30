@@ -74,7 +74,7 @@ const RenderField: FC<RenderFieldProps> = ({
           description={description}
         />
       ) : field.type === "list" ? (
-        <ListInput field={{ ...field, label, description }} />
+        <ListInput name={field.name} label={label} description={description} />
       ) : field.type === "select" ? (
         <SelectInput
           name={field.name}

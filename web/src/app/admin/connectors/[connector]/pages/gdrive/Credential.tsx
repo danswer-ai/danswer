@@ -356,7 +356,7 @@ export const DriveAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-6">
-          When using a Google Drive Service Account, you must speicify the email
+          When using a Google Drive Service Account, you must specify the email
           of the primary admin that you would like the service account to
           impersonate.
           <br />
