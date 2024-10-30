@@ -106,7 +106,7 @@ export default function LogoType({
           content={toggled ? `Unpin sidebar` : "Pin sidebar"}
         >
           <button
-            className="text-red-500 mr-3 my-auto ml-auto"
+            className="mr-3 my-auto ml-auto"
             onClick={() => {
               toggleSidebar();
               if (toggled) {

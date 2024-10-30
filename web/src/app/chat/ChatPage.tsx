@@ -2514,7 +2514,7 @@ export function ChatPage({
           </div>
           <FixedLogo
             chat
-            toggledBackground={toggledSidebar || showDocSidebar}
+            backgroundToggled={toggledSidebar || showDocSidebar}
           />
         </div>
       </div>

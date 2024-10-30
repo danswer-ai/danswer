@@ -5,11 +5,11 @@ import React from "react";
 export function HeaderTitle({
   children,
   chat,
-  toggledBackground,
+  backgroundToggled,
 }: {
   children: JSX.Element | string;
   chat?: boolean;
-  toggledBackground?: boolean;
+  backgroundToggled?: boolean;
 }) {
   const isString = typeof children === "string";
   const textSize = isString && children.length > 10 ? "text-xl" : "text-2xl";
@@ -18,7 +18,7 @@ export function HeaderTitle({
     <h1
       className={`${textSize} ${
         chat
-          ? toggledBackground
+          ? backgroundToggled
             ? "text-text-sidebar-toggled-header"
             : "text-text-sidebar-header"
           : "text-text-header"

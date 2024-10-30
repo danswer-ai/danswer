@@ -83,7 +83,7 @@ module.exports = {
         "non-selectable": "var(--non-selectable)",
 
         // background
-        background: "#EDEDF1",
+        background: "var(--background)",
         "background-100": "var(--background-100)",
         "background-125": "var(--background-125)",
         "background-150": "var(--background-150)",
@@ -95,38 +95,27 @@ module.exports = {
         "background-700": "var(--background-700)",
         "background-800": "var(--background-800)",
         "background-900": "var(--background-900)",
-        "background-toggle": "var(--background-100)",
 
-        "toggled-background": "var(--background-500)",
-        "untoggled-background": "var(--background-300)",
         "background-inverted": "var(--background-inverted)",
         "background-emphasis": "var(--background-emphasis)",
         "background-strong": "var(--background-strong)",
         "background-search": "var(--white)",
 
-        "text-sidebar-toggled-header": "var(--text-200)",
-        "text-sidebar-header": "var(--text-900)",
-        "text-sidebar-dark": "var(--text-200)",
-
-        "search-answer-border": "var(--background-300)",
-
-        "background-chat-hover": "#1D4ED8",
-        "background-chat-selected": "#1D4ED8",
         // colors for sidebar in chat, search, and manage settings
-        "background-sidebar": "#0021A5",
+        "background-sidebar": "var(--background-100)",
         "background-settings-sidebar": "var(--background-100)",
-        "background-chatbar": "#FFFFFF",
-        "text-sidebar": "#FFFFFF",
+        "background-chatbar": "var(--background-100)",
+        "text-sidebar": "var(--text-500)",
 
         // Settings
-        "text-sidebar-subtle": "#A9D4FF",
+        "text-sidebar-subtle": "var(--text-500)",
         "icon-settings-sidebar": "var(--text-600)",
         "text-settings-sidebar": "var(--text-600)",
         "text-settings-sidebar-strong": "var(--text-900)",
         "background-settings-hover": "var(--background-200)",
 
         // Background for chat messages (user bubbles)
-        user: "#0021A5",
+        user: "var(--user-bubble)",
 
         // Colors for the search toggle buttons
         "background-agentic-toggled": "var(--light-success)",
@@ -140,10 +129,8 @@ module.exports = {
         "star-indicator": "var(--background-100)",
 
         // Backgrounds for submit buttons on search and chat
-        "submit-background": "#0021A5",
+        "submit-background": "var(--background-800)",
         "disabled-submit-background": "var(--background-400)",
-
-        "sidebar-toggle": "var(--text-200)",
 
         input: "var(--white)",
 
@@ -159,7 +146,7 @@ module.exports = {
         "text-900": "var(--text-900)",
         "text-950": "var(--text-950)",
 
-        "user-text": "#FFFFFF",
+        "user-text": "var(--text-800)",
 
         description: "var(--text-400)",
         subtle: "var(--text-500)",
