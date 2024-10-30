@@ -1,7 +1,7 @@
 import requests
 import json
 from datetime import datetime, timezone
-from typing import Any, List, Optional, Iterator
+from typing import List, Iterator
 from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -84,14 +84,15 @@ def _create_metadata_from_ticket(ticket: dict) -> dict:
             str(ticket.get("status")), "Unknown Status"
         )
 
-    metadata["overdue"] = datetime.now(timezone.utc) > ticket["due_by"]
+    due_by = datetime.fromisoformat(ticket["due_by"].replace("Z", "+00:00"))
+    metadata["overdue"] = str(datetime.now(timezone.utc) > due_by)
 
     return metadata
 
 
 def _create_doc_from_ticket(ticket: dict, domain: str) -> Document:
     return Document(
-        id=ticket["id"],
+        id=str(ticket["id"]),
         sections=[
             Section(
                 link=f"https://{domain}.freshdesk.com/helpdesk/tickets/{int(ticket['id'])}",
@@ -101,7 +102,9 @@ def _create_doc_from_ticket(ticket: dict, domain: str) -> Document:
         source=DocumentSource.FRESHDESK,
         semantic_identifier=ticket["subject"],
         metadata=_create_metadata_from_ticket(ticket),
-        doc_updated_at=ticket["updated_at"],
+        doc_updated_at=datetime.fromisoformat(
+            ticket["updated_at"].replace("Z", "+00:00")
+        ),
     )
 
 
