@@ -80,7 +80,7 @@ def on_task_postrun(
     if not task:
         return
 
-    task_logger.info(f"Task {task.name} (ID: {task_id}) completed with state: {state}")
+    task_logger.debug(f"Task {task.name} (ID: {task_id}) completed with state: {state}")
 
     if state not in READY_STATES:
         return
