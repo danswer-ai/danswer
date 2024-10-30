@@ -58,13 +58,10 @@ def _execute_with_retry(request: Any) -> Any:
                     retry_after_timestamp = match.group(1)
                     retry_after_dt = datetime.strptime(
                         retry_after_timestamp, "%Y-%m-%dT%H:%M:%S.%fZ"
-                    )
+                    ).replace(tzinfo=timezone.utc)
+                    current_time = datetime.now(timezone.utc)
                     sleep_time = max(
-                        int(
-                            (
-                                retry_after_dt - datetime.now(timezone.utc)
-                            ).total_seconds()
-                        ),
+                        int((retry_after_dt - current_time).total_seconds()),
                         0,
                     )
                 else:
