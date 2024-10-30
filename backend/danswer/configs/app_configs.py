@@ -40,7 +40,7 @@ WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 #####
 # Auth Configs
 #####
-AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or AuthType.DISABLED.value).lower())
+AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or "disabled").lower())
 DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 
 # Necessary for cloud integration tests

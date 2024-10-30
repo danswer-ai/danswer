@@ -30,8 +30,30 @@ class ApiKeyDescriptor(BaseModel):
     user_id: uuid.UUID
 
 
-def generate_api_key() -> str:
-    return _API_KEY_PREFIX + secrets.token_urlsafe(_API_KEY_LEN)
+def generate_api_key(tenant_id: str | None = None) -> str:
+    # For backwards compatibility, if no tenant_id, generate old style key
+    if not tenant_id:
+        return _API_KEY_PREFIX + secrets.token_urlsafe(_API_KEY_LEN)
+
+    # For multi-tenant, embed tenant info: prefix.tenant_id.random
+    return f"{_API_KEY_PREFIX}{tenant_id}.{secrets.token_urlsafe(_API_KEY_LEN)}"
+
+
+def extract_tenant_from_api_key(api_key: str) -> str:
+    """Extract tenant ID from an API key. Returns default schema for old-style keys."""
+
+    if not api_key.startswith(_API_KEY_PREFIX):
+        return None
+
+    parts = api_key[len(_API_KEY_PREFIX) :].split(".", 1)
+    if len(parts) != 2:
+        return None
+
+    tenant_id, _ = parts
+    if not tenant_id:
+        return None
+
+    return tenant_id
 
 
 def hash_api_key(api_key: str) -> str:

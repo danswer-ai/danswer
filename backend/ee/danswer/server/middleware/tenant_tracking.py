@@ -10,6 +10,7 @@ from fastapi import Response
 
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.db.engine import is_valid_schema_name
+from ee.danswer.auth.api_key import extract_tenant_from_api_key
 from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
@@ -24,32 +25,42 @@ def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> Non
             if not MULTI_TENANT:
                 tenant_id = POSTGRES_DEFAULT_SCHEMA
             else:
-                token = request.cookies.get("fastapiusersauth")
+                # First check for API key
+                api_key_header = request.headers.get("Authorization")
+                tenant_id = None
+                if api_key_header and api_key_header.startswith("Bearer "):
+                    api_key = api_key_header[7:]  # Remove "Bearer " prefix
+                    tenant_id = extract_tenant_from_api_key(api_key)
 
-                if token:
-                    try:
-                        payload = jwt.decode(
-                            token,
-                            USER_AUTH_SECRET,
-                            audience=["fastapi-users:auth"],
-                            algorithms=["HS256"],
-                        )
-                        tenant_id = payload.get("tenant_id", POSTGRES_DEFAULT_SCHEMA)
-                        if not is_valid_schema_name(tenant_id):
-                            raise HTTPException(
-                                status_code=400, detail="Invalid tenant ID format"
+                if not tenant_id:
+                    # Existing cookie-based auth logic
+                    token = request.cookies.get("fastapiusersauth")
+                    if token:
+                        try:
+                            payload = jwt.decode(
+                                token,
+                                USER_AUTH_SECRET,
+                                audience=["fastapi-users:auth"],
+                                algorithms=["HS256"],
                             )
-                    except jwt.InvalidTokenError:
+                            tenant_id = payload.get(
+                                "tenant_id", POSTGRES_DEFAULT_SCHEMA
+                            )
+                            if not is_valid_schema_name(tenant_id):
+                                raise HTTPException(
+                                    status_code=400, detail="Invalid tenant ID format"
+                                )
+                        except jwt.InvalidTokenError:
+                            tenant_id = POSTGRES_DEFAULT_SCHEMA
+                        except Exception as e:
+                            logger.error(
+                                f"Unexpected error in set_tenant_id_middleware: {str(e)}"
+                            )
+                            raise HTTPException(
+                                status_code=500, detail="Internal server error"
+                            )
+                    else:
                         tenant_id = POSTGRES_DEFAULT_SCHEMA
-                    except Exception as e:
-                        logger.error(
-                            f"Unexpected error in set_tenant_id_middleware: {str(e)}"
-                        )
-                        raise HTTPException(
-                            status_code=500, detail="Internal server error"
-                        )
-                else:
-                    tenant_id = POSTGRES_DEFAULT_SCHEMA
 
             CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
             response = await call_next(request)
