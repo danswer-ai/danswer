@@ -16,12 +16,14 @@ export function ChatTab({
   folders,
   openedFolders,
   toggleSideBar,
+  teamspaceId,
 }: {
   existingChats: ChatSession[];
   currentChatId?: number;
   folders: Folder[];
   openedFolders: { [key: number]: boolean };
   toggleSideBar?: () => void;
+  teamspaceId?: string;
 }) {
   const groupedChatSessions = groupSessionsByDateRange(existingChats);
   const router = useRouter();
@@ -100,6 +102,7 @@ export function ChatTab({
                             isSelected={isSelected}
                             skipGradient={isDragOver}
                             toggleSideBar={toggleSideBar}
+                            teamspaceId={teamspaceId}
                           />
                         </div>
                       );

@@ -29,15 +29,13 @@ export function Combobox({
   onSelect,
   placeholder = "Select an item...",
   label = "Select item",
-  selected = []
+  selected = [],
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
   const [selectedItems, setSelectedItems] = React.useState<
     { value: string; label: string }[]
-  >(
-    items?.filter((item) => selected.includes(item.value)) || [] 
-  );
+  >(items?.filter((item) => selected.includes(item.value)) || []);
 
   const handleSelect = (currentValue: string) => {
     const selectedItem = items?.find((item) => item.label === currentValue);
@@ -118,7 +116,7 @@ export function Combobox({
               key={selectedItem.value}
               onClick={() => handleRemove(selectedItem.value)}
               variant="outline"
-              className="cursor-pointer hover:bg-opacity-80"
+              className="cursor-pointer hover:bg-blue-200"
             >
               {selectedItem.label}
               <X className="my-auto ml-1 cursor-pointer" size={14} />

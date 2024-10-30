@@ -113,7 +113,7 @@ export const ChatSidebar = ({
             `}
         id="chat-sidebar"
       >
-        <div className="flex items-center gap-2 w-full relative justify-between px-4 pb-4">
+        <div className="flex items-center gap-2 w-full relative justify-center px-4 pb-4">
           <div className="flex">
             {workspaces && workspaces.workspace_name ? (
               <Image src={EnmeddLogo} alt="LogoBrand" height={40} />
@@ -192,6 +192,7 @@ export const ChatSidebar = ({
             folders={folders}
             openedFolders={openedFolders}
             toggleSideBar={toggleSideBar}
+            teamspaceId={teamspaceId}
           />
         </div>
 

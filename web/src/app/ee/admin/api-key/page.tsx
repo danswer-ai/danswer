@@ -72,7 +72,6 @@ function NewApiKeyModal({
                 {isCopyClicked ? <Check size="16" /> : <Copy size="16" />}
               </Button>
             }
-            
           >
             {isCopyClicked ? "Copied" : "Copy"}
           </CustomTooltip>
@@ -209,12 +208,14 @@ function Main() {
                           onClick={() => handleEdit(apiKey)}
                         >
                           <Pencil size={16} className="shrink-0" />
-                         
-                            <p className="w-full truncate mr-5">{apiKey.api_key_name || <i>null</i>}</p>
+
+                          <p className="w-full truncate mr-5">
+                            {apiKey.api_key_name || <i>null</i>}
+                          </p>
                         </div>
                       }
                       asChild
-                      align='start'
+                      align="start"
                     >
                       {apiKey.api_key_name || <i>null</i>}
                     </CustomTooltip>

@@ -54,7 +54,6 @@ const GDriveMain = ({}: {}) => {
     refreshCredentials,
   } = usePublicCredentials();
 
-
   const appCredentialSuccessfullyFetched =
     appCredentialData ||
     (isAppCredentialError && isAppCredentialError.status === 404);

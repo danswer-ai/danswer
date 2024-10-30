@@ -6,10 +6,14 @@ import { buildImgUrl } from "@/app/chat/files/images/utils";
 interface TeamspaceBubbleProps {
   teamspace?: MinimalTeamspaceSnapshot | undefined;
   link: string;
-  teamspaceId?: string | string[]
+  teamspaceId?: string | string[];
 }
 
-export const TeamspaceBubble = ({ teamspace, link, teamspaceId }: TeamspaceBubbleProps) => {
+export const TeamspaceBubble = ({
+  teamspace,
+  link,
+  teamspaceId,
+}: TeamspaceBubbleProps) => {
   if (!teamspace) return null;
 
   const generateGradient = (teamspaceName: string) => {
@@ -23,7 +27,9 @@ export const TeamspaceBubble = ({ teamspace, link, teamspaceId }: TeamspaceBubbl
       trigger={
         <Link href={`/${link}`} className="relative flex items-center">
           {teamspace.logo ? (
-            <div className={`rounded-md w-10 h-10 overflow-hidden flex items-center justify-center ${Number(teamspaceId) === teamspace.id ? "bg-secondary" : ""}`}>
+            <div
+              className={`rounded-md w-10 h-10 overflow-hidden flex items-center justify-center ${Number(teamspaceId) === teamspace.id ? "bg-secondary" : ""}`}
+            >
               <img
                 src={buildImgUrl(teamspace.logo)}
                 alt="Teamspace Logo"

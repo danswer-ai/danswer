@@ -1,7 +1,5 @@
 import { Text, Callout } from "@tremor/react";
-import {
-  HostedEmbeddingModel,
-} from "../../../../components/embedding/interfaces";
+import { HostedEmbeddingModel } from "../../../../components/embedding/interfaces";
 import { CustomModal } from "@/components/CustomModal";
 import { Button } from "@/components/ui/button";
 
@@ -10,7 +8,7 @@ export function ModelSelectionConfirmationModal({
   isCustom,
   onConfirm,
   onCancel,
-  showTentativeOpenProvider
+  showTentativeOpenProvider,
 }: {
   selectedModel: HostedEmbeddingModel;
   isCustom: boolean;

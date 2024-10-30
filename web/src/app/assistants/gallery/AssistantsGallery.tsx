@@ -26,7 +26,7 @@ export function AssistantGalleryCard({
   user: User | null;
   selectedAssistant: boolean;
 }) {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const router = useRouter();
   return (
     <div

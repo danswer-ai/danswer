@@ -211,15 +211,15 @@ export default function AddConnector({
 
   const onSuccess = () => {
     toast({
-      title: "Connector Created",
-      description: "Redirecting to connector home page",
+      title: "Data Source Created",
+      description: "Redirecting to Add Data Source page",
       variant: "success",
     });
     setTimeout(() => {
       window.open(
         teamspaceId
-          ? `/t/${teamspaceId}/admin/indexing/status`
-          : "/admin/indexing/status",
+          ? `/t/${teamspaceId}/admin/data-sources`
+          : "/admin/data-sources",
         "_self"
       );
     }, 1000);
@@ -285,7 +285,7 @@ export default function AddConnector({
             toast({
               title: "Google Site Submitted",
               description: "Your Google site has been successfully submitted!",
-              variant: "success", 
+              variant: "success",
             });
             onSuccess();
           } else {

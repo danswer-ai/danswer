@@ -159,7 +159,8 @@ export const DriveJsonUpload = () => {
   );
 };
 
-interface DriveJsonUploadSectionProps {  appCredentialData?: { client_id: string };
+interface DriveJsonUploadSectionProps {
+  appCredentialData?: { client_id: string };
   serviceAccountCredentialData?: { service_account_email: string };
   isAdmin: boolean;
 }
@@ -169,7 +170,7 @@ export const DriveJsonUploadSection = ({
   serviceAccountCredentialData,
   isAdmin,
 }: DriveJsonUploadSectionProps) => {
-  const { mutate } = useSWRConfig(); 
+  const { mutate } = useSWRConfig();
   const { toast } = useToast();
 
   if (serviceAccountCredentialData?.service_account_email) {
@@ -271,7 +272,6 @@ export const DriveJsonUploadSection = ({
                   });
                 }
               }}
-            
             >
               Delete
             </Button>
@@ -360,7 +360,7 @@ export const DriveOAuthSection = ({
               });
               return;
             }
-        
+
             await adminDeleteCredential(existingCredential.id);
             toast({
               title: "Success",

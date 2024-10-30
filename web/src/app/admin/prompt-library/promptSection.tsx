@@ -28,7 +28,7 @@ export const PromptSection = ({
   centering?: boolean;
   isPublic: boolean;
 }) => {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const [newPrompt, setNewPrompt] = useState(false);
   const [newPromptId, setNewPromptId] = useState<number | null>(null);
 
@@ -44,7 +44,7 @@ export const PromptSection = ({
     });
 
     if (!response.ok) {
-      const errorMsg = await response.text(); 
+      const errorMsg = await response.text();
       toast({
         title: "Input Prompt Creation Failed",
         description: `Error: ${errorMsg}`,
@@ -71,13 +71,13 @@ export const PromptSection = ({
       });
 
       if (!response.ok) {
-        const errorMsg = await response.text(); 
+        const errorMsg = await response.text();
         toast({
           title: "Prompt Update Failed",
           description: `Error: ${errorMsg}`,
           variant: "destructive",
         });
-        return; 
+        return;
       }
 
       setNewPromptId(null);
@@ -106,7 +106,7 @@ export const PromptSection = ({
 
   const handleEdit = (promptId: number) => {
     setNewPromptId(promptId);
-    console.log(promptId)
+    console.log(promptId);
   };
 
   return (

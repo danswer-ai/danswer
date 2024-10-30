@@ -20,17 +20,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isTeamspaceAdmin, setIsTeamspaceAdmin] = useState(false);
-  const { teamspaceId } = useParams();
+  const params = useParams();
+  const teamspaceId = params?.teamspaceId;
 
   const fetchUser = async () => {
     try {
       const user = await getCurrentUser();
       setUser(user);
       setIsAdmin(user?.role === UserRole.ADMIN);
-      if (teamspaceId) {
-        const teamspaceUser = await getCurrentTeamspaceUser(teamspaceId[0]);
-        setIsTeamspaceAdmin(teamspaceUser?.role === UserRole.ADMIN);
-      }
     } catch (error) {
       console.error("Error fetching current user:", error);
     } finally {
@@ -39,11 +36,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    fetchUser();
+    refreshUser();
   }, [teamspaceId]);
 
   const refreshUser = async () => {
-    await fetchUser();
+    fetchUser().then(async () => {
+      if (teamspaceId) {
+        const teamspaceUser = await getCurrentTeamspaceUser(teamspaceId[0]);
+        setIsTeamspaceAdmin(teamspaceUser?.role === UserRole.ADMIN);
+      } else {
+        setIsTeamspaceAdmin(false);
+      }
+    });
   };
 
   return (

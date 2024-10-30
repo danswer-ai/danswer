@@ -6,7 +6,6 @@ import dask
 from dask.distributed import Client
 from dask.distributed import Future
 from distributed import LocalCluster
-from server.settings.store import load_settings
 from sqlalchemy.orm import Session
 
 from enmedd.background.indexing.dask_utils import ResourceLogger
@@ -407,9 +406,9 @@ def update_loop(
     engine = get_sqlalchemy_engine()
     with Session(engine) as db_session:
         # update default num_indexing_workers value coming from the db
-        settings = load_settings(db_session)
-        num_workers = settings.num_indexing_workers
-        num_secondary_workers = num_workers
+        # settings = load_settings(db_session)
+        # num_workers = settings.num_indexing_workers
+        # num_secondary_workers = num_workers
 
         check_index_swap(db_session=db_session)
         search_settings = get_current_search_settings(db_session)

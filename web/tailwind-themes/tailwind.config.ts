@@ -43,24 +43,24 @@ const config = {
         ring: "hsl(var(--ring))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#2039f3",
-          foreground: "#b8d7ff",
-          300: "#D7EAFF",
-          light: "#F1F5F9",
+          DEFAULT: "#080404",
+          foreground: "#DDBBBB",
+          300: "#8B4646",
+          light: "#4B2525",
         },
         // TODO: make a proper palette for this that uses range
-        blue: {
-          "50": "#e9f4ff",
-          "100": "#d7eaff",
-          "200": "#b8d7ff",
-          "300": "#8dbaff",
-          "400": "#6090ff",
-          "500": "#3c67ff",
-          "600": "#1a38ff",
-          "700": "#2039f3",
-          "800": "#1028c3",
-          "900": "#172b98",
-          "950": "#0e1858",
+        brand: {
+          50: "#EEDDDD",
+          100: "#DDBBBB",
+          200: "#BD7A7A",
+          300: "#8B4646",
+          400: "#4B2525",
+          500: "#080404",
+          600: "#070303",
+          700: "#030202",
+          800: "#030202",
+          900: "#000000",
+          950: "#000000",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -112,7 +112,7 @@ const config = {
         emphasis: "#374151", // gray-700
         error: "#ef4444", // red-500
         alert: "#f59e0b", // amber-600
-        accent: "#6671d0",
+        accent: "#4B2525",
 
         // borders
         border: "#e5e7eb", // gray-200
