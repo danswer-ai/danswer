@@ -2512,7 +2512,10 @@ export function ChatPage({
               )}
             </div>
           </div>
-          <FixedLogo chat />
+          <FixedLogo
+            chat
+            toggledBackground={toggledSidebar || showDocSidebar}
+          />
         </div>
       </div>
       <DocumentSidebar

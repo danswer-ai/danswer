@@ -8,7 +8,13 @@ import Link from "next/link";
 import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 
-export default function FixedLogo({ chat }: { chat?: boolean }) {
+export default function FixedLogo({
+  chat,
+  toggledBackground,
+}: {
+  chat?: boolean;
+  toggledBackground?: boolean;
+}) {
   const combinedSettings = useContext(SettingsContext);
   const settings = combinedSettings?.settings;
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
@@ -28,7 +34,7 @@ export default function FixedLogo({ chat }: { chat?: boolean }) {
           <div className="w-full">
             {enterpriseSettings && enterpriseSettings.application_name ? (
               <div>
-                <HeaderTitle chat={chat}>
+                <HeaderTitle toggledBackground={toggledBackground} chat={chat}>
                   {enterpriseSettings.application_name}
                 </HeaderTitle>
                 {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
@@ -36,7 +42,9 @@ export default function FixedLogo({ chat }: { chat?: boolean }) {
                 )}
               </div>
             ) : (
-              <HeaderTitle chat={chat}>Danswer</HeaderTitle>
+              <HeaderTitle toggledBackground={toggledBackground} chat={chat}>
+                Danswer
+              </HeaderTitle>
             )}
           </div>
         </div>

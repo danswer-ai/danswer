@@ -108,7 +108,7 @@ export function BasicSelectable({
               ? "bg-background-chat-selected"
               : "bg-hover"
             : chat
-              ? "bg-background-chat-hover"
+              ? "hover:bg-background-chat-hover"
               : "hover:bg-hover"
         }
         ${fullWidth ? "w-full" : ""}`}

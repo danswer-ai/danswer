@@ -145,7 +145,7 @@ export function ChatSessionDisplay({
                     ${
                       isSelected
                         ? "to-background-chat-hover"
-                        : " to-background-chat-selected group-hover:to-background-chat-hover"
+                        : " to-background-chat-hove group-hover:to-background-chat-selected"
                     } `}
                   />
                 </p>
