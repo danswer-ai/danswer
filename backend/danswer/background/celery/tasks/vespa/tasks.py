@@ -19,9 +19,6 @@ from tenacity import RetryError
 from danswer.access.access import get_access_for_document
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_redis import celery_get_queue_length
-from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
-from danswer.background.celery.celery_redis import RedisDocumentSet
-from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.tasks.shared.RetryDocumentIndex import RetryDocumentIndex
 from danswer.background.celery.tasks.shared.tasks import LIGHT_SOFT_TIME_LIMIT
 from danswer.background.celery.tasks.shared.tasks import LIGHT_TIME_LIMIT
@@ -59,10 +56,13 @@ from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
+from danswer.redis.redis_document_set import RedisDocumentSet
 from danswer.redis.redis_pool import get_redis_client
+from danswer.redis.redis_usergroup import RedisUserGroup
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from danswer.utils.variable_functionality import (
@@ -187,7 +187,7 @@ def try_generate_stale_document_sync_tasks(
     total_tasks_generated = 0
     cc_pairs = get_connector_credential_pairs(db_session)
     for cc_pair in cc_pairs:
-        rc = RedisConnectorCredentialPair(cc_pair.id)
+        rc = RedisConnectorCredentialPair(tenant_id, cc_pair.id)
         tasks_generated = rc.generate_tasks(
             celery_app, db_session, r, lock_beat, tenant_id
         )
@@ -223,10 +223,10 @@ def try_generate_document_set_sync_tasks(
 ) -> int | None:
     lock_beat.reacquire()
 
-    rds = RedisDocumentSet(document_set_id)
+    rds = RedisDocumentSet(tenant_id, document_set_id)
 
     # don't generate document set sync tasks if tasks are still pending
-    if r.exists(rds.fence_key):
+    if rds.fenced:
         return None
 
     # don't generate sync tasks if we're up to date
@@ -264,7 +264,7 @@ def try_generate_document_set_sync_tasks(
     )
 
     # set this only after all tasks have been added
-    r.set(rds.fence_key, tasks_generated)
+    rds.set_fence(tasks_generated)
     return tasks_generated
 
 
@@ -278,10 +278,9 @@ def try_generate_user_group_sync_tasks(
 ) -> int | None:
     lock_beat.reacquire()
 
-    rug = RedisUserGroup(usergroup_id)
-
-    # don't generate sync tasks if tasks are still pending
-    if r.exists(rug.fence_key):
+    rug = RedisUserGroup(tenant_id, usergroup_id)
+    if rug.fenced:
+        # don't generate sync tasks if tasks are still pending
         return None
 
     # race condition with the monitor/cleanup function if we use a cached result!
@@ -321,7 +320,7 @@ def try_generate_user_group_sync_tasks(
     )
 
     # set this only after all tasks have been added
-    r.set(rug.fence_key, tasks_generated)
+    rug.set_fence(tasks_generated)
     return tasks_generated
 
 
@@ -347,7 +346,7 @@ def monitor_connector_taskset(r: Redis) -> None:
 
 
 def monitor_document_set_taskset(
-    key_bytes: bytes, r: Redis, db_session: Session
+    tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
     document_set_id_str = RedisDocumentSet.get_id_from_fence_key(fence_key)
@@ -357,16 +356,12 @@ def monitor_document_set_taskset(
 
     document_set_id = int(document_set_id_str)
 
-    rds = RedisDocumentSet(document_set_id)
-
-    fence_value = r.get(rds.fence_key)
-    if fence_value is None:
+    rds = RedisDocumentSet(tenant_id, document_set_id)
+    if not rds.fenced:
         return
 
-    try:
-        initial_count = int(cast(int, fence_value))
-    except ValueError:
-        task_logger.error("The value is not an integer.")
+    initial_count = rds.payload
+    if initial_count is None:
         return
 
     count = cast(int, r.scard(rds.taskset_key))
@@ -394,8 +389,7 @@ def monitor_document_set_taskset(
                 f"Successfully synced document set: document_set={document_set_id}"
             )
 
-    r.delete(rds.taskset_key)
-    r.delete(rds.fence_key)
+    rds.reset()
 
 
 def monitor_connector_deletion_taskset(
@@ -645,7 +639,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
     This task lock timeout is CELERY_METADATA_SYNC_BEAT_LOCK_TIMEOUT seconds, so don't
     do anything too expensive in this function!
 
-    Returns True if the task actually did work, False
+    Returns True if the task actually did work, False if it exited early to prevent overlap
     """
     r = get_redis_client(tenant_id=tenant_id)
 
@@ -717,7 +711,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
         for key_bytes in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
             lock_beat.reacquire()
             with get_session_with_tenant(tenant_id) as db_session:
-                monitor_document_set_taskset(key_bytes, r, db_session)
+                monitor_document_set_taskset(tenant_id, key_bytes, r, db_session)
 
         lock_beat.reacquire()
         for key_bytes in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
@@ -728,7 +722,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                 noop_fallback,
             )
             with get_session_with_tenant(tenant_id) as db_session:
-                monitor_usergroup_taskset(key_bytes, r, db_session)
+                monitor_usergroup_taskset(tenant_id, key_bytes, r, db_session)
 
         lock_beat.reacquire()
         for key_bytes in r.scan_iter(RedisConnectorPrune.FENCE_PREFIX + "*"):

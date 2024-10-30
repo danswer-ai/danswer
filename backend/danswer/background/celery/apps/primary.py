@@ -13,20 +13,20 @@ from celery.signals import worker_shutdown
 
 import danswer.background.celery.apps.app_base as app_base
 from danswer.background.celery.apps.app_base import task_logger
-from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
-from danswer.background.celery.celery_redis import RedisDocumentSet
-from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
 from danswer.configs.constants import CELERY_PRIMARY_WORKER_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
 from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import SqlEngine
+from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_connector_stop import RedisConnectorStop
+from danswer.redis.redis_document_set import RedisDocumentSet
 from danswer.redis.redis_pool import get_redis_client
+from danswer.redis.redis_usergroup import RedisUserGroup
 from danswer.utils.logger import setup_logger
 
 
@@ -120,17 +120,9 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
         r.delete(RedisConnectorCredentialPair.get_taskset_key())
         r.delete(RedisConnectorCredentialPair.get_fence_key())
 
-        for key in r.scan_iter(RedisDocumentSet.TASKSET_PREFIX + "*"):
-            r.delete(key)
+        RedisDocumentSet.reset_all(r)
 
-        for key in r.scan_iter(RedisDocumentSet.FENCE_PREFIX + "*"):
-            r.delete(key)
-
-        for key in r.scan_iter(RedisUserGroup.TASKSET_PREFIX + "*"):
-            r.delete(key)
-
-        for key in r.scan_iter(RedisUserGroup.FENCE_PREFIX + "*"):
-            r.delete(key)
+        RedisUserGroup.reset_all(r)
 
         RedisConnectorDelete.reset_all(r)
 
