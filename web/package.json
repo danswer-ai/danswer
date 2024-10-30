@@ -22,7 +22,6 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@sentry/nextjs": "^8.34.0",
     "@stripe/stripe-js": "^4.6.0",
-    "@tremor/react": "^3.9.2",
     "@types/js-cookie": "^3.0.3",
     "@types/lodash": "^4.17.0",
     "@types/node": "18.15.11",
