@@ -37,7 +37,9 @@ logger = setup_logger()
 
 
 def _extract_str_list_from_comma_str(string: str | None) -> list[str]:
-    return string.split(",") if string else []
+    if not string:
+        return []
+    return [s.strip() for s in string.split(",") if s.strip()]
 
 
 def _extract_ids_from_urls(urls: list[str]) -> list[str]:
@@ -159,14 +161,14 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                     service=primary_drive_service,
                     drive_id=shared_drive_id,
                     is_slim=is_slim,
-                    cache_folders=bool(self.folder_ids),
+                    cache_folders=bool(self.shared_folder_ids),
                     start=start,
                     end=end,
                 ):
                     yield file
 
-        if self.folder_ids:
-            for folder_id in self.folder_ids:
+        if self.shared_folder_ids:
+            for folder_id in self.shared_folder_ids:
                 yield from crawl_folders_for_files(
                     service=primary_drive_service,
                     parent_id=folder_id,

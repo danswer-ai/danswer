@@ -9,6 +9,7 @@ import { useUser } from "@/components/user/UserProvider";
 import { useField } from "formik";
 import { AutoSyncOptions } from "./AutoSyncOptions";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { useEffect } from "react";
 
 function isValidAutoSyncSource(
   value: ConfigurableSources
@@ -28,6 +29,21 @@ export function AccessTypeForm({
   const isAutoSyncSupported = isValidAutoSyncSource(connector);
   const { isLoadingUser, isAdmin } = useUser();
 
+  useEffect(() => {
+    if (!isPaidEnterpriseEnabled) {
+      access_type_helpers.setValue("public");
+    } else if (isAutoSyncSupported) {
+      access_type_helpers.setValue("sync");
+    } else {
+      access_type_helpers.setValue("private");
+    }
+  }, [
+    isAutoSyncSupported,
+    isAdmin,
+    isPaidEnterpriseEnabled,
+    access_type_helpers,
+  ]);
+
   const options = [
     {
       name: "Private",
@@ -46,7 +62,7 @@ export function AccessTypeForm({
     });
   }
 
-  if (isAutoSyncSupported && isAdmin) {
+  if (isAutoSyncSupported && isAdmin && isPaidEnterpriseEnabled) {
     options.push({
       name: "Auto Sync Permissions",
       value: "sync",

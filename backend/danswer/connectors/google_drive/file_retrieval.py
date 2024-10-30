@@ -129,7 +129,7 @@ def get_files_in_shared_drive(
     # If we know we are going to folder crawl later, we can cache the folders here
     if cache_folders:
         # Get all folders being queried and add them to the traversed set
-        query = f"mimeType == '{DRIVE_FOLDER_TYPE}'"
+        query = f"mimeType = '{DRIVE_FOLDER_TYPE}'"
         for file in execute_paginated_retrieval(
             retrieval_function=service.files().list,
             list_key="files",
