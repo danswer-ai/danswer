@@ -105,7 +105,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
             return None
 
         with get_session_with_tenant(tenant_id=tenant_id) as db_session:
-            check_index_swap(db_session=db_session)
+            old_search_settings = check_index_swap(db_session=db_session)
             current_search_settings = get_current_search_settings(db_session)
             # So that the first time users aren't surprised by really slow speed of first
             # batch of documents indexed
@@ -115,9 +115,11 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     server_host=INDEXING_MODEL_SERVER_HOST,
                     server_port=INDEXING_MODEL_SERVER_PORT,
                 )
-                warm_up_bi_encoder(
-                    embedding_model=embedding_model,
-                )
+                if old_search_settings:
+                    # only warm up if search settings were changed
+                    warm_up_bi_encoder(
+                        embedding_model=embedding_model,
+                    )
 
         cc_pair_ids: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
