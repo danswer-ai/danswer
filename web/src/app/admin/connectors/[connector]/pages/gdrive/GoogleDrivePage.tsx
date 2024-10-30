@@ -12,7 +12,7 @@ import {
   useConnectorCredentialIndexingStatus,
 } from "@/lib/hooks";
 import { Title } from "@tremor/react";
-import { DriveJsonUploadSection, DriveOAuthSection } from "./Credential";
+import { DriveJsonUploadSection, DriveAuthSection } from "./Credential";
 import {
   Credential,
   GoogleDriveCredentialJson,
@@ -135,7 +135,7 @@ const GDriveMain = ({}: {}) => {
           <Title className="mb-2 mt-6 ml-auto mr-auto">
             Step 2: Authenticate with Danswer
           </Title>
-          <DriveOAuthSection
+          <DriveAuthSection
             setPopup={setPopup}
             refreshCredentials={refreshCredentials}
             googleDrivePublicCredential={googleDrivePublicCredential}

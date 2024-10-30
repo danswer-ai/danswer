@@ -309,7 +309,7 @@ interface DriveCredentialSectionProps {
   connectorExists: boolean;
 }
 
-export const DriveOAuthSection = ({
+export const DriveAuthSection = ({
   googleDrivePublicCredential,
   googleDriveServiceAccountCredential,
   serviceAccountKeyData,
@@ -367,10 +367,10 @@ export const DriveOAuthSection = ({
 
         <Formik
           initialValues={{
-            google_drive_delegated_user: "",
+            google_drive_primary_admin: "",
           }}
           validationSchema={Yup.object().shape({
-            google_drive_delegated_user: Yup.string().required(
+            google_drive_primary_admin: Yup.string().required(
               "User email is required"
             ),
           })}
@@ -384,8 +384,7 @@ export const DriveOAuthSection = ({
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  google_drive_delegated_user:
-                    values.google_drive_delegated_user,
+                  google_drive_primary_admin: values.google_drive_primary_admin,
                 }),
               }
             );
@@ -408,7 +407,7 @@ export const DriveOAuthSection = ({
           {({ isSubmitting }) => (
             <Form>
               <TextFormField
-                name="google_drive_delegated_user"
+                name="google_drive_primary_admin"
                 label="User email to impersonate:"
                 subtext="Enter the email of the user whose Google Drive access you want to delegate to the service account."
               />

@@ -35,25 +35,33 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+def _get_string_list_from_comma_separated_string(string: str | None) -> list[str]:
+    return string.split(",") if string else []
+
+
 class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
         self,
         include_shared_drives: bool = True,
-        shared_drive_ids: list[str] | None = None,
+        shared_drive_ids: str | None = None,
         include_my_drives: bool = True,
-        my_drive_emails: list[str] | None = None,
-        folder_ids: list[str] | None = None,
+        my_drive_emails: str | None = None,
+        folder_ids: str | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.batch_size = batch_size
 
         self.include_shared_drives = include_shared_drives
-        self.shared_drive_ids = shared_drive_ids or []
+        self.shared_drive_ids = _get_string_list_from_comma_separated_string(
+            shared_drive_ids
+        )
 
         self.include_my_drives = include_my_drives
-        self.my_drive_emails = my_drive_emails or []
+        self.my_drive_emails = _get_string_list_from_comma_separated_string(
+            my_drive_emails
+        )
 
-        self.folder_ids = folder_ids or []
+        self.folder_ids = _get_string_list_from_comma_separated_string(folder_ids)
 
         self.primary_admin_email: str | None = None
         self.google_domain: str | None = None
@@ -142,9 +150,17 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
 
         # get all personal docs from each users' personal drive
         if self.include_my_drives:
-            all_user_emails = self.my_drive_emails
-            if not all_user_emails:
-                all_user_emails = self._get_all_user_emails()
+            all_user_emails: set[str] = set(self.my_drive_emails or [])
+
+            # If using service account and no emails specified, fetch all users
+            if not all_user_emails and isinstance(
+                self.creds, ServiceAccountCredentials
+            ):
+                all_user_emails = set(self._get_all_user_emails())
+
+            # Always include the primary admin email
+            if self.primary_admin_email:
+                all_user_emails.add(self.primary_admin_email)
 
             for email in all_user_emails:
                 logger.info(f"Fetching personal files for user: {email}")

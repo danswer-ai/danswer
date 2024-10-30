@@ -2,6 +2,7 @@ import * as Yup from "yup";
 import { IsPublicGroupSelectorFormType } from "@/components/IsPublicGroupSelector";
 import { ConfigurableSources, ValidInputTypes, ValidSources } from "../types";
 import { AccessTypeGroupSelectorFormType } from "@/components/admin/connectors/AccessTypeGroupSelector";
+import { Credential } from "@/lib/connectors/credentials"; // Import Credential type
 
 export function isLoadState(connector_name: string): boolean {
   // TODO: centralize connector metadata like this somewhere instead of hardcoding it here
@@ -29,12 +30,18 @@ export type StringWithDescription = {
 };
 
 export interface Option {
-  label: string;
+  label: string | ((currentCredential: Credential<any> | null) => string);
   name: string;
-  description?: string;
+  description?:
+    | string
+    | ((currentCredential: Credential<any> | null) => string);
   query?: string;
   optional?: boolean;
   hidden?: boolean;
+  visibleCondition?: (
+    values: any,
+    currentCredential: Credential<any> | null
+  ) => boolean;
 }
 
 export interface SelectOption extends Option {
@@ -202,23 +209,58 @@ export const connectorConfigs: Record<
   },
   google_drive: {
     description: "Configure Google Drive connector",
-    values: [],
-    advanced_values: [
+    values: [
       {
-        type: "list",
-        query: "Enter the URLs of the shared folders or drives to index:",
-        label: "Parent URLs To Index",
-        name: "parent_urls",
+        type: "checkbox",
+        description: "Include shared drives?",
+        label: "Include Shared Drives",
+        name: "include_shared_drives",
+        optional: true,
+        default: true,
+      },
+      {
+        type: "text",
+        description:
+          "Enter a comma separated list of the IDs of the shared drives to index. Leave blank to index all shared drives.",
+        label: "Shared Drive IDs",
+        name: "shared_drive_ids",
+        visibleCondition: (values) => values.include_shared_drives,
         optional: true,
       },
       {
         type: "checkbox",
-        query:
-          "Include personal drives? (Note: This should only be used if you use permissions sync)",
-        label: "Include personal",
-        name: "include_personal",
-        optional: false,
-        default: false,
+        label: (currentCredential) =>
+          currentCredential?.credential_json?.google_drive_tokens
+            ? "Include My Drive?"
+            : "Include Everyone's My Drive?",
+        description: (currentCredential) =>
+          currentCredential?.credential_json?.google_drive_tokens
+            ? "This will let Danswer index everything in your My Drive."
+            : "This will let Danswer index everything in everyone's My Drives.",
+        name: "include_my_drives",
+        optional: true,
+        default: true,
+      },
+      {
+        type: "text",
+        description:
+          "Enter a comma separated list of the emails of the users whose MyDrive you want to index. Leave blank to index all MyDrives.",
+        label: "My Drive Emails",
+        name: "my_drive_emails",
+        visibleCondition: (values, currentCredential) =>
+          values.include_my_drives &&
+          !currentCredential?.credential_json?.google_drive_tokens,
+        optional: true,
+      },
+    ],
+    advanced_values: [
+      {
+        type: "text",
+        description:
+          "Enter a comma separated list of the IDs of the folders to index:",
+        label: "Folder IDs",
+        name: "folder_ids",
+        optional: true,
       },
     ],
   },

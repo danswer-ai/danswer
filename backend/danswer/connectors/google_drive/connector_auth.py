@@ -8,7 +8,7 @@ from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import WEB_DOMAIN
@@ -85,7 +85,12 @@ def get_google_drive_creds(
         # (e.g. the token has been refreshed)
         new_creds_json_str = oauth_creds.to_json() if oauth_creds else ""
         if new_creds_json_str != access_token_json_str:
-            new_creds_dict = {DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str}
+            new_creds_dict = {
+                DB_CREDENTIALS_DICT_TOKEN_KEY: new_creds_json_str,
+                DB_CREDENTIALS_PRIMARY_ADMIN_KEY: credentials[
+                    DB_CREDENTIALS_PRIMARY_ADMIN_KEY
+                ],
+            }
 
     elif KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY in credentials:
         service_account_key_json_str = credentials[KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY]

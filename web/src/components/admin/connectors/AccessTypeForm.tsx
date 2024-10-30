@@ -48,7 +48,7 @@ export function AccessTypeForm({
 
   if (isAutoSyncSupported && isAdmin) {
     options.push({
-      name: "Auto Sync",
+      name: "Auto Sync Permissions",
       value: "sync",
       description:
         "We will automatically sync permissions from the source. A document will be searchable in Danswer if and only if the user performing the search has permission to access the document in the source.",
