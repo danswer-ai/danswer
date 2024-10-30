@@ -22,7 +22,7 @@ import { GoogleDriveConfig } from "@/lib/connectors/connectors";
 import { useUser } from "@/components/user/UserProvider";
 
 const GDriveMain = ({}: {}) => {
-  const { isLoadingUser, isAdmin } = useUser();
+  const { isLoadingUser, isAdmin, user } = useUser();
 
   const {
     data: appCredentialData,
@@ -145,6 +145,7 @@ const GDriveMain = ({}: {}) => {
             appCredentialData={appCredentialData}
             serviceAccountKeyData={serviceAccountKeyData}
             connectorExists={googleDriveConnectorIndexingStatuses.length > 0}
+            user={user}
           />
         </>
       )}

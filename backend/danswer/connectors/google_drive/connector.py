@@ -13,6 +13,7 @@ from danswer.connectors.google_drive.connector_auth import (
 from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
 from danswer.connectors.google_drive.constants import MISSING_SCOPES_ERROR_STR
 from danswer.connectors.google_drive.constants import ONYX_SCOPE_INSTRUCTIONS
+from danswer.connectors.google_drive.constants import SCOPE_DOC_URL
 from danswer.connectors.google_drive.constants import SLIM_BATCH_SIZE
 from danswer.connectors.google_drive.constants import USER_FIELDS
 from danswer.connectors.google_drive.doc_conversion import (
@@ -35,40 +36,65 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def _get_string_list_from_comma_separated_string(string: str | None) -> list[str]:
+def _extract_str_list_from_comma_str(string: str | None) -> list[str]:
     return string.split(",") if string else []
+
+
+def _extract_ids_from_urls(urls: list[str]) -> list[str]:
+    return [url.split("/")[-1] for url in urls]
 
 
 class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
         self,
         include_shared_drives: bool = True,
-        shared_drive_ids: str | None = None,
+        shared_drive_urls: str | None = None,
         include_my_drives: bool = True,
         my_drive_emails: str | None = None,
-        folder_ids: str | None = None,
+        shared_folder_urls: str | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
+        # OLD PARAMETERS
+        folder_paths: list[str] | None = None,
+        include_shared: bool | None = None,
+        follow_shortcuts: bool | None = None,
+        only_org_public: bool | None = None,
+        continue_on_failure: bool | None = None,
     ) -> None:
+        # Check for old input parameters
+        if (
+            folder_paths is not None
+            or include_shared is not None
+            or follow_shortcuts is not None
+            or only_org_public is not None
+            or continue_on_failure is not None
+        ):
+            logger.exception(
+                "Google Drive connector received old input parameters. "
+                "Please visit the docs for help with the new setup: "
+                f"{SCOPE_DOC_URL}"
+            )
+            raise ValueError(
+                "Google Drive connector received old input parameters. "
+                "Please visit the docs for help with the new setup: "
+                f"{SCOPE_DOC_URL}"
+            )
+
         self.batch_size = batch_size
 
         self.include_shared_drives = include_shared_drives
-        self.shared_drive_ids = _get_string_list_from_comma_separated_string(
-            shared_drive_ids
-        )
+        shared_drive_urls = _extract_str_list_from_comma_str(shared_drive_urls)
+        self.shared_drive_ids = _extract_ids_from_urls(shared_drive_urls)
 
         self.include_my_drives = include_my_drives
-        self.my_drive_emails = _get_string_list_from_comma_separated_string(
-            my_drive_emails
-        )
+        self.my_drive_emails = _extract_str_list_from_comma_str(my_drive_emails)
 
-        self.folder_ids = _get_string_list_from_comma_separated_string(folder_ids)
+        shared_folder_urls = _extract_str_list_from_comma_str(shared_folder_urls)
+        self.shared_folder_ids = _extract_ids_from_urls(shared_folder_urls)
 
         self.primary_admin_email: str | None = None
         self.google_domain: str | None = None
 
         self.creds: OAuthCredentials | ServiceAccountCredentials | None = None
-
-        self._TRAVERSED_PARENT_IDS: set[str] = set()
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
         primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
@@ -113,26 +139,27 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
-        admin_drive_service = self.get_google_resource()
+        primary_drive_service = self.get_google_resource()
 
         if self.include_shared_drives:
-            shared_drive_ids = self.shared_drive_ids
-            if not shared_drive_ids:
+            shared_drive_urls = self.shared_drive_ids
+            if not shared_drive_urls:
                 # if no parent ids are specified, get all shared drives using the admin account
                 for drive in execute_paginated_retrieval(
-                    retrieval_function=admin_drive_service.drives().list,
+                    retrieval_function=primary_drive_service.drives().list,
                     list_key="drives",
                     useDomainAdminAccess=True,
                     fields="drives(id)",
                 ):
-                    shared_drive_ids.append(drive["id"])
+                    shared_drive_urls.append(drive["id"])
 
             # crawl all the shared parent ids for files
-            for shared_drive_id in shared_drive_ids:
+            for shared_drive_id in shared_drive_urls:
                 for file in get_files_in_shared_drive(
-                    service=admin_drive_service,
+                    service=primary_drive_service,
                     drive_id=shared_drive_id,
                     is_slim=is_slim,
+                    cache_folders=bool(self.folder_ids),
                     start=start,
                     end=end,
                 ):
@@ -141,7 +168,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         if self.folder_ids:
             for folder_id in self.folder_ids:
                 yield from crawl_folders_for_files(
-                    service=admin_drive_service,
+                    service=primary_drive_service,
                     parent_id=folder_id,
                     personal_drive=False,
                     start=start,
@@ -150,17 +177,16 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
 
         # get all personal docs from each users' personal drive
         if self.include_my_drives:
-            all_user_emails: set[str] = set(self.my_drive_emails or [])
+            if isinstance(self.creds, ServiceAccountCredentials):
+                all_user_emails = self.my_drive_emails or []
 
-            # If using service account and no emails specified, fetch all users
-            if not all_user_emails and isinstance(
-                self.creds, ServiceAccountCredentials
-            ):
-                all_user_emails = set(self._get_all_user_emails())
+                # If using service account and no emails specified, fetch all users
+                if not all_user_emails:
+                    all_user_emails = self._get_all_user_emails()
 
-            # Always include the primary admin email
-            if self.primary_admin_email:
-                all_user_emails.add(self.primary_admin_email)
+            else:
+                # If using OAuth, only fetch the primary admin email
+                all_user_emails = self.primary_admin_email or []
 
             for email in all_user_emails:
                 logger.info(f"Fetching personal files for user: {email}")

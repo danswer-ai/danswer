@@ -212,8 +212,9 @@ export const connectorConfigs: Record<
     values: [
       {
         type: "checkbox",
-        description: "Include shared drives?",
-        label: "Include Shared Drives",
+        label: "Include shared drives?",
+        description:
+          "This will allow Danswer to index everything in your shared drives.",
         name: "include_shared_drives",
         optional: true,
         default: true,
@@ -223,7 +224,7 @@ export const connectorConfigs: Record<
         description:
           "Enter a comma separated list of the IDs of the shared drives to index. Leave blank to index all shared drives.",
         label: "Shared Drive IDs",
-        name: "shared_drive_ids",
+        name: "shared_drive_urls",
         visibleCondition: (values) => values.include_shared_drives,
         optional: true,
       },
@@ -235,8 +236,8 @@ export const connectorConfigs: Record<
             : "Include Everyone's My Drive?",
         description: (currentCredential) =>
           currentCredential?.credential_json?.google_drive_tokens
-            ? "This will let Danswer index everything in your My Drive."
-            : "This will let Danswer index everything in everyone's My Drives.",
+            ? "This will allow Danswer to index everything in your My Drive."
+            : "This will allow Danswer to index everything in everyone's My Drives.",
         name: "include_my_drives",
         optional: true,
         default: true,

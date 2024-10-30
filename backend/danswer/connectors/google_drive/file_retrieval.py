@@ -122,9 +122,27 @@ def get_files_in_shared_drive(
     service: Resource,
     drive_id: str,
     is_slim: bool = False,
+    cache_folders: bool = True,
     start: SecondsSinceUnixEpoch | None = None,
     end: SecondsSinceUnixEpoch | None = None,
 ) -> Iterator[GoogleDriveFileType]:
+    # If we know we are going to folder crawl later, we can cache the folders here
+    if cache_folders:
+        # Get all folders being queried and add them to the traversed set
+        query = f"mimeType == '{DRIVE_FOLDER_TYPE}'"
+        for file in execute_paginated_retrieval(
+            retrieval_function=service.files().list,
+            list_key="files",
+            corpora="drive",
+            driveId=drive_id,
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
+            fields="nextPageToken, files(id)",
+            q=query,
+        ):
+            _TRAVERSED_PARENT_IDS.add(file["id"])
+
+    # Get all files in the shared drive
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}'"
     query += _generate_time_range_filter(start, end)
     for file in execute_paginated_retrieval(

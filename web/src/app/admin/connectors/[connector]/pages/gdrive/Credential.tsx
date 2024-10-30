@@ -10,6 +10,7 @@ import { GOOGLE_DRIVE_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
+import { User } from "@/lib/types";
 import { Button as TremorButton } from "@tremor/react";
 import {
   Credential,
@@ -157,6 +158,7 @@ export const DriveJsonUploadSection = ({
   isAdmin,
 }: DriveJsonUploadSectionProps) => {
   const { mutate } = useSWRConfig();
+  const router = useRouter();
 
   if (serviceAccountCredentialData?.service_account_email) {
     return (
@@ -190,6 +192,7 @@ export const DriveJsonUploadSection = ({
                     message: "Successfully deleted service account key",
                     type: "success",
                   });
+                  router.refresh();
                 } else {
                   const errorMsg = await response.text();
                   setPopup({
@@ -307,6 +310,7 @@ interface DriveCredentialSectionProps {
   setPopup: (popupSpec: PopupSpec | null) => void;
   refreshCredentials: () => void;
   connectorExists: boolean;
+  user: User | null;
 }
 
 export const DriveAuthSection = ({
@@ -317,6 +321,7 @@ export const DriveAuthSection = ({
   setPopup,
   refreshCredentials,
   connectorExists,
+  user,
 }: DriveCredentialSectionProps) => {
   const router = useRouter();
 
@@ -361,13 +366,13 @@ export const DriveAuthSection = ({
           impersonate.
           <br />
           <br />
-          Ideally, this account should be the owner of the Google Organization
-          that owns the Google Drive you want to index.
+          Ideally, this account should be an owner/admin of the Google
+          Organization that owns the Google Drive(s) you want to index.
         </p>
 
         <Formik
           initialValues={{
-            google_drive_primary_admin: "",
+            google_drive_primary_admin: user?.email || "",
           }}
           validationSchema={Yup.object().shape({
             google_drive_primary_admin: Yup.string().required(

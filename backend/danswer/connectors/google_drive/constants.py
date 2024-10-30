@@ -3,7 +3,7 @@ DRIVE_FOLDER_TYPE = "application/vnd.google-apps.folder"
 DRIVE_SHORTCUT_TYPE = "application/vnd.google-apps.shortcut"
 
 FILE_FIELDS = "nextPageToken, files(mimeType, id, name, permissions, modifiedTime, webViewLink, shortcutDetails, owners)"
-SLIM_FILE_FIELDS = "nextPageToken, files(id, permissions(emailAddress, type), permissionIds, webViewLink)"
+SLIM_FILE_FIELDS = "nextPageToken, files(id, mimeType, permissions(emailAddress, type), permissionIds, webViewLink)"
 FOLDER_FIELDS = "nextPageToken, files(id, name, permissions, modifiedTime, webViewLink, shortcutDetails)"
 USER_FIELDS = "nextPageToken, users(primaryEmail)"
 
