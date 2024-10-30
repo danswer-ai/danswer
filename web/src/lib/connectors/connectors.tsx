@@ -222,8 +222,8 @@ export const connectorConfigs: Record<
       {
         type: "text",
         description:
-          "Enter a comma separated list of the IDs of the shared drives to index. Leave blank to index all shared drives.",
-        label: "Shared Drive IDs",
+          "Enter a comma separated list of the URLs of the shared drives to index. Leave blank to index all shared drives.",
+        label: "Shared Drive URLs",
         name: "shared_drive_urls",
         visibleCondition: (values) => values.include_shared_drives,
         optional: true,
@@ -258,9 +258,9 @@ export const connectorConfigs: Record<
       {
         type: "text",
         description:
-          "Enter a comma separated list of the IDs of the folders to index:",
-        label: "Folder IDs",
-        name: "folder_ids",
+          "Enter a comma separated list of the URLs of the folders located in Shared Drives to index. The files located in these folders (and all subfolders) will be indexed.",
+        label: "Folder URLs",
+        name: "shared_folder_urls",
         optional: true,
       },
     ],
