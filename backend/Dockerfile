@@ -100,7 +100,6 @@ COPY supervisord.conf /usr/etc/supervisord.conf
 
 # Escape hatch
 COPY ./scripts/force_delete_connector_by_id.py /app/scripts/force_delete_connector_by_id.py
-COPY ./scripts/initialize_ca_cert.py /app/scripts/initialize_ca_cert.py
 
 # Put logo in assets
 COPY ./assets /app/assets
