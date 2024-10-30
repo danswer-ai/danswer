@@ -12,7 +12,6 @@ ARG DANSWER_VERSION=0.8-dev
 ENV DANSWER_VERSION=${DANSWER_VERSION} \
     DANSWER_RUNNING_IN_DOCKER="true"
 
-ARG CA_CERT_CONTENT=""
 
 RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # Install system dependencies
@@ -39,15 +38,6 @@ RUN apt-get update && \
     apt-get clean
 
 
-# Conditionally write the CA certificate and update certificates
-RUN if [ -n "$CA_CERT_CONTENT" ]; then \
-    echo "Adding custom CA certificate"; \
-    echo "$CA_CERT_CONTENT" > /usr/local/share/ca-certificates/my-ca.crt && \
-    chmod 644 /usr/local/share/ca-certificates/my-ca.crt && \
-    update-ca-certificates; \
-else \
-    echo "No custom CA certificate provided"; \
-fi
 
 # Install Python dependencies
 # Remove py which is pulled in by retry, py is not needed and is a CVE
@@ -87,6 +77,11 @@ RUN apt-get update && \
 RUN python -c "from tokenizers import Tokenizer; \
 Tokenizer.from_pretrained('nomic-ai/nomic-embed-text-v1')"
 
+# Add custom CA certificate
+COPY /path/to/volume/mount/my-ca.crt /usr/local/share/ca-certificates/my-ca.crt
+RUN chmod 644 /usr/local/share/ca-certificates/my-ca.crt && \
+    update-ca-certificates
+
 
 # Pre-downloading NLTK for setups with limited egress
 RUN python -c "import nltk; \
@@ -116,6 +111,10 @@ COPY ./scripts/force_delete_connector_by_id.py /app/scripts/force_delete_connect
 COPY ./assets /app/assets
 
 ENV PYTHONPATH=/app
+
+
+COPY scripts/initialize_ca_cert.py /app/scripts/initialize_ca_cert.py
+RUN chmod +x /app/scripts/initialize_ca_cert.py
 
 # Default command which does nothing
 # This container is used by api server and background which specify their own CMD
