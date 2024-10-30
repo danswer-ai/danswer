@@ -39,8 +39,15 @@ def generate_api_key(tenant_id: str | None = None) -> str:
     return f"{_API_KEY_PREFIX}{tenant_id}.{secrets.token_urlsafe(_API_KEY_LEN)}"
 
 
-def extract_tenant_from_api_key(api_key: str) -> str:
-    """Extract tenant ID from an API key. Returns default schema for old-style keys."""
+def extract_tenant_from_api_key(request: Request) -> str | None:
+    """Extract tenant ID from request. Returns None if auth is disabled."""
+
+    api_key_header = request.headers.get("Authorization")
+    tenant_id = None
+    if not api_key_header or not api_key_header.startswith("Bearer "):
+        return None
+
+    api_key = api_key_header[7:]  # Remove "Bearer " prefix
 
     if not api_key.startswith(_API_KEY_PREFIX):
         return None
@@ -57,7 +64,7 @@ def extract_tenant_from_api_key(api_key: str) -> str:
 
 
 def hash_api_key(api_key: str) -> str:
-    # NOTE: no salt is needed, as the API key is randomly generated
+    # NOTE: no salt is needed, as the API key is randoml py generated
     # and overlaps are impossible
     return sha256_crypt.hash(api_key, salt="", rounds=API_KEY_HASH_ROUNDS)
 
