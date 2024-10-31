@@ -13,10 +13,11 @@ from danswer.db.engine import SqlEngine
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
+logger = setup_logger()
+
 
 celery_app = Celery(__name__)
 celery_app.config_from_object("danswer.background.celery.configs.beat")
-logger = setup_logger(__name__)
 
 
 class DynamicTenantScheduler(PersistentScheduler):
@@ -104,9 +105,6 @@ class DynamicTenantScheduler(PersistentScheduler):
         return current_tasks != new_tasks
 
 
-celery_app.conf.beat_scheduler = DynamicTenantScheduler
-
-
 @beat_init.connect
 def on_beat_init(sender: Any, **kwargs: Any) -> None:
     logger.info("beat_init signal received.")
@@ -122,3 +120,6 @@ def on_setup_logging(
     loglevel: Any, logfile: Any, format: Any, colorize: Any, **kwargs: Any
 ) -> None:
     app_base.on_setup_logging(loglevel, logfile, format, colorize, **kwargs)
+
+
+celery_app.conf.beat_scheduler = DynamicTenantScheduler
