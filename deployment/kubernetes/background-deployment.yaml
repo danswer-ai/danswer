@@ -22,7 +22,6 @@ spec:
               "-c",
               "/etc/supervisor/conf.d/supervisord.conf",
             ]
-          # Existing environment variables
           env:
             - name: REDIS_PASSWORD
               valueFrom:
@@ -32,16 +31,17 @@ spec:
           envFrom:
             - configMapRef:
                 name: env-configmap
-          # Optional volume mount for CA certificate
-          volumeMounts:
-            - name: my-ca-cert-volume
-              mountPath: /etc/ssl/certs/my-ca.crt
-              subPath: my-ca.crt
+      # Uncomment the following lines if you need to include a custom CA certificate
+      # Optional volume mount for CA certificate
+      #   volumeMounts:
+      #     - name: my-ca-cert-volume
+      #       mountPath: /etc/ssl/certs/custom-ca.crt
+      #       subPath: my-ca.crt
       # Optional volume for CA certificate
-      volumes:
-        - name: my-ca-cert-volume
-          secret:
-            secretName: my-ca-cert
-            items:
-              - key: my-ca.crt
-                path: my-ca.crt
+      # volumes:
+      #   - name: my-cas-cert-volume
+      #     secret:
+      #       secretName: my-ca-cert
+      #       items:
+      #         - key: my-ca.crt
+      #           path: my-ca.crt
