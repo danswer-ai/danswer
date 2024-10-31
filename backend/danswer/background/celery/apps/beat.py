@@ -1,3 +1,4 @@
+from db.engine import get_all_tenant_ids
 from datetime import timedelta
 from typing import Any
 
@@ -8,13 +9,13 @@ from celery.signals import beat_init
 
 import danswer.background.celery.apps.app_base as app_base
 from danswer.configs.constants import POSTGRES_CELERY_BEAT_APP_NAME
-from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import SqlEngine
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 
-logger = setup_logger()
+# Import the custom scheduler
 
+logger = setup_logger(__name__)
 
 celery_app = Celery(__name__)
 celery_app.config_from_object("danswer.background.celery.configs.beat")
@@ -119,6 +120,5 @@ def on_setup_logging(
     loglevel: Any, logfile: Any, format: Any, colorize: Any, **kwargs: Any
 ) -> None:
     app_base.on_setup_logging(loglevel, logfile, format, colorize, **kwargs)
-
 
 celery_app.conf.beat_scheduler = DynamicTenantScheduler
