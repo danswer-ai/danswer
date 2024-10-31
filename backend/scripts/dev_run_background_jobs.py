@@ -75,7 +75,7 @@ def run_jobs() -> None:
     cmd_beat = [
         "celery",
         "-A",
-        "danswer.background.celery.versioned_apps.beat",
+        "danswer.background.celery.apps.beat",
         "beat",
         "--loglevel=INFO",
     ]
