@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Any
 
 from danswer.background.celery.tasks.tasks import (
     tasks_to_schedule as base_tasks_to_schedule,
@@ -28,5 +29,5 @@ ee_tasks_to_schedule = [
 ]
 
 
-def get_tasks_to_schedule():
+def get_tasks_to_schedule() -> list[dict[str, Any]]:
     return ee_tasks_to_schedule + base_tasks_to_schedule

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Any
 
 from danswer.configs.constants import DanswerCeleryPriority
 
@@ -43,5 +44,5 @@ tasks_to_schedule = [
 ]
 
 
-def get_tasks_to_schedule():
+def get_tasks_to_schedule() -> list[dict[str, Any]]:
     return tasks_to_schedule

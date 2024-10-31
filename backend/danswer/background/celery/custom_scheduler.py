@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Any
 
-from celery.beat import PersistentScheduler
+from celery.beat import PersistentScheduler  # type: ignore
 from celery.utils.log import get_task_logger
 
 from danswer.db.engine import get_all_tenant_ids
@@ -41,36 +41,56 @@ class DynamicTenantScheduler(PersistentScheduler):
                 "danswer.background.celery.tasks.tasks", "get_tasks_to_schedule"
             )
 
-            new_beat_schedule = {}
+            new_beat_schedule: dict[str, dict[str, Any]] = {}
 
-            for tenant_id in tenant_ids:
-                for task in tasks_to_schedule():
-                    task_name = f"{task['name']}-{tenant_id}"
-                    task = {
-                        "task": task["task"],
-                        "schedule": task["schedule"],
-                        "kwargs": {"tenant_id": tenant_id},
-                    }
-                    if task.get("options"):
-                        task["options"] = task["options"]
-                    new_beat_schedule[task_name] = task
-
-            # Get current schedule
             current_schedule = getattr(self, "_store", {"entries": {}}).get(
                 "entries", {}
             )
 
-            # Compare schedules (converting to sets of task names for easy comparison)
-            current_tasks = set(current_schedule.keys())
-            new_tasks = set(new_beat_schedule.keys())
+            existing_tenants = set()
+            for task_name in current_schedule.keys():
+                if "-" in task_name:
+                    existing_tenants.add(task_name.split("-")[-1])
 
-            if current_tasks != new_tasks:
-                logger.info("Changes detected in tenant tasks, updating schedule...")
+            for tenant_id in tenant_ids:
+                if tenant_id not in existing_tenants:
+                    logger.info(f"Found new tenant: {tenant_id}")
+
+                for task in tasks_to_schedule():
+                    task_name = f"{task['name']}-{tenant_id}"
+                    new_task = {
+                        "task": task["task"],
+                        "schedule": task["schedule"],
+                        "kwargs": {"tenant_id": tenant_id},
+                    }
+                    if options := task.get("options"):
+                        new_task["options"] = options
+                    new_beat_schedule[task_name] = new_task
+
+            if self._should_update_schedule(current_schedule, new_beat_schedule):
+                logger.info(
+                    "Updating schedule",
+                    extra={
+                        "new_tasks": len(new_beat_schedule),
+                        "current_tasks": len(current_schedule),
+                    },
+                )
                 if not hasattr(self, "_store"):
-                    self._store = {"entries": {}}
+                    self._store: dict[str, dict] = {"entries": {}}
                 self.update_from_dict(new_beat_schedule)
-                logger.info("Tenant tasks updated.")
+                logger.info("Tenant tasks updated successfully")
             else:
-                logger.debug("No changes in tenant tasks detected.")
+                logger.debug("No schedule updates needed")
+
+        except (AttributeError, KeyError) as e:
+            logger.error("Failed to process task configuration: %s", str(e))
         except Exception as e:
-            logger.exception("Failed to update tenant tasks: %s", e)
+            logger.exception("Unexpected error updating tenant tasks: %s", str(e))
+
+    def _should_update_schedule(
+        self, current_schedule: dict, new_schedule: dict
+    ) -> bool:
+        """Compare schedules to determine if an update is needed."""
+        current_tasks = set(current_schedule.keys())
+        new_tasks = set(new_schedule.keys())
+        return current_tasks != new_tasks
