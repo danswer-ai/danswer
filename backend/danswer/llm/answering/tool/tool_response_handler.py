@@ -135,14 +135,9 @@ class ToolResponseHandler:
         if not selected_tool or not selected_tool_call_request:
             return
 
+        logger.info(f"Selected tool: {selected_tool.name}")
+        logger.debug(f"Selected tool call request: {selected_tool_call_request}")
         self.tool_runner = ToolRunner(selected_tool, selected_tool_call_request["args"])
-        self.tool_call_summary = ToolCallSummary(
-            tool_call_request=self.tool_call_chunk,
-            tool_call_result=build_tool_message(
-                tool_call_request, self.tool_runner.tool_message_content()
-            ),
-        )
-
         self.tool_kickoff = self.tool_runner.kickoff()
         yield self.tool_kickoff
 
@@ -152,6 +147,13 @@ class ToolResponseHandler:
 
         self.tool_final_result = self.tool_runner.tool_final_result()
         yield self.tool_final_result
+
+        self.tool_call_summary = ToolCallSummary(
+            tool_call_request=self.tool_call_chunk,
+            tool_call_result=build_tool_message(
+                selected_tool_call_request, self.tool_runner.tool_message_content()
+            ),
+        )
 
     def handle_response_part(
         self,

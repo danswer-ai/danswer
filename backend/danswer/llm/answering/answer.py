@@ -19,6 +19,9 @@ from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.llm.answering.prompts.build import default_build_system_message
 from danswer.llm.answering.prompts.build import default_build_user_message
 from danswer.llm.answering.stream_processing.answer_response_handler import (
+    AnswerResponseHandler,
+)
+from danswer.llm.answering.stream_processing.answer_response_handler import (
     CitationResponseHandler,
 )
 from danswer.llm.answering.stream_processing.answer_response_handler import (
@@ -210,6 +213,8 @@ class Answer:
         tool_call_handler = ToolResponseHandler(current_llm_call.tools)
 
         search_result = SearchTool.get_search_result(current_llm_call) or []
+
+        answer_handler: AnswerResponseHandler
         if self.answer_style_config.citation_config:
             answer_handler = CitationResponseHandler(
                 context_docs=search_result,

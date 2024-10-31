@@ -1,6 +1,6 @@
 import asyncio
 import io
-import time
+import json
 import uuid
 from collections.abc import Callable
 from collections.abc import Generator
@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.chat_utils import extract_headers
+from danswer.chat.process_message import stream_chat_message
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
@@ -73,7 +74,7 @@ from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
-from danswer.server.utils import get_json_line
+from danswer.utils.headers import get_custom_tool_additional_request_headers
 from danswer.utils.logger import setup_logger
 
 
@@ -289,9 +290,7 @@ async def is_connected(request: Request) -> Callable[[], bool]:
     def is_connected_sync() -> bool:
         future = asyncio.run_coroutine_threadsafe(request.is_disconnected(), main_loop)
         try:
-            logger.debug("Checking if connected")
             is_connected = not future.result(timeout=0.01)
-            logger.debug(f"Is connected: {is_connected}")
             return is_connected
         except asyncio.TimeoutError:
             logger.error("Asyncio timed out")
@@ -343,32 +342,22 @@ def handle_new_chat_message(
     ):
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
 
-    import json
-
     def stream_generator() -> Generator[str, None, None]:
         try:
-            # for packet in stream_chat_message(
-            #     new_msg_req=chat_message_req,
-            #     user=user,
-            #     use_existing_user_message=chat_message_req.use_existing_user_message,
-            #     litellm_additional_headers=extract_headers(
-            #         request.headers, LITELLM_PASS_THROUGH_HEADERS
-            #     ),
-            #     custom_tool_additional_headers=get_custom_tool_additional_request_headers(
-            #         request.headers
-            #     ),
-            #     is_connected=None,
-            # ):
-            #     yield json.dumps(packet) if isinstance(packet, dict) else packet
-            yield get_json_line(
-                {"user_message_id": 1289, "reserved_assistant_message_id": 1290}
-            )
-            for _ in range(50):
-                logger.debug("Yielding answer piece")
-                yield get_json_line({"answer_piece": "hello"})
-                is_connected = is_connected_func()
-                logger.debug(f"Is connected: {is_connected}")
-                time.sleep(1)
+            for packet in stream_chat_message(
+                new_msg_req=chat_message_req,
+                user=user,
+                use_existing_user_message=chat_message_req.use_existing_user_message,
+                litellm_additional_headers=extract_headers(
+                    request.headers, LITELLM_PASS_THROUGH_HEADERS
+                ),
+                custom_tool_additional_headers=get_custom_tool_additional_request_headers(
+                    request.headers
+                ),
+                is_connected=is_connected_func,
+            ):
+                logger.debug(f"Yielding packet: {packet}")
+                yield json.dumps(packet) if isinstance(packet, dict) else packet
 
         except Exception as e:
             logger.exception(f"Error in chat message streaming: {e}")
