@@ -5,6 +5,7 @@ import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
   ArrayHelpers,
@@ -1092,6 +1093,7 @@ export function AssistantEditor({
                                             a client about a new billing feature
                                             we just released.&quot;
                                           </SubLabel>
+                                          af
                                           <Field
                                             name={`starter_messages[${index}].message`}
                                             className={`
@@ -1102,9 +1104,11 @@ export function AssistantEditor({
                                               w-full 
                                               py-2 
                                               px-3 
+                                              min-h-12
                                               mr-4
+                                              line-clamp-
                                           `}
-                                            as="textarea"
+                                            component={Textarea}
                                             autoComplete="off"
                                           />
                                           <ErrorMessage
