@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from collections.abc import Iterator
 from datetime import datetime
 
@@ -37,6 +38,7 @@ def _get_folders_in_parent(
 ) -> Iterator[GoogleDriveFileType]:
     # Follow shortcuts to folders
     query = f"(mimeType = '{DRIVE_FOLDER_TYPE}' or mimeType = '{DRIVE_SHORTCUT_TYPE}')"
+    query += " and trashed = false"
 
     if parent_id:
         query += f" and '{parent_id}' in parents"
@@ -62,6 +64,7 @@ def _get_files_in_parent(
     is_slim: bool = False,
 ) -> Iterator[GoogleDriveFileType]:
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}' and '{parent_id}' in parents"
+    query += " and trashed = false"
     query += _generate_time_range_filter(start, end)
 
     for file in execute_paginated_retrieval(
@@ -76,24 +79,23 @@ def _get_files_in_parent(
         yield file
 
 
-_TRAVERSED_PARENT_IDS: set[str] = set()
-
-
 def crawl_folders_for_files(
     service: Resource,
     parent_id: str,
     personal_drive: bool,
+    traversed_parent_ids: set[str],
+    update_traversed_ids_func: Callable[[str], None],
     start: SecondsSinceUnixEpoch | None = None,
     end: SecondsSinceUnixEpoch | None = None,
 ) -> Iterator[GoogleDriveFileType]:
     """
-    This one can start crawling from any folder. It is slower though.
+    This function starts crawling from any folder. It is slower though.
     """
-    if parent_id in _TRAVERSED_PARENT_IDS:
-        logger.debug(f"Skipping subfolder since already traversed: {parent_id}")
+    if parent_id in traversed_parent_ids:
+        print(f"Skipping subfolder since already traversed: {parent_id}")
         return
 
-    _TRAVERSED_PARENT_IDS.add(parent_id)
+    update_traversed_ids_func(parent_id)
 
     yield from _get_files_in_parent(
         service=service,
@@ -113,6 +115,8 @@ def crawl_folders_for_files(
             service=service,
             parent_id=subfolder["id"],
             personal_drive=personal_drive,
+            traversed_parent_ids=traversed_parent_ids,
+            update_traversed_ids_func=update_traversed_ids_func,
             start=start,
             end=end,
         )
@@ -123,6 +127,7 @@ def get_files_in_shared_drive(
     drive_id: str,
     is_slim: bool = False,
     cache_folders: bool = True,
+    update_traversed_ids_func: Callable[[str], None] = lambda _: None,
     start: SecondsSinceUnixEpoch | None = None,
     end: SecondsSinceUnixEpoch | None = None,
 ) -> Iterator[GoogleDriveFileType]:
@@ -130,6 +135,7 @@ def get_files_in_shared_drive(
     if cache_folders:
         # Get all folders being queried and add them to the traversed set
         query = f"mimeType = '{DRIVE_FOLDER_TYPE}'"
+        query += " and trashed = false"
         for file in execute_paginated_retrieval(
             retrieval_function=service.files().list,
             list_key="files",
@@ -140,10 +146,11 @@ def get_files_in_shared_drive(
             fields="nextPageToken, files(id)",
             q=query,
         ):
-            _TRAVERSED_PARENT_IDS.add(file["id"])
+            update_traversed_ids_func(file["id"])
 
     # Get all files in the shared drive
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}'"
+    query += " and trashed = false"
     query += _generate_time_range_filter(start, end)
     for file in execute_paginated_retrieval(
         retrieval_function=service.files().list,
@@ -166,6 +173,7 @@ def get_files_in_my_drive(
     end: SecondsSinceUnixEpoch | None = None,
 ) -> Iterator[GoogleDriveFileType]:
     query = f"mimeType != '{DRIVE_FOLDER_TYPE}' and '{email}' in owners"
+    query += " and trashed = false"
     query += _generate_time_range_filter(start, end)
     for file in execute_paginated_retrieval(
         retrieval_function=service.files().list,

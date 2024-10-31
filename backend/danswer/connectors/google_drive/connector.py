@@ -81,22 +81,37 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 f"{SCOPE_DOC_URL}"
             )
 
+        if (
+            not include_shared_drives
+            and not include_my_drives
+            and not shared_folder_urls
+        ):
+            raise ValueError(
+                "At least one of include_shared_drives, include_my_drives,"
+                " or shared_folder_urls must be true"
+            )
+
         self.batch_size = batch_size
 
         self.include_shared_drives = include_shared_drives
-        shared_drive_urls = _extract_str_list_from_comma_str(shared_drive_urls)
-        self.shared_drive_ids = _extract_ids_from_urls(shared_drive_urls)
+        shared_drive_url_list = _extract_str_list_from_comma_str(shared_drive_urls)
+        self.shared_drive_ids = _extract_ids_from_urls(shared_drive_url_list)
 
         self.include_my_drives = include_my_drives
         self.my_drive_emails = _extract_str_list_from_comma_str(my_drive_emails)
 
-        shared_folder_urls = _extract_str_list_from_comma_str(shared_folder_urls)
-        self.shared_folder_ids = _extract_ids_from_urls(shared_folder_urls)
+        shared_folder_url_list = _extract_str_list_from_comma_str(shared_folder_urls)
+        self.shared_folder_ids = _extract_ids_from_urls(shared_folder_url_list)
 
         self.primary_admin_email: str | None = None
         self.google_domain: str | None = None
 
         self.creds: OAuthCredentials | ServiceAccountCredentials | None = None
+
+        self._TRAVERSED_PARENT_IDS: set[str] = set()
+
+    def _update_traversed_parent_ids(self, folder_id: str) -> None:
+        self._TRAVERSED_PARENT_IDS.add(folder_id)
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
         primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
@@ -155,28 +170,33 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 ):
                     shared_drive_urls.append(drive["id"])
 
-            # crawl all the shared parent ids for files
+            # For each shared drive, retrieve all files
             for shared_drive_id in shared_drive_urls:
                 for file in get_files_in_shared_drive(
                     service=primary_drive_service,
                     drive_id=shared_drive_id,
                     is_slim=is_slim,
                     cache_folders=bool(self.shared_folder_ids),
+                    update_traversed_ids_func=self._update_traversed_parent_ids,
                     start=start,
                     end=end,
                 ):
                     yield file
 
         if self.shared_folder_ids:
+            # Crawl all the shared parent ids for files
             for folder_id in self.shared_folder_ids:
                 yield from crawl_folders_for_files(
                     service=primary_drive_service,
                     parent_id=folder_id,
                     personal_drive=False,
+                    traversed_parent_ids=self._TRAVERSED_PARENT_IDS,
+                    update_traversed_ids_func=self._update_traversed_parent_ids,
                     start=start,
                     end=end,
                 )
 
+        all_user_emails = []
         # get all personal docs from each users' personal drive
         if self.include_my_drives:
             if isinstance(self.creds, ServiceAccountCredentials):
@@ -186,9 +206,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 if not all_user_emails:
                     all_user_emails = self._get_all_user_emails()
 
-            else:
+            elif self.primary_admin_email:
                 # If using OAuth, only fetch the primary admin email
-                all_user_emails = self.primary_admin_email or []
+                all_user_emails = [self.primary_admin_email]
 
             for email in all_user_emails:
                 logger.info(f"Fetching personal files for user: {email}")
@@ -262,6 +282,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                         "doc_id": file.get("id"),
                         "permissions": file.get("permissions", []),
                         "permission_ids": file.get("permissionIds", []),
+                        "name": file.get("name"),
+                        "owner_email": file.get("owners", [{}])[0].get("emailAddress"),
                     },
                 )
             )
