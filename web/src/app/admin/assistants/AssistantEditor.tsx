@@ -1093,7 +1093,6 @@ export function AssistantEditor({
                                             a client about a new billing feature
                                             we just released.&quot;
                                           </SubLabel>
-                                          af
                                           <Field
                                             name={`starter_messages[${index}].message`}
                                             className={`
@@ -1108,7 +1107,7 @@ export function AssistantEditor({
                                               mr-4
                                               line-clamp-
                                           `}
-                                            component={Textarea}
+                                            as="textarea"
                                             autoComplete="off"
                                           />
                                           <ErrorMessage
