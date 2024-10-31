@@ -357,7 +357,17 @@ def get_session_with_tenant(
 
             # Bind the session to the connection
             with Session(bind=connection, expire_on_commit=False) as session:
-                yield session
+                try:
+                    yield session
+                finally:
+                    # Reset search_path to default after the session is used
+                    if MULTI_TENANT:
+                        cursor = dbapi_connection.cursor()
+                        try:
+                            cursor.execute('SET search_path TO "$user", public')
+                        finally:
+                            cursor.close()
+
     finally:
         # Restore the previous tenant ID
         CURRENT_TENANT_ID_CONTEXTVAR.set(previous_tenant_id)
