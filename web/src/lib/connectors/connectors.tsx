@@ -171,6 +171,50 @@ export const connectorConfigs: Record<
     ],
     advanced_values: [],
   },
+  github_pages: {
+    description: "Configure GitHub Pages connector",
+    values: [
+      {
+        type: "text",
+        query: "Enter the base URL of the GitHub Pages site:",
+        label: "Base URL",
+        name: "base_url",
+        optional: false,
+      },
+      {
+        type: "checkbox",
+        query: "Authenticate requests with GitHub credentials?",
+        label: "Use GitHub Authentication",
+        description: "Enable this if your GitHub Pages site requires authentication",
+        name: "use_authentication",
+        optional: true,
+      },
+    ],
+    advanced_values: [
+      {
+        type: "text",
+        query: "Enter your GitHub username (if using authentication):",
+        label: "GitHub Username",
+        name: "github_username",
+        optional: true,
+      },
+      {
+        type: "text",
+        query: "Enter your GitHub personal access token:",
+        label: "GitHub Personal Access Token",
+        name: "github_personal_access_token",
+        optional: true,
+      },
+      {
+        type: "number",
+        query: "Set the batch size for indexing (default is 10):",
+        label: "Batch Size",
+        name: "batch_size",
+        optional: true,
+        default: 10,
+      },
+    ],
+  },
   gitlab: {
     description: "Configure GitLab connector",
     values: [
@@ -1053,6 +1097,14 @@ export interface GithubConfig {
   repo_name: string;
   include_prs: boolean;
   include_issues: boolean;
+}
+
+export interface GithubPagesConfig {
+  base_url: string;
+  use_authentication?: boolean;
+  github_username?: string;
+  github_personal_access_token?: string;
+  batch_size?: number;
 }
 
 export interface GitlabConfig {

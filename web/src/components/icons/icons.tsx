@@ -1036,6 +1036,13 @@ export const GithubIcon = ({
   <LogoIcon size={size} className={className} src="/Github.png" />
 );
 
+export const GithubPagesIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <LogoIcon size={size} className={className} src="/GithubPages.png" />
+);
+
 export const GmailIcon = ({
   size = 16,
   className = defaultTailwindCSS,

@@ -38,6 +38,7 @@ import {
   XenforoIcon,
   FreshdeskIcon,
   FirefliesIcon,
+  GithubPagesIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -94,6 +95,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Github",
     category: SourceCategory.CodeRepository,
     docs: "https://docs.danswer.dev/connectors/github",
+  },
+  github_pages: {
+    icon: GithubPagesIcon,
+    displayName: "Github Pages",
+    category: SourceCategory.Wiki,
+    docs: "https://docs.danswer.dev/connectors/github_pages",
   },
   gitlab: {
     icon: GitlabIcon,
