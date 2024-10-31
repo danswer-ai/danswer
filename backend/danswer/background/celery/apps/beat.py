@@ -91,8 +91,8 @@ class DynamicTenantScheduler(PersistentScheduler):
             else:
                 logger.debug("No schedule updates needed")
 
-        except (AttributeError, KeyError) as e:
-            logger.error("Failed to process task configuration: %s", str(e))
+        except (AttributeError, KeyError):
+            logger.exception("Error processing task configuration:")
         except Exception as e:
             logger.exception("Unexpected error updating tenant tasks: %s", str(e))
 
