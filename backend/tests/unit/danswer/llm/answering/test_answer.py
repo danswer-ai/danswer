@@ -293,6 +293,7 @@ def test_answer_with_search_call_quotes_enabled(
     answer_instance.force_use_tool = ForceUseTool(
         force_use=False, tool_name="", args=None
     )
+    answer_instance.answer_style_config.citation_config = None
     answer_instance.answer_style_config.quotes_config = QuotesConfig()
 
     # Set up the LLM mock to return search results and then an answer
