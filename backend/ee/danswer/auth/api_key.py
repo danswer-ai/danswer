@@ -1,5 +1,7 @@
 import secrets
 import uuid
+from urllib.parse import quote
+from urllib.parse import unquote
 
 from fastapi import Request
 from passlib.hash import sha256_crypt
@@ -35,8 +37,8 @@ def generate_api_key(tenant_id: str | None = None) -> str:
     if not tenant_id:
         return _API_KEY_PREFIX + secrets.token_urlsafe(_API_KEY_LEN)
 
-    # For multi-tenant, embed tenant info: prefix.tenant_id.random
-    return f"{_API_KEY_PREFIX}{tenant_id}.{secrets.token_urlsafe(_API_KEY_LEN)}"
+    encoded_tenant = quote(tenant_id)  # URL encode the tenant ID
+    return f"{_API_KEY_PREFIX}{encoded_tenant}.{secrets.token_urlsafe(_API_KEY_LEN)}"
 
 
 def extract_tenant_from_api_key(request: Request) -> str | None:
@@ -60,7 +62,7 @@ def extract_tenant_from_api_key(request: Request) -> str | None:
     if not tenant_id:
         return None
 
-    return tenant_id
+    return unquote(tenant_id)
 
 
 def hash_api_key(api_key: str) -> str:
