@@ -9,7 +9,6 @@ from pydantic.v1 import BaseModel as BaseModel__v1
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import StreamStopInfo
-from danswer.chat.models import StreamStopReason
 from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.tools.force import ForceUseTool
@@ -72,7 +71,7 @@ class LLMResponseHandlerManager:
             all_messages.append(message)
 
             if self.is_cancelled():
-                yield StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
+                # yield StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
                 return
 
         # potentially give back all info on the selected tool call + its result

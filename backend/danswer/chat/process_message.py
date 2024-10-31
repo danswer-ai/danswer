@@ -18,6 +18,7 @@ from danswer.chat.models import MessageResponseIDInfo
 from danswer.chat.models import MessageSpecificCitations
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
+from danswer.chat.models import StreamStopInfo
 from danswer.configs.app_configs import AZURE_DALLE_API_BASE
 from danswer.configs.app_configs import AZURE_DALLE_API_KEY
 from danswer.configs.app_configs import AZURE_DALLE_API_VERSION
@@ -278,6 +279,7 @@ ChatPacket = (
     | CustomToolResponse
     | MessageSpecificCitations
     | MessageResponseIDInfo
+    | StreamStopInfo
 )
 ChatPacketStream = Iterator[ChatPacket]
 
@@ -803,7 +805,8 @@ def stream_chat_message_objects(
                         response=custom_tool_response.tool_result,
                         tool_name=custom_tool_response.tool_name,
                     )
-
+            elif isinstance(packet, StreamStopInfo):
+                pass
             else:
                 if isinstance(packet, ToolCallFinalResult):
                     tool_result = packet

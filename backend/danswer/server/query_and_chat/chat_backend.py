@@ -283,13 +283,16 @@ def delete_chat_session_by_id(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-async def is_disconnected(request: Request) -> Callable[[], bool]:
+async def is_connected(request: Request) -> Callable[[], bool]:
     main_loop = asyncio.get_event_loop()
 
-    def is_disconnected_sync() -> bool:
+    def is_connected_sync() -> bool:
         future = asyncio.run_coroutine_threadsafe(request.is_disconnected(), main_loop)
         try:
-            return not future.result(timeout=0.01)
+            logger.debug("Checking if connected")
+            is_connected = not future.result(timeout=0.01)
+            logger.debug(f"Is connected: {is_connected}")
+            return is_connected
         except asyncio.TimeoutError:
             logger.error("Asyncio timed out")
             return True
@@ -300,7 +303,7 @@ async def is_disconnected(request: Request) -> Callable[[], bool]:
             )
             return True
 
-    return is_disconnected_sync
+    return is_connected_sync
 
 
 @router.post("/send-message")
@@ -309,7 +312,7 @@ def handle_new_chat_message(
     request: Request,
     user: User | None = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
-    is_disconnected_func: Callable[[], bool] = Depends(is_disconnected),
+    is_connected_func: Callable[[], bool] = Depends(is_connected),
 ) -> StreamingResponse:
     """
     This endpoint is both used for all the following purposes:
@@ -325,7 +328,7 @@ def handle_new_chat_message(
         request (Request): The current HTTP request context.
         user (User | None): The current user, obtained via dependency injection.
         _ (None): Rate limit check is run if user/group/global rate limits are enabled.
-        is_disconnected_func (Callable[[], bool]): Function to check client disconnection,
+        is_connected_func (Callable[[], bool]): Function to check client disconnection,
             used to stop the streaming response if the client disconnects.
 
     Returns:
@@ -354,7 +357,7 @@ def handle_new_chat_message(
                 custom_tool_additional_headers=get_custom_tool_additional_request_headers(
                     request.headers
                 ),
-                is_connected=is_disconnected_func,
+                is_connected=is_connected_func,
             ):
                 yield json.dumps(packet) if isinstance(packet, dict) else packet
 
