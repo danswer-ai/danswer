@@ -34,15 +34,13 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-              if [ -f /usr/local/share/ca-certificates/my-ca.crt ]; then
-                update-ca-certificates;
-              fi &&
               alembic upgrade head &&
               echo "Starting Danswer Api Server" &&
               uvicorn danswer.main:app --host 0.0.0.0 --port 8080
           ports:
             - containerPort: 8080
-          # Existing environment variables
+          # There are some extra values since this is shared between services
+          # There are no conflicts though, extra env variables are simply ignored
           env:
             - name: OAUTH_CLIENT_ID
               valueFrom:
@@ -62,17 +60,3 @@ spec:
           envFrom:
             - configMapRef:
                 name: env-configmap
-          # Optional volume mount for CA certificate - feel free to comment out
-          # If not necessary
-          volumeMounts:
-            - name: my-ca-cert-volume
-              mountPath: /etc/ssl/certs/my-ca.crt
-              subPath: my-ca.crt
-      # Optional volume for CA certificate
-      volumes:
-        - name: my-ca-cert-volume
-          secret:
-            secretName: my-ca-cert
-            items:
-              - key: my-ca.crt
-                path: my-ca.crt
