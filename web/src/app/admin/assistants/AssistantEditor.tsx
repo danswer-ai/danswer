@@ -3,7 +3,6 @@
 import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
-import Italic from "@/components/ui/italic";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
