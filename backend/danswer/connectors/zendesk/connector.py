@@ -20,7 +20,7 @@ from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.utils.retry_wrapper import retry_builder
 
 
-MAX_PAGE_SIZE = 30
+MAX_PAGE_SIZE = 30  # Zendesk API maximum
 
 
 class ZendeskCredentialsNotSetUpError(PermissionError):
@@ -386,14 +386,15 @@ class ZendeskConnector(LoadConnector, PollConnector):
 
 
 if __name__ == "__main__":
+    import os
     import time
 
-    connector = ZendeskConnector(content_type="tickets")
+    connector = ZendeskConnector()
     connector.load_credentials(
         {
-            "zendesk_subdomain": "https://dansweraisupport.zendesk.com",
-            "zendesk_email": "yuhong@danswer.ai",
-            "zendesk_token": "LGtvNnAcXRi5DTCt9yo7X6b6w6cg5cgw5A8LgjKl",
+            "zendesk_subdomain": os.environ["ZENDESK_SUBDOMAIN"],
+            "zendesk_email": os.environ["ZENDESK_EMAIL"],
+            "zendesk_token": os.environ["ZENDESK_TOKEN"],
         }
     )
 
