@@ -40,45 +40,54 @@ logger = setup_logger()
 
 
 def _execute_with_retry(request: Any) -> Any:
-    try:
-        return request.execute()
-    except HttpError as error:
-        if error.resp.status == 429:
-            # Attempt to get 'Retry-After' from headers
-            retry_after = error.resp.get("Retry-After")
-            if retry_after:
-                sleep_time = int(retry_after)
-            else:
-                # Extract 'Retry after' timestamp from error message
-                match = re.search(
-                    r"Retry after (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)",
-                    str(error),
-                )
-                if match:
-                    retry_after_timestamp = match.group(1)
-                    retry_after_dt = datetime.strptime(
-                        retry_after_timestamp, "%Y-%m-%dT%H:%M:%S.%fZ"
-                    ).replace(tzinfo=timezone.utc)
-                    current_time = datetime.now(timezone.utc)
-                    sleep_time = max(
-                        int((retry_after_dt - current_time).total_seconds()),
-                        0,
-                    )
-                else:
-                    logger.error(
-                        f"No Retry-After header or timestamp found in error message: {error}"
-                    )
-                    sleep_time = 900  # This is how much the sleep tends to be according to a few tests
+    max_attempts = 10
+    attempt = 0
 
-            sleep_time += 5  # Add a buffer to be safe
-
-            logger.info(f"Rate limit exceeded. Sleeping for {sleep_time} seconds.")
-            time.sleep(sleep_time)
-
-            # If it still fails, just raise to not be stuck in a loop
+    while attempt < max_attempts:
+        try:
             return request.execute()
+        except HttpError as error:
+            attempt += 1
 
-        raise
+            if error.resp.status == 429:
+                # Attempt to get 'Retry-After' from headers
+                retry_after = error.resp.get("Retry-After")
+                if retry_after:
+                    sleep_time = int(retry_after)
+                else:
+                    # Extract 'Retry after' timestamp from error message
+                    match = re.search(
+                        r"Retry after (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)",
+                        str(error),
+                    )
+                    if match:
+                        retry_after_timestamp = match.group(1)
+                        retry_after_dt = datetime.strptime(
+                            retry_after_timestamp, "%Y-%m-%dT%H:%M:%S.%fZ"
+                        ).replace(tzinfo=timezone.utc)
+                        current_time = datetime.now(timezone.utc)
+                        sleep_time = max(
+                            int((retry_after_dt - current_time).total_seconds()),
+                            0,
+                        )
+                    else:
+                        logger.error(
+                            f"No Retry-After header or timestamp found in error message: {error}"
+                        )
+                        sleep_time = 60
+
+                sleep_time += 3  # Add a buffer to be safe
+
+                logger.info(
+                    f"Rate limit exceeded. Attempt {attempt}/{max_attempts}. Sleeping for {sleep_time} seconds."
+                )
+                time.sleep(sleep_time)
+
+            else:
+                raise
+
+    # If we've exhausted all attempts
+    raise Exception(f"Failed to execute request after {max_attempts} attempts")
 
 
 class GmailConnector(LoadConnector, PollConnector):
