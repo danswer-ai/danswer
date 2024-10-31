@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy.orm import Session
 
 from danswer.db.models import SlackBotConfig
@@ -59,3 +61,5 @@ TENANT_HEARTBEAT_EXPIRATION = 180  # How long before a tenant's heartbeat expire
 TENANT_ACQUISITION_INTERVAL = (
     60  # How often pods attempt to acquire unprocessed tenants
 )
+
+MAX_TENANTS_PER_POD = int(os.getenv("MAX_TENANTS_PER_POD", 50))
