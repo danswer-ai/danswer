@@ -171,52 +171,9 @@ def wait_for_redis(sender: Any, **kwargs: Any) -> None:
 
 
 def on_secondary_worker_init(sender: Any, **kwargs: Any) -> None:
-    # WAIT_INTERVAL = 5
-    # WAIT_LIMIT = 60
-
     logger.info("Running as a secondary celery worker.")
     logger.info("Waiting for all tenant primary workers to be ready...")
-    # time_start = time.monotonic()
 
-    # while True:
-    #     tenant_ids = get_all_tenant_ids()
-    #     # Check if we have a primary worker lock for each tenant
-    #     all_tenants_ready = all(
-    #         get_redis_client(tenant_id=tenant_id).exists(
-    #             DanswerRedisLocks.PRIMARY_WORKER
-    #         )
-    #         for tenant_id in tenant_ids
-    #     )
-
-    #     if all_tenants_ready:
-    #         break
-
-    #     time_elapsed = time.monotonic() - time_start
-    #     ready_tenants = sum(
-    #         1
-    #         for tenant_id in tenant_ids
-    #         if get_redis_client(tenant_id=tenant_id).exists(
-    #             DanswerRedisLocks.PRIMARY_WORKER
-    #         )
-    #     )
-
-    #     logger.info(
-    #         f"Not all tenant primary workers are ready yet. "
-    #         f"Ready tenants: {ready_tenants}/{len(tenant_ids)} "
-    #         f"elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
-    #     )
-
-    #     if time_elapsed > WAIT_LIMIT:
-    #         msg = (
-    #             f"Not all tenant primary workers were ready within the timeout "
-    #             f"({WAIT_LIMIT} seconds). Exiting..."
-    #         )
-    #         logger.error(msg)
-    #         raise WorkerShutdown(msg)
-
-    #     time.sleep(WAIT_INTERVAL)
-
-    logger.info("All tenant primary workers are ready. Continuing...")
     return
 
 
