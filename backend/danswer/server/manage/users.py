@@ -190,7 +190,6 @@ def bulk_invite_users(
         )
 
     tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-
     normalized_emails = []
     try:
         for email in emails:
@@ -206,6 +205,7 @@ def bulk_invite_users(
     if MULTI_TENANT:
         try:
             add_users_to_tenant(normalized_emails, tenant_id)
+
         except IntegrityError as e:
             if isinstance(e.orig, UniqueViolation):
                 raise HTTPException(
@@ -213,6 +213,8 @@ def bulk_invite_users(
                     detail="User has already been invited to a Danswer organization",
                 )
             raise
+        except Exception as e:
+            logger.error(f"Failed to add users to tenant {tenant_id}: {str(e)}")
 
     initial_invited_users = get_invited_users()
 

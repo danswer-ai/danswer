@@ -325,8 +325,11 @@ def get_session_with_tenant(
     """Generate a database session bound to a connection with the appropriate tenant schema set."""
     engine = get_sqlalchemy_engine()
 
+    # Store the previous tenant ID
+    previous_tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+
     if tenant_id is None:
-        tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+        tenant_id = previous_tenant_id
     else:
         CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
@@ -335,30 +338,25 @@ def get_session_with_tenant(
     if not is_valid_schema_name(tenant_id):
         raise HTTPException(status_code=400, detail="Invalid tenant ID")
 
-    # Establish a raw connection
-    with engine.connect() as connection:
-        # Access the raw DBAPI connection and set the search_path
-        dbapi_connection = connection.connection
+    try:
+        # Establish a raw connection
+        with engine.connect() as connection:
+            # Access the raw DBAPI connection and set the search_path
+            dbapi_connection = connection.connection
 
-        # Set the search_path outside of any transaction
-        cursor = dbapi_connection.cursor()
-        try:
-            cursor.execute(f'SET search_path = "{tenant_id}"')
-        finally:
-            cursor.close()
-
-        # Bind the session to the connection
-        with Session(bind=connection, expire_on_commit=False) as session:
+            # Set the search_path outside of any transaction
+            cursor = dbapi_connection.cursor()
             try:
-                yield session
+                cursor.execute(f'SET search_path = "{tenant_id}"')
             finally:
-                # Reset search_path to default after the session is used
-                if MULTI_TENANT:
-                    cursor = dbapi_connection.cursor()
-                    try:
-                        cursor.execute('SET search_path TO "$user", public')
-                    finally:
-                        cursor.close()
+                cursor.close()
+
+            # Bind the session to the connection
+            with Session(bind=connection, expire_on_commit=False) as session:
+                yield session
+    finally:
+        # Restore the previous tenant ID
+        CURRENT_TENANT_ID_CONTEXTVAR.set(previous_tenant_id)
 
 
 def set_search_path_on_checkout(
