@@ -240,7 +240,7 @@ class SlackbotHandler:
         socket_client = _get_socket_client(slack_bot_tokens, tenant_id)
 
         # Append the event handler
-        socket_client.socket_mode_request_listeners.append(process_slack_event)
+        socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 
         # Establish a WebSocket connection to the Socket Mode servers
         logger.info(f"Connecting socket client for tenant {tenant_id}")
