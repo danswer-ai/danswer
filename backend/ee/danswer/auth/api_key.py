@@ -41,15 +41,16 @@ def generate_api_key(tenant_id: str | None = None) -> str:
     return f"{_API_KEY_PREFIX}{encoded_tenant}.{secrets.token_urlsafe(_API_KEY_LEN)}"
 
 
-def extract_tenant_from_api_key(request: Request) -> str | None:
-    """Extract tenant ID from request. Returns None if auth is disabled."""
+def extract_tenant_from_api_key_header(request: Request) -> str | None:
+    """Extract tenant ID from request. Returns None if auth is disabled or invalid format."""
+    raw_api_key_header = request.headers.get(
+        _API_KEY_HEADER_ALTERNATIVE_NAME
+    ) or request.headers.get(_API_KEY_HEADER_NAME)
 
-    api_key_header = request.headers.get("Authorization")
-    tenant_id = None
-    if not api_key_header or not api_key_header.startswith("Bearer "):
+    if not raw_api_key_header or not raw_api_key_header.startswith(_BEARER_PREFIX):
         return None
 
-    api_key = api_key_header[7:]  # Remove "Bearer " prefix
+    api_key = raw_api_key_header[len(_BEARER_PREFIX) :].strip()
 
     if not api_key.startswith(_API_KEY_PREFIX):
         return None
@@ -58,15 +59,12 @@ def extract_tenant_from_api_key(request: Request) -> str | None:
     if len(parts) != 2:
         return None
 
-    tenant_id, _ = parts
-    if not tenant_id:
-        return None
-
-    return unquote(tenant_id)
+    tenant_id = parts[0]
+    return unquote(tenant_id) if tenant_id else None
 
 
 def hash_api_key(api_key: str) -> str:
-    # NOTE: no salt is needed, as the API key is randoml py generated
+    # NOTE: no salt is needed, as the API key is randomly generated
     # and overlaps are impossible
     return sha256_crypt.hash(api_key, salt="", rounds=API_KEY_HASH_ROUNDS)
 

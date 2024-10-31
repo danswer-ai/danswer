@@ -10,7 +10,7 @@ from fastapi import Response
 
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.db.engine import is_valid_schema_name
-from ee.danswer.auth.api_key import extract_tenant_from_api_key
+from ee.danswer.auth.api_key import extract_tenant_from_api_key_header
 from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
@@ -37,7 +37,7 @@ def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> Non
 
 def _get_tenant_id_from_request(request: Request, logger: logging.LoggerAdapter) -> str:
     # First check for API key
-    tenant_id = extract_tenant_from_api_key(request)
+    tenant_id = extract_tenant_from_api_key_header(request)
     if tenant_id is not None:
         return tenant_id
 
