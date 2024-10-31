@@ -1,6 +1,5 @@
 from collections.abc import Iterator
 from typing import Any
-from typing import Dict
 
 import requests
 
@@ -37,7 +36,7 @@ class ZendeskClient:
         self.auth = (f"{email}/token", token)
 
     @retry_builder()
-    def make_request(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def make_request(self, endpoint: str, params: dict[str, Any]) -> dict[str, Any]:
         response = requests.get(
             f"{self.base_url}/{endpoint}", auth=self.auth, params=params
         )
@@ -69,7 +68,7 @@ def _get_content_tag_mapping(client: ZendeskClient) -> dict[str, str]:
 
 def _get_articles(
     client: ZendeskClient, start_time: int | None = None, page_size: int = MAX_PAGE_SIZE
-) -> Iterator[Dict[str, Any]]:
+) -> Iterator[dict[str, Any]]:
     params = (
         {"start_time": start_time, "page[size]": page_size}
         if start_time
@@ -88,7 +87,7 @@ def _get_articles(
 
 def _get_tickets(
     client: ZendeskClient, start_time: int | None = None
-) -> Iterator[Dict[str, Any]]:
+) -> Iterator[dict[str, Any]]:
     params = {"start_time": start_time} if start_time else {"start_time": 0}
 
     while True:
