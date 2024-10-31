@@ -44,6 +44,13 @@ def _execute_with_retry(request: Any) -> Any:
     attempt = 0
 
     while attempt < max_attempts:
+        # Note for reasons unknown, the Google API will sometimes return a 429
+        # and even after waiting the retry period, it will return another 429.
+        # It could be due to a few possibilities:
+        # 1. Other things are also requesting from the Gmail API with the same key
+        # 2. It's a rolling rate limit so the moment we get some amount of requests cleared, we hit it again very quickly
+        # 3. The retry-after has a maximum and we've already hit the limit for the day
+        # or it's something else...
         try:
             return request.execute()
         except HttpError as error:
