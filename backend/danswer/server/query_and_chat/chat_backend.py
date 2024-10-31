@@ -363,9 +363,6 @@ def handle_new_chat_message(
             logger.exception(f"Error in chat message streaming: {e}")
             yield json.dumps({"error": str(e)})
 
-        except GeneratorExit:
-            logger.debug("GeneratorExit")
-
         finally:
             logger.debug("Stream generator finished")
 
