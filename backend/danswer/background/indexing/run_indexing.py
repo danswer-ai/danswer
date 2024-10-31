@@ -118,7 +118,13 @@ def _run_indexing(
     """
     start_time = time.time()
 
+    if index_attempt.search_settings is None:
+        raise ValueError(
+            "Search settings must be set for indexing. This should not be possible."
+        )
+
     search_settings = index_attempt.search_settings
+
     index_name = search_settings.index_name
 
     # Only update cc-pair status for primary index jobs
