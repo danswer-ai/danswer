@@ -18,11 +18,14 @@ from danswer.llm.answering.models import PromptConfig
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.llm.answering.prompts.build import default_build_system_message
 from danswer.llm.answering.prompts.build import default_build_user_message
-from danswer.llm.answering.stream_processing.citation_response_handler import (
+from danswer.llm.answering.stream_processing.answer_response_handler import (
     CitationResponseHandler,
 )
-from danswer.llm.answering.stream_processing.citation_response_handler import (
+from danswer.llm.answering.stream_processing.answer_response_handler import (
     DummyAnswerResponseHandler,
+)
+from danswer.llm.answering.stream_processing.answer_response_handler import (
+    QuotesResponseHandler,
 )
 from danswer.llm.answering.stream_processing.utils import map_document_id_order
 from danswer.llm.answering.tool.tool_response_handler import ToolResponseHandler
@@ -207,13 +210,20 @@ class Answer:
         tool_call_handler = ToolResponseHandler(current_llm_call.tools)
 
         search_result = SearchTool.get_search_result(current_llm_call) or []
-        citation_response_handler = CitationResponseHandler(
-            context_docs=search_result,
-            doc_id_to_rank_map=map_document_id_order(search_result),
-        )
+        if self.answer_style_config.citation_config:
+            answer_handler = CitationResponseHandler(
+                context_docs=search_result,
+                doc_id_to_rank_map=map_document_id_order(search_result),
+            )
+        elif self.answer_style_config.quotes_config:
+            answer_handler = QuotesResponseHandler(
+                context_docs=search_result,
+            )
+        else:
+            raise ValueError("No answer style config provided")
 
         response_handler_manager = LLMResponseHandlerManager(
-            tool_call_handler, citation_response_handler, self.is_cancelled
+            tool_call_handler, answer_handler, self.is_cancelled
         )
 
         # DEBUG: good breakpoint

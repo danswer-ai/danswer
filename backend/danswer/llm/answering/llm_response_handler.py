@@ -20,7 +20,7 @@ from danswer.tools.tool import Tool
 
 
 if TYPE_CHECKING:
-    from danswer.llm.answering.stream_processing.citation_response_handler import (
+    from danswer.llm.answering.stream_processing.answer_response_handler import (
         AnswerResponseHandler,
     )
     from danswer.llm.answering.tool.tool_response_handler import ToolResponseHandler

@@ -13,13 +13,15 @@ from langchain_core.messages import ToolCallChunk
 
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import DanswerQuote
+from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import StreamStopInfo
 from danswer.chat.models import StreamStopReason
 from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
-from danswer.llm.answering.models import CitationConfig
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.models import QuotesConfig
 from danswer.llm.interfaces import LLM
 from danswer.tools.force import ForceUseTool
 from danswer.tools.models import ToolCallFinalResult
@@ -291,9 +293,7 @@ def test_answer_with_search_call_quotes_enabled(
     answer_instance.force_use_tool = ForceUseTool(
         force_use=False, tool_name="", args=None
     )
-    answer_instance.answer_style_config.citation_config = CitationConfig(
-        use_quotes=True
-    )
+    answer_instance.answer_style_config.quotes_config = QuotesConfig()
 
     # Set up the LLM mock to return search results and then an answer
     mock_llm = cast(Mock, answer_instance.llm)
@@ -315,10 +315,21 @@ def test_answer_with_search_call_quotes_enabled(
         )
     ]
 
+    # needs to be short due to the "anti-hallucination" check in QuotesProcessor
+    answer_content = "z"
+    quote_content = mock_search_results[0].content
     mock_llm.stream.side_effect = [
         [tool_call_chunk],
         [
-            AIMessageChunk(content="Answer"),
+            AIMessageChunk(
+                content=(
+                    '{"answer": "'
+                    + answer_content
+                    + '", "quotes": ["'
+                    + quote_content
+                    + '"]}'
+                )
+            ),
         ],
     ]
 
@@ -326,7 +337,7 @@ def test_answer_with_search_call_quotes_enabled(
     output = list(answer_instance.processed_streamed_output)
 
     # Assertions
-    assert len(output) == 7
+    assert len(output) == 5
     assert output[0] == ToolCallKickoff(
         tool_name="search", tool_args=DEFAULT_SEARCH_ARGS
     )
@@ -339,50 +350,21 @@ def test_answer_with_search_call_quotes_enabled(
         tool_args=DEFAULT_SEARCH_ARGS,
         tool_result=[json.loads(doc.model_dump_json()) for doc in mock_search_results],
     )
-    assert output[3] == DanswerAnswerPiece(answer_piece="Based on the search results, ")
-    expected_citation = CitationInfo(citation_num=1, document_id="doc1")
-    assert output[4] == expected_citation
-    assert output[5] == DanswerAnswerPiece(
-        answer_piece='the answer is "abc"[[1]](https://example.com/doc1). '
-    )
-    assert output[6] == DanswerAnswerPiece(answer_piece="This is some other stuff.")
-
-    expected_answer = (
-        "Based on the search results, "
-        'the answer is "abc"[[1]](https://example.com/doc1). '
-        "This is some other stuff."
-    )
-    full_answer = "".join(
-        piece.answer_piece
-        for piece in output
-        if isinstance(piece, DanswerAnswerPiece) and piece.answer_piece is not None
-    )
-    assert full_answer == expected_answer
-
-    assert answer_instance.llm_answer == expected_answer
-    assert len(answer_instance.citations) == 1
-    assert answer_instance.citations[0] == expected_citation
-
-    # Verify LLM calls
-    assert mock_llm.stream.call_count == 2
-    first_call, second_call = mock_llm.stream.call_args_list
-
-    # First call should include the search tool definition
-    assert len(first_call.kwargs["tools"]) == 1
-    assert (
-        first_call.kwargs["tools"][0] == mock_search_tool.tool_definition.return_value
+    assert output[3] == DanswerAnswerPiece(answer_piece=answer_content)
+    assert output[4] == DanswerQuotes(
+        quotes=[
+            DanswerQuote(
+                quote=quote_content,
+                document_id=mock_search_results[0].document_id,
+                link=mock_search_results[0].link,
+                source_type=mock_search_results[0].source_type,
+                semantic_identifier=mock_search_results[0].semantic_identifier,
+                blurb=mock_search_results[0].blurb,
+            )
+        ]
     )
 
-    # Second call should not include tools (as we're just generating the final answer)
-    assert "tools" not in second_call.kwargs or not second_call.kwargs["tools"]
-    # Second call should use the returned prompt from build_next_prompt
-    assert (
-        second_call.kwargs["prompt"]
-        == mock_search_tool.build_next_prompt.return_value.build.return_value
-    )
-
-    # Verify that tool_definition was called on the mock_search_tool
-    mock_search_tool.tool_definition.assert_called_once()
+    assert answer_instance.llm_answer == answer_content
 
 
 def test_is_cancelled(answer_instance: Answer) -> None:

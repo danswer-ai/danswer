@@ -9,6 +9,9 @@ from danswer.llm.answering.llm_response_handler import ResponsePart
 from danswer.llm.answering.stream_processing.citation_processing import (
     CitationProcessor,
 )
+from danswer.llm.answering.stream_processing.quotes_processing import (
+    QuotesProcessor,
+)
 from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 
 
@@ -59,3 +62,30 @@ class CitationResponseHandler(AnswerResponseHandler):
 
         # Process the new content through the citation processor
         yield from self.citation_processor.process_token(content)
+
+
+class QuotesResponseHandler(AnswerResponseHandler):
+    def __init__(
+        self,
+        context_docs: list[LlmDoc],
+        is_json_prompt: bool = True,
+    ):
+        self.quotes_processor = QuotesProcessor(
+            context_docs=context_docs,
+            is_json_prompt=is_json_prompt,
+        )
+
+    def handle_response_part(
+        self,
+        response_item: BaseMessage | None,
+        previous_response_items: list[BaseMessage],
+    ) -> Generator[ResponsePart, None, None]:
+        if response_item is None:
+            yield from self.quotes_processor.process_token(None)
+            return
+
+        content = (
+            response_item.content if isinstance(response_item.content, str) else ""
+        )
+
+        yield from self.quotes_processor.process_token(content)
