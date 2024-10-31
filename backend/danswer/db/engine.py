@@ -322,7 +322,11 @@ async def get_async_session_with_tenant(
 def get_session_with_tenant(
     tenant_id: str | None = None,
 ) -> Generator[Session, None, None]:
-    """Generate a database session bound to a connection with the appropriate tenant schema set."""
+    """
+    Generate a database session bound to a connection with the appropriate tenant schema set.
+    This preserves the tenant ID across the session and reverts to the previous tenant ID
+    after the session is closed.
+    """
     engine = get_sqlalchemy_engine()
 
     # Store the previous tenant ID
