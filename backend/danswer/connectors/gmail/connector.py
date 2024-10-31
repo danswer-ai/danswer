@@ -68,7 +68,9 @@ def _execute_with_retry(request: Any) -> Any:
                     logger.error(
                         f"No Retry-After header or timestamp found in error message: {error}"
                     )
-                    sleep_time = 600  # 10 minutes
+                    sleep_time = 900  # This is how much the sleep tends to be according to a few tests
+
+            sleep_time += 5  # Add a buffer to be safe
 
             logger.info(f"Rate limit exceeded. Sleeping for {sleep_time} seconds.")
             time.sleep(sleep_time)
