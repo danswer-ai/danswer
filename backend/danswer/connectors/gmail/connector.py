@@ -65,12 +65,18 @@ def _execute_with_retry(request: Any) -> Any:
                         0,
                     )
                 else:
-                    sleep_time = 60
+                    logger.error(
+                        f"No Retry-After header or timestamp found in error message: {error}"
+                    )
+                    sleep_time = 600  # 10 minutes
 
             logger.info(f"Rate limit exceeded. Sleeping for {sleep_time} seconds.")
             time.sleep(sleep_time)
-        else:
-            raise
+
+            # If it still fails, just raise to not be stuck in a loop
+            return request.execute()
+
+        raise
 
 
 class GmailConnector(LoadConnector, PollConnector):
