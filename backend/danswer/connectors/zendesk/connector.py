@@ -305,11 +305,9 @@ class ZendeskConnector(LoadConnector, PollConnector):
         self, start: SecondsSinceUnixEpoch | None
     ) -> GenerateDocumentsOutput:
         articles = _get_articles(self.client, start_time=int(start) if start else None)
-        author_map: dict[
-            str, BasicExpertInfo
-        ] = (
-            {}
-        )  # This one is built on the fly as there may be more many more authors than tags
+
+        # This one is built on the fly as there may be more many more authors than tags
+        author_map: dict[str, BasicExpertInfo] = {}
 
         doc_batch = []
         for article in articles:
