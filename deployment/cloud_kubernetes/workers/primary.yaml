@@ -35,7 +35,6 @@ spec:
                   key: redis_password
             - name: DANSWER_VERSION
               value: "v0.11.0-cloud.beta.1"
-            # Add other necessary environment variables
           envFrom:
             - configMapRef:
                 name: env-configmap
