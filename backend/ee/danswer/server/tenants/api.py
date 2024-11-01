@@ -56,7 +56,6 @@ def create_tenant(
             status_code=409, detail="User already belongs to an organization"
         )
 
-    print(f"Ensuring schema exists for tenant {tenant_id}")
     try:
         if not ensure_schema_exists(tenant_id):
             logger.info(f"Created schema for tenant {tenant_id}")
