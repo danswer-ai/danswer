@@ -20,10 +20,12 @@ from danswer.background.celery.celery_redis import RedisConnectorPruning
 from danswer.background.celery.celery_redis import RedisDocumentSet
 from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
+from danswer.configs.constants import DanswerRedisLocks
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import SENTRY_DSN
 
 
@@ -172,8 +174,38 @@ def wait_for_redis(sender: Any, **kwargs: Any) -> None:
 
 def on_secondary_worker_init(sender: Any, **kwargs: Any) -> None:
     logger.info("Running as a secondary celery worker.")
-    logger.info("Waiting for all tenant primary workers to be ready...")
 
+    # Exit early if multi-tenant since primary worker check not needed
+    if MULTI_TENANT:
+        return
+
+    # Set up variables for waiting on primary worker
+    WAIT_INTERVAL = 5
+    WAIT_LIMIT = 60
+    r = get_redis_client(tenant_id=None)
+    time_start = time.monotonic()
+
+    logger.info("Waiting for primary worker to be ready...")
+    while True:
+        if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
+            break
+
+        time.monotonic()
+        time_elapsed = time.monotonic() - time_start
+        logger.info(
+            f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        )
+        if time_elapsed > WAIT_LIMIT:
+            msg = (
+                f"Primary worker was not ready within the timeout. "
+                f"({WAIT_LIMIT} seconds). Exiting..."
+            )
+            logger.error(msg)
+            raise WorkerShutdown(msg)
+
+        time.sleep(WAIT_INTERVAL)
+
+    logger.info("Wait for primary worker completed successfully. Continuing...")
     return
 
 
@@ -185,26 +217,20 @@ def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
     if not celery_is_worker_primary(sender):
         return
 
-    if not hasattr(sender, "primary_worker_locks"):
+    if not sender.primary_worker_lock:
         return
 
-    for tenant_id, lock in sender.primary_worker_locks.items():
-        try:
-            if lock and lock.owned():
-                logger.debug(f"Attempting to release lock for tenant {tenant_id}")
-                try:
-                    lock.release()
-                    logger.debug(f"Successfully released lock for tenant {tenant_id}")
-                except Exception as e:
-                    logger.error(
-                        f"Failed to release lock for tenant {tenant_id}. Error: {str(e)}"
-                    )
-                finally:
-                    sender.primary_worker_locks[tenant_id] = None
-        except Exception as e:
-            logger.error(
-                f"Error checking lock status for tenant {tenant_id}. Error: {str(e)}"
-            )
+    logger.info("Releasing primary worker lock.")
+    lock = sender.primary_worker_lock
+    try:
+        if lock.owned():
+            try:
+                lock.release()
+                sender.primary_worker_lock = None
+            except Exception as e:
+                logger.error(f"Failed to release primary worker lock: {e}")
+    except Exception as e:
+        logger.error(f"Failed to check if primary worker lock is owned: {e}")
 
 
 def on_setup_logging(
