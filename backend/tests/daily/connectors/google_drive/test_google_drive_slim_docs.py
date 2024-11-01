@@ -9,11 +9,11 @@ from danswer.connectors.google_drive.google_utils import execute_paginated_retri
 from ee.danswer.external_permissions.google_drive.doc_sync import (
     _get_permissions_from_slim_doc,
 )
-from tests.daily.connectors.google_drive.helpers import DRIVE_MAPPING
-from tests.daily.connectors.google_drive.helpers import flatten_file_ranges
-from tests.daily.connectors.google_drive.helpers import (
-    get_expected_file_names_and_texts,
-)
+from tests.daily.connectors.google_drive.helpers import ACCESS_MAPPING
+from tests.daily.connectors.google_drive.helpers import DRIVE_ID_MAPPING
+from tests.daily.connectors.google_drive.helpers import EMAIL_MAPPING
+from tests.daily.connectors.google_drive.helpers import file_name_template
+from tests.daily.connectors.google_drive.helpers import print_discrepencies
 from tests.daily.connectors.google_drive.helpers import PUBLIC_RANGE
 
 
@@ -45,8 +45,9 @@ def get_keys_available_to_user_from_access_map(
     return accessible_file_names_for_user
 
 
-def check_access_for_user(
-    user_dict: dict,
+def assert_correct_access_for_user(
+    user_email: str,
+    expected_access_ids: list[int],
     group_map: dict[str, list[str]],
     retrieved_access_map: dict[str, ExternalAccess],
 ) -> None:
@@ -55,18 +56,15 @@ def check_access_for_user(
     retrieved from the source
     """
     retrieved_keys_available_to_user = get_keys_available_to_user_from_access_map(
-        user_dict["email"], group_map, retrieved_access_map
+        user_email, group_map, retrieved_access_map
     )
-
-    expected_access_range = list(set(user_dict["access"] + PUBLIC_RANGE))
-
-    expected_file_names, _ = get_expected_file_names_and_texts(expected_access_range)
-
     retrieved_file_names = set(retrieved_keys_available_to_user)
-    if expected_file_names != retrieved_file_names:
-        print(user_dict["email"])
-        print(expected_file_names)
-        print(retrieved_file_names)
+
+    # Combine public and user-specific access IDs
+    all_accessible_ids = expected_access_ids + PUBLIC_RANGE
+    expected_file_names = {file_name_template.format(i) for i in all_accessible_ids}
+
+    print_discrepencies(expected_file_names, retrieved_file_names)
 
     assert expected_file_names == retrieved_file_names
 
@@ -127,21 +125,20 @@ def test_all_permissions(
     for file_name, external_access in access_map.items():
         print(file_name, external_access)
 
-    expected_file_ranges = [
-        DRIVE_MAPPING["ADMIN"]["range"],
-        DRIVE_MAPPING["TEST_USER_1"]["range"],
-        DRIVE_MAPPING["TEST_USER_2"]["range"],
-        DRIVE_MAPPING["TEST_USER_3"]["range"],
-        DRIVE_MAPPING["SHARED_DRIVE_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_2"]["range"],
-        DRIVE_MAPPING["SHARED_DRIVE_2"]["range"],
-        DRIVE_MAPPING["FOLDER_2"]["range"],
-        DRIVE_MAPPING["FOLDER_2_1"]["range"],
-        DRIVE_MAPPING["FOLDER_2_2"]["range"],
-    ]
-    expected_file_range = flatten_file_ranges(expected_file_ranges)
+    expected_file_range = (
+        DRIVE_ID_MAPPING["ADMIN"]
+        + DRIVE_ID_MAPPING["TEST_USER_1"]
+        + DRIVE_ID_MAPPING["TEST_USER_2"]
+        + DRIVE_ID_MAPPING["TEST_USER_3"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2_1"]
+        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+    )
 
     # Should get everything
     assert len(access_map) == len(expected_file_range)
@@ -150,7 +147,28 @@ def test_all_permissions(
 
     print("groups:\n", group_map)
 
-    check_access_for_user(DRIVE_MAPPING["ADMIN"], group_map, access_map)
-    check_access_for_user(DRIVE_MAPPING["TEST_USER_1"], group_map, access_map)
-    check_access_for_user(DRIVE_MAPPING["TEST_USER_2"], group_map, access_map)
-    check_access_for_user(DRIVE_MAPPING["TEST_USER_3"], group_map, access_map)
+    assert_correct_access_for_user(
+        user_email=EMAIL_MAPPING["ADMIN"],
+        expected_access_ids=ACCESS_MAPPING["ADMIN"],
+        group_map=group_map,
+        retrieved_access_map=access_map,
+    )
+    assert_correct_access_for_user(
+        user_email=EMAIL_MAPPING["TEST_USER_1"],
+        expected_access_ids=ACCESS_MAPPING["TEST_USER_1"],
+        group_map=group_map,
+        retrieved_access_map=access_map,
+    )
+
+    assert_correct_access_for_user(
+        user_email=EMAIL_MAPPING["TEST_USER_2"],
+        expected_access_ids=ACCESS_MAPPING["TEST_USER_2"],
+        group_map=group_map,
+        retrieved_access_map=access_map,
+    )
+    assert_correct_access_for_user(
+        user_email=EMAIL_MAPPING["TEST_USER_3"],
+        expected_access_ids=ACCESS_MAPPING["TEST_USER_3"],
+        group_map=group_map,
+        retrieved_access_map=access_map,
+    )

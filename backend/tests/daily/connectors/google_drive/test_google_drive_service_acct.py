@@ -5,9 +5,12 @@ from unittest.mock import patch
 
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.models import Document
-from tests.daily.connectors.google_drive.helpers import DRIVE_MAPPING
-from tests.daily.connectors.google_drive.helpers import flatten_file_ranges
-from tests.daily.connectors.google_drive.helpers import validate_file_names_and_texts
+from tests.daily.connectors.google_drive.helpers import (
+    assert_retrieved_docs_match_expected,
+)
+from tests.daily.connectors.google_drive.helpers import DRIVE_ID_MAPPING
+from tests.daily.connectors.google_drive.helpers import EMAIL_MAPPING
+from tests.daily.connectors.google_drive.helpers import URL_MAPPING
 
 
 @patch(
@@ -23,27 +26,29 @@ def test_include_all(
         include_shared_drives=True,
         include_my_drives=True,
     )
-    docs: list[Document] = []
+    retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
-        docs.extend(doc_batch)
+        retrieved_docs.extend(doc_batch)
 
     # Should get everything
-    expected_file_ranges = [
-        DRIVE_MAPPING["ADMIN"]["range"],
-        DRIVE_MAPPING["TEST_USER_1"]["range"],
-        DRIVE_MAPPING["TEST_USER_2"]["range"],
-        DRIVE_MAPPING["TEST_USER_3"]["range"],
-        DRIVE_MAPPING["SHARED_DRIVE_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_2"]["range"],
-        DRIVE_MAPPING["SHARED_DRIVE_2"]["range"],
-        DRIVE_MAPPING["FOLDER_2"]["range"],
-        DRIVE_MAPPING["FOLDER_2_1"]["range"],
-        DRIVE_MAPPING["FOLDER_2_2"]["range"],
-    ]
-    expected_file_range = flatten_file_ranges(expected_file_ranges)
-    validate_file_names_and_texts(docs, expected_file_range)
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["ADMIN"]
+        + DRIVE_ID_MAPPING["TEST_USER_1"]
+        + DRIVE_ID_MAPPING["TEST_USER_2"]
+        + DRIVE_ID_MAPPING["TEST_USER_3"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2_1"]
+        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+    )
+    assert_retrieved_docs_match_expected(
+        retrieved_docs=retrieved_docs,
+        expected_file_ids=expected_file_ids,
+    )
 
 
 @patch(
@@ -59,23 +64,25 @@ def test_include_shared_drives_only(
         include_shared_drives=True,
         include_my_drives=False,
     )
-    docs: list[Document] = []
+    retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
-        docs.extend(doc_batch)
+        retrieved_docs.extend(doc_batch)
 
     # Should only get shared drives
-    expected_file_ranges = [
-        DRIVE_MAPPING["SHARED_DRIVE_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_2"]["range"],
-        DRIVE_MAPPING["SHARED_DRIVE_2"]["range"],
-        DRIVE_MAPPING["FOLDER_2"]["range"],
-        DRIVE_MAPPING["FOLDER_2_1"]["range"],
-        DRIVE_MAPPING["FOLDER_2_2"]["range"],
-    ]
-    expected_file_range = flatten_file_ranges(expected_file_ranges)
-    validate_file_names_and_texts(docs, expected_file_range)
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2_1"]
+        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+    )
+    assert_retrieved_docs_match_expected(
+        retrieved_docs=retrieved_docs,
+        expected_file_ids=expected_file_ids,
+    )
 
 
 @patch(
@@ -91,19 +98,21 @@ def test_include_my_drives_only(
         include_shared_drives=False,
         include_my_drives=True,
     )
-    docs: list[Document] = []
+    retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
-        docs.extend(doc_batch)
+        retrieved_docs.extend(doc_batch)
 
     # Should only get everyone's My Drives
-    expected_file_ranges = [
-        DRIVE_MAPPING["ADMIN"]["range"],
-        DRIVE_MAPPING["TEST_USER_1"]["range"],
-        DRIVE_MAPPING["TEST_USER_2"]["range"],
-        DRIVE_MAPPING["TEST_USER_3"]["range"],
-    ]
-    expected_file_range = flatten_file_ranges(expected_file_ranges)
-    validate_file_names_and_texts(docs, expected_file_range)
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["ADMIN"]
+        + DRIVE_ID_MAPPING["TEST_USER_1"]
+        + DRIVE_ID_MAPPING["TEST_USER_2"]
+        + DRIVE_ID_MAPPING["TEST_USER_3"]
+    )
+    assert_retrieved_docs_match_expected(
+        retrieved_docs=retrieved_docs,
+        expected_file_ids=expected_file_ids,
+    )
 
 
 @patch(
@@ -115,25 +124,27 @@ def test_drive_one_only(
     google_drive_service_acct_connector_factory: Callable[..., GoogleDriveConnector],
 ) -> None:
     print("\n\nRunning test_drive_one_only")
-    urls = [DRIVE_MAPPING["SHARED_DRIVE_1"]["url"]]
+    urls = [URL_MAPPING["SHARED_DRIVE_1"]]
     connector = google_drive_service_acct_connector_factory(
         include_shared_drives=True,
         include_my_drives=False,
         shared_drive_urls=",".join([str(url) for url in urls]),
     )
-    docs: list[Document] = []
+    retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
-        docs.extend(doc_batch)
+        retrieved_docs.extend(doc_batch)
 
     # We ignore shared_drive_urls if include_shared_drives is False
-    expected_file_ranges = [
-        DRIVE_MAPPING["SHARED_DRIVE_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_2"]["range"],
-    ]
-    expected_file_range = flatten_file_ranges(expected_file_ranges)
-    validate_file_names_and_texts(docs, expected_file_range)
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+    )
+    assert_retrieved_docs_match_expected(
+        retrieved_docs=retrieved_docs,
+        expected_file_ids=expected_file_ids,
+    )
 
 
 @patch(
@@ -146,35 +157,37 @@ def test_folder_and_shared_drive(
 ) -> None:
     print("\n\nRunning test_folder_and_shared_drive")
     drive_urls = [
-        DRIVE_MAPPING["SHARED_DRIVE_1"]["url"],
+        URL_MAPPING["SHARED_DRIVE_1"],
     ]
-    folder_urls = [DRIVE_MAPPING["FOLDER_2"]["url"]]
+    folder_urls = [URL_MAPPING["FOLDER_2"]]
     connector = google_drive_service_acct_connector_factory(
         include_shared_drives=True,
         include_my_drives=True,
         shared_drive_urls=",".join([str(url) for url in drive_urls]),
         shared_folder_urls=",".join([str(url) for url in folder_urls]),
     )
-    docs: list[Document] = []
+    retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
-        docs.extend(doc_batch)
+        retrieved_docs.extend(doc_batch)
 
     # Should
-    expected_file_ranges = [
-        DRIVE_MAPPING["ADMIN"]["range"],
-        DRIVE_MAPPING["TEST_USER_1"]["range"],
-        DRIVE_MAPPING["TEST_USER_2"]["range"],
-        DRIVE_MAPPING["TEST_USER_3"]["range"],
-        DRIVE_MAPPING["SHARED_DRIVE_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_2"]["range"],
-        DRIVE_MAPPING["FOLDER_2"]["range"],
-        DRIVE_MAPPING["FOLDER_2_1"]["range"],
-        DRIVE_MAPPING["FOLDER_2_2"]["range"],
-    ]
-    expected_file_range = flatten_file_ranges(expected_file_ranges)
-    validate_file_names_and_texts(docs, expected_file_range)
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["ADMIN"]
+        + DRIVE_ID_MAPPING["TEST_USER_1"]
+        + DRIVE_ID_MAPPING["TEST_USER_2"]
+        + DRIVE_ID_MAPPING["TEST_USER_3"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2_1"]
+        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+    )
+    assert_retrieved_docs_match_expected(
+        retrieved_docs=retrieved_docs,
+        expected_file_ids=expected_file_ids,
+    )
 
 
 @patch(
@@ -187,28 +200,30 @@ def test_folders_only(
 ) -> None:
     print("\n\nRunning test_folders_only")
     folder_urls = [
-        DRIVE_MAPPING["FOLDER_1_1"]["url"],
-        DRIVE_MAPPING["FOLDER_1_2"]["url"],
-        DRIVE_MAPPING["FOLDER_2_1"]["url"],
-        DRIVE_MAPPING["FOLDER_2_2"]["url"],
+        URL_MAPPING["FOLDER_1_1"],
+        URL_MAPPING["FOLDER_1_2"],
+        URL_MAPPING["FOLDER_2_1"],
+        URL_MAPPING["FOLDER_2_2"],
     ]
     connector = google_drive_service_acct_connector_factory(
         include_shared_drives=False,
         include_my_drives=False,
         shared_folder_urls=",".join([str(url) for url in folder_urls]),
     )
-    docs: list[Document] = []
+    retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
-        docs.extend(doc_batch)
+        retrieved_docs.extend(doc_batch)
 
-    expected_file_ranges = [
-        DRIVE_MAPPING["FOLDER_1_1"]["range"],
-        DRIVE_MAPPING["FOLDER_1_2"]["range"],
-        DRIVE_MAPPING["FOLDER_2_1"]["range"],
-        DRIVE_MAPPING["FOLDER_2_2"]["range"],
-    ]
-    expected_file_range = flatten_file_ranges(expected_file_ranges)
-    validate_file_names_and_texts(docs, expected_file_range)
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2_1"]
+        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+    )
+    assert_retrieved_docs_match_expected(
+        retrieved_docs=retrieved_docs,
+        expected_file_ids=expected_file_ids,
+    )
 
 
 @patch(
@@ -221,21 +236,22 @@ def test_specific_emails(
 ) -> None:
     print("\n\nRunning test_specific_emails")
     my_drive_emails = [
-        DRIVE_MAPPING["TEST_USER_1"]["email"],
-        DRIVE_MAPPING["TEST_USER_3"]["email"],
+        EMAIL_MAPPING["TEST_USER_1"],
+        EMAIL_MAPPING["TEST_USER_3"],
     ]
     connector = google_drive_service_acct_connector_factory(
         include_shared_drives=False,
         include_my_drives=True,
         my_drive_emails=",".join([str(email) for email in my_drive_emails]),
     )
-    docs: list[Document] = []
+    retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
-        docs.extend(doc_batch)
+        retrieved_docs.extend(doc_batch)
 
-    expected_file_ranges = [
-        DRIVE_MAPPING["TEST_USER_1"]["range"],
-        DRIVE_MAPPING["TEST_USER_3"]["range"],
-    ]
-    expected_file_range = flatten_file_ranges(expected_file_ranges)
-    validate_file_names_and_texts(docs, expected_file_range)
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["TEST_USER_1"] + DRIVE_ID_MAPPING["TEST_USER_3"]
+    )
+    assert_retrieved_docs_match_expected(
+        retrieved_docs=retrieved_docs,
+        expected_file_ids=expected_file_ids,
+    )
