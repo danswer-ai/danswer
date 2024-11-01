@@ -5,11 +5,13 @@ from collections.abc import Callable
 import pytest
 
 from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
-from danswer.connectors.google_drive.connector import GoogleDriveConnector
-from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_TOKEN_KEY
-from danswer.connectors.google_drive.connector_auth import (
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    DB_CREDENTIALS_DICT_TOKEN_KEY,
+)
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
+from danswer.connectors.google_drive.connector import GoogleDriveConnector
 
 
 def load_env_vars(env_file: str = ".env") -> None:

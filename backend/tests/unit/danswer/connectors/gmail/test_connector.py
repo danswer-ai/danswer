@@ -5,12 +5,14 @@ from pytest_mock import MockFixture
 
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
+from danswer.connectors.gmail.connector import _build_time_range_query
+from danswer.connectors.gmail.connector import email_to_document
 from danswer.connectors.gmail.connector import GmailConnector
 from danswer.connectors.models import Document
 
 
 def test_email_to_document() -> None:
-    connector = GmailConnector()
+    GmailConnector()
     email_id = "18cabedb1ea46b03"
     email_subject = "Danswer Test Subject"
     email_sender = "Google <no-reply@accounts.google.com>"
@@ -77,7 +79,7 @@ def test_email_to_document() -> None:
         "historyId": "697762",
         "internalDate": "1703691529000",
     }
-    doc = connector._email_to_document(full_email)
+    doc = email_to_document(full_email)
     assert type(doc) == Document
     assert doc.source == DocumentSource.GMAIL
     assert doc.title == "Danswer Test Subject"
@@ -191,15 +193,15 @@ def test_fetch_mails_from_gmail(mocker: MockFixture) -> None:
 def test_build_time_range_query() -> None:
     time_range_start = 1703066296.159339
     time_range_end = 1704984791.657404
-    query = GmailConnector._build_time_range_query(time_range_start, time_range_end)
+    query = _build_time_range_query(time_range_start, time_range_end)
     assert query == "after:1703066296 before:1704984791"
-    query = GmailConnector._build_time_range_query(time_range_start, None)
+    query = _build_time_range_query(time_range_start, None)
     assert query == "after:1703066296"
-    query = GmailConnector._build_time_range_query(None, time_range_end)
+    query = _build_time_range_query(None, time_range_end)
     assert query == "before:1704984791"
-    query = GmailConnector._build_time_range_query(0.0, time_range_end)
+    query = _build_time_range_query(0.0, time_range_end)
     assert query == "before:1704984791"
-    query = GmailConnector._build_time_range_query(None, None)
+    query = _build_time_range_query(None, None)
     assert query is None
 
 

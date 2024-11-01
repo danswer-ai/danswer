@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 
+from danswer.connectors.cross_connector_utils.google.google_utils import (
+    execute_paginated_retrieval,
+)
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
-from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger

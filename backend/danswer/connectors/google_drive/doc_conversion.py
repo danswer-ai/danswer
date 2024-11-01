@@ -9,7 +9,6 @@ from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.connectors.google_drive.constants import DRIVE_SHORTCUT_TYPE
-from danswer.connectors.google_drive.constants import ERRORS_TO_CONTINUE_ON
 from danswer.connectors.google_drive.constants import UNSUPPORTED_FILE_TYPE_CONTENT
 from danswer.connectors.google_drive.models import GDriveMimeType
 from danswer.connectors.google_drive.models import GoogleDriveFileType
@@ -23,6 +22,14 @@ from danswer.file_processing.unstructured import unstructured_to_text
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+# these errors don't represent a failure in the connector, but simply files
+# that can't / shouldn't be indexed
+ERRORS_TO_CONTINUE_ON = [
+    "cannotExportFile",
+    "exportSizeLimitExceeded",
+    "cannotDownloadFile",
+]
 
 
 def _extract_text(file: dict[str, str], service: Resource) -> str:

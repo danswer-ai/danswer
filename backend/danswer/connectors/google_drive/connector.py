@@ -7,22 +7,25 @@ from googleapiclient.discovery import build  # type: ignore
 from googleapiclient.discovery import Resource  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.connectors.google_drive.connector_auth import (
+from danswer.configs.constants import DocumentSource
+from danswer.connectors.cross_connector_utils.google.google_auth import get_google_creds
+from danswer.connectors.cross_connector_utils.google.google_utils import (
+    execute_paginated_retrieval,
+)
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
-from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
+from danswer.connectors.cross_connector_utils.google.shared_constants import USER_FIELDS
 from danswer.connectors.google_drive.constants import MISSING_SCOPES_ERROR_STR
 from danswer.connectors.google_drive.constants import ONYX_SCOPE_INSTRUCTIONS
 from danswer.connectors.google_drive.constants import SCOPE_DOC_URL
 from danswer.connectors.google_drive.constants import SLIM_BATCH_SIZE
-from danswer.connectors.google_drive.constants import USER_FIELDS
 from danswer.connectors.google_drive.doc_conversion import (
     convert_drive_item_to_document,
 )
 from danswer.connectors.google_drive.file_retrieval import crawl_folders_for_files
 from danswer.connectors.google_drive.file_retrieval import get_files_in_my_drive
 from danswer.connectors.google_drive.file_retrieval import get_files_in_shared_drive
-from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
 from danswer.connectors.google_drive.models import GoogleDriveFileType
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
@@ -118,7 +121,10 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         self.google_domain = primary_admin_email.split("@")[1]
         self.primary_admin_email = primary_admin_email
 
-        self.creds, new_creds_dict = get_google_drive_creds(credentials)
+        self.creds, new_creds_dict = get_google_creds(
+            credentials=credentials,
+            source=DocumentSource.GOOGLE_DRIVE,
+        )
         return new_creds_dict
 
     def get_google_resource(

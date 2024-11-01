@@ -413,7 +413,7 @@ export const DriveAuthSection = ({
             <Form>
               <TextFormField
                 name="google_drive_primary_admin"
-                label="User email to impersonate:"
+                label="Primary Admin Email:"
                 subtext="Enter the email of the user whose Google Drive access you want to delegate to the service account."
               />
               <div className="flex">
