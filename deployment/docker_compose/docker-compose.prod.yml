@@ -65,9 +65,9 @@ services:
         max-size: "50m"
         max-file: "6"
     # Uncomment the following lines if you need to include a custom CA certificate
-    volumes:
-      # Maps to the CA_CERT_PATH environment variable in the Dockerfile
-      - ${CA_CERT_PATH:-./custom-ca.crt}:/etc/ssl/certs/custom-ca.crt:ro
+    # volumes:
+    #   # Maps to the CA_CERT_PATH environment variable in the Dockerfile
+    #   - ${CA_CERT_PATH:-./custom-ca.crt}:/etc/ssl/certs/custom-ca.crt:ro
 
   web_server:
     image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
