@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Any
 
-from danswer.background.celery.tasks.tasks import (
+from backend.ee.danswer.background.celery.tasks.beat_schedule import (
     tasks_to_schedule as base_tasks_to_schedule,
 )
 
@@ -9,12 +9,12 @@ ee_tasks_to_schedule = [
     {
         "name": "sync-external-doc-permissions",
         "task": "check_sync_external_doc_permissions_task",
-        "schedule": timedelta(seconds=5),  # TODO: optimize this
+        "schedule": timedelta(seconds=30),  # TODO: optimize this
     },
     {
         "name": "sync-external-group-permissions",
         "task": "check_sync_external_group_permissions_task",
-        "schedule": timedelta(seconds=5),  # TODO: optimize this
+        "schedule": timedelta(seconds=60),  # TODO: optimize this
     },
     {
         "name": "autogenerate_usage_report",
