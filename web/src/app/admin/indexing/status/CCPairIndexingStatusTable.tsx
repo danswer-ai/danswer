@@ -182,9 +182,9 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className={`hover:bg-hover-light ${
-        invisible ? "invisible !h-0 !-mb-10" : "border border-border !border-b"
-      }  w-full cursor-pointer relative`}
+      className={`border hover:bg-hover-light ${
+        invisible ? "invisible !h-0 !-mb-10" : "!border !border-border"
+      }  w-full cursor-pointer relative `}
       onClick={() => {
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
       }}
@@ -201,7 +201,7 @@ function ConnectorRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell>
           {ccPairsIndexingStatus.access_type === "public" ? (
-            <Badge variant="outline" icon={FiUnlock}>
+            <Badge variant="success" icon={FiUnlock}>
               Public
             </Badge>
           ) : ccPairsIndexingStatus.access_type === "sync" ? (

@@ -12,7 +12,7 @@ import { SEARCH_PARAM_NAMES } from "../searchParams";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { structureValue } from "@/lib/llm/utils";
 import { LlmOverride } from "@/lib/hooks";
-import { Separator } from "@radix-ui/react-separator";
+import { Separator } from "@/components/ui/separator";
 
 function buildShareLink(chatSessionId: string) {
   const baseUrl = `${window.location.protocol}//${window.location.host}`;

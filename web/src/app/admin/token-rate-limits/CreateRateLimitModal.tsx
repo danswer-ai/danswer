@@ -72,7 +72,7 @@ export const CreateRateLimitModal = ({
     <Modal
       title={"Create a Token Rate Limit"}
       onOutsideClick={() => setIsOpen(false)}
-      width="w-2/6"
+      width="max-w-2xl w-full"
     >
       <Formik
         initialValues={{

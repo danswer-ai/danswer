@@ -201,9 +201,10 @@ export const StandardAnswerCreationForm = ({
                   }))}
                 />
               </div>
-              <div className="p-4 flex">
+              <div className="py-4 flex">
                 <Button
                   type="submit"
+                  variant="submit"
                   disabled={isSubmitting}
                   className="mx-auto w-64"
                 >

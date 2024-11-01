@@ -23,9 +23,8 @@ import Link from "next/link";
 import { humanReadableFormat, humanReadableFormatWithTime } from "@/lib/time";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PageSelector } from "@/components/PageSelector";
-import { Separator } from "@radix-ui/react-separator";
+import { Separator } from "@/components/ui/separator";
 import { DateRangePickerValue } from "../DateRangeSelector";
-import { DateRangeSelector } from "../DateRangeSelector";
 import {
   Popover,
   PopoverContent,
