@@ -22,16 +22,15 @@ celery_app.config_from_object("danswer.background.celery.configs.beat")
 
 class DynamicTenantScheduler(PersistentScheduler):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super(DynamicTenantScheduler, self).__init__(*args, **kwargs)
-        self._last_reload = self.app.now()
+        super().__init__(*args, **kwargs)
+        self._last_reload = self.app.now() - self._reload_interval
         self._reload_interval = timedelta(minutes=1)
-        self._update_tenant_tasks()
 
     def setup_schedule(self) -> None:
-        super(DynamicTenantScheduler, self).setup_schedule()
+        super().setup_schedule()
 
     def tick(self) -> float:
-        retval = super(DynamicTenantScheduler, self).tick()
+        retval = super().tick()
         now = self.app.now()
         if (
             self._last_reload is None
@@ -47,7 +46,7 @@ class DynamicTenantScheduler(PersistentScheduler):
         try:
             tenant_ids = get_all_tenant_ids()
             tasks_to_schedule = fetch_versioned_implementation(
-                "danswer.background.celery.tasks.tasks", "get_tasks_to_schedule"
+                "danswer.background.celery.tasks.beat_schedule", "get_tasks_to_schedule"
             )
 
             new_beat_schedule: dict[str, dict[str, Any]] = {}
@@ -91,10 +90,10 @@ class DynamicTenantScheduler(PersistentScheduler):
             else:
                 logger.debug("No schedule updates needed")
 
-        except (AttributeError, KeyError) as e:
-            logger.error("Failed to process task configuration: %s", str(e))
-        except Exception as e:
-            logger.exception("Unexpected error updating tenant tasks: %s", str(e))
+        except (AttributeError, KeyError):
+            logger.exception("Failed to process task configuration")
+        except Exception:
+            logger.exception("Unexpected error updating tenant tasks")
 
     def _should_update_schedule(
         self, current_schedule: dict, new_schedule: dict
