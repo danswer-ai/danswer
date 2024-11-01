@@ -729,9 +729,6 @@ def stream_chat_message_objects(
         tool_result = None
 
         for packet in answer.processed_streamed_output:
-            if isinstance(packet, StreamStopInfo):
-                break
-
             if isinstance(packet, ToolResponse):
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (
@@ -782,6 +779,8 @@ def stream_chat_message_objects(
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response
                     )
+                    print(img_generation_response[0].__dict__)
+                    print(img_generation_response)
 
                     file_ids = save_files_from_urls(
                         [img.url for img in img_generation_response]
