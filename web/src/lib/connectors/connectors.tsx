@@ -1053,10 +1053,11 @@ export interface GitlabConfig {
 }
 
 export interface GoogleDriveConfig {
-  parent_urls?: string[];
-  include_shared?: boolean;
-  follow_shortcuts?: boolean;
-  only_org_public?: boolean;
+  include_shared_drives?: boolean;
+  shared_drive_urls?: string;
+  include_my_drives?: boolean;
+  my_drive_emails?: string;
+  shared_folder_urls?: string;
 }
 
 export interface GmailConfig {}
