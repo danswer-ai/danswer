@@ -180,6 +180,10 @@ export interface AxeroCredentialJson {
   axero_api_token: string;
 }
 
+export interface DiscordCredentialJson {
+  discord_bot_token: string;
+}
+
 export interface MediaWikiCredentialJson {}
 export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
 
@@ -286,6 +290,7 @@ export const credentialTemplates: Record<ValidSources, any> = {
   web: null,
   not_applicable: null,
   ingestion_api: null,
+  discord: { discord_bot_token: "" } as DiscordCredentialJson,
 
   // NOTE: These are Special Cases
   google_drive: { google_drive_tokens: "" } as GoogleDriveCredentialJson,
@@ -318,6 +323,9 @@ export const credentialDisplayNames: Record<string, string> = {
 
   // Slack
   slack_bot_token: "Slack Bot Token",
+
+  // Discord
+  discord_bot_token: "Discord Bot Token",
 
   // Gmail
   gmail_tokens: "Gmail Tokens",
