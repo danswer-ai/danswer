@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: celery-worker-indexing
-          image: danswer/danswer-backend:v0.11.0-cloud.beta.1
+          image: danswer/danswer-backend:v0.11.0-cloud.beta.2
           imagePullPolicy: Always
           command:
             [
