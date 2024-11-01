@@ -6,18 +6,19 @@ import { KeyIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import useSWR, { mutate } from "swr";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
-  Button,
-  Divider,
   TableBody,
   TableCell,
   TableHead,
-  TableHeaderCell,
+  TableHeader,
   TableRow,
-  Text,
-  Title,
   Table,
-} from "@tremor/react";
+} from "@/components/ui/table";
+
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useState } from "react";
 import { DeleteButton } from "@/components/DeleteButton";
@@ -116,8 +117,8 @@ function Main() {
 
   const newApiKeyButton = (
     <Button
-      color="green"
-      size="xs"
+      variant="navigate"
+      size="sm"
       className="mt-3"
       onClick={() => setShowCreateUpdateForm(true)}
     >
@@ -166,19 +167,19 @@ function Main() {
       <Text>{API_KEY_TEXT}</Text>
       {newApiKeyButton}
 
-      <Divider />
+      <Separator />
 
       <Title className="mt-6">Existing API Keys</Title>
       <Table className="overflow-visible">
-        <TableHead>
+        <TableHeader>
           <TableRow>
-            <TableHeaderCell>Name</TableHeaderCell>
-            <TableHeaderCell>API Key</TableHeaderCell>
-            <TableHeaderCell>Role</TableHeaderCell>
-            <TableHeaderCell>Regenerate</TableHeaderCell>
-            <TableHeaderCell>Delete</TableHeaderCell>
+            <TableHead>Name</TableHead>
+            <TableHead>API Key</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Regenerate</TableHead>
+            <TableHead>Delete</TableHead>
           </TableRow>
-        </TableHead>
+        </TableHeader>
         <TableBody>
           {apiKeys.map((apiKey) => (
             <TableRow key={apiKey.api_key_id}>

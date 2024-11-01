@@ -19,7 +19,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { DateRangeSelector } from "../DateRangeSelector";
-import { DateRangePickerValue } from "@tremor/react";
+import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
 import { FilterDropdown } from "./FilterDropdown";
 import { listSourceMetadata } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";

@@ -19,7 +19,7 @@ interface FullSearchBarProps {
 
 import { useRef } from "react";
 import { SendIcon } from "../icons/icons";
-import { Divider } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
 import { CustomTooltip } from "../tooltip/CustomTooltip";
 import KeyboardSymbol from "@/lib/browserUtilities";
 import { HorizontalSourceSelector } from "./filtering/Filters";
@@ -49,7 +49,7 @@ export const AnimatedToggle = ({
             Our most powerful search, have an AI agent guide you to pinpoint
             exactly what you&apos;re looking for.
           </p>
-          <Divider />
+          <Separator />
           <h2 className="text-xl text-text-800 font-bold mb-2">Fast Search</h2>
           <p className="text-text-700 text-sm mb-4">
             Get quality results immediately, best suited for instant access to

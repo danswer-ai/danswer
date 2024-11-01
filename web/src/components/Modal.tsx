@@ -1,5 +1,5 @@
 "use client";
-import { Divider } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
 import { FiX } from "react-icons/fi";
 import { IconProps, XIcon } from "./icons/icons";
 import { useRef } from "react";
@@ -85,7 +85,7 @@ export function Modal({
                   {icon && icon({ size: 30 })}
                 </h2>
               </div>
-              {!hideDividerForTitle && <Divider />}
+              {!hideDividerForTitle && <Separator />}
             </>
           )}
           <div className="max-h-[60vh] overflow-y-scroll">{children}</div>

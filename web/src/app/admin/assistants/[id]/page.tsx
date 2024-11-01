@@ -1,12 +1,14 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { AssistantEditor } from "../AssistantEditor";
 import { BackButton } from "@/components/BackButton";
-import { Card, Title } from "@tremor/react";
+
 import { DeletePersonaButton } from "./DeletePersonaButton";
 import { fetchAssistantEditorInfoSS } from "@/lib/assistants/fetchPersonaEditorInfoSS";
 import { SuccessfulPersonaUpdateRedirectType } from "../enums";
 import { RobotIcon } from "@/components/icons/icons";
 import { AdminPageTitle } from "@/components/admin/Title";
+import CardSection from "@/components/admin/CardSection";
+import Title from "@/components/ui/title";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);
@@ -19,16 +21,17 @@ export default async function Page({ params }: { params: { id: string } }) {
   } else {
     body = (
       <>
-        <Card>
+        <CardSection>
           <AssistantEditor
             {...values}
             defaultPublic={true}
             redirectType={SuccessfulPersonaUpdateRedirectType.ADMIN}
           />
-        </Card>
+        </CardSection>
 
         <div className="mt-12">
           <Title>Delete Assistant</Title>
+
           <div className="flex mt-6">
             <DeletePersonaButton
               personaId={values.existingPersona!.id}
