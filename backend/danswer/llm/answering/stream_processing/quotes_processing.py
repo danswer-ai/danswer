@@ -246,7 +246,7 @@ class QuotesProcessor:
                 remaining = self.model_output[m.end() :]
 
                 # Look for an unescaped quote, which means the answer is entirely contained
-                # in this toekn e.g. if the token is `{"answer": "blah", "qu`
+                # in this token e.g. if the token is `{"answer": "blah", "qu`
                 quote_indices = [i for i, char in enumerate(remaining) if char == '"']
                 for quote_idx in quote_indices:
                     # Check if quote is escaped by counting backslashes before it
