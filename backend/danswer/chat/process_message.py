@@ -729,6 +729,9 @@ def stream_chat_message_objects(
         tool_result = None
 
         for packet in answer.processed_streamed_output:
+            if isinstance(packet, StreamStopInfo):
+                break
+
             if isinstance(packet, ToolResponse):
                 if packet.id == SEARCH_RESPONSE_SUMMARY_ID:
                     (
@@ -805,8 +808,7 @@ def stream_chat_message_objects(
                         response=custom_tool_response.tool_result,
                         tool_name=custom_tool_response.tool_name,
                     )
-            elif isinstance(packet, StreamStopInfo):
-                pass
+
             else:
                 if isinstance(packet, ToolCallFinalResult):
                     tool_result = packet
@@ -864,17 +866,15 @@ def stream_chat_message_objects(
             if message_specific_citations
             else None,
             error=None,
-            tool_calls=(
-                [
-                    ToolCall(
-                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                        tool_name=tool_result.tool_name,
-                        tool_arguments=tool_result.tool_args,
-                        tool_result=tool_result.tool_result,
-                    )
-                ]
+            tool_call=(
+                ToolCall(
+                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                    tool_name=tool_result.tool_name,
+                    tool_arguments=tool_result.tool_args,
+                    tool_result=tool_result.tool_result,
+                )
                 if tool_result
-                else []
+                else None
             ),
         )
 

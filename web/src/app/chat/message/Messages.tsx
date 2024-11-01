@@ -152,7 +152,7 @@ export const AIMessage = ({
   files?: FileDescriptor[];
   query?: string;
   citedDocuments?: [string, DanswerDocument][] | null;
-  toolCall?: ToolCallMetadata;
+  toolCall?: ToolCallMetadata | null;
   isComplete?: boolean;
   hasDocs?: boolean;
   handleFeedback?: (feedbackType: FeedbackType) => void;
