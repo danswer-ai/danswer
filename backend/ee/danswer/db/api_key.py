@@ -17,8 +17,12 @@ from ee.danswer.auth.api_key import hash_api_key
 from ee.danswer.server.api_key.models import APIKeyArgs
 
 
+def get_api_key_email_pattern() -> str:
+    return DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
+
+
 def is_api_key_email_address(email: str) -> bool:
-    return email.endswith(f"{DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN}")
+    return email.endswith(get_api_key_email_pattern())
 
 
 def fetch_api_keys(db_session: Session) -> list[ApiKeyDescriptor]:
