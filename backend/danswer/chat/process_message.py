@@ -836,6 +836,7 @@ def stream_chat_message_objects(
 
     # Post-LLM answer processing
     try:
+        logger.debug("Post-LLM answer processing")
         message_specific_citations: MessageSpecificCitations | None = None
         if reference_db_search_docs:
             message_specific_citations = _translate_citations(

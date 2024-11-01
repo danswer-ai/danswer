@@ -356,7 +356,6 @@ def handle_new_chat_message(
                 ),
                 is_connected=is_connected_func,
             ):
-                logger.debug(f"Yielding packet: {packet}")
                 yield json.dumps(packet) if isinstance(packet, dict) else packet
 
         except Exception as e:
