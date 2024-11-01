@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import tempfile
 from collections.abc import Iterable
 
 import pytest
@@ -9,7 +10,9 @@ from pytest_mock import MockFixture
 
 from danswer.connectors.mediawiki import wiki
 
-# These tests are disabled for now
+# Some of these tests are disabled for now due to flakiness with wikipedia as the backend
+
+pywikibot.config.base_dir = tempfile.TemporaryDirectory().name
 
 
 @pytest.fixture
@@ -17,7 +20,6 @@ def site() -> pywikibot.Site:
     return pywikibot.Site("en", "wikipedia")
 
 
-@pytest.mark.skip(reason="Test disabled")
 def test_pywikibot_timestamp_to_utc_datetime() -> None:
     timestamp_without_tzinfo = pywikibot.Timestamp(2023, 12, 27, 15, 38, 49)
     timestamp_min_timezone = timestamp_without_tzinfo.astimezone(datetime.timezone.min)
