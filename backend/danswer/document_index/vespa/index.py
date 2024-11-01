@@ -17,7 +17,6 @@ import httpx  # type: ignore
 import requests  # type: ignore
 
 from danswer.configs.app_configs import DOCUMENT_INDEX_NAME
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.chat_configs import DOC_TIME_DECAY
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.chat_configs import TITLE_CONTENT_RATIO
@@ -73,6 +72,7 @@ from danswer.search.models import IndexFilters
 from danswer.search.models import InferenceChunkUncleaned
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
+from shared_configs.configs import MULTI_TENANT
 from shared_configs.model_server_models import Embedding
 
 

@@ -253,9 +253,9 @@ export default function AddConnector({
 
         // Apply advanced configuration-specific transforms.
         const advancedConfiguration: any = {
-          pruneFreq: (pruneFreq || defaultPruneFreqDays) * 60 * 60 * 24,
+          pruneFreq: (pruneFreq ?? defaultPruneFreqDays) * 60 * 60 * 24,
           indexingStart: convertStringToDateTime(indexingStart),
-          refreshFreq: (refreshFreq || defaultRefreshFreqMinutes) * 60,
+          refreshFreq: (refreshFreq ?? defaultRefreshFreqMinutes) * 60,
         };
 
         // Google sites-specific handling
@@ -431,6 +431,12 @@ export default function AddConnector({
                   setSelectedFiles={setSelectedFiles}
                   selectedFiles={selectedFiles}
                   connector={connector}
+                  currentCredential={
+                    currentCredential ||
+                    liveGDriveCredential ||
+                    liveGmailCredential ||
+                    null
+                  }
                 />
               </Card>
             )}

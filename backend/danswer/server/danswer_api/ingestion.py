@@ -9,6 +9,7 @@ from danswer.connectors.models import IndexAttemptMetadata
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.document import get_documents_by_cc_pair
 from danswer.db.document import get_ingestion_documents
+from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.search_settings import get_current_search_settings
@@ -67,6 +68,7 @@ def upsert_ingestion_doc(
     doc_info: IngestionDocument,
     _: User | None = Depends(api_key_dep),
     db_session: Session = Depends(get_session),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> IngestionResult:
     doc_info.document.from_ingestion_api = True
 
@@ -101,6 +103,7 @@ def upsert_ingestion_doc(
         document_index=curr_doc_index,
         ignore_time_skip=True,
         db_session=db_session,
+        tenant_id=tenant_id,
     )
 
     new_doc, __chunk_count = indexing_pipeline(
@@ -134,6 +137,7 @@ def upsert_ingestion_doc(
             document_index=sec_doc_index,
             ignore_time_skip=True,
             db_session=db_session,
+            tenant_id=tenant_id,
         )
 
         sec_ind_pipeline(

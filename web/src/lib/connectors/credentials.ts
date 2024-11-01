@@ -58,6 +58,7 @@ export interface GmailCredentialJson {
 
 export interface GoogleDriveCredentialJson {
   google_drive_tokens: string;
+  google_drive_primary_admin: string;
 }
 
 export interface GmailServiceAccountCredentialJson {
@@ -67,7 +68,7 @@ export interface GmailServiceAccountCredentialJson {
 
 export interface GoogleDriveServiceAccountCredentialJson {
   google_drive_service_account_key: string;
-  google_drive_delegated_user: string;
+  google_drive_primary_admin: string;
 }
 
 export interface SlabCredentialJson {
@@ -104,12 +105,6 @@ export interface LinearCredentialJson {
 
 export interface HubSpotCredentialJson {
   hubspot_access_token: string;
-}
-
-export interface RequestTrackerCredentialJson {
-  requesttracker_username: string;
-  requesttracker_password: string;
-  requesttracker_base_url: string;
 }
 
 export interface Document360CredentialJson {
@@ -224,11 +219,6 @@ export const credentialTemplates: Record<ValidSources, any> = {
     portal_id: "",
     document360_api_token: "",
   } as Document360CredentialJson,
-  requesttracker: {
-    requesttracker_username: "",
-    requesttracker_password: "",
-    requesttracker_base_url: "",
-  } as RequestTrackerCredentialJson,
   loopio: {
     loopio_subdomain: "",
     loopio_client_id: "",
@@ -342,7 +332,7 @@ export const credentialDisplayNames: Record<string, string> = {
 
   // Google Drive Service Account
   google_drive_service_account_key: "Google Drive Service Account Key",
-  google_drive_delegated_user: "Google Drive Delegated User",
+  google_drive_primary_admin: "Google Drive Delegated User",
 
   // Slab
   slab_bot_token: "Slab Bot Token",
@@ -371,12 +361,6 @@ export const credentialDisplayNames: Record<string, string> = {
 
   // HubSpot
   hubspot_access_token: "HubSpot Access Token",
-
-  // Request Tracker
-  requesttracker_username: "Request Tracker Username",
-  requesttracker_password: "Request Tracker Password",
-  requesttracker_base_url: "Request Tracker Base URL",
-
   // Document360
   portal_id: "Document360 Portal ID",
   document360_api_token: "Document360 API Token",

@@ -30,10 +30,10 @@ from danswer.auth.schemas import UserStatus
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
+from danswer.auth.users import get_tenant_id_for_email
 from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import ENABLE_EMAIL_INVITES
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
@@ -66,6 +66,7 @@ from ee.danswer.db.user_group import remove_curator_status__no_commit
 from ee.danswer.server.tenants.billing import register_tenant_users
 from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import remove_users_from_tenant
+from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
 
@@ -189,7 +190,6 @@ def bulk_invite_users(
         )
 
     tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-
     normalized_emails = []
     try:
         for email in emails:
@@ -205,6 +205,7 @@ def bulk_invite_users(
     if MULTI_TENANT:
         try:
             add_users_to_tenant(normalized_emails, tenant_id)
+
         except IntegrityError as e:
             if isinstance(e.orig, UniqueViolation):
                 raise HTTPException(
@@ -212,6 +213,8 @@ def bulk_invite_users(
                     detail="User has already been invited to a Danswer organization",
                 )
             raise
+        except Exception as e:
+            logger.error(f"Failed to add users to tenant {tenant_id}: {str(e)}")
 
     initial_invited_users = get_invited_users()
 
@@ -493,10 +496,13 @@ def verify_user_logged_in(
     token_created_at = (
         None if MULTI_TENANT else get_current_token_creation(user, db_session)
     )
+    organization_name = get_tenant_id_for_email(user.email)
+
     user_info = UserInfo.from_model(
         user,
         current_token_created_at=token_created_at,
         expiry_length=SESSION_EXPIRE_TIME_SECONDS,
+        organization_name=organization_name,
     )
 
     return user_info

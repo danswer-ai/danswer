@@ -10,6 +10,11 @@ from ee.danswer.configs.app_configs import API_KEY_HASH_ROUNDS
 
 
 _API_KEY_HEADER_NAME = "Authorization"
+# NOTE for others who are curious: In the context of a header, "X-" often refers
+# to non-standard, experimental, or custom headers in HTTP or other protocols. It
+# indicates that the header is not part of the official standards defined by
+# organizations like the Internet Engineering Task Force (IETF).
+_API_KEY_HEADER_ALTERNATIVE_NAME = "X-Danswer-Authorization"
 _BEARER_PREFIX = "Bearer "
 _API_KEY_PREFIX = "dn_"
 _API_KEY_LEN = 192
@@ -43,7 +48,9 @@ def build_displayable_api_key(api_key: str) -> str:
 
 
 def get_hashed_api_key_from_request(request: Request) -> str | None:
-    raw_api_key_header = request.headers.get(_API_KEY_HEADER_NAME)
+    raw_api_key_header = request.headers.get(
+        _API_KEY_HEADER_ALTERNATIVE_NAME
+    ) or request.headers.get(_API_KEY_HEADER_NAME)
     if raw_api_key_header is None:
         return None
 

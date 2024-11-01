@@ -21,6 +21,7 @@ interface AssistantsContextProps {
   finalAssistants: Persona[];
   ownedButHiddenAssistants: Persona[];
   refreshAssistants: () => Promise<void>;
+  isImageGenerationAvailable: boolean;
 
   // Admin only
   editablePersonas: Persona[];
@@ -47,51 +48,54 @@ export const AssistantsProvider: React.FC<{
   );
   const { user, isLoadingUser, isAdmin } = useUser();
   const [editablePersonas, setEditablePersonas] = useState<Persona[]>([]);
-
-  useEffect(() => {
-    const fetchEditablePersonas = async () => {
-      if (!isAdmin) {
-        return;
-      }
-
-      try {
-        const response = await fetch("/api/admin/persona?get_editable=true");
-        if (!response.ok) {
-          console.error("Failed to fetch editable personas");
-          return;
-        }
-        const personas = await response.json();
-        setEditablePersonas(personas);
-      } catch (error) {
-        console.error("Error fetching editable personas:", error);
-      }
-    };
-
-    fetchEditablePersonas();
-  }, [isAdmin]);
-
   const [allAssistants, setAllAssistants] = useState<Persona[]>([]);
 
+  const [isImageGenerationAvailable, setIsImageGenerationAvailable] =
+    useState<boolean>(false);
+
   useEffect(() => {
-    const fetchAllAssistants = async () => {
+    const checkImageGenerationAvailability = async () => {
+      try {
+        const response = await fetch("/api/persona/image-generation-tool");
+        if (response.ok) {
+          const { is_available } = await response.json();
+          setIsImageGenerationAvailable(is_available);
+        }
+      } catch (error) {
+        console.error("Error checking image generation availability:", error);
+      }
+    };
+
+    checkImageGenerationAvailability();
+  }, []);
+
+  useEffect(() => {
+    const fetchPersonas = async () => {
       if (!isAdmin) {
         return;
       }
 
       try {
-        const response = await fetch("/api/admin/persona");
-        if (!response.ok) {
-          console.error("Failed to fetch all personas");
-          return;
+        const [editableResponse, allResponse] = await Promise.all([
+          fetch("/api/admin/persona?get_editable=true"),
+          fetch("/api/admin/persona"),
+        ]);
+
+        if (editableResponse.ok) {
+          const editablePersonas = await editableResponse.json();
+          setEditablePersonas(editablePersonas);
         }
-        const personas = await response.json();
-        setAllAssistants(personas);
+
+        if (allResponse.ok) {
+          const allPersonas = await allResponse.json();
+          setAllAssistants(allPersonas);
+        }
       } catch (error) {
-        console.error("Error fetching all personas:", error);
+        console.error("Error fetching personas:", error);
       }
     };
 
-    fetchAllAssistants();
+    fetchPersonas();
   }, [isAdmin]);
 
   const refreshAssistants = async () => {
@@ -162,6 +166,7 @@ export const AssistantsProvider: React.FC<{
         refreshAssistants,
         editablePersonas,
         allAssistants,
+        isImageGenerationAvailable,
       }}
     >
       {children}

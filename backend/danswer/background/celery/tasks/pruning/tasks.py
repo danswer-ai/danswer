@@ -34,6 +34,7 @@ from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.redis.redis_pool import get_redis_client
+from danswer.utils.logger import pruning_ctx
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -79,13 +80,13 @@ def check_for_pruning(self: Task, *, tenant_id: str | None) -> None:
                 if not tasks_created:
                     continue
 
-                task_logger.info(f"Pruning queued: cc_pair_id={cc_pair.id}")
+                task_logger.info(f"Pruning queued: cc_pair={cc_pair.id}")
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."
         )
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
         if lock_beat.owned():
             lock_beat.release()
@@ -201,7 +202,7 @@ def try_creating_prune_generator_task(
         # set this only after all tasks have been added
         r.set(rcp.fence_key, 1)
     except Exception:
-        task_logger.exception("Unexpected exception")
+        task_logger.exception(f"Unexpected exception: cc_pair={cc_pair.id}")
         return None
     finally:
         if lock.owned():
@@ -229,9 +230,14 @@ def connector_pruning_generator_task(
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list"""
 
-    r = get_redis_client(tenant_id=tenant_id)
+    pruning_ctx_dict = pruning_ctx.get()
+    pruning_ctx_dict["cc_pair_id"] = cc_pair_id
+    pruning_ctx_dict["request_id"] = self.request.id
+    pruning_ctx.set(pruning_ctx_dict)
 
     rcp = RedisConnectorPruning(cc_pair_id)
+
+    r = get_redis_client(tenant_id=tenant_id)
 
     lock = r.lock(
         DanswerRedisLocks.PRUNING_LOCK_PREFIX + f"_{rcp._id}",
@@ -300,7 +306,7 @@ def connector_pruning_generator_task(
             rcp.documents_to_prune = set(doc_ids_to_remove)
 
             task_logger.info(
-                f"RedisConnectorPruning.generate_tasks starting. cc_pair_id={cc_pair_id}"
+                f"RedisConnectorPruning.generate_tasks starting. cc_pair={cc_pair.id}"
             )
             tasks_generated = rcp.generate_tasks(
                 self.app, db_session, r, None, tenant_id
@@ -310,7 +316,7 @@ def connector_pruning_generator_task(
 
             task_logger.info(
                 f"RedisConnectorPruning.generate_tasks finished. "
-                f"cc_pair={cc_pair_id} tasks_generated={tasks_generated}"
+                f"cc_pair={cc_pair.id} tasks_generated={tasks_generated}"
             )
 
             r.set(rcp.generator_complete_key, tasks_generated)

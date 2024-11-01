@@ -8,7 +8,12 @@ import Link from "next/link";
 import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 
-export default function FixedLogo() {
+export default function FixedLogo({
+  // Whether the sidebar is toggled or not
+  backgroundToggled,
+}: {
+  backgroundToggled?: boolean;
+}) {
   const combinedSettings = useContext(SettingsContext);
   const settings = combinedSettings?.settings;
   const enterpriseSettings = combinedSettings?.enterpriseSettings;
@@ -28,13 +33,17 @@ export default function FixedLogo() {
           <div className="w-full">
             {enterpriseSettings && enterpriseSettings.application_name ? (
               <div>
-                <HeaderTitle>{enterpriseSettings.application_name}</HeaderTitle>
+                <HeaderTitle backgroundToggled={backgroundToggled}>
+                  {enterpriseSettings.application_name}
+                </HeaderTitle>
                 {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
                   <p className="text-xs text-subtle">Powered by Danswer</p>
                 )}
               </div>
             ) : (
-              <HeaderTitle>Danswer</HeaderTitle>
+              <HeaderTitle backgroundToggled={backgroundToggled}>
+                Danswer
+              </HeaderTitle>
             )}
           </div>
         </div>

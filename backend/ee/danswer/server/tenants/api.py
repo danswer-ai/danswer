@@ -5,7 +5,6 @@ from fastapi import HTTPException
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import User
-from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.notification import create_notification
@@ -25,6 +24,7 @@ from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
 from ee.danswer.server.tenants.provisioning import user_owns_a_tenant
 from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.configs import MULTI_TENANT
 
 
 stripe.api_key = STRIPE_SECRET_KEY
@@ -59,7 +59,7 @@ def create_tenant(
         run_alembic_migrations(tenant_id)
 
         with get_session_with_tenant(tenant_id) as db_session:
-            setup_danswer(db_session)
+            setup_danswer(db_session, tenant_id)
 
         add_users_to_tenant([email], tenant_id)
 

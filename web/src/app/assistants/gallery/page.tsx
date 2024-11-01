@@ -24,8 +24,8 @@ export default async function GalleryPage({
     chatSessions,
     folders,
     openedFolders,
-    shouldShowWelcomeModal,
     toggleSidebar,
+    shouldShowWelcomeModal,
   } = data;
 
   return (

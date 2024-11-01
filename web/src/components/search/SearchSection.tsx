@@ -44,6 +44,7 @@ import UnconfiguredProviderText from "../chat_search/UnconfiguredProviderText";
 import { DateRangePickerValue } from "@tremor/react";
 import { Tag } from "@/lib/types";
 import { isEqual } from "lodash";
+import { WelcomeModal } from "../initialSetup/welcome/WelcomeModalWrapper";
 
 export type searchState =
   | "input"
@@ -723,7 +724,9 @@ export const SearchSection = ({
 
             {
               <div
-                className={`desktop:px-24 w-full ${chatBannerPresent && "mt-10"} pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
+                className={`desktop:px-24 w-full ${
+                  chatBannerPresent && "mt-10"
+                } pt-10 relative max-w-[2000px] xl:max-w-[1430px] mx-auto`}
               >
                 <div className="absolute z-10 mobile:px-4 mobile:max-w-searchbar-max mobile:w-[90%] top-12 desktop:left-4 hidden 2xl:block mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 desktop:w-52 3xl:w-64">
                   {!settings?.isMobile &&
@@ -783,6 +786,7 @@ export const SearchSection = ({
                     </div>
 
                     <UnconfiguredProviderText
+                      noSources={shouldDisplayNoSources}
                       showConfigureAPIKey={() => setShowApiKeyModal(true)}
                     />
 
@@ -847,7 +851,7 @@ export const SearchSection = ({
           </div>
         </div>
       </div>
-      <FixedLogo />
+      <FixedLogo backgroundToggled={toggledSidebar || showDocSidebar} />
     </>
   );
 };

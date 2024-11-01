@@ -17,6 +17,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.interfaces import SlimConnector
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
@@ -91,12 +92,13 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 cql_page_query += f" and id='{page_id}'"
 
         self.cql_page_query = cql_page_query
-        self.cql_label_filter = ""
         self.cql_time_filter = ""
+
+        self.cql_label_filter = ""
         if labels_to_skip:
             labels_to_skip = list(set(labels_to_skip))
-            comma_separated_labels = ",".join(labels_to_skip)
-            self.cql_label_filter = f"&label not in ({comma_separated_labels})"
+            comma_separated_labels = ",".join(f"'{label}'" for label in labels_to_skip)
+            self.cql_label_filter = f" and label not in ({comma_separated_labels})"
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
@@ -125,7 +127,8 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             for comment in comments:
                 comment_string += "\nComment:\n"
                 comment_string += extract_text_from_confluence_html(
-                    confluence_client=self.confluence_client, confluence_object=comment
+                    confluence_client=self.confluence_client,
+                    confluence_object=comment,
                 )
 
         return comment_string
@@ -247,7 +250,11 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         self.cql_time_filter += f" and lastmodified <= '{formatted_end_time}'"
         return self._fetch_document_batches()
 
-    def retrieve_all_slim_documents(self) -> GenerateSlimDocumentOutput:
+    def retrieve_all_slim_documents(
+        self,
+        start: SecondsSinceUnixEpoch | None = None,
+        end: SecondsSinceUnixEpoch | None = None,
+    ) -> GenerateSlimDocumentOutput:
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
 

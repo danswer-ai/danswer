@@ -119,6 +119,7 @@ def test_using_reference_docs_with_simple_with_history_api_flow(reset: None) -> 
     )
     assert response.status_code == 200
     response_json = response.json()
+
     # get the db_doc_id of the top document to use as a search doc id for second message
     first_db_doc_id = response_json["top_documents"][0]["db_doc_id"]
 
@@ -154,42 +155,38 @@ def test_send_message_simple_with_history_strict_json(
     new_admin_user: DATestUser | None,
 ) -> None:
     # create connectors
-    cc_pair_1: DATestCCPair = CCPairManager.create_from_scratch(
-        user_performing_action=new_admin_user,
-    )
-    api_key: DATestAPIKey = APIKeyManager.create(
-        user_performing_action=new_admin_user,
-    )
     LLMProviderManager.create(user_performing_action=new_admin_user)
-    cc_pair_1.documents = DocumentManager.seed_dummy_docs(
-        cc_pair=cc_pair_1,
-        num_docs=NUM_DOCS,
-        api_key=api_key,
-    )
 
     response = requests.post(
         f"{API_SERVER_URL}/chat/send-message-simple-with-history",
         json={
+            # intentionally not relevant prompt to ensure that the
+            # structured response format is actually used
             "messages": [
                 {
-                    "message": "List the names of the first three US presidents in JSON format",
+                    "message": "What is green?",
                     "role": MessageType.USER.value,
                 }
             ],
             "persona_id": 0,
             "prompt_id": 0,
             "structured_response_format": {
-                "type": "json_object",
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "presidents": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "description": "List of the first three US presidents",
-                        }
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "presidents",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "presidents": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "List of the first three US presidents",
+                            }
+                        },
+                        "required": ["presidents"],
+                        "additionalProperties": False,
                     },
-                    "required": ["presidents"],
+                    "strict": True,
                 },
             },
         },
@@ -211,14 +208,17 @@ def test_send_message_simple_with_history_strict_json(
     try:
         clean_answer = clean_json_string(response_json["answer"])
         parsed_answer = json.loads(clean_answer)
+
+        # NOTE: do not check content, just the structure
         assert isinstance(parsed_answer, dict)
         assert "presidents" in parsed_answer
         assert isinstance(parsed_answer["presidents"], list)
-        assert len(parsed_answer["presidents"]) == 3
         for president in parsed_answer["presidents"]:
             assert isinstance(president, str)
     except json.JSONDecodeError:
-        assert False, "The answer is not a valid JSON object"
+        assert (
+            False
+        ), f"The answer is not a valid JSON object - '{response_json['answer']}'"
 
     # Check that the answer_citationless is also valid JSON
     assert "answer_citationless" in response_json
