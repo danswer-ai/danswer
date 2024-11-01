@@ -21,9 +21,9 @@ export function Callout({
         "my-6 flex items-start rounded-md border border-l-4 p-4",
         className,
         {
-          "border-red-900 bg-red-50": type === "danger",
-          "border-yellow-900 bg-yellow-50": type === "warning",
-          "border-blue-900 bg-blue-50": type === "notice",
+          "border-rose-300 bg-rose-50": type === "danger",
+          "border-amber-300 bg-amber-50": type === "warning",
+          "border-sky-300 bg-sky-50": type === "notice",
         }
       )}
       {...props}

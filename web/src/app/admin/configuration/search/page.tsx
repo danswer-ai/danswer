@@ -160,7 +160,7 @@ function Main() {
           </CardSection>
 
           <Link href="/admin/embeddings">
-            <Button variant="update" className="mt-8">
+            <Button variant="navigate" className="mt-8">
               Update Search Settings
             </Button>
           </Link>

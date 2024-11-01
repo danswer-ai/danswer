@@ -110,7 +110,7 @@ export function CCPairStatus({
     );
   } else if (disabled) {
     badge = (
-      <Badge variant="secondary" icon={FiPauseCircle}>
+      <Badge variant="paused" icon={FiPauseCircle}>
         Paused
       </Badge>
     );

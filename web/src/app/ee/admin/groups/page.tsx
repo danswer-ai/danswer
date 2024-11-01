@@ -61,14 +61,17 @@ const Main = () => {
       {popup}
       {isAdmin && (
         <div className="my-3">
-          <Button size="sm" variant="submit" onClick={() => setShowForm(true)}>
+          <Button
+            size="sm"
+            variant="navigate"
+            onClick={() => setShowForm(true)}
+          >
             Create New User Group
           </Button>
         </div>
       )}
       {data.length > 0 && (
         <div>
-          {isAdmin && <Separator />}
           <UserGroupsTable
             userGroups={data}
             setPopup={setPopup}

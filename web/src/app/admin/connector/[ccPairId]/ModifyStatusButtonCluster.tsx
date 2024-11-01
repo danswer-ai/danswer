@@ -19,7 +19,7 @@ export function ModifyStatusButtonCluster({
       {popup}
       {ccPair.status === ConnectorCredentialPairStatus.PAUSED ? (
         <Button
-          variant="submit"
+          variant="success-reverse"
           onClick={() =>
             setCCPairStatus(
               ccPair.id,
@@ -34,7 +34,7 @@ export function ModifyStatusButtonCluster({
         </Button>
       ) : (
         <Button
-          variant="destructive"
+          variant="default"
           onClick={() =>
             setCCPairStatus(
               ccPair.id,

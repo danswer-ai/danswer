@@ -8,7 +8,7 @@ import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
-import { Separator } from "@radix-ui/react-separator";
+import { Separator } from "@/components/ui/separator";
 
 function ReIndexPopup({
   connectorId,
@@ -120,7 +120,7 @@ export function ReIndexButton({
       )}
       {popup}
       <Button
-        variant="submit"
+        variant="success-reverse"
         className="ml-auto"
         onClick={() => {
           setReIndexPopupVisible(true);

@@ -92,7 +92,7 @@ export default function Status() {
         title="Existing Connectors"
         farRightElement={
           <Link href="/admin/add-connector">
-            <Button variant="navigate">Add Connector</Button>
+            <Button variant="success-reverse">Add Connector</Button>
           </Link>
         }
       />

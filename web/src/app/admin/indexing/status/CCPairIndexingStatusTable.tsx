@@ -359,7 +359,7 @@ export function CCPairIndexingStatusTable({
   };
   const shouldExpand =
     Object.values(connectorsToggled).filter(Boolean).length <
-    sortedSources.length / 2;
+    sortedSources.length;
 
   return (
     <Table>

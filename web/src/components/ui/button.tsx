@@ -12,7 +12,8 @@ const buttonVariants = cva(
         success:
           "bg-green-100 text-green-600 hover:bg-green-500/90 dark:bg-blue-500 dark:text-neutral-50 dark:hover:bg-green-900/90",
         "success-reverse":
-          "bg-green-600 text-green-100 hover:bg-green-600/90 dark:bg-neutral-50 dark:text-blue-500 dark:hover:bg-green-100/90",
+          "bg-green-500 text-green-100 hover:bg-green-600/90 dark:bg-neutral-50 dark:text-blue-500 dark:hover:bg-green-100/90",
+
         default:
           "bg-neutral-900 border-border text-neutral-50 hover:bg-neutral-900/90 dark:bg-neutral-50 dark:text-neutral-900 dark:hover:bg-neutral-50/90",
         "default-reverse":
@@ -37,7 +38,9 @@ const buttonVariants = cva(
         "link-reverse":
           "text-neutral-50 underline-offset-4 hover:underline dark:text-neutral-900",
         submit:
-          "bg-blue-600 text-neutral-50 hover:bg-blue-600/80 dark:bg-blue-600 dark:text-neutral-50 dark:hover:bg-blue-600/90",
+          "bg-green-500 text-green-100 hover:bg-green-600/90 dark:bg-neutral-50 dark:text-blue-500 dark:hover:bg-green-100/90",
+
+        // "bg-blue-600 text-neutral-50 hover:bg-blue-600/80 dark:bg-blue-600 dark:text-neutral-50 dark:hover:bg-blue-600/90",
         "submit-reverse":
           "bg-neutral-50 text-blue-600 hover:bg-neutral-50/80 dark:bg-neutral-50 dark:text-blue-600 dark:hover:bg-neutral-50/90",
         navigate:
@@ -45,7 +48,7 @@ const buttonVariants = cva(
         "navigate-reverse":
           "bg-white text-blue-500 hover:bg-blue-50 dark:bg-blue-100 dark:hover:bg-blue-200",
         update:
-          "bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80",
+          "border border-neutral-300 bg-neutral-100 text-neutral-900 hover:bg-neutral-100/80 dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-800/80",
         "update-reverse":
           "bg-neutral-900 text-neutral-100 hover:bg-neutral-900/80 dark:bg-neutral-50 dark:text-neutral-800 dark:hover:bg-neutral-50/80",
         next: "bg-neutral-700 text-neutral-50 hover:bg-neutral-700/90 dark:bg-neutral-600 dark:text-neutral-50 dark:hover:bg-neutral-600/90",

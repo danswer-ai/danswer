@@ -139,9 +139,9 @@ function Main() {
       </ul>
 
       <Button
-        variant="submit"
+        variant="navigate"
         size="sm"
-        className="my-3"
+        className="my-4"
         onClick={() => setModalIsOpen(true)}
       >
         Create a Token Rate Limit

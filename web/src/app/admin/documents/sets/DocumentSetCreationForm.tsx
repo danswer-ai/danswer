@@ -342,6 +342,7 @@ export const DocumentSetCreationForm = ({
               <div className="flex mt-6">
                 <Button
                   type="submit"
+                  variant="submit"
                   disabled={props.isSubmitting}
                   className="w-64 mx-auto"
                 >

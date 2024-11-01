@@ -116,7 +116,7 @@ export const CreateRateLimitModal = ({
         }}
       >
         {({ isSubmitting, values, setFieldValue }) => (
-          <Form>
+          <Form className="overflow-visible px-2">
             {!forSpecificScope && (
               <SelectorFormField
                 name="target_scope"

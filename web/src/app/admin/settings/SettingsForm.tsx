@@ -280,7 +280,7 @@ export function SettingsForm() {
           </Button>
           <Button
             onClick={handleClearChatRetention}
-            variant="secondary"
+            variant="default"
             size="sm"
           >
             Retain All

@@ -11,9 +11,10 @@ const badgeVariants = cva(
         orange:
           "border-orange-200 bg-orange-50 text-orange-600 hover:bg-orange-75 dark:bg-orange-900 dark:text-neutral-50 dark:hover:bg-orange-850",
         paused:
-          "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-75 dark:bg-blue-900 dark:text-neutral-50 dark:hover:bg-blue-850",
-        in_progress:
           "border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-75 dark:bg-amber-900 dark:text-neutral-50 dark:hover:bg-amber-850",
+        in_progress:
+          "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-75 dark:bg-blue-900 dark:text-neutral-50 dark:hover:bg-blue-850",
+
         purple:
           "border-purple-400 bg-purple-50 text-purple-600 hover:bg-purple-75 dark:bg-purple-900 dark:text-neutral-50 dark:hover:bg-purple-850",
         success:

@@ -120,7 +120,7 @@ function AddCustomLLMProvider({
   }
 
   return (
-    <Button variant="next" onClick={() => setFormIsVisible(true)}>
+    <Button variant="navigate" onClick={() => setFormIsVisible(true)}>
       Add Custom LLM Provider
     </Button>
   );
