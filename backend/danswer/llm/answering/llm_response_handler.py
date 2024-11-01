@@ -67,15 +67,14 @@ class LLMResponseHandlerManager:
     ) -> Generator[ResponsePart, None, None]:
         all_messages: list[BaseMessage] = []
         for message in stream:
+            if self.is_cancelled():
+                yield StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
+                return
             # tool handler doesn't do anything until the full message is received
             # NOTE: still need to run list() to get this to run
             list(self.tool_handler.handle_response_part(message, all_messages))
             yield from self.answer_handler.handle_response_part(message, all_messages)
             all_messages.append(message)
-
-            if self.is_cancelled():
-                yield StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
-                return
 
         # potentially give back all info on the selected tool call + its result
         yield from self.tool_handler.handle_response_part(None, all_messages)
