@@ -17,10 +17,43 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Create the new column
+    # 1. Add 'message_id' column to 'tool_call' table
+    op.add_column("tool_call", sa.Column("message_id", sa.Integer(), nullable=True))
+
+    # 2. Create foreign key constraint from 'tool_call.message_id' to 'chat_message.id'
+    op.create_foreign_key(
+        "fk_tool_call_message_id",
+        "tool_call",
+        "chat_message",
+        ["message_id"],
+        ["id"],
+    )
+
+    # 3. Migrate existing data from 'chat_message.tool_call_id' to 'tool_call.message_id'
+    op.execute(
+        """
+        UPDATE tool_call
+        SET message_id = chat_message.id
+        FROM chat_message
+        WHERE chat_message.tool_call_id = tool_call.id
+        """
+    )
+
+    # 4. Drop the foreign key constraint and column 'tool_call_id' from 'chat_message' table
+    op.drop_constraint("fk_chat_message_tool_call", "chat_message", type_="foreignkey")
+    op.drop_column("chat_message", "tool_call_id")
+
+    # 5. Optionally drop the unique constraint if it was previously added
+    # op.drop_constraint("uq_chat_message_tool_call_id", "chat_message", type_="unique")
+
+
+def downgrade() -> None:
+    # 1. Add 'tool_call_id' column back to 'chat_message' table
     op.add_column(
         "chat_message", sa.Column("tool_call_id", sa.Integer(), nullable=True)
     )
+
+    # 2. Restore foreign key constraint from 'chat_message.tool_call_id' to 'tool_call.id'
     op.create_foreign_key(
         "fk_chat_message_tool_call",
         "chat_message",
@@ -29,36 +62,16 @@ def upgrade() -> None:
         ["id"],
     )
 
-    # Migrate existing data
+    # 3. Migrate data back from 'tool_call.message_id' to 'chat_message.tool_call_id'
     op.execute(
-        "UPDATE chat_message SET tool_call_id = (SELECT id FROM tool_call WHERE tool_call.message_id = chat_message.id LIMIT 1)"
+        """
+        UPDATE chat_message
+        SET tool_call_id = tool_call.id
+        FROM tool_call
+        WHERE tool_call.message_id = chat_message.id
+        """
     )
 
-    # Drop the old relationship
-    op.drop_constraint("tool_call_message_id_fkey", "tool_call", type_="foreignkey")
+    # 4. Drop the foreign key constraint and column 'message_id' from 'tool_call' table
+    op.drop_constraint("fk_tool_call_message_id", "tool_call", type_="foreignkey")
     op.drop_column("tool_call", "message_id")
-
-    # Add a unique constraint to ensure one-to-one relationship
-    op.create_unique_constraint(
-        "uq_chat_message_tool_call_id", "chat_message", ["tool_call_id"]
-    )
-
-
-def downgrade() -> None:
-    # Add back the old column
-    op.add_column(
-        "tool_call",
-        sa.Column("message_id", sa.INTEGER(), autoincrement=False, nullable=True),
-    )
-    op.create_foreign_key(
-        "tool_call_message_id_fkey", "tool_call", "chat_message", ["message_id"], ["id"]
-    )
-
-    # Migrate data back
-    op.execute(
-        "UPDATE tool_call SET message_id = (SELECT id FROM chat_message WHERE chat_message.tool_call_id = tool_call.id)"
-    )
-
-    # Drop the new column
-    op.drop_constraint("fk_chat_message_tool_call", "chat_message", type_="foreignkey")
-    op.drop_column("chat_message", "tool_call_id")
