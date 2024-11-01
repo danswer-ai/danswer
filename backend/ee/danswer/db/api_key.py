@@ -15,6 +15,8 @@ from ee.danswer.auth.api_key import build_displayable_api_key
 from ee.danswer.auth.api_key import generate_api_key
 from ee.danswer.auth.api_key import hash_api_key
 from ee.danswer.server.api_key.models import APIKeyArgs
+from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.configs import MULTI_TENANT
 
 
 def get_api_key_email_pattern() -> str:
@@ -64,7 +66,11 @@ def insert_api_key(
     db_session: Session, api_key_args: APIKeyArgs, user_id: uuid.UUID | None
 ) -> ApiKeyDescriptor:
     std_password_helper = PasswordHelper()
-    api_key = generate_api_key()
+
+    # Get tenant_id from context var (will be default schema for single tenant)
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+
+    api_key = generate_api_key(tenant_id if MULTI_TENANT else None)
     api_key_user_id = uuid.uuid4()
 
     display_name = api_key_args.name or UNNAMED_KEY_PLACEHOLDER
