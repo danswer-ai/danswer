@@ -142,6 +142,9 @@ def test_using_reference_docs_with_simple_with_history_api_flow(reset: None) -> 
     assert response.status_code == 200
     response_json = response.json()
 
+    # make sure there is an answer
+    assert response_json["answer"]
+
     # since we only gave it one search doc, all responses should only contain that doc
     assert response_json["final_context_doc_indices"] == [0]
     assert response_json["llm_selected_doc_indices"] == [0]

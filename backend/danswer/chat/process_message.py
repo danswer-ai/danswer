@@ -18,6 +18,7 @@ from danswer.chat.models import MessageResponseIDInfo
 from danswer.chat.models import MessageSpecificCitations
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
+from danswer.chat.models import StreamStopInfo
 from danswer.configs.app_configs import AZURE_DALLE_API_BASE
 from danswer.configs.app_configs import AZURE_DALLE_API_KEY
 from danswer.configs.app_configs import AZURE_DALLE_API_VERSION
@@ -77,31 +78,49 @@ from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
 from danswer.tools.built_in_tools import get_built_in_tool_by_id
-from danswer.tools.custom.custom_tool import (
+from danswer.tools.force import ForceUseTool
+from danswer.tools.models import DynamicSchemaInfo
+from danswer.tools.models import ToolResponse
+from danswer.tools.tool import Tool
+from danswer.tools.tool_implementations.custom.custom_tool import (
     build_custom_tools_from_openapi_schema_and_headers,
 )
-from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
-from danswer.tools.custom.custom_tool import CustomToolCallSummary
-from danswer.tools.force import ForceUseTool
-from danswer.tools.images.image_generation_tool import IMAGE_GENERATION_RESPONSE_ID
-from danswer.tools.images.image_generation_tool import ImageGenerationResponse
-from danswer.tools.images.image_generation_tool import ImageGenerationTool
-from danswer.tools.internet_search.internet_search_tool import (
+from danswer.tools.tool_implementations.custom.custom_tool import (
+    CUSTOM_TOOL_RESPONSE_ID,
+)
+from danswer.tools.tool_implementations.custom.custom_tool import CustomToolCallSummary
+from danswer.tools.tool_implementations.images.image_generation_tool import (
+    IMAGE_GENERATION_RESPONSE_ID,
+)
+from danswer.tools.tool_implementations.images.image_generation_tool import (
+    ImageGenerationResponse,
+)
+from danswer.tools.tool_implementations.images.image_generation_tool import (
+    ImageGenerationTool,
+)
+from danswer.tools.tool_implementations.internet_search.internet_search_tool import (
     INTERNET_SEARCH_RESPONSE_ID,
 )
-from danswer.tools.internet_search.internet_search_tool import (
+from danswer.tools.tool_implementations.internet_search.internet_search_tool import (
     internet_search_response_to_search_docs,
 )
-from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
-from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
-from danswer.tools.models import DynamicSchemaInfo
-from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
-from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
-from danswer.tools.search.search_tool import SearchResponseSummary
-from danswer.tools.search.search_tool import SearchTool
-from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
-from danswer.tools.tool import Tool
-from danswer.tools.tool import ToolResponse
+from danswer.tools.tool_implementations.internet_search.internet_search_tool import (
+    InternetSearchResponse,
+)
+from danswer.tools.tool_implementations.internet_search.internet_search_tool import (
+    InternetSearchTool,
+)
+from danswer.tools.tool_implementations.search.search_tool import (
+    FINAL_CONTEXT_DOCUMENTS_ID,
+)
+from danswer.tools.tool_implementations.search.search_tool import (
+    SEARCH_RESPONSE_SUMMARY_ID,
+)
+from danswer.tools.tool_implementations.search.search_tool import SearchResponseSummary
+from danswer.tools.tool_implementations.search.search_tool import SearchTool
+from danswer.tools.tool_implementations.search.search_tool import (
+    SECTION_RELEVANCE_LIST_ID,
+)
 from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.tools.utils import compute_all_tool_tokens
 from danswer.tools.utils import explicit_tool_calling_supported
@@ -260,6 +279,7 @@ ChatPacket = (
     | CustomToolResponse
     | MessageSpecificCitations
     | MessageResponseIDInfo
+    | StreamStopInfo
 )
 ChatPacketStream = Iterator[ChatPacket]
 
@@ -532,6 +552,13 @@ def stream_chat_message_objects(
             if not persona
             else PromptConfig.from_model(persona.prompts[0])
         )
+        answer_style_config = AnswerStyleConfig(
+            citation_config=CitationConfig(
+                all_docs_useful=selected_db_search_docs is not None
+            ),
+            document_pruning_config=document_pruning_config,
+            structured_response_format=new_msg_req.structured_response_format,
+        )
 
         # find out what tools to use
         search_tool: SearchTool | None = None
@@ -550,13 +577,16 @@ def stream_chat_message_objects(
                         llm=llm,
                         fast_llm=fast_llm,
                         pruning_config=document_pruning_config,
+                        answer_style_config=answer_style_config,
                         selected_sections=selected_sections,
                         chunks_above=new_msg_req.chunks_above,
                         chunks_below=new_msg_req.chunks_below,
                         full_doc=new_msg_req.full_doc,
-                        evaluation_type=LLMEvaluationType.BASIC
-                        if persona.llm_relevance_filter
-                        else LLMEvaluationType.SKIP,
+                        evaluation_type=(
+                            LLMEvaluationType.BASIC
+                            if persona.llm_relevance_filter
+                            else LLMEvaluationType.SKIP
+                        ),
                     )
                     tool_dict[db_tool_model.id] = [search_tool]
                 elif tool_cls.__name__ == ImageGenerationTool.__name__:
@@ -626,7 +656,11 @@ def stream_chat_message_objects(
                             "Internet search tool requires a Bing API key, please contact your Danswer admin to get it added!"
                         )
                     tool_dict[db_tool_model.id] = [
-                        InternetSearchTool(api_key=bing_api_key)
+                        InternetSearchTool(
+                            api_key=bing_api_key,
+                            answer_style_config=answer_style_config,
+                            prompt_config=prompt_config,
+                        )
                     ]
 
                 continue
@@ -667,13 +701,7 @@ def stream_chat_message_objects(
             is_connected=is_connected,
             question=final_msg.message,
             latest_query_files=latest_query_files,
-            answer_style_config=AnswerStyleConfig(
-                citation_config=CitationConfig(
-                    all_docs_useful=selected_db_search_docs is not None
-                ),
-                document_pruning_config=document_pruning_config,
-                structured_response_format=new_msg_req.structured_response_format,
-            ),
+            answer_style_config=answer_style_config,
             prompt_config=prompt_config,
             llm=(
                 llm
@@ -777,7 +805,8 @@ def stream_chat_message_objects(
                         response=custom_tool_response.tool_result,
                         tool_name=custom_tool_response.tool_name,
                     )
-
+            elif isinstance(packet, StreamStopInfo):
+                pass
             else:
                 if isinstance(packet, ToolCallFinalResult):
                     tool_result = packet
@@ -807,6 +836,7 @@ def stream_chat_message_objects(
 
     # Post-LLM answer processing
     try:
+        logger.debug("Post-LLM answer processing")
         message_specific_citations: MessageSpecificCitations | None = None
         if reference_db_search_docs:
             message_specific_citations = _translate_citations(

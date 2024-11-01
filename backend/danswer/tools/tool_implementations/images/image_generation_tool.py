@@ -11,12 +11,17 @@ from danswer.chat.chat_utils import combine_message_chain
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.key_value_store.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
+from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import build_content_with_imgs
 from danswer.llm.utils import message_to_string
 from danswer.prompts.constants import GENERAL_SEP_PAT
+from danswer.tools.message import ToolCallSummary
+from danswer.tools.models import ToolResponse
 from danswer.tools.tool import Tool
-from danswer.tools.tool import ToolResponse
+from danswer.tools.tool_implementations.images.prompt import (
+    build_image_generation_user_prompt,
+)
 from danswer.utils.headers import build_llm_extra_headers
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
@@ -112,7 +117,10 @@ class ImageGenerationTool(Tool):
                         },
                         "shape": {
                             "type": "string",
-                            "description": "Optional. Image shape: 'square', 'portrait', or 'landscape'",
+                            "description": (
+                                "Optional - only specify if you want a specific shape."
+                                " Image shape: 'square', 'portrait', or 'landscape'."
+                            ),
                             "enum": [shape.value for shape in ImageShape],
                         },
                     },
@@ -258,3 +266,34 @@ class ImageGenerationTool(Tool):
             image_generation_response.model_dump()
             for image_generation_response in image_generation_responses
         ]
+
+    def build_next_prompt(
+        self,
+        prompt_builder: AnswerPromptBuilder,
+        tool_call_summary: ToolCallSummary,
+        tool_responses: list[ToolResponse],
+        using_tool_calling_llm: bool,
+    ) -> AnswerPromptBuilder:
+        img_generation_response = cast(
+            list[ImageGenerationResponse] | None,
+            next(
+                (
+                    response.response
+                    for response in tool_responses
+                    if response.id == IMAGE_GENERATION_RESPONSE_ID
+                ),
+                None,
+            ),
+        )
+        if img_generation_response is None:
+            raise ValueError("No image generation response found")
+
+        img_urls = [img.url for img in img_generation_response]
+        prompt_builder.update_user_prompt(
+            build_image_generation_user_prompt(
+                query=prompt_builder.get_user_message_content(),
+                img_urls=img_urls,
+            )
+        )
+
+        return prompt_builder
