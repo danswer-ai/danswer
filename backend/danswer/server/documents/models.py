@@ -377,16 +377,16 @@ class GoogleServiceAccountKey(BaseModel):
 
 
 class GoogleServiceAccountCredentialRequest(BaseModel):
-    google_drive_delegated_user: str | None = None  # email of user to impersonate
+    google_drive_primary_admin: str | None = None  # email of user to impersonate
     gmail_delegated_user: str | None = None  # email of user to impersonate
 
     @model_validator(mode="after")
     def check_user_delegation(self) -> "GoogleServiceAccountCredentialRequest":
-        if (self.google_drive_delegated_user is None) == (
+        if (self.google_drive_primary_admin is None) == (
             self.gmail_delegated_user is None
         ):
             raise ValueError(
-                "Exactly one of google_drive_delegated_user or gmail_delegated_user must be set"
+                "Exactly one of google_drive_primary_admin or gmail_delegated_user must be set"
             )
         return self
 

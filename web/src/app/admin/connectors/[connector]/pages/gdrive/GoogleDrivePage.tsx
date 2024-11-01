@@ -12,7 +12,7 @@ import {
   useConnectorCredentialIndexingStatus,
 } from "@/lib/hooks";
 import { Title } from "@tremor/react";
-import { DriveJsonUploadSection, DriveOAuthSection } from "./Credential";
+import { DriveJsonUploadSection, DriveAuthSection } from "./Credential";
 import {
   Credential,
   GoogleDriveCredentialJson,
@@ -22,7 +22,7 @@ import { GoogleDriveConfig } from "@/lib/connectors/connectors";
 import { useUser } from "@/components/user/UserProvider";
 
 const GDriveMain = ({}: {}) => {
-  const { isLoadingUser, isAdmin } = useUser();
+  const { isLoadingUser, isAdmin, user } = useUser();
 
   const {
     data: appCredentialData,
@@ -135,7 +135,7 @@ const GDriveMain = ({}: {}) => {
           <Title className="mb-2 mt-6 ml-auto mr-auto">
             Step 2: Authenticate with Danswer
           </Title>
-          <DriveOAuthSection
+          <DriveAuthSection
             setPopup={setPopup}
             refreshCredentials={refreshCredentials}
             googleDrivePublicCredential={googleDrivePublicCredential}
@@ -145,6 +145,7 @@ const GDriveMain = ({}: {}) => {
             appCredentialData={appCredentialData}
             serviceAccountKeyData={serviceAccountKeyData}
             connectorExists={googleDriveConnectorIndexingStatuses.length > 0}
+            user={user}
           />
         </>
       )}

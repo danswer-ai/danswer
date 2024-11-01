@@ -10,11 +10,9 @@ from sqlalchemy.sql.expression import or_
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
 from danswer.connectors.gmail.constants import (
     GMAIL_DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
-)
-from danswer.connectors.google_drive.constants import (
-    DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
@@ -442,7 +440,7 @@ def delete_google_drive_service_account_credentials(
 ) -> None:
     credentials = fetch_credentials(db_session=db_session, user=user)
     for credential in credentials:
-        if credential.credential_json.get(DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY):
+        if credential.credential_json.get(KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY):
             db_session.delete(credential)
 
     db_session.commit()

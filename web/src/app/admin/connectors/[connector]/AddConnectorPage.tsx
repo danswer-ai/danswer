@@ -431,6 +431,12 @@ export default function AddConnector({
                   setSelectedFiles={setSelectedFiles}
                   selectedFiles={selectedFiles}
                   connector={connector}
+                  currentCredential={
+                    currentCredential ||
+                    liveGDriveCredential ||
+                    liveGmailCredential ||
+                    null
+                  }
                 />
               </Card>
             )}

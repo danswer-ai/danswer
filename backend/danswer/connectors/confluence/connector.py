@@ -17,6 +17,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.interfaces import SlimConnector
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
@@ -249,7 +250,11 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         self.cql_time_filter += f" and lastmodified <= '{formatted_end_time}'"
         return self._fetch_document_batches()
 
-    def retrieve_all_slim_documents(self) -> GenerateSlimDocumentOutput:
+    def retrieve_all_slim_documents(
+        self,
+        start: SecondsSinceUnixEpoch | None = None,
+        end: SecondsSinceUnixEpoch | None = None,
+    ) -> GenerateSlimDocumentOutput:
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
 
