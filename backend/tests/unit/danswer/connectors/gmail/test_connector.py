@@ -6,8 +6,8 @@ from pytest_mock import MockFixture
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.gmail.connector import _build_time_range_query
-from danswer.connectors.gmail.connector import email_to_document
 from danswer.connectors.gmail.connector import GmailConnector
+from danswer.connectors.gmail.connector import thread_to_document
 from danswer.connectors.models import Document
 
 
@@ -79,7 +79,7 @@ def test_email_to_document() -> None:
         "historyId": "697762",
         "internalDate": "1703691529000",
     }
-    doc = email_to_document(full_email)
+    doc = thread_to_document(full_email)
     assert type(doc) == Document
     assert doc.source == DocumentSource.GMAIL
     assert doc.title == "Danswer Test Subject"

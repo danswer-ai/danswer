@@ -4,7 +4,9 @@ from collections.abc import Callable
 
 import pytest
 
-from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
+)
 from danswer.connectors.cross_connector_utils.google.shared_constants import (
     DB_CREDENTIALS_DICT_TOKEN_KEY,
 )
@@ -91,7 +93,7 @@ def google_drive_service_acct_connector_factory() -> (
         # Load Service Account Credentials
         connector.load_credentials(
             {
-                KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY: refried_json_string,
+                DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY: refried_json_string,
                 DB_CREDENTIALS_PRIMARY_ADMIN_KEY: primary_admin_email,
             }
         )

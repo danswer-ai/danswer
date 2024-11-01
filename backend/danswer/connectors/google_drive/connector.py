@@ -15,11 +15,19 @@ from danswer.connectors.cross_connector_utils.google.google_utils import (
 from danswer.connectors.cross_connector_utils.google.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    MISSING_SCOPES_ERROR_STR,
+)
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    ONYX_SCOPE_INSTRUCTIONS,
+)
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    SCOPE_DOC_URL,
+)
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    SLIM_BATCH_SIZE,
+)
 from danswer.connectors.cross_connector_utils.google.shared_constants import USER_FIELDS
-from danswer.connectors.google_drive.constants import MISSING_SCOPES_ERROR_STR
-from danswer.connectors.google_drive.constants import ONYX_SCOPE_INSTRUCTIONS
-from danswer.connectors.google_drive.constants import SCOPE_DOC_URL
-from danswer.connectors.google_drive.constants import SLIM_BATCH_SIZE
 from danswer.connectors.google_drive.doc_conversion import (
     convert_drive_item_to_document,
 )

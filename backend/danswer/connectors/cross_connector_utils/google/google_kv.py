@@ -28,8 +28,12 @@ from danswer.connectors.cross_connector_utils.google.shared_constants import (
 from danswer.connectors.cross_connector_utils.google.shared_constants import (
     GOOGLE_SCOPES,
 )
-from danswer.connectors.google_drive.constants import MISSING_SCOPES_ERROR_STR
-from danswer.connectors.google_drive.constants import ONYX_SCOPE_INSTRUCTIONS
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    MISSING_SCOPES_ERROR_STR,
+)
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    ONYX_SCOPE_INSTRUCTIONS,
+)
 from danswer.db.credentials import update_credential_json
 from danswer.db.models import User
 from danswer.key_value_store.factory import get_kv_store

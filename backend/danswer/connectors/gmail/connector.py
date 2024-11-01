@@ -16,19 +16,45 @@ from danswer.connectors.cross_connector_utils.google.google_utils import (
 from danswer.connectors.cross_connector_utils.google.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    MISSING_SCOPES_ERROR_STR,
+)
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    ONYX_SCOPE_INSTRUCTIONS,
+)
+from danswer.connectors.cross_connector_utils.google.shared_constants import (
+    SLIM_BATCH_SIZE,
+)
 from danswer.connectors.cross_connector_utils.google.shared_constants import USER_FIELDS
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.interfaces import SlimConnector
+from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.connectors.models import SlimDocument
 from danswer.utils.logger import setup_logger
+from danswer.utils.retry_wrapper import retry_builder
+
 
 logger = setup_logger()
 
-MESSAGE_FIELDS = "messages(id, payload(headers, parts(body(data), mimeType), parts(body(data), mimeType)))"
+MESSAGE_FIELDS = "nextPageToken, messages(id, payload(headers, parts(body(data), mimeType), parts(body(data), mimeType)))"
+THREAD_FIELDS = "nextPageToken, threads(id)"
+SLIM_THREAD_FIELDS = "nextPageToken, threads(id)"
+
+EMAIL_FIELDS = [
+    "cc",
+    "bcc",
+    "from",
+    "to",
+]
+
+add_retries = retry_builder(tries=50, max_delay=30)
 
 
 def _build_time_range_query(
@@ -48,52 +74,96 @@ def _build_time_range_query(
     return query
 
 
-def _get_email_body(payload: dict[str, Any]) -> str:
+def _get_message_body(payload: dict[str, Any]) -> str:
     parts = payload.get("parts", [])
-    email_body = ""
+    message_body = ""
     for part in parts:
         mime_type = part.get("mimeType")
         body = part.get("body")
         if mime_type == "text/plain":
             data = body.get("data", "")
             text = urlsafe_b64decode(data).decode()
-            email_body += text
-    return email_body
+            message_body += text
+    return message_body
 
 
-def email_to_document(full_email: Dict[str, Any]) -> Document:
-    email_id = full_email["id"]
-    payload = full_email["payload"]
-    headers = payload.get("headers")
-    labels = full_email.get("labelIds", [])
-    metadata = {}
-    if headers:
-        for header in headers:
-            name = header.get("name").lower()
-            value = header.get("value")
-            if name in ["from", "to", "subject", "date", "cc", "bcc"]:
-                metadata[name] = value
-    email_data = ""
+def message_to_section(message: Dict[str, Any]) -> tuple[Section, dict[str, str]]:
+    link = f"https://mail.google.com/mail/u/0/#inbox/{message['id']}"
+
+    payload = message.get("payload", {})
+    headers = payload.get("headers", [])
+    metadata: dict[str, Any] = {}
+    for header in headers:
+        name = header.get("name").lower()
+        value = header.get("value")
+        if name in EMAIL_FIELDS:
+            metadata[name] = value
+        if name == "subject":
+            metadata["subject"] = value
+        if name == "date":
+            metadata["updated_at"] = value
+
+    if labels := message.get("labelIds"):
+        metadata["labels"] = labels
+
+    message_data = ""
     for name, value in metadata.items():
-        email_data += f"{name}: {value}\n"
-    metadata["labels"] = labels
-    logger.debug(f"{email_data}")
-    email_body_text: str = _get_email_body(payload)
-    date_str = metadata.get("date")
-    email_updated_at = time_str_to_utc(date_str) if date_str else None
-    link = f"https://mail.google.com/mail/u/0/#inbox/{email_id}"
+        # updated at isnt super useful for the llm
+        if name != "updated_at":
+            message_data += f"{name}: {value}\n"
+
+    message_body_text: str = _get_message_body(payload)
+
+    return Section(link=link, text=message_body_text + message_data), metadata
+
+
+def thread_to_document(full_thread: Dict[str, Any]) -> Document | None:
+    all_messages = full_thread.get("messages", [])
+    if not all_messages:
+        return None
+
+    sections = []
+    semantic_identifier = ""
+    updated_at = None
+    from_emails: set[str] = set()
+    other_emails: set[str] = set()
+    for message in all_messages:
+        section, message_metadata = message_to_section(message)
+        sections.append(section)
+
+        for name, value in message_metadata.items():
+            if name in EMAIL_FIELDS:
+                if name == "from":
+                    from_emails.add(value)
+                else:
+                    other_emails.add(value)
+
+        # If we haven't set the semantic identifier yet, set it to the subject of the first message
+        if not semantic_identifier:
+            semantic_identifier = message_metadata.get("subject", "")
+
+        if message_metadata.get("updated_at"):
+            updated_at = message_metadata.get("updated_at")
+
+    updated_at_datetime = None
+    if updated_at:
+        updated_at_datetime = time_str_to_utc(updated_at)
+
     return Document(
-        id=email_id,
-        sections=[Section(link=link, text=email_data + email_body_text)],
+        id=full_thread["id"],
+        semantic_identifier=semantic_identifier,
+        sections=sections,
         source=DocumentSource.GMAIL,
-        title=metadata.get("subject"),
-        semantic_identifier=metadata.get("subject", "Untitled Email"),
-        doc_updated_at=email_updated_at,
-        metadata=metadata,
+        # This is used to perform permission sync
+        primary_owners=[BasicExpertInfo(email=email) for email in from_emails],
+        secondary_owners=[BasicExpertInfo(email=email) for email in other_emails],
+        doc_updated_at=updated_at_datetime,
+        # Not adding emails to metadata because it's already in the sections
+        metadata={},
     )
 
 
-class GmailConnector(LoadConnector, PollConnector):
+class GmailConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
         self.batch_size = batch_size
 
@@ -141,69 +211,94 @@ class GmailConnector(LoadConnector, PollConnector):
                 emails.append(email)
         return emails
 
-    def _fetch_mails_from_gmail(
+    def _fetch_threads(
         self,
         time_range_start: SecondsSinceUnixEpoch | None = None,
         time_range_end: SecondsSinceUnixEpoch | None = None,
     ) -> GenerateDocumentsOutput:
-        if self.creds is None:
-            raise PermissionError("Not logged into Gmail")
-        _build_time_range_query(time_range_start, time_range_end)
-        service = self.get_google_resource()
-        # for file in execute_paginated_retrieval(
-        #     retrieval_function=service.messages().list,
-        #     list_key="messages",
-        #     fields="messages(id, payload(headers, parts(body(data), mimeType), parts(body(data), mimeType)))",
-        #     q=query,
-        # ):
-        #     yield file
+        query = _build_time_range_query(time_range_start, time_range_end)
         doc_batch = []
         for user_email in self._get_all_user_emails():
-            service = self.get_google_resource(user_email=user_email)
-            for message in execute_paginated_retrieval(
-                retrieval_function=service.users().messages().list,
-                list_key="messages",
+            gmail_service = self.get_google_resource(user_email=user_email)
+            for thread in execute_paginated_retrieval(
+                retrieval_function=gmail_service.users().threads().list,
+                list_key="threads",
                 userId=user_email,
-                fields="*",
+                fields=THREAD_FIELDS,
+                q=query,
             ):
-                doc_batch.append(email_to_document(message))
-            if len(doc_batch) > 0:
-                yield doc_batch
-                doc_batch = []
-        # while page_token is not None:
-        #     result = _execute_with_retry(
-        #         service.users()
-        #         .messages()
-        #         .list(
-        #             userId="me",
-        #             pageToken=page_token,
-        #             q=query,
-        #             maxResults=self.batch_size,
-        #         )
-        #     )
+                full_thread = add_retries(
+                    lambda: gmail_service.users()
+                    .threads()
+                    .get(
+                        userId=user_email,
+                        id=thread["id"],
+                        fields=MESSAGE_FIELDS,
+                    )
+                    .execute()
+                )()
+                doc = thread_to_document(full_thread)
+                if doc is None:
+                    continue
+                doc_batch.append(doc)
+                if len(doc_batch) > self.batch_size:
+                    yield doc_batch
+                    doc_batch = []
 
-        #     page_token = result.get("nextPageToken")
-        #     messages = result.get("messages", [])
-        #     doc_batch = []
-        #     for message in messages:
-        #         message_id = message["id"]
-        #         msg = _execute_with_retry(
-        #             service.users()
-        #             .messages()
-        #             .get(userId="me", id=message_id, format="full")
-        #         )
-        #         doc = _email_to_document(msg)
-        #         doc_batch.append(doc)
-        #     if len(doc_batch) > 0:
-        #         yield doc_batch
+    def _fetch_slim_threads(
+        self,
+        time_range_start: SecondsSinceUnixEpoch | None = None,
+        time_range_end: SecondsSinceUnixEpoch | None = None,
+    ) -> GenerateSlimDocumentOutput:
+        query = _build_time_range_query(time_range_start, time_range_end)
+        doc_batch = []
+        for user_email in self._get_all_user_emails():
+            gmail_service = self.get_google_resource(user_email=user_email)
+            for thread in execute_paginated_retrieval(
+                retrieval_function=gmail_service.users().threads().list,
+                list_key="threads",
+                userId=user_email,
+                fields=SLIM_THREAD_FIELDS,
+                q=query,
+            ):
+                doc_batch.append(
+                    SlimDocument(
+                        id=thread["id"],
+                    )
+                )
+                if len(doc_batch) > SLIM_BATCH_SIZE:
+                    yield doc_batch
+                    doc_batch = []
 
     def load_from_state(self) -> GenerateDocumentsOutput:
-        yield from self._fetch_mails_from_gmail()
+        try:
+            yield from self._fetch_threads()
+        except Exception as e:
+            if MISSING_SCOPES_ERROR_STR in str(e):
+                raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
+            raise e
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        yield from self._fetch_mails_from_gmail(start, end)
+        try:
+            yield from self._fetch_threads(start, end)
+        except Exception as e:
+            if MISSING_SCOPES_ERROR_STR in str(e):
+                raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
+            raise e
+
+    def retrieve_all_slim_documents(
+        self,
+        start: SecondsSinceUnixEpoch | None = None,
+        end: SecondsSinceUnixEpoch | None = None,
+    ) -> GenerateSlimDocumentOutput:
+        try:
+            yield from self._fetch_slim_threads(start, end)
+        except Exception as e:
+            if MISSING_SCOPES_ERROR_STR in str(e):
+                raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
+            raise e
 
 
 if __name__ == "__main__":
