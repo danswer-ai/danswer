@@ -122,7 +122,7 @@ export function ChatSessionDisplay({
           );
         }}
       >
-        <BasicSelectable chat padding="extra" fullWidth selected={isSelected}>
+        <BasicSelectable padding="extra" fullWidth selected={isSelected}>
           <>
             <div className="flex relative">
               {isRenamingChat ? (
@@ -144,8 +144,8 @@ export function ChatSessionDisplay({
                     className={`absolute right-0 top-0 h-full w-8 bg-gradient-to-r from-transparent 
                     ${
                       isSelected
-                        ? "to-background-chat-hover"
-                        : " to-background-chat-selected group-hover:to-background-chat-hover"
+                        ? "to-background-chat-selected"
+                        : "group-hover:to-background-chat-hover"
                     } `}
                   />
                 </p>

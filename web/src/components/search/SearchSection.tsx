@@ -851,7 +851,7 @@ export const SearchSection = ({
           </div>
         </div>
       </div>
-      <FixedLogo chat />
+      <FixedLogo backgroundToggled={toggledSidebar || showDocSidebar} />
     </>
   );
 };

@@ -81,18 +81,6 @@ def get_cc_source_full_info(
     ]
 
 
-@router.get("/credential/{id}")
-def list_credentials_by_id(
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> list[CredentialSnapshot]:
-    credentials = fetch_credentials(db_session=db_session, user=user)
-    return [
-        CredentialSnapshot.from_credential_db_model(credential)
-        for credential in credentials
-    ]
-
-
 @router.delete("/admin/credential/{credential_id}")
 def delete_credential_by_id_admin(
     credential_id: int,

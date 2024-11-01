@@ -99,19 +99,22 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
             return None
 
         with get_session_with_tenant(tenant_id=tenant_id) as db_session:
-            check_index_swap(db_session=db_session)
+            old_search_settings = check_index_swap(db_session=db_session)
             current_search_settings = get_current_search_settings(db_session)
             # So that the first time users aren't surprised by really slow speed of first
             # batch of documents indexed
             if current_search_settings.provider_type is None and not MULTI_TENANT:
-                embedding_model = EmbeddingModel.from_db_model(
-                    search_settings=current_search_settings,
-                    server_host=INDEXING_MODEL_SERVER_HOST,
-                    server_port=INDEXING_MODEL_SERVER_PORT,
-                )
-                warm_up_bi_encoder(
-                    embedding_model=embedding_model,
-                )
+                if old_search_settings:
+                    embedding_model = EmbeddingModel.from_db_model(
+                        search_settings=current_search_settings,
+                        server_host=INDEXING_MODEL_SERVER_HOST,
+                        server_port=INDEXING_MODEL_SERVER_PORT,
+                    )
+
+                    # only warm up if search settings were changed
+                    warm_up_bi_encoder(
+                        embedding_model=embedding_model,
+                    )
 
         cc_pair_ids: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
@@ -384,7 +387,12 @@ def connector_indexing_proxy_task(
     tenant_id: str | None,
 ) -> None:
     """celery tasks are forked, but forking is unstable.  This proxies work to a spawned task."""
-
+    task_logger.info(
+        f"Indexing proxy - starting: attempt={index_attempt_id} "
+        f"tenant={tenant_id} "
+        f"cc_pair={cc_pair_id} "
+        f"search_settings={search_settings_id}"
+    )
     client = SimpleJobClient()
 
     job = client.submit(
@@ -398,29 +406,56 @@ def connector_indexing_proxy_task(
     )
 
     if not job:
+        task_logger.info(
+            f"Indexing proxy - spawn failed: attempt={index_attempt_id} "
+            f"tenant={tenant_id} "
+            f"cc_pair={cc_pair_id} "
+            f"search_settings={search_settings_id}"
+        )
         return
+
+    task_logger.info(
+        f"Indexing proxy - spawn succeeded: attempt={index_attempt_id} "
+        f"tenant={tenant_id} "
+        f"cc_pair={cc_pair_id} "
+        f"search_settings={search_settings_id}"
+    )
 
     while True:
         sleep(10)
-        with get_session_with_tenant(tenant_id) as db_session:
-            index_attempt = get_index_attempt(
-                db_session=db_session, index_attempt_id=index_attempt_id
-            )
 
-            # do nothing for ongoing jobs that haven't been stopped
-            if not job.done():
+        # do nothing for ongoing jobs that haven't been stopped
+        if not job.done():
+            with get_session_with_tenant(tenant_id) as db_session:
+                index_attempt = get_index_attempt(
+                    db_session=db_session, index_attempt_id=index_attempt_id
+                )
+
                 if not index_attempt:
                     continue
 
                 if not index_attempt.is_finished():
                     continue
 
-            if job.status == "error":
-                logger.error(job.exception())
+        if job.status == "error":
+            task_logger.error(
+                f"Indexing proxy - spawned task exceptioned: "
+                f"attempt={index_attempt_id} "
+                f"tenant={tenant_id} "
+                f"cc_pair={cc_pair_id} "
+                f"search_settings={search_settings_id} "
+                f"error={job.exception()}"
+            )
 
-            job.release()
-            break
+        job.release()
+        break
 
+    task_logger.info(
+        f"Indexing proxy - finished: attempt={index_attempt_id} "
+        f"tenant={tenant_id} "
+        f"cc_pair={cc_pair_id} "
+        f"search_settings={search_settings_id}"
+    )
     return
 
 
@@ -442,7 +477,17 @@ def connector_indexing_task(
 
     Returns None if the task did not run (possibly due to a conflict).
     Otherwise, returns an int >= 0 representing the number of indexed docs.
+
+    NOTE: if an exception is raised out of this task, the primary worker will detect
+    that the task transitioned to a "READY" state but the generator_complete_key doesn't exist.
+    This will cause the primary worker to abort the indexing attempt and clean up.
     """
+    logger.info(
+        f"Indexing spawned task starting: attempt={index_attempt_id} "
+        f"tenant={tenant_id} "
+        f"cc_pair={cc_pair_id} "
+        f"search_settings={search_settings_id}"
+    )
 
     attempt = None
     n_final_progress: int | None = None
@@ -478,13 +523,13 @@ def connector_indexing_task(
             raise ValueError("connector_indexing_task: payload invalid or not found")
 
         if payload.index_attempt_id is None or payload.celery_task_id is None:
-            task_logger.info(
+            logger.info(
                 f"connector_indexing_task - Waiting for fence: fence={redis_connector_index.fence_key}"
             )
             sleep(1)
             continue
 
-        task_logger.info(
+        logger.info(
             f"connector_indexing_task - Fence found, continuing...: fence={redis_connector_index.fence_key}"
         )
         break
@@ -496,7 +541,7 @@ def connector_indexing_task(
 
     acquired = lock.acquire(blocking=False)
     if not acquired:
-        task_logger.warning(
+        logger.warning(
             f"Indexing task already running, exiting...: "
             f"cc_pair={cc_pair_id} search_settings={search_settings_id}"
         )
@@ -539,6 +584,13 @@ def connector_indexing_task(
                 r,
             )
 
+            logger.info(
+                f"Indexing spawned task running entrypoint: attempt={index_attempt_id} "
+                f"tenant={tenant_id} "
+                f"cc_pair={cc_pair_id} "
+                f"search_settings={search_settings_id}"
+            )
+
             run_indexing_entrypoint(
                 index_attempt_id,
                 tenant_id,
@@ -551,7 +603,12 @@ def connector_indexing_task(
             n_final_progress = redis_connector_index.get_progress()
             redis_connector_index.set_generator_complete(HTTPStatus.OK.value)
     except Exception as e:
-        task_logger.exception(f"Indexing failed: cc_pair={cc_pair_id}")
+        logger.exception(
+            f"Indexing spawned task failed: attempt={index_attempt_id} "
+            f"tenant={tenant_id} "
+            f"cc_pair={cc_pair_id} "
+            f"search_settings={search_settings_id}"
+        )
         if attempt:
             with get_session_with_tenant(tenant_id) as db_session:
                 mark_attempt_failed(attempt, db_session, failure_reason=str(e))
@@ -562,4 +619,10 @@ def connector_indexing_task(
         if lock.owned():
             lock.release()
 
+    logger.info(
+        f"Indexing spawned task finished: attempt={index_attempt_id} "
+        f"tenant={tenant_id} "
+        f"cc_pair={cc_pair_id} "
+        f"search_settings={search_settings_id}"
+    )
     return n_final_progress

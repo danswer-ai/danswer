@@ -1,3 +1,4 @@
+import contextvars
 import logging
 import os
 from collections.abc import MutableMapping
@@ -15,6 +16,10 @@ from shared_configs.configs import TENANT_ID_PREFIX
 
 
 logging.addLevelName(logging.INFO + 5, "NOTICE")
+
+pruning_ctx: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar(
+    "pruning_ctx", default=dict()
+)
 
 
 class IndexAttemptSingleton:
@@ -64,11 +69,19 @@ class DanswerLoggingAdapter(logging.LoggerAdapter):
         index_attempt_id = IndexAttemptSingleton.get_index_attempt_id()
         cc_pair_id = IndexAttemptSingleton.get_connector_credential_pair_id()
 
-        if index_attempt_id is not None:
-            msg = f"[Index Attempt: {index_attempt_id}] {msg}"
+        pruning_ctx_dict = pruning_ctx.get()
+        if len(pruning_ctx_dict) > 0:
+            if "request_id" in pruning_ctx_dict:
+                msg = f"[Prune: {pruning_ctx_dict['request_id']}] {msg}"
 
-        if cc_pair_id is not None:
-            msg = f"[CC Pair: {cc_pair_id}] {msg}"
+            if "cc_pair_id" in pruning_ctx_dict:
+                msg = f"[CC Pair: {pruning_ctx_dict['cc_pair_id']}] {msg}"
+        else:
+            if index_attempt_id is not None:
+                msg = f"[Index Attempt: {index_attempt_id}] {msg}"
+
+            if cc_pair_id is not None:
+                msg = f"[CC Pair: {cc_pair_id}] {msg}"
 
         # Add tenant information if it differs from default
         # This will always be the case for authenticated API requests

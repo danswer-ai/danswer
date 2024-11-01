@@ -251,9 +251,6 @@ ENABLED_CONNECTOR_TYPES = os.environ.get("ENABLED_CONNECTOR_TYPES") or ""
 # for some connectors
 ENABLE_EXPENSIVE_EXPERT_CALLS = False
 
-GOOGLE_DRIVE_INCLUDE_SHARED = False
-GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
-GOOGLE_DRIVE_ONLY_ORG_PUBLIC = False
 
 # TODO these should be available for frontend configuration, via advanced options expandable
 WEB_CONNECTOR_IGNORED_CLASSES = os.environ.get(
