@@ -264,6 +264,7 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
                 doc_batch.append(
                     SlimDocument(
                         id=thread["id"],
+                        perm_sync_data={"user_email": user_email},
                     )
                 )
                 if len(doc_batch) > SLIM_BATCH_SIZE:
