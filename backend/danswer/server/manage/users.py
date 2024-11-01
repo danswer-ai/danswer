@@ -37,7 +37,7 @@ from danswer.configs.app_configs import ENABLE_EMAIL_INVITES
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
-from danswer.db.auth import get_total_users
+from danswer.db.auth import get_total_users_count
 from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
@@ -226,7 +226,7 @@ def bulk_invite_users(
     try:
         logger.info("Registering tenant users")
         register_tenant_users(
-            CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users(db_session)
+            CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session)
         )
         if ENABLE_EMAIL_INVITES:
             try:
@@ -262,7 +262,7 @@ def remove_invited_user(
     try:
         if MULTI_TENANT:
             register_tenant_users(
-                CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users(db_session)
+                CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session)
             )
     except Exception:
         logger.error(
