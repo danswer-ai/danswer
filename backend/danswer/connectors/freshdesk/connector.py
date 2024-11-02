@@ -40,7 +40,7 @@ _TICKET_FIELDS_TO_INCLUDE = {
     "to_emails",
 }
 
-_SOURCE_TYPES = {
+_SOURCE_NUMBER_TYPE_MAP = {
     "1": "Email",
     "2": "Portal",
     "3": "Phone",
@@ -49,9 +49,9 @@ _SOURCE_TYPES = {
     "10": "Outbound Email",
 }
 
-_PRIORITY_TYPES = {"1": "low", "2": "medium", "3": "high", "4": "urgent"}
+_PRIORITY_NUMBER_TYPE_MAP = {"1": "low", "2": "medium", "3": "high", "4": "urgent"}
 
-_STATUS_TYPES = {"2": "open", "3": "pending", "4": "resolved", "5": "closed"}
+_STATUS_NUMBER_TYPE_MAP = {"2": "open", "3": "pending", "4": "resolved", "5": "closed"}
 
 
 def _create_metadata_from_ticket(ticket: dict) -> dict:
@@ -88,17 +88,21 @@ def _create_metadata_from_ticket(ticket: dict) -> dict:
 
     # Convert source numbers to human-parsable string
     if source_number := ticket.get("source"):
-        metadata["source"] = _SOURCE_TYPES.get(
+        metadata["source"] = _SOURCE_NUMBER_TYPE_MAP.get(
             str(source_number), "Unknown Source Type"
         )
 
     # Convert priority numbers to human-parsable string
     if priority_number := ticket.get("priority"):
-        metadata["priority"] = _PRIORITY_TYPES.get(priority_number, "Unknown Priority")
+        metadata["priority"] = _PRIORITY_NUMBER_TYPE_MAP.get(
+            priority_number, "Unknown Priority"
+        )
 
     # Convert status to human-parsable string
     if status_number := ticket.get("status"):
-        metadata["status"] = _STATUS_TYPES.get(str(status_number), "Unknown Status")
+        metadata["status"] = _STATUS_NUMBER_TYPE_MAP.get(
+            str(status_number), "Unknown Status"
+        )
 
     due_by = datetime.fromisoformat(ticket["due_by"].replace("Z", "+00:00"))
     metadata["overdue"] = str(datetime.now(timezone.utc) > due_by)
