@@ -16,7 +16,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     # Step 1: Delete extraneous ToolCall entries
     # Keep only the ToolCall with the smallest 'id' for each 'message_id'
     op.execute(
@@ -41,7 +41,7 @@ def upgrade():
     )
 
 
-def downgrade():
+def downgrade() -> None:
     # Step 1: Drop the unique constraint on message_id
     op.drop_constraint(
         constraint_name="uq_tool_call_message_id",
