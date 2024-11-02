@@ -190,7 +190,6 @@ def on_secondary_worker_init(sender: Any, **kwargs: Any) -> None:
         if r.exists(DanswerRedisLocks.PRIMARY_WORKER):
             break
 
-        time.monotonic()
         time_elapsed = time.monotonic() - time_start
         logger.info(
             f"Primary worker is not ready yet. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
