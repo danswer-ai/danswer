@@ -16,6 +16,7 @@ from danswer.connectors.discourse.connector import DiscourseConnector
 from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.dropbox.connector import DropboxConnector
 from danswer.connectors.file.connector import LocalFileConnector
+from danswer.connectors.freshdesk.connector import FreshdeskConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.gitlab.connector import GitlabConnector
 from danswer.connectors.gmail.connector import GmailConnector
@@ -46,7 +47,6 @@ from danswer.connectors.wikipedia.connector import WikipediaConnector
 from danswer.connectors.xenforo.connector import XenforoConnector
 from danswer.connectors.zendesk.connector import ZendeskConnector
 from danswer.connectors.zulip.connector import ZulipConnector
-from danswer.connectors.freshdesk.connector import FreshdeskConnector
 from danswer.db.credentials import backend_update_credential_json
 from danswer.db.models import Credential
 

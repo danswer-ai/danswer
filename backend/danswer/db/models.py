@@ -3,7 +3,7 @@ import json
 from enum import Enum as PyEnum
 from typing import Any
 from typing import Literal
-from typing_extensions import NotRequired
+from typing import NotRequired
 from typing import Optional
 from uuid import uuid4
 from typing_extensions import TypedDict  # noreorder
