@@ -16,7 +16,6 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
-from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
 from danswer.background.celery.tasks.indexing.tasks import try_creating_indexing_task
 from danswer.background.celery.versioned_apps.primary import app as primary_app
@@ -85,6 +84,7 @@ from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.file_store.file_store import get_default_file_store
 from danswer.key_value_store.interface import KvKeyNotFoundError
+from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
@@ -486,12 +486,10 @@ def get_connector_indexing_status(
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
 
-    r = get_redis_client(tenant_id=tenant_id)
-
     # NOTE: If the connector is deleting behind the scenes,
     # accessing cc_pairs can be inconsistent and members like
     # connector or credential may be None.
-    # Additional checks are done to make sure the connector and credential still exists.
+    # Additional checks are done to make sure the connector and credential still exist.
     # TODO: make this one query ... possibly eager load or wrap in a read transaction
     # to avoid the complexity of trying to error check throughout the function
     cc_pairs = get_connector_credential_pairs(
@@ -558,8 +556,9 @@ def get_connector_indexing_status(
 
         in_progress = False
         if search_settings:
-            rci = RedisConnectorIndexing(cc_pair.id, search_settings.id)
-            if r.exists(rci.fence_key):
+            redis_connector = RedisConnector(tenant_id, cc_pair.id)
+            redis_connector_index = redis_connector.new_index(search_settings.id)
+            if redis_connector_index.fenced:
                 in_progress = True
 
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(

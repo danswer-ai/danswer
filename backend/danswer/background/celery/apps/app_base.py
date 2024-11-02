@@ -14,15 +14,16 @@ from sentry_sdk.integrations.celery import CeleryIntegration
 
 from danswer.background.celery.apps.task_formatters import CeleryTaskColoredFormatter
 from danswer.background.celery.apps.task_formatters import CeleryTaskPlainFormatter
-from danswer.background.celery.celery_redis import RedisConnectorCredentialPair
-from danswer.background.celery.celery_redis import RedisConnectorDeletion
-from danswer.background.celery.celery_redis import RedisConnectorPruning
-from danswer.background.celery.celery_redis import RedisDocumentSet
-from danswer.background.celery.celery_redis import RedisUserGroup
 from danswer.background.celery.celery_utils import celery_is_worker_primary
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.engine import get_all_tenant_ids
+from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
+from danswer.redis.redis_connector_delete import RedisConnectorDelete
+from danswer.redis.redis_connector_prune import RedisConnectorPrune
+from danswer.redis.redis_document_set import RedisDocumentSet
 from danswer.redis.redis_pool import get_redis_client
+from danswer.redis.redis_usergroup import RedisUserGroup
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
@@ -108,29 +109,27 @@ def on_task_postrun(
     if task_id.startswith(RedisDocumentSet.PREFIX):
         document_set_id = RedisDocumentSet.get_id_from_task_id(task_id)
         if document_set_id is not None:
-            rds = RedisDocumentSet(int(document_set_id))
+            rds = RedisDocumentSet(tenant_id, int(document_set_id))
             r.srem(rds.taskset_key, task_id)
         return
 
     if task_id.startswith(RedisUserGroup.PREFIX):
         usergroup_id = RedisUserGroup.get_id_from_task_id(task_id)
         if usergroup_id is not None:
-            rug = RedisUserGroup(int(usergroup_id))
+            rug = RedisUserGroup(tenant_id, int(usergroup_id))
             r.srem(rug.taskset_key, task_id)
         return
 
-    if task_id.startswith(RedisConnectorDeletion.PREFIX):
-        cc_pair_id = RedisConnectorDeletion.get_id_from_task_id(task_id)
+    if task_id.startswith(RedisConnectorDelete.PREFIX):
+        cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
-            rcd = RedisConnectorDeletion(int(cc_pair_id))
-            r.srem(rcd.taskset_key, task_id)
+            RedisConnectorDelete.remove_from_taskset(int(cc_pair_id), task_id, r)
         return
 
-    if task_id.startswith(RedisConnectorPruning.SUBTASK_PREFIX):
-        cc_pair_id = RedisConnectorPruning.get_id_from_task_id(task_id)
+    if task_id.startswith(RedisConnectorPrune.SUBTASK_PREFIX):
+        cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
-            rcp = RedisConnectorPruning(int(cc_pair_id))
-            r.srem(rcp.taskset_key, task_id)
+            RedisConnectorPrune.remove_from_taskset(int(cc_pair_id), task_id, r)
         return
 
 
