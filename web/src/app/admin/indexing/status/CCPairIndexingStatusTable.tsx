@@ -168,7 +168,7 @@ function ConnectorRow({
         );
       case "not_started":
         return (
-          <Badge circle variant="secondary">
+          <Badge circle variant="purple">
             Scheduled
           </Badge>
         );
@@ -183,7 +183,7 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className={`border hover:bg-hover-light ${
+      className={`hover:bg-hover-light ${
         invisible ? "invisible !h-0 !-mb-10" : "!border !border-border"
       }  w-full cursor-pointer relative `}
       onClick={() => {
@@ -214,11 +214,7 @@ function ConnectorRow({
               Sync
             </Badge>
           ) : (
-            <Badge
-              size="md"
-              variant={isEditable ? "outline" : "default"}
-              icon={FiLock}
-            >
+            <Badge variant="in_progress" icon={FiLock}>
               Private
             </Badge>
           )}
@@ -347,13 +343,10 @@ export function CCPairIndexingStatusTable({
       Object.values(connectorsToggled).filter(Boolean).length;
     const shouldToggleOn = currentToggledCount < sortedSources.length / 2;
 
-    const connectors = sortedSources.reduce(
-      (acc, source) => {
-        acc[source] = shouldToggleOn;
-        return acc;
-      },
-      {} as Record<ValidSources, boolean>
-    );
+    const connectors = sortedSources.reduce((acc, source) => {
+      acc[source] = shouldToggleOn;
+      return acc;
+    }, {} as Record<ValidSources, boolean>);
 
     setConnectorsToggled(connectors);
     Cookies.set(TOGGLED_CONNECTORS_COOKIE_NAME, JSON.stringify(connectors));
@@ -419,7 +412,7 @@ export function CCPairIndexingStatusTable({
           placeholder="Search connectors..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="ml-1 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="ml-1 w-96 h-9 flex-none rounded-md bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
 
         <Button className="h-9" onClick={() => toggleSources()}>
