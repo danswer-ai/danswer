@@ -23,8 +23,8 @@ celery_app.config_from_object("danswer.background.celery.configs.beat")
 class DynamicTenantScheduler(PersistentScheduler):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self._last_reload = self.app.now() - self._reload_interval
         self._reload_interval = timedelta(minutes=1)
+        self._last_reload = self.app.now() - self._reload_interval
 
     def setup_schedule(self) -> None:
         super().setup_schedule()

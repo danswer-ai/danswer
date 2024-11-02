@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Any
 
-from backend.ee.danswer.background.celery.tasks.beat_schedule import (
+from danswer.background.celery.tasks.beat_schedule import (
     tasks_to_schedule as base_tasks_to_schedule,
 )
 
