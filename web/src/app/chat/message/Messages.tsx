@@ -55,8 +55,8 @@ import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
 import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
 import { extractCodeText } from "./codeUtils";
-import ToolResult from "./components/ToolResult";
-import CsvContent from "./components/CSVContent";
+import ToolResult from "../../../components/tools/ToolResult";
+import CsvContent from "../../../components/tools/CSVContent";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -101,6 +101,7 @@ function FileDisplay({
           </div>
         </div>
       )}
+
       {imageFiles && imageFiles.length > 0 && (
         <div
           id="danswer-image"
@@ -113,6 +114,7 @@ function FileDisplay({
           </div>
         </div>
       )}
+
       {csvImgFiles && csvImgFiles.length > 0 && (
         <div className={` ${alignBubble && "ml-auto"} mt-2 auto mb-4`}>
           <div className="flex flex-col gap-2">
