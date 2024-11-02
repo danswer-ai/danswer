@@ -72,10 +72,5 @@
     "eslint": "^8.48.0",
     "eslint-config-next": "^14.1.0",
     "prettier": "2.8.8"
-  },
-  "overrides": {
-    "@tremor/react": {
-      "@headlessui/react": "2.2.0"
-    } 
   }
 }
