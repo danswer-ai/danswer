@@ -183,7 +183,9 @@ export default async function Home(props: {
     <>
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
-      {shouldShowWelcomeModal && <WelcomeModal user={user} requestCookies={requestCookies}/>}
+      {shouldShowWelcomeModal && (
+        <WelcomeModal user={user} requestCookies={requestCookies} />
+      )}
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       <ChatPopup />
