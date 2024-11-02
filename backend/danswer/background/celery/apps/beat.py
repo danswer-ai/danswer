@@ -3,7 +3,7 @@ from typing import Any
 
 from celery import Celery
 from celery import signals
-from celery.beat import PersistentScheduler
+from celery.beat import PersistentScheduler  # type: ignore
 from celery.signals import beat_init
 
 import danswer.background.celery.apps.app_base as app_base
