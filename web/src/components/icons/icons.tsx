@@ -74,6 +74,7 @@ import slackIcon from "../../../public/Slack.png";
 import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.png";
 import salesforceIcon from "../../../public/Salesforce.png";
+import freshdeskIcon from "../../../public/Freshdesk.png";
 
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
@@ -1292,6 +1293,13 @@ export const AsanaIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => <LogoIcon size={size} className={className} src={asanaIcon} />;
+
+export const FreshdeskIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <LogoIcon size={size} className={className} src={freshdeskIcon} />
+);
 
 /* 
 EE Icons

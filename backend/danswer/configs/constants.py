@@ -125,6 +125,7 @@ class DocumentSource(str, Enum):
     OCI_STORAGE = "oci_storage"
     XENFORO = "xenforo"
     NOT_APPLICABLE = "not_applicable"
+    FRESHDESK = "freshdesk"
 
 
 DocumentSourceRequiringTenantContext: list[DocumentSource] = [DocumentSource.FILE]

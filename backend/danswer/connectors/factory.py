@@ -16,6 +16,7 @@ from danswer.connectors.discourse.connector import DiscourseConnector
 from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.dropbox.connector import DropboxConnector
 from danswer.connectors.file.connector import LocalFileConnector
+from danswer.connectors.freshdesk.connector import FreshdeskConnector
 from danswer.connectors.github.connector import GithubConnector
 from danswer.connectors.gitlab.connector import GitlabConnector
 from danswer.connectors.gmail.connector import GmailConnector
@@ -99,6 +100,7 @@ def identify_connector_class(
         DocumentSource.GOOGLE_CLOUD_STORAGE: BlobStorageConnector,
         DocumentSource.OCI_STORAGE: BlobStorageConnector,
         DocumentSource.XENFORO: XenforoConnector,
+        DocumentSource.FRESHDESK: FreshdeskConnector,
     }
     connector_by_source = connector_map.get(source, {})
 
