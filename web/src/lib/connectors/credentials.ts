@@ -181,6 +181,12 @@ export interface AxeroCredentialJson {
   axero_api_token: string;
 }
 
+export interface FreshdeskCredentialJson {
+  freshdesk_domain: string;
+  freshdesk_password: string;
+  freshdesk_api_key: string;
+}
+
 export interface MediaWikiCredentialJson {}
 export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
 
@@ -279,6 +285,11 @@ export const credentialTemplates: Record<ValidSources, any> = {
     access_key_id: "",
     secret_access_key: "",
   } as OCICredentialJson,
+  freshdesk: {
+    freshdesk_domain: "",
+    freshdesk_password: "",
+    freshdesk_api_key: "",
+  } as FreshdeskCredentialJson,
   xenforo: null,
   google_sites: null,
   file: null,
@@ -419,6 +430,11 @@ export const credentialDisplayNames: Record<string, string> = {
   // Axero
   base_url: "Axero Base URL",
   axero_api_token: "Axero API Token",
+
+  // Freshdesk
+  freshdesk_domain: "Freshdesk Domain",
+  freshdesk_password: "Freshdesk Password",
+  freshdesk_api_key: "Freshdesk API Key",
 };
 export function getDisplayNameForCredentialKey(key: string): string {
   return credentialDisplayNames[key] || key;

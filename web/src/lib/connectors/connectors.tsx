@@ -945,6 +945,12 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     ],
     advanced_values: [],
   },
+  freshdesk: {
+    description: "Configure Freshdesk connector",
+    values: [],
+    advanced_values: [],
+  },
+  
 };
 export function createConnectorInitialValues(
   connector: ConfigurableSources
@@ -1201,6 +1207,9 @@ export interface AsanaConfig {
   asana_project_ids?: string;
   asana_team_id?: string;
 }
+
+export interface FreshdeskConfig {}
+
 
 export interface MediaWikiConfig extends MediaWikiBaseConfig {
   hostname: string;
