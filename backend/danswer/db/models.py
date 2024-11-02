@@ -919,7 +919,7 @@ class ToolCall(Base):
     tool_result: Mapped[JSON_ro] = mapped_column(postgresql.JSONB())
 
     message_id: Mapped[int | None] = mapped_column(
-        ForeignKey("chat_message.id"), nullable=True
+        ForeignKey("chat_message.id"), nullable=False
     )
 
     # Update the relationship
@@ -1062,7 +1062,6 @@ class ChatMessage(Base):
         "ToolCall",
         back_populates="message",
         uselist=False,
-        # foreign_keys=[ToolCall.message_id],  # Specify foreign key if needed
     )
 
     standard_answers: Mapped[list["StandardAnswer"]] = relationship(
