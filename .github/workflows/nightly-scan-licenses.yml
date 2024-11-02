@@ -11,6 +11,11 @@ on:
   schedule:
     - cron: '0 14 * * *'  # Runs every day at 6 AM PST / 7 AM PDT / 2 PM UTC
   workflow_dispatch:  # Allows manual triggering
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
   
 jobs:
   scan-licenses:
