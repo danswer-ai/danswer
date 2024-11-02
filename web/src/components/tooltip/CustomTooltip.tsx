@@ -22,7 +22,7 @@ const TooltipGroupContext = createContext<{
 export const TooltipGroup: React.FC<{
   children: React.ReactNode;
   gap?: string;
-}> = ({ children, gap = "gap-x-4" }) => {
+}> = ({ children, gap }) => {
   const [groupHovered, setGroupHovered] = useState(false);
   const hoverCountRef = useRef(false);
 

@@ -72,8 +72,8 @@ export const FileWrapper = ({
   const [isLoading, setIsLoading] = useState(true);
   const [fadeIn, setFadeIn] = useState(false);
 
+  // Prevent a jarring fade in
   useEffect(() => {
-    // Simulate loading
     setTimeout(() => setIsLoading(false), 300);
   }, []);
 
@@ -86,9 +86,14 @@ export const FileWrapper = ({
   }, [isLoading]);
 
   const downloadFile = () => {
-    // Implement download logic here
+    const a = document.createElement("a");
+    a.href = `api/chat/file/${fileDescriptor.id}`;
+    a.download = fileDescriptor.name || "download.csv";
+    a.setAttribute("download", fileDescriptor.name || "download.csv");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
-
   return (
     <div
       className={`${
@@ -101,7 +106,7 @@ export const FileWrapper = ({
             {fileDescriptor.name}
           </CardTitle>
           <div className="flex !my-auto">
-            <TooltipGroup>
+            <TooltipGroup gap="gap-x-4">
               <CustomTooltip showTick line content="Download file">
                 <button onClick={downloadFile}>
                   <DownloadCSVIcon className="cursor-pointer transition-colors duration-300 hover:text-text-800 h-6 w-6 text-text-400" />

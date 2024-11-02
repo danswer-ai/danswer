@@ -27,6 +27,7 @@ export const CsvContent = ({
 }: ToolDisplay) => {
   const [data, setData] = useState<CSVData[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
+
   useEffect(() => {
     fetchCSV(fileDescriptor.id);
   }, [fileDescriptor.id]);

@@ -170,13 +170,13 @@ def _build_content(
         return message
 
     final_message_with_files = "FILES:\n\n"
-    for file in text_files:
+    for file in text_files or []:
         file_content = file.content.decode("utf-8")
         file_name_section = f"DOCUMENT: {file.filename}\n" if file.filename else ""
         final_message_with_files += (
             f"{file_name_section}{CODE_BLOCK_PAT.format(file_content.strip())}\n\n\n"
         )
-    for file in csv_files:
+    for file in csv_files or []:
         final_message_with_files += _process_csv_file(file)
 
     final_message_with_files += message
