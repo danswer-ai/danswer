@@ -208,7 +208,6 @@ class FreshdeskConnector(PollConnector, LoadConnector):
 
         for ticket_batch in self._fetch_tickets(start, end):
             for ticket in ticket_batch:
-                logger.info(_create_doc_from_ticket(ticket, self.domain))
                 doc_batch.append(_create_doc_from_ticket(ticket, self.domain))
 
                 if len(doc_batch) >= self.batch_size:
