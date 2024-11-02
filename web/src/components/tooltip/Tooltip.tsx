@@ -31,8 +31,6 @@ export function Tooltip({
           side={side}
           align={align}
           className={`
-            bg-background-inverted 
-            text-inverted 
             text-sm 
             rounded 
             ${width}
