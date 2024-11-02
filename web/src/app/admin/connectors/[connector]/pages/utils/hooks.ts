@@ -12,7 +12,7 @@ import {
   GoogleDriveServiceAccountCredentialJson,
 } from "@/lib/connectors/credentials";
 
-export const useGmailCredentials = () => {
+export const useGmailCredentials = (connector: string) => {
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,
@@ -23,7 +23,9 @@ export const useGmailCredentials = () => {
   const gmailPublicCredential: Credential<GmailCredentialJson> | undefined =
     credentialsData?.find(
       (credential) =>
-        credential.credential_json?.gmail_tokens && credential.admin_public
+        credential.credential_json?.google_service_account_key &&
+        credential.admin_public &&
+        credential.source === connector
     );
 
   const gmailServiceAccountCredential:
@@ -36,18 +38,20 @@ export const useGmailCredentials = () => {
     gmailPublicCredential || gmailServiceAccountCredential;
 
   return {
-    liveGmailCredential,
+    liveGmailCredential: liveGmailCredential,
   };
 };
 
-export const useGoogleDriveCredentials = () => {
+export const useGoogleDriveCredentials = (connector: string) => {
   const { data: credentialsData } = usePublicCredentials();
 
   const googleDrivePublicCredential:
     | Credential<GoogleDriveCredentialJson>
     | undefined = credentialsData?.find(
     (credential) =>
-      credential.credential_json?.google_drive_tokens && credential.admin_public
+      credential.credential_json?.google_service_account_key &&
+      credential.admin_public &&
+      credential.source === connector
   );
 
   const googleDriveServiceAccountCredential:
@@ -60,6 +64,6 @@ export const useGoogleDriveCredentials = () => {
     googleDrivePublicCredential || googleDriveServiceAccountCredential;
 
   return {
-    liveGDriveCredential,
+    liveGDriveCredential: liveGDriveCredential,
   };
 };

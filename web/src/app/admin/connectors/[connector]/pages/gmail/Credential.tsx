@@ -378,16 +378,18 @@ export const GmailAuthSection = ({
                 }
               );
 
-            const response = await fetch(
-              "/api/manage/admin/connector/gmail/service-account-credential",
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  gmail_primary_admin: values.gmail_primary_admin,
-                }),
+              if (response.ok) {
+                setPopup({
+                  message: "Successfully created service account credential",
+                  type: "success",
+                });
+              } else {
+                const errorMsg = await response.text();
+                setPopup({
+                  message: `Failed to create service account credential - ${errorMsg}`,
+                  type: "error",
+                });
+              }
               refreshCredentials();
             }}
           >

@@ -276,6 +276,7 @@ export type ConfigurableSources = Exclude<
 export const validAutoSyncSources = [
   "confluence",
   "google_drive",
+  "gmail",
   "slack",
 ] as const;
 export type ValidAutoSyncSources = (typeof validAutoSyncSources)[number];

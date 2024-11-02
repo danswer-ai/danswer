@@ -43,8 +43,8 @@ from danswer.utils.retry_wrapper import retry_builder
 
 logger = setup_logger()
 
-MESSAGE_FIELDS = "nextPageToken, messages(id, payload(headers, parts(body(data), mimeType), parts(body(data), mimeType)))"
-THREAD_FIELDS = "nextPageToken, threads(id)"
+THREAD_LIST_FIELDS = "nextPageToken, threads(id)"
+THREAD_FIELDS = "threads(id, messages(id, payload(headers, parts(body(data), mimeType), parts(body(data), mimeType))))"
 SLIM_THREAD_FIELDS = "nextPageToken, threads(id)"
 
 EMAIL_FIELDS = [
@@ -80,7 +80,7 @@ def _get_message_body(payload: dict[str, Any]) -> str:
     for part in parts:
         mime_type = part.get("mimeType")
         body = part.get("body")
-        if mime_type == "text/plain":
+        if mime_type == "text/plain" and body:
             data = body.get("data", "")
             text = urlsafe_b64decode(data).decode()
             message_body += text
@@ -149,8 +149,10 @@ def thread_to_document(full_thread: Dict[str, Any]) -> Document | None:
     if updated_at:
         updated_at_datetime = time_str_to_utc(updated_at)
 
+    full_thread.get("id") or full_thread.get("messages", [{}])[0].get("id")
+
     return Document(
-        id=full_thread["id"],
+        id=full_thread.get("id"),
         semantic_identifier=semantic_identifier,
         sections=sections,
         source=DocumentSource.GMAIL,
@@ -224,7 +226,7 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
                 retrieval_function=gmail_service.users().threads().list,
                 list_key="threads",
                 userId=user_email,
-                fields=THREAD_FIELDS,
+                fields=THREAD_LIST_FIELDS,
                 q=query,
             ):
                 full_thread = add_retries(
@@ -233,7 +235,7 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
                     .get(
                         userId=user_email,
                         id=thread["id"],
-                        fields=MESSAGE_FIELDS,
+                        fields=THREAD_FIELDS,
                     )
                     .execute()
                 )()
