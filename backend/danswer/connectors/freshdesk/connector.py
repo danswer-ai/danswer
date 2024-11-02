@@ -21,76 +21,84 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def _create_metadata_from_ticket(ticket: dict) -> dict:
-    included_fields = {
-        "fr_escalated",
-        "spam",
-        "priority",
-        "source",
-        "status",
-        "type",
-        "is_escalated",
-        "tags",
-        "nr_due_by",
-        "nr_escalated",
-        "cc_emails",
-        "fwd_emails",
-        "reply_cc_emails",
-        "ticket_cc_emails",
-        "support_email",
-        "to_emails",
-    }
+_TICKET_FIELDS_TO_INCLUDE = {
+    "fr_escalated",
+    "spam",
+    "priority",
+    "source",
+    "status",
+    "type",
+    "is_escalated",
+    "tags",
+    "nr_due_by",
+    "nr_escalated",
+    "cc_emails",
+    "fwd_emails",
+    "reply_cc_emails",
+    "ticket_cc_emails",
+    "support_email",
+    "to_emails",
+}
 
-    metadata = {}
-    email_data = {}
+_SOURCE_TYPES = {
+    "1": "Email",
+    "2": "Portal",
+    "3": "Phone",
+    "7": "Chat",
+    "9": "Feedback Widget",
+    "10": "Outbound Email",
+}
+
+_PRIORITY_TYPES = {"1": "low", "2": "medium", "3": "high", "4": "urgent"}
+
+_STATUS_TYPES = {"2": "open", "3": "pending", "4": "resolved", "5": "closed"}
+
+
+def _create_metadata_from_ticket(ticket: dict) -> dict:
+    metadata: dict[str, str | list[str]] = {}
+    # Combine all emails into a list so there are no repeated emails
+    email_data: set[str] = set()
 
     for key, value in ticket.items():
-        if (
-            key in included_fields
-            and value is not None
-            and value != []
-            and value != {}
-            and value != "[]"
-            and value != ""
-        ):
-            value_to_str = (
-                [str(item) for item in value] if isinstance(value, List) else str(value)
-            )
-            if "email" in key:
-                email_data[key] = value_to_str
+        # Skip fields that aren't useful for embedding
+        if key not in _TICKET_FIELDS_TO_INCLUDE:
+            continue
+
+        # Skip empty fields
+        if not value or value == "[]":
+            continue
+
+        # Convert strings or lists to strings
+        stringified_value: str | list[str]
+        if isinstance(value, list):
+            stringified_value = [str(item) for item in value]
+        else:
+            stringified_value = str(value)
+
+        if "email" in key:
+            if isinstance(stringified_value, list):
+                email_data.update(stringified_value)
             else:
-                metadata[key] = value_to_str
+                email_data.add(stringified_value)
+        else:
+            metadata[key] = stringified_value
 
     if email_data:
-        metadata["email_data"] = str(email_data)
+        metadata["emails"] = list(email_data)
 
-    # Convert source to human-parsable string
-    source_types = {
-        "1": "Email",
-        "2": "Portal",
-        "3": "Phone",
-        "7": "Chat",
-        "9": "Feedback Widget",
-        "10": "Outbound Email",
-    }
-    if ticket.get("source"):
-        metadata["source"] = source_types.get(
-            str(ticket.get("source")), "Unknown Source Type"
+    # Convert source numbers to human-parsable string
+    if source_number := ticket.get("source"):
+        metadata["source"] = _SOURCE_TYPES.get(
+            str(source_number), "Unknown Source Type"
         )
 
-    # Convert priority to human-parsable string
-    priority_types = {"1": "low", "2": "medium", "3": "high", "4": "urgent"}
-    if ticket.get("priority"):
-        metadata["priority"] = priority_types.get(
-            str(ticket.get("priority")), "Unknown Priority"
-        )
+    # Convert priority numbers to human-parsable string
+    if priority_number := ticket.get("priority"):
+        metadata["priority"] = _PRIORITY_TYPES.get(priority_number, "Unknown Priority")
 
     # Convert status to human-parsable string
-    status_types = {"2": "open", "3": "pending", "4": "resolved", "5": "closed"}
-    if ticket.get("status"):
-        metadata["status"] = status_types.get(
-            str(ticket.get("status")), "Unknown Status"
-        )
+    if status_number := ticket.get("status"):
+        metadata["status"] = _STATUS_TYPES.get(str(status_number), "Unknown Status")
 
     due_by = datetime.fromisoformat(ticket["due_by"].replace("Z", "+00:00"))
     metadata["overdue"] = str(datetime.now(timezone.utc) > due_by)
@@ -99,17 +107,21 @@ def _create_metadata_from_ticket(ticket: dict) -> dict:
 
 
 def _create_doc_from_ticket(ticket: dict, domain: str) -> Document:
+    # Use the ticket description as the text
+    text = f"Ticket description: {parse_html_page_basic(ticket.get('description_text', ''))}"
+    metadata = _create_metadata_from_ticket(ticket)
+
     return Document(
         id=str(ticket["id"]),
         sections=[
             Section(
                 link=f"https://{domain}.freshdesk.com/helpdesk/tickets/{int(ticket['id'])}",
-                text=f"description: {parse_html_page_basic(ticket.get('description_text', ''))}",
+                text=text,
             )
         ],
         source=DocumentSource.FRESHDESK,
         semantic_identifier=ticket["subject"],
-        metadata=_create_metadata_from_ticket(ticket),
+        metadata=metadata,
         doc_updated_at=datetime.fromisoformat(
             ticket["updated_at"].replace("Z", "+00:00")
         ),
@@ -146,7 +158,7 @@ class FreshdeskConnector(PollConnector, LoadConnector):
         'include' field available for this endpoint:
         https://developers.freshdesk.com/api/#filter_tickets
         """
-        if any(attr is None for attr in [self.api_key, self.domain, self.password]):
+        if self.api_key is None or self.domain is None or self.password is None:
             raise ConnectorMissingCredentialError("freshdesk")
 
         base_url = f"https://{self.domain}.freshdesk.com/api/v2/tickets"
