@@ -129,10 +129,10 @@ class FreshdeskConnector(PollConnector, LoadConnector):
     def _fetch_tickets(
         self, start: datetime | None = None, end: datetime | None = None
     ) -> Iterator[List[dict]]:
-        """ 
+        """
         'end' is not currently used, so we may double fetch tickets created after the indexing
         starts but before the actual call is made.
-        
+
         To use 'end' would require us to use the search endpoint but it has limitations,
         namely having to fetch all IDs and then individually fetch each ticket because there is no
         'include' field available for this endpoint:
