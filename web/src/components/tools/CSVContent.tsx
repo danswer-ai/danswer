@@ -1,3 +1,4 @@
+// CsvContent
 import React, { useState, useEffect } from "react";
 import {
   Table,
@@ -7,25 +8,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileDescriptor } from "@/app/chat/interfaces";
+import { ContentComponentProps } from "./ExpandableContentWrapper";
 import { WarningCircle } from "@phosphor-icons/react";
 
-interface CSVData {
-  [key: string]: string;
-}
-
-export interface ToolDisplay {
-  fileDescriptor: FileDescriptor;
-  isLoading: boolean;
-  fadeIn: boolean;
-}
-
-export const CsvContent = ({
+const CsvContent: React.FC<ContentComponentProps> = ({
   fileDescriptor,
   isLoading,
   fadeIn,
-}: ToolDisplay) => {
-  const [data, setData] = useState<CSVData[]>([]);
+}) => {
+  const [data, setData] = useState<Record<string, string>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
 
   useEffect(() => {
@@ -54,12 +45,15 @@ export const CsvContent = ({
       const parsedHeaders = rows[0].split(",");
       setHeaders(parsedHeaders);
 
-      const parsedData: CSVData[] = rows.slice(1).map((row) => {
+      const parsedData: Record<string, string>[] = rows.slice(1).map((row) => {
         const values = row.split(",");
-        return parsedHeaders.reduce<CSVData>((obj, header, index) => {
-          obj[header] = values[index];
-          return obj;
-        }, {});
+        return parsedHeaders.reduce<Record<string, string>>(
+          (obj, header, index) => {
+            obj[header] = values[index];
+            return obj;
+          },
+          {}
+        );
       });
       setData(parsedData);
     } catch (error) {
@@ -72,7 +66,7 @@ export const CsvContent = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[300px]">
-        <div className="animate-pulse w- flex space-x-4">
+        <div className="animate-pulse flex space-x-4">
           <div className="rounded-full bg-background-200 h-10 w-10"></div>
           <div className="w-full flex-1 space-y-4 py-1">
             <div className="h-2 w-full bg-background-200 rounded"></div>
@@ -95,28 +89,28 @@ export const CsvContent = ({
         fadeIn ? "opacity-100" : "opacity-0"
       }`}
     >
-      <div className={`overflow-y-auto flex relative max-h-[400px]`}>
-        <Table className="!relative !overflow-y-scroll">
-          <TableHeader className="z-20 !sticky !top-0">
-            <TableRow className="!bg-neutral-100">
+      <div className="overflow-y-hidden flex relative max-h-[400px]">
+        <Table>
+          <TableHeader className="sticky z-[1000] top-0">
+            <TableRow className="hover:bg-background-125 bg-background-125">
               {headers.map((header, index) => (
-                <TableHead className=" " key={index}>
+                <TableHead key={index}>
                   <p className="text-text-600 line-clamp-2 my-2 font-medium">
-                    {index === 0 ? "" : header}
+                    {header}
                   </p>
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
 
-          <TableBody>
+          <TableBody className="h-[300px] overflow-y-scroll">
             {data.length > 0 ? (
               data.map((row, rowIndex) => (
                 <TableRow key={rowIndex}>
                   {headers.map((header, cellIndex) => (
                     <TableCell
                       className={`${
-                        cellIndex === 0 && "sticky left-0 !bg-neutral-100"
+                        cellIndex === 0 ? "sticky left-0 bg-background-100" : ""
                       }`}
                       key={cellIndex}
                     >
@@ -153,3 +147,5 @@ export const CsvContent = ({
     </div>
   );
 };
+
+export default CsvContent;

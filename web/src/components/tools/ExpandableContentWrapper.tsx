@@ -1,3 +1,4 @@
+// ExpandableContentWrapper
 import React, { useState, useEffect } from "react";
 import {
   CustomTooltip,
@@ -10,67 +11,31 @@ import {
   OpenIcon,
 } from "@/components/icons/icons";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-
 import { Modal } from "@/components/Modal";
 import { FileDescriptor } from "@/app/chat/interfaces";
-import { CsvContent, ToolDisplay } from "./CSVDisplay";
 
-export default function ToolResult({
-  csvFileDescriptor,
-  close,
-}: {
-  csvFileDescriptor: FileDescriptor;
-  close: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const expand = () => setExpanded((prev) => !prev);
-
-  return (
-    <>
-      {expanded && (
-        <Modal
-          hideCloseButton
-          onOutsideClick={() => setExpanded(false)}
-          className="!max-w-5xl overflow-hidden rounded-lg animate-all ease-in !p-0"
-        >
-          <FileWrapper
-            fileDescriptor={csvFileDescriptor}
-            close={close}
-            expanded={true}
-            expand={expand}
-            ContentComponent={CsvContent}
-          />
-        </Modal>
-      )}
-
-      <FileWrapper
-        fileDescriptor={csvFileDescriptor}
-        close={close}
-        expanded={false}
-        expand={expand}
-        ContentComponent={CsvContent}
-      />
-    </>
-  );
-}
-
-interface FileWrapperProps {
+export interface ExpandableContentWrapperProps {
   fileDescriptor: FileDescriptor;
   close: () => void;
-  expanded: boolean;
-  expand: () => void;
-  ContentComponent: React.ComponentType<ToolDisplay>;
+  ContentComponent: React.ComponentType<ContentComponentProps>;
 }
 
-export const FileWrapper = ({
+export interface ContentComponentProps {
+  fileDescriptor: FileDescriptor;
+  isLoading: boolean;
+  fadeIn: boolean;
+}
+
+const ExpandableContentWrapper: React.FC<ExpandableContentWrapperProps> = ({
   fileDescriptor,
   close,
-  expanded,
-  expand,
   ContentComponent,
-}: FileWrapperProps) => {
+}) => {
+  const [expanded, setExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [fadeIn, setFadeIn] = useState(false);
+
+  const toggleExpand = () => setExpanded((prev) => !prev);
 
   // Prevent a jarring fade in
   useEffect(() => {
@@ -94,22 +59,23 @@ export const FileWrapper = ({
     a.click();
     document.body.removeChild(a);
   };
-  return (
+
+  const Content = (
     <div
       className={`${
         !expanded ? "w-message-sm" : "w-full"
-      } !rounded !rounded-lg overflow-y-hidden w-full border border-border`}
+      } !rounded !rounded-lg overflow-y-hidden border border-border`}
     >
-      <CardHeader className="w-full !py-0 !pb-4 border-b border-border border-b-neutral-200 !pt-4 !mb-0 z-[10] top-0">
+      <CardHeader className="w-full py-4 border-b border-border bg-white z-[10] top-0">
         <div className="flex justify-between items-center">
-          <CardTitle className="!my-auto text-ellipsis line-clamp-1 text-xl font-semibold text-text-700 pr-4 transition-colors duration-300">
-            {fileDescriptor.name}
+          <CardTitle className="text-ellipsis line-clamp-1 text-xl font-semibold text-text-700 pr-4">
+            {fileDescriptor.name || "Untitled"}
           </CardTitle>
-          <div className="flex !my-auto">
+          <div className="flex items-center">
             <TooltipGroup gap="gap-x-4">
               <CustomTooltip showTick line content="Download file">
                 <button onClick={downloadFile}>
-                  <DownloadCSVIcon className="cursor-pointer transition-colors duration-300 hover:text-text-800 h-6 w-6 text-text-400" />
+                  <DownloadCSVIcon className="cursor-pointer hover:text-text-800 h-6 w-6 text-text-400" />
                 </button>
               </CustomTooltip>
               <CustomTooltip
@@ -117,25 +83,25 @@ export const FileWrapper = ({
                 showTick
                 content={expanded ? "Minimize" : "Full screen"}
               >
-                <button onClick={expand}>
+                <button onClick={toggleExpand}>
                   {!expanded ? (
-                    <ExpandTwoIcon className="transition-colors duration-300 hover:text-text-800 h-6 w-6 cursor-pointer text-text-400" />
+                    <ExpandTwoIcon className="hover:text-text-800 h-6 w-6 cursor-pointer text-text-400" />
                   ) : (
-                    <DexpandTwoIcon className="transition-colors duration-300 hover:text-text-800 h-6 w-6 cursor-pointer text-text-400" />
+                    <DexpandTwoIcon className="hover:text-text-800 h-6 w-6 cursor-pointer text-text-400" />
                   )}
                 </button>
               </CustomTooltip>
               <CustomTooltip showTick line content="Hide">
                 <button onClick={close}>
-                  <OpenIcon className="transition-colors duration-300 hover:text-text-800 h-6 w-6 cursor-pointer text-text-400" />
+                  <OpenIcon className="hover:text-text-800 h-6 w-6 cursor-pointer text-text-400" />
                 </button>
               </CustomTooltip>
             </TooltipGroup>
           </div>
         </div>
       </CardHeader>
-      <Card className="!rounded-none w-full max-h-[600px] !p-0 relative overflow-x-scroll overflow-y-scroll mx-auto">
-        <CardContent className="!p-0">
+      <Card className="!rounded-none w-full max-h-[600px] p-0 relative overflow-x-scroll overflow-y-scroll mx-auto">
+        <CardContent className="p-0">
           <ContentComponent
             fileDescriptor={fileDescriptor}
             isLoading={isLoading}
@@ -145,4 +111,21 @@ export const FileWrapper = ({
       </Card>
     </div>
   );
+
+  return (
+    <>
+      {expanded && (
+        <Modal
+          hideCloseButton
+          onOutsideClick={() => setExpanded(false)}
+          className="!max-w-5xl overflow-hidden rounded-lg !p-0 !m-0"
+        >
+          {Content}
+        </Modal>
+      )}
+      {!expanded && Content}
+    </>
+  );
 };
+
+export default ExpandableContentWrapper;

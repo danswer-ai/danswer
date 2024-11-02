@@ -56,6 +56,7 @@ import { ContinueGenerating } from "./ContinueMessage";
 import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
 import { extractCodeText } from "./codeUtils";
 import ToolResult from "./components/ToolResult";
+import CsvContent from "./components/CSVContent";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -123,6 +124,7 @@ function FileDisplay({
                       <ToolResult
                         csvFileDescriptor={file}
                         close={() => setClose(false)}
+                        contentComponent={CsvContent}
                       />
                     </>
                   ) : (
