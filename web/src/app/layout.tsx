@@ -71,7 +71,9 @@ export default async function RootLayout({
               <Logo height={40} width={40} />
             </div>
 
-            <Card className="p-8 max-w-md bg-background-100 !shadow-none !border-none">
+            {/*<Card className="p-8 max-w-md bg-background-100 !shadow-none !border-none">*/}
+              <Card className="p-8 max-w-md bg-background-100 border-0 shadow-none">
+
               <h1 className="text-2xl font-bold mb-4 text-error">Error</h1>
               <p className="text-text-500">
                 Your Enigma instance was not configured properly and your
