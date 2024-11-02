@@ -64,8 +64,8 @@ export default async function Page(props: {
   // prettier-ignore
   const persona: Persona =
     chatSession?.persona_id && availableAssistants?.length
-      ? availableAssistants.find((p) => p.id === chatSession.persona_id) ??
-        defaultPersona
+      ? (availableAssistants.find((p) => p.id === chatSession.persona_id) ??
+        defaultPersona)
       : (availableAssistants?.[0] ?? defaultPersona);
 
   return (
