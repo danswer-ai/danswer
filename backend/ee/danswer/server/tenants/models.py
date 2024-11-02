@@ -29,3 +29,7 @@ class BillingInformation(BaseModel):
 
 class CheckoutSessionCreationResponse(BaseModel):
     id: str
+
+
+class ImpersonateRequest(BaseModel):
+    email: str

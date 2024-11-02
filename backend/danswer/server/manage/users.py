@@ -35,6 +35,7 @@ from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import ENABLE_EMAIL_INVITES
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
 from danswer.db.auth import get_total_users_count
@@ -476,6 +477,7 @@ def verify_user_logged_in(
     # NOTE: this does not use `current_user` / `current_admin_user` because we don't want
     # to enforce user verification here - the frontend always wants to get the info about
     # the current user regardless of if they are currently verified
+
     if user is None:
         # if auth type is disabled, return a dummy user with preferences from
         # the key-value store
@@ -502,6 +504,7 @@ def verify_user_logged_in(
         user,
         current_token_created_at=token_created_at,
         expiry_length=SESSION_EXPIRE_TIME_SECONDS,
+        is_cloud_superuser=user.email in SUPER_USERS,
         organization_name=organization_name,
     )
 
