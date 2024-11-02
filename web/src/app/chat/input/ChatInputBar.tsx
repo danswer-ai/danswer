@@ -380,7 +380,7 @@ export function ChatInputBar({
               flex
               flex-col
               border
-              border-[#E5E7EB]
+              border-border-medium
               rounded-lg
               text-text-chatbar
               bg-background-chatbar

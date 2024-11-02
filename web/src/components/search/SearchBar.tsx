@@ -38,10 +38,9 @@ export const AnimatedToggle = ({
 
   return (
     <CustomTooltip
-      light
       large
       content={
-        <div className="bg-white my-auto p-6 rounded-lg w-full">
+        <div className="bg-background my-auto p-6 rounded-lg w-full">
           <h2 className="text-xl text-text-800 font-bold mb-2">
             Agentic Search
           </h2>
