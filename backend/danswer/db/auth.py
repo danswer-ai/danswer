@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
-from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserRole
 from danswer.db.engine import get_async_session
 from danswer.db.engine import get_async_session_with_tenant
@@ -44,10 +43,11 @@ def get_total_users_count(db_session: Session) -> int:
     user_count = (
         db_session.query(User)
         .filter(~User.email.endswith(get_api_key_email_pattern()))  # type: ignore
+        .filter(User.is_active)
         .count()
     )
-    invited_users = len(get_invited_users())
-    return user_count + invited_users
+
+    return user_count
 
 
 async def get_user_count() -> int:

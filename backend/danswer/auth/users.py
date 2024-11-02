@@ -77,6 +77,7 @@ from danswer.configs.constants import DANSWER_API_KEY_PREFIX
 from danswer.configs.constants import UNNAMED_KEY_PLACEHOLDER
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_default_admin_user_emails
+from danswer.db.auth import get_total_users_count
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
 from danswer.db.auth import SQLAlchemyUserAdminDB
@@ -93,6 +94,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from ee.danswer.server.tenants.billing import register_tenant_users
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
@@ -425,6 +427,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         self, user: User, request: Optional[Request] = None
     ) -> None:
         logger.notice(f"User {user.id} has registered.")
+
+        if MULTI_TENANT:
+            register_tenant_users(
+                CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(self.user_db)
+            )
+
         optional_telemetry(
             record_type=RecordType.SIGN_UP,
             data={"action": "create"},
