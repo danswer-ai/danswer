@@ -14,8 +14,8 @@ spec:
     spec:
       containers:
         - name: background
-          image: danswer/danswer-backend:latest
-          imagePullPolicy: IfNotPresent
+          image: public.ecr.aws/s0d3n4f3/buddy-danswer/backend
+          imagePullPolicy: Always
           command:
             [
               "/usr/bin/supervisord",
