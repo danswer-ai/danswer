@@ -20,6 +20,8 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+_FRESHDESK_ID_PREFIX = "FRESHDESK_"
+
 
 _TICKET_FIELDS_TO_INCLUDE = {
     "fr_escalated",
@@ -116,7 +118,7 @@ def _create_doc_from_ticket(ticket: dict, domain: str) -> Document:
     metadata = _create_metadata_from_ticket(ticket)
 
     return Document(
-        id=str(ticket["id"]),
+        id=_FRESHDESK_ID_PREFIX + str(ticket["id"]),
         sections=[
             Section(
                 link=f"https://{domain}.freshdesk.com/helpdesk/tickets/{int(ticket['id'])}",
