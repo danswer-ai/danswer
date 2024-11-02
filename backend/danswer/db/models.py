@@ -734,9 +734,10 @@ class IndexAttempt(Base):
     full_exception_trace: Mapped[str | None] = mapped_column(Text, default=None)
     # Nullable because in the past, we didn't allow swapping out embedding models live
     search_settings_id: Mapped[int] = mapped_column(
-        ForeignKey("search_settings.id"),
-        nullable=False,
+        ForeignKey("search_settings.id", ondelete="SET NULL"),
+        nullable=True,
     )
+
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -756,7 +757,7 @@ class IndexAttempt(Base):
         "ConnectorCredentialPair", back_populates="index_attempts"
     )
 
-    search_settings: Mapped[SearchSettings] = relationship(
+    search_settings: Mapped[SearchSettings | None] = relationship(
         "SearchSettings", back_populates="index_attempts"
     )
 

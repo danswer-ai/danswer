@@ -4,7 +4,7 @@ import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { HealthCheckBanner } from "@/components/health/healthcheck";
 
-import { Card, Title } from "@tremor/react";
+import Title from "@/components/ui/title";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { usePopup } from "@/components/admin/connectors/Popup";
@@ -42,6 +42,7 @@ import {
 import { Formik } from "formik";
 import NavigationRow from "./NavigationRow";
 import { useRouter } from "next/navigation";
+import CardSection from "@/components/admin/CardSection";
 export interface AdvancedConfig {
   refreshFreq: number;
   pruneFreq: number;
@@ -363,7 +364,7 @@ export default function AddConnector({
             />
 
             {formStep == 0 && (
-              <Card>
+              <CardSection>
                 <Title className="mb-2 text-lg">Select a credential</Title>
 
                 {connector == "google_drive" ? (
@@ -420,11 +421,11 @@ export default function AddConnector({
                       )}
                   </>
                 )}
-              </Card>
+              </CardSection>
             )}
 
             {formStep == 1 && (
-              <Card className="w-full py-8 flex gap-y-6 flex-col max-w-3xl px-12 mx-auto">
+              <CardSection className="w-full py-8 flex gap-y-6 flex-col max-w-3xl px-12 mx-auto">
                 <DynamicConnectionForm
                   values={formikProps.values}
                   config={configuration}
@@ -438,13 +439,13 @@ export default function AddConnector({
                     null
                   }
                 />
-              </Card>
+              </CardSection>
             )}
 
             {formStep === 2 && (
-              <Card>
+              <CardSection>
                 <AdvancedFormPage />
-              </Card>
+              </CardSection>
             )}
 
             <NavigationRow

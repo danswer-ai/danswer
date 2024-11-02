@@ -1,5 +1,7 @@
 import { Modal } from "@/components/Modal";
-import { Button, Divider, Text } from "@tremor/react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import Text from "@/components/ui/text";
 
 export function MakePublicAssistantModal({
   isPublic,
@@ -28,7 +30,7 @@ export function MakePublicAssistantModal({
             : " Only you can access this assistant."}
         </Text>
 
-        <Divider />
+        <Separator />
 
         {isPublic ? (
           <div className="space-y-4">
@@ -42,7 +44,7 @@ export function MakePublicAssistantModal({
                 onClose();
               }}
               size="sm"
-              color="red"
+              variant="destructive"
             >
               Make Assistant Private
             </Button>
@@ -60,7 +62,7 @@ export function MakePublicAssistantModal({
                 onClose();
               }}
               size="sm"
-              color="green"
+              variant="submit"
             >
               Make Assistant Public
             </Button>

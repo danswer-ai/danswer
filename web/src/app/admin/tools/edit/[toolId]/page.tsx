@@ -1,5 +1,7 @@
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { Card, Text, Title } from "@tremor/react";
+import Text from "@/components/ui/text";
+import Title from "@/components/ui/title";
+import CardSection from "@/components/admin/CardSection";
 import { ToolEditor } from "@/app/admin/tools/ToolEditor";
 import { fetchToolByIdSS } from "@/lib/tools/fetchTools";
 import { DeleteToolButton } from "./DeleteToolButton";
@@ -25,9 +27,9 @@ export default async function Page({ params }: { params: { toolId: string } }) {
       <div className="w-full my-8">
         <div>
           <div>
-            <Card>
+            <CardSection>
               <ToolEditor tool={tool} />
-            </Card>
+            </CardSection>
 
             <Title className="mt-12">Delete Tool</Title>
             <Text>Click the button below to permanently delete this tool.</Text>

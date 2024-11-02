@@ -17,10 +17,13 @@ from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.key_value_store.interface import JSON_ro
+from danswer.llm.answering.llm_response_handler import LLMCall
+from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import ContextualPruningConfig
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.llm.answering.prompts.citations_prompt import compute_max_llm_input_tokens
 from danswer.llm.answering.prune_and_merge import prune_and_merge_sections
 from danswer.llm.answering.prune_and_merge import prune_sections
@@ -35,9 +38,16 @@ from danswer.search.models import SearchRequest
 from danswer.search.pipeline import SearchPipeline
 from danswer.secondary_llm_flows.choose_search import check_if_need_search
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
-from danswer.tools.search.search_utils import llm_doc_to_dict
+from danswer.tools.message import ToolCallSummary
+from danswer.tools.models import ToolResponse
 from danswer.tools.tool import Tool
-from danswer.tools.tool import ToolResponse
+from danswer.tools.tool_implementations.search.search_utils import llm_doc_to_dict
+from danswer.tools.tool_implementations.search_like_tool_utils import (
+    build_next_prompt_for_search_like_tool,
+)
+from danswer.tools.tool_implementations.search_like_tool_utils import (
+    FINAL_CONTEXT_DOCUMENTS_ID,
+)
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -45,7 +55,6 @@ logger = setup_logger()
 SEARCH_RESPONSE_SUMMARY_ID = "search_response_summary"
 SEARCH_DOC_CONTENT_ID = "search_doc_content"
 SECTION_RELEVANCE_LIST_ID = "section_relevance_list"
-FINAL_CONTEXT_DOCUMENTS_ID = "final_context_documents"
 SEARCH_EVALUATION_ID = "llm_doc_eval"
 
 
@@ -85,6 +94,7 @@ class SearchTool(Tool):
         llm: LLM,
         fast_llm: LLM,
         pruning_config: DocumentPruningConfig,
+        answer_style_config: AnswerStyleConfig,
         evaluation_type: LLMEvaluationType,
         # if specified, will not actually run a search and will instead return these
         # sections. Used when the user selects specific docs to talk to
@@ -136,6 +146,7 @@ class SearchTool(Tool):
 
         num_chunk_multiple = self.chunks_above + self.chunks_below + 1
 
+        self.answer_style_config = answer_style_config
         self.contextual_pruning_config = (
             ContextualPruningConfig.from_doc_pruning_config(
                 num_chunk_multiple=num_chunk_multiple, doc_pruning_config=pruning_config
@@ -353,4 +364,36 @@ class SearchTool(Tool):
         # NOTE: need to do this json.loads(doc.json()) stuff because there are some
         # subfields that are not serializable by default (datetime)
         # this forces pydantic to make them JSON serializable for us
-        return [json.loads(doc.json()) for doc in final_docs]
+        return [json.loads(doc.model_dump_json()) for doc in final_docs]
+
+    def build_next_prompt(
+        self,
+        prompt_builder: AnswerPromptBuilder,
+        tool_call_summary: ToolCallSummary,
+        tool_responses: list[ToolResponse],
+        using_tool_calling_llm: bool,
+    ) -> AnswerPromptBuilder:
+        return build_next_prompt_for_search_like_tool(
+            prompt_builder=prompt_builder,
+            tool_call_summary=tool_call_summary,
+            tool_responses=tool_responses,
+            using_tool_calling_llm=using_tool_calling_llm,
+            answer_style_config=self.answer_style_config,
+            prompt_config=self.prompt_config,
+        )
+
+    """Other utility functions"""
+
+    @classmethod
+    def get_search_result(cls, llm_call: LLMCall) -> list[LlmDoc] | None:
+        if not llm_call.tool_call_info:
+            return None
+
+        for yield_item in llm_call.tool_call_info:
+            if (
+                isinstance(yield_item, ToolResponse)
+                and yield_item.id == FINAL_CONTEXT_DOCUMENTS_ID
+            ):
+                return cast(list[LlmDoc], yield_item.response)
+
+        return None

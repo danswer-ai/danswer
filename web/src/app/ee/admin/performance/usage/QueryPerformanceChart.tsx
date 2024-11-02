@@ -1,14 +1,12 @@
 "use client";
 
-import {
-  Card,
-  AreaChart,
-  Title,
-  Text,
-  DateRangePickerValue,
-} from "@tremor/react";
+import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
 import { getDatesList, useQueryAnalytics, useUserAnalytics } from "../lib";
 import { ThreeDotsLoader } from "@/components/Loading";
+import { AreaChartDisplay } from "@/components/ui/areaChart";
+import Title from "@/components/ui/title";
+import Text from "@/components/ui/text";
+import CardSection from "@/components/admin/CardSection";
 
 export function QueryPerformanceChart({
   timeRange,
@@ -62,8 +60,8 @@ export function QueryPerformanceChart({
     );
 
     chart = (
-      <AreaChart
-        className="h-80"
+      <AreaChartDisplay
+        className="mt-4"
         data={dateRange.map((dateStr) => {
           const queryAnalyticsForDate = dateToQueryAnalytics.get(dateStr);
           const userAnalyticsForDate = dateToUserAnalytics.get(dateStr);
@@ -85,10 +83,10 @@ export function QueryPerformanceChart({
   }
 
   return (
-    <Card className="mt-8">
+    <CardSection className="mt-8">
       <Title>Usage</Title>
       <Text>Usage over time</Text>
       {chart}
-    </Card>
+    </CardSection>
   );
 }

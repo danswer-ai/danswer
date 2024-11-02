@@ -1,5 +1,4 @@
-import { Callout } from "@tremor/react";
-import { FiAlertOctagon } from "react-icons/fi";
+import { Callout } from "@/components/ui/callout";
 
 export function ErrorCallout({
   errorTitle,
@@ -13,8 +12,8 @@ export function ErrorCallout({
       <Callout
         className="mt-4"
         title={errorTitle || "Page not found"}
-        icon={FiAlertOctagon}
-        color="rose"
+        icon="alert"
+        type="danger"
       >
         {errorMsg}
       </Callout>

@@ -52,12 +52,16 @@ from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephr
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.utils import get_json_line
 from danswer.tools.force import ForceUseTool
-from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
-from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
-from danswer.tools.search.search_tool import SearchResponseSummary
-from danswer.tools.search.search_tool import SearchTool
-from danswer.tools.search.search_tool import SECTION_RELEVANCE_LIST_ID
-from danswer.tools.tool import ToolResponse
+from danswer.tools.models import ToolResponse
+from danswer.tools.tool_implementations.search.search_tool import SEARCH_DOC_CONTENT_ID
+from danswer.tools.tool_implementations.search.search_tool import (
+    SEARCH_RESPONSE_SUMMARY_ID,
+)
+from danswer.tools.tool_implementations.search.search_tool import SearchResponseSummary
+from danswer.tools.tool_implementations.search.search_tool import SearchTool
+from danswer.tools.tool_implementations.search.search_tool import (
+    SECTION_RELEVANCE_LIST_ID,
+)
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
@@ -202,28 +206,31 @@ def stream_answer_objects(
         max_tokens=max_document_tokens,
     )
 
+    answer_config = AnswerStyleConfig(
+        citation_config=CitationConfig() if use_citations else None,
+        quotes_config=QuotesConfig() if not use_citations else None,
+        document_pruning_config=document_pruning_config,
+    )
+
     search_tool = SearchTool(
         db_session=db_session,
         user=user,
-        evaluation_type=LLMEvaluationType.SKIP
-        if DISABLE_LLM_DOC_RELEVANCE
-        else query_req.evaluation_type,
+        evaluation_type=(
+            LLMEvaluationType.SKIP
+            if DISABLE_LLM_DOC_RELEVANCE
+            else query_req.evaluation_type
+        ),
         persona=persona,
         retrieval_options=query_req.retrieval_options,
         prompt_config=prompt_config,
         llm=llm,
         fast_llm=fast_llm,
         pruning_config=document_pruning_config,
+        answer_style_config=answer_config,
         bypass_acl=bypass_acl,
         chunks_above=query_req.chunks_above,
         chunks_below=query_req.chunks_below,
         full_doc=query_req.full_doc,
-    )
-
-    answer_config = AnswerStyleConfig(
-        citation_config=CitationConfig() if use_citations else None,
-        quotes_config=QuotesConfig() if not use_citations else None,
-        document_pruning_config=document_pruning_config,
     )
 
     answer = Answer(

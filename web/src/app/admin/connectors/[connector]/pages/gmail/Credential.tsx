@@ -11,7 +11,7 @@ import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
 import { User } from "@/lib/types";
-
+import CardSection from "@/components/admin/CardSection";
 import {
   Credential,
   GmailCredentialJson,
@@ -354,15 +354,29 @@ export const GmailAuthSection = ({
           indexed.
         </p>
 
-        <Formik
-          initialValues={{
-            gmail_primary_admin: user?.email || "",
-          }}
-          validationSchema={Yup.object().shape({
-            gmail_primary_admin: Yup.string().required(),
-          })}
-          onSubmit={async (values, formikHelpers) => {
-            formikHelpers.setSubmitting(true);
+        <CardSection>
+          <Formik
+            initialValues={{
+              gmail_primary_admin: user?.email || "",
+            }}
+            validationSchema={Yup.object().shape({
+              gmail_primary_admin: Yup.string().required(),
+            })}
+            onSubmit={async (values, formikHelpers) => {
+              formikHelpers.setSubmitting(true);
+
+              const response = await fetch(
+                "/api/manage/admin/connector/gmail/service-account-credential",
+                {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    gmail_primary_admin: values.gmail_primary_admin,
+                  }),
+                }
+              );
 
             const response = await fetch(
               "/api/manage/admin/connector/gmail/service-account-credential",
@@ -374,47 +388,33 @@ export const GmailAuthSection = ({
                 body: JSON.stringify({
                   gmail_primary_admin: values.gmail_primary_admin,
                 }),
-              }
-            );
-
-            if (response.ok) {
-              setPopup({
-                message: "Successfully created service account credential",
-                type: "success",
-              });
-            } else {
-              const errorMsg = await response.text();
-              setPopup({
-                message: `Failed to create service account credential - ${errorMsg}`,
-                type: "error",
-              });
-            }
-            refreshCredentials();
-          }}
-        >
-          {({ isSubmitting }) => (
-            <Form>
-              <TextFormField
-                name="gmail_primary_admin"
-                label="Primary Admin Email:"
-                subtext="If left blank, Danswer will use the service account itself."
-              />
-              <div className="flex">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={
-                    "bg-slate-500 hover:bg-slate-700 text-white " +
-                    "font-bold py-2 px-4 rounded focus:outline-none " +
-                    "focus:shadow-outline w-full max-w-sm mx-auto"
-                  }
-                >
-                  Submit
-                </button>
-              </div>
-            </Form>
-          )}
-        </Formik>
+              refreshCredentials();
+            }}
+          >
+            {({ isSubmitting }) => (
+              <Form>
+                <TextFormField
+                  name="gmail_primary_admin"
+                  label="Primary Admin Email:"
+                  subtext="You must provide an admin/owner account to retrieve all org emails."
+                />
+                <div className="flex">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={
+                      "bg-slate-500 hover:bg-slate-700 text-white " +
+                      "font-bold py-2 px-4 rounded focus:outline-none " +
+                      "focus:shadow-outline w-full max-w-sm mx-auto"
+                    }
+                  >
+                    Submit
+                  </button>
+                </div>
+              </Form>
+            )}
+          </Formik>
+        </CardSection>
       </div>
     );
   }

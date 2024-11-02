@@ -3,7 +3,8 @@
 import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
-import { Button, Divider, Italic } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
   ArrayHelpers,
@@ -39,13 +40,13 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiInfo, FiPlus, FiX } from "react-icons/fi";
+import { FiInfo, FiX } from "react-icons/fi";
 import * as Yup from "yup";
 import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
-import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
+import { createPersona, updatePersona } from "./lib";
 import { Popover } from "@/components/popover/Popover";
 import {
   CameraIcon,
@@ -627,7 +628,10 @@ export function AssistantEditor({
                   otherwise specified below.
                   {admin &&
                     user?.preferences.default_model &&
-                    `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
+                    `  Your current (user-specific) default model is ${getDisplayNameForModel(
+                      destructureValue(user?.preferences?.default_model!)
+                        .modelName
+                    )}`}
                 </p>
                 {admin ? (
                   <div className="mb-2 flex items-starts">
@@ -869,7 +873,7 @@ export function AssistantEditor({
                                     )}
                                   />
                                 ) : (
-                                  <Italic className="text-sm">
+                                  <p className="text-sm italic">
                                     No Document Sets available.{" "}
                                     {user?.role !== "admin" && (
                                       <>
@@ -878,7 +882,7 @@ export function AssistantEditor({
                                         Danswer for assistance.
                                       </>
                                     )}
-                                  </Italic>
+                                  </p>
                                 )}
 
                                 <div className="mt-4  flex flex-col gap-y-4">
@@ -972,7 +976,7 @@ export function AssistantEditor({
                   )}
                 </div>
               </div>
-              <Divider />
+              <Separator />
               <AdvancedOptionsToggle
                 showAdvancedOptions={showAdvancedOptions}
                 setShowAdvancedOptions={setShowAdvancedOptions}
@@ -1138,11 +1142,9 @@ export function AssistantEditor({
                                 message: "",
                               });
                             }}
-                            className="text-white mt-3"
-                            size="xs"
-                            type="button"
-                            icon={FiPlus}
-                            color="green"
+                            className="mt-3"
+                            size="sm"
+                            variant="next"
                           >
                             Add New
                           </Button>
@@ -1166,9 +1168,7 @@ export function AssistantEditor({
 
               <div className="flex">
                 <Button
-                  className="mx-auto"
-                  color="green"
-                  size="md"
+                  variant="submit"
                   type="submit"
                   disabled={isSubmitting || isRequestSuccessful}
                 >

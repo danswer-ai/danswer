@@ -11,7 +11,7 @@ import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
 import { User } from "@/lib/types";
-import { Button as TremorButton } from "@tremor/react";
+import { Button as TremorButton } from "@/components/ui/button";
 import {
   Credential,
   GoogleDriveCredentialJson,

@@ -11,7 +11,7 @@ import {
   usePublicCredentials,
   useConnectorCredentialIndexingStatus,
 } from "@/lib/hooks";
-import { Title } from "@tremor/react";
+import Title from "@/components/ui/title";
 import { DriveJsonUploadSection, DriveAuthSection } from "./Credential";
 import {
   Credential,

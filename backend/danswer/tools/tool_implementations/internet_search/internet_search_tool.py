@@ -11,18 +11,31 @@ from danswer.chat.models import LlmDoc
 from danswer.configs.constants import DocumentSource
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.key_value_store.interface import JSON_ro
+from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import PreviousMessage
+from danswer.llm.answering.models import PromptConfig
+from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_to_string
 from danswer.prompts.chat_prompts import INTERNET_SEARCH_QUERY_REPHRASE
 from danswer.prompts.constants import GENERAL_SEP_PAT
 from danswer.search.models import SearchDoc
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
-from danswer.tools.internet_search.models import InternetSearchResponse
-from danswer.tools.internet_search.models import InternetSearchResult
-from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
+from danswer.tools.message import ToolCallSummary
+from danswer.tools.models import ToolResponse
 from danswer.tools.tool import Tool
-from danswer.tools.tool import ToolResponse
+from danswer.tools.tool_implementations.internet_search.models import (
+    InternetSearchResponse,
+)
+from danswer.tools.tool_implementations.internet_search.models import (
+    InternetSearchResult,
+)
+from danswer.tools.tool_implementations.search_like_tool_utils import (
+    build_next_prompt_for_search_like_tool,
+)
+from danswer.tools.tool_implementations.search_like_tool_utils import (
+    FINAL_CONTEXT_DOCUMENTS_ID,
+)
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -97,8 +110,17 @@ class InternetSearchTool(Tool):
     _DISPLAY_NAME = "[Beta] Internet Search Tool"
     _DESCRIPTION = "Perform an internet search for up-to-date information."
 
-    def __init__(self, api_key: str, num_results: int = 10) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        answer_style_config: AnswerStyleConfig,
+        prompt_config: PromptConfig,
+        num_results: int = 10,
+    ) -> None:
         self.api_key = api_key
+        self.answer_style_config = answer_style_config
+        self.prompt_config = prompt_config
+
         self.host = "https://api.bing.microsoft.com/v7.0"
         self.headers = {
             "Ocp-Apim-Subscription-Key": api_key,
@@ -231,3 +253,19 @@ class InternetSearchTool(Tool):
     def final_result(self, *args: ToolResponse) -> JSON_ro:
         search_response = cast(InternetSearchResponse, args[0].response)
         return search_response.model_dump()
+
+    def build_next_prompt(
+        self,
+        prompt_builder: AnswerPromptBuilder,
+        tool_call_summary: ToolCallSummary,
+        tool_responses: list[ToolResponse],
+        using_tool_calling_llm: bool,
+    ) -> AnswerPromptBuilder:
+        return build_next_prompt_for_search_like_tool(
+            prompt_builder=prompt_builder,
+            tool_call_summary=tool_call_summary,
+            tool_responses=tool_responses,
+            using_tool_calling_llm=using_tool_calling_llm,
+            answer_style_config=self.answer_style_config,
+            prompt_config=self.prompt_config,
+        )

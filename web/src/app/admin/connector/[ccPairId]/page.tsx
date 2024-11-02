@@ -12,7 +12,9 @@ import { updateConnectorCredentialPairName } from "@/lib/connector";
 import { credentialTemplates } from "@/lib/connectors/credentials";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ValidSources } from "@/lib/types";
-import { Button, Divider, Title } from "@tremor/react";
+import { Button } from "@/components/ui/button";
+import Title from "@/components/ui/title";
+import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
@@ -157,10 +159,10 @@ function Main({ ccPairId }: { ccPairId: number }) {
               onChange={handleNameChange}
               className="text-3xl w-full ring ring-1 ring-neutral-800 text-emphasis font-bold"
             />
-            <Button onClick={handleUpdateName} className="ml-2">
+            <Button onClick={handleUpdateName}>
               <CheckmarkIcon className="text-neutral-200" />
             </Button>
-            <Button onClick={() => resetEditing()} className="ml-2">
+            <Button onClick={() => resetEditing()}>
               <XIcon className="text-neutral-200" />
             </Button>
           </div>
@@ -169,7 +171,9 @@ function Main({ ccPairId }: { ccPairId: number }) {
             onClick={() =>
               ccPair.is_editable_for_current_user && startEditing()
             }
-            className={`group flex ${ccPair.is_editable_for_current_user ? "cursor-pointer" : ""} text-3xl text-emphasis gap-x-2 items-center font-bold`}
+            className={`group flex ${
+              ccPair.is_editable_for_current_user ? "cursor-pointer" : ""
+            } text-3xl text-emphasis gap-x-2 items-center font-bold`}
           >
             {ccPair.name}
             {ccPair.is_editable_for_current_user && (
@@ -229,7 +233,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
       {credentialTemplates[ccPair.connector.source] &&
         ccPair.is_editable_for_current_user && (
           <>
-            <Divider />
+            <Separator />
 
             <Title className="mb-2">Credentials</Title>
 
@@ -240,7 +244,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
             />
           </>
         )}
-      <Divider />
+      <Separator />
       <ConfigDisplay
         connectorSpecificConfig={ccPair.connector.connector_specific_config}
         sourceType={ccPair.connector.source}
@@ -262,7 +266,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
         </div>
         <IndexingAttemptsTable ccPair={ccPair} />
       </div>
-      <Divider />
+      <Separator />
       <div className="flex mt-4">
         <div className="mx-auto">
           {ccPair.is_editable_for_current_user && (

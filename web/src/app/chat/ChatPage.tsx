@@ -103,7 +103,7 @@ import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
 import BlurBackground from "./shared_chat_search/BlurBackground";
 import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
 import { useAssistants } from "@/components/context/AssistantsContext";
-import { Divider } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -2029,7 +2029,7 @@ export function ChatPage({
                                     currentPersona.starter_messages.length >
                                       0 && (
                                       <>
-                                        <Divider className="mx-2" />
+                                        <Separator className="mx-2" />
 
                                         {currentPersona.starter_messages
                                           .slice(0, 4)
