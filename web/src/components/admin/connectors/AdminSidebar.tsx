@@ -124,7 +124,7 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
           key={"danswerVersion"}
         >
           <h2 className="text-xs text-text w-52 font-medium pb-2">
-            Danswer version: {combinedSettings.webVersion}
+            Buddy version: {combinedSettings.webVersion}
           </h2>
         </div>
       )}
