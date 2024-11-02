@@ -32,6 +32,7 @@ export enum ChatFileType {
   IMAGE = "image",
   DOCUMENT = "document",
   PLAIN_TEXT = "plain_text",
+  CSV = "csv",
 }
 
 export interface FileDescriptor {
