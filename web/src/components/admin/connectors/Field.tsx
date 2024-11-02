@@ -594,7 +594,6 @@ export function SelectorFormField({
   label,
   options,
   subtext,
-  includeDefault = false,
   side = "bottom",
   maxHeight,
   onSelect,
@@ -615,26 +614,34 @@ export function SelectorFormField({
       {subtext && <SubLabel>{subtext}</SubLabel>}
       <div className="mt-2">
         <Select
-          value={field.value}
+          value={field.value || defaultValue}
           onValueChange={
             onSelect || ((selected) => setFieldValue(name, selected))
           }
           defaultValue={defaultValue}
         >
           <SelectTrigger>
-            <SelectValue
-              placeholder={includeDefault ? "Select..." : undefined}
-            />
+            <SelectValue placeholder="Select...">
+              {field.value || defaultValue || ""}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent
             side={side}
             className={maxHeight ? `max-h-[${maxHeight}]` : undefined}
           >
-            {includeDefault && (
+            {options.length == 0 && (
               <SelectItem value="default">Select...</SelectItem>
             )}
+            {defaultValue && (
+              <SelectItem value={defaultValue}>{defaultValue}</SelectItem>
+            )}
             {options.map((option) => (
-              <SelectItem key={option.value} value={String(option.value)}>
+              <SelectItem
+                icon={option.icon}
+                key={option.value}
+                value={String(option.value)}
+                selected={field.value === option.value}
+              >
                 {option.name}
               </SelectItem>
             ))}

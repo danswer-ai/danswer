@@ -115,8 +115,9 @@ const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
     icon?: React.ElementType;
+    selected?: boolean;
   }
->(({ className, children, icon: Icon, ...props }, ref) => (
+>(({ className, children, icon: Icon, selected, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
@@ -127,9 +128,14 @@ const SelectItem = React.forwardRef<
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        {Icon ? <Icon className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+        <Check className="h-4 w-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
+    {!selected && Icon && (
+      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        <Icon className="h-4 w-4" />
+      </span>
+    )}
 
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
