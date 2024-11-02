@@ -424,14 +424,18 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             return user
 
     async def on_after_register(
-        self, user: User, request: Optional[Request] = None
+        self,
+        user: User,
+        request: Optional[Request] = None,
     ) -> None:
         logger.notice(f"User {user.id} has registered.")
-
         if MULTI_TENANT:
-            register_tenant_users(
-                CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(self.user_db)
-            )
+            # We will always have set the context var (in `create` and `oauth_callback`)
+            with get_session_with_tenant() as db_session:
+                register_tenant_users(
+                    CURRENT_TENANT_ID_CONTEXTVAR.get(),
+                    get_total_users_count(db_session),
+                )
 
         optional_telemetry(
             record_type=RecordType.SIGN_UP,
