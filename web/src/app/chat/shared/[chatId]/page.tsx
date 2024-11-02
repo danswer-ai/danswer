@@ -61,11 +61,12 @@ export default async function Page(props: {
   if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
     return redirect("/auth/waiting-on-verification");
   }
+  // prettier-ignore
   const persona: Persona =
     chatSession?.persona_id && availableAssistants?.length
       ? availableAssistants.find((p) => p.id === chatSession.persona_id) ??
         defaultPersona
-      : availableAssistants?.[0] ?? defaultPersona;
+      : (availableAssistants?.[0] ?? defaultPersona);
 
   return (
     <div>
