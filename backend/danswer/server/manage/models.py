@@ -57,6 +57,7 @@ class UserInfo(BaseModel):
     oidc_expiry: datetime | None = None
     current_token_created_at: datetime | None = None
     current_token_expiry_length: int | None = None
+    is_cloud_superuser: bool = False
     organization_name: str | None = None
 
     @classmethod
@@ -65,6 +66,7 @@ class UserInfo(BaseModel):
         user: User,
         current_token_created_at: datetime | None = None,
         expiry_length: int | None = None,
+        is_cloud_superuser: bool = False,
         organization_name: str | None = None,
     ) -> "UserInfo":
         return cls(
@@ -90,6 +92,7 @@ class UserInfo(BaseModel):
             oidc_expiry=user.oidc_expiry if TRACK_EXTERNAL_IDP_EXPIRY else None,
             current_token_created_at=current_token_created_at,
             current_token_expiry_length=expiry_length,
+            is_cloud_superuser=is_cloud_superuser,
         )
 
 

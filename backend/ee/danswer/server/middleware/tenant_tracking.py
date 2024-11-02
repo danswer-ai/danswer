@@ -11,9 +11,9 @@ from fastapi import Response
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.db.engine import is_valid_schema_name
 from ee.danswer.auth.api_key import extract_tenant_from_api_key_header
-from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
+from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 
 def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> None:
@@ -22,11 +22,11 @@ def add_tenant_id_middleware(app: FastAPI, logger: logging.LoggerAdapter) -> Non
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         try:
-            tenant_id = POSTGRES_DEFAULT_SCHEMA
-
-            if MULTI_TENANT:
-                tenant_id = _get_tenant_id_from_request(request, logger)
-
+            tenant_id = (
+                _get_tenant_id_from_request(request, logger)
+                if MULTI_TENANT
+                else POSTGRES_DEFAULT_SCHEMA
+            )
             CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
             return await call_next(request)
 

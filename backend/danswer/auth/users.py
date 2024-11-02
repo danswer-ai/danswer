@@ -93,9 +93,9 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
-from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
+from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 
 logger = setup_logger()
@@ -510,19 +510,23 @@ cookie_transport = CookieTransport(
 
 # This strategy is used to add tenant_id to the JWT token
 class TenantAwareJWTStrategy(JWTStrategy):
-    async def write_token(self, user: User) -> str:
+    async def _create_token_data(self, user: User, impersonate: bool = False) -> dict:
         tenant_id = get_tenant_id_for_email(user.email)
         data = {
             "sub": str(user.id),
             "aud": self.token_audience,
             "tenant_id": tenant_id,
         }
+        return data
+
+    async def write_token(self, user: User) -> str:
+        data = await self._create_token_data(user)
         return generate_jwt(
             data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm
         )
 
 
-def get_jwt_strategy() -> JWTStrategy:
+def get_jwt_strategy() -> TenantAwareJWTStrategy:
     return TenantAwareJWTStrategy(
         secret=USER_AUTH_SECRET,
         lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS,

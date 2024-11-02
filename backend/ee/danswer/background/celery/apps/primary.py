@@ -28,8 +28,8 @@ from ee.danswer.external_permissions.permission_sync import (
     run_external_group_permission_sync,
 )
 from ee.danswer.server.reporting.usage_export_generation import create_new_usage_report
-from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import MULTI_TENANT
+from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
 

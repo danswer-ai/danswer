@@ -478,3 +478,7 @@ CONTROL_PLANE_API_BASE_URL = os.environ.get(
 
 # JWT configuration
 JWT_ALGORITHM = "HS256"
+
+# Super Users
+SUPER_USERS = json.loads(os.environ.get("SUPER_USERS", '["pablo@danswer.ai"]'))
+SUPER_CLOUD_API_KEY = os.environ.get("SUPER_CLOUD_API_KEY", "api_key")

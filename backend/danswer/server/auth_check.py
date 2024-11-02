@@ -10,6 +10,7 @@ from danswer.auth.users import current_user
 from danswer.auth.users import current_user_with_expired_token
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.server.danswer_api.ingestion import api_key_dep
+from ee.danswer.auth.users import current_cloud_superuser
 from ee.danswer.server.tenants.access import control_plane_dep
 
 
@@ -100,6 +101,7 @@ def check_router_auth(
                     or depends_fn == api_key_dep
                     or depends_fn == current_user_with_expired_token
                     or depends_fn == control_plane_dep
+                    or depends_fn == current_cloud_superuser
                 ):
                     found_auth = True
                     break
