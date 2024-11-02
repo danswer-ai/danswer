@@ -40,7 +40,6 @@ jobs:
         image-ref: danswer/danswer-backend:latest
         scanners: license
         severity: HIGH,CRITICAL
-        trivyignores: ./backend/.trivyignore
         exit-code: 1
 
     # Web server
