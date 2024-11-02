@@ -3,7 +3,7 @@ from typing import Any
 
 from celery import Celery
 from celery import signals
-from celery.beat import PersistentScheduler  # type: ignore
+from celery.beat import PersistentScheduler
 from celery.signals import beat_init
 
 import danswer.background.celery.apps.app_base as app_base
@@ -25,7 +25,9 @@ class DynamicTenantScheduler(PersistentScheduler):
         super().__init__(*args, **kwargs)
         self._reload_interval = timedelta(minutes=0.1)
         self._last_reload = self.app.now() - self._reload_interval
-        # self._update_tenant_tasks()
+        # Let the parent class handle store initialization
+        self.setup_schedule()
+        self._update_tenant_tasks()
         logger.info(f"Set reload interval to {self._reload_interval}")
 
     def setup_schedule(self) -> None:
@@ -61,11 +63,10 @@ class DynamicTenantScheduler(PersistentScheduler):
 
             new_beat_schedule: dict[str, dict[str, Any]] = {}
 
-            store = getattr(self, "_store", None)
-            current_schedule = store.get("entries", {}) if store is not None else {}
+            current_schedule = self.schedule.items()
 
             existing_tenants = set()
-            for task_name in current_schedule.keys():
+            for task_name, _ in current_schedule:
                 if "-" in task_name:
                     existing_tenants.add(task_name.split("-")[-1])
             logger.info(f"Found {len(existing_tenants)} existing tenants in schedule")
@@ -95,11 +96,25 @@ class DynamicTenantScheduler(PersistentScheduler):
                         "current_tasks": len(current_schedule),
                     },
                 )
-                if not hasattr(self, "_store"):
-                    logger.info("Initializing store for first time")
-                    self._store: dict[str, dict] = {"entries": {}}
-                logger.info("Applying schedule updates")
-                logger.info(f"New schedule: {new_beat_schedule}")
+
+                # Create schedule entries
+                entries = {}
+                for name, entry in new_beat_schedule.items():
+                    entries[name] = self.Entry(
+                        name=name,
+                        app=self.app,
+                        task=entry["task"],
+                        schedule=entry["schedule"],
+                        options=entry.get("options", {}),
+                        kwargs=entry.get("kwargs", {}),
+                    )
+
+                # Update the schedule using the scheduler's methods
+                self.schedule.clear()
+                self.schedule.update(entries)
+
+                # Ensure changes are persisted
+                self.sync()
 
                 logger.info("Schedule update completed successfully")
             else:
@@ -115,7 +130,7 @@ class DynamicTenantScheduler(PersistentScheduler):
     ) -> bool:
         """Compare schedules to determine if an update is needed."""
         logger.debug("Comparing current and new schedules")
-        current_tasks = set(current_schedule.keys())
+        current_tasks = set(name for name, _ in current_schedule)
         new_tasks = set(new_schedule.keys())
         needs_update = current_tasks != new_tasks
         logger.debug(f"Schedule update needed: {needs_update}")
