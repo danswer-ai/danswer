@@ -117,11 +117,14 @@ def _create_doc_from_ticket(ticket: dict, domain: str) -> Document:
     text = f"Ticket description: {parse_html_page_basic(ticket.get('description_text', ''))}"
     metadata = _create_metadata_from_ticket(ticket)
 
+    # This is also used in the ID because it is more unique than the just the ticket ID
+    link = f"https://{domain}.freshdesk.com/helpdesk/tickets/{ticket['id']}"
+
     return Document(
-        id=_FRESHDESK_ID_PREFIX + str(ticket["id"]),
+        id=_FRESHDESK_ID_PREFIX + link,
         sections=[
             Section(
-                link=f"https://{domain}.freshdesk.com/helpdesk/tickets/{int(ticket['id'])}",
+                link=link,
                 text=text,
             )
         ],
