@@ -43,9 +43,15 @@ from danswer.utils.retry_wrapper import retry_builder
 
 logger = setup_logger()
 
+# This is for the initial list call to get the thread ids
 THREAD_LIST_FIELDS = "nextPageToken, threads(id)"
-THREAD_FIELDS = "threads(id, messages(id, payload(headers, parts(body(data), mimeType), parts(body(data), mimeType))))"
-SLIM_THREAD_FIELDS = "nextPageToken, threads(id)"
+
+# These are the fields to retrieve using the ID from the initial list call
+PARTS_FIELDS = "parts(body(data), mimeType)"
+PAYLOAD_FIELDS = f"payload(headers, {PARTS_FIELDS})"
+MESSAGES_FIELDS = f"messages(id, {PAYLOAD_FIELDS})"
+THREADS_FIELDS = f"threads(id, {MESSAGES_FIELDS})"
+THREAD_FIELDS = f"id, {MESSAGES_FIELDS}"
 
 EMAIL_FIELDS = [
     "cc",
@@ -72,6 +78,34 @@ def _build_time_range_query(
         return None
 
     return query
+
+
+def _clean_email_and_extract_name(email: str) -> tuple[str, str | None]:
+    email = email.strip()
+    if "<" in email and ">" in email:
+        # Handle format: "Display Name <email@domain.com>"
+        display_name = email[: email.find("<")].strip()
+        email_address = email[email.find("<") + 1 : email.find(">")].strip()
+        return email_address, display_name if display_name else None
+    else:
+        # Handle plain email address
+        return email.strip(), None
+
+
+def _get_owners_from_emails(emails: dict[str, str | None]) -> list[BasicExpertInfo]:
+    owners = []
+    for email, names in emails.items():
+        if names:
+            name_parts = names.split(" ")
+            first_name = " ".join(name_parts[:-1])
+            last_name = name_parts[-1]
+        else:
+            first_name = None
+            last_name = None
+        owners.append(
+            BasicExpertInfo(email=email, first_name=first_name, last_name=last_name)
+        )
+    return owners
 
 
 def _get_message_body(payload: dict[str, Any]) -> str:
@@ -125,18 +159,23 @@ def thread_to_document(full_thread: Dict[str, Any]) -> Document | None:
     sections = []
     semantic_identifier = ""
     updated_at = None
-    from_emails: set[str] = set()
-    other_emails: set[str] = set()
+    from_emails: dict[str, str | None] = {}
+    other_emails: dict[str, str | None] = {}
     for message in all_messages:
         section, message_metadata = message_to_section(message)
         sections.append(section)
 
         for name, value in message_metadata.items():
             if name in EMAIL_FIELDS:
+                email, display_name = _clean_email_and_extract_name(value)
                 if name == "from":
-                    from_emails.add(value)
+                    from_emails[email] = (
+                        display_name if not from_emails.get(email) else None
+                    )
                 else:
-                    other_emails.add(value)
+                    other_emails[email] = (
+                        display_name if not other_emails.get(email) else None
+                    )
 
         # If we haven't set the semantic identifier yet, set it to the subject of the first message
         if not semantic_identifier:
@@ -149,16 +188,21 @@ def thread_to_document(full_thread: Dict[str, Any]) -> Document | None:
     if updated_at:
         updated_at_datetime = time_str_to_utc(updated_at)
 
-    full_thread.get("id") or full_thread.get("messages", [{}])[0].get("id")
+    id = full_thread.get("id")
+    if not id:
+        raise ValueError("Thread ID is required")
+
+    primary_owners = _get_owners_from_emails(from_emails)
+    secondary_owners = _get_owners_from_emails(other_emails)
 
     return Document(
-        id=full_thread.get("id"),
+        id=id,
         semantic_identifier=semantic_identifier,
         sections=sections,
         source=DocumentSource.GMAIL,
         # This is used to perform permission sync
-        primary_owners=[BasicExpertInfo(email=email) for email in from_emails],
-        secondary_owners=[BasicExpertInfo(email=email) for email in other_emails],
+        primary_owners=primary_owners,
+        secondary_owners=secondary_owners,
         doc_updated_at=updated_at_datetime,
         # Not adding emails to metadata because it's already in the sections
         metadata={},
@@ -246,6 +290,8 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
                 if len(doc_batch) > self.batch_size:
                     yield doc_batch
                     doc_batch = []
+        if doc_batch:
+            yield doc_batch
 
     def _fetch_slim_threads(
         self,
@@ -260,7 +306,7 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
                 retrieval_function=gmail_service.users().threads().list,
                 list_key="threads",
                 userId=user_email,
-                fields=SLIM_THREAD_FIELDS,
+                fields=THREAD_LIST_FIELDS,
                 q=query,
             ):
                 doc_batch.append(
@@ -272,6 +318,8 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
                 if len(doc_batch) > SLIM_BATCH_SIZE:
                     yield doc_batch
                     doc_batch = []
+        if doc_batch:
+            yield doc_batch
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         try:

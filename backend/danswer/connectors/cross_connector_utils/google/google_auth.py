@@ -40,8 +40,8 @@ def get_google_oauth_creds(
             if creds.valid:
                 logger.notice("Refreshed Google Drive tokens.")
                 return creds
-        except Exception as e:
-            logger.exception(f"Failed to refresh google drive access token due to: {e}")
+        except Exception:
+            logger.exception("Failed to refresh google drive access token due to:")
             return None
 
     return None
@@ -61,6 +61,7 @@ def get_google_creds(
     service_creds = None
     new_creds_dict = None
     if DB_CREDENTIALS_DICT_TOKEN_KEY in credentials:
+        # OAUTH
         access_token_json_str = cast(str, credentials[DB_CREDENTIALS_DICT_TOKEN_KEY])
         oauth_creds = get_google_oauth_creds(
             token_json_str=access_token_json_str, source=source
@@ -76,8 +77,8 @@ def get_google_creds(
                     DB_CREDENTIALS_PRIMARY_ADMIN_KEY
                 ],
             }
-
     elif DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
+        # SERVICE ACCOUNT
         service_account_key_json_str = credentials[
             DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY
         ]
