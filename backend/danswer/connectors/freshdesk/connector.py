@@ -1,13 +1,21 @@
-import requests
 import json
-from datetime import datetime, timezone
-from typing import List, Iterator
-from danswer.file_processing.html_utils import parse_html_page_basic
+from collections.abc import Iterator
+from datetime import datetime
+from datetime import timezone
+from typing import List
+
+import requests
+
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.interfaces import GenerateDocumentsOutput, SecondsSinceUnixEpoch
-from danswer.connectors.interfaces import PollConnector, LoadConnector
-from danswer.connectors.models import ConnectorMissingCredentialError, Document, Section
+from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.connectors.models import ConnectorMissingCredentialError
+from danswer.connectors.models import Document
+from danswer.connectors.models import Section
+from danswer.file_processing.html_utils import parse_html_page_basic
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
