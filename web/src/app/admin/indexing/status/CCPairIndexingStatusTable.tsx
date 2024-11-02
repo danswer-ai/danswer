@@ -202,19 +202,21 @@ function ConnectorRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell>
           {ccPairsIndexingStatus.access_type === "public" ? (
-            <Badge variant="success" icon={FiUnlock}>
+            <Badge variant={isEditable ? "success" : "default"} icon={FiUnlock}>
               Public
             </Badge>
           ) : ccPairsIndexingStatus.access_type === "sync" ? (
             <Badge
-              variant="outline"
-              color={isEditable ? "orange" : "gray"}
+              variant={isEditable ? "orange" : "default"}
               icon={FiRefreshCw}
             >
               Sync
             </Badge>
           ) : (
-            <Badge variant="in_progress" icon={FiLock}>
+            <Badge
+              variant={isEditable ? "in_progress" : "default"}
+              icon={FiLock}
+            >
               Private
             </Badge>
           )}

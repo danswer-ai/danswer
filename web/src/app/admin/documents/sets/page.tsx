@@ -207,13 +207,17 @@ const DocumentSetTable = ({
                   </TableCell>
                   <TableCell>
                     {documentSet.is_public ? (
-                      <Badge size="md" variant="success" icon={FiUnlock}>
+                      <Badge
+                        size="md"
+                        variant={isEditable ? "success" : "default"}
+                        icon={FiUnlock}
+                      >
                         Public
                       </Badge>
                     ) : (
                       <Badge
                         size="md"
-                        variant={isEditable ? "purple" : "outline"}
+                        variant={isEditable ? "in_progress" : "outline"}
                         icon={FiLock}
                       >
                         Private
