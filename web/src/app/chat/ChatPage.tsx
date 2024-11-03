@@ -277,13 +277,13 @@ export function ChatPage({
     if (
       lastMessage &&
       lastMessage.type === "assistant" &&
-      lastMessage.toolCalls[0] &&
-      lastMessage.toolCalls[0].tool_result === undefined
+      lastMessage.toolCall &&
+      lastMessage.toolCall.tool_result === undefined
     ) {
       const newCompleteMessageMap = new Map(
         currentMessageMap(completeMessageDetail)
       );
-      const updatedMessage = { ...lastMessage, toolCalls: [] };
+      const updatedMessage = { ...lastMessage, toolCall: null };
       newCompleteMessageMap.set(lastMessage.messageId, updatedMessage);
       updateCompleteMessageDetail(currentSession, newCompleteMessageMap);
     }
@@ -513,7 +513,7 @@ export function ChatPage({
         message: "",
         type: "system",
         files: [],
-        toolCalls: [],
+        toolCall: null,
         parentMessageId: null,
         childrenMessageIds: [firstMessageId],
         latestChildMessageId: firstMessageId,
@@ -1104,7 +1104,7 @@ export function ChatPage({
     let stackTrace: string | null = null;
 
     let finalMessage: BackendMessage | null = null;
-    let toolCalls: ToolCallMetadata[] = [];
+    let toolCall: ToolCallMetadata | null = null;
 
     let initialFetchDetails: null | {
       user_message_id: number;
@@ -1209,7 +1209,7 @@ export function ChatPage({
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
-                toolCalls: [],
+                toolCall: null,
                 parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
               },
             ];
@@ -1262,17 +1262,14 @@ export function ChatPage({
                 setSelectedMessageForDocDisplay(user_message_id);
               }
             } else if (Object.hasOwn(packet, "tool_name")) {
-              toolCalls = [
-                {
-                  tool_name: (packet as ToolCallMetadata).tool_name,
-                  tool_args: (packet as ToolCallMetadata).tool_args,
-                  tool_result: (packet as ToolCallMetadata).tool_result,
-                },
-              ];
-              if (
-                !toolCalls[0].tool_result ||
-                toolCalls[0].tool_result == undefined
-              ) {
+              // Will only ever be one tool call per message
+              toolCall = {
+                tool_name: (packet as ToolCallMetadata).tool_name,
+                tool_args: (packet as ToolCallMetadata).tool_args,
+                tool_result: (packet as ToolCallMetadata).tool_result,
+              };
+
+              if (!toolCall.tool_result || toolCall.tool_result == undefined) {
                 updateChatState("toolBuilding", frozenSessionId);
               } else {
                 updateChatState("streaming", frozenSessionId);
@@ -1280,8 +1277,8 @@ export function ChatPage({
 
               // This will be consolidated in upcoming tool calls udpate,
               // but for now, we need to set query as early as possible
-              if (toolCalls[0].tool_name == SEARCH_TOOL_NAME) {
-                query = toolCalls[0].tool_args["query"];
+              if (toolCall.tool_name == SEARCH_TOOL_NAME) {
+                query = toolCall.tool_args["query"];
               }
             } else if (Object.hasOwn(packet, "file_ids")) {
               aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
@@ -1339,7 +1336,7 @@ export function ChatPage({
                 message: currMessage,
                 type: "user",
                 files: currentMessageFiles,
-                toolCalls: [],
+                toolCall: null,
                 parentMessageId: error ? null : lastSuccessfulMessageId,
                 childrenMessageIds: [
                   ...(regenerationRequest?.parentMessage?.childrenMessageIds ||
@@ -1358,7 +1355,7 @@ export function ChatPage({
                   finalMessage?.context_docs?.top_documents || documents,
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
-                toolCalls: finalMessage?.tool_calls || toolCalls,
+                toolCall: finalMessage?.tool_call || null,
                 parentMessageId: regenerationRequest
                   ? regenerationRequest?.parentMessage?.messageId!
                   : initialFetchDetails.user_message_id,
@@ -1381,7 +1378,7 @@ export function ChatPage({
             message: currMessage,
             type: "user",
             files: currentMessageFiles,
-            toolCalls: [],
+            toolCall: null,
             parentMessageId: parentMessage?.messageId || SYSTEM_MESSAGE_ID,
           },
           {
@@ -1391,7 +1388,7 @@ export function ChatPage({
             message: errorMsg,
             type: "error",
             files: aiMessageImages || [],
-            toolCalls: [],
+            toolCall: null,
             parentMessageId:
               initialFetchDetails?.user_message_id || TEMP_USER_MESSAGE_ID,
           },
@@ -2238,10 +2235,7 @@ export function ChatPage({
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
                                       )}
-                                      toolCall={
-                                        message.toolCalls &&
-                                        message.toolCalls[0]
-                                      }
+                                      toolCall={message.toolCall}
                                       isComplete={
                                         i !== messageHistory.length - 1 ||
                                         (currentSessionChatState !=

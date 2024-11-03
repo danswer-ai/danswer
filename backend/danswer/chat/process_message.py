@@ -864,17 +864,15 @@ def stream_chat_message_objects(
             if message_specific_citations
             else None,
             error=None,
-            tool_calls=(
-                [
-                    ToolCall(
-                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                        tool_name=tool_result.tool_name,
-                        tool_arguments=tool_result.tool_args,
-                        tool_result=tool_result.tool_result,
-                    )
-                ]
+            tool_call=(
+                ToolCall(
+                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                    tool_name=tool_result.tool_name,
+                    tool_arguments=tool_result.tool_args,
+                    tool_result=tool_result.tool_result,
+                )
                 if tool_result
-                else []
+                else None
             ),
         )
 
