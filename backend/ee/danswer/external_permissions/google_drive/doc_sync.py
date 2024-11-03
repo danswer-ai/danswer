@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from danswer.access.models import ExternalAccess
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
+from danswer.connectors.google_drive.resources import get_drive_service
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.models import SlimDocument
 from danswer.db.models import ConnectorCredentialPair
@@ -56,7 +57,10 @@ def _fetch_permissions_for_permission_ids(
         return permissions
 
     owner_email = permission_info.get("owner_email")
-    drive_service = google_drive_connector.get_google_resource(user_email=owner_email)
+    drive_service = get_drive_service(
+        creds=google_drive_connector.creds,
+        user_email=(owner_email or google_drive_connector.primary_admin_email),
+    )
 
     # Otherwise, fetch all permissions and update cache
     fetched_permissions = execute_paginated_retrieval(

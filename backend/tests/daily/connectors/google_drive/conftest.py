@@ -31,6 +31,30 @@ def load_env_vars(env_file: str = ".env") -> None:
 load_env_vars()
 
 
+def parse_credentials(env_str: str) -> dict:
+    """
+    Parse a double-escaped JSON string from environment variables into a Python dictionary.
+
+    Args:
+        env_str (str): The double-escaped JSON string from environment variables
+
+    Returns:
+        dict: Parsed OAuth credentials
+    """
+    # first try normally
+    try:
+        return json.loads(env_str)
+    except Exception:
+        # First, try remove extra escaping backslashes
+        unescaped = env_str.replace('\\"', '"')
+
+        # remove leading / trailing quotes
+        unescaped = unescaped.strip('"')
+
+        # Now parse the JSON
+        return json.loads(unescaped)
+
+
 @pytest.fixture
 def google_drive_oauth_connector_factory() -> Callable[..., GoogleDriveConnector]:
     def _connector_factory(
@@ -50,7 +74,7 @@ def google_drive_oauth_connector_factory() -> Callable[..., GoogleDriveConnector
         )
 
         json_string = os.environ["GOOGLE_DRIVE_OAUTH_CREDENTIALS_JSON_STR"]
-        refried_json_string = json.loads(json_string)
+        refried_json_string = json.dumps(parse_credentials(json_string))
 
         credentials_json = {
             DB_CREDENTIALS_DICT_TOKEN_KEY: refried_json_string,
@@ -84,7 +108,7 @@ def google_drive_service_acct_connector_factory() -> (
         )
 
         json_string = os.environ["GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON_STR"]
-        refried_json_string = json.loads(json_string)
+        refried_json_string = json.dumps(parse_credentials(json_string))
 
         # Load Service Account Credentials
         connector.load_credentials(

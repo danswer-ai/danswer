@@ -2,7 +2,6 @@ import io
 from datetime import datetime
 from datetime import timezone
 
-from googleapiclient.discovery import Resource  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
 
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
@@ -13,6 +12,9 @@ from danswer.connectors.google_drive.constants import ERRORS_TO_CONTINUE_ON
 from danswer.connectors.google_drive.constants import UNSUPPORTED_FILE_TYPE_CONTENT
 from danswer.connectors.google_drive.models import GDriveMimeType
 from danswer.connectors.google_drive.models import GoogleDriveFileType
+from danswer.connectors.google_drive.resources import GoogleDocsService
+from danswer.connectors.google_drive.resources import GoogleDriveService
+from danswer.connectors.google_drive.section_extraction import get_document_sections
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import docx_to_text
@@ -25,86 +27,137 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def _extract_text(file: dict[str, str], service: Resource) -> str:
+def _extract_sections_basic(
+    file: dict[str, str], service: GoogleDriveService
+) -> list[Section]:
     mime_type = file["mimeType"]
+    link = file["webViewLink"]
 
     if mime_type not in set(item.value for item in GDriveMimeType):
         # Unsupported file types can still have a title, finding this way is still useful
-        return UNSUPPORTED_FILE_TYPE_CONTENT
+        return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
-    if mime_type in [
-        GDriveMimeType.DOC.value,
-        GDriveMimeType.PPT.value,
-        GDriveMimeType.SPREADSHEET.value,
-    ]:
-        export_mime_type = (
-            "text/plain"
-            if mime_type != GDriveMimeType.SPREADSHEET.value
-            else "text/csv"
-        )
-        return (
-            service.files()
-            .export(fileId=file["id"], mimeType=export_mime_type)
-            .execute()
-            .decode("utf-8")
-        )
-    elif mime_type in [
-        GDriveMimeType.PLAIN_TEXT.value,
-        GDriveMimeType.MARKDOWN.value,
-    ]:
-        return service.files().get_media(fileId=file["id"]).execute().decode("utf-8")
-    if mime_type in [
-        GDriveMimeType.WORD_DOC.value,
-        GDriveMimeType.POWERPOINT.value,
-        GDriveMimeType.PDF.value,
-    ]:
-        response = service.files().get_media(fileId=file["id"]).execute()
-        if get_unstructured_api_key():
-            return unstructured_to_text(
-                file=io.BytesIO(response), file_name=file.get("name", file["id"])
+    try:
+        if mime_type in [
+            GDriveMimeType.DOC.value,
+            GDriveMimeType.PPT.value,
+            GDriveMimeType.SPREADSHEET.value,
+        ]:
+            export_mime_type = (
+                "text/plain"
+                if mime_type != GDriveMimeType.SPREADSHEET.value
+                else "text/csv"
             )
+            text = (
+                service.files()
+                .export(fileId=file["id"], mimeType=export_mime_type)
+                .execute()
+                .decode("utf-8")
+            )
+            return [Section(link=link, text=text)]
+        elif mime_type in [
+            GDriveMimeType.PLAIN_TEXT.value,
+            GDriveMimeType.MARKDOWN.value,
+        ]:
+            return [
+                Section(
+                    link=link,
+                    text=service.files()
+                    .get_media(fileId=file["id"])
+                    .execute()
+                    .decode("utf-8"),
+                )
+            ]
+        if mime_type in [
+            GDriveMimeType.WORD_DOC.value,
+            GDriveMimeType.POWERPOINT.value,
+            GDriveMimeType.PDF.value,
+        ]:
+            response = service.files().get_media(fileId=file["id"]).execute()
+            if get_unstructured_api_key():
+                return [
+                    Section(
+                        link=link,
+                        text=unstructured_to_text(
+                            file=io.BytesIO(response),
+                            file_name=file.get("name", file["id"]),
+                        ),
+                    )
+                ]
 
-        if mime_type == GDriveMimeType.WORD_DOC.value:
-            return docx_to_text(file=io.BytesIO(response))
-        elif mime_type == GDriveMimeType.PDF.value:
-            text, _ = read_pdf_file(file=io.BytesIO(response))
-            return text
-        elif mime_type == GDriveMimeType.POWERPOINT.value:
-            return pptx_to_text(file=io.BytesIO(response))
+            if mime_type == GDriveMimeType.WORD_DOC.value:
+                return [
+                    Section(link=link, text=docx_to_text(file=io.BytesIO(response)))
+                ]
+            elif mime_type == GDriveMimeType.PDF.value:
+                text, _ = read_pdf_file(file=io.BytesIO(response))
+                return [Section(link=link, text=text)]
+            elif mime_type == GDriveMimeType.POWERPOINT.value:
+                return [
+                    Section(link=link, text=pptx_to_text(file=io.BytesIO(response)))
+                ]
 
-    return UNSUPPORTED_FILE_TYPE_CONTENT
+        return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
+
+    except Exception:
+        return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
 
 def convert_drive_item_to_document(
-    file: GoogleDriveFileType, service: Resource
+    file: GoogleDriveFileType,
+    drive_service: GoogleDriveService,
+    docs_service: GoogleDocsService,
 ) -> Document | None:
     try:
         # Skip files that are shortcuts
         if file.get("mimeType") == DRIVE_SHORTCUT_TYPE:
             logger.info("Ignoring Drive Shortcut Filetype")
             return None
-        try:
-            text_contents = _extract_text(file, service) or ""
-        except HttpError as e:
-            reason = e.error_details[0]["reason"] if e.error_details else e.reason
-            message = e.error_details[0]["message"] if e.error_details else e.reason
-            if e.status_code == 403 and reason in ERRORS_TO_CONTINUE_ON:
-                logger.warning(
-                    f"Could not export file '{file['name']}' due to '{message}', skipping..."
-                )
-                return None
 
-            raise
+        sections: list[Section] = []
+
+        # Special handling for Google Docs to preserve structure, link
+        # to headers
+        if file.get("mimeType") == GDriveMimeType.DOC.value:
+            try:
+                sections = get_document_sections(docs_service, file["id"])
+            except Exception as e:
+                logger.warning(
+                    f"Ran into exception '{e}' when pulling sections from Google Doc '{file['name']}'."
+                    " Falling back to basic extraction."
+                )
+
+        # NOTE: this will run for either (1) the above failed or (2) the file is not a Google Doc
+        if not sections:
+            try:
+                # For all other file types just extract the text
+                sections = _extract_sections_basic(file, drive_service)
+
+            except HttpError as e:
+                reason = e.error_details[0]["reason"] if e.error_details else e.reason
+                message = e.error_details[0]["message"] if e.error_details else e.reason
+                if e.status_code == 403 and reason in ERRORS_TO_CONTINUE_ON:
+                    logger.warning(
+                        f"Could not export file '{file['name']}' due to '{message}', skipping..."
+                    )
+                    return None
+
+                raise
+
+        if not sections:
+            return None
 
         return Document(
             id=file["webViewLink"],
-            sections=[Section(link=file["webViewLink"], text=text_contents)],
+            sections=sections,
             source=DocumentSource.GOOGLE_DRIVE,
             semantic_identifier=file["name"],
             doc_updated_at=datetime.fromisoformat(file["modifiedTime"]).astimezone(
                 timezone.utc
             ),
-            metadata={} if text_contents else {IGNORE_FOR_QA: "True"},
+            metadata={}
+            if any(section.text for section in sections)
+            else {IGNORE_FOR_QA: "True"},
             additional_info=file.get("id"),
         )
     except Exception as e:

@@ -18,6 +18,7 @@ _SHARED_DRIVE_2_FILE_IDS = list(range(40, 45))
 _FOLDER_2_FILE_IDS = list(range(45, 50))
 _FOLDER_2_1_FILE_IDS = list(range(50, 55))
 _FOLDER_2_2_FILE_IDS = list(range(55, 60))
+_SECTIONS_FILE_IDS = [61]
 
 _PUBLIC_FOLDER_RANGE = _FOLDER_1_2_FILE_IDS
 _PUBLIC_FILE_IDS = list(range(55, 57))
@@ -64,6 +65,7 @@ DRIVE_ID_MAPPING: dict[str, list[int]] = {
     "FOLDER_2": _FOLDER_2_FILE_IDS,
     "FOLDER_2_1": _FOLDER_2_1_FILE_IDS,
     "FOLDER_2_2": _FOLDER_2_2_FILE_IDS,
+    "SECTIONS": _SECTIONS_FILE_IDS,
 }
 
 # Dictionary for emails
@@ -100,6 +102,7 @@ ACCESS_MAPPING: dict[str, list[int]] = {
         + _FOLDER_2_FILE_IDS
         + _FOLDER_2_1_FILE_IDS
         + _FOLDER_2_2_FILE_IDS
+        + _SECTIONS_FILE_IDS
     ),
     # This user has access to drive 1
     # This user has redundant access to folder 1 because of group access
@@ -127,6 +130,21 @@ ACCESS_MAPPING: dict[str, list[int]] = {
     "TEST_USER_3": _TEST_USER_3_FILE_IDS,
 }
 
+SPECIAL_FILE_ID_TO_CONTENT_MAP: dict[int, str] = {
+    61: (
+        "Title\n\n"
+        "This is a Google Doc with sections - "
+        "Section 1\n\n"
+        "Section 1 content - "
+        "Sub-Section 1-1\n\n"
+        "Sub-Section 1-1 content - "
+        "Sub-Section 1-2\n\n"
+        "Sub-Section 1-2 content - "
+        "Section 2\n\n"
+        "Section 2 content"
+    ),
+}
+
 
 file_name_template = "file_{}.txt"
 file_text_template = "This is file {}"
@@ -142,18 +160,28 @@ def print_discrepencies(expected: set[str], retrieved: set[str]) -> None:
         print(expected - retrieved)
 
 
+def get_file_content(file_id: int) -> str:
+    if file_id in SPECIAL_FILE_ID_TO_CONTENT_MAP:
+        return SPECIAL_FILE_ID_TO_CONTENT_MAP[file_id]
+
+    return file_text_template.format(file_id)
+
+
 def assert_retrieved_docs_match_expected(
     retrieved_docs: list[Document], expected_file_ids: Sequence[int]
 ) -> None:
     expected_file_names = {
         file_name_template.format(file_id) for file_id in expected_file_ids
     }
-    expected_file_texts = {
-        file_text_template.format(file_id) for file_id in expected_file_ids
-    }
+    expected_file_texts = {get_file_content(file_id) for file_id in expected_file_ids}
 
     retrieved_file_names = set([doc.semantic_identifier for doc in retrieved_docs])
-    retrieved_texts = set([doc.sections[0].text for doc in retrieved_docs])
+    retrieved_texts = set(
+        [
+            " - ".join([section.text for section in doc.sections])
+            for doc in retrieved_docs
+        ]
+    )
 
     # Check file names
     print_discrepencies(expected_file_names, retrieved_file_names)

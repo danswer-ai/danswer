@@ -28,6 +28,8 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+# NOTE: do not need https://www.googleapis.com/auth/documents.readonly
+# this is counted under `/auth/drive.readonly`
 GOOGLE_DRIVE_SCOPES = [
     "https://www.googleapis.com/auth/drive.readonly",
     "https://www.googleapis.com/auth/drive.metadata.readonly",

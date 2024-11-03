@@ -3,8 +3,6 @@ from typing import Any
 
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
-from googleapiclient.discovery import build  # type: ignore
-from googleapiclient.discovery import Resource  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.connectors.google_drive.connector_auth import (
@@ -24,6 +22,9 @@ from danswer.connectors.google_drive.file_retrieval import get_files_in_my_drive
 from danswer.connectors.google_drive.file_retrieval import get_files_in_shared_drive
 from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
 from danswer.connectors.google_drive.models import GoogleDriveFileType
+from danswer.connectors.google_drive.resources import get_admin_service
+from danswer.connectors.google_drive.resources import get_drive_service
+from danswer.connectors.google_drive.resources import get_google_docs_service
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -103,12 +104,32 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         shared_folder_url_list = _extract_str_list_from_comma_str(shared_folder_urls)
         self.shared_folder_ids = _extract_ids_from_urls(shared_folder_url_list)
 
-        self.primary_admin_email: str | None = None
+        self._primary_admin_email: str | None = None
         self.google_domain: str | None = None
 
-        self.creds: OAuthCredentials | ServiceAccountCredentials | None = None
+        self._creds: OAuthCredentials | ServiceAccountCredentials | None = None
 
         self._TRAVERSED_PARENT_IDS: set[str] = set()
+
+    @property
+    def primary_admin_email(self) -> str:
+        if self._primary_admin_email is None:
+            raise RuntimeError(
+                "Primary admin email missing, "
+                "should not call this property "
+                "before calling load_credentials"
+            )
+        return self._primary_admin_email
+
+    @property
+    def creds(self) -> OAuthCredentials | ServiceAccountCredentials:
+        if self._creds is None:
+            raise RuntimeError(
+                "Creds missing, "
+                "should not call this property "
+                "before calling load_credentials"
+            )
+        return self._creds
 
     def _update_traversed_parent_ids(self, folder_id: str) -> None:
         self._TRAVERSED_PARENT_IDS.add(folder_id)
@@ -116,29 +137,16 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
         primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
         self.google_domain = primary_admin_email.split("@")[1]
-        self.primary_admin_email = primary_admin_email
+        self._primary_admin_email = primary_admin_email
 
-        self.creds, new_creds_dict = get_google_drive_creds(credentials)
+        self._creds, new_creds_dict = get_google_drive_creds(credentials)
         return new_creds_dict
 
-    def get_google_resource(
-        self,
-        service_name: str = "drive",
-        service_version: str = "v3",
-        user_email: str | None = None,
-    ) -> Resource:
-        if isinstance(self.creds, ServiceAccountCredentials):
-            creds = self.creds.with_subject(user_email or self.primary_admin_email)
-            service = build(service_name, service_version, credentials=creds)
-        elif isinstance(self.creds, OAuthCredentials):
-            service = build(service_name, service_version, credentials=self.creds)
-        else:
-            raise PermissionError("No credentials found")
-
-        return service
-
     def _get_all_user_emails(self) -> list[str]:
-        admin_service = self.get_google_resource("admin", "directory_v1")
+        admin_service = get_admin_service(
+            creds=self.creds,
+            user_email=self.primary_admin_email,
+        )
         emails = []
         for user in execute_paginated_retrieval(
             retrieval_function=admin_service.users().list,
@@ -156,7 +164,10 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
-        primary_drive_service = self.get_google_resource()
+        primary_drive_service = get_drive_service(
+            creds=self.creds,
+            user_email=self.primary_admin_email,
+        )
 
         if self.include_shared_drives:
             shared_drive_urls = self.shared_drive_ids
@@ -212,7 +223,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
 
             for email in all_user_emails:
                 logger.info(f"Fetching personal files for user: {email}")
-                user_drive_service = self.get_google_resource(user_email=email)
+                user_drive_service = get_drive_service(self.creds, user_email=email)
 
                 yield from get_files_in_my_drive(
                     service=user_drive_service,
@@ -233,11 +244,16 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             start=start,
             end=end,
         ):
-            user_email = file.get("owners", [{}])[0].get("emailAddress")
-            service = self.get_google_resource(user_email=user_email)
+            user_email = (
+                file.get("owners", [{}])[0].get("emailAddress")
+                or self.primary_admin_email
+            )
+            user_drive_service = get_drive_service(self.creds, user_email=user_email)
+            docs_service = get_google_docs_service(self.creds, user_email=user_email)
             if doc := convert_drive_item_to_document(
                 file=file,
-                service=service,
+                drive_service=user_drive_service,
+                docs_service=docs_service,
             ):
                 doc_batch.append(doc)
             if len(doc_batch) >= self.batch_size:

@@ -6,6 +6,7 @@ from unittest.mock import patch
 from danswer.access.models import ExternalAccess
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
+from danswer.connectors.google_drive.resources import get_admin_service
 from ee.danswer.external_permissions.google_drive.doc_sync import (
     _get_permissions_from_slim_doc,
 )
@@ -72,7 +73,10 @@ def assert_correct_access_for_user(
 # This function is supposed to map to the group_sync.py file for the google drive connector
 # TODO: Call it directly
 def get_group_map(google_drive_connector: GoogleDriveConnector) -> dict[str, list[str]]:
-    admin_service = google_drive_connector.get_google_resource("admin", "directory_v1")
+    admin_service = get_admin_service(
+        creds=google_drive_connector.creds,
+        user_email=google_drive_connector.primary_admin_email,
+    )
 
     group_map: dict[str, list[str]] = {}
     for group in execute_paginated_retrieval(
@@ -138,6 +142,7 @@ def test_all_permissions(
         + DRIVE_ID_MAPPING["FOLDER_2"]
         + DRIVE_ID_MAPPING["FOLDER_2_1"]
         + DRIVE_ID_MAPPING["FOLDER_2_2"]
+        + DRIVE_ID_MAPPING["SECTIONS"]
     )
 
     # Should get everything

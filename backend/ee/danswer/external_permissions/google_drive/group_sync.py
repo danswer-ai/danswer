@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
+from danswer.connectors.google_drive.resources import get_admin_service
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
@@ -19,8 +20,9 @@ def gdrive_group_sync(
         **cc_pair.connector.connector_specific_config
     )
     google_drive_connector.load_credentials(cc_pair.credential.credential_json)
-
-    admin_service = google_drive_connector.get_google_resource("admin", "directory_v1")
+    admin_service = get_admin_service(
+        google_drive_connector.creds, google_drive_connector.primary_admin_email
+    )
 
     danswer_groups: list[ExternalUserGroup] = []
     for group in execute_paginated_retrieval(
