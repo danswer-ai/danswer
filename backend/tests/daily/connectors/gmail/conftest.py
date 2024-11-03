@@ -14,7 +14,21 @@ from danswer.connectors.cross_connector_utils.google.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
 from danswer.connectors.gmail.connector import GmailConnector
-from tests.load_env_vars import load_env_vars
+
+
+def load_env_vars(env_file: str = ".env") -> None:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    env_path = os.path.join(current_dir, env_file)
+    try:
+        with open(env_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    key, value = line.split("=", 1)
+                    os.environ[key] = value.strip()
+        print("Successfully loaded environment variables")
+    except FileNotFoundError:
+        print(f"File {env_file} not found")
 
 
 # Load environment variables at the module level
