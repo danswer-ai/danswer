@@ -14,7 +14,7 @@ from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import FileDescriptor
 from danswer.file_store.models import InMemoryChatFile
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 
 def load_chat_file(
