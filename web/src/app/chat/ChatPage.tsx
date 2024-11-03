@@ -10,7 +10,7 @@ import {
   ChatSessionSharedStatus,
   DocumentsResponse,
   FileDescriptor,
-  ImageGenerationDisplay,
+  FileChatDisplay,
   Message,
   MessageResponseIDInfo,
   RetrievalType,
@@ -1281,7 +1281,7 @@ export function ChatPage({
                 query = toolCall.tool_args["query"];
               }
             } else if (Object.hasOwn(packet, "file_ids")) {
-              aiMessageImages = (packet as ImageGenerationDisplay).file_ids.map(
+              aiMessageImages = (packet as FileChatDisplay).file_ids.map(
                 (fileId) => {
                   return {
                     id: fileId,
