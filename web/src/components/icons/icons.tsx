@@ -15,7 +15,6 @@ import {
   ArrowSquareOut,
 } from "@phosphor-icons/react";
 import {
-  FiCheck,
   FiChevronsDown,
   FiChevronsUp,
   FiEdit2,
@@ -30,17 +29,10 @@ import {
   FiChevronRight,
   FiChevronLeft,
   FiAlertTriangle,
-  FiZoomIn,
   FiCopy,
-  FiBookmark,
   FiCpu,
   FiInfo,
-  FiUploadCloud,
-  FiUser,
-  FiUsers,
   FiBarChart2,
-  FiDatabase,
-  FiSlack,
 } from "react-icons/fi";
 import { SiBookstack } from "react-icons/si";
 import Image, { StaticImageData } from "next/image";

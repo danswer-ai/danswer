@@ -17,11 +17,10 @@ import { getSecondsUntilExpiration } from "@/lib/time";
 import AuthFlowContainer from "@/components/auth/AuthFlowContainer";
 import CardSection from "@/components/admin/CardSection";
 
-const Page = async ({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+const Page = async (props: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
+  const searchParams = await props.searchParams;
   const autoRedirectDisabled = searchParams?.disableAutoRedirect === "true";
 
   // catch cases where the backend is completely unreachable here

@@ -13,7 +13,8 @@ import {
 } from "@/lib/assistants/fetchAssistantsSS";
 import { getStandardAnswerCategoriesIfEE } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 
-async function Page({ params }: { params: { id: string } }) {
+async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const tasks = [
     fetchSS("/manage/admin/slack-bot/config"),
     fetchSS("/manage/document-set"),
