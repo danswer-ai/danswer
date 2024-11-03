@@ -59,7 +59,7 @@ def _fetch_permissions_for_permission_ids(
     owner_email = permission_info.get("owner_email")
     drive_service = get_drive_service(
         creds=google_drive_connector.creds,
-        user_email=owner_email,
+        user_email=(owner_email or google_drive_connector.primary_admin_email),
     )
 
     # Otherwise, fetch all permissions and update cache

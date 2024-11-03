@@ -142,6 +142,7 @@ def test_all_permissions(
         + DRIVE_ID_MAPPING["FOLDER_2"]
         + DRIVE_ID_MAPPING["FOLDER_2_1"]
         + DRIVE_ID_MAPPING["FOLDER_2_2"]
+        + DRIVE_ID_MAPPING["SECTIONS"]
     )
 
     # Should get everything
