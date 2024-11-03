@@ -1321,7 +1321,6 @@ class StarterMessage(TypedDict):
     in Postgres"""
 
     name: str
-    description: str
     message: str
 
 
