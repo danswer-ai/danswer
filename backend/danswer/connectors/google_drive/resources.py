@@ -47,5 +47,6 @@ def get_drive_service(
 
 def get_admin_service(
     creds: ServiceAccountCredentials | OAuthCredentials,
+    user_email: str,
 ) -> AdminService:
-    return _get_google_service("admin", "directory_v1", creds)
+    return _get_google_service("admin", "directory_v1", creds, user_email)

@@ -104,12 +104,32 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         shared_folder_url_list = _extract_str_list_from_comma_str(shared_folder_urls)
         self.shared_folder_ids = _extract_ids_from_urls(shared_folder_url_list)
 
-        self.primary_admin_email: str | None = None
+        self._primary_admin_email: str | None = None
         self.google_domain: str | None = None
 
-        self.creds: OAuthCredentials | ServiceAccountCredentials | None = None
+        self._creds: OAuthCredentials | ServiceAccountCredentials | None = None
 
         self._TRAVERSED_PARENT_IDS: set[str] = set()
+
+    @property
+    def primary_admin_email(self) -> str:
+        if self._primary_admin_email is None:
+            raise RuntimeError(
+                "Primary admin email missing, "
+                "should not call this property "
+                "before calling load_credentials"
+            )
+        return self._primary_admin_email
+
+    @property
+    def creds(self) -> OAuthCredentials | ServiceAccountCredentials:
+        if self._creds is None:
+            raise RuntimeError(
+                "Creds missing, "
+                "should not call this property "
+                "before calling load_credentials"
+            )
+        return self._creds
 
     def _update_traversed_parent_ids(self, folder_id: str) -> None:
         self._TRAVERSED_PARENT_IDS.add(folder_id)
@@ -117,13 +137,16 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
         primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
         self.google_domain = primary_admin_email.split("@")[1]
-        self.primary_admin_email = primary_admin_email
+        self._primary_admin_email = primary_admin_email
 
-        self.creds, new_creds_dict = get_google_drive_creds(credentials)
+        self._creds, new_creds_dict = get_google_drive_creds(credentials)
         return new_creds_dict
 
     def _get_all_user_emails(self) -> list[str]:
-        admin_service = get_admin_service(self.creds)
+        admin_service = get_admin_service(
+            creds=self.creds,
+            user_email=self.primary_admin_email,
+        )
         emails = []
         for user in execute_paginated_retrieval(
             retrieval_function=admin_service.users().list,
@@ -142,7 +165,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
         primary_drive_service = get_drive_service(
-            self.creds, user_email=self.primary_admin_email
+            creds=self.creds,
+            user_email=self.primary_admin_email,
         )
 
         if self.include_shared_drives:
@@ -220,7 +244,10 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             start=start,
             end=end,
         ):
-            user_email = file.get("owners", [{}])[0].get("emailAddress")
+            user_email = (
+                file.get("owners", [{}])[0].get("emailAddress")
+                or self.primary_admin_email
+            )
             user_drive_service = get_drive_service(self.creds, user_email=user_email)
             docs_service = get_google_docs_service(self.creds, user_email=user_email)
             if doc := convert_drive_item_to_document(

@@ -114,11 +114,20 @@ def convert_drive_item_to_document(
             logger.info("Ignoring Drive Shortcut Filetype")
             return None
 
+        sections: list[Section] = []
+
         # Special handling for Google Docs to preserve structure, link
         # to headers
         if file.get("mimeType") == GDriveMimeType.DOC.value:
-            sections = get_document_sections(docs_service, file["id"])
-        else:
+            try:
+                sections = get_document_sections(docs_service, file["id"])
+            except Exception as e:
+                logger.warning(
+                    f"Ran into exception '{e}' when pulling sections from Google Doc '{file['name']}'."
+                    " Falling back to basic extraction."
+                )
+
+        if not sections:
             try:
                 # For all other file types just extract the text
                 sections = _extract_sections_basic(file, drive_service)

@@ -6,7 +6,7 @@ ALL_FILES = list(range(0, 60))
 SHARED_DRIVE_FILES = list(range(20, 25))
 
 
-_ADMIN_FILE_IDS = list(range(0, 5)) + [61]  # Google Doc with sections
+_ADMIN_FILE_IDS = list(range(0, 5))
 _TEST_USER_1_FILE_IDS = list(range(5, 10))
 _TEST_USER_2_FILE_IDS = list(range(10, 15))
 _TEST_USER_3_FILE_IDS = list(range(15, 20))
@@ -18,6 +18,7 @@ _SHARED_DRIVE_2_FILE_IDS = list(range(40, 45))
 _FOLDER_2_FILE_IDS = list(range(45, 50))
 _FOLDER_2_1_FILE_IDS = list(range(50, 55))
 _FOLDER_2_2_FILE_IDS = list(range(55, 60))
+_SECTIONS_FILE_IDS = [61]
 
 _PUBLIC_FOLDER_RANGE = _FOLDER_1_2_FILE_IDS
 _PUBLIC_FILE_IDS = list(range(55, 57))
@@ -64,6 +65,7 @@ DRIVE_ID_MAPPING: dict[str, list[int]] = {
     "FOLDER_2": _FOLDER_2_FILE_IDS,
     "FOLDER_2_1": _FOLDER_2_1_FILE_IDS,
     "FOLDER_2_2": _FOLDER_2_2_FILE_IDS,
+    "SECTIONS": _SECTIONS_FILE_IDS,
 }
 
 # Dictionary for emails
@@ -100,6 +102,7 @@ ACCESS_MAPPING: dict[str, list[int]] = {
         + _FOLDER_2_FILE_IDS
         + _FOLDER_2_1_FILE_IDS
         + _FOLDER_2_2_FILE_IDS
+        + _SECTIONS_FILE_IDS
     ),
     # This user has access to drive 1
     # This user has redundant access to folder 1 because of group access
@@ -128,7 +131,18 @@ ACCESS_MAPPING: dict[str, list[int]] = {
 }
 
 SPECIAL_FILE_ID_TO_CONTENT_MAP: dict[int, str] = {
-    61: "This is a Google Doc with sections - Section 1 - Section 2",
+    61: (
+        "Title\n\n"
+        "This is a Google Doc with sections - "
+        "Section 1\n\n"
+        "Section 1 content - "
+        "Sub-Section 1-1\n\n"
+        "Sub-Section 1-1 content - "
+        "Sub-Section 1-2\n\n"
+        "Sub-Section 1-2 content - "
+        "Section 2\n\n"
+        "Section 2 content"
+    ),
 }
 
 
