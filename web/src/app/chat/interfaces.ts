@@ -136,7 +136,7 @@ export interface DocumentsResponse {
   rephrased_query: string | null;
 }
 
-export interface ImageGenerationDisplay {
+export interface FileChatDisplay {
   file_ids: string[];
 }
 
