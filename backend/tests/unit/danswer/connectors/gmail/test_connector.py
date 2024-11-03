@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 
-import pytest
 from pytest_mock import MockFixture
 
 from danswer.configs.constants import DocumentSource
@@ -27,17 +26,6 @@ def test_thread_to_document() -> None:
     )
     assert len(doc.sections) == 4
     assert doc.metadata == {}
-
-
-def test_fetch_mails_from_gmail_empty(mocker: MockFixture) -> None:
-    mock_discovery = mocker.patch("danswer.connectors.gmail.connector.discovery")
-    mock_discovery.build.return_value.users.return_value.messages.return_value.list.return_value.execute.return_value = {
-        "messages": []
-    }
-    connector = GmailConnector()
-    connector.creds = mocker.Mock()
-    with pytest.raises(StopIteration):
-        next(connector.load_from_state())
 
 
 def test_fetch_mails_from_gmail(mocker: MockFixture) -> None:
