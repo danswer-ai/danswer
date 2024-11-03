@@ -38,8 +38,10 @@ from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
+from danswer.db.auth import get_total_users_count
 from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_session
+from danswer.db.engine import get_session_with_tenant
 from danswer.db.models import AccessToken
 from danswer.db.models import DocumentSet__User
 from danswer.db.models import Persona__User
@@ -63,6 +65,7 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.db.api_key import is_api_key_email_address
 from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
 from ee.danswer.db.user_group import remove_curator_status__no_commit
+from ee.danswer.server.tenants.billing import register_tenant_users
 from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.provisioning import remove_users_from_tenant
 from shared_configs.configs import MULTI_TENANT
@@ -284,6 +287,14 @@ def deactivate_user(
     user_to_deactivate.is_active = False
     db_session.add(user_to_deactivate)
     db_session.commit()
+
+    if MULTI_TENANT:
+        # We will always have set the context var (in `create` and `oauth_callback`)
+        with get_session_with_tenant() as db_session:
+            register_tenant_users(
+                CURRENT_TENANT_ID_CONTEXTVAR.get(),
+                get_total_users_count(db_session),
+            )
 
 
 @router.delete("/manage/admin/delete-user")

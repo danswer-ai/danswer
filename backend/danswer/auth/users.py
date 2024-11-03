@@ -429,6 +429,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         request: Optional[Request] = None,
     ) -> None:
         logger.notice(f"User {user.id} has registered.")
+
         if MULTI_TENANT:
             # We will always have set the context var (in `create` and `oauth_callback`)
             with get_session_with_tenant() as db_session:
