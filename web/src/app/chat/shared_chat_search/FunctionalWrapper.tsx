@@ -38,7 +38,7 @@ const ToggleSwitch = () => {
   return (
     <div className="bg-background-toggle mobile:mt-8 flex rounded-full p-1">
       <div
-        className={` mobile:mt-8 top-1 bottom-1 ${
+        className={`absolute mobile:mt-8 top-1 bottom-1 ${
           activeTab === "chat" ? "w-[45%]" : "w-[50%]"
         } bg-white rounded-full shadow ${
           isInitialLoad ? "" : "transition-transform duration-300 ease-in-out"
@@ -53,7 +53,7 @@ const ToggleSwitch = () => {
         onClick={() => handleTabChange("search")}
       >
         <SearchIcon size={16} className="mr-2" />
-        <div className="flex items-center">
+        <div className="flex  items-center">
           Search
           <div className="ml-2 flex content-center">
             <span className="leading-none pb-[1px] my-auto">
@@ -145,14 +145,10 @@ export default function FunctionalWrapper({
 
   return (
     <>
-      <div className="overscroll-y-contain overflow-y-scroll z-50 overscroll-contain left-0 top-0 w-full h-svh">
-        {content(toggledSidebar, toggle)}
-      </div>
-
       {(!settings ||
         (settings.search_page_enabled && settings.chat_page_enabled)) && (
         <div
-          className={`mobile:hidden flex absolute ${
+          className={`mobile:hidden z-30 flex fixed ${
             chatBannerPresent ? (twoLines ? "top-20" : "top-14") : "top-4"
           } left-1/2 transform -translate-x-1/2`}
         >
@@ -166,6 +162,10 @@ export default function FunctionalWrapper({
           </div>
         </div>
       )}
+
+      <div className="overscroll-y-contain overflow-y-scroll overscroll-contain left-0 top-0 w-full h-svh">
+        {content(toggledSidebar, toggle)}
+      </div>
     </>
   );
 }

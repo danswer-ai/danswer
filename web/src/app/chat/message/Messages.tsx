@@ -71,7 +71,7 @@ function FileDisplay({
   files: FileDescriptor[];
   alignBubble?: boolean;
 }) {
-  const [close, setClose] = useState(false);
+  const [close, setClose] = useState(true);
   const imageFiles = files.filter((file) => file.type === ChatFileType.IMAGE);
   const nonImgFiles = files.filter(
     (file) => file.type !== ChatFileType.IMAGE && file.type !== ChatFileType.CSV

@@ -24,6 +24,7 @@ export interface ContentComponentProps {
   fileDescriptor: FileDescriptor;
   isLoading: boolean;
   fadeIn: boolean;
+  expanded?: boolean;
 }
 
 const ExpandableContentWrapper: React.FC<ExpandableContentWrapperProps> = ({
@@ -64,7 +65,7 @@ const ExpandableContentWrapper: React.FC<ExpandableContentWrapperProps> = ({
     <div
       className={`${
         !expanded ? "w-message-sm" : "w-full"
-      } !rounded !rounded-lg overflow-y-hidden border border-border`}
+      } !rounded !rounded-lg overflow-y-hidden border h-full border-border`}
     >
       <CardHeader className="w-full py-4 border-b border-border bg-white z-[10] top-0">
         <div className="flex justify-between items-center">
@@ -100,12 +101,17 @@ const ExpandableContentWrapper: React.FC<ExpandableContentWrapperProps> = ({
           </div>
         </div>
       </CardHeader>
-      <Card className="!rounded-none w-full max-h-[600px] p-0 relative overflow-x-scroll overflow-y-scroll mx-auto">
+      <Card
+        className={`!rounded-none w-full ${
+          expanded ? "max-h-[600px]" : "max-h-[300px] h"
+        } p-0 relative overflow-x-scroll overflow-y-scroll mx-auto`}
+      >
         <CardContent className="p-0">
           <ContentComponent
             fileDescriptor={fileDescriptor}
             isLoading={isLoading}
             fadeIn={fadeIn}
+            expanded={expanded}
           />
         </CardContent>
       </Card>

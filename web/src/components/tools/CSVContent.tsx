@@ -15,6 +15,7 @@ const CsvContent: React.FC<ContentComponentProps> = ({
   fileDescriptor,
   isLoading,
   fadeIn,
+  expanded = false,
 }) => {
   const [data, setData] = useState<Record<string, string>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -89,7 +90,11 @@ const CsvContent: React.FC<ContentComponentProps> = ({
         fadeIn ? "opacity-100" : "opacity-0"
       }`}
     >
-      <div className="overflow-y-hidden flex relative max-h-[400px]">
+      <div
+        className={`overflow-y-hidden flex relative ${
+          expanded ? "max-h-2/3" : "max-h-[300px]"
+        }`}
+      >
         <Table>
           <TableHeader className="sticky z-[1000] top-0">
             <TableRow className="hover:bg-background-125 bg-background-125">
