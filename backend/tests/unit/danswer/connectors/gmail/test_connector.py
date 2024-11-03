@@ -13,7 +13,7 @@ from danswer.connectors.gmail.connector import thread_to_document
 from danswer.connectors.models import Document
 
 
-def test_email_to_document() -> None:
+def test_thread_to_document() -> None:
     json_path = os.path.join(os.path.dirname(__file__), "thread.json")
     with open(json_path, "r") as f:
         full_email_thread = json.load(f)
