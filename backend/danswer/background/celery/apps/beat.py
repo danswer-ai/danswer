@@ -23,7 +23,7 @@ class DynamicTenantScheduler(PersistentScheduler):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         logger.info("Initializing DynamicTenantScheduler")
         super().__init__(*args, **kwargs)
-        self._reload_interval = timedelta(minutes=0.1)
+        self._reload_interval = timedelta(minutes=2)
         self._last_reload = self.app.now() - self._reload_interval
         # Let the parent class handle store initialization
         self.setup_schedule()
@@ -36,7 +36,6 @@ class DynamicTenantScheduler(PersistentScheduler):
         logger.info("Initial schedule setup complete")
 
     def tick(self) -> float:
-        logger.info("Tick started")
         retval = super().tick()
         now = self.app.now()
         if (
