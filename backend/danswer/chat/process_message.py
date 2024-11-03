@@ -779,8 +779,6 @@ def stream_chat_message_objects(
                     img_generation_response = cast(
                         list[ImageGenerationResponse], packet.response
                     )
-                    print(img_generation_response[0].__dict__)
-                    print(img_generation_response)
 
                     file_ids = save_files_from_urls(
                         [img.url for img in img_generation_response]
