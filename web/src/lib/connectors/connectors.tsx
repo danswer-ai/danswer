@@ -950,7 +950,6 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     values: [],
     advanced_values: [],
   },
-  
 };
 export function createConnectorInitialValues(
   connector: ConfigurableSources
@@ -1209,7 +1208,6 @@ export interface AsanaConfig {
 }
 
 export interface FreshdeskConfig {}
-
 
 export interface MediaWikiConfig extends MediaWikiBaseConfig {
   hostname: string;

@@ -345,10 +345,13 @@ export function CCPairIndexingStatusTable({
       Object.values(connectorsToggled).filter(Boolean).length;
     const shouldToggleOn = currentToggledCount < sortedSources.length / 2;
 
-    const connectors = sortedSources.reduce((acc, source) => {
-      acc[source] = shouldToggleOn;
-      return acc;
-    }, {} as Record<ValidSources, boolean>);
+    const connectors = sortedSources.reduce(
+      (acc, source) => {
+        acc[source] = shouldToggleOn;
+        return acc;
+      },
+      {} as Record<ValidSources, boolean>
+    );
 
     setConnectorsToggled(connectors);
     Cookies.set(TOGGLED_CONNECTORS_COOKIE_NAME, JSON.stringify(connectors));
