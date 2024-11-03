@@ -50,9 +50,9 @@ def gmail_doc_sync(
             if slim_doc.perm_sync_data is None:
                 logger.warning(f"No permissions found for document {slim_doc.id}")
                 continue
-            if user_emails := slim_doc.perm_sync_data.get("user_emails"):
+            if user_email := slim_doc.perm_sync_data.get("user_email"):
                 ext_access = ExternalAccess(
-                    external_user_emails=set(user_emails),
+                    external_user_emails=set([user_email]),
                     external_user_group_ids=set(),
                     is_public=False,
                 )

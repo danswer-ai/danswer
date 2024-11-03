@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Any
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -17,7 +18,7 @@ This thread was 4 emails long:
     admin@onyx-test.com -> test_user_2@onyx-test.com + BCC: test_user_3@onyx-test.com
     test_user_3@onyx-test.com -> admin@onyx-test.com
 """
-_THREAD_1_BY_ID: dict[str, dict[str, str]] = {
+_THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
     "192edefb315737c3": {
         "email": "admin@onyx-test.com",
         "sections_count": 4,
@@ -85,7 +86,9 @@ def test_slim_docs_retrieval(
     assert len(retrieved_slim_docs) == 4
 
     for doc in retrieved_slim_docs:
-        user_email = doc.perm_sync_data["user_email"]
+        permission_info = doc.perm_sync_data
+        assert isinstance(permission_info, dict)
+        user_email = permission_info["user_email"]
         assert _THREAD_1_BY_ID[doc.id]["email"] == user_email
 
 
@@ -107,12 +110,14 @@ def test_docs_retrieval(
 
     for doc in retrieved_docs:
         id = doc.id
-        retrieved_primary_owner_emails = set(
-            [owner.email for owner in doc.primary_owners]
-        )
-        retrieved_secondary_owner_emails = set(
-            [owner.email for owner in doc.secondary_owners]
-        )
+        if doc.primary_owners:
+            retrieved_primary_owner_emails = set(
+                [owner.email for owner in doc.primary_owners]
+            )
+        if doc.secondary_owners:
+            retrieved_secondary_owner_emails = set(
+                [owner.email for owner in doc.secondary_owners]
+            )
         assert _THREAD_1_BY_ID[id]["sections_count"] == len(doc.sections)
         assert _THREAD_1_BY_ID[id]["primary_owners"] == retrieved_primary_owner_emails
         assert (
