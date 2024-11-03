@@ -127,6 +127,7 @@ def convert_drive_item_to_document(
                     " Falling back to basic extraction."
                 )
 
+        # NOTE: this will run for either (1) the above failed or (2) the file is not a Google Doc
         if not sections:
             try:
                 # For all other file types just extract the text
