@@ -1355,7 +1355,7 @@ export function ChatPage({
                   finalMessage?.context_docs?.top_documents || documents,
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
-                toolCall: finalMessage?.tool_call || null,
+                toolCall: finalMessage?.tool_call || toolCall,
                 parentMessageId: regenerationRequest
                   ? regenerationRequest?.parentMessage?.messageId!
                   : initialFetchDetails.user_message_id,
