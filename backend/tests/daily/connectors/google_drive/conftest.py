@@ -45,7 +45,7 @@ def parse_oauth_credentials(env_str: str) -> dict:
     try:
         return json.loads(env_str)
     except Exception:
-        # First, remove the literal backslashes
+        # First, try remove extra escaping backslashes
         unescaped = env_str.replace('\\"', '"')
 
         # remove leading / trailing quotes
