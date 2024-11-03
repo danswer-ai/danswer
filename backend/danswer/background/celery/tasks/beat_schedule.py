@@ -14,7 +14,7 @@ tasks_to_schedule = [
     {
         "name": "check-for-connector-deletion",
         "task": "check_for_connector_deletion_task",
-        "schedule": timedelta(seconds=60),
+        "schedule": timedelta(seconds=20),
         "options": {"priority": DanswerCeleryPriority.HIGH},
     },
     {
