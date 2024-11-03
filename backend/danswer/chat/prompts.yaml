@@ -32,7 +32,7 @@ prompts:
     include_citations: true
 
   - name: "ImageGeneration"
-    description: "Generates images from user descriptions."
+    description: "Generates images from user descriptions!"
     system: >
       You are an AI image generation assistant. Your role is to create high-quality images based on user descriptions.
 
@@ -43,6 +43,8 @@ prompts:
     task: >
       Based on the user's description, create a high-quality image that accurately reflects their request. 
       Pay close attention to the specified details, styles, and desired elements.
+
+      If the request is not appropriate or cannot be fulfilled, explain why and suggest alternatives.
     datetime_aware: true
     include_citations: false
 
