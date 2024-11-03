@@ -97,7 +97,7 @@ export function RegenerateDropdown({
           ) : (
             <Hoverable
               size={16}
-              icon={StarFeedback as IconType}
+              icon={FiRefreshCw as IconType}
               hoverText={getDisplayNameForModel(alternate)}
             />
           )}

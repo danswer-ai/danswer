@@ -394,8 +394,9 @@ export function AssistantsList() {
 
         <div className="grid grid-cols-2 gap-4 mt-4 mb-8">
           <Button
+            variant="default"
+            className="p-6 text-base"
             onClick={() => router.push("/assistants/new")}
-            className="w-full py-3 text-lg rounded-full bg-background-800 text-white hover:bg-background-800 transition duration-300 ease-in-out"
             icon={FiPlus}
           >
             Create New Assistant
@@ -403,7 +404,8 @@ export function AssistantsList() {
 
           <Button
             onClick={() => router.push("/assistants/gallery")}
-            className="w-full hover:border-border-strong py-3 text-lg rounded-full bg-white border !border-border shadow text-text-700 hover:bg-background-50 transition duration-300 ease-in-out"
+            variant="outline"
+            className="text-base py-6"
             icon={FiList}
           >
             Assistant Gallery
