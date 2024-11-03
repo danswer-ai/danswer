@@ -1,4 +1,6 @@
 import datetime
+import json
+import os
 
 import pytest
 from pytest_mock import MockFixture
@@ -12,87 +14,19 @@ from danswer.connectors.models import Document
 
 
 def test_email_to_document() -> None:
-    GmailConnector()
-    email_id = "18cabedb1ea46b03"
-    email_subject = "Danswer Test Subject"
-    email_sender = "Google <no-reply@accounts.google.com>"
-    email_recipient = "test.mail@gmail.com"
-    email_date = "Wed, 27 Dec 2023 15:38:49 GMT"
-    email_labels = ["UNREAD", "IMPORTANT", "CATEGORY_UPDATES", "STARRED", "INBOX"]
-    full_email = {
-        "id": email_id,
-        "threadId": email_id,
-        "labelIds": email_labels,
-        "snippet": "A new sign-in. We noticed a new sign-in to your Google Account. If this was you, you don&#39;t need to do",
-        "payload": {
-            "partId": "",
-            "mimeType": "multipart/alternative",
-            "filename": "",
-            "headers": [
-                {"name": "Delivered-To", "value": email_recipient},
-                {"name": "Date", "value": email_date},
-                {
-                    "name": "Message-ID",
-                    "value": "<OhMtIhHwNS1NoOQRSQEWqw@notifications.google.com>",
-                },
-                {"name": "Subject", "value": email_subject},
-                {"name": "From", "value": email_sender},
-                {"name": "To", "value": email_recipient},
-            ],
-            "body": {"size": 0},
-            "parts": [
-                {
-                    "partId": "0",
-                    "mimeType": "text/plain",
-                    "filename": "",
-                    "headers": [
-                        {
-                            "name": "Content-Type",
-                            "value": 'text/plain; charset="UTF-8"; format=flowed; delsp=yes',
-                        },
-                        {"name": "Content-Transfer-Encoding", "value": "base64"},
-                    ],
-                    "body": {
-                        "size": 9,
-                        "data": "dGVzdCBkYXRh",
-                    },
-                },
-                {
-                    "partId": "1",
-                    "mimeType": "text/html",
-                    "filename": "",
-                    "headers": [
-                        {"name": "Content-Type", "value": 'text/html; charset="UTF-8"'},
-                        {
-                            "name": "Content-Transfer-Encoding",
-                            "value": "quoted-printable",
-                        },
-                    ],
-                    "body": {
-                        "size": 9,
-                        "data": "dGVzdCBkYXRh",
-                    },
-                },
-            ],
-        },
-        "sizeEstimate": 12048,
-        "historyId": "697762",
-        "internalDate": "1703691529000",
-    }
-    doc = thread_to_document(full_email)
+    json_path = os.path.join(os.path.dirname(__file__), "thread.json")
+    with open(json_path, "r") as f:
+        full_email_thread = json.load(f)
+
+    doc = thread_to_document(full_email_thread)
     assert type(doc) == Document
     assert doc.source == DocumentSource.GMAIL
-    assert doc.title == "Danswer Test Subject"
+    assert doc.semantic_identifier == "Email Chain 1"
     assert doc.doc_updated_at == datetime.datetime(
-        2023, 12, 27, 15, 38, 49, tzinfo=datetime.timezone.utc
+        2024, 11, 2, 17, 34, 55, tzinfo=datetime.timezone.utc
     )
-    assert doc.metadata == {
-        "labels": email_labels,
-        "from": email_sender,
-        "to": email_recipient,
-        "date": email_date,
-        "subject": email_subject,
-    }
+    assert len(doc.sections) == 4
+    assert doc.metadata == {}
 
 
 def test_fetch_mails_from_gmail_empty(mocker: MockFixture) -> None:
