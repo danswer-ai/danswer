@@ -6,7 +6,7 @@ ALL_FILES = list(range(0, 60))
 SHARED_DRIVE_FILES = list(range(20, 25))
 
 
-_ADMIN_FILE_IDS = list(range(0, 5))
+_ADMIN_FILE_IDS = list(range(0, 5)) + [61]  # Google Doc with sections
 _TEST_USER_1_FILE_IDS = list(range(5, 10))
 _TEST_USER_2_FILE_IDS = list(range(10, 15))
 _TEST_USER_3_FILE_IDS = list(range(15, 20))
@@ -127,6 +127,10 @@ ACCESS_MAPPING: dict[str, list[int]] = {
     "TEST_USER_3": _TEST_USER_3_FILE_IDS,
 }
 
+SPECIAL_FILE_ID_TO_CONTENT_MAP: dict[int, str] = {
+    61: "This is a Google Doc with sections - Section 1 - Section 2",
+}
+
 
 file_name_template = "file_{}.txt"
 file_text_template = "This is file {}"
@@ -142,18 +146,28 @@ def print_discrepencies(expected: set[str], retrieved: set[str]) -> None:
         print(expected - retrieved)
 
 
+def get_file_content(file_id: int) -> str:
+    if file_id in SPECIAL_FILE_ID_TO_CONTENT_MAP:
+        return SPECIAL_FILE_ID_TO_CONTENT_MAP[file_id]
+
+    return file_text_template.format(file_id)
+
+
 def assert_retrieved_docs_match_expected(
     retrieved_docs: list[Document], expected_file_ids: Sequence[int]
 ) -> None:
     expected_file_names = {
         file_name_template.format(file_id) for file_id in expected_file_ids
     }
-    expected_file_texts = {
-        file_text_template.format(file_id) for file_id in expected_file_ids
-    }
+    expected_file_texts = {get_file_content(file_id) for file_id in expected_file_ids}
 
     retrieved_file_names = set([doc.semantic_identifier for doc in retrieved_docs])
-    retrieved_texts = set([doc.sections[0].text for doc in retrieved_docs])
+    retrieved_texts = set(
+        [
+            " - ".join([section.text for section in doc.sections])
+            for doc in retrieved_docs
+        ]
+    )
 
     # Check file names
     print_discrepencies(expected_file_names, retrieved_file_names)
