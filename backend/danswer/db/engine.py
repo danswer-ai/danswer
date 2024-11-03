@@ -29,6 +29,7 @@ from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
+from danswer.configs.app_configs import POSTGRES_IDLE_SESSIONS_TIMEOUT
 from danswer.configs.app_configs import POSTGRES_PASSWORD
 from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
 from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
@@ -352,6 +353,10 @@ def get_session_with_tenant(
             cursor = dbapi_connection.cursor()
             try:
                 cursor.execute(f'SET search_path = "{tenant_id}"')
+                if POSTGRES_IDLE_SESSIONS_TIMEOUT:
+                    cursor.execute(
+                        f"SET SESSION idle_in_transaction_session_timeout = {POSTGRES_IDLE_SESSIONS_TIMEOUT}"
+                    )
             finally:
                 cursor.close()
 
