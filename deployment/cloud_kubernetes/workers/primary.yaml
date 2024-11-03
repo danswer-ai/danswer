@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: celery-worker-primary
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: celery-worker-primary
@@ -25,7 +25,7 @@ spec:
               "--loglevel=INFO",
               "--hostname=primary@%n",
               "-Q",
-              "celery,periodic_tasks,vespa_metadata_sync",
+              "celery,celery:1,celery:2,celery:3,celery:4",
             ]
           env:
             - name: REDIS_PASSWORD
@@ -34,7 +34,7 @@ spec:
                   name: danswer-secrets
                   key: redis_password
             - name: DANSWER_VERSION
-              value: "v0.11.0-cloud.beta.4"
+              value: "v0.11.0-cloud.beta.5"
           envFrom:
             - configMapRef:
                 name: env-configmap
