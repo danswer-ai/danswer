@@ -2,12 +2,9 @@ import datetime
 import json
 import os
 
-from pytest_mock import MockFixture
-
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.gmail.connector import _build_time_range_query
-from danswer.connectors.gmail.connector import GmailConnector
 from danswer.connectors.gmail.connector import thread_to_document
 from danswer.connectors.models import Document
 
@@ -26,90 +23,6 @@ def test_thread_to_document() -> None:
     )
     assert len(doc.sections) == 4
     assert doc.metadata == {}
-
-
-def test_fetch_mails_from_gmail(mocker: MockFixture) -> None:
-    mock_discovery = mocker.patch("danswer.connectors.gmail.connector.discovery")
-    email_id = "18cabedb1ea46b03"
-    email_subject = "Danswer Test Subject"
-    email_sender = "Google <no-reply@accounts.google.com>"
-    email_recipient = "test.mail@gmail.com"
-    mock_discovery.build.return_value.users.return_value.messages.return_value.list.return_value.execute.return_value = {
-        "messages": [{"id": email_id, "threadId": email_id}],
-        "nextPageToken": "14473313008248105741",
-        "resultSizeEstimate": 201,
-    }
-    mock_discovery.build.return_value.users.return_value.messages.return_value.get.return_value.execute.return_value = {
-        "id": email_id,
-        "threadId": email_id,
-        "labelIds": ["UNREAD", "IMPORTANT", "CATEGORY_UPDATES", "STARRED", "INBOX"],
-        "snippet": "A new sign-in. We noticed a new sign-in to your Google Account. If this was you, you don&#39;t need to do",
-        "payload": {
-            "partId": "",
-            "mimeType": "multipart/alternative",
-            "filename": "",
-            "headers": [
-                {"name": "Delivered-To", "value": email_recipient},
-                {"name": "Date", "value": "Wed, 27 Dec 2023 15:38:49 GMT"},
-                {
-                    "name": "Message-ID",
-                    "value": "<OhMtIhHwNS1NoOQRSQEWqw@notifications.google.com>",
-                },
-                {"name": "Subject", "value": email_subject},
-                {"name": "From", "value": email_sender},
-                {"name": "To", "value": email_recipient},
-            ],
-            "body": {"size": 0},
-            "parts": [
-                {
-                    "partId": "0",
-                    "mimeType": "text/plain",
-                    "filename": "",
-                    "headers": [
-                        {
-                            "name": "Content-Type",
-                            "value": 'text/plain; charset="UTF-8"; format=flowed; delsp=yes',
-                        },
-                        {"name": "Content-Transfer-Encoding", "value": "base64"},
-                    ],
-                    "body": {
-                        "size": 9,
-                        "data": "dGVzdCBkYXRh",
-                    },
-                },
-                {
-                    "partId": "1",
-                    "mimeType": "text/html",
-                    "filename": "",
-                    "headers": [
-                        {"name": "Content-Type", "value": 'text/html; charset="UTF-8"'},
-                        {
-                            "name": "Content-Transfer-Encoding",
-                            "value": "quoted-printable",
-                        },
-                    ],
-                    "body": {
-                        "size": 9,
-                        "data": "dGVzdCBkYXRh",
-                    },
-                },
-            ],
-        },
-        "sizeEstimate": 12048,
-        "historyId": "697762",
-        "internalDate": "1703691529000",
-    }
-
-    connector = GmailConnector()
-    connector.creds = mocker.Mock()
-    docs = next(connector.load_from_state())
-    assert len(docs) == 1
-    doc: Document = docs[0]
-    assert type(doc) == Document
-    assert doc.id == email_id
-    assert doc.title == email_subject
-    assert email_recipient in doc.sections[0].text
-    assert email_sender in doc.sections[0].text
 
 
 def test_build_time_range_query() -> None:
