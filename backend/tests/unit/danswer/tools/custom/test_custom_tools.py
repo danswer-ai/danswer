@@ -215,6 +215,7 @@ class TestCustomTool(unittest.TestCase):
         mock_response = ToolResponse(
             id=CUSTOM_TOOL_RESPONSE_ID,
             response=CustomToolCallSummary(
+                response_type="json",
                 tool_name="getAssistant",
                 tool_result={"id": "789", "name": "Final Assistant"},
             ),
