@@ -557,9 +557,9 @@ def upload_files_for_chat(
     _: User | None = Depends(current_user),
 ) -> dict[str, list[FileDescriptor]]:
     image_content_types = {"image/jpeg", "image/png", "image/webp"}
+    csv_content_types = {"text/csv"}
     text_content_types = {
         "text/plain",
-        "text/csv",
         "text/markdown",
         "text/x-markdown",
         "text/x-config",
@@ -578,8 +578,10 @@ def upload_files_for_chat(
         "application/epub+zip",
     }
 
-    allowed_content_types = image_content_types.union(text_content_types).union(
-        document_content_types
+    allowed_content_types = (
+        image_content_types.union(text_content_types)
+        .union(document_content_types)
+        .union(csv_content_types)
     )
 
     for file in files:
@@ -589,6 +591,10 @@ def upload_files_for_chat(
             elif file.content_type in text_content_types:
                 error_detail = "Unsupported text file type. Supported text types include .txt, .csv, .md, .mdx, .conf, "
                 ".log, .tsv."
+            elif file.content_type in csv_content_types:
+                error_detail = (
+                    "Unsupported CSV file type. Supported CSV types include .csv."
+                )
             else:
                 error_detail = (
                     "Unsupported document file type. Supported document types include .pdf, .docx, .pptx, .xlsx, "
@@ -614,6 +620,10 @@ def upload_files_for_chat(
             file_type = ChatFileType.IMAGE
             # Convert image to JPEG
             file_content, new_content_type = convert_to_jpeg(file)
+        elif file.content_type in csv_content_types:
+            file_type = ChatFileType.CSV
+            file_content = io.BytesIO(file.file.read())
+            new_content_type = file.content_type or ""
         elif file.content_type in document_content_types:
             file_type = ChatFileType.DOC
             file_content = io.BytesIO(file.file.read())

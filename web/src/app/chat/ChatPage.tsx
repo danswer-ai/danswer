@@ -1490,6 +1490,7 @@ export function ChatPage({
     const imageFiles = acceptedFiles.filter((file) =>
       file.type.startsWith("image/")
     );
+
     if (imageFiles.length > 0 && !llmAcceptsImages) {
       setPopup({
         type: "error",
