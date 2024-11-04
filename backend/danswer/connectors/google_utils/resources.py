@@ -16,12 +16,16 @@ class AdminService(Resource):
     pass
 
 
+class GmailService(Resource):
+    pass
+
+
 def _get_google_service(
     service_name: str,
     service_version: str,
     creds: ServiceAccountCredentials | OAuthCredentials,
     user_email: str | None = None,
-) -> GoogleDriveService:
+) -> GoogleDriveService | GoogleDocsService | AdminService | GmailService:
     if isinstance(creds, ServiceAccountCredentials):
         creds = creds.with_subject(user_email)
         service = build(service_name, service_version, credentials=creds)
@@ -50,3 +54,10 @@ def get_admin_service(
     user_email: str,
 ) -> AdminService:
     return _get_google_service("admin", "directory_v1", creds, user_email)
+
+
+def get_gmail_service(
+    creds: ServiceAccountCredentials | OAuthCredentials,
+    user_email: str,
+) -> GmailService:
+    return _get_google_service("gmail", "v1", creds, user_email)

@@ -5,26 +5,27 @@ from google.oauth2.credentials import Credentials as OAuthCredentials  # type: i
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.connectors.google_drive.connector_auth import (
-    DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
-)
-from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
-from danswer.connectors.google_drive.constants import MISSING_SCOPES_ERROR_STR
-from danswer.connectors.google_drive.constants import ONYX_SCOPE_INSTRUCTIONS
-from danswer.connectors.google_drive.constants import SCOPE_DOC_URL
-from danswer.connectors.google_drive.constants import SLIM_BATCH_SIZE
-from danswer.connectors.google_drive.constants import USER_FIELDS
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.google_drive.doc_conversion import (
     convert_drive_item_to_document,
 )
 from danswer.connectors.google_drive.file_retrieval import crawl_folders_for_files
 from danswer.connectors.google_drive.file_retrieval import get_files_in_my_drive
 from danswer.connectors.google_drive.file_retrieval import get_files_in_shared_drive
-from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
 from danswer.connectors.google_drive.models import GoogleDriveFileType
-from danswer.connectors.google_drive.resources import get_admin_service
-from danswer.connectors.google_drive.resources import get_drive_service
-from danswer.connectors.google_drive.resources import get_google_docs_service
+from danswer.connectors.google_utils.google_auth import get_google_creds
+from danswer.connectors.google_utils.google_utils import execute_paginated_retrieval
+from danswer.connectors.google_utils.resources import get_admin_service
+from danswer.connectors.google_utils.resources import get_drive_service
+from danswer.connectors.google_utils.resources import get_google_docs_service
+from danswer.connectors.google_utils.shared_constants import (
+    DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
+)
+from danswer.connectors.google_utils.shared_constants import MISSING_SCOPES_ERROR_STR
+from danswer.connectors.google_utils.shared_constants import ONYX_SCOPE_INSTRUCTIONS
+from danswer.connectors.google_utils.shared_constants import SCOPE_DOC_URL
+from danswer.connectors.google_utils.shared_constants import SLIM_BATCH_SIZE
+from danswer.connectors.google_utils.shared_constants import USER_FIELDS
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -105,7 +106,6 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         self.shared_folder_ids = _extract_ids_from_urls(shared_folder_url_list)
 
         self._primary_admin_email: str | None = None
-        self.google_domain: str | None = None
 
         self._creds: OAuthCredentials | ServiceAccountCredentials | None = None
 
@@ -122,6 +122,16 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         return self._primary_admin_email
 
     @property
+    def google_domain(self) -> str:
+        if self._primary_admin_email is None:
+            raise RuntimeError(
+                "Primary admin email missing, "
+                "should not call this property "
+                "before calling load_credentials"
+            )
+        return self._primary_admin_email.split("@")[-1]
+
+    @property
     def creds(self) -> OAuthCredentials | ServiceAccountCredentials:
         if self._creds is None:
             raise RuntimeError(
@@ -136,10 +146,12 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
         primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
-        self.google_domain = primary_admin_email.split("@")[1]
         self._primary_admin_email = primary_admin_email
 
-        self._creds, new_creds_dict = get_google_drive_creds(credentials)
+        self._creds, new_creds_dict = get_google_creds(
+            credentials=credentials,
+            source=DocumentSource.GOOGLE_DRIVE,
+        )
         return new_creds_dict
 
     def _get_all_user_emails(self) -> list[str]:

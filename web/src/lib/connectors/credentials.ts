@@ -54,6 +54,7 @@ export interface SlackCredentialJson {
 
 export interface GmailCredentialJson {
   gmail_tokens: string;
+  gmail_primary_admin: string;
 }
 
 export interface GoogleDriveCredentialJson {
@@ -63,7 +64,7 @@ export interface GoogleDriveCredentialJson {
 
 export interface GmailServiceAccountCredentialJson {
   gmail_service_account_key: string;
-  gmail_delegated_user: string;
+  gmail_primary_admin: string;
 }
 
 export interface GoogleDriveServiceAccountCredentialJson {
@@ -339,7 +340,7 @@ export const credentialDisplayNames: Record<string, string> = {
 
   // Gmail Service Account
   gmail_service_account_key: "Gmail Service Account Key",
-  gmail_delegated_user: "Gmail Delegated User",
+  gmail_primary_admin: "Gmail Primary Admin",
 
   // Google Drive Service Account
   google_drive_service_account_key: "Google Drive Service Account Key",

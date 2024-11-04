@@ -5,13 +5,11 @@ from unittest.mock import patch
 
 from danswer.access.models import ExternalAccess
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
-from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
-from danswer.connectors.google_drive.resources import get_admin_service
+from danswer.connectors.google_utils.google_utils import execute_paginated_retrieval
+from danswer.connectors.google_utils.resources import get_admin_service
 from ee.danswer.external_permissions.google_drive.doc_sync import (
     _get_permissions_from_slim_doc,
 )
-from tests.daily.connectors.google_drive.helpers import ACCESS_MAPPING
-from tests.daily.connectors.google_drive.helpers import DRIVE_ID_MAPPING
 from tests.daily.connectors.google_drive.helpers import EMAIL_MAPPING
 from tests.daily.connectors.google_drive.helpers import file_name_template
 from tests.daily.connectors.google_drive.helpers import print_discrepencies
@@ -130,19 +128,19 @@ def test_all_permissions(
         print(file_name, external_access)
 
     expected_file_range = (
-        DRIVE_ID_MAPPING["ADMIN"]
-        + DRIVE_ID_MAPPING["TEST_USER_1"]
-        + DRIVE_ID_MAPPING["TEST_USER_2"]
-        + DRIVE_ID_MAPPING["TEST_USER_3"]
-        + DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1_2"]
-        + DRIVE_ID_MAPPING["SHARED_DRIVE_2"]
-        + DRIVE_ID_MAPPING["FOLDER_2"]
-        + DRIVE_ID_MAPPING["FOLDER_2_1"]
-        + DRIVE_ID_MAPPING["FOLDER_2_2"]
-        + DRIVE_ID_MAPPING["SECTIONS"]
+        list(range(0, 5))  # Admin's My Drive
+        + list(range(5, 10))  # TEST_USER_1's My Drive
+        + list(range(10, 15))  # TEST_USER_2's My Drive
+        + list(range(15, 20))  # TEST_USER_3's My Drive
+        + list(range(20, 25))  # Shared Drive 1
+        + list(range(25, 30))  # Folder 1
+        + list(range(30, 35))  # Folder 1_1
+        + list(range(35, 40))  # Folder 1_2
+        + list(range(40, 45))  # Shared Drive 2
+        + list(range(45, 50))  # Folder 2
+        + list(range(50, 55))  # Folder 2_1
+        + list(range(55, 60))  # Folder 2_2
+        + [61]  # Sections
     )
 
     # Should get everything
@@ -154,26 +152,33 @@ def test_all_permissions(
 
     assert_correct_access_for_user(
         user_email=EMAIL_MAPPING["ADMIN"],
-        expected_access_ids=ACCESS_MAPPING["ADMIN"],
+        expected_access_ids=list(range(0, 5))  # Admin's My Drive
+        + list(range(20, 60))  # All shared drive content
+        + [61],  # Sections
         group_map=group_map,
         retrieved_access_map=access_map,
     )
     assert_correct_access_for_user(
         user_email=EMAIL_MAPPING["TEST_USER_1"],
-        expected_access_ids=ACCESS_MAPPING["TEST_USER_1"],
+        expected_access_ids=list(range(5, 10))  # TEST_USER_1's My Drive
+        + list(range(20, 40))  # Shared Drive 1 and its folders
+        + list(range(0, 2)),  # Access to some of Admin's files
         group_map=group_map,
         retrieved_access_map=access_map,
     )
 
     assert_correct_access_for_user(
         user_email=EMAIL_MAPPING["TEST_USER_2"],
-        expected_access_ids=ACCESS_MAPPING["TEST_USER_2"],
+        expected_access_ids=list(range(10, 15))  # TEST_USER_2's My Drive
+        + list(range(25, 40))  # Folder 1 and its subfolders
+        + list(range(50, 55))  # Folder 2_1
+        + list(range(45, 47)),  # Some files in Folder 2
         group_map=group_map,
         retrieved_access_map=access_map,
     )
     assert_correct_access_for_user(
         user_email=EMAIL_MAPPING["TEST_USER_3"],
-        expected_access_ids=ACCESS_MAPPING["TEST_USER_3"],
+        expected_access_ids=list(range(15, 20)),  # TEST_USER_3's My Drive only
         group_map=group_map,
         retrieved_access_map=access_map,
     )

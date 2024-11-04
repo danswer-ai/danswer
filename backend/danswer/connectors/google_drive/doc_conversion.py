@@ -8,13 +8,12 @@ from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.connectors.google_drive.constants import DRIVE_SHORTCUT_TYPE
-from danswer.connectors.google_drive.constants import ERRORS_TO_CONTINUE_ON
 from danswer.connectors.google_drive.constants import UNSUPPORTED_FILE_TYPE_CONTENT
 from danswer.connectors.google_drive.models import GDriveMimeType
 from danswer.connectors.google_drive.models import GoogleDriveFileType
-from danswer.connectors.google_drive.resources import GoogleDocsService
-from danswer.connectors.google_drive.resources import GoogleDriveService
 from danswer.connectors.google_drive.section_extraction import get_document_sections
+from danswer.connectors.google_utils.resources import GoogleDocsService
+from danswer.connectors.google_utils.resources import GoogleDriveService
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import docx_to_text
@@ -25,6 +24,14 @@ from danswer.file_processing.unstructured import unstructured_to_text
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+# these errors don't represent a failure in the connector, but simply files
+# that can't / shouldn't be indexed
+ERRORS_TO_CONTINUE_ON = [
+    "cannotExportFile",
+    "exportSizeLimitExceeded",
+    "cannotDownloadFile",
+]
 
 
 def _extract_sections_basic(

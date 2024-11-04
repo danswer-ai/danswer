@@ -6,15 +6,22 @@ from googleapiclient.discovery import Resource  # type: ignore
 
 from danswer.connectors.google_drive.constants import DRIVE_FOLDER_TYPE
 from danswer.connectors.google_drive.constants import DRIVE_SHORTCUT_TYPE
-from danswer.connectors.google_drive.constants import FILE_FIELDS
-from danswer.connectors.google_drive.constants import FOLDER_FIELDS
-from danswer.connectors.google_drive.constants import SLIM_FILE_FIELDS
-from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
 from danswer.connectors.google_drive.models import GoogleDriveFileType
+from danswer.connectors.google_utils.google_utils import execute_paginated_retrieval
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+FILE_FIELDS = (
+    "nextPageToken, files(mimeType, id, name, permissions, modifiedTime, webViewLink, "
+    "shortcutDetails, owners(emailAddress))"
+)
+SLIM_FILE_FIELDS = (
+    "nextPageToken, files(mimeType, id, name, permissions(emailAddress, type), "
+    "permissionIds, webViewLink, owners(emailAddress))"
+)
+FOLDER_FIELDS = "nextPageToken, files(id, name, permissions, modifiedTime, webViewLink, shortcutDetails)"
 
 
 def _generate_time_range_filter(

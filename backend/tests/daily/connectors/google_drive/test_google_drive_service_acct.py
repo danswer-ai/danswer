@@ -105,12 +105,7 @@ def test_include_my_drives_only(
         retrieved_docs.extend(doc_batch)
 
     # Should only get everyone's My Drives
-    expected_file_ids = (
-        DRIVE_ID_MAPPING["ADMIN"]
-        + DRIVE_ID_MAPPING["TEST_USER_1"]
-        + DRIVE_ID_MAPPING["TEST_USER_2"]
-        + DRIVE_ID_MAPPING["TEST_USER_3"]
-    )
+    expected_file_ids = list(range(0, 20))  # All My Drives
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
         expected_file_ids=expected_file_ids,
@@ -137,12 +132,7 @@ def test_drive_one_only(
         retrieved_docs.extend(doc_batch)
 
     # We ignore shared_drive_urls if include_shared_drives is False
-    expected_file_ids = (
-        DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1_2"]
-    )
+    expected_file_ids = list(range(20, 40))  # Shared Drive 1 and its folders
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
         expected_file_ids=expected_file_ids,
@@ -174,17 +164,9 @@ def test_folder_and_shared_drive(
 
     # Should
     expected_file_ids = (
-        DRIVE_ID_MAPPING["ADMIN"]
-        + DRIVE_ID_MAPPING["TEST_USER_1"]
-        + DRIVE_ID_MAPPING["TEST_USER_2"]
-        + DRIVE_ID_MAPPING["TEST_USER_3"]
-        + DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1_2"]
-        + DRIVE_ID_MAPPING["FOLDER_2"]
-        + DRIVE_ID_MAPPING["FOLDER_2_1"]
-        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+        list(range(0, 20))  # All My Drives
+        + list(range(20, 40))  # Shared Drive 1 and its folders
+        + list(range(45, 60))  # Folder 2 and its subfolders
     )
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
@@ -216,12 +198,9 @@ def test_folders_only(
     for doc_batch in connector.poll_source(0, time.time()):
         retrieved_docs.extend(doc_batch)
 
-    expected_file_ids = (
-        DRIVE_ID_MAPPING["FOLDER_1_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1_2"]
-        + DRIVE_ID_MAPPING["FOLDER_2_1"]
-        + DRIVE_ID_MAPPING["FOLDER_2_2"]
-    )
+    expected_file_ids = list(range(30, 40)) + list(  # Folders 1_1 and 1_2
+        range(50, 60)
+    )  # Folders 2_1 and 2_2
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
         expected_file_ids=expected_file_ids,
@@ -250,9 +229,9 @@ def test_specific_emails(
     for doc_batch in connector.poll_source(0, time.time()):
         retrieved_docs.extend(doc_batch)
 
-    expected_file_ids = (
-        DRIVE_ID_MAPPING["TEST_USER_1"] + DRIVE_ID_MAPPING["TEST_USER_3"]
-    )
+    expected_file_ids = list(range(5, 10)) + list(
+        range(15, 20)
+    )  # TEST_USER_1 and TEST_USER_3 My Drives
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
         expected_file_ids=expected_file_ids,

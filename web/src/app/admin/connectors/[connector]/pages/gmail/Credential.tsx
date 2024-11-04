@@ -10,6 +10,7 @@ import { GMAIL_AUTH_IS_ADMIN_COOKIE_NAME } from "@/lib/constants";
 import Cookies from "js-cookie";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import { Form, Formik } from "formik";
+import { User } from "@/lib/types";
 import CardSection from "@/components/admin/CardSection";
 import {
   Credential,
@@ -293,9 +294,10 @@ interface DriveCredentialSectionProps {
   setPopup: (popupSpec: PopupSpec | null) => void;
   refreshCredentials: () => void;
   connectorExists: boolean;
+  user: User | null;
 }
 
-export const GmailOAuthSection = ({
+export const GmailAuthSection = ({
   gmailPublicCredential,
   gmailServiceAccountCredential,
   serviceAccountKeyData,
@@ -303,6 +305,7 @@ export const GmailOAuthSection = ({
   setPopup,
   refreshCredentials,
   connectorExists,
+  user,
 }: DriveCredentialSectionProps) => {
   const router = useRouter();
 
@@ -342,24 +345,22 @@ export const GmailOAuthSection = ({
     return (
       <div>
         <p className="text-sm mb-2">
-          When using a Gmail Service Account, you can either have Danswer act as
-          the service account itself OR you can specify an account for the
-          service account to impersonate.
+          When using a Gmail Service Account, you must specify the email of the
+          primary admin that you would like the service account to impersonate.
           <br />
           <br />
-          If you want to use the service account itself, leave the{" "}
-          <b>&apos;User email to impersonate&apos;</b> field blank when
-          submitting. If you do choose this option, make sure you have shared
-          the documents you want to index with the service account.
+          For this connector to index all users Gmail, the primary admin email
+          should be an owner/admin of the Google Organization that being
+          indexed.
         </p>
 
         <CardSection>
           <Formik
             initialValues={{
-              gmail_delegated_user: "",
+              gmail_primary_admin: user?.email || "",
             }}
             validationSchema={Yup.object().shape({
-              gmail_delegated_user: Yup.string().optional(),
+              gmail_primary_admin: Yup.string().required(),
             })}
             onSubmit={async (values, formikHelpers) => {
               formikHelpers.setSubmitting(true);
@@ -372,7 +373,7 @@ export const GmailOAuthSection = ({
                     "Content-Type": "application/json",
                   },
                   body: JSON.stringify({
-                    gmail_delegated_user: values.gmail_delegated_user,
+                    gmail_primary_admin: values.gmail_primary_admin,
                   }),
                 }
               );
@@ -395,9 +396,9 @@ export const GmailOAuthSection = ({
             {({ isSubmitting }) => (
               <Form>
                 <TextFormField
-                  name="gmail_delegated_user"
-                  label="[Optional] User email to impersonate:"
-                  subtext="If left blank, Danswer will use the service account itself."
+                  name="gmail_primary_admin"
+                  label="Primary Admin Email:"
+                  subtext="You must provide an admin/owner account to retrieve all org emails."
                 />
                 <div className="flex">
                   <button

@@ -197,10 +197,10 @@ def bulk_invite_users(
             email_info = validate_email(email)
             normalized_emails.append(email_info.normalized)  # type: ignore
 
-    except (EmailUndeliverableError, EmailNotValidError):
+    except (EmailUndeliverableError, EmailNotValidError) as e:
         raise HTTPException(
             status_code=400,
-            detail="One or more emails in the list are invalid",
+            detail=f"Invalid email address: {email} - {str(e)}",
         )
 
     if MULTI_TENANT:
