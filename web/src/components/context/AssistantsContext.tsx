@@ -52,10 +52,14 @@ export const AssistantsProvider: React.FC<{
   const [allAssistants, setAllAssistants] = useState<Persona[]>([]);
 
   const [recentAssistants, setRecentAssistants] = useState<Persona[]>(
-    assistants.filter(
-      (assistant) =>
-        user?.preferences.recent_assistants?.includes(assistant.id) || false
-    )
+    user?.preferences.recent_assistants
+      ?.filter((assistantId) =>
+        assistants.find((assistant) => assistant.id === assistantId)
+      )
+      .map(
+        (assistantId) =>
+          assistants.find((assistant) => assistant.id === assistantId)!
+      ) || []
   );
 
   const [isImageGenerationAvailable, setIsImageGenerationAvailable] =
