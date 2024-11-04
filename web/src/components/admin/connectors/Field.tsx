@@ -25,7 +25,7 @@ import {
 } from "@radix-ui/react-tooltip";
 import ReactMarkdown from "react-markdown";
 import { FaMarkdown } from "react-icons/fa";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import remarkGfm from "remark-gfm";
 import { EditIcon } from "@/components/icons/icons";
 import { Button } from "@/components/ui/button";
@@ -602,6 +602,11 @@ export function SelectorFormField({
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
+  const currentlySelected = options.find(
+    (option) => option.value?.toString() === field.value?.toString()
+  );
 
   return (
     <div>
@@ -612,7 +617,7 @@ export function SelectorFormField({
         </div>
       )}
       {subtext && <SubLabel>{subtext}</SubLabel>}
-      <div className="mt-2">
+      <div className="mt-2" ref={setContainer}>
         <Select
           value={field.value || defaultValue}
           onValueChange={
@@ -622,30 +627,34 @@ export function SelectorFormField({
         >
           <SelectTrigger>
             <SelectValue placeholder="Select...">
-              {field.value || defaultValue || ""}
+              {currentlySelected?.name || defaultValue || ""}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent
-            side={side}
-            className={maxHeight ? `max-h-[${maxHeight}]` : undefined}
-          >
-            {options.length == 0 && (
-              <SelectItem value="default">Select...</SelectItem>
-            )}
-            {defaultValue && (
-              <SelectItem value={defaultValue}>{defaultValue}</SelectItem>
-            )}
-            {options.map((option) => (
-              <SelectItem
-                icon={option.icon}
-                key={option.value}
-                value={String(option.value)}
-                selected={field.value === option.value}
-              >
-                {option.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
+
+          {container && (
+            <SelectContent
+              side={side}
+              className={maxHeight ? `max-h-[${maxHeight}]` : undefined}
+              container={container}
+            >
+              {options.length == 0 && (
+                <SelectItem value="default">Select...</SelectItem>
+              )}
+              {defaultValue && (
+                <SelectItem value={defaultValue}>{defaultValue}</SelectItem>
+              )}
+              {options.map((option) => (
+                <SelectItem
+                  icon={option.icon}
+                  key={option.value}
+                  value={String(option.value)}
+                  selected={field.value === option.value}
+                >
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          )}
         </Select>
       </div>
 
