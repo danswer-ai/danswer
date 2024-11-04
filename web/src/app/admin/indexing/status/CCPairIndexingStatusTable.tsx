@@ -200,8 +200,8 @@ function ConnectorRow({
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
       }}
     >
-      <TableCell className="!w-[300px]">
-        <p className="w-[200px] xl:w-[400px] inline-block ellipsis truncate">
+      <TableCell className="">
+        <p className="lg:w-[200px] xl:w-[400px] inline-block ellipsis truncate">
           {ccPairsIndexingStatus.name}
         </p>
       </TableCell>
