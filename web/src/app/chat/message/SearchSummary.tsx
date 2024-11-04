@@ -174,8 +174,8 @@ export function SearchSummary({
             )}
           </div>
           {handleSearchQueryEdit && (
-            <TooltipProvider>
-              <Tooltip delayDuration={1000}>
+            <TooltipProvider delayDuration={1000}>
+              <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     className="my-auto hover:bg-hover p-1.5 rounded"

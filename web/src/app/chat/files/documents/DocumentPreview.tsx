@@ -57,7 +57,7 @@ export function DocumentPreview({
         </div>
       </div>
       <div className="ml-4 flex-grow">
-        <TooltipProvider delayDuration={50}>
+        <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <div
@@ -140,7 +140,7 @@ export function InputDocumentPreview({
         </div>
       </div>
       <div className="ml-2 relative">
-        <TooltipProvider delayDuration={50}>
+        <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <div

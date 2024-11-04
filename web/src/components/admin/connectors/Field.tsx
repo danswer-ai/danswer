@@ -107,7 +107,7 @@ export function ToolTipDetails({
   children: string | JSX.Element;
 }) {
   return (
-    <TooltipProvider delayDuration={50}>
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
           <FiInfo size={12} />

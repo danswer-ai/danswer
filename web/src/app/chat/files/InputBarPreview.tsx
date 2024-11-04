@@ -143,7 +143,7 @@ export function InputBarPreview({
           </div>
         </div>
         <div className="ml-2 relative">
-          <TooltipProvider delayDuration={50}>
+          <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <div

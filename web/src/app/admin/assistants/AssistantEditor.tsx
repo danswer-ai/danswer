@@ -565,7 +565,7 @@ export function AssistantEditor({
                   align="start"
                   side="bottom"
                 />
-                <TooltipProvider delayDuration={50}>
+                <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
                       <FiInfo size={12} />
@@ -607,7 +607,7 @@ export function AssistantEditor({
                   <div className="block  font-medium text-base">
                     Default AI Model{" "}
                   </div>
-                  <TooltipProvider delayDuration={50}>
+                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
                         <FiInfo size={12} />
@@ -702,7 +702,7 @@ export function AssistantEditor({
                   <div className="block font-medium text-base">
                     Capabilities{" "}
                   </div>
-                  <TooltipProvider delayDuration={50}>
+                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
                         <FiInfo size={12} />
@@ -720,7 +720,7 @@ export function AssistantEditor({
 
                 <div className="mt-4 flex flex-col gap-y-4  ml-1">
                   {imageGenerationTool && (
-                    <TooltipProvider delayDuration={50}>
+                    <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div
@@ -768,7 +768,7 @@ export function AssistantEditor({
                   )}
 
                   {searchTool && (
-                    <TooltipProvider delayDuration={50}>
+                    <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div

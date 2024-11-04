@@ -81,8 +81,8 @@ export default function LogoType({
       </div>
 
       {page == "chat" && !showArrow && (
-        <TooltipProvider>
-          <Tooltip delayDuration={1000}>
+        <TooltipProvider delayDuration={1000}>
+          <Tooltip>
             <TooltipTrigger asChild>
               <Link
                 className="my-auto mobile:hidden"
@@ -111,8 +111,8 @@ export default function LogoType({
         </TooltipProvider>
       )}
       {showArrow && toggleSidebar && (
-        <TooltipProvider>
-          <Tooltip delayDuration={0}>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
             <TooltipTrigger asChild>
               <button
                 className="mr-3 my-auto ml-auto"
