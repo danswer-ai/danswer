@@ -123,7 +123,7 @@ export function SetDefaultModelModal({
   );
 
   return (
-    <Modal onOutsideClick={onClose} width="rounded-lg  bg-white max-w-xl">
+    <Modal onOutsideClick={onClose} width="rounded-lg border border-border-medium bg-background max-w-xl">
       <>
         <div className="flex mb-4">
           <h2 className="text-2xl text-emphasis font-bold flex my-auto">
@@ -137,7 +137,7 @@ export function SetDefaultModelModal({
           {defaultModel == null && "  No default model has been selected!"}
         </Text>
         <div
-          className="w-full max-h-96 overflow-y-auto flex text-sm flex-col border rounded-md"
+          className="w-full max-h-96 overflow-y-auto flex text-sm flex-col border border-border-medium rounded-md"
           ref={containerRef}
         >
           <div
@@ -150,7 +150,7 @@ export function SetDefaultModelModal({
           <div>
             <div
               key={-1}
-              className="w-full border-b flex items-center gap-x-2 hover:bg-background-50"
+              className="w-full border-b flex items-center gap-x-2 border-border-medium hover:bg-background-50"
             >
               <input
                 checked={defaultModelDestructured?.modelName == null}
@@ -177,7 +177,7 @@ export function SetDefaultModelModal({
               return (
                 <div
                   key={index}
-                  className="w-full flex items-center gap-x-2 border-b hover:bg-background-50"
+                  className="w-full flex items-center gap-x-2 border-b border-border-medium hover:bg-background-50"
                 >
                   <input
                     checked={defaultModelDestructured?.modelName == name}

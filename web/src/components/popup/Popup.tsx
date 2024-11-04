@@ -129,7 +129,7 @@ const Popup: React.FC<PopupProps> = ({
       {isOpen && (
         <div
           ref={popupRef}
-          className={`absolute bg-white border border-gray-200  rounded-lg shadow-lg ${
+          className={`absolute bg-background border border-border-medium rounded-lg shadow-lg ${
             !removePadding && "p-4"
           } ${!settings?.isMobile ? (tab ? "w-[400px] " : "min-w-[400px]") : "w-[250px]"}`}
           style={getPopupStyle()}

@@ -94,8 +94,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             bg-background-sidebar
             w-full
             border-r 
-            border-sidebar-border 
-            flex 
+            border-border-medium
             flex-col relative
             h-screen
             transition-transform 
@@ -111,7 +110,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
           {page == "chat" && (
             <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
               <Link
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-background border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
                 href={
                   `/${page}` +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
@@ -146,7 +145,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                       });
                     })
                 }
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-background border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
               >
                 <FiFolderPlus className="my-auto" />
                 <p className="my-auto flex items-center text-sm">New Folder</p>
@@ -154,7 +153,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
 
               <Link
                 href="/assistants/mine"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-background border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
               >
                 <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
                 <p className="my-auto flex items-center text-sm">
@@ -163,7 +162,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               </Link>
               <Link
                 href="/prompts"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-background border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
               >
                 <ClosedBookIcon className="h-4 w-4 my-auto" />
                 <p className="my-auto flex items-center text-sm">

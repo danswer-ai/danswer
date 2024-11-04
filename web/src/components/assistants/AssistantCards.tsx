@@ -122,7 +122,7 @@ export function DisplayAssistantCard({
   selectedPersona: Persona;
 }) {
   return (
-    <div className="p-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-md border border-border/50 max-w-md w-full mx-auto transition-all duration-300 ease-in-out hover:shadow-lg">
+    <div className="p-4 bg-background backdrop-blur-sm rounded-lg shadow-md border border-border-medium max-w-md w-full mx-auto transition-all duration-300 ease-in-out hover:shadow-lg">
       <div className="flex items-center mb-3">
         <AssistantIcon
           disableToolip

@@ -131,7 +131,7 @@ export const CustomTooltip = ({
             ${
               light
                 ? "text-gray-800 bg-background-200"
-                : "text-white bg-background-800"
+                : "text-white bg-background-200"
             } 
             rounded-lg shadow-lg`}
             style={{

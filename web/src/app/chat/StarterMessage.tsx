@@ -9,7 +9,7 @@ export function StarterMessage({
 }) {
   return (
     <div
-      className="mb-4 mx-2 group relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-white to-background p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.005] cursor-pointer"
+      className="mb-4 mx-2 group relative overflow-hidden rounded-xl border border-border p-4 shadow-sm transition-all duration-300 hover:shadow-md hover:scale-[1.005] cursor-pointer"
       onClick={onClick}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-purple-100 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />

@@ -74,7 +74,7 @@ export default function SearchAnswer({
         searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"
       } ${
         !searchAnswerExpanded && searchAnswerOverflowing && "overflow-y-hidden"
-      } p-4 border-2 border-search-answer-border rounded-lg relative`}
+      } p-4 border-2 border-border-medium rounded-lg relative`}
     >
       <div>
         <div className="flex gap-x-2">

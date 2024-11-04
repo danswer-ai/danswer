@@ -228,7 +228,7 @@ const FolderItem = ({
                       }
                       popover={
                         <div className="p-2 w-[225px] bg-background-100 rounded shadow-lg">
-                          <p className="text-sm mb-2">
+                          <p className="text-sm mb-2 text-text-sidebar">
                             Are you sure you want to delete{" "}
                             <i>{folder.folder_name}</i>? All the content inside
                             this folder will also be deleted.

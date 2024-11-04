@@ -66,7 +66,6 @@ export default async function RootLayout({
 
   const productGating =
     combinedSettings?.settings.product_gating ?? GatingType.NONE;
-
   const getPageContent = (content: React.ReactNode) => (
     <html lang="en" className={`${inter.variable} font-sans`}>
       <head>

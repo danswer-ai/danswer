@@ -2029,7 +2029,7 @@ export function ChatPage({
                                     currentPersona.starter_messages.length >
                                       0 && (
                                       <>
-                                        <Separator className="mx-2" />
+                                        <Separator className="mx-2 dark border-border-medium" />
 
                                         {currentPersona.starter_messages
                                           .slice(0, 4)
