@@ -245,6 +245,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 else POSTGRES_DEFAULT_SCHEMA
             )
         except exceptions.UserNotExists:
+            # We should provision a tenant
             raise HTTPException(status_code=401, detail="User not found")
 
         if not tenant_id:
