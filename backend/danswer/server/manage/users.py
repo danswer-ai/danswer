@@ -523,7 +523,7 @@ class RecentAssistantsRequest(BaseModel):
 
 
 def update_recent_assistants(
-    recent_assistants: list[int] | None, current_assistant
+    recent_assistants: list[int] | None, current_assistant: int
 ) -> list[int]:
     if recent_assistants is None:
         recent_assistants = []
@@ -559,15 +559,10 @@ def update_user_recent_assistants(
         else:
             raise RuntimeError("This should never happen")
 
-    # Get current recent assistants list
-    current_user = db_session.query(User).filter(User.id == user.id).first()
-
-    # Remove the current assistant if it exists in the list
-    recent_assistants = current_user.recent_assistants
+    recent_assistants = UserInfo.from_model(user).preferences.recent_assistants
     updated_recent_assistants = update_recent_assistants(
         recent_assistants, request.current_assistant
     )
-
     db_session.execute(
         update(User)
         .where(User.id == user.id)  # type: ignore
