@@ -22,7 +22,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@radix-ui/react-tooltip";
+} from "@/components/ui/tooltip";
 import ReactMarkdown from "react-markdown";
 import { FaMarkdown } from "react-icons/fa";
 import { useRef, useState } from "react";
@@ -113,9 +113,7 @@ export function ToolTipDetails({
           <FiInfo size={12} />
         </TooltipTrigger>
         <TooltipContent side="top" align="center">
-          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-inverted">
-            {children}
-          </p>
+          {children}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

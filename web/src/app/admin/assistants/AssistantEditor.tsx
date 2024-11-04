@@ -36,7 +36,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@radix-ui/react-tooltip";
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -571,9 +571,7 @@ export function AssistantEditor({
                       <FiInfo size={12} />
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center">
-                      <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                        This icon will visually represent your Assistant
-                      </p>
+                      This icon will visually represent your Assistant
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -615,10 +613,8 @@ export function AssistantEditor({
                         <FiInfo size={12} />
                       </TooltipTrigger>
                       <TooltipContent side="top" align="center">
-                        <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                          Select a Large Language Model (Generative AI model) to
-                          power this Assistant
-                        </p>
+                        Select a Large Language Model (Generative AI model) to
+                        power this Assistant
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -712,10 +708,8 @@ export function AssistantEditor({
                         <FiInfo size={12} />
                       </TooltipTrigger>
                       <TooltipContent side="top" align="center">
-                        <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                          You can give your assistant advanced capabilities like
-                          image generation
-                        </p>
+                        You can give your assistant advanced capabilities like
+                        image generation
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
