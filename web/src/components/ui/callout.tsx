@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 interface CalloutProps {
-  icon?: string;
+  icon?: React.ReactNode;
   children?: React.ReactNode;
   type?: "default" | "warning" | "danger" | "notice";
   className?: string;
