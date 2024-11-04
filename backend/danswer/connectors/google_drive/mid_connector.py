@@ -1,0 +1,306 @@
+# from collections.abc import Iterator
+# from typing import Any
+# from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
+# from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
+# from googleapiclient.discovery import build  # type: ignore
+# from googleapiclient.discovery import Resource  # type: ignore
+# from danswer.configs.app_configs import INDEX_BATCH_SIZE
+# from danswer.connectors.google_drive.connector_auth import (
+#     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
+# )
+# from danswer.connectors.google_drive.connector_auth import get_google_drive_creds
+# from danswer.connectors.google_drive.constants import MISSING_SCOPES_ERROR_STR
+# from danswer.connectors.google_drive.constants import ONYX_SCOPE_INSTRUCTIONS
+# from danswer.connectors.google_drive.constants import SCOPE_DOC_URL
+# from danswer.connectors.google_drive.constants import SLIM_BATCH_SIZE
+# from danswer.connectors.google_drive.constants import USER_FIELDS
+# from danswer.connectors.google_drive.doc_conversion import (
+#     convert_drive_item_to_document,
+# )
+# from danswer.connectors.google_drive.file_retrieval import crawl_folders_for_files
+# from danswer.connectors.google_drive.file_retrieval import get_files_in_my_drive
+# from danswer.connectors.google_drive.file_retrieval import get_files_in_shared_drive
+# from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
+# from danswer.connectors.google_drive.models import GoogleDriveFileType
+# from danswer.connectors.interfaces import GenerateDocumentsOutput
+# from danswer.connectors.interfaces import GenerateSlimDocumentOutput
+# from danswer.connectors.interfaces import LoadConnector
+# from danswer.connectors.interfaces import PollConnector
+# from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+# from danswer.connectors.interfaces import SlimConnector
+# from danswer.connectors.models import SlimDocument
+# from danswer.utils.logger import setup_logger
+# logger = setup_logger()
+# def _extract_str_list_from_comma_str(string: str | None) -> list[str]:
+#     if not string:
+#         return []
+#     return [s.strip() for s in string.split(",") if s.strip()]
+# def _extract_ids_from_urls(urls: list[str]) -> list[str]:
+#     return [url.split("/")[-1] for url in urls]
+# class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
+#     def __init__(
+#         self,
+#         include_shared_drives: bool = True,
+#         shared_drive_urls: str | None = None,
+#         include_my_drives: bool = True,
+#         my_drive_emails: str | None = None,
+#         shared_folder_urls: str | None = None,
+#         batch_size: int = INDEX_BATCH_SIZE,
+#         # OLD PARAMETERS
+#         folder_paths: list[str] | None = None,
+#         include_shared: bool | None = None,
+#         follow_shortcuts: bool | None = None,
+#         only_org_public: bool | None = None,
+#         continue_on_failure: bool | None = None,
+#     ) -> None:
+#         # Check for old input parameters
+#         if (
+#             folder_paths is not None
+#             or include_shared is not None
+#             or follow_shortcuts is not None
+#             or only_org_public is not None
+#             or continue_on_failure is not None
+#         ):
+#             logger.exception(
+#                 "Google Drive connector received old input parameters. "
+#                 "Please visit the docs for help with the new setup: "
+#                 f"{SCOPE_DOC_URL}"
+#             )
+#             raise ValueError(
+#                 "Google Drive connector received old input parameters. "
+#                 "Please visit the docs for help with the new setup: "
+#                 f"{SCOPE_DOC_URL}"
+#             )
+#         if (
+#             not include_shared_drives
+#             and not include_my_drives
+#             and not shared_folder_urls
+#         ):
+#             raise ValueError(
+#                 "At least one of include_shared_drives, include_my_drives,"
+#                 " or shared_folder_urls must be true"
+#             )
+#         self.batch_size = batch_size
+#         self.include_shared_drives = include_shared_drives
+#         shared_drive_url_list = _extract_str_list_from_comma_str(shared_drive_urls)
+#         self.shared_drive_ids = _extract_ids_from_urls(shared_drive_url_list)
+#         self.include_my_drives = include_my_drives
+#         self.my_drive_emails = _extract_str_list_from_comma_str(my_drive_emails)
+#         shared_folder_url_list = _extract_str_list_from_comma_str(shared_folder_urls)
+#         self.shared_folder_ids = _extract_ids_from_urls(shared_folder_url_list)
+#         self.primary_admin_email: str | None = None
+#         self.google_domain: str | None = None
+#         self.creds: OAuthCredentials | ServiceAccountCredentials | None = None
+#         self._TRAVERSED_PARENT_IDS: set[str] = set()
+#     def _update_traversed_parent_ids(self, folder_id: str) -> None:
+#         self._TRAVERSED_PARENT_IDS.add(folder_id)
+#     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
+#         primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
+#         self.google_domain = primary_admin_email.split("@")[1]
+#         self.primary_admin_email = primary_admin_email
+#         self.creds, new_creds_dict = get_google_drive_creds(credentials)
+#         return new_creds_dict
+#     def get_google_resource(
+#         self,
+#         service_name: str = "drive",
+#         service_version: str = "v3",
+#         user_email: str | None = None,
+#     ) -> Resource:
+#         if isinstance(self.creds, ServiceAccountCredentials):
+#             creds = self.creds.with_subject(user_email or self.primary_admin_email)
+#             service = build(service_name, service_version, credentials=creds)
+#         elif isinstance(self.creds, OAuthCredentials):
+#             service = build(service_name, service_version, credentials=self.creds)
+#         else:
+#             raise PermissionError("No credentials found")
+#         return service
+#     def _get_all_user_emails(self) -> Iterator[str]:
+#         # If using OAuth, only fetch the primary admin email
+#         if isinstance(self.creds, OAuthCredentials):
+#             yield self.primary_admin_email
+#             return
+#         # If using service account and emails specified, fetch those emails
+#         # if self.my_drive_emails:
+#         #     for email in self.my_drive_emails:
+#         #         yield email
+#         #     return
+#         # If using service account and no emails specified, fetch all users
+#         admin_service = self.get_google_resource("admin", "directory_v1")
+#         for user in execute_paginated_retrieval(
+#             retrieval_function=admin_service.users().list,
+#             list_key="users",
+#             fields=USER_FIELDS,
+#             domain=self.google_domain,
+#         ):
+#             if email := user.get("primaryEmail"):
+#                 yield email
+#     def _fetch_drive_items(
+#         self,
+#         is_slim: bool,
+#         start: SecondsSinceUnixEpoch | None = None,
+#         end: SecondsSinceUnixEpoch | None = None,
+#     ) -> Iterator[GoogleDriveFileType]:
+#         primary_drive_service = self.get_google_resource()
+#         if self.include_shared_drives:
+#             shared_drive_urls = self.shared_drive_ids
+#             if not shared_drive_urls:
+#                 # if no parent ids are specified, get all shared drives using the admin account
+#                 for drive in execute_paginated_retrieval(
+#                     retrieval_function=primary_drive_service.drives().list,
+#                     list_key="drives",
+#                     useDomainAdminAccess=True,
+#                     fields="drives(id)",
+#                 ):
+#                     shared_drive_urls.append(drive["id"])
+#             # For each shared drive, retrieve all files
+#             for shared_drive_id in shared_drive_urls:
+#                 for file in get_files_in_shared_drive(
+#                     service=primary_drive_service,
+#                     drive_id=shared_drive_id,
+#                     is_slim=is_slim,
+#                     cache_folders=bool(self.shared_folder_ids),
+#                     update_traversed_ids_func=self._update_traversed_parent_ids,
+#                     start=start,
+#                     end=end,
+#                 ):
+#                     yield file
+#         requested_folder_ids: set[str] = set(self.shared_folder_ids)
+#         remaining_folder_ids: set[str] = requested_folder_ids.difference(
+#             self._TRAVERSED_PARENT_IDS
+#         )
+#         # No need to do more if no folders
+#         if not self.include_my_drives and not self.shared_folder_ids:
+#             return
+#         for email in self._get_all_user_emails():
+#             logger.info(f"Fetching personal files for user: {email}")
+#             user_drive_service = self.get_google_resource(user_email=email)
+#             if email in self.my_drive_emails:
+#                 yield from get_files_in_my_drive(
+#                     service=user_drive_service,
+#                     email=email,
+#                     is_slim=is_slim,
+#                     cache_folders=bool(self.shared_folder_ids),
+#                     update_traversed_ids_func=self._update_traversed_parent_ids,
+#                     start=start,
+#                     end=end,
+#                 )
+#         if self.shared_folder_ids:
+#             # Crawl all the shared parent ids for files
+#             for folder_id in self.shared_folder_ids:
+#                 yield from crawl_folders_for_files(
+#                     service=primary_drive_service,
+#                     parent_id=folder_id,
+#                     personal_drive=False,
+#                     traversed_parent_ids=self._TRAVERSED_PARENT_IDS,
+#                     update_traversed_ids_func=self._update_traversed_parent_ids,
+#                     start=start,
+#                     end=end,
+#                 )
+#     def _extract_docs_from_google_drive(
+#         self,
+#         start: SecondsSinceUnixEpoch | None = None,
+#         end: SecondsSinceUnixEpoch | None = None,
+#     ) -> GenerateDocumentsOutput:
+#         doc_batch = []
+#         for file in self._fetch_drive_items(
+#             is_slim=False,
+#             start=start,
+#             end=end,
+#         ):
+#             user_email = file.get("owners", [{}])[0].get("emailAddress")
+#             service = self.get_google_resource(user_email=user_email)
+#             if doc := convert_drive_item_to_document(
+#                 file=file,
+#                 service=service,
+#             ):
+#                 doc_batch.append(doc)
+#             if len(doc_batch) >= self.batch_size:
+#                 yield doc_batch
+#                 doc_batch = []
+#         yield doc_batch
+#     def load_from_state(self) -> GenerateDocumentsOutput:
+#         try:
+#             yield from self._extract_docs_from_google_drive()
+#         except Exception as e:
+#             if MISSING_SCOPES_ERROR_STR in str(e):
+#                 raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
+#             raise e
+#     def poll_source(
+#         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
+#     ) -> GenerateDocumentsOutput:
+#         try:
+#             yield from self._extract_docs_from_google_drive(start, end)
+#         except Exception as e:
+#             if MISSING_SCOPES_ERROR_STR in str(e):
+#                 raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
+#             raise e
+#     def _extract_slim_docs_from_google_drive(
+#         self,
+#         start: SecondsSinceUnixEpoch | None = None,
+#         end: SecondsSinceUnixEpoch | None = None,
+#     ) -> GenerateSlimDocumentOutput:
+#         slim_batch = []
+#         for file in self._fetch_drive_items(
+#             is_slim=True,
+#             start=start,
+#             end=end,
+#         ):
+#             slim_batch.append(
+#                 SlimDocument(
+#                     id=file["webViewLink"],
+#                     perm_sync_data={
+#                         "doc_id": file.get("id"),
+#                         "permissions": file.get("permissions", []),
+#                         "permission_ids": file.get("permissionIds", []),
+#                         "name": file.get("name"),
+#                         "owner_email": file.get("owners", [{}])[0].get("emailAddress"),
+#                     },
+#                 )
+#             )
+#             if len(slim_batch) >= SLIM_BATCH_SIZE:
+#                 yield slim_batch
+#                 slim_batch = []
+#         yield slim_batch
+#     def retrieve_all_slim_documents(
+#         self,
+#         start: SecondsSinceUnixEpoch | None = None,
+#         end: SecondsSinceUnixEpoch | None = None,
+#     ) -> GenerateSlimDocumentOutput:
+#         try:
+#             yield from self._extract_slim_docs_from_google_drive(start, end)
+#         except Exception as e:
+#             if MISSING_SCOPES_ERROR_STR in str(e):
+#                 raise PermissionError(ONYX_SCOPE_INSTRUCTIONS) from e
+#             raise e
+# def get_files_in_my_drive(
+#     service: Resource,
+#     email: str,
+#     is_slim: bool = False,
+#     cache_folders: bool = True,
+#     update_traversed_ids_func: Callable[[str], None] = lambda _: None,
+#     start: SecondsSinceUnixEpoch | None = None,
+#     end: SecondsSinceUnixEpoch | None = None,
+# ) -> Iterator[GoogleDriveFileType]:
+#     if cache_folders:
+#         # Get all folders being queried and add them to the traversed set
+#         query = f"mimeType = '{DRIVE_FOLDER_TYPE}' and '{email}' in owners"
+#         query += " and trashed = false"
+#         for file in execute_paginated_retrieval(
+#             retrieval_function=service.files().list,
+#             list_key="files",
+#             corpora="user",
+#             fields="nextPageToken, files(id)",
+#             q=query,
+#         ):
+#             update_traversed_ids_func(file["id"])
+#     query = f"mimeType != '{DRIVE_FOLDER_TYPE}' and '{email}' in owners"
+#     query += " and trashed = false"
+#     query += _generate_time_range_filter(start, end)
+#     for file in execute_paginated_retrieval(
+#         retrieval_function=service.files().list,
+#         list_key="files",
+#         corpora="user",
+#         fields=SLIM_FILE_FIELDS if is_slim else FILE_FIELDS,
+#         q=query,
+#     ):
+#         yield file

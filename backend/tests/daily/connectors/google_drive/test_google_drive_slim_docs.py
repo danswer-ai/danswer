@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 from danswer.access.models import ExternalAccess
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
-from danswer.connectors.google_drive.resources import get_admin_service
 from danswer.connectors.google_utils.google_utils import execute_paginated_retrieval
+from danswer.connectors.google_utils.resources import get_admin_service
 from ee.danswer.external_permissions.google_drive.doc_sync import (
     _get_permissions_from_slim_doc,
 )

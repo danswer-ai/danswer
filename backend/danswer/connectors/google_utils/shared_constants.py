@@ -16,8 +16,11 @@ GOOGLE_SCOPES = {
     ],
 }
 
+# This is the Oauth token
 DB_CREDENTIALS_DICT_TOKEN_KEY = "google_tokens"
+# This is the service account key
 DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY = "google_service_account_key"
+# The email saved for both auth types
 DB_CREDENTIALS_PRIMARY_ADMIN_KEY = "google_primary_admin"
 
 USER_FIELDS = "nextPageToken, users(primaryEmail)"

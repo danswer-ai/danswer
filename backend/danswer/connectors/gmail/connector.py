@@ -4,14 +4,14 @@ from typing import Dict
 
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
-from googleapiclient.discovery import build  # type: ignore
-from googleapiclient.discovery import Resource  # type: ignore
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
 from danswer.connectors.google_utils.google_auth import get_google_creds
 from danswer.connectors.google_utils.google_utils import execute_paginated_retrieval
+from danswer.connectors.google_utils.resources import get_admin_service
+from danswer.connectors.google_utils.resources import get_gmail_service
 from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
@@ -205,39 +205,51 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(self, batch_size: int = INDEX_BATCH_SIZE) -> None:
         self.batch_size = batch_size
 
-        self.creds: OAuthCredentials | ServiceAccountCredentials | None = None
-        self.google_domain: str | None = None
-        self.primary_admin_email: str | None = None
+        self._creds: OAuthCredentials | ServiceAccountCredentials | None = None
+        self._primary_admin_email: str | None = None
+
+    @property
+    def primary_admin_email(self) -> str:
+        if self._primary_admin_email is None:
+            raise RuntimeError(
+                "Primary admin email missing, "
+                "should not call this property "
+                "before calling load_credentials"
+            )
+        return self._primary_admin_email
+
+    @property
+    def google_domain(self) -> str:
+        if self._primary_admin_email is None:
+            raise RuntimeError(
+                "Primary admin email missing, "
+                "should not call this property "
+                "before calling load_credentials"
+            )
+        return self._primary_admin_email.split("@")[-1]
+
+    @property
+    def creds(self) -> OAuthCredentials | ServiceAccountCredentials:
+        if self._creds is None:
+            raise RuntimeError(
+                "Creds missing, "
+                "should not call this property "
+                "before calling load_credentials"
+            )
+        return self._creds
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, str] | None:
         primary_admin_email = credentials[DB_CREDENTIALS_PRIMARY_ADMIN_KEY]
-        self.google_domain = primary_admin_email.split("@")[1]
-        self.primary_admin_email = primary_admin_email
+        self._primary_admin_email = primary_admin_email
 
-        self.creds, new_creds_dict = get_google_creds(
+        self._creds, new_creds_dict = get_google_creds(
             credentials=credentials,
             source=DocumentSource.GMAIL,
         )
         return new_creds_dict
 
-    def get_google_resource(
-        self,
-        service_name: str = "gmail",
-        service_version: str = "v1",
-        user_email: str | None = None,
-    ) -> Resource:
-        if isinstance(self.creds, ServiceAccountCredentials):
-            creds = self.creds.with_subject(user_email or self.primary_admin_email)
-            service = build(service_name, service_version, credentials=creds)
-        elif isinstance(self.creds, OAuthCredentials):
-            service = build(service_name, service_version, credentials=self.creds)
-        else:
-            raise PermissionError("No credentials found")
-
-        return service
-
     def _get_all_user_emails(self) -> list[str]:
-        admin_service = self.get_google_resource("admin", "directory_v1")
+        admin_service = get_admin_service(self.creds, self.primary_admin_email)
         emails = []
         for user in execute_paginated_retrieval(
             retrieval_function=admin_service.users().list,
@@ -257,7 +269,7 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
         query = _build_time_range_query(time_range_start, time_range_end)
         doc_batch = []
         for user_email in self._get_all_user_emails():
-            gmail_service = self.get_google_resource(user_email=user_email)
+            gmail_service = get_gmail_service(self.creds, user_email)
             for thread in execute_paginated_retrieval(
                 retrieval_function=gmail_service.users().threads().list,
                 list_key="threads",
@@ -293,7 +305,7 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
         query = _build_time_range_query(time_range_start, time_range_end)
         doc_batch = []
         for user_email in self._get_all_user_emails():
-            gmail_service = self.get_google_resource(user_email=user_email)
+            gmail_service = get_gmail_service(self.creds, user_email)
             for thread in execute_paginated_retrieval(
                 retrieval_function=gmail_service.users().threads().list,
                 list_key="threads",

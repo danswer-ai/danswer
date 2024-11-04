@@ -11,9 +11,9 @@ from danswer.connectors.google_drive.constants import DRIVE_SHORTCUT_TYPE
 from danswer.connectors.google_drive.constants import UNSUPPORTED_FILE_TYPE_CONTENT
 from danswer.connectors.google_drive.models import GDriveMimeType
 from danswer.connectors.google_drive.models import GoogleDriveFileType
-from danswer.connectors.google_drive.resources import GoogleDocsService
-from danswer.connectors.google_drive.resources import GoogleDriveService
 from danswer.connectors.google_drive.section_extraction import get_document_sections
+from danswer.connectors.google_utils.resources import GoogleDocsService
+from danswer.connectors.google_utils.resources import GoogleDriveService
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.file_processing.extract_file_text import docx_to_text

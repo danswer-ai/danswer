@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from danswer.connectors.google_drive.resources import GoogleDocsService
+from danswer.connectors.google_utils.resources import GoogleDocsService
 from danswer.connectors.models import Section
 
 
