@@ -21,12 +21,23 @@ import { getCurrentUserSS } from "@/lib/userSS";
 import CardSection from "@/components/admin/CardSection";
 import { Suspense } from "react";
 import PostHogPageView from "./PostHogPageView";
+import IntlProvider from "@/components/IntlProvider";
+import initTranslations from "@/app/i18n";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
+
+const i18nNamespaces = [
+  "connectors",
+  "welcome",
+  "chat",
+  "assistants",
+  "modal",
+  "search",
+];
 
 export async function generateMetadata(): Promise<Metadata> {
   let logoLocation = buildClientUrl("/danswer.ico");
@@ -52,14 +63,18 @@ export const dynamic = "force-dynamic";
 
 export default async function RootLayout({
   children,
+  params: { locale },
 }: {
   children: React.ReactNode;
+  params: { locale: string };
 }) {
   const [combinedSettings, assistantsData, user] = await Promise.all([
     fetchSettingsSS(),
     fetchAssistantData(),
     getCurrentUserSS(),
   ]);
+
+  const { t, resources } = await initTranslations(locale, i18nNamespaces);
 
   const productGating =
     combinedSettings?.settings.product_gating ?? GatingType.NONE;
@@ -170,18 +185,26 @@ export default async function RootLayout({
   const { assistants, hasAnyConnectors, hasImageCompatibleModel } =
     assistantsData;
 
-  return getPageContent(
-    <AppProvider
-      user={user}
-      settings={combinedSettings}
-      assistants={assistants}
-      hasAnyConnectors={hasAnyConnectors}
-      hasImageCompatibleModel={hasImageCompatibleModel}
+  return (
+    <IntlProvider
+      namespaces={i18nNamespaces}
+      locale={locale}
+      resources={resources}
     >
-      <Suspense fallback={null}>
-        <PostHogPageView />
-      </Suspense>
-      {children}
-    </AppProvider>
+      {getPageContent(
+        <AppProvider
+          user={user}
+          settings={combinedSettings}
+          assistants={assistants}
+          hasAnyConnectors={hasAnyConnectors}
+          hasImageCompatibleModel={hasImageCompatibleModel}
+        >
+          <Suspense fallback={null}>
+            <PostHogPageView />
+          </Suspense>
+          {children}
+        </AppProvider>
+      )}
+    </IntlProvider>
   );
 }

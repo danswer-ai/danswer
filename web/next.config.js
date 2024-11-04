@@ -7,8 +7,11 @@ const version = env_version || package_version;
 // Always require withSentryConfig
 const { withSentryConfig } = require("@sentry/nextjs");
 
+const { i18n } = require('./src/i18nConfig'); 
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  i18n,
   output: "standalone",
   swcMinify: true,
   rewrites: async () => {

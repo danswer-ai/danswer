@@ -28,5 +28,7 @@
     "Delete": "Delete",
     "Share": "Share",
     "Rename": "Rename",
-    "De-Select All": "De-Select All"
+    "De-Select All": "De-Select All",
+    "Manage Assistants": "Manage Assistants",
+    "Manage Prompts": "Manage Prompts"
 }

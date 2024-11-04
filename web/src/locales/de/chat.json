@@ -28,5 +28,7 @@
     "Delete": "Löschen",
     "Share": "Teilen",
     "Rename": "Umbenennen",
-    "De-Select All": "Alle abwählen"
+    "De-Select All": "Alle abwählen",
+    "Manage Assistants": "Assistenten verwalten",
+    "Manage Prompts": "Prompts verwalten"
 }

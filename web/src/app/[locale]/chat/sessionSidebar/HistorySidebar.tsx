@@ -161,7 +161,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               >
                 <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
                 <p className="my-auto flex items-center text-sm">
-                  Manage Assistants
+                  {t("Manage Assistants")}
                 </p>
               </Link>
               <Link
@@ -170,7 +170,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               >
                 <ClosedBookIcon className="h-4 w-4 my-auto" />
                 <p className="my-auto flex items-center text-sm">
-                  Manage Prompts
+                  {t("Manage Prompts")}
                 </p>
               </Link>
             </div>

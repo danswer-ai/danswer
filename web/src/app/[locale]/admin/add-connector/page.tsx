@@ -1,4 +1,5 @@
 "use client";
+
 import { SourceIcon } from "@/components/SourceIcon";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { ConnectorIcon } from "@/components/icons/icons";
@@ -8,6 +9,7 @@ import Title from "@/components/ui/title";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function SourceTile({
   sourceMetadata,
@@ -37,7 +39,9 @@ function SourceTile({
     </Link>
   );
 }
+
 export default function Page() {
+  const { t } = useTranslation("connectors");
   const sources = useMemo(() => listSourceMetadata(), []);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -48,6 +52,7 @@ export default function Page() {
       searchInputRef.current.focus();
     }
   }, []);
+
   const filterSources = useCallback(
     (sources: SourceMetadata[]) => {
       if (!searchTerm) return sources;
@@ -76,15 +81,13 @@ export default function Page() {
       {} as Record<SourceCategory, SourceMetadata[]>
     );
   }, [sources, searchTerm]);
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       const filteredCategories = Object.entries(categorizedSources).filter(
         ([_, sources]) => sources.length > 0
       );
-      if (
-        filteredCategories.length > 0 &&
-        filteredCategories[0][1].length > 0
-      ) {
+      if (filteredCategories.length > 0 && filteredCategories[0][1].length > 0) {
         const firstSource = filteredCategories[0][1][0];
         if (firstSource) {
           window.open(firstSource.adminUrl, "_self");
@@ -97,10 +100,12 @@ export default function Page() {
     <div className="mx-auto container">
       <AdminPageTitle
         icon={<ConnectorIcon size={32} />}
-        title="Add Connector"
+        title={t("Add Connector", { defaultValue: "Add Connector" })}
         farRightElement={
           <Link href="/admin/indexing/status">
-            <Button variant="success-reverse">See Connectors</Button>
+            <Button variant="success-reverse">
+              {t("seeConnectors", { defaultValue: "See Connectors" })}
+            </Button>
           </Link>
         }
       />
@@ -108,7 +113,7 @@ export default function Page() {
       <input
         type="text"
         ref={searchInputRef}
-        placeholder="Search connectors..."
+        placeholder={t("searchConnectorsPlaceholder", { defaultValue: "Search connectors..." })}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         onKeyDown={handleKeyPress}
@@ -120,9 +125,9 @@ export default function Page() {
         .map(([category, sources], categoryInd) => (
           <div key={category} className="mb-8">
             <div className="flex mt-8">
-              <Title>{category}</Title>
+              <Title>{t(`category_${category}`, { defaultValue: category })}</Title>
             </div>
-            <p>{getCategoryDescription(category as SourceCategory)}</p>
+            <p>{t(`description_${category}`, { defaultValue: getCategoryDescription(category as SourceCategory) })}</p>
             <div className="flex flex-wrap gap-4 p-4">
               {sources.map((source, sourceInd) => (
                 <SourceTile

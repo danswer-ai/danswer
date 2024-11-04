@@ -9,8 +9,10 @@ import Text from "@/components/ui/text";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { usePopupFromQuery } from "@/components/popup/PopupFromQuery";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 function Main() {
+  const { t } = useTranslation("connectors");
   const {
     data: indexAttemptData,
     isLoading: indexAttemptIsLoading,
@@ -36,7 +38,7 @@ function Main() {
       <div className="text-error">
         {indexAttemptError?.info?.detail ||
           editableIndexAttemptError?.info?.detail ||
-          "Error loading indexing history."}
+          t("errorLoadingIndexingHistory", { defaultValue: "Error loading indexing history." })}
       </div>
     );
   }
@@ -44,11 +46,12 @@ function Main() {
   if (indexAttemptData.length === 0) {
     return (
       <Text>
-        It looks like you don&apos;t have any connectors setup yet. Visit the{" "}
+        {t("noConnectorsSetup", { defaultValue: "It looks like you don't have any connectors setup yet." })}
+        {" "}
         <Link className="text-link" href="/admin/add-connector">
-          Add Connector
+          {t("addConnectorPageLink", { defaultValue: "Add Connector" })}
         </Link>{" "}
-        page to get started!
+        {t("toGetStarted", { defaultValue: "page to get started!" })}
       </Text>
     );
   }
@@ -73,13 +76,14 @@ function Main() {
 }
 
 export default function Status() {
+  const { t } = useTranslation("connectors");
   const { popup } = usePopupFromQuery({
     "connector-created": {
-      message: "Connector created successfully",
+      message: t("connectorCreatedSuccess", { defaultValue: "Connector created successfully" }),
       type: "success",
     },
     "connector-deleted": {
-      message: "Connector deleted successfully",
+      message: t("connectorDeletedSuccess", { defaultValue: "Connector deleted successfully" }),
       type: "success",
     },
   });
@@ -89,10 +93,12 @@ export default function Status() {
       {popup}
       <AdminPageTitle
         icon={<NotebookIcon size={32} />}
-        title="Existing Connectors"
+        title={t("existingConnectors", { defaultValue: "Existing Connectors" })}
         farRightElement={
           <Link href="/admin/add-connector">
-            <Button variant="success-reverse">Add Connector</Button>
+            <Button variant="success-reverse">
+              {t("addConnectorButton", { defaultValue: "Add Connector" })}
+            </Button>
           </Link>
         }
       />
