@@ -13,7 +13,7 @@ export function ErrorCallout({
       <Callout
         className="mt-4"
         title={errorTitle || "Page not found"}
-        icon={<FiAlertTriangle />}
+        icon={<FiAlertTriangle className="text-red-500 h-4 w-4" />}
         type="danger"
       >
         {errorMsg}
