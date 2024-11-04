@@ -1,4 +1,5 @@
 "use client";
+import { use } from "react";
 
 import Text from "@/components/ui/text";
 import Title from "@/components/ui/title";
@@ -63,7 +64,8 @@ function MessageDisplay({ message }: { message: MessageSnapshot }) {
   );
 }
 
-export default function QueryPage({ params }: { params: { id: string } }) {
+export default function QueryPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const {
     data: chatSessionSnapshot,
     isLoading,

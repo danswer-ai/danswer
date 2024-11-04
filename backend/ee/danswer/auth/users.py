@@ -1,9 +1,13 @@
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
+from fastapi import status
 from sqlalchemy.orm import Session
 
+from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import AUTH_TYPE
+from danswer.configs.app_configs import SUPER_CLOUD_API_KEY
+from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.constants import AuthType
 from danswer.db.engine import get_session
 from danswer.db.models import User
@@ -68,3 +72,19 @@ def get_default_admin_user_emails_() -> list[str]:
     if seed_config and seed_config.admin_user_emails:
         return seed_config.admin_user_emails
     return []
+
+
+async def current_cloud_superuser(
+    request: Request,
+    user: User | None = Depends(current_admin_user),
+) -> User | None:
+    api_key = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if api_key != SUPER_CLOUD_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    if user and user.email not in SUPER_USERS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. User must be a cloud superuser to perform this action.",
+        )
+    return user

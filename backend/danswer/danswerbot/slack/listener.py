@@ -57,10 +57,10 @@ from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
-from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import SLACK_CHANNEL_ID
+from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
 

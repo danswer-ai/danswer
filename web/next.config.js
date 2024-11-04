@@ -10,7 +10,6 @@ const { withSentryConfig } = require("@sentry/nextjs");
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  swcMinify: true,
   publicRuntimeConfig: {
     version,
   },

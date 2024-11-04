@@ -10,7 +10,8 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import CardSection from "@/components/admin/CardSection";
 import Title from "@/components/ui/title";
 
-export default async function Page({ params }: { params: { id: string } }) {
+export default async function Page(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const [values, error] = await fetchAssistantEditorInfoSS(params.id);
 
   let body;

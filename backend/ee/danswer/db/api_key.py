@@ -15,8 +15,8 @@ from ee.danswer.auth.api_key import build_displayable_api_key
 from ee.danswer.auth.api_key import generate_api_key
 from ee.danswer.auth.api_key import hash_api_key
 from ee.danswer.server.api_key.models import APIKeyArgs
-from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import MULTI_TENANT
+from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 
 def get_api_key_email_pattern() -> str:

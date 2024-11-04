@@ -2,8 +2,6 @@ from datetime import datetime
 from datetime import timezone
 from http import HTTPStatus
 from time import sleep
-from typing import cast
-from uuid import uuid4
 
 import redis
 from celery import Celery
@@ -14,12 +12,6 @@ from redis import Redis
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
-from danswer.background.celery.celery_redis import RedisConnectorDeletion
-from danswer.background.celery.celery_redis import RedisConnectorIndexing
-from danswer.background.celery.celery_redis import RedisConnectorStop
-from danswer.background.celery.tasks.shared.RedisConnectorIndexingFenceData import (
-    RedisConnectorIndexingFenceData,
-)
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
 from danswer.background.indexing.run_indexing import RunIndexingCallbackInterface
@@ -50,6 +42,8 @@ from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
+from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector_index import RedisConnectorIndexingFenceData
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
@@ -129,6 +123,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                 cc_pair_ids.append(cc_pair_entry.id)
 
         for cc_pair_id in cc_pair_ids:
+            redis_connector = RedisConnector(tenant_id, cc_pair_id)
             with get_session_with_tenant(tenant_id) as db_session:
                 # Get the primary search settings
                 primary_search_settings = get_current_search_settings(db_session)
@@ -141,10 +136,10 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     search_settings.append(secondary_search_settings)
 
                 for search_settings_instance in search_settings:
-                    rci = RedisConnectorIndexing(
-                        cc_pair_id, search_settings_instance.id
+                    redis_connector_index = redis_connector.new_index(
+                        search_settings_instance.id
                     )
-                    if r.exists(rci.fence_key):
+                    if redis_connector_index.fenced:
                         continue
 
                     cc_pair = get_connector_credential_pair_from_id(
@@ -307,15 +302,15 @@ def try_creating_indexing_task(
         return None
 
     try:
-        rci = RedisConnectorIndexing(cc_pair.id, search_settings.id)
+        redis_connector = RedisConnector(tenant_id, cc_pair.id)
+        redis_connector_index = redis_connector.new_index(search_settings.id)
 
         # skip if already indexing
-        if r.exists(rci.fence_key):
+        if redis_connector_index.fenced:
             return None
 
         # skip indexing if the cc_pair is deleting
-        rcd = RedisConnectorDeletion(cc_pair.id)
-        if r.exists(rcd.fence_key):
+        if redis_connector.delete.fenced:
             return None
 
         db_session.refresh(cc_pair)
@@ -323,19 +318,17 @@ def try_creating_indexing_task(
             return None
 
         # add a long running generator task to the queue
-        r.delete(rci.generator_complete_key)
-        r.delete(rci.taskset_key)
-
-        custom_task_id = f"{rci.generator_task_id_prefix}_{uuid4()}"
+        redis_connector_index.generator_clear()
 
         # set a basic fence to start
-        fence_value = RedisConnectorIndexingFenceData(
+        payload = RedisConnectorIndexingFenceData(
             index_attempt_id=None,
             started=None,
             submitted=datetime.now(timezone.utc),
             celery_task_id=None,
         )
-        r.set(rci.fence_key, fence_value.model_dump_json())
+
+        redis_connector_index.set_fence(payload)
 
         # create the index attempt for tracking purposes
         # code elsewhere checks for index attempts without an associated redis key
@@ -347,6 +340,8 @@ def try_creating_indexing_task(
             from_beginning=reindex,
             db_session=db_session,
         )
+
+        custom_task_id = redis_connector_index.generate_generator_task_id()
 
         result = celery_app.send_task(
             "connector_indexing_proxy_task",
@@ -364,11 +359,12 @@ def try_creating_indexing_task(
             raise RuntimeError("send_task for connector_indexing_proxy_task failed.")
 
         # now fill out the fence with the rest of the data
-        fence_value.index_attempt_id = index_attempt_id
-        fence_value.celery_task_id = result.id
-        r.set(rci.fence_key, fence_value.model_dump_json())
+        payload.index_attempt_id = index_attempt_id
+        payload.celery_task_id = result.id
+        redis_connector_index.set_fence(payload)
+
     except Exception:
-        r.delete(rci.fence_key)
+        redis_connector_index.set_fence(payload)
         task_logger.exception(
             f"Unexpected exception: "
             f"tenant={tenant_id} "
@@ -494,61 +490,52 @@ def connector_indexing_task(
     )
 
     attempt = None
-    n_final_progress = 0
+    n_final_progress: int | None = None
+
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    redis_connector_index = redis_connector.new_index(search_settings_id)
 
     r = get_redis_client(tenant_id=tenant_id)
 
-    rcd = RedisConnectorDeletion(cc_pair_id)
-    if r.exists(rcd.fence_key):
+    if redis_connector.delete.fenced:
         raise RuntimeError(
             f"Indexing will not start because connector deletion is in progress: "
             f"cc_pair={cc_pair_id} "
-            f"fence={rcd.fence_key}"
+            f"fence={redis_connector.delete.fence_key}"
         )
 
-    rcs = RedisConnectorStop(cc_pair_id)
-    if r.exists(rcs.fence_key):
+    if redis_connector.stop.fenced:
         raise RuntimeError(
             f"Indexing will not start because a connector stop signal was detected: "
             f"cc_pair={cc_pair_id} "
-            f"fence={rcs.fence_key}"
+            f"fence={redis_connector.stop.fence_key}"
         )
 
-    rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
-
     while True:
-        # read related data and evaluate/print task progress
-        fence_value = cast(bytes, r.get(rci.fence_key))
-        if fence_value is None:
+        # wait for the fence to come up
+        if not redis_connector_index.fenced:
             raise ValueError(
-                f"connector_indexing_task: fence_value not found: fence={rci.fence_key}"
+                f"connector_indexing_task - fence not found: fence={redis_connector_index.fence_key}"
             )
 
-        try:
-            fence_json = fence_value.decode("utf-8")
-            fence_data = RedisConnectorIndexingFenceData.model_validate_json(
-                cast(str, fence_json)
-            )
-        except ValueError:
-            logger.exception(
-                f"connector_indexing_task: fence_data not decodeable: fence={rci.fence_key}"
-            )
-            raise
+        payload = redis_connector_index.payload
+        if not payload:
+            raise ValueError("connector_indexing_task: payload invalid or not found")
 
-        if fence_data.index_attempt_id is None or fence_data.celery_task_id is None:
+        if payload.index_attempt_id is None or payload.celery_task_id is None:
             logger.info(
-                f"connector_indexing_task - Waiting for fence: fence={rci.fence_key}"
+                f"connector_indexing_task - Waiting for fence: fence={redis_connector_index.fence_key}"
             )
             sleep(1)
             continue
 
         logger.info(
-            f"connector_indexing_task - Fence found, continuing...: fence={rci.fence_key}"
+            f"connector_indexing_task - Fence found, continuing...: fence={redis_connector_index.fence_key}"
         )
         break
 
     lock = r.lock(
-        rci.generator_lock_key,
+        redis_connector_index.generator_lock_key,
         timeout=CELERY_INDEXING_LOCK_TIMEOUT,
     )
 
@@ -558,11 +545,10 @@ def connector_indexing_task(
             f"Indexing task already running, exiting...: "
             f"cc_pair={cc_pair_id} search_settings={search_settings_id}"
         )
-        # r.set(rci.generator_complete_key, HTTPStatus.CONFLICT.value)
         return None
 
-    fence_data.started = datetime.now(timezone.utc)
-    r.set(rci.fence_key, fence_data.model_dump_json())
+    payload.started = datetime.now(timezone.utc)
+    redis_connector_index.set_fence(payload)
 
     try:
         with get_session_with_tenant(tenant_id) as db_session:
@@ -590,11 +576,12 @@ def connector_indexing_task(
                     f"Credential not found: cc_pair={cc_pair_id} credential={cc_pair.credential_id}"
                 )
 
-            rci = RedisConnectorIndexing(cc_pair_id, search_settings_id)
-
             # define a callback class
             callback = RunIndexingCallback(
-                rcs.fence_key, rci.generator_progress_key, lock, r
+                redis_connector.stop.fence_key,
+                redis_connector_index.generator_progress_key,
+                lock,
+                r,
             )
 
             logger.info(
@@ -613,14 +600,8 @@ def connector_indexing_task(
             )
 
             # get back the total number of indexed docs and return it
-            generator_progress_value = r.get(rci.generator_progress_key)
-            if generator_progress_value is not None:
-                try:
-                    n_final_progress = int(cast(int, generator_progress_value))
-                except ValueError:
-                    pass
-
-            r.set(rci.generator_complete_key, HTTPStatus.OK.value)
+            n_final_progress = redis_connector_index.get_progress()
+            redis_connector_index.set_generator_complete(HTTPStatus.OK.value)
     except Exception as e:
         logger.exception(
             f"Indexing spawned task failed: attempt={index_attempt_id} "
@@ -632,10 +613,7 @@ def connector_indexing_task(
             with get_session_with_tenant(tenant_id) as db_session:
                 mark_attempt_failed(attempt, db_session, failure_reason=str(e))
 
-        r.delete(rci.generator_lock_key)
-        r.delete(rci.generator_progress_key)
-        r.delete(rci.taskset_key)
-        r.delete(rci.fence_key)
+        redis_connector_index.reset()
         raise e
     finally:
         if lock.owned():

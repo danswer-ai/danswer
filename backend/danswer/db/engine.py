@@ -37,10 +37,10 @@ from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.utils.logger import setup_logger
-from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.configs import TENANT_ID_PREFIX
+from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
 
