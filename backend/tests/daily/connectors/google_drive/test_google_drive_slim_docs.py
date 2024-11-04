@@ -153,7 +153,8 @@ def test_all_permissions(
     assert_correct_access_for_user(
         user_email=EMAIL_MAPPING["ADMIN"],
         expected_access_ids=list(range(0, 5))  # Admin's My Drive
-        + list(range(20, 60)),  # All shared drive content
+        + list(range(20, 60))  # All shared drive content
+        + [61],  # Sections
         group_map=group_map,
         retrieved_access_map=access_map,
     )
