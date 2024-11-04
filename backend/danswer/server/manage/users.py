@@ -525,8 +525,6 @@ class RecentAssistantsRequest(BaseModel):
 def update_recent_assistants(
     recent_assistants: list[int] | None, current_assistant
 ) -> list[int]:
-    print("recent_assistants: ", recent_assistants)
-    print("current_assistant: ", current_assistant)
     if recent_assistants is None:
         recent_assistants = []
     else:
