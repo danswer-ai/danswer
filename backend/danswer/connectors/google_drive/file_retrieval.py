@@ -4,12 +4,10 @@ from datetime import datetime
 
 from googleapiclient.discovery import Resource  # type: ignore
 
-from danswer.connectors.cross_connector_utils.google.google_utils import (
-    execute_paginated_retrieval,
-)
 from danswer.connectors.google_drive.constants import DRIVE_FOLDER_TYPE
 from danswer.connectors.google_drive.constants import DRIVE_SHORTCUT_TYPE
 from danswer.connectors.google_drive.models import GoogleDriveFileType
+from danswer.connectors.google_utils.google_utils import execute_paginated_retrieval
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.utils.logger import setup_logger
 

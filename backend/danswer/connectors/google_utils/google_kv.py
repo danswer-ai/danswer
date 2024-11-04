@@ -16,22 +16,22 @@ from danswer.configs.constants import KV_GMAIL_CRED_KEY
 from danswer.configs.constants import KV_GMAIL_SERVICE_ACCOUNT_KEY
 from danswer.configs.constants import KV_GOOGLE_DRIVE_CRED_KEY
 from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_TOKEN_KEY,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     GOOGLE_SCOPES,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     MISSING_SCOPES_ERROR_STR,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     ONYX_SCOPE_INSTRUCTIONS,
 )
 from danswer.db.credentials import update_credential_json

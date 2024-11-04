@@ -22,36 +22,36 @@ from danswer.background.celery.versioned_apps.primary import app as primary_app
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
-from danswer.connectors.cross_connector_utils.google.google_auth import (
+from danswer.connectors.google_utils.google_auth import (
     get_google_oauth_creds,
 )
-from danswer.connectors.cross_connector_utils.google.google_kv import (
+from danswer.connectors.google_utils.google_kv import (
     build_service_account_creds,
 )
-from danswer.connectors.cross_connector_utils.google.google_kv import (
+from danswer.connectors.google_utils.google_kv import (
     delete_google_app_cred,
 )
-from danswer.connectors.cross_connector_utils.google.google_kv import (
+from danswer.connectors.google_utils.google_kv import (
     delete_service_account_key,
 )
-from danswer.connectors.cross_connector_utils.google.google_kv import get_auth_url
-from danswer.connectors.cross_connector_utils.google.google_kv import (
+from danswer.connectors.google_utils.google_kv import get_auth_url
+from danswer.connectors.google_utils.google_kv import (
     get_google_app_cred,
 )
-from danswer.connectors.cross_connector_utils.google.google_kv import (
+from danswer.connectors.google_utils.google_kv import (
     get_service_account_key,
 )
-from danswer.connectors.cross_connector_utils.google.google_kv import (
+from danswer.connectors.google_utils.google_kv import (
     update_credential_access_tokens,
 )
-from danswer.connectors.cross_connector_utils.google.google_kv import (
+from danswer.connectors.google_utils.google_kv import (
     upsert_google_app_cred,
 )
-from danswer.connectors.cross_connector_utils.google.google_kv import (
+from danswer.connectors.google_utils.google_kv import (
     upsert_service_account_key,
 )
-from danswer.connectors.cross_connector_utils.google.google_kv import verify_csrf
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.google_kv import verify_csrf
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_TOKEN_KEY,
 )
 from danswer.db.connector import create_connector

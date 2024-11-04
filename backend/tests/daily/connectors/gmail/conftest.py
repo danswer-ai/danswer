@@ -4,16 +4,16 @@ from collections.abc import Callable
 
 import pytest
 
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.gmail.connector import GmailConnector
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_TOKEN_KEY,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
-from danswer.connectors.gmail.connector import GmailConnector
 
 
 def load_env_vars(env_file: str = ".env") -> None:

@@ -6,16 +6,16 @@ from google.oauth2.credentials import Credentials as OAuthCredentials  # type: i
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 
 from danswer.configs.constants import DocumentSource
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_TOKEN_KEY,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     GOOGLE_SCOPES,
 )
 from danswer.utils.logger import setup_logger

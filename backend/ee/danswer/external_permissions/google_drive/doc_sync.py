@@ -5,11 +5,9 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from danswer.access.models import ExternalAccess
-from danswer.connectors.cross_connector_utils.google.google_utils import (
-    execute_paginated_retrieval,
-)
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_drive.resources import get_drive_service
+from danswer.connectors.google_utils.google_utils import execute_paginated_retrieval
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.models import SlimDocument
 from danswer.db.models import ConnectorCredentialPair

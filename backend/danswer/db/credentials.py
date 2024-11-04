@@ -11,7 +11,7 @@ from sqlalchemy.sql.expression import or_
 from danswer.auth.schemas import UserRole
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import KV_GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY
-from danswer.connectors.cross_connector_utils.google.shared_constants import (
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
 from danswer.db.models import ConnectorCredentialPair
