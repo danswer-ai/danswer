@@ -239,29 +239,29 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        try:
-            tenant_id = (
-                get_tenant_id_for_email(user_create.email)
-                if MULTI_TENANT
-                else POSTGRES_DEFAULT_SCHEMA
-            )
-        except exceptions.UserNotExists:
-            # Tenant does not exist; provision a new tenant
-            tenant_provisioning_service = TenantProvisioningService()
+        if MULTI_TENANT:
             try:
-                tenant_id = await tenant_provisioning_service.provision_tenant(
-                    user_create.email
-                )
-            except Exception as e:
-                logger.error(f"Tenant provisioning failed: {e}")
-                raise HTTPException(
-                    status_code=500, detail="Failed to provision tenant."
-                )
+                tenant_id = get_tenant_id_for_email(user_create.email)
 
-        if not tenant_id:
-            raise HTTPException(
-                status_code=401, detail="User does not belong to an organization"
-            )
+            except exceptions.UserNotExists:
+                # If tenant does not exist and in Multi tenant mode, provision a new tenant
+                tenant_provisioning_service = TenantProvisioningService()
+                try:
+                    tenant_id = await tenant_provisioning_service.provision_tenant(
+                        user_create.email
+                    )
+                except Exception as e:
+                    logger.error(f"Tenant provisioning failed: {e}")
+                    raise HTTPException(
+                        status_code=500, detail="Failed to provision tenant."
+                    )
+
+            if not tenant_id:
+                raise HTTPException(
+                    status_code=401, detail="User does not belong to an organization"
+                )
+        else:
+            tenant_id = POSTGRES_DEFAULT_SCHEMA
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
@@ -321,24 +321,23 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
         # Get tenant_id from mapping table
-        try:
-            tenant_id = (
-                get_tenant_id_for_email(account_email)
-                if MULTI_TENANT
-                else POSTGRES_DEFAULT_SCHEMA
-            )
-        except exceptions.UserNotExists:
-            # Tenant does not exist; provision a new tenant
-            tenant_provisioning_service = TenantProvisioningService()
+        if MULTI_TENANT:
             try:
-                tenant_id = await tenant_provisioning_service.provision_tenant(
-                    account_email
-                )
-            except Exception as e:
-                logger.error(f"Tenant provisioning failed: {e}")
-                raise HTTPException(
-                    status_code=500, detail="Failed to provision tenant."
-                )
+                tenant_id = get_tenant_id_for_email(account_email)
+            except exceptions.UserNotExists:
+                # Tenant does not exist; provision a new tenant
+                tenant_provisioning_service = TenantProvisioningService()
+                try:
+                    tenant_id = await tenant_provisioning_service.provision_tenant(
+                        account_email
+                    )
+                except Exception as e:
+                    logger.error(f"Tenant provisioning failed: {e}")
+                    raise HTTPException(
+                        status_code=500, detail="Failed to provision tenant."
+                    )
+        else:
+            tenant_id = POSTGRES_DEFAULT_SCHEMA
 
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")

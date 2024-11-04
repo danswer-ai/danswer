@@ -35,11 +35,6 @@ from shared_configs.enums import EmbeddingProvider
 logger = logging.getLogger(__name__)
 
 
-def drop_schema(tenant_id: str) -> None:
-    with get_sqlalchemy_engine().connect() as connection:
-        connection.execute(text(f"DROP SCHEMA IF EXISTS {tenant_id} CASCADE"))
-
-
 class TenantProvisioningService:
     async def provision_tenant(self, email: str) -> str:
         tenant_id = TENANT_ID_PREFIX + str(uuid.uuid4())  # Generate new tenant ID
@@ -244,3 +239,8 @@ def ensure_schema_exists(tenant_id: str) -> bool:
                 db_session.execute(stmt)
                 return True
             return False
+
+
+def drop_schema(tenant_id: str) -> None:
+    with get_sqlalchemy_engine().connect() as connection:
+        connection.execute(text(f"DROP SCHEMA IF EXISTS {tenant_id} CASCADE"))
