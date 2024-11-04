@@ -104,6 +104,13 @@ import BlurBackground from "./shared_chat_search/BlurBackground";
 import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
+import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -319,6 +326,7 @@ export function ChatPage({
   useEffect(() => {
     Prism.highlightAll();
     setIsReady(true);
+    refreshRecentAssistants(liveAssistant?.id);
   }, []);
 
   // this is triggered every time the user switches which chat
@@ -1799,6 +1807,13 @@ export function ChatPage({
     };
   }
 
+  const {
+    visibleAssistants: assistants,
+    recentAssistants,
+    refreshAssistants,
+    refreshRecentAssistants,
+  } = useAssistants();
+
   return (
     <>
       <HealthCheckBanner />
@@ -2018,7 +2033,7 @@ export function ChatPage({
                                       flex 
                                       flex-wrap
                                       justify-center
-                                      mt-2
+                                      mt-6
                                       h-40
                                       items-start
                                       mb-6`}
@@ -2027,8 +2042,6 @@ export function ChatPage({
                                     currentPersona.starter_messages.length >
                                       0 && (
                                       <>
-                                        <Separator className="mx-2" />
-
                                         {currentPersona.starter_messages
                                           .slice(0, 4)
                                           .map((starterMessage, i) => (
@@ -2047,6 +2060,74 @@ export function ChatPage({
                                       </>
                                     )}
                                 </div>
+
+                                {!isFetchingChatMessages &&
+                                  currentSessionChatState == "input" &&
+                                  !loadingError && (
+                                    <div className="mx-auto mt-20 px-4 w-full max-w-[750px] flex flex-col items-center">
+                                      <Separator className="mx-2 mb-4" />
+                                      <div className="text-sm text-muted-foreground mb-4">
+                                        Recent Assistants
+                                      </div>
+                                      <div className="grid grid-cols-4 gap-4 w-full">
+                                        {recentAssistants
+                                          // First filter out the current assistant
+                                          .filter(
+                                            (assistant) =>
+                                              assistant.id !== liveAssistant?.id
+                                          )
+                                          // Combine with visible assistants to get up to 4 total
+                                          .concat(
+                                            assistants.filter(
+                                              (assistant) =>
+                                                // Exclude current assistant
+                                                assistant.id !==
+                                                  liveAssistant?.id &&
+                                                // Exclude assistants already in recentAssistants
+                                                !recentAssistants.some(
+                                                  (recent) =>
+                                                    recent.id === assistant.id
+                                                )
+                                            )
+                                          )
+                                          // Take first 4
+                                          .slice(0, 4)
+                                          .map((assistant) => (
+                                            <Card
+                                              key={assistant.id}
+                                              className="cursor-pointer hover:bg-background-100  transition-colors"
+                                              onClick={() =>
+                                                onAssistantChange(assistant)
+                                              }
+                                            >
+                                              <CardHeader>
+                                                <div className="flex items-center gap-x-2">
+                                                  <AssistantIcon
+                                                    size="small"
+                                                    assistant={assistant}
+                                                  />
+                                                  <div className="font-semibold text-base">
+                                                    {assistant.name}
+                                                  </div>
+                                                </div>
+                                              </CardHeader>
+                                              <CardContent>
+                                                <CardDescription>
+                                                  <>
+                                                    <div className="text-sm text-muted-foreground line-clamp-2">
+                                                      {assistant.description}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground mt-1">
+                                                      Created by user
+                                                    </div>
+                                                  </>
+                                                </CardDescription>
+                                              </CardContent>
+                                            </Card>
+                                          ))}
+                                      </div>
+                                    </div>
+                                  )}
                               </div>
                             )}
 

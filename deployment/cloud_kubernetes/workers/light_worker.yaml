@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: celery-worker-light
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: celery-worker-light

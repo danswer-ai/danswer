@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: celery-worker-indexing
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: celery-worker-indexing

@@ -22,7 +22,8 @@ interface AssistantsContextProps {
   ownedButHiddenAssistants: Persona[];
   refreshAssistants: () => Promise<void>;
   isImageGenerationAvailable: boolean;
-
+  recentAssistants: Persona[];
+  refreshRecentAssistants: (currentAssistant: number) => Promise<void>;
   // Admin only
   editablePersonas: Persona[];
   allAssistants: Persona[];
@@ -46,9 +47,16 @@ export const AssistantsProvider: React.FC<{
   const [assistants, setAssistants] = useState<Persona[]>(
     initialAssistants || []
   );
-  const { user, isLoadingUser, isAdmin } = useUser();
+  const { user, isLoadingUser, refreshUser, isAdmin } = useUser();
   const [editablePersonas, setEditablePersonas] = useState<Persona[]>([]);
   const [allAssistants, setAllAssistants] = useState<Persona[]>([]);
+
+  const [recentAssistants, setRecentAssistants] = useState<Persona[]>(
+    assistants.filter(
+      (assistant) =>
+        user?.preferences.recent_assistants?.includes(assistant.id) || false
+    )
+  );
 
   const [isImageGenerationAvailable, setIsImageGenerationAvailable] =
     useState<boolean>(false);
@@ -98,6 +106,19 @@ export const AssistantsProvider: React.FC<{
     fetchPersonas();
   }, [isAdmin]);
 
+  const refreshRecentAssistants = async (currentAssistant: number) => {
+    await fetch("/api/user/recent-assistants", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        current_assistant: currentAssistant,
+      }),
+    });
+    await refreshUser();
+  };
+
   const refreshAssistants = async () => {
     try {
       const response = await fetch("/api/persona", {
@@ -125,6 +146,12 @@ export const AssistantsProvider: React.FC<{
     } catch (error) {
       console.error("Error refreshing assistants:", error);
     }
+    setRecentAssistants(
+      assistants.filter(
+        (assistant) =>
+          user?.preferences.recent_assistants?.includes(assistant.id) || false
+      )
+    );
   };
 
   const {
@@ -167,6 +194,8 @@ export const AssistantsProvider: React.FC<{
         editablePersonas,
         allAssistants,
         isImageGenerationAvailable,
+        recentAssistants,
+        refreshRecentAssistants,
       }}
     >
       {children}
