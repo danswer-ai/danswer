@@ -12,6 +12,8 @@ from sqlalchemy.schema import CreateSchema
 
 from alembic import command
 from alembic.config import Config
+from danswer.auth.users import exceptions
+from danswer.auth.users import get_tenant_id_for_email
 from danswer.configs.app_configs import CONTROL_PLANE_API_BASE_URL
 from danswer.configs.app_configs import EXPECTED_API_KEY
 from danswer.db.engine import build_connection_string
@@ -32,7 +34,32 @@ from shared_configs.configs import TENANT_ID_PREFIX
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.enums import EmbeddingProvider
 
+
 logger = logging.getLogger(__name__)
+
+
+async def get_or_create_tenant_id(email: str) -> str:
+    """Get existing tenant ID for an email or create a new tenant if none exists."""
+    if not MULTI_TENANT:
+        return POSTGRES_DEFAULT_SCHEMA
+
+    try:
+        tenant_id = get_tenant_id_for_email(email)
+    except exceptions.UserNotExists:
+        # If tenant does not exist and in Multi tenant mode, provision a new tenant
+        tenant_provisioning_service = TenantProvisioningService()
+        try:
+            tenant_id = await tenant_provisioning_service.provision_tenant(email)
+        except Exception as e:
+            logger.error(f"Tenant provisioning failed: {e}")
+            raise HTTPException(status_code=500, detail="Failed to provision tenant.")
+
+    if not tenant_id:
+        raise HTTPException(
+            status_code=401, detail="User does not belong to an organization"
+        )
+
+    return tenant_id
 
 
 class TenantProvisioningService:
