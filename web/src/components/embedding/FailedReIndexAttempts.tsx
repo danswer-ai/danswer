@@ -1,4 +1,4 @@
-import { buildCCPairInfoUrl } from "@/app/admin/connector/[ccPairId]/lib";
+import { buildCCPairInfoUrl } from "@/app/[locale]/admin/connector/[ccPairId]/lib";
 import { PageSelector } from "@/components/PageSelector";
 import { IndexAttemptStatus } from "@/components/Status";
 import { deleteCCPair } from "@/lib/documentDeletion";

@@ -1,4 +1,4 @@
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/[locale]/admin/assistants/interfaces";
 import { DocumentSet, ValidSources } from "./types";
 import { getSourcesForPersona } from "./sources";
 

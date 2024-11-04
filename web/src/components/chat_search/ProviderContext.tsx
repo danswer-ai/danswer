@@ -1,5 +1,5 @@
 "use client";
-import { WellKnownLLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
+import { WellKnownLLMProviderDescriptor } from "@/app/[locale]/admin/configuration/llm/interfaces";
 import React, {
   createContext,
   useContext,

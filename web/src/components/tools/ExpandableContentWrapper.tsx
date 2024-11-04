@@ -12,7 +12,7 @@ import {
 } from "@/components/icons/icons";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Modal } from "@/components/Modal";
-import { FileDescriptor } from "@/app/chat/interfaces";
+import { FileDescriptor } from "@/app/[locale]/chat/interfaces";
 
 export interface ExpandableContentWrapperProps {
   fileDescriptor: FileDescriptor;

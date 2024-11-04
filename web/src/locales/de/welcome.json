@@ -1,0 +1,19 @@
+{
+    "Welcome to Danswer": "Willkommen bei Danswer",
+    "Get Started":"Los gehts",
+    "How are you planning on using Danswer?": "Wie willst du Danswer nutzen?",
+    "Search / Chat with Knowledge": "Suchen / Chatten mit Wissensdatenbank",
+    "Search / Chat with Knowledge - Description": "Wenn du eine Wissensdatenbank durchsuchen oder direkt mit ihr chatten willst, bist du hier richtig.",
+    "Secure ChatGPT": "Sicheres ChatGPT",
+    "Secure ChatGPT - Description": "Wenn du nach einer reinen ChatGPT-Experience suchst, bist du hier richtig.",
+    "Step 1: Setup an LLM": "Schritt 1: Ein LLM einrichten",
+    "LLM setup complete!": "LLM Einrichtung abgeschlossen!",
+    "If you want to change the key later, you&apos;ll be able to easily to do so in the Admin Panel.": "Wenn du den Key später ändern willst, kannst du das im Admin Bereich machen.",
+    "Step 2: Connect Data Sources": "Schritt 2: Data Sources verknüpfen",
+    "Step 2: Connect Data Sources - Description": "Mit einem Connector bekommt Danswer Daten von den vielen Datenquellen deiner Organisation. Sobald dieser eingerichtet ist, werden die daten automatisch synchronisiert damit du sie in Danswer nutzen kannst.",
+    "Setup your first connector!": "Richte deinen ersten Connector ein!",
+    "Step 2: Start Chatting!": "Schritt 2: Fang an zu chatten!",
+    "Step 2: Staet Chatting! - Description": "Klicke den Button unten um mit diesem Setup zu chatten! Keine Angst - solltest du später noch eine Wissensdatenbank verknüpfen wollen, gen in den",
+    "Admin Panel": "Admin Bereich",
+    "Start chatting!": "Los gehts!"
+}

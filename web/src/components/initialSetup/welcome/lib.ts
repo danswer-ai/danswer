@@ -1,7 +1,7 @@
 import {
   FullLLMProvider,
   WellKnownLLMProviderDescriptor,
-} from "@/app/admin/configuration/llm/interfaces";
+} from "@/app/[locale]/admin/configuration/llm/interfaces";
 import { User } from "@/lib/types";
 
 const DEFAULT_LLM_PROVIDER_TEST_COMPLETE_KEY = "defaultLlmProviderTestComplete";

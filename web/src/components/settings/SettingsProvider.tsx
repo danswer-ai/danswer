@@ -1,6 +1,6 @@
 "use client";
 
-import { CombinedSettings } from "@/app/admin/settings/interfaces";
+import { CombinedSettings } from "@/app/[locale]/admin/settings/interfaces";
 import { createContext, useEffect, useState } from "react";
 
 export const SettingsContext = createContext<CombinedSettings | null>(null);

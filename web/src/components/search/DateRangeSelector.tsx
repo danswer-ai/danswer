@@ -1,7 +1,7 @@
-import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
+import { DateRangePickerValue } from "@/app/[locale]/ee/admin/performance/DateRangeSelector";
 import { FiCalendar, FiChevronDown, FiXCircle } from "react-icons/fi";
 import { CustomDropdown } from "../Dropdown";
-import { timeRangeValues } from "@/app/config/timeRange";
+import { timeRangeValues } from "@/app/[locale]/config/timeRange";
 import { TimeRangeSelector } from "@/components/filters/TimeRangeSelector";
 
 export function DateRangeSelector({

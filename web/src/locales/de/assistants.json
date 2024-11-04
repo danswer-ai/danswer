@@ -1,0 +1,10 @@
+{
+    "New Assistant": "Neuer Assistent",
+    "Existing Assistants": "Vorhandene Assistenten",
+    "Assistants are a way to build custom search/question-answering experiences for different use cases.": "Assistenten sind eine Möglichkeit, benutzerdefinierte Suchabfragen für verschiedene Anwendungsfälle zu erstellen.",
+    "Assistants": "Assistenten",
+    "They allow you to customize:": "Sie erlauben die Konfiguration von:",
+    "The prompt used by your LLM of choice to respond to the user query": "Die Eingabeaufforderung, die Ihr LLM Ihrer Wahl verwendet, um auf die Benutzeranfrage zu antworten",
+    "The documents that are used as context": "Die Dokumente, die als Kontext verwendet werden",
+    "Create an Assistant": "Assistent erstellen"
+}

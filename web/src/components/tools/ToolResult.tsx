@@ -2,7 +2,7 @@ import React from "react";
 import ExpandableContentWrapper, {
   ContentComponentProps,
 } from "./ExpandableContentWrapper";
-import { FileDescriptor } from "@/app/chat/interfaces";
+import { FileDescriptor } from "@/app/[locale]/chat/interfaces";
 
 interface ToolResultProps {
   csvFileDescriptor: FileDescriptor;

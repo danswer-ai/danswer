@@ -8,10 +8,10 @@ import {
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
 import { useContext, useEffect, useState } from "react";
-import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
+import { DateRangePickerValue } from "@/app/[locale]/ee/admin/performance/DateRangeSelector";
 import { SourceMetadata } from "./search/interfaces";
 import { destructureValue } from "./llm/utils";
-import { ChatSession } from "@/app/chat/interfaces";
+import { ChatSession } from "@/app/[locale]/chat/interfaces";
 import { UsersResponse } from "./users/interfaces";
 import { Credential } from "./connectors/credentials";
 import { SettingsContext } from "@/components/settings/SettingsProvider";

@@ -1,4 +1,4 @@
-import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/types";
+import { ConnectorCredentialPairStatus } from "@/app/[locale]/admin/connector/[ccPairId]/types";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 
 export async function setCCPairStatus(

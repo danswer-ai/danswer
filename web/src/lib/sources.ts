@@ -44,7 +44,7 @@ import {
   SourceCategory,
   SourceMetadata,
 } from "./search/interfaces";
-import { Persona } from "@/app/admin/assistants/interfaces";
+import { Persona } from "@/app/[locale]/admin/assistants/interfaces";
 
 interface PartialSourceMetadata {
   icon: React.FC<{ size?: number; className?: string }>;
