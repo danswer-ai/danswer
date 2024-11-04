@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import uuid
@@ -27,6 +28,7 @@ from ee.danswer.configs.app_configs import COHERE_DEFAULT_API_KEY
 from ee.danswer.configs.app_configs import OPENAI_DEFAULT_API_KEY
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
+from shared_configs.configs import TENANT_ID_PREFIX
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.enums import EmbeddingProvider
 
@@ -40,7 +42,7 @@ def drop_schema(tenant_id: str) -> None:
 
 class TenantProvisioningService:
     async def provision_tenant(self, email: str) -> str:
-        tenant_id = str(uuid.uuid4())  # Generate new tenant ID
+        tenant_id = TENANT_ID_PREFIX + str(uuid.uuid4())  # Generate new tenant ID
 
         # Provision tenant on data plane
         await self._provision_on_data_plane(tenant_id, email)
@@ -69,7 +71,9 @@ class TenantProvisioningService:
                 logger.info(f"Schema already exists for tenant {tenant_id}")
 
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
-            run_alembic_migrations(tenant_id)
+
+            # Await the Alembic migrations
+            await asyncio.to_thread(run_alembic_migrations, tenant_id)
 
             with get_session_with_tenant(tenant_id) as db_session:
                 setup_danswer(db_session, tenant_id)

@@ -56,7 +56,6 @@ from sqlalchemy.orm import Session
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
-from danswer.auth.schemas import UserUpdate
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import DISABLE_VERIFICATION
@@ -93,6 +92,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from ee.danswer.server.tenants.provisioning import TenantProvisioningService
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
@@ -245,14 +245,25 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 else POSTGRES_DEFAULT_SCHEMA
             )
         except exceptions.UserNotExists:
-            # We should provision a tenant
-            raise HTTPException(status_code=401, detail="User not found")
+            # Tenant does not exist; provision a new tenant
+            tenant_provisioning_service = TenantProvisioningService()
+            try:
+                tenant_id = await tenant_provisioning_service.provision_tenant(
+                    user_create.email
+                )
+            except Exception as e:
+                logger.error(f"Tenant provisioning failed: {e}")
+                raise HTTPException(
+                    status_code=500, detail="Failed to provision tenant."
+                )
 
         if not tenant_id:
             raise HTTPException(
                 status_code=401, detail="User does not belong to an organization"
             )
 
+        # Proceed with user creation
+        logger.error(f"Creating user {user_create.email} in tenant {tenant_id}")
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
@@ -272,28 +283,15 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     user_create.role = UserRole.ADMIN
                 else:
                     user_create.role = UserRole.BASIC
-            user = None
+
             try:
-                user = await super().create(user_create, safe=safe, request=request)  # type: ignore
+                user = await super().create(user_create, safe=safe, request=request)
             except exceptions.UserAlreadyExists:
-                user = await self.get_by_email(user_create.email)
-                # Handle case where user has used product outside of web and is now creating an account through web
-                if (
-                    not user.has_web_login
-                    and hasattr(user_create, "has_web_login")
-                    and user_create.has_web_login
-                ):
-                    user_update = UserUpdate(
-                        password=user_create.password,
-                        has_web_login=True,
-                        role=user_create.role,
-                        is_verified=user_create.is_verified,
-                    )
-                    user = await self.update(user_update, user)
-                else:
-                    raise exceptions.UserAlreadyExists()
+                # ... existing handling of this case
+                raise exceptions.UserAlreadyExists()
 
             CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
+
             return user
 
     async def oauth_callback(
@@ -317,12 +315,24 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 else POSTGRES_DEFAULT_SCHEMA
             )
         except exceptions.UserNotExists:
-            raise HTTPException(status_code=401, detail="User not found")
+            # Tenant does not exist; provision a new tenant
+            tenant_provisioning_service = TenantProvisioningService()
+            try:
+                tenant_id = await tenant_provisioning_service.provision_tenant(
+                    account_email
+                )
+            except Exception as e:
+                logger.error(f"Tenant provisioning failed: {e}")
+                raise HTTPException(
+                    status_code=500, detail="Failed to provision tenant."
+                )
 
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")
 
+        # Proceed with the tenant context
         token = None
+        logger.error(f"zabozeezaaGetting async session with tenant {tenant_id}")
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
@@ -372,9 +382,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     # Explicitly set the Postgres schema for this session to ensure
                     # OAuth account creation happens in the correct tenant schema
                     await db_session.execute(text(f'SET search_path = "{tenant_id}"'))
-                    user = await self.user_db.add_oauth_account(
-                        user, oauth_account_dict
-                    )
+
+                    # Add OAuth account
+                    await self.user_db.add_oauth_account(user, oauth_account_dict)
                     await self.on_after_register(user, request)
 
             else:
