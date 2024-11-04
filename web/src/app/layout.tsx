@@ -92,7 +92,6 @@ export default async function RootLayout({
       </body>
     </html>
   );
-  console.log("combinedSettings", combinedSettings);
 
   if (!combinedSettings) {
     return getPageContent(

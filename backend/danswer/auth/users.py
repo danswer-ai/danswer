@@ -56,6 +56,7 @@ from sqlalchemy.orm import Session
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
+from danswer.auth.schemas import UserUpdate
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import DISABLE_VERIFICATION
@@ -262,8 +263,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 status_code=401, detail="User does not belong to an organization"
             )
 
-        # Proceed with user creation
-        logger.error(f"Creating user {user_create.email} in tenant {tenant_id}")
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
@@ -287,8 +286,22 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             try:
                 user = await super().create(user_create, safe=safe, request=request)
             except exceptions.UserAlreadyExists:
-                # ... existing handling of this case
-                raise exceptions.UserAlreadyExists()
+                user = await self.get_by_email(user_create.email)
+                # Handle case where user has used product outside of web and is now creating an account through web
+                if (
+                    not user.has_web_login
+                    and hasattr(user_create, "has_web_login")
+                    and user_create.has_web_login
+                ):
+                    user_update = UserUpdate(
+                        password=user_create.password,
+                        has_web_login=True,
+                        role=user_create.role,
+                        is_verified=user_create.is_verified,
+                    )
+                    user = await self.update(user_update, user)
+                else:
+                    raise exceptions.UserAlreadyExists()
 
             CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
@@ -332,7 +345,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         # Proceed with the tenant context
         token = None
-        logger.error(f"zabozeezaaGetting async session with tenant {tenant_id}")
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
