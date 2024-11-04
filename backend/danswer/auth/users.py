@@ -93,7 +93,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
-from ee.danswer.server.tenants.provisioning import TenantProvisioningService
+from ee.danswer.server.tenants.provisioning import get_or_create_tenant_id
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
@@ -239,29 +239,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        if MULTI_TENANT:
-            try:
-                tenant_id = get_tenant_id_for_email(user_create.email)
-
-            except exceptions.UserNotExists:
-                # If tenant does not exist and in Multi tenant mode, provision a new tenant
-                tenant_provisioning_service = TenantProvisioningService()
-                try:
-                    tenant_id = await tenant_provisioning_service.provision_tenant(
-                        user_create.email
-                    )
-                except Exception as e:
-                    logger.error(f"Tenant provisioning failed: {e}")
-                    raise HTTPException(
-                        status_code=500, detail="Failed to provision tenant."
-                    )
-
-            if not tenant_id:
-                raise HTTPException(
-                    status_code=401, detail="User does not belong to an organization"
-                )
-        else:
-            tenant_id = POSTGRES_DEFAULT_SCHEMA
+        tenant_id = get_or_create_tenant_id(user_create.email)
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
@@ -303,7 +281,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 else:
                     raise exceptions.UserAlreadyExists()
 
-            CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
+            finally:
+                CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
             return user
 
@@ -320,24 +299,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
-        # Get tenant_id from mapping table
-        if MULTI_TENANT:
-            try:
-                tenant_id = get_tenant_id_for_email(account_email)
-            except exceptions.UserNotExists:
-                # Tenant does not exist; provision a new tenant
-                tenant_provisioning_service = TenantProvisioningService()
-                try:
-                    tenant_id = await tenant_provisioning_service.provision_tenant(
-                        account_email
-                    )
-                except Exception as e:
-                    logger.error(f"Tenant provisioning failed: {e}")
-                    raise HTTPException(
-                        status_code=500, detail="Failed to provision tenant."
-                    )
-        else:
-            tenant_id = POSTGRES_DEFAULT_SCHEMA
+        tenant_id = get_or_create_tenant_id(account_email)
 
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")
