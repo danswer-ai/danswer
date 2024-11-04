@@ -310,8 +310,12 @@ async def get_async_session_with_tenant(
         try:
             # Set the search_path to the tenant's schema
             await session.execute(text(f'SET search_path = "{tenant_id}"'))
-        except Exception as e:
-            logger.error(f"Error setting search_path: {str(e)}")
+            if POSTGRES_IDLE_SESSIONS_TIMEOUT:
+                await session.execute(
+                    f"SET SESSION idle_in_transaction_session_timeout = {POSTGRES_IDLE_SESSIONS_TIMEOUT}"
+                )
+        except Exception:
+            logger.exception("Error setting search_path.")
             # You can choose to re-raise the exception or handle it
             # Here, we'll re-raise to prevent proceeding with an incorrect session
             raise
