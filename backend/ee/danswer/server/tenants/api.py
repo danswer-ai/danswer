@@ -27,9 +27,9 @@ from ee.danswer.server.tenants.models import CreateTenantRequest
 from ee.danswer.server.tenants.models import ImpersonateRequest
 from ee.danswer.server.tenants.models import ProductGatingRequest
 from ee.danswer.server.tenants.provisioning import add_users_to_tenant
+from ee.danswer.server.tenants.provisioning import configure_default_api_keys
 from ee.danswer.server.tenants.provisioning import ensure_schema_exists
 from ee.danswer.server.tenants.provisioning import run_alembic_migrations
-from ee.danswer.server.tenants.provisioning import setup_api_keys
 from ee.danswer.server.tenants.provisioning import user_owns_a_tenant
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
@@ -68,7 +68,7 @@ def create_tenant(
         with get_session_with_tenant(tenant_id) as db_session:
             setup_danswer(db_session, tenant_id)
 
-            setup_api_keys(db_session)
+            configure_default_api_keys(db_session)
 
         add_users_to_tenant([email], tenant_id)
 

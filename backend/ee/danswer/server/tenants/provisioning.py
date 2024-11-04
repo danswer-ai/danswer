@@ -60,7 +60,7 @@ def run_alembic_migrations(schema_name: str) -> None:
         raise
 
 
-def setup_api_keys(db_session: Session) -> None:
+def configure_default_api_keys(db_session: Session) -> None:
     open_provider = LLMProviderUpsertRequest(
         name="OpenAI",
         provider="OpenAI",
