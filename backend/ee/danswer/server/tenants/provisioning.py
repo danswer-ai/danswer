@@ -7,10 +7,14 @@ from sqlalchemy.schema import CreateSchema
 
 from alembic import command
 from alembic.config import Config
+from danswer.configs.app_configs import ANTHROPIC_DEFAULT_API_KEY
+from danswer.configs.app_configs import OPENAI_DEFAULT_API_KEY
 from danswer.db.engine import build_connection_string
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import UserTenantMapping
+from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
@@ -50,6 +54,21 @@ def run_alembic_migrations(schema_name: str) -> None:
     except Exception as e:
         logger.exception(f"Alembic migration failed for schema {schema_name}: {str(e)}")
         raise
+
+
+def setup_api_keys(db_session: Session) -> None:
+    open_provider = LLMProviderUpsertRequest(
+        name="OpenAI",
+        provider="OpenAI",
+        api_key=OPENAI_DEFAULT_API_KEY,
+    )
+    anthropic_provider = LLMProviderUpsertRequest(
+        name="Anthropic",
+        provider="Anthropic",
+        api_key=ANTHROPIC_DEFAULT_API_KEY,
+    )
+    upsert_llm_provider(open_provider, db_session)
+    upsert_llm_provider(anthropic_provider, db_session)
 
 
 def ensure_schema_exists(tenant_id: str) -> bool:
