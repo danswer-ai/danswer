@@ -140,6 +140,7 @@ def test_all_permissions(
         + list(range(45, 50))  # Folder 2
         + list(range(50, 55))  # Folder 2_1
         + list(range(55, 60))  # Folder 2_2
+        + [61]  # Sections
     )
 
     # Should get everything
