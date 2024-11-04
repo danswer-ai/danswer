@@ -77,7 +77,7 @@ class TenantProvisioningService:
             add_users_to_tenant([email], tenant_id)
 
         except Exception as e:
-            logger.exception(f"Failed to create tenant {tenant_id}: {str(e)}")
+            logger.exception(f"Failed to create tenant {tenant_id}")
             raise HTTPException(
                 status_code=500, detail=f"Failed to create tenant: {str(e)}"
             )
@@ -138,8 +138,8 @@ def add_users_to_tenant(emails: list[str], tenant_id: str) -> None:
         try:
             for email in emails:
                 db_session.add(UserTenantMapping(email=email, tenant_id=tenant_id))
-        except Exception as e:
-            logger.exception(f"Failed to add users to tenant {tenant_id}: {str(e)}")
+        except Exception:
+            logger.exception(f"Failed to add users to tenant {tenant_id}")
         db_session.commit()
 
 

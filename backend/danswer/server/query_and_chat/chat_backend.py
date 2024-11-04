@@ -359,7 +359,7 @@ def handle_new_chat_message(
                 yield json.dumps(packet) if isinstance(packet, dict) else packet
 
         except Exception as e:
-            logger.exception(f"Error in chat message streaming: {e}")
+            logger.exception("Error in chat message streaming")
             yield json.dumps({"error": str(e)})
 
         finally:
