@@ -68,7 +68,7 @@ def create_tenant(
         with get_session_with_tenant(tenant_id) as db_session:
             setup_danswer(db_session, tenant_id)
 
-            setup_api_keys(db_session, tenant_id)
+            setup_api_keys(db_session)
 
         add_users_to_tenant([email], tenant_id)
 
