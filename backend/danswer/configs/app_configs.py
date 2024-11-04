@@ -163,6 +163,17 @@ try:
 except ValueError:
     POSTGRES_POOL_RECYCLE = POSTGRES_POOL_RECYCLE_DEFAULT
 
+# Experimental setting to control idle transactions
+POSTGRES_IDLE_SESSIONS_TIMEOUT_DEFAULT = 0  # milliseconds
+try:
+    POSTGRES_IDLE_SESSIONS_TIMEOUT = int(
+        os.environ.get(
+            "POSTGRES_IDLE_SESSIONS_TIMEOUT", POSTGRES_IDLE_SESSIONS_TIMEOUT_DEFAULT
+        )
+    )
+except ValueError:
+    POSTGRES_IDLE_SESSIONS_TIMEOUT = POSTGRES_IDLE_SESSIONS_TIMEOUT_DEFAULT
+
 REDIS_SSL = os.getenv("REDIS_SSL", "").lower() == "true"
 REDIS_HOST = os.environ.get("REDIS_HOST") or "localhost"
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))

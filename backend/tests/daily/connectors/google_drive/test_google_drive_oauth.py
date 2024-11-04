@@ -31,9 +31,18 @@ def test_include_all(
         retrieved_docs.extend(doc_batch)
 
     # Should get everything in shared and admin's My Drive with oauth
-    expected_file_ids = list(range(0, 5)) + list(
-        range(20, 60)
-    )  # Admin's My Drive + all shared drive content
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["ADMIN"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2_1"]
+        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+        + DRIVE_ID_MAPPING["SECTIONS"]
+    )
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
         expected_file_ids=expected_file_ids,
@@ -58,7 +67,17 @@ def test_include_shared_drives_only(
         retrieved_docs.extend(doc_batch)
 
     # Should only get shared drives
-    expected_file_ids = list(range(20, 60))  # All shared drive content
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2_1"]
+        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+        + DRIVE_ID_MAPPING["SECTIONS"]
+    )
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
         expected_file_ids=expected_file_ids,

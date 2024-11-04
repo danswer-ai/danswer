@@ -1,22 +1,34 @@
+import csv
 import json
+import uuid
 from collections.abc import Generator
+from io import BytesIO
+from io import StringIO
 from typing import Any
 from typing import cast
+from typing import Dict
+from typing import List
 
 import requests
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 
+from danswer.configs.constants import FileOrigin
+from danswer.db.engine import get_session_with_tenant
+from danswer.file_store.file_store import get_default_file_store
+from danswer.file_store.models import ChatFileType
+from danswer.file_store.models import InMemoryChatFile
 from danswer.key_value_store.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
+from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.llm.interfaces import LLM
 from danswer.tools.base_tool import BaseTool
+from danswer.tools.message import ToolCallSummary
 from danswer.tools.models import CHAT_SESSION_ID_PLACEHOLDER
 from danswer.tools.models import DynamicSchemaInfo
 from danswer.tools.models import MESSAGE_ID_PLACEHOLDER
 from danswer.tools.models import ToolResponse
-from danswer.tools.tool_implementations.custom.base_tool_types import ToolResultType
 from danswer.tools.tool_implementations.custom.custom_tool_prompts import (
     SHOULD_USE_CUSTOM_TOOL_SYSTEM_PROMPT,
 )
@@ -39,6 +51,9 @@ from danswer.tools.tool_implementations.custom.openapi_parsing import REQUEST_BO
 from danswer.tools.tool_implementations.custom.openapi_parsing import (
     validate_openapi_schema,
 )
+from danswer.tools.tool_implementations.custom.prompt import (
+    build_custom_image_generation_user_prompt,
+)
 from danswer.utils.headers import header_list_to_header_dict
 from danswer.utils.headers import HeaderItemDict
 from danswer.utils.logger import setup_logger
@@ -48,9 +63,14 @@ logger = setup_logger()
 CUSTOM_TOOL_RESPONSE_ID = "custom_tool_response"
 
 
+class CustomToolFileResponse(BaseModel):
+    file_ids: List[str]  # References to saved images or CSVs
+
+
 class CustomToolCallSummary(BaseModel):
     tool_name: str
-    tool_result: ToolResultType
+    response_type: str  # e.g., 'json', 'image', 'csv', 'graph'
+    tool_result: Any  # The response data
 
 
 class CustomTool(BaseTool):
@@ -91,6 +111,12 @@ class CustomTool(BaseTool):
         self, *args: ToolResponse
     ) -> str | list[str | dict[str, Any]]:
         response = cast(CustomToolCallSummary, args[0].response)
+
+        if response.response_type == "image" or response.response_type == "csv":
+            image_response = cast(CustomToolFileResponse, response.tool_result)
+            return json.dumps({"file_ids": image_response.file_ids})
+
+        # For JSON or other responses, return as-is
         return json.dumps(response.tool_result)
 
     """For LLMs which do NOT support explicit tool calling"""
@@ -158,6 +184,38 @@ class CustomTool(BaseTool):
         )
         return None
 
+    def _save_and_get_file_references(
+        self, file_content: bytes | str, content_type: str
+    ) -> List[str]:
+        with get_session_with_tenant() as db_session:
+            file_store = get_default_file_store(db_session)
+
+            file_id = str(uuid.uuid4())
+
+            # Handle both binary and text content
+            if isinstance(file_content, str):
+                content = BytesIO(file_content.encode())
+            else:
+                content = BytesIO(file_content)
+
+            file_store.save_file(
+                file_name=file_id,
+                content=content,
+                display_name=file_id,
+                file_origin=FileOrigin.CHAT_UPLOAD,
+                file_type=content_type,
+                file_metadata={
+                    "content_type": content_type,
+                },
+            )
+
+        return [file_id]
+
+    def _parse_csv(self, csv_text: str) -> List[Dict[str, Any]]:
+        csv_file = StringIO(csv_text)
+        reader = csv.DictReader(csv_file)
+        return [row for row in reader]
+
     """Actual execution of the tool"""
 
     def run(self, **kwargs: Any) -> Generator[ToolResponse, None, None]:
@@ -177,20 +235,103 @@ class CustomTool(BaseTool):
 
         url = self._method_spec.build_url(self._base_url, path_params, query_params)
         method = self._method_spec.method
-        # Log request details
+
         response = requests.request(
             method, url, json=request_body, headers=self.headers
+        )
+        content_type = response.headers.get("Content-Type", "")
+
+        if "text/csv" in content_type:
+            file_ids = self._save_and_get_file_references(
+                response.content, content_type
+            )
+            tool_result = CustomToolFileResponse(file_ids=file_ids)
+            response_type = "csv"
+
+        elif "image/" in content_type:
+            file_ids = self._save_and_get_file_references(
+                response.content, content_type
+            )
+            tool_result = CustomToolFileResponse(file_ids=file_ids)
+            response_type = "image"
+
+        else:
+            tool_result = response.json()
+            response_type = "json"
+
+        logger.info(
+            f"Returning tool response for {self._name} with type {response_type}"
         )
 
         yield ToolResponse(
             id=CUSTOM_TOOL_RESPONSE_ID,
             response=CustomToolCallSummary(
-                tool_name=self._name, tool_result=response.json()
+                tool_name=self._name,
+                response_type=response_type,
+                tool_result=tool_result,
             ),
         )
 
+    def build_next_prompt(
+        self,
+        prompt_builder: AnswerPromptBuilder,
+        tool_call_summary: ToolCallSummary,
+        tool_responses: list[ToolResponse],
+        using_tool_calling_llm: bool,
+    ) -> AnswerPromptBuilder:
+        response = cast(CustomToolCallSummary, tool_responses[0].response)
+
+        # Handle non-file responses using parent class behavior
+        if response.response_type not in ["image", "csv"]:
+            return super().build_next_prompt(
+                prompt_builder,
+                tool_call_summary,
+                tool_responses,
+                using_tool_calling_llm,
+            )
+
+        # Handle image and CSV file responses
+        file_type = (
+            ChatFileType.IMAGE
+            if response.response_type == "image"
+            else ChatFileType.CSV
+        )
+
+        # Load files from storage
+        files = []
+        with get_session_with_tenant() as db_session:
+            file_store = get_default_file_store(db_session)
+
+            for file_id in response.tool_result.file_ids:
+                try:
+                    file_io = file_store.read_file(file_id, mode="b")
+                    files.append(
+                        InMemoryChatFile(
+                            file_id=file_id,
+                            filename=file_id,
+                            content=file_io.read(),
+                            file_type=file_type,
+                        )
+                    )
+                except Exception:
+                    logger.exception(f"Failed to read file {file_id}")
+
+            # Update prompt with file content
+            prompt_builder.update_user_prompt(
+                build_custom_image_generation_user_prompt(
+                    query=prompt_builder.get_user_message_content(),
+                    files=files,
+                    file_type=file_type,
+                )
+            )
+
+        return prompt_builder
+
     def final_result(self, *args: ToolResponse) -> JSON_ro:
-        return cast(CustomToolCallSummary, args[0].response).tool_result
+        response = cast(CustomToolCallSummary, args[0].response)
+        if isinstance(response.tool_result, CustomToolFileResponse):
+            return response.tool_result.model_dump()
+        return response.tool_result
 
 
 def build_custom_tools_from_openapi_schema_and_headers(

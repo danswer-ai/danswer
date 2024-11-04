@@ -168,7 +168,7 @@ function ConnectorRow({
         );
       case "not_started":
         return (
-          <Badge circle variant="secondary">
+          <Badge circle variant="purple">
             Scheduled
           </Badge>
         );
@@ -183,7 +183,7 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className={`border hover:bg-hover-light ${
+      className={`hover:bg-hover-light ${
         invisible ? "invisible !h-0 !-mb-10" : "!border !border-border"
       }  w-full cursor-pointer relative `}
       onClick={() => {
@@ -202,21 +202,19 @@ function ConnectorRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell>
           {ccPairsIndexingStatus.access_type === "public" ? (
-            <Badge variant="success" icon={FiUnlock}>
+            <Badge variant={isEditable ? "success" : "default"} icon={FiUnlock}>
               Public
             </Badge>
           ) : ccPairsIndexingStatus.access_type === "sync" ? (
             <Badge
-              variant="outline"
-              color={isEditable ? "orange" : "gray"}
+              variant={isEditable ? "orange" : "default"}
               icon={FiRefreshCw}
             >
               Sync
             </Badge>
           ) : (
             <Badge
-              size="md"
-              variant={isEditable ? "outline" : "default"}
+              variant={isEditable ? "in_progress" : "default"}
               icon={FiLock}
             >
               Private
@@ -419,7 +417,7 @@ export function CCPairIndexingStatusTable({
           placeholder="Search connectors..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="ml-1 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="ml-1 w-96 h-9 flex-none rounded-md bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
 
         <Button className="h-9" onClick={() => toggleSources()}>

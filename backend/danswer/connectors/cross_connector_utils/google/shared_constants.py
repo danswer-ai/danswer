@@ -1,5 +1,7 @@
 from danswer.configs.constants import DocumentSource
 
+# NOTE: do not need https://www.googleapis.com/auth/documents.readonly
+# this is counted under `/auth/drive.readonly`
 GOOGLE_SCOPES = {
     DocumentSource.GOOGLE_DRIVE: [
         "https://www.googleapis.com/auth/drive.readonly",

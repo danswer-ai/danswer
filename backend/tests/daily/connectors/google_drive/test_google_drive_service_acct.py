@@ -8,6 +8,7 @@ from danswer.connectors.models import Document
 from tests.daily.connectors.google_drive.helpers import (
     assert_retrieved_docs_match_expected,
 )
+from tests.daily.connectors.google_drive.helpers import DRIVE_ID_MAPPING
 from tests.daily.connectors.google_drive.helpers import EMAIL_MAPPING
 from tests.daily.connectors.google_drive.helpers import URL_MAPPING
 
@@ -30,7 +31,21 @@ def test_include_all(
         retrieved_docs.extend(doc_batch)
 
     # Should get everything
-    expected_file_ids = list(range(0, 60))  # All files
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["ADMIN"]
+        + DRIVE_ID_MAPPING["TEST_USER_1"]
+        + DRIVE_ID_MAPPING["TEST_USER_2"]
+        + DRIVE_ID_MAPPING["TEST_USER_3"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2_1"]
+        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+        + DRIVE_ID_MAPPING["SECTIONS"]
+    )
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
         expected_file_ids=expected_file_ids,
@@ -55,7 +70,17 @@ def test_include_shared_drives_only(
         retrieved_docs.extend(doc_batch)
 
     # Should only get shared drives
-    expected_file_ids = list(range(20, 60))  # All shared drive content
+    expected_file_ids = (
+        DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_1"]
+        + DRIVE_ID_MAPPING["FOLDER_1_2"]
+        + DRIVE_ID_MAPPING["SHARED_DRIVE_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2"]
+        + DRIVE_ID_MAPPING["FOLDER_2_1"]
+        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+        + DRIVE_ID_MAPPING["SECTIONS"]
+    )
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
         expected_file_ids=expected_file_ids,

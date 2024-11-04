@@ -109,11 +109,10 @@ def translate_danswer_msg_to_langchain(
     files: list[InMemoryChatFile] = []
 
     # If the message is a `ChatMessage`, it doesn't have the downloaded files
-    # attached. Just ignore them for now. Also, OpenAI doesn't allow files to
-    # be attached to AI messages, so we must remove them
-    if not isinstance(msg, ChatMessage) and msg.message_type != MessageType.ASSISTANT:
+    # attached. Just ignore them for now.
+    if not isinstance(msg, ChatMessage):
         files = msg.files
-    content = build_content_with_imgs(msg.message, files)
+    content = build_content_with_imgs(msg.message, files, message_type=msg.message_type)
 
     if msg.message_type == MessageType.SYSTEM:
         raise ValueError("System messages are not currently part of history")
@@ -188,10 +187,19 @@ def build_content_with_imgs(
     message: str,
     files: list[InMemoryChatFile] | None = None,
     img_urls: list[str] | None = None,
+    message_type: MessageType = MessageType.USER,
 ) -> str | list[str | dict[str, Any]]:  # matching Langchain's BaseMessage content type
     files = files or []
-    img_files = [file for file in files if file.file_type == ChatFileType.IMAGE]
+
+    # Only include image files for user messages
+    img_files = (
+        [file for file in files if file.file_type == ChatFileType.IMAGE]
+        if message_type == MessageType.USER
+        else []
+    )
+
     img_urls = img_urls or []
+
     message_main_content = _build_content(message, files)
 
     if not img_files and not img_urls:

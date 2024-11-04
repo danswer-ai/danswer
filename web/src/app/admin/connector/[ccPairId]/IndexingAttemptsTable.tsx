@@ -206,7 +206,6 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
       <Callout
         className="mt-4"
         title="No indexing attempts scheduled yet"
-        icon={"info"}
         type="notice"
       >
         Index attempts are scheduled in the background, and may take some time
