@@ -69,6 +69,7 @@ def google_drive_oauth_connector_factory() -> Callable[..., GoogleDriveConnector
         my_drive_emails: str | None = None,
         shared_folder_urls: str | None = None,
     ) -> GoogleDriveConnector:
+        print("Creating GoogleDriveConnector with OAuth credentials")
         connector = GoogleDriveConnector(
             include_shared_drives=include_shared_drives,
             shared_drive_urls=shared_drive_urls,

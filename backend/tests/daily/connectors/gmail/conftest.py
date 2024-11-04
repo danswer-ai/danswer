@@ -65,10 +65,11 @@ def google_gmail_oauth_connector_factory() -> Callable[..., GmailConnector]:
     def _connector_factory(
         primary_admin_email: str = "admin@onyx-test.com",
     ) -> GmailConnector:
+        print("Creating GmailConnector with OAuth credentials")
         connector = GmailConnector()
 
         json_string = os.environ["GOOGLE_GMAIL_OAUTH_CREDENTIALS_JSON_STR"]
-        refried_json_string = json.loads(parse_credentials(json_string))
+        refried_json_string = json.dumps(parse_credentials(json_string))
 
         credentials_json = {
             DB_CREDENTIALS_DICT_TOKEN_KEY: refried_json_string,
@@ -89,7 +90,7 @@ def google_gmail_service_acct_connector_factory() -> Callable[..., GmailConnecto
         connector = GmailConnector()
 
         json_string = os.environ["GOOGLE_GMAIL_SERVICE_ACCOUNT_JSON_STR"]
-        refried_json_string = json.loads(parse_credentials(json_string))
+        refried_json_string = json.dumps(parse_credentials(json_string))
 
         # Load Service Account Credentials
         connector.load_credentials(
