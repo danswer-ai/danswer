@@ -7,13 +7,15 @@ from sqlalchemy.orm import Session
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import UserTenantMapping
+from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
-
 
 logger = logging.getLogger(__name__)
 
 
 def get_tenant_id_for_email(email: str) -> str:
+    if not MULTI_TENANT:
+        return POSTGRES_DEFAULT_SCHEMA
     # Implement logic to get tenant_id from the mapping table
     with Session(get_sqlalchemy_engine()) as db_session:
         result = db_session.execute(
