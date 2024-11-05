@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import exceptions
 from danswer.configs.app_configs import CONTROL_PLANE_API_BASE_URL
-from danswer.configs.app_configs import EXPECTED_API_KEY
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.llm import upsert_cloud_embedding_provider
@@ -20,6 +19,8 @@ from danswer.setup import setup_danswer
 from ee.danswer.configs.app_configs import ANTHROPIC_DEFAULT_API_KEY
 from ee.danswer.configs.app_configs import COHERE_DEFAULT_API_KEY
 from ee.danswer.configs.app_configs import OPENAI_DEFAULT_API_KEY
+from ee.danswer.server.tenants.access import generate_data_plane_token
+from ee.danswer.server.tenants.models import TenantCreationPayload
 from ee.danswer.server.tenants.schema_management import create_schema_if_not_exists
 from ee.danswer.server.tenants.schema_management import drop_schema
 from ee.danswer.server.tenants.schema_management import run_alembic_migrations
@@ -112,11 +113,13 @@ async def provision_tenant(tenant_id: str, email: str) -> None:
 
 
 async def notify_control_plane(tenant_id: str, email: str) -> None:
+    logger.info("Fetching billing information")
+    token = generate_data_plane_token()
     headers = {
-        "Authorization": f"Bearer {EXPECTED_API_KEY}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
-    payload = {"tenant_id": tenant_id, "email": email}
+    payload = TenantCreationPayload(tenant_id=tenant_id, email=email)
 
     async with aiohttp.ClientSession() as session:
         async with session.post(
