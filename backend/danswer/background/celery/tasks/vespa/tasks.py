@@ -610,7 +610,7 @@ def monitor_ccpair_indexing_taskset(
             index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
             if index_attempt:
                 mark_attempt_failed(
-                    index_attempt=index_attempt,
+                    index_attempt_id=payload.index_attempt_id,
                     db_session=db_session,
                     failure_reason="Connector indexing aborted or exceptioned.",
                 )
@@ -696,7 +696,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                         a.connector_credential_pair_id, a.search_settings_id
                     )
                 ):
-                    mark_attempt_failed(a, db_session, failure_reason=failure_reason)
+                    mark_attempt_failed(a.id, db_session, failure_reason=failure_reason)
 
         lock_beat.reacquire()
         if r.exists(RedisConnectorCredentialPair.get_fence_key()):

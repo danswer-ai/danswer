@@ -635,22 +635,20 @@ export function SelectorFormField({
               className={maxHeight ? `max-h-[${maxHeight}]` : undefined}
               container={container}
             >
-              {options.length == 0 && (
+              {options.length === 0 ? (
                 <SelectItem value="default">Select...</SelectItem>
+              ) : (
+                options.map((option) => (
+                  <SelectItem
+                    icon={option.icon}
+                    key={option.value}
+                    value={String(option.value)}
+                    selected={field.value === option.value}
+                  >
+                    {option.name}
+                  </SelectItem>
+                ))
               )}
-              {defaultValue && (
-                <SelectItem value={defaultValue}>{defaultValue}</SelectItem>
-              )}
-              {options.map((option) => (
-                <SelectItem
-                  icon={option.icon}
-                  key={option.value}
-                  value={String(option.value)}
-                  selected={field.value === option.value}
-                >
-                  {option.name}
-                </SelectItem>
-              ))}
             </SelectContent>
           )}
         </Select>
