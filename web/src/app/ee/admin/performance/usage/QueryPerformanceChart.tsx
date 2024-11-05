@@ -45,6 +45,7 @@ export function QueryPerformanceChart({
   } else {
     const initialDate = timeRange.from || new Date(queryAnalyticsData[0].date);
     const dateRange = getDatesList(initialDate);
+    console.log("dateRange", dateRange);
 
     const dateToQueryAnalytics = new Map(
       queryAnalyticsData.map((queryAnalyticsEntry) => [
@@ -58,6 +59,8 @@ export function QueryPerformanceChart({
         userAnalyticsEntry,
       ])
     );
+    // console.log("dateToQueryAnalytics", dateToQueryAnalytics);
+    // console.log("dateToUserAnalytics", dateToUserAnalytics);
 
     chart = (
       <AreaChartDisplay
@@ -75,9 +78,28 @@ export function QueryPerformanceChart({
         index="Day"
         colors={["indigo", "fuchsia"]}
         valueFormatter={(number: number) =>
-          `${Intl.NumberFormat("us").format(number).toString()}`
+          new Intl.NumberFormat("en-US", {
+            notation: "standard",
+            maximumFractionDigits: 0,
+          }).format(number)
         }
+        xAxisFormatter={(dateStr: string) => {
+          const date = new Date(dateStr);
+          return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+        }}
+        tooltipFormatter={(dateStr: string) => {
+          const date = new Date(dateStr);
+          return date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+        }}
         yAxisWidth={60}
+        allowDecimals={false}
       />
     );
   }

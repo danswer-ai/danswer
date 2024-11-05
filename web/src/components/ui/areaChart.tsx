@@ -42,6 +42,7 @@ interface AreaChartProps {
   className?: string;
   title?: string;
   description?: string;
+  xAxisFormatter?: (dateStr: string) => string;
 }
 
 export function AreaChartDisplay({
@@ -49,6 +50,7 @@ export function AreaChartDisplay({
   categories = [],
   index,
   colors = ["indigo", "fuchsia"],
+  xAxisFormatter,
   valueFormatter = (number: number) =>
     `${Intl.NumberFormat("us").format(number).toString()}`,
   startEndOnly = false,
@@ -94,7 +96,7 @@ export function AreaChartDisplay({
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
-                  tickFormatter={(value) => value.slice(0, 3)}
+                  tickFormatter={(value) => xAxisFormatter?.(value) || value}
                 />
               )}
               {showYAxis && (
