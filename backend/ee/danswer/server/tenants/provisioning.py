@@ -10,9 +10,14 @@ from danswer.auth.users import exceptions
 from danswer.configs.app_configs import CONTROL_PLANE_API_BASE_URL
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_cloud_embedding_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import UserTenantMapping
+from danswer.llm.llm_provider_options import ANTHROPIC_MODEL_NAMES
+from danswer.llm.llm_provider_options import ANTHROPIC_PROVIDER_NAME
+from danswer.llm.llm_provider_options import OPEN_AI_MODEL_NAMES
+from danswer.llm.llm_provider_options import OPENAI_PROVIDER_NAME
 from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.setup import setup_danswer
@@ -125,7 +130,7 @@ async def notify_control_plane(tenant_id: str, email: str) -> None:
         async with session.post(
             f"{CONTROL_PLANE_API_BASE_URL}/tenants/create",
             headers=headers,
-            json=payload,
+            json=payload.model_dump(),
         ) as response:
             if response.status != 200:
                 error_text = await response.text()
@@ -152,23 +157,54 @@ async def rollback_tenant_provisioning(tenant_id: str) -> None:
 
 
 def configure_default_api_keys(db_session: Session) -> None:
-    open_provider = LLMProviderUpsertRequest(
-        name="OpenAI",
-        provider="OpenAI",
-        api_key=OPENAI_DEFAULT_API_KEY,
-        default_model_name="gpt-4o",
-    )
-    anthropic_provider = LLMProviderUpsertRequest(
-        name="Anthropic",
-        provider="Anthropic",
-        api_key=ANTHROPIC_DEFAULT_API_KEY,
-        default_model_name="claude-3-5-sonnet-20240620",
-    )
-    upsert_llm_provider(open_provider, db_session)
-    upsert_llm_provider(anthropic_provider, db_session)
+    if OPENAI_DEFAULT_API_KEY:
+        open_provider = LLMProviderUpsertRequest(
+            name="OpenAI",
+            provider=OPENAI_PROVIDER_NAME,
+            api_key=OPENAI_DEFAULT_API_KEY,
+            default_model_name="gpt-4",
+            fast_default_model_name="gpt-4o-mini",
+            model_names=OPEN_AI_MODEL_NAMES,
+        )
+        try:
+            full_provider = upsert_llm_provider(open_provider, db_session)
+            update_default_provider(full_provider.id, db_session)
+        except Exception as e:
+            logger.error(f"Failed to configure OpenAI provider: {e}")
+    else:
+        logger.error(
+            "OPENAI_DEFAULT_API_KEY not set, skipping OpenAI provider configuration"
+        )
 
-    cloud_embedding_provider = CloudEmbeddingProviderCreationRequest(
-        provider_type=EmbeddingProvider.COHERE,
-        api_key=COHERE_DEFAULT_API_KEY,
-    )
-    upsert_cloud_embedding_provider(db_session, cloud_embedding_provider)
+    if ANTHROPIC_DEFAULT_API_KEY:
+        anthropic_provider = LLMProviderUpsertRequest(
+            name="Anthropic",
+            provider=ANTHROPIC_PROVIDER_NAME,
+            api_key=ANTHROPIC_DEFAULT_API_KEY,
+            default_model_name="claude-3-5-sonnet-20241022",
+            fast_default_model_name="claude-3-5-sonnet-20241022",
+            model_names=ANTHROPIC_MODEL_NAMES,
+        )
+        try:
+            full_provider = upsert_llm_provider(anthropic_provider, db_session)
+            update_default_provider(full_provider.id, db_session)
+        except Exception as e:
+            logger.error(f"Failed to configure Anthropic provider: {e}")
+    else:
+        logger.error(
+            "ANTHROPIC_DEFAULT_API_KEY not set, skipping Anthropic provider configuration"
+        )
+
+    if COHERE_DEFAULT_API_KEY:
+        cloud_embedding_provider = CloudEmbeddingProviderCreationRequest(
+            provider_type=EmbeddingProvider.COHERE,
+            api_key=COHERE_DEFAULT_API_KEY,
+        )
+        try:
+            upsert_cloud_embedding_provider(db_session, cloud_embedding_provider)
+        except Exception as e:
+            logger.error(f"Failed to configure Cohere embedding provider: {e}")
+    else:
+        logger.error(
+            "COHERE_DEFAULT_API_KEY not set, skipping Cohere embedding provider configuration"
+        )
