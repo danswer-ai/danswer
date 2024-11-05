@@ -559,23 +559,23 @@ def connector_indexing_task(
                 )
             attempt_found = True
 
-        cc_pair = get_connector_credential_pair_from_id(
-            cc_pair_id=cc_pair_id,
-            db_session=db_session,
-        )
-
-        if not cc_pair:
-            raise ValueError(f"cc_pair not found: cc_pair={cc_pair_id}")
-
-        if not cc_pair.connector:
-            raise ValueError(
-                f"Connector not found: cc_pair={cc_pair_id} connector={cc_pair.connector_id}"
+            cc_pair = get_connector_credential_pair_from_id(
+                cc_pair_id=cc_pair_id,
+                db_session=db_session,
             )
 
-        if not cc_pair.credential:
-            raise ValueError(
-                f"Credential not found: cc_pair={cc_pair_id} credential={cc_pair.credential_id}"
-            )
+            if not cc_pair:
+                raise ValueError(f"cc_pair not found: cc_pair={cc_pair_id}")
+
+            if not cc_pair.connector:
+                raise ValueError(
+                    f"Connector not found: cc_pair={cc_pair_id} connector={cc_pair.connector_id}"
+                )
+
+            if not cc_pair.credential:
+                raise ValueError(
+                    f"Credential not found: cc_pair={cc_pair_id} credential={cc_pair.credential_id}"
+                )
 
         # define a callback class
         callback = RunIndexingCallback(
