@@ -9,7 +9,8 @@ on:
   merge_group:
   pull_request:
     branches: [ main ]
-
+  workflow_dispatch:  # Allows manual triggering
+  
 jobs:
   lint-test:
     # See https://runs-on.com/runners/linux/
@@ -18,7 +19,7 @@ jobs:
     # fetch-depth 0 is required for helm/chart-testing-action
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         
