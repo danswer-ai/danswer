@@ -4,6 +4,7 @@ from http import HTTPStatus
 from time import sleep
 
 import redis
+import sentry_sdk
 from celery import Celery
 from celery import shared_task
 from celery import Task
@@ -50,6 +51,7 @@ from danswer.utils.variable_functionality import global_version
 from shared_configs.configs import INDEXING_MODEL_SERVER_HOST
 from shared_configs.configs import INDEXING_MODEL_SERVER_PORT
 from shared_configs.configs import MULTI_TENANT
+from shared_configs.configs import SENTRY_DSN
 
 logger = setup_logger()
 
@@ -482,6 +484,15 @@ def connector_indexing_task(
     that the task transitioned to a "READY" state but the generator_complete_key doesn't exist.
     This will cause the primary worker to abort the indexing attempt and clean up.
     """
+    if SENTRY_DSN:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            traces_sample_rate=0.1,
+        )
+        logger.info("Sentry initialized")
+    else:
+        logger.debug("Sentry DSN not provided, skipping Sentry initialization")
+
     logger.info(
         f"Indexing spawned task starting: attempt={index_attempt_id} "
         f"tenant={tenant_id} "
