@@ -48,7 +48,6 @@ from httpx_oauth.integrations.fastapi import OAuth2AuthorizeCallback
 from httpx_oauth.oauth2 import BaseOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
 from pydantic import BaseModel
-from sqlalchemy import select
 from sqlalchemy import text
 from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
@@ -83,19 +82,17 @@ from danswer.db.auth import SQLAlchemyUserAdminDB
 from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.engine import get_session
 from danswer.db.engine import get_session_with_tenant
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
 from danswer.db.models import User
-from danswer.db.models import UserTenantMapping
 from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
 from ee.danswer.server.tenants.provisioning import get_or_create_tenant_id
+from ee.danswer.server.tenants.user_mapping import get_tenant_id_for_email
 from shared_configs.configs import MULTI_TENANT
-from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
@@ -188,20 +185,6 @@ def verify_email_domain(email: str) -> None:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email domain is not valid",
             )
-
-
-def get_tenant_id_for_email(email: str) -> str:
-    if not MULTI_TENANT:
-        return POSTGRES_DEFAULT_SCHEMA
-    # Implement logic to get tenant_id from the mapping table
-    with Session(get_sqlalchemy_engine()) as db_session:
-        result = db_session.execute(
-            select(UserTenantMapping.tenant_id).where(UserTenantMapping.email == email)
-        )
-        tenant_id = result.scalar_one_or_none()
-    if tenant_id is None:
-        raise exceptions.UserNotExists()
-    return tenant_id
 
 
 def send_user_verification_email(
