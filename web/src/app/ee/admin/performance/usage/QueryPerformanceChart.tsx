@@ -45,7 +45,6 @@ export function QueryPerformanceChart({
   } else {
     const initialDate = timeRange.from || new Date(queryAnalyticsData[0].date);
     const dateRange = getDatesList(initialDate);
-    console.log("dateRange", dateRange);
 
     const dateToQueryAnalytics = new Map(
       queryAnalyticsData.map((queryAnalyticsEntry) => [
@@ -59,8 +58,6 @@ export function QueryPerformanceChart({
         userAnalyticsEntry,
       ])
     );
-    // console.log("dateToQueryAnalytics", dateToQueryAnalytics);
-    // console.log("dateToUserAnalytics", dateToUserAnalytics);
 
     chart = (
       <AreaChartDisplay
