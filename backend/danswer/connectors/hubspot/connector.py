@@ -53,6 +53,56 @@ class HubSpotConnector(LoadConnector, PollConnector):
 
         return None
 
+    def _process_all_notes(
+        self, api_client: HubSpot, start: datetime | None = None, end: datetime | None = None
+    ) -> list[Document]:
+        """Fetch all notes from HubSpot"""
+        note_docs: list[Document] = []
+        
+        # Use pagination to get all notes
+        after = None
+        while True:
+            response = api_client.crm.objects.notes.basic_api.get_page(
+                properties=["hs_body_preview", "hs_created_by", "hs_note_body"],
+                after=after,
+                limit=100
+            )
+            
+            if not response.results:
+                break
+                
+            for note in response.results:
+                if not note.properties.get("hs_body_preview"):
+                    continue
+                    
+                updated_at = note.updated_at.replace(tzinfo=None)
+                if start is not None and updated_at < start:
+                    continue
+                if end is not None and updated_at > end:
+                    continue
+
+                content_text = note.properties.get("hs_note_body", note.properties["hs_body_preview"])
+                creator = note.properties.get("hs_created_by")
+                creator_str = str(creator) if creator is not None else "Unknown"
+                
+                note_docs.append(
+                    Document(
+                        id=f"note_{note.id}",
+                        sections=[Section(link=f"{self.ticket_base_url}", text=content_text)],
+                        source=DocumentSource.HUBSPOT,
+                        semantic_identifier=f"Note by {creator_str}",
+                        doc_updated_at=note.updated_at.replace(tzinfo=timezone.utc),
+                        metadata={"type": "note", "creator": [creator_str]},  # Wrap creator in a list
+                    )
+                )
+            
+            if not response.paging:
+                break
+                
+            after = response.paging.next.after
+
+        return note_docs
+
     def _process_tickets(
         self, start: datetime | None = None, end: datetime | None = None
     ) -> GenerateDocumentsOutput:
@@ -60,65 +110,85 @@ class HubSpotConnector(LoadConnector, PollConnector):
             raise ConnectorMissingCredentialError("HubSpot")
 
         api_client = HubSpot(access_token=self.access_token)
-        all_tickets = api_client.crm.tickets.get_all(associations=["contacts", "notes"])
-
-        doc_batch: list[Document] = []
-
-        for ticket in all_tickets:
-            updated_at = ticket.updated_at.replace(tzinfo=None)
-            if start is not None and updated_at < start:
-                continue
-            if end is not None and updated_at > end:
-                continue
-
-            title = ticket.properties["subject"]
-            link = self.ticket_base_url + ticket.id
-            content_text = ticket.properties["content"]
-
-            associated_emails: list[str] = []
-            associated_notes: list[str] = []
-
-            if ticket.associations:
-                contacts = ticket.associations.get("contacts")
-                notes = ticket.associations.get("notes")
-
-                if contacts:
-                    for contact in contacts.results:
-                        contact = api_client.crm.contacts.basic_api.get_by_id(
-                            contact_id=contact.id
-                        )
-                        associated_emails.append(contact.properties["email"])
-
-                if notes:
-                    for note in notes.results:
-                        note = api_client.crm.objects.notes.basic_api.get_by_id(
-                            note_id=note.id, properties=["content", "hs_body_preview"]
-                        )
-                        if note.properties["hs_body_preview"] is None:
-                            continue
-                        associated_notes.append(note.properties["hs_body_preview"])
-
-            associated_emails_str = " ,".join(associated_emails)
-            associated_notes_str = " ".join(associated_notes)
-
-            content_text = f"{content_text}\n emails: {associated_emails_str} \n notes: {associated_notes_str}"
-
-            doc_batch.append(
-                Document(
-                    id=ticket.id,
-                    sections=[Section(link=link, text=content_text)],
-                    source=DocumentSource.HUBSPOT,
-                    semantic_identifier=title,
-                    # Is already in tzutc, just replacing the timezone format
-                    doc_updated_at=ticket.updated_at.replace(tzinfo=timezone.utc),
-                    metadata={},
-                )
+        
+        # Get all standalone notes first
+        doc_batch = self._process_all_notes(api_client, start, end)
+        
+        # Then process tickets with pagination
+        after = None
+        while True:
+            response = api_client.crm.tickets.basic_api.get_page(
+                associations=["contacts", "notes"],
+                after=after,
+                limit=100
             )
+            
+            if not response.results:
+                break
+                
+            for ticket in response.results:
+                updated_at = ticket.updated_at.replace(tzinfo=None)
+                if start is not None and updated_at < start:
+                    continue
+                if end is not None and updated_at > end:
+                    continue
 
-            if len(doc_batch) >= self.batch_size:
-                yield doc_batch
-                doc_batch = []
+                title = ticket.properties.get("subject") or "Untitled Ticket"
+                link = self.ticket_base_url + ticket.id
+                content_text = ticket.properties.get("content", "")
 
+                associated_emails: list[str] = []
+                associated_notes: list[str] = []
+
+                if ticket.associations:
+                    contacts = ticket.associations.get("contacts")
+                    notes = ticket.associations.get("notes")
+
+                    if contacts:
+                        for contact in contacts.results:
+                            contact = api_client.crm.contacts.basic_api.get_by_id(
+                                contact_id=contact.id
+                            )
+                            associated_emails.append(contact.properties["email"])
+
+                    if notes:
+                        for note in notes.results:
+                            note = api_client.crm.objects.notes.basic_api.get_by_id(
+                                note_id=note.id, properties=["content", "hs_body_preview"]
+                            )
+                            if note.properties["hs_body_preview"] is None:
+                                continue
+                            associated_notes.append(note.properties["hs_body_preview"])
+
+                # Filter out None values and ensure strings
+                associated_emails_str = " ,".join(filter(None, (str(email) for email in associated_emails)))
+                associated_notes_str = " ".join(filter(None, (str(note) for note in associated_notes)))
+
+                content_text = (content_text or "").strip()
+                content_text = f"{content_text}\n emails: {associated_emails_str} \n notes: {associated_notes_str}"
+
+                doc_batch.append(
+                    Document(
+                        id=ticket.id,
+                        sections=[Section(link=link, text=content_text)],
+                        source=DocumentSource.HUBSPOT,
+                        semantic_identifier=title,
+                        # Is already in tzutc, just replacing the timezone format
+                        doc_updated_at=ticket.updated_at.replace(tzinfo=timezone.utc),
+                        metadata={},
+                    )
+                )
+
+                if len(doc_batch) >= self.batch_size:
+                    yield doc_batch
+                    doc_batch = []
+            
+            if not response.paging:
+                break
+                
+            after = response.paging.next.after
+
+        # Yield any remaining documents
         if doc_batch:
             yield doc_batch
 
