@@ -489,7 +489,7 @@ def connector_indexing_task(
         f"search_settings={search_settings_id}"
     )
 
-    attempt = None
+    attempt_found = False
     n_final_progress: int | None = None
 
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
@@ -557,6 +557,7 @@ def connector_indexing_task(
                 raise ValueError(
                     f"Index attempt not found: index_attempt={index_attempt_id}"
                 )
+            attempt_found = True
 
             cc_pair = get_connector_credential_pair_from_id(
                 cc_pair_id=cc_pair_id,
@@ -576,32 +577,32 @@ def connector_indexing_task(
                     f"Credential not found: cc_pair={cc_pair_id} credential={cc_pair.credential_id}"
                 )
 
-            # define a callback class
-            callback = RunIndexingCallback(
-                redis_connector.stop.fence_key,
-                redis_connector_index.generator_progress_key,
-                lock,
-                r,
-            )
+        # define a callback class
+        callback = RunIndexingCallback(
+            redis_connector.stop.fence_key,
+            redis_connector_index.generator_progress_key,
+            lock,
+            r,
+        )
 
-            logger.info(
-                f"Indexing spawned task running entrypoint: attempt={index_attempt_id} "
-                f"tenant={tenant_id} "
-                f"cc_pair={cc_pair_id} "
-                f"search_settings={search_settings_id}"
-            )
+        logger.info(
+            f"Indexing spawned task running entrypoint: attempt={index_attempt_id} "
+            f"tenant={tenant_id} "
+            f"cc_pair={cc_pair_id} "
+            f"search_settings={search_settings_id}"
+        )
 
-            run_indexing_entrypoint(
-                index_attempt_id,
-                tenant_id,
-                cc_pair_id,
-                is_ee,
-                callback=callback,
-            )
+        run_indexing_entrypoint(
+            index_attempt_id,
+            tenant_id,
+            cc_pair_id,
+            is_ee,
+            callback=callback,
+        )
 
-            # get back the total number of indexed docs and return it
-            n_final_progress = redis_connector_index.get_progress()
-            redis_connector_index.set_generator_complete(HTTPStatus.OK.value)
+        # get back the total number of indexed docs and return it
+        n_final_progress = redis_connector_index.get_progress()
+        redis_connector_index.set_generator_complete(HTTPStatus.OK.value)
     except Exception as e:
         logger.exception(
             f"Indexing spawned task failed: attempt={index_attempt_id} "
@@ -609,9 +610,9 @@ def connector_indexing_task(
             f"cc_pair={cc_pair_id} "
             f"search_settings={search_settings_id}"
         )
-        if attempt:
+        if attempt_found:
             with get_session_with_tenant(tenant_id) as db_session:
-                mark_attempt_failed(attempt, db_session, failure_reason=str(e))
+                mark_attempt_failed(index_attempt_id, db_session, failure_reason=str(e))
 
         redis_connector_index.reset()
         raise e
