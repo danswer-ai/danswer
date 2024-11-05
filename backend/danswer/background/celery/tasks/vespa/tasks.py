@@ -690,12 +690,17 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 
             for a in attempts:
                 # if attempts exist in the db but we don't detect them in redis, mark them as failed
-                failure_reason = f"Unknown index attempt {a.id}. Might be left over from a process restart."
-                if not r.exists(
-                    RedisConnectorIndex.fence_key_with_ids(
-                        a.connector_credential_pair_id, a.search_settings_id
+                fence_key = RedisConnectorIndex.fence_key_with_ids(
+                    a.connector_credential_pair_id, a.search_settings_id
+                )
+                if not r.exists(fence_key):
+                    failure_reason = (
+                        f"Unknown index attempt. Might be left over from a process restart: "
+                        f"index_attempt={a.id} "
+                        f"cc_pair={a.connector_credential_pair_id} "
+                        f"search_settings={a.search_settings_id}"
                     )
-                ):
+                    task_logger.warning(failure_reason)
                     mark_attempt_failed(a.id, db_session, failure_reason=failure_reason)
 
         lock_beat.reacquire()
