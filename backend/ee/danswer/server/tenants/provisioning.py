@@ -7,7 +7,6 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import exceptions
-from danswer.auth.users import get_tenant_id_for_email
 from danswer.configs.app_configs import CONTROL_PLANE_API_BASE_URL
 from danswer.configs.app_configs import EXPECTED_API_KEY
 from danswer.db.engine import get_session_with_tenant
@@ -25,6 +24,7 @@ from ee.danswer.server.tenants.schema_management import create_schema_if_not_exi
 from ee.danswer.server.tenants.schema_management import drop_schema
 from ee.danswer.server.tenants.schema_management import run_alembic_migrations
 from ee.danswer.server.tenants.user_mapping import add_users_to_tenant
+from ee.danswer.server.tenants.user_mapping import get_tenant_id_for_email
 from ee.danswer.server.tenants.user_mapping import user_owns_a_tenant
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA

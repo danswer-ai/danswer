@@ -1,10 +1,28 @@
 import logging
 
+from fastapi_users import exceptions
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from danswer.db.engine import get_session_with_tenant
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import UserTenantMapping
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 
+
 logger = logging.getLogger(__name__)
+
+
+def get_tenant_id_for_email(email: str) -> str:
+    # Implement logic to get tenant_id from the mapping table
+    with Session(get_sqlalchemy_engine()) as db_session:
+        result = db_session.execute(
+            select(UserTenantMapping.tenant_id).where(UserTenantMapping.email == email)
+        )
+        tenant_id = result.scalar_one_or_none()
+    if tenant_id is None:
+        raise exceptions.UserNotExists()
+    return tenant_id
 
 
 def user_owns_a_tenant(email: str) -> bool:
