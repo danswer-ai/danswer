@@ -74,7 +74,7 @@ export function QueryPerformanceChart({
         categories={["Queries", "Unique Users"]}
         index="Day"
         colors={["indigo", "fuchsia"]}
-        valueFormatter={(number: number) =>
+        yAxisFormatter={(number: number) =>
           new Intl.NumberFormat("en-US", {
             notation: "standard",
             maximumFractionDigits: 0,
@@ -83,14 +83,6 @@ export function QueryPerformanceChart({
         xAxisFormatter={(dateStr: string) => {
           const date = new Date(dateStr);
           return date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          });
-        }}
-        tooltipFormatter={(dateStr: string) => {
-          const date = new Date(dateStr);
-          return date.toLocaleDateString("en-US", {
-            year: "numeric",
             month: "short",
             day: "numeric",
           });
