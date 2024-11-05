@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from collections.abc import Iterator
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
@@ -67,7 +68,7 @@ def _convert_single_file(
 
 
 def _process_files_batch(
-    files: list[GoogleDriveFileType], convert_func: callable, batch_size: int
+    files: list[GoogleDriveFileType], convert_func: Callable, batch_size: int
 ) -> GenerateDocumentsOutput:
     doc_batch = []
     with ThreadPoolExecutor(max_workers=min(16, len(files))) as executor:
@@ -259,7 +260,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         is_slim: bool,
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
-    ):
+    ) -> Iterator[GoogleDriveFileType]:
         drive_service = get_drive_service(self.creds, user_email)
         if self.include_my_drives and (
             not self._requested_my_drive_emails

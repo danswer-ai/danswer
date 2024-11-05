@@ -1,4 +1,3 @@
-import re
 import time
 from collections.abc import Callable
 from unittest.mock import MagicMock
@@ -33,13 +32,6 @@ from tests.daily.connectors.google_drive.helpers import TEST_USER_2_EMAIL
 from tests.daily.connectors.google_drive.helpers import TEST_USER_2_FILE_IDS
 from tests.daily.connectors.google_drive.helpers import TEST_USER_3_EMAIL
 from tests.daily.connectors.google_drive.helpers import TEST_USER_3_FILE_IDS
-
-
-def extract_number_from_name(name: str) -> int:
-    match = re.search(r"file_(\d+)\.txt", name)
-    if match:
-        return int(match.group(1))
-    raise ValueError(f"Invalid file name format: {name}")
 
 
 def get_keys_available_to_user_from_access_map(
@@ -139,7 +131,7 @@ def test_all_permissions(
     )
 
     access_map: dict[str, ExternalAccess] = {}
-    found_file_ids = set()
+    found_file_names = set()
     for slim_doc_batch in google_drive_connector.retrieve_all_slim_documents(
         0, time.time()
     ):
@@ -149,7 +141,7 @@ def test_all_permissions(
                 google_drive_connector=google_drive_connector,
                 slim_doc=slim_doc,
             )
-            found_file_ids.add(extract_number_from_name(name))
+            found_file_names.add(name)
 
     for file_name, external_access in access_map.items():
         print(file_name, external_access)
@@ -170,10 +162,13 @@ def test_all_permissions(
         + FOLDER_2_2_FILE_IDS  # Folder 2_2
         + SECTIONS_FILE_IDS  # Sections
     )
+    expected_file_names = {
+        file_name_template.format(file_id) for file_id in expected_file_range
+    }
 
     # Should get everything
-    print_discrepencies(set(expected_file_range), found_file_ids)
-    assert found_file_ids == set(expected_file_range)
+    print_discrepencies(expected_file_names, found_file_names)
+    assert expected_file_names == found_file_names
 
     group_map = get_group_map(google_drive_connector)
 

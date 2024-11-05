@@ -96,7 +96,6 @@ def execute_paginated_retrieval(
         if next_page_token:
             request_kwargs["pageToken"] = next_page_token
 
-        # results = add_retries(lambda: retrieval_function(**request_kwargs).execute())()
         try:
             results = retrieval_function(**request_kwargs).execute()
         except HttpError as e:
