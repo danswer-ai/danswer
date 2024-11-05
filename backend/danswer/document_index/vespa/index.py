@@ -2,6 +2,7 @@ import concurrent.futures
 import io
 import logging
 import os
+import random
 import re
 import time
 import urllib
@@ -898,6 +899,31 @@ class VespaIndex(DocumentIndex):
                             # Optionally, implement retry logic or error handling here
 
         logger.info("Batch deletion completed")
+
+    def random_retrieval(
+        self,
+        filters: IndexFilters,
+        num_to_retrieve: int = 10,
+    ) -> list[InferenceChunkUncleaned]:
+        """Retrieve random chunks matching the filters using Vespa's random ranking"""
+        vespa_where_clauses = build_vespa_filters(filters)
+        # Remove the trailing 'and' if it exists
+        if vespa_where_clauses.strip().endswith("and"):
+            vespa_where_clauses = vespa_where_clauses.strip()[:-3].strip()
+
+        yql = YQL_BASE.format(index_name=self.index_name) + vespa_where_clauses
+
+        random_seed = random.randint(0, 1000000)
+
+        params: dict[str, str | int | float] = {
+            "yql": yql,
+            "hits": num_to_retrieve,
+            "timeout": VESPA_TIMEOUT,
+            "ranking.profile": "random_",
+            "ranking.properties.random.seed": random_seed,
+        }
+
+        return query_vespa(params)
 
 
 class _VespaDeleteRequest:

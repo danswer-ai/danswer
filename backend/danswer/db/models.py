@@ -5,6 +5,8 @@ from typing import Literal
 from typing import NotRequired
 from typing import Optional
 from uuid import uuid4
+
+from pydantic import BaseModel
 from typing_extensions import TypedDict  # noreorder
 from uuid import UUID
 
@@ -1341,6 +1343,12 @@ class StarterMessage(TypedDict):
     in Postgres"""
 
     name: str
+    message: str
+
+
+class StarterMessageModel(BaseModel):
+    name: str
+    description: str
     message: str
 
 
