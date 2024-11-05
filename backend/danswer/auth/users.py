@@ -98,7 +98,6 @@ from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
-
 logger = setup_logger()
 
 
@@ -239,7 +238,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        tenant_id = get_or_create_tenant_id(user_create.email)
+        tenant_id = await get_or_create_tenant_id(user_create.email)
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
@@ -262,7 +261,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     user_create.role = UserRole.BASIC
 
             try:
-                user = await super().create(user_create, safe=safe, request=request)
+                user = await super().create(user_create, safe=safe, request=request)  # type: ignore
             except exceptions.UserAlreadyExists:
                 user = await self.get_by_email(user_create.email)
                 # Handle case where user has used product outside of web and is now creating an account through web
@@ -299,7 +298,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
-        tenant_id = get_or_create_tenant_id(account_email)
+        tenant_id = await get_or_create_tenant_id(account_email)
 
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")
