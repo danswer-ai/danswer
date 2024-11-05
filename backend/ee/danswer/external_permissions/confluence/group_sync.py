@@ -1,5 +1,6 @@
 from typing import Any
 
+from atlassian import Confluence
 from sqlalchemy.orm import Session
 
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
@@ -44,6 +45,21 @@ def confluence_group_sync(
     cc_pair: ConnectorCredentialPair,
 ) -> None:
     is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
+
+    credentials = cc_pair.credential.credential_json
+    wiki_base = cc_pair.connector.connector_specific_config["wiki_base"]
+    # test connection with direct client, no retries
+    confluence_client = Confluence(
+        api_version="cloud" if is_cloud else "latest",
+        url=wiki_base.rstrip("/"),
+        username=credentials["confluence_username"] if is_cloud else None,
+        password=credentials["confluence_access_token"] if is_cloud else None,
+        token=credentials["confluence_access_token"] if not is_cloud else None,
+    )
+    spaces = confluence_client.get_all_spaces(limit=1)
+    if not spaces:
+        raise RuntimeError(f"No spaces found at {wiki_base}!")
+
     confluence_client = build_confluence_client(
         credentials_json=cc_pair.credential.credential_json,
         is_cloud=is_cloud,

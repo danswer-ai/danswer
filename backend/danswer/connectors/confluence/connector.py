@@ -3,6 +3,8 @@ from datetime import timezone
 from typing import Any
 from urllib.parse import quote
 
+from atlassian import Confluence
+
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -103,6 +105,19 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
         # for a list of other hidden constructor args
+
+        # test connection with direct client, no retries
+        confluence_client = Confluence(
+            api_version="cloud" if self.is_cloud else "latest",
+            url=self.wiki_base.rstrip("/"),
+            username=credentials["confluence_username"] if self.is_cloud else None,
+            password=credentials["confluence_access_token"] if self.is_cloud else None,
+            token=credentials["confluence_access_token"] if not self.is_cloud else None,
+        )
+        spaces = confluence_client.get_all_spaces(limit=1)
+        if not spaces:
+            raise RuntimeError(f"No spaces found at {self.wiki_base}!")
+
         self.confluence_client = build_confluence_client(
             credentials_json=credentials,
             is_cloud=self.is_cloud,
