@@ -7,7 +7,6 @@ from fastapi import Response
 from danswer.auth.users import auth_backend
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import get_jwt_strategy
-from danswer.auth.users import get_tenant_id_for_email
 from danswer.auth.users import User
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.db.engine import get_session_with_tenant
@@ -24,6 +23,7 @@ from ee.danswer.server.tenants.billing import fetch_tenant_stripe_information
 from ee.danswer.server.tenants.models import BillingInformation
 from ee.danswer.server.tenants.models import ImpersonateRequest
 from ee.danswer.server.tenants.models import ProductGatingRequest
+from ee.danswer.server.tenants.user_mapping import get_tenant_id_for_email
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 stripe.api_key = STRIPE_SECRET_KEY
