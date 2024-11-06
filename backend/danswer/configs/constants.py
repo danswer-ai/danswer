@@ -225,6 +225,9 @@ class DanswerRedisLocks:
     PRUNING_LOCK_PREFIX = "da_lock:pruning"
     INDEXING_METADATA_PREFIX = "da_metadata:indexing"
 
+    SLACK_BOT_LOCK = "da_lock:slack_bot"
+    SLACK_BOT_HEARTBEAT_PREFIX = "da_heartbeat:slack_bot"
+
 
 class DanswerCeleryPriority(int, Enum):
     HIGHEST = 0

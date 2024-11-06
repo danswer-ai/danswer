@@ -81,3 +81,4 @@ stripe==10.12.0
 urllib3==2.2.3
 mistune==0.8.4
 sentry-sdk==2.14.0
+prometheus_client==0.21.0

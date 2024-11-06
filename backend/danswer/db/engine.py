@@ -331,11 +331,13 @@ def get_session_with_tenant(
     Generate a database session bound to a connection with the appropriate tenant schema set.
     This preserves the tenant ID across the session and reverts to the previous tenant ID
     after the session is closed.
+    If tenant ID is set, we save the previous tenant ID from the context var to set
+    after the session is closed. The value `None` evaluates to the default schema.
     """
     engine = get_sqlalchemy_engine()
 
     # Store the previous tenant ID
-    previous_tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+    previous_tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get() or POSTGRES_DEFAULT_SCHEMA
 
     if tenant_id is None:
         tenant_id = previous_tenant_id
