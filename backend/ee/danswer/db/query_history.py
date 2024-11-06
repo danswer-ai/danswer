@@ -20,9 +20,8 @@ def fetch_chat_sessions_eagerly_by_time(
     end: datetime.datetime,
     db_session: Session,
     limit: int | None = 500,
-    initial_id: int | None = None,
+    initial_time: datetime.datetime | None = None,
 ) -> list[ChatSession]:
-    id_order = desc(ChatSession.id)  # type: ignore
     time_order = desc(ChatSession.time_created)  # type: ignore
     message_order = asc(ChatMessage.id)  # type: ignore
 
@@ -30,20 +29,20 @@ def fetch_chat_sessions_eagerly_by_time(
         ChatSession.time_created.between(start, end)
     ]
 
-    if initial_id:
-        filters.append(ChatSession.id < initial_id)
+    if initial_time:
+        filters.append(ChatSession.time_created > initial_time)
+
     subquery = (
         db_session.query(ChatSession.id, ChatSession.time_created)
         .filter(*filters)
-        .order_by(id_order, time_order)
-        .distinct(ChatSession.id)
+        .order_by(time_order)
         .limit(limit)
         .subquery()
     )
 
     query = (
         db_session.query(ChatSession)
-        .join(subquery, ChatSession.id == subquery.c.id)  # type: ignore
+        .join(subquery, ChatSession.id == subquery.c.id)
         .outerjoin(ChatMessage, ChatSession.id == ChatMessage.chat_session_id)
         .options(
             joinedload(ChatSession.user),
