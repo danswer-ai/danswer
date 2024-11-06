@@ -66,7 +66,7 @@ import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
 import { FiArrowDown } from "react-icons/fi";
 import { ChatIntro } from "./ChatIntro";
 import { AIMessage, HumanMessage } from "./message/Messages";
-import { StarterMessage } from "./StarterMessage";
+import { StarterMessages } from "../../components/assistants/StarterMessage";
 import {
   AnswerPiecePacket,
   DanswerDocument,
@@ -111,6 +111,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
+import AssistantBanner from "../../components/assistants/AssistantBanner";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -2021,113 +2022,33 @@ export function ChatPage({
                             !isFetchingChatMessages &&
                             currentSessionChatState == "input" &&
                             !loadingError && (
-                              <div className="h-full flex flex-col justify-center items-center">
+                              <div className="h-full mt-12 flex flex-col justify-center items-center">
                                 <ChatIntro selectedPersona={liveAssistant} />
 
-                                <div
-                                  key={-4}
-                                  className={`
-                                      mx-auto 
-                                      px-4 
-                                      w-full
-                                      max-w-[750px]
-                                      flex 
-                                      flex-wrap
-                                      justify-center
-                                      mt-6
-                                      h-40
-                                      items-start
-                                      mb-6`}
-                                >
-                                  {currentPersona?.starter_messages &&
-                                    currentPersona.starter_messages.length >
-                                      0 && (
-                                      <>
-                                        {currentPersona.starter_messages
-                                          .slice(0, 4)
-                                          .map((starterMessage, i) => (
-                                            <div key={i} className="w-1/2">
-                                              <StarterMessage
-                                                starterMessage={starterMessage}
-                                                onClick={() =>
-                                                  onSubmit({
-                                                    messageOverride:
-                                                      starterMessage.message,
-                                                  })
-                                                }
-                                              />
-                                            </div>
-                                          ))}
-                                      </>
-                                    )}
-                                </div>
+                                <StarterMessages
+                                  currentPersona={currentPersona}
+                                  onSubmit={(messageOverride) =>
+                                    onSubmit({
+                                      messageOverride,
+                                    })
+                                  }
+                                />
 
                                 {!isFetchingChatMessages &&
                                   currentSessionChatState == "input" &&
                                   !loadingError &&
                                   allAssistants.length > 1 && (
-                                    <div className="mx-auto mt-20 px-4 w-full max-w-[750px] flex flex-col items-center">
-                                      <Separator className="mx-2 mb-4" />
-                                      <div className="text-sm text-muted-foreground mb-4">
-                                        Recent Assistants
+                                    <div className="mx-auto px-4 w-full max-w-[750px] flex flex-col items-center">
+                                      <Separator className="mx-2  w-full  my-12" />
+                                      <div className="text-sm text-black font-medium">
+                                        Other Assistants
                                       </div>
-                                      <div className="grid grid-cols-4 gap-4 w-full">
-                                        {recentAssistants
-                                          // First filter out the current assistant
-                                          .filter(
-                                            (assistant) =>
-                                              assistant.id !== liveAssistant?.id
-                                          )
-                                          // Combine with visible assistants to get up to 4 total
-                                          .concat(
-                                            allAssistants.filter(
-                                              (assistant) =>
-                                                // Exclude current assistant
-                                                assistant.id !==
-                                                  liveAssistant?.id &&
-                                                // Exclude assistants already in recentAssistants
-                                                !recentAssistants.some(
-                                                  (recent) =>
-                                                    recent.id === assistant.id
-                                                )
-                                            )
-                                          )
-                                          // Take first 4
-                                          .slice(0, 4)
-                                          .map((assistant) => (
-                                            <Card
-                                              key={assistant.id}
-                                              className="cursor-pointer hover:bg-background-100  transition-colors"
-                                              onClick={() =>
-                                                onAssistantChange(assistant)
-                                              }
-                                            >
-                                              <CardHeader>
-                                                <div className="flex items-center gap-x-2">
-                                                  <AssistantIcon
-                                                    size="small"
-                                                    assistant={assistant}
-                                                  />
-                                                  <div className="font-semibold text-base">
-                                                    {assistant.name}
-                                                  </div>
-                                                </div>
-                                              </CardHeader>
-                                              <CardContent>
-                                                <CardDescription>
-                                                  <>
-                                                    <div className="text-sm text-muted-foreground line-clamp-2">
-                                                      {assistant.description}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground mt-1">
-                                                      Created by user
-                                                    </div>
-                                                  </>
-                                                </CardDescription>
-                                              </CardContent>
-                                            </Card>
-                                          ))}
-                                      </div>
+                                      <AssistantBanner
+                                        recentAssistants={recentAssistants}
+                                        liveAssistant={liveAssistant}
+                                        allAssistants={allAssistants}
+                                        onAssistantChange={onAssistantChange}
+                                      />
                                     </div>
                                   )}
                               </div>
