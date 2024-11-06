@@ -13,7 +13,7 @@ from danswer.connectors.slack.utils import expert_info_from_slack_id
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.danswerbot.slack.blocks import build_follow_up_resolved_blocks
 from danswer.danswerbot.slack.blocks import get_document_feedback_blocks
-from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
+from danswer.danswerbot.slack.config import get_slack_bot_config_for_app_and_channel
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FeedbackVisibility
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
@@ -80,6 +80,7 @@ def handle_doc_feedback_button(
 
 
 def handle_generate_answer_button(
+    app_id: int,
     req: SocketModeRequest,
     client: TenantSocketModeClient,
 ) -> None:
@@ -117,8 +118,8 @@ def handle_generate_answer_button(
     )
 
     with get_session_with_tenant(client.tenant_id) as db_session:
-        slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name, db_session=db_session
+        slack_bot_config = get_slack_bot_config_for_app_and_channel(
+            app_id=app_id, channel_name=channel_name, db_session=db_session
         )
 
         handle_regular_answer(
@@ -231,6 +232,7 @@ def handle_slack_feedback(
 
 
 def handle_followup_button(
+    app_id: int,
     req: SocketModeRequest,
     client: TenantSocketModeClient,
 ) -> None:
@@ -256,8 +258,8 @@ def handle_followup_button(
         channel_name, is_dm = get_channel_name_from_id(
             client=client.web_client, channel_id=channel_id
         )
-        slack_bot_config = get_slack_bot_config_for_channel(
-            channel_name=channel_name, db_session=db_session
+        slack_bot_config = get_slack_bot_config_for_app_and_channel(
+            app_id=app_id, channel_name=channel_name, db_session=db_session
         )
         if slack_bot_config:
             tag_names = slack_bot_config.channel_config.get("follow_up_tags")

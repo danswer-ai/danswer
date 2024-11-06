@@ -79,6 +79,7 @@ def _no_ee_standard_answer_categories(*args: Any, **kwargs: Any) -> list:
 
 
 def insert_slack_bot_config(
+    app_id: int,
     persona_id: int | None,
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
@@ -111,6 +112,7 @@ def insert_slack_bot_config(
             )
 
     slack_bot_config = SlackBotConfig(
+        app_id=app_id,
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=response_type,
@@ -225,13 +227,20 @@ def remove_slack_bot_config(
     db_session.commit()
 
 
+def fetch_slack_bot_configs(
+    db_session: Session, slack_bot_app_id: int | None = None
+) -> Sequence[SlackBotConfig]:
+    if not slack_bot_app_id:
+        return db_session.scalars(select(SlackBotConfig)).all()
+
+    return db_session.scalars(
+        select(SlackBotConfig).where(SlackBotConfig.app_id == slack_bot_app_id)
+    ).all()
+
+
 def fetch_slack_bot_config(
     db_session: Session, slack_bot_config_id: int
 ) -> SlackBotConfig | None:
     return db_session.scalar(
         select(SlackBotConfig).where(SlackBotConfig.id == slack_bot_config_id)
     )
-
-
-def fetch_slack_bot_configs(db_session: Session) -> Sequence[SlackBotConfig]:
-    return db_session.scalars(select(SlackBotConfig)).all()

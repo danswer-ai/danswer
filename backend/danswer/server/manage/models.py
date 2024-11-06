@@ -13,6 +13,7 @@ from danswer.configs.constants import AuthType
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
+from danswer.db.models import SlackApp as SlackAppModel
 from danswer.db.models import SlackBotConfig as SlackBotConfigModel
 from danswer.db.models import SlackBotResponseType
 from danswer.db.models import User
@@ -127,6 +128,15 @@ class HiddenUpdateRequest(BaseModel):
     hidden: bool
 
 
+class SlackAppCreationRequest(BaseModel):
+    name: str
+    description: str
+    enabled: bool
+
+    bot_token: str
+    app_token: str
+
+
 class SlackBotTokens(BaseModel):
     bot_token: str
     app_token: str
@@ -134,14 +144,16 @@ class SlackBotTokens(BaseModel):
 
 
 class SlackBotConfigCreationRequest(BaseModel):
+    app_id: int
     # currently, a persona is created for each slack bot config
     # in the future, `document_sets` will probably be replaced
     # by an optional `PersonaSnapshot` object. Keeping it like this
     # for now for simplicity / speed of development
     document_sets: list[int] | None = None
-    persona_id: (
-        int | None
-    ) = None  # NOTE: only one of `document_sets` / `persona_id` should be set
+
+    # NOTE: only one of `document_sets` / `persona_id` should be set
+    persona_id: int | None = None
+
     channel_names: list[str]
     respond_tag_only: bool = False
     respond_to_bots: bool = False
@@ -173,6 +185,7 @@ class SlackBotConfigCreationRequest(BaseModel):
 
 
 class SlackBotConfig(BaseModel):
+    app_id: int
     id: int
     persona: PersonaSnapshot | None
     channel_config: ChannelConfig
@@ -187,6 +200,7 @@ class SlackBotConfig(BaseModel):
     ) -> "SlackBotConfig":
         return cls(
             id=slack_bot_config_model.id,
+            app_id=slack_bot_config_model.app_id,
             persona=(
                 PersonaSnapshot.from_model(
                     slack_bot_config_model.persona, allow_deleted=True
@@ -202,6 +216,27 @@ class SlackBotConfig(BaseModel):
                 for standard_answer_category_model in slack_bot_config_model.standard_answer_categories
             ],
             enable_auto_filters=slack_bot_config_model.enable_auto_filters,
+        )
+
+
+class SlackApp(BaseModel):
+    id: int
+    name: str
+    description: str
+    enabled: bool
+
+    bot_token: str
+    app_token: str
+
+    @classmethod
+    def from_model(cls, slack_app_model: SlackAppModel) -> "SlackApp":
+        return cls(
+            id=slack_app_model.id,
+            name=slack_app_model.name,
+            description=slack_app_model.description,
+            enabled=slack_app_model.enabled,
+            bot_token=slack_app_model.bot_token,
+            app_token=slack_app_model.app_token,
         )
 
 

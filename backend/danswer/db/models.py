@@ -1458,6 +1458,7 @@ class SlackBotConfig(Base):
     __tablename__ = "slack_bot_config"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    app_id: Mapped[int] = mapped_column(ForeignKey("slack_app.id"), nullable=True)
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True
     )
@@ -1479,6 +1480,20 @@ class SlackBotConfig(Base):
         secondary=SlackBotConfig__StandardAnswerCategory.__table__,
         back_populates="slack_bot_configs",
     )
+
+
+class SlackApp(Base):
+    __tablename__ = "slack_app"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    description: Mapped[str] = mapped_column(String)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    bot_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
+    app_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
+
+    config: Mapped[SlackBotConfig | None] = relationship("SlackBotConfig")
 
 
 class TaskQueueState(Base):
