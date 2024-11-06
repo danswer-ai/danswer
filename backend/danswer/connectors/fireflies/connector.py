@@ -1,8 +1,3 @@
-# TODO: Fix the transcript text parsing for the document
-# TODO: Remove the host email from the secondary owners
-# TODO: Figure out if to use semantic identifier or title
-# TODO: Fix date parsing in graphql query
-# TODO: Fix credentials loading
 from collections.abc import Iterator
 from datetime import datetime
 from datetime import timezone
@@ -28,26 +23,24 @@ _FIREFLIES_ID_PREFIX = "FIREFLIES_"
 
 _FIREFLIES_API_URL = "https://api.fireflies.ai/graphql"
 
-_FIREFLIES_API_HEADERS = {"Content-Type": "application/json", "Authorization": ""}
+_FIREFLIES_TRANSCRIPT_PAGE_SIZE = 30
 
 
-def _create_doc_from_transcript(transcript: dict) -> Document:
+def _create_doc_from_transcript(transcript: dict) -> Document | None:
     meeting_text = ""
     sentences = transcript.get("sentences", [])
-    meeting_text = str(sentences)
-    # for sentence in sentences:
-    #     meeting_text += (
-    #         sentence.get("speaker_name", "Unknown Speaker")
-    #         + ": "
-    #         + sentence.get("text", "")
-    #         + "\n\n"
-    #     )
+    if sentences:
+        for sentence in sentences:
+            meeting_text += sentence.get("speaker_name") or "Unknown Speaker"
+            meeting_text += ": " + sentence.get("text", "") + "\n\n"
+    else:
+        return None
 
-    link = transcript.get("transcript_url", "")
+    meeting_link = transcript.get("transcript_url", "")
 
-    id = _FIREFLIES_ID_PREFIX + transcript.get("id", "")
+    fireflies_id = _FIREFLIES_ID_PREFIX + transcript.get("id", "")
 
-    title = transcript.get("title", "")
+    meeting_title = transcript.get("title", "")
 
     meeting_date_unix = transcript.get("date", "")
     meeting_date = datetime.fromtimestamp(meeting_date_unix / 1000, tz=timezone.utc)
@@ -59,15 +52,15 @@ def _create_doc_from_transcript(transcript: dict) -> Document:
         meeting_participants_emails.append(BasicExpertInfo(email=participant))
 
     return Document(
-        id=id,
+        id=fireflies_id,
         sections=[
             Section(
-                link=link,
+                link=meeting_link,
                 text=meeting_text,
             )
         ],
         source=DocumentSource.FIREFLIES,
-        semantic_identifier=title,
+        semantic_identifier=meeting_title,
         metadata={},
         doc_updated_at=meeting_date,
         primary_owners=meeting_host_email,
@@ -87,50 +80,51 @@ class FirefliesConnector(PollConnector, LoadConnector):
                 "The Fireflies API key must be a string"
             )
 
-        self.api_key = str(api_key)
+        self.api_key = api_key
 
     def _fetch_transcripts(
-        self, start: datetime | None = None, end: datetime | None = None
+        self, start: str | None = None, end: str | None = None
     ) -> Iterator[List[dict]]:
         if self.api_key is None:
             raise ConnectorMissingCredentialError("Missing API key")
 
-        headers = _FIREFLIES_API_HEADERS.copy()
-        headers["Authorization"] = "Bearer 790bc814-e2f8-4349-af78-2d0b5affdaa5"
-
-        limit = 4
-        skip = 0
-        date_filters = ""
-        if start:
-            date_filters = f"fromDate: {start.isoformat()},"
-        if end:
-            date_filters += f"toDate: {end.isoformat()}"
-
-        api_query = {
-            "query": f"""
-                query {{
-                    transcripts(
-                        limit: {limit},
-                        skip: {skip}
-                    ) {{
-                        title
-                        id
-                        date
-                        host_email
-                        participants
-                        transcript_url
-                        sentences {{
-                            text
-                            speaker_name
-                        }}
-                    }}
-                }}
-            """
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + self.api_key,
         }
+
+        skip = 0
+        variables: dict[str, int | str] = {
+            "limit": _FIREFLIES_TRANSCRIPT_PAGE_SIZE,
+        }
+
+        if start:
+            variables["fromDate"] = start
+        if end:
+            variables["toDate"] = end
+
+        query = """
+            query Transcripts($fromDate: DateTime, $toDate: DateTime) {
+                transcripts(fromDate: $fromDate, toDate: $toDate) {
+                    id
+                    title
+                    host_email
+                    participants
+                    date
+                    transcript_url
+                    sentences {
+                        text
+                        speaker_name
+                    }
+                  }
+              }
+          """
 
         while True:
             response = requests.post(
-                _FIREFLIES_API_URL, headers=headers, json=api_query
+                _FIREFLIES_API_URL,
+                headers=headers,
+                json={"query": query, "variables": variables},
             )
 
             response.raise_for_status()
@@ -138,27 +132,31 @@ class FirefliesConnector(PollConnector, LoadConnector):
             if response.status_code == 204:
                 break
 
-            transcripts = response.json().get("data", {}).get("transcripts", [])
+            recieved_transcripts = response.json()
+            parsed_transcripts = recieved_transcripts.get("data", {}).get(
+                "transcripts", []
+            )
 
-            if not transcripts:
+            if not parsed_transcripts:
                 break
 
-            yield transcripts
+            yield parsed_transcripts
 
-            if len(transcripts) < limit:
+            if len(parsed_transcripts) < _FIREFLIES_TRANSCRIPT_PAGE_SIZE:
                 break
 
-            skip += limit
+            skip += _FIREFLIES_TRANSCRIPT_PAGE_SIZE
+            variables["skip"] = skip
 
     def _process_transcripts(
-        self, start: datetime | None = None, end: datetime | None = None
+        self, start: str | None = None, end: str | None = None
     ) -> GenerateDocumentsOutput:
         doc_batch: List[Document] = []
 
         for transcript_batch in self._fetch_transcripts(start, end):
             for transcript in transcript_batch:
-                print(transcript)
-                doc_batch.append(_create_doc_from_transcript(transcript))
+                if doc := _create_doc_from_transcript(transcript):
+                    doc_batch.append(doc)
 
                 if len(doc_batch) >= self.batch_size:
                     yield doc_batch
@@ -173,7 +171,11 @@ class FirefliesConnector(PollConnector, LoadConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        start_datetime = datetime.fromtimestamp(start, tz=timezone.utc)
-        end_datetime = datetime.fromtimestamp(end, tz=timezone.utc)
+        start_datetime = datetime.fromtimestamp(start, tz=timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%S.000Z"
+        )
+        end_datetime = datetime.fromtimestamp(end, tz=timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%S.000Z"
+        )
 
         yield from self._process_transcripts(start_datetime, end_datetime)
