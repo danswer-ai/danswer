@@ -22,20 +22,21 @@ def fetch_chat_sessions_eagerly_by_time(
     limit: int | None = 500,
     initial_time: datetime.datetime | None = None,
 ) -> list[ChatSession]:
-    time_order = desc(ChatSession.time_created)  # type: ignore
-    message_order = asc(ChatMessage.id)  # type: ignore
+    time_order = desc(ChatSession.time_created)
+    message_order = asc(ChatMessage.time_sent)  # Changed from ChatMessage.id
 
     filters: list[ColumnElement | BinaryExpression] = [
         ChatSession.time_created.between(start, end)
     ]
 
     if initial_time:
-        filters.append(ChatSession.time_created > initial_time)
+        filters.append(ChatSession.time_created < initial_time)
 
     subquery = (
         db_session.query(ChatSession.id, ChatSession.time_created)
         .filter(*filters)
-        .order_by(time_order)
+        .order_by(ChatSession.id, time_order)
+        .distinct(ChatSession.id)
         .limit(limit)
         .subquery()
     )

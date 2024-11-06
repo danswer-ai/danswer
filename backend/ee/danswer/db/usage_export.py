@@ -61,7 +61,7 @@ def get_all_empty_chat_message_entries(
     db_session: Session,
     period: tuple[datetime, datetime],
 ) -> Generator[list[ChatMessageSkeleton], None, None]:
-    initial_time = None
+    initial_time = period[0]
     ind = 0
     while True:
         ind += 1
@@ -72,6 +72,7 @@ def get_all_empty_chat_message_entries(
             period,
             initial_time=initial_time,
         )
+        print("length", len(message_skeletons))
         if not message_skeletons:
             return
 
