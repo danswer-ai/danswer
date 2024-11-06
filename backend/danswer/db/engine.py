@@ -9,7 +9,6 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Any
 from typing import ContextManager
-from typing import Sentinel
 
 import jwt
 from fastapi import HTTPException
@@ -324,7 +323,8 @@ async def get_async_session_with_tenant(
             yield session
 
 
-_DEFAULT = Sentinel("_DEFAULT")
+# Sentinel object to represent the default value
+_DEFAULT = object()
 
 
 @contextmanager
