@@ -241,9 +241,17 @@ export function ChatPage({
   const [alternativeAssistant, setAlternativeAssistant] =
     useState<Persona | null>(null);
 
+  const {
+    visibleAssistants: assistants,
+    recentAssistants,
+    assistants: allAssistants,
+    refreshRecentAssistants,
+  } = useAssistants();
+
   const liveAssistant =
     alternativeAssistant ||
     selectedAssistant ||
+    recentAssistants[0] ||
     finalAssistants[0] ||
     availableAssistants[0];
 
@@ -1806,13 +1814,6 @@ export function ChatPage({
       });
     };
   }
-
-  const {
-    visibleAssistants: assistants,
-    recentAssistants,
-    assistants: allAssistants,
-    refreshRecentAssistants,
-  } = useAssistants();
 
   return (
     <>

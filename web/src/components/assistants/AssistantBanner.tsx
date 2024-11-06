@@ -66,7 +66,7 @@ export default function AssistantBanner({
 
 export function AssistantCard({ assistant }: { assistant: Persona }) {
   return (
-    <div className="p-6 backdrop-blur-sm rounded-lg max-w-md w-full mx-auto transition-all duration-300 ease-in-out hover:shadow-xl">
+    <div className="p-6 backdrop-blur-sm rounded-lg max-w-md w-full mx-auto">
       <div className="flex items-center mb-4">
         <div className="mb-auto mt-2">
           <AssistantIcon disableToolip size="small" assistant={assistant} />
