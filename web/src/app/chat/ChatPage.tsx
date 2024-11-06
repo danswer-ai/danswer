@@ -1810,6 +1810,7 @@ export function ChatPage({
   const {
     visibleAssistants: assistants,
     recentAssistants,
+    assistants: allAssistants,
     refreshAssistants,
     refreshRecentAssistants,
   } = useAssistants();
@@ -2063,7 +2064,8 @@ export function ChatPage({
 
                                 {!isFetchingChatMessages &&
                                   currentSessionChatState == "input" &&
-                                  !loadingError && (
+                                  !loadingError &&
+                                  allAssistants.length > 1 && (
                                     <div className="mx-auto mt-20 px-4 w-full max-w-[750px] flex flex-col items-center">
                                       <Separator className="mx-2 mb-4" />
                                       <div className="text-sm text-muted-foreground mb-4">
@@ -2078,7 +2080,7 @@ export function ChatPage({
                                           )
                                           // Combine with visible assistants to get up to 4 total
                                           .concat(
-                                            assistants.filter(
+                                            allAssistants.filter(
                                               (assistant) =>
                                                 // Exclude current assistant
                                                 assistant.id !==
