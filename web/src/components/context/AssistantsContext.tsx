@@ -111,7 +111,7 @@ export const AssistantsProvider: React.FC<{
   }, [isAdmin]);
 
   const refreshRecentAssistants = async (currentAssistant: number) => {
-    await fetch("/api/user/recent-assistants", {
+    const response = await fetch("/api/user/recent-assistants", {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -120,6 +120,13 @@ export const AssistantsProvider: React.FC<{
         current_assistant: currentAssistant,
       }),
     });
+    setRecentAssistants((recentAssistants) => [
+      assistants.find((assistant) => assistant.id === currentAssistant)!,
+
+      ...recentAssistants.filter(
+        (assistant) => assistant.id !== currentAssistant
+      ),
+    ]);
   };
 
   const refreshAssistants = async () => {
