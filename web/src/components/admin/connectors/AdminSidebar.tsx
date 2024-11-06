@@ -73,7 +73,7 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
           </div>
         </div>
         <div className="flex w-full justify-center">
-          <Link href={"/chat"}>
+          <Link href={settings.default_page == "chat" ? "/chat" : "/search"}>
             <button className="text-sm flex items-center block w-52 py-2.5 flex px-2 text-left text-text-back-button bg-background-back-button hover:bg-opacity-80 cursor-pointer rounded">
               <BackIcon className="my-auto" size={18} />
               <p className="ml-1 break-words line-clamp-2 ellipsis leading-none">
