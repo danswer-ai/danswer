@@ -308,7 +308,7 @@ def upsert_service_account_credential(
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GOOGLE_DRIVE,
-            primary_admin_email=service_account_credential_request.google_drive_primary_admin,
+            primary_admin_email=service_account_credential_request.google_primary_admin,
         )
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -334,7 +334,7 @@ def upsert_gmail_service_account_credential(
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GMAIL,
-            primary_admin_email=service_account_credential_request.gmail_primary_admin,
+            primary_admin_email=service_account_credential_request.google_primary_admin,
         )
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))

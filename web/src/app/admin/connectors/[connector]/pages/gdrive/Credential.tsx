@@ -362,10 +362,10 @@ export const DriveAuthSection = ({
       <div>
         <Formik
           initialValues={{
-            google_drive_primary_admin: user?.email || "",
+            google_primary_admin: user?.email || "",
           }}
           validationSchema={Yup.object().shape({
-            google_drive_primary_admin: Yup.string().required(
+            google_primary_admin: Yup.string().required(
               "User email is required"
             ),
           })}
@@ -379,7 +379,7 @@ export const DriveAuthSection = ({
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  google_drive_primary_admin: values.google_drive_primary_admin,
+                  google_primary_admin: values.google_primary_admin,
                 }),
               }
             );
@@ -402,7 +402,7 @@ export const DriveAuthSection = ({
           {({ isSubmitting }) => (
             <Form>
               <TextFormField
-                name="google_drive_primary_admin"
+                name="google_primary_admin"
                 label="Primary Admin Email:"
                 subtext="Enter the email of an admin/owner of the Google Organization that owns the Google Drive(s) you want to index."
               />
