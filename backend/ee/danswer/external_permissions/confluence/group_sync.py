@@ -44,10 +44,10 @@ def confluence_group_sync(
     db_session: Session,
     cc_pair: ConnectorCredentialPair,
 ) -> None:
-    is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
-
     credentials = cc_pair.credential.credential_json
+    is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
     wiki_base = cc_pair.connector.connector_specific_config["wiki_base"]
+
     # test connection with direct client, no retries
     confluence_client = Confluence(
         api_version="cloud" if is_cloud else "latest",
@@ -61,9 +61,9 @@ def confluence_group_sync(
         raise RuntimeError(f"No spaces found at {wiki_base}!")
 
     confluence_client = build_confluence_client(
-        credentials_json=cc_pair.credential.credential_json,
+        credentials_json=credentials,
         is_cloud=is_cloud,
-        wiki_base=cc_pair.connector.connector_specific_config["wiki_base"],
+        wiki_base=wiki_base,
     )
 
     # Get all group names
