@@ -81,7 +81,7 @@ def _execute_with_retry(request: Any) -> Any:
 
 def execute_paginated_retrieval(
     retrieval_function: Callable,
-    list_key: str,
+    list_key: str | None = None,
     continue_on_404_or_403: bool = False,
     **kwargs: Any,
 ) -> Iterator[GoogleDriveFileType]:
@@ -118,5 +118,8 @@ def execute_paginated_retrieval(
                 raise e
 
         next_page_token = results.get("nextPageToken")
-        for item in results.get(list_key, []):
-            yield item
+        if list_key:
+            for item in results.get(list_key, []):
+                yield item
+        else:
+            yield results

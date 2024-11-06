@@ -344,16 +344,6 @@ export const GmailAuthSection = ({
   if (serviceAccountKeyData?.service_account_email) {
     return (
       <div>
-        <p className="text-sm mb-2">
-          When using a Gmail Service Account, you must specify the email of the
-          primary admin that you would like the service account to impersonate.
-          <br />
-          <br />
-          For this connector to index all users Gmail, the primary admin email
-          should be an owner/admin of the Google Organization that being
-          indexed.
-        </p>
-
         <CardSection>
           <Formik
             initialValues={{
