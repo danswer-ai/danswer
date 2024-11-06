@@ -75,6 +75,7 @@ import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.png";
 import salesforceIcon from "../../../public/Salesforce.png";
 import freshdeskIcon from "../../../public/Freshdesk.png";
+import firefliesIcon from "../../../public/Fireflies.png";
 
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
@@ -88,6 +89,7 @@ import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 import xenforoIcon from "../../../public/Xenforo.svg";
 import { FaRobot } from "react-icons/fa";
+import { size } from "lodash";
 
 export interface IconProps {
   size?: number;
@@ -1299,6 +1301,13 @@ export const FreshdeskIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => (
   <LogoIcon size={size} className={className} src={freshdeskIcon} />
+);
+
+export const FirefliesIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <LogoIcon size={size} className={className} src={firefliesIcon} />
 );
 
 /* 

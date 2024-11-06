@@ -126,6 +126,7 @@ class DocumentSource(str, Enum):
     XENFORO = "xenforo"
     NOT_APPLICABLE = "not_applicable"
     FRESHDESK = "freshdesk"
+    FIREFLIES = "fireflies"
 
 
 DocumentSourceRequiringTenantContext: list[DocumentSource] = [DocumentSource.FILE]

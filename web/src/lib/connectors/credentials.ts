@@ -187,6 +187,10 @@ export interface FreshdeskCredentialJson {
   freshdesk_api_key: string;
 }
 
+export interface FirefliesCredentialJson {
+  fireflies_api_key: string;
+}
+
 export interface MediaWikiCredentialJson {}
 export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
 
@@ -290,6 +294,9 @@ export const credentialTemplates: Record<ValidSources, any> = {
     freshdesk_password: "",
     freshdesk_api_key: "",
   } as FreshdeskCredentialJson,
+  fireflies: {
+    fireflies_api_key: "",
+  } as FirefliesCredentialJson,
   xenforo: null,
   google_sites: null,
   file: null,
@@ -435,7 +442,11 @@ export const credentialDisplayNames: Record<string, string> = {
   freshdesk_domain: "Freshdesk Domain",
   freshdesk_password: "Freshdesk Password",
   freshdesk_api_key: "Freshdesk API Key",
+
+  // Fireflies
+  fireflies_api_key: "Fireflies API Key",
 };
+
 export function getDisplayNameForCredentialKey(key: string): string {
   return credentialDisplayNames[key] || key;
 }
