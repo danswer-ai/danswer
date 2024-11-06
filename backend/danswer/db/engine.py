@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Any
 from typing import ContextManager
+from typing import Sentinel
 
 import jwt
 from fastapi import HTTPException
@@ -323,9 +324,12 @@ async def get_async_session_with_tenant(
             yield session
 
 
+_DEFAULT = Sentinel("_DEFAULT")
+
+
 @contextmanager
 def get_session_with_tenant(
-    tenant_id: str | None = None,
+    tenant_id: str | None = _DEFAULT,
 ) -> Generator[Session, None, None]:
     """
     Generate a database session bound to a connection with the appropriate tenant schema set.
@@ -339,7 +343,7 @@ def get_session_with_tenant(
     # Store the previous tenant ID
     previous_tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get() or POSTGRES_DEFAULT_SCHEMA
 
-    if tenant_id is None:
+    if tenant_id is _DEFAULT:
         tenant_id = previous_tenant_id
     else:
         CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
