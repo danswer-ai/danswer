@@ -173,7 +173,9 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     )
                     if attempt_id:
                         task_logger.info(
-                            f"Indexing queued: cc_pair={cc_pair.id} index_attempt={attempt_id}"
+                            f"Indexing queued: index_attempt={attempt_id} "
+                            f"cc_pair={cc_pair.id} "
+                            f"search_settings={search_settings_instance.id} "
                         )
                         tasks_created += 1
     except SoftTimeLimitExceeded:
@@ -529,6 +531,13 @@ def connector_indexing_task(
             sleep(1)
             continue
 
+        if payload.index_attempt_id != index_attempt_id:
+            raise ValueError(
+                f"connector_indexing_task - id mismatch. Task may be left over from previous run.: "
+                f"task_index_attempt={index_attempt_id} "
+                f"payload_index_attempt={payload.index_attempt_id}"
+            )
+
         logger.info(
             f"connector_indexing_task - Fence found, continuing...: fence={redis_connector_index.fence_key}"
         )
@@ -614,7 +623,6 @@ def connector_indexing_task(
             with get_session_with_tenant(tenant_id) as db_session:
                 mark_attempt_failed(index_attempt_id, db_session, failure_reason=str(e))
 
-        redis_connector_index.reset()
         raise e
     finally:
         if lock.owned():
