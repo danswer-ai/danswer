@@ -148,7 +148,7 @@ export function ChatPage({
     !shouldShowWelcomeModal
   );
 
-  const { user, isAdmin, isLoadingUser } = useUser();
+  const { user, isAdmin, isLoadingUser, refreshUser } = useUser();
 
   const existingChatIdRaw = searchParams.get("chatId");
   const [sendOnLoad, setSendOnLoad] = useState<string | null>(
@@ -327,7 +327,6 @@ export function ChatPage({
   useEffect(() => {
     Prism.highlightAll();
     setIsReady(true);
-    refreshRecentAssistants(liveAssistant?.id);
   }, []);
 
   // this is triggered every time the user switches which chat
@@ -746,7 +745,7 @@ export function ChatPage({
         setMaxTokens(maxTokens);
       }
     }
-
+    refreshRecentAssistants(liveAssistant?.id);
     fetchMaxTokens();
   }, [liveAssistant]);
 
@@ -1812,7 +1811,6 @@ export function ChatPage({
     visibleAssistants: assistants,
     recentAssistants,
     assistants: allAssistants,
-    refreshAssistants,
     refreshRecentAssistants,
   } = useAssistants();
 

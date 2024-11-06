@@ -120,7 +120,6 @@ export const AssistantsProvider: React.FC<{
         current_assistant: currentAssistant,
       }),
     });
-    await refreshUser();
   };
 
   const refreshAssistants = async () => {
