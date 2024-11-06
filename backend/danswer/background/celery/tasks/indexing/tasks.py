@@ -484,6 +484,9 @@ def connector_indexing_task(
     that the task transitioned to a "READY" state but the generator_complete_key doesn't exist.
     This will cause the primary worker to abort the indexing attempt and clean up.
     """
+
+    # Since connector_indexing_proxy_task spawns a new process using this function as
+    # the entrypoint, we init Sentry here.
     if SENTRY_DSN:
         sentry_sdk.init(
             dsn=SENTRY_DSN,
