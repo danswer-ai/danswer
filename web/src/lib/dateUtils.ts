@@ -57,7 +57,7 @@ export const buildDateString = (date: Date | null) => {
     : "Select a time range";
 };
 export const getTimeAgoString = (date: Date | null) => {
-  if (!date) return "Since";
+  if (!date) return null;
 
   const diffMs = new Date().getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));

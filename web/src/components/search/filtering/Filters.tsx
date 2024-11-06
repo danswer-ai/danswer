@@ -116,7 +116,7 @@ export function SourceSelector({
           <div className="cursor-pointer">
             <SectionTitle>Time Range</SectionTitle>
             <p className="text-sm text-default mt-2">
-              {getTimeAgoString(timeRange?.from!)}
+              {getTimeAgoString(timeRange?.from!) || "Select a time range"}
             </p>
           </div>
         </PopoverTrigger>
@@ -463,7 +463,6 @@ export function HorizontalSourceSelector({
               border-border 
               rounded-lg 
               bg-background
-              flex 
               max-h-96 
               overflow-y-scroll
               overscroll-contain
