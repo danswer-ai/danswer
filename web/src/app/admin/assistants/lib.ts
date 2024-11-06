@@ -108,6 +108,15 @@ function updatePrompt({
   });
 }
 
+export const createAssistantCategory = (name: string, description: string) => {
+  return fetch("/api/admin/persona/categories", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name, description }),
+  });
+};
 function buildPersonaAPIBody(
   creationRequest: PersonaCreationRequest | PersonaUpdateRequest,
   promptId: number,

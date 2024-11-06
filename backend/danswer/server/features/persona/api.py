@@ -18,7 +18,9 @@ from danswer.configs.constants import NotificationType
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.notification import create_notification
+from danswer.db.persona import create_assistant_category
 from danswer.db.persona import create_update_persona
+from danswer.db.persona import get_assistant_categories
 from danswer.db.persona import get_persona_by_id
 from danswer.db.persona import get_personas
 from danswer.db.persona import mark_persona_as_deleted
@@ -30,6 +32,7 @@ from danswer.db.persona import update_persona_visibility
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
 from danswer.llm.answering.prompts.utils import build_dummy_prompt
+from danswer.server.features.persona.models import AssistantCategoryCreate
 from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import ImageGenerationToolStatus
 from danswer.server.features.persona.models import PersonaSharedNotificationData
@@ -38,6 +41,7 @@ from danswer.server.features.persona.models import PromptTemplateResponse
 from danswer.server.models import DisplayPriorityRequest
 from danswer.tools.utils import is_image_generation_available
 from danswer.utils.logger import setup_logger
+
 
 logger = setup_logger()
 
@@ -181,6 +185,26 @@ def update_persona(
         create_persona_request=update_persona_request,
         user=user,
         db_session=db_session,
+    )
+
+
+@basic_router.get("/categories")
+def get_categories(
+    db: Session = Depends(get_session),
+    _: User | None = Depends(current_user),
+):
+    return get_assistant_categories(db_session=db)
+
+
+@admin_router.post("/categories")
+def create_category(
+    category: AssistantCategoryCreate,
+    db: Session = Depends(get_session),
+    _: User | None = Depends(current_admin_user),
+) -> None:
+    """Create a new assistant category"""
+    create_assistant_category(
+        name=category.name, description=category.description, db_session=db
     )
 
 

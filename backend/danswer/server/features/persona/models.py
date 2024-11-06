@@ -128,3 +128,8 @@ class PersonaSharedNotificationData(BaseModel):
 
 class ImageGenerationToolStatus(BaseModel):
     is_available: bool
+
+
+class AssistantCategoryCreate(BaseModel):
+    name: str
+    description: str

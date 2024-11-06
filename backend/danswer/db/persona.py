@@ -26,6 +26,7 @@ from danswer.db.models import DocumentSet
 from danswer.db.models import Persona
 from danswer.db.models import Persona__User
 from danswer.db.models import Persona__UserGroup
+from danswer.db.models import PersonaCategory
 from danswer.db.models import Prompt
 from danswer.db.models import StarterMessage
 from danswer.db.models import Tool
@@ -743,4 +744,13 @@ def delete_persona_by_name(
     )
 
     db_session.execute(stmt)
+    db_session.commit()
+
+
+def get_assistant_categories(db_session: Session) -> list[PersonaCategory]:
+    return db_session.query(PersonaCategory).all()
+
+
+def create_assistant_category(db_session: Session, name: str, description: str) -> None:
+    db_session.add(PersonaCategory(name=name, description=description))
     db_session.commit()

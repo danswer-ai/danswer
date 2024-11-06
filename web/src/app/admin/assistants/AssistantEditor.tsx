@@ -24,7 +24,7 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { getDisplayNameForModel } from "@/lib/hooks";
+import { getDisplayNameForModel, useCategories } from "@/lib/hooks";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
@@ -47,7 +47,7 @@ import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
-import { createPersona, updatePersona } from "./lib";
+import { createAssistantCategory, createPersona, updatePersona } from "./lib";
 import { Popover } from "@/components/popover/Popover";
 import {
   CameraIcon,
@@ -107,6 +107,7 @@ export function AssistantEditor({
   const router = useRouter();
 
   const { popup, setPopup } = usePopup();
+  const { data: categories, refreshCategories } = useCategories();
 
   const colorOptions = [
     "#FF6FBF",
@@ -211,6 +212,7 @@ export function AssistantEditor({
     icon_color: existingPersona?.icon_color ?? defautIconColor,
     icon_shape: existingPersona?.icon_shape ?? defaultIconShape,
     uploaded_image: null,
+    category: existingPersona?.category ?? null,
 
     // EE Only
     groups: existingPersona?.groups ?? [],
@@ -255,6 +257,7 @@ export function AssistantEditor({
             icon_color: Yup.string(),
             icon_shape: Yup.number(),
             uploaded_image: Yup.mixed().nullable(),
+            category: Yup.string().nullable(),
             // EE Only
             groups: Yup.array().of(Yup.number()),
           })
@@ -574,6 +577,82 @@ export function AssistantEditor({
                   </Tooltip>
                 </TooltipProvider>
               </div>
+
+              {categories && categories.length > 0 && (
+                <div className="mb-6">
+                  <div className="flex gap-x-2 items-center">
+                    <div className="block font-medium text-base">Category</div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <FiInfo size={12} />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                          Group similar assistants together by category
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <SelectorFormField
+                    name="category"
+                    options={categories.map((category) => ({
+                      name: category.name,
+                      value: category.id,
+                    }))}
+                  />
+                </div>
+              )}
+
+              {admin && (
+                <div className="mb-6">
+                  <div className="flex gap-x-2 items-center">
+                    <div className="block font-medium text-base">
+                      Create New Category
+                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <FiInfo size={12} />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                          Create a new category to group similar assistants
+                          together
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+
+                  <div className="flex gap-x-2 mt-2">
+                    <TextFormField
+                      name="newCategoryName"
+                      label="Category Name"
+                      placeholder="Category Name"
+                    />
+                    <TextFormField
+                      name="newCategoryDescription"
+                      placeholder="Category Description"
+                      label="Category Description"
+                    />
+                    <Button
+                      onClick={async () => {
+                        const name = values.newCategoryName;
+                        const description = values.newCategoryDescription;
+                        if (!name || !description) return;
+
+                        await createAssistantCategory(name, description);
+                        // Refresh categories
+                        await refreshCategories();
+
+                        // Clear fields
+                        setFieldValue("newCategoryName", "");
+                        setFieldValue("newCategoryDescription", "");
+                      }}
+                    >
+                      Create
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               <TextFormField
                 name="name"
