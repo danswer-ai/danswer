@@ -2037,9 +2037,9 @@ export function ChatPage({
                                   !loadingError &&
                                   allAssistants.length > 1 && (
                                     <div className="mx-auto px-4 w-full max-w-[750px] flex flex-col items-center">
-                                      <Separator className="mx-2  w-full  my-12" />
-                                      <div className="text-sm text-black font-medium">
-                                        Other Assistants
+                                      <Separator className="mx-2 w-full my-12" />
+                                      <div className="text-sm text-black font-medium mb-4">
+                                        Recent Assistants
                                       </div>
                                       <AssistantBanner
                                         recentAssistants={recentAssistants}
