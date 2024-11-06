@@ -4,12 +4,12 @@ dependencies:
   version: 14.3.1
 - name: vespa
   repository: https://danswer-ai.github.io/vespa-helm-charts
-  version: 0.2.8
+  version: 0.2.9
 - name: nginx
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 15.14.0
 - name: redis
   repository: https://charts.bitnami.com/bitnami
   version: 20.1.0
-digest: sha256:7fef354e9e3bf529933b77475171c955b717a45b8dc6e2d0a4eb6d693e446cff
-generated: "2024-11-05T22:03:02.743594-08:00"
+digest: sha256:435a2c3a811202049bdc10051cfb93730376e4e26f802bef12ed41a7147c25b0
+generated: "2024-11-06T14:21:18.44095-08:00"
