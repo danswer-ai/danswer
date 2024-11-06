@@ -1,6 +1,6 @@
 from typing import Any
 
-from atlassian import Confluence
+from atlassian import Confluence  # type: ignore
 from sqlalchemy.orm import Session
 
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence

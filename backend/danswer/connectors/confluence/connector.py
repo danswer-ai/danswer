@@ -3,7 +3,7 @@ from datetime import timezone
 from typing import Any
 from urllib.parse import quote
 
-from atlassian import Confluence
+from atlassian import Confluence  # type: ignore
 
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
