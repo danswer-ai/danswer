@@ -35,6 +35,7 @@ from danswer.llm.answering.prompts.utils import build_dummy_prompt
 from danswer.server.features.persona.models import AssistantCategoryCreate
 from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import ImageGenerationToolStatus
+from danswer.server.features.persona.models import PersonaCategoryResponse
 from danswer.server.features.persona.models import PersonaSharedNotificationData
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.features.persona.models import PromptTemplateResponse
@@ -192,7 +193,7 @@ def update_persona(
 def get_categories(
     db: Session = Depends(get_session),
     _: User | None = Depends(current_user),
-):
+) -> list[PersonaCategoryResponse]:
     return get_assistant_categories(db_session=db)
 
 

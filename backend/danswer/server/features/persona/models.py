@@ -41,6 +41,7 @@ class CreatePersonaRequest(BaseModel):
     is_default_persona: bool = False
     display_priority: int | None = None
     search_start_date: datetime | None = None
+    category_id: int | None = None
 
 
 class PersonaSnapshot(BaseModel):
@@ -68,6 +69,7 @@ class PersonaSnapshot(BaseModel):
     uploaded_image_id: str | None = None
     is_default_persona: bool
     search_start_date: datetime | None = None
+    category_id: int | None = None
 
     @classmethod
     def from_model(
@@ -115,6 +117,7 @@ class PersonaSnapshot(BaseModel):
             icon_shape=persona.icon_shape,
             uploaded_image_id=persona.uploaded_image_id,
             search_start_date=persona.search_start_date,
+            category_id=persona.category_id,
         )
 
 
@@ -133,3 +136,12 @@ class ImageGenerationToolStatus(BaseModel):
 class AssistantCategoryCreate(BaseModel):
     name: str
     description: str
+
+
+class PersonaCategoryResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None
+
+    class Config:
+        from_attributes = True

@@ -212,7 +212,7 @@ export function AssistantEditor({
     icon_color: existingPersona?.icon_color ?? defautIconColor,
     icon_shape: existingPersona?.icon_shape ?? defaultIconShape,
     uploaded_image: null,
-    category: existingPersona?.category ?? null,
+    category_id: existingPersona?.category_id ?? null,
 
     // EE Only
     groups: existingPersona?.groups ?? [],
@@ -257,7 +257,7 @@ export function AssistantEditor({
             icon_color: Yup.string(),
             icon_shape: Yup.number(),
             uploaded_image: Yup.mixed().nullable(),
-            category: Yup.string().nullable(),
+            category_id: Yup.number().nullable(),
             // EE Only
             groups: Yup.array().of(Yup.number()),
           })
@@ -594,7 +594,7 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
                   <SelectorFormField
-                    name="category"
+                    name="category_id"
                     options={categories.map((category) => ({
                       name: category.name,
                       value: category.id,
@@ -605,7 +605,7 @@ export function AssistantEditor({
 
               {admin && (
                 <div className="mb-6">
-                  <div className="flex gap-x-2 items-center">
+                  <div className="flex gap-x-2 items-center mb-2">
                     <div className="block font-medium text-base">
                       Create New Category
                     </div>
@@ -622,34 +622,56 @@ export function AssistantEditor({
                     </TooltipProvider>
                   </div>
 
-                  <div className="flex gap-x-2 mt-2">
+                  <div className="grid grid-cols-[1fr,1fr,auto] gap-4">
                     <TextFormField
+                      fontSize="sm"
                       name="newCategoryName"
                       label="Category Name"
-                      placeholder="Category Name"
+                      placeholder="e.g. Development"
                     />
                     <TextFormField
+                      fontSize="sm"
                       name="newCategoryDescription"
-                      placeholder="Category Description"
                       label="Category Description"
+                      placeholder="e.g. Assistants for software development"
                     />
-                    <Button
-                      onClick={async () => {
-                        const name = values.newCategoryName;
-                        const description = values.newCategoryDescription;
-                        if (!name || !description) return;
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        onClick={async () => {
+                          const name = values.newCategoryName;
+                          const description = values.newCategoryDescription;
+                          if (!name || !description) return;
 
-                        await createAssistantCategory(name, description);
-                        // Refresh categories
-                        await refreshCategories();
+                          try {
+                            const response = await createAssistantCategory(
+                              name,
+                              description
+                            );
+                            if (response.ok) {
+                              setPopup({
+                                message: `Category "${name}" created successfully`,
+                                type: "success",
+                              });
+                            } else {
+                              throw new Error(await response.text());
+                            }
+                          } catch (error) {
+                            setPopup({
+                              message: `Failed to create category - ${error}`,
+                              type: "error",
+                            });
+                          }
 
-                        // Clear fields
-                        setFieldValue("newCategoryName", "");
-                        setFieldValue("newCategoryDescription", "");
-                      }}
-                    >
-                      Create
-                    </Button>
+                          await refreshCategories();
+
+                          setFieldValue("newCategoryName", "");
+                          setFieldValue("newCategoryDescription", "");
+                        }}
+                      >
+                        Create
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

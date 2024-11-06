@@ -42,7 +42,7 @@ export interface Persona {
   icon_shape?: number;
   icon_color?: string;
   uploaded_image_id?: string;
-  category?: string | null;
+  category_id?: number | null;
 }
 
 export interface PersonaCategory {

@@ -23,6 +23,7 @@ interface PersonaCreationRequest {
   uploaded_image: File | null;
   search_start_date: Date | null;
   is_default_persona: boolean;
+  category_id: number | null;
 }
 
 interface PersonaUpdateRequest {
@@ -48,6 +49,7 @@ interface PersonaUpdateRequest {
   remove_image: boolean;
   uploaded_image: File | null;
   search_start_date: Date | null;
+  category_id: number | null;
 }
 
 function promptNameFromPersonaName(personaName: string) {
@@ -136,6 +138,7 @@ function buildPersonaAPIBody(
     icon_shape,
     remove_image,
     search_start_date,
+    category_id,
   } = creationRequest;
 
   const is_default_persona =
@@ -165,6 +168,7 @@ function buildPersonaAPIBody(
     remove_image,
     search_start_date,
     is_default_persona,
+    category_id,
   };
 }
 

@@ -161,7 +161,7 @@ export function TextFormField({
   error?: string;
   defaultHeight?: string;
   isCode?: boolean;
-  fontSize?: "text-sm" | "text-base" | "text-lg";
+  fontSize?: "sm" | "md" | "lg";
   hideError?: boolean;
   tooltip?: string;
   explanationText?: string;
@@ -187,12 +187,31 @@ export function TextFormField({
       onChange(e as React.ChangeEvent<HTMLInputElement>);
     }
   };
+  const textSizeClasses = {
+    sm: {
+      label: "text-sm",
+      input: "text-sm",
+      placeholder: "text-sm",
+    },
+    md: {
+      label: "text-base",
+      input: "text-base",
+      placeholder: "text-base",
+    },
+    lg: {
+      label: "text-lg",
+      input: "text-lg",
+      placeholder: "text-lg",
+    },
+  };
+
+  const sizeClass = textSizeClasses[fontSize || "md"];
 
   return (
     <div className={`w-full ${width}`}>
       <div className="flex gap-x-2 items-center">
         {!removeLabel && (
-          <Label className="text-text-950" small={small}>
+          <Label className={`text-text-950 ${sizeClass.label}`} small={small}>
             {label}
           </Label>
         )}
@@ -221,7 +240,7 @@ export function TextFormField({
           name={name}
           id={name}
           className={`
-            ${small && "text-sm"}
+            ${small && sizeClass.input}
             border 
             border-border 
             rounded-md
@@ -230,10 +249,10 @@ export function TextFormField({
             px-3 
             mt-1
             placeholder:font-description 
-            placeholder:text-base 
+            placeholder:${sizeClass.placeholder}
             placeholder:text-text-400
             ${heightString}
-            ${fontSize}
+            ${sizeClass.input}
             ${disabled ? " bg-background-strong" : " bg-white"}
             ${isCode ? " font-mono" : ""}
           `}

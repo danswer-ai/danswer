@@ -418,6 +418,7 @@ def upsert_persona(
     search_start_date: datetime | None = None,
     builtin_persona: bool = False,
     is_default_persona: bool = False,
+    category_id: int | None = None,
     chunks_above: int = CONTEXT_CHUNKS_ABOVE,
     chunks_below: int = CONTEXT_CHUNKS_BELOW,
 ) -> Persona:
@@ -488,7 +489,7 @@ def upsert_persona(
         persona.is_visible = is_visible
         persona.search_start_date = search_start_date
         persona.is_default_persona = is_default_persona
-
+        persona.category_id = category_id
         # Do not delete any associations manually added unless
         # a new updated list is provided
         if document_sets is not None:
@@ -529,6 +530,7 @@ def upsert_persona(
             is_visible=is_visible,
             search_start_date=search_start_date,
             is_default_persona=is_default_persona,
+            category_id=category_id,
         )
         db_session.add(persona)
 
