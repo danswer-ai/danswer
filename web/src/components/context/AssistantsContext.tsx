@@ -120,6 +120,9 @@ export const AssistantsProvider: React.FC<{
         current_assistant: currentAssistant,
       }),
     });
+    if (!response.ok) {
+      return;
+    }
     setRecentAssistants((recentAssistants) => [
       assistants.find((assistant) => assistant.id === currentAssistant)!,
 
