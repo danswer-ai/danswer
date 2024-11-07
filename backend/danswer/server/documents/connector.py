@@ -67,8 +67,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.credentials import cleanup_gmail_credentials
 from danswer.db.credentials import cleanup_google_drive_credentials
 from danswer.db.credentials import create_credential
-from danswer.db.credentials import delete_gmail_service_account_credentials
-from danswer.db.credentials import delete_google_drive_service_account_credentials
+from danswer.db.credentials import delete_service_account_credentials
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_counts_for_cc_pairs
@@ -309,13 +308,13 @@ def upsert_service_account_credential(
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GOOGLE_DRIVE,
-            primary_admin_email=service_account_credential_request.google_drive_primary_admin,
+            primary_admin_email=service_account_credential_request.google_primary_admin,
         )
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
-    delete_google_drive_service_account_credentials(user, db_session)
+    delete_service_account_credentials(user, db_session, DocumentSource.GOOGLE_DRIVE)
     # `user=None` since this credential is not a personal credential
     credential = create_credential(
         credential_data=credential_base, user=user, db_session=db_session
@@ -335,13 +334,13 @@ def upsert_gmail_service_account_credential(
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GMAIL,
-            primary_admin_email=service_account_credential_request.gmail_primary_admin,
+            primary_admin_email=service_account_credential_request.google_primary_admin,
         )
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
-    delete_gmail_service_account_credentials(user, db_session)
+    delete_service_account_credentials(user, db_session, DocumentSource.GMAIL)
     # `user=None` since this credential is not a personal credential
     credential = create_credential(
         credential_data=credential_base, user=user, db_session=db_session
@@ -894,7 +893,7 @@ def gmail_auth(
         httponly=True,
         max_age=600,
     )
-    return AuthUrl(auth_url=get_auth_url(int(credential_id)))
+    return AuthUrl(auth_url=get_auth_url(int(credential_id), DocumentSource.GMAIL))
 
 
 @router.get("/connector/google-drive/authorize/{credential_id}")
@@ -908,7 +907,9 @@ def google_drive_auth(
         httponly=True,
         max_age=600,
     )
-    return AuthUrl(auth_url=get_auth_url(int(credential_id)))
+    return AuthUrl(
+        auth_url=get_auth_url(int(credential_id), DocumentSource.GOOGLE_DRIVE)
+    )
 
 
 @router.get("/connector/gmail/callback")
@@ -925,12 +926,10 @@ def gmail_callback(
         )
     credential_id = int(credential_id_cookie)
     verify_csrf(credential_id, callback.state)
-    if (
-        update_credential_access_tokens(
-            callback.code, credential_id, user, db_session, DocumentSource.GMAIL
-        )
-        is None
-    ):
+    credentials: Credentials | None = update_credential_access_tokens(
+        callback.code, credential_id, user, db_session, DocumentSource.GMAIL
+    )
+    if credentials is None:
         raise HTTPException(
             status_code=500, detail="Unable to fetch Gmail access tokens"
         )

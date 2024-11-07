@@ -277,16 +277,16 @@ class GmailConnector(LoadConnector, PollConnector, SlimConnector):
                 fields=THREAD_LIST_FIELDS,
                 q=query,
             ):
-                full_thread = add_retries(
-                    lambda: gmail_service.users()
-                    .threads()
-                    .get(
-                        userId=user_email,
-                        id=thread["id"],
-                        fields=THREAD_FIELDS,
-                    )
-                    .execute()
-                )()
+                full_threads = execute_paginated_retrieval(
+                    retrieval_function=gmail_service.users().threads().get,
+                    list_key=None,
+                    userId=user_email,
+                    fields=THREAD_FIELDS,
+                    id=thread["id"],
+                )
+                # full_threads is an iterator containing a single thread
+                # so we need to convert it to a list and grab the first element
+                full_thread = list(full_threads)[0]
                 doc = thread_to_document(full_thread)
                 if doc is None:
                     continue
