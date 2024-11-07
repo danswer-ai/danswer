@@ -12,12 +12,13 @@ from celery.utils.log import get_task_logger
 from celery.worker import strategy  # type: ignore
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.task_formatters import CeleryTaskColoredFormatter
 from danswer.background.celery.apps.task_formatters import CeleryTaskPlainFormatter
 from danswer.background.celery.celery_utils import celery_is_worker_primary
 from danswer.configs.constants import DanswerRedisLocks
-from danswer.db.engine import SqlEngine
+from danswer.db.engine import get_sqlalchemy_engine
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
@@ -181,7 +182,7 @@ def wait_for_db(sender: Any, **kwargs: Any) -> None:
     logger.info("Database: Readiness probe starting.")
     while True:
         try:
-            with SqlEngine.get_engine() as db_session:
+            with Session(get_sqlalchemy_engine()) as db_session:
                 result = db_session.execute(text("SELECT NOW()")).scalar()
                 if result:
                     break
