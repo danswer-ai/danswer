@@ -265,31 +265,21 @@ class Answer:
                 tool_call_made = True
 
         if check_for_tool_call and not tool_call_made:
-            print("No tool call made")
-            print("Buffered packets:", buffered_packets)
-            print("Current LLM call:", current_llm_call)
-            print("Search result:", search_result)
             for remaining_packet in buffered_packets:
-                print(f"Yielding buffered packet: {remaining_packet}")
                 yield remaining_packet
             return
 
         for remaining_packet in buffered_packets:
-            print(f"Yielding buffered packet: {remaining_packet}")
             yield remaining_packet
 
         new_llm_call = response_handler_manager.next_llm_call(
             current_llm_call, tool_call_made
         )
-        print(f"New LLM call: {new_llm_call}")
 
         if new_llm_call:
-            print("Making new LLM call")
             yield from self._get_response(llm_calls + [new_llm_call])
         else:
             yield StreamStopInfo(stop_reason=StreamStopReason.NEW_RESPONSE)
-
-            print("No new LLM call, creating default LLM call")
 
             def build_next_prompter(
                 llm_call: LLMCall, prompt_builder: AnswerPromptBuilder
@@ -311,15 +301,12 @@ class Answer:
                 tool_call_info=[],
                 using_tool_calling_llm=self.using_tool_calling_llm,
             )
-            print("Yielding StreamStopInfo")
-            print("Getting response with default LLM call")
             yield from self._get_response(
                 [llm_call], check_for_tool_call=not tool_call_made
             )
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
-        print("THIS IS CALLED")
         if self._processed_stream is not None:
             yield from self._processed_stream
             return

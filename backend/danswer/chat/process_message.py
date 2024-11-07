@@ -764,10 +764,8 @@ def stream_chat_message_objects(
 
                 # Saving Gen AI answer and responding with message info
                 if tool_result is None:
-                    print("No tool result available")
                     tool_call = None
                 else:
-                    print(f"Processing tool result for {tool_result.tool_name}")
                     tool_call = ToolCall(
                         tool_id=tool_name_to_tool_id[tool_result.tool_name],
                         tool_name=tool_result.tool_name,
@@ -775,32 +773,24 @@ def stream_chat_message_objects(
                         tool_result=tool_result.tool_result,
                     )
 
-                print("Generating AI response message")
-                try:
-                    gen_ai_response_message = partial_response(
-                        reserved_message_id=reserved_message_id,
-                        message=answer.llm_answer,
-                        rephrased_query=cast(
-                            QADocsResponse, qa_docs_response
-                        ).rephrased_query
-                        if qa_docs_response is not None
-                        else None,
-                        reference_docs=reference_db_search_docs,
-                        files=ai_message_files,
-                        token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-                        citations=cast(
-                            MessageSpecificCitations, db_citations
-                        ).citation_map
-                        if db_citations is not None
-                        else None,
-                        error=None,
-                        tool_call=tool_call,
-                    )
-                    db_session.commit()  # actually save user / assistant message
-                except Exception as e:
-                    print("Failed to generate AI response message")
-                    print(e)
-                print("I AM GEN AI RESPONSE MESSAGE!")
+                gen_ai_response_message = partial_response(
+                    reserved_message_id=reserved_message_id,
+                    message=answer.llm_answer,
+                    rephrased_query=cast(
+                        QADocsResponse, qa_docs_response
+                    ).rephrased_query
+                    if qa_docs_response is not None
+                    else None,
+                    reference_docs=reference_db_search_docs,
+                    files=ai_message_files,
+                    token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
+                    citations=cast(MessageSpecificCitations, db_citations).citation_map
+                    if db_citations is not None
+                    else None,
+                    error=None,
+                    tool_call=tool_call,
+                )
+                db_session.commit()  # actually save user / assistant message
 
                 msg_detail_response = translate_db_message_to_chat_message_detail(
                     gen_ai_response_message
