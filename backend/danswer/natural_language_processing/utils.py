@@ -3,16 +3,16 @@ from abc import ABC
 from abc import abstractmethod
 from copy import copy
 
+from transformers import logging as transformer_logging  # type:ignore
+
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
 from danswer.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from shared_configs.enums import EmbeddingProvider
 
-# from transformers import logging as transformer_logging  # type:ignore
-
 logger = setup_logger()
-# transformer_logging.set_verbosity_error()
+transformer_logging.set_verbosity_error()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"

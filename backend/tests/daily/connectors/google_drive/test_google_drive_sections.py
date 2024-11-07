@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.models import Document
-from tests.daily.connectors.google_drive.helpers import SECTIONS_FOLDER_URL
+from tests.daily.connectors.google_drive.consts_and_utils import SECTIONS_FOLDER_URL
 
 
 @patch(

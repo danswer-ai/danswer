@@ -5,29 +5,29 @@ from unittest.mock import patch
 
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.models import Document
-from tests.daily.connectors.google_drive.helpers import ADMIN_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import ADMIN_FOLDER_3_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import (
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_FOLDER_3_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import (
     assert_retrieved_docs_match_expected,
 )
-from tests.daily.connectors.google_drive.helpers import FOLDER_1_1_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_1_1_URL
-from tests.daily.connectors.google_drive.helpers import FOLDER_1_2_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_1_2_URL
-from tests.daily.connectors.google_drive.helpers import FOLDER_1_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_2_1_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_2_1_URL
-from tests.daily.connectors.google_drive.helpers import FOLDER_2_2_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_2_2_URL
-from tests.daily.connectors.google_drive.helpers import FOLDER_2_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_2_URL
-from tests.daily.connectors.google_drive.helpers import FOLDER_3_URL
-from tests.daily.connectors.google_drive.helpers import SECTIONS_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import SHARED_DRIVE_1_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import SHARED_DRIVE_1_URL
-from tests.daily.connectors.google_drive.helpers import SHARED_DRIVE_2_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import TEST_USER_1_EMAIL
-from tests.daily.connectors.google_drive.helpers import TEST_USER_3_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_1_URL
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_2_URL
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_1_URL
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_2_URL
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_URL
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_3_URL
+from tests.daily.connectors.google_drive.consts_and_utils import SECTIONS_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import SHARED_DRIVE_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import SHARED_DRIVE_1_URL
+from tests.daily.connectors.google_drive.consts_and_utils import SHARED_DRIVE_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_1_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_3_EMAIL
 
 
 @patch(

@@ -10,28 +10,28 @@ from danswer.connectors.google_utils.resources import get_admin_service
 from ee.danswer.external_permissions.google_drive.doc_sync import (
     _get_permissions_from_slim_doc,
 )
-from tests.daily.connectors.google_drive.helpers import ACCESS_MAPPING
-from tests.daily.connectors.google_drive.helpers import ADMIN_EMAIL
-from tests.daily.connectors.google_drive.helpers import ADMIN_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import ADMIN_FOLDER_3_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import file_name_template
-from tests.daily.connectors.google_drive.helpers import FOLDER_1_1_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_1_2_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_1_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_2_1_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_2_2_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import FOLDER_2_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import print_discrepencies
-from tests.daily.connectors.google_drive.helpers import PUBLIC_RANGE
-from tests.daily.connectors.google_drive.helpers import SECTIONS_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import SHARED_DRIVE_1_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import SHARED_DRIVE_2_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import TEST_USER_1_EMAIL
-from tests.daily.connectors.google_drive.helpers import TEST_USER_1_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import TEST_USER_2_EMAIL
-from tests.daily.connectors.google_drive.helpers import TEST_USER_2_FILE_IDS
-from tests.daily.connectors.google_drive.helpers import TEST_USER_3_EMAIL
-from tests.daily.connectors.google_drive.helpers import TEST_USER_3_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import ACCESS_MAPPING
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_FOLDER_3_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import file_name_template
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import print_discrepencies
+from tests.daily.connectors.google_drive.consts_and_utils import PUBLIC_RANGE
+from tests.daily.connectors.google_drive.consts_and_utils import SECTIONS_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import SHARED_DRIVE_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import SHARED_DRIVE_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_1_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_2_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_3_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_3_FILE_IDS
 
 
 def get_keys_available_to_user_from_access_map(
