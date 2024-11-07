@@ -246,9 +246,6 @@ export function AssistantEditor({
                 name: Yup.string().required(
                   "Each starter message must have a name"
                 ),
-                description: Yup.string().required(
-                  "Each starter message must have a description"
-                ),
                 message: Yup.string().required(
                   "Each starter message must have a message"
                 ),
@@ -1048,36 +1045,6 @@ export function AssistantEditor({
                                           />
                                           <ErrorMessage
                                             name={`starter_messages[${index}].name`}
-                                            component="div"
-                                            className="text-error text-sm mt-1"
-                                          />
-                                        </div>
-
-                                        <div className="mt-3">
-                                          <Label small>Description</Label>
-                                          <SubLabel>
-                                            A description which tells the user
-                                            what they might want to use this
-                                            Starter Message for. For example
-                                            &quot;to a client about a new
-                                            feature&quot;
-                                          </SubLabel>
-                                          <Field
-                                            name={`starter_messages.${index}.description`}
-                                            className={`
-                                            border 
-                                            border-border 
-                                            bg-background 
-                                            rounded 
-                                            w-full 
-                                            py-2 
-                                            px-3 
-                                            mr-4
-                                          `}
-                                            autoComplete="off"
-                                          />
-                                          <ErrorMessage
-                                            name={`starter_messages[${index}].description`}
                                             component="div"
                                             className="text-error text-sm mt-1"
                                           />

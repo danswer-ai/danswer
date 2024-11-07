@@ -135,6 +135,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     hidden_assistants: Mapped[list[int]] = mapped_column(
         postgresql.JSONB(), nullable=False, default=[]
     )
+    recent_assistants: Mapped[list[dict]] = mapped_column(
+        postgresql.JSONB(), nullable=False, default=list, server_default="[]"
+    )
 
     oidc_expiry: Mapped[datetime.datetime] = mapped_column(
         TIMESTAMPAware(timezone=True), nullable=True
@@ -1321,7 +1324,6 @@ class StarterMessage(TypedDict):
     in Postgres"""
 
     name: str
-    description: str
     message: str
 
 

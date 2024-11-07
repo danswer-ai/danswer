@@ -203,7 +203,7 @@ export default function CreateCredential({
               for information on setting up this connector.
             </p>
           )}
-          <CardSection className="!border-0 mt-4 flex flex-col gap-y-6">
+          <CardSection className="w-full  !border-0 mt-4 flex flex-col gap-y-6">
             <TextFormField
               name="name"
               placeholder="(Optional) credential name.."
