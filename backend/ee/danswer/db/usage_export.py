@@ -55,6 +55,7 @@ def get_empty_chat_messages_entries__paginated(
             )
     if len(chat_sessions) == 0:
         return None, []
+
     return chat_sessions[0].time_created, message_skeletons
 
 
