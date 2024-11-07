@@ -323,12 +323,14 @@ async def get_async_session_with_tenant(
             yield session
 
 
+@contextmanager
 def get_session_with_default_tenant() -> Generator[Session, None, None]:
     """
     Get a database session using the current tenant ID from the context variable.
     """
     tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-    return get_session_with_tenant(tenant_id)
+    with get_session_with_tenant(tenant_id) as session:
+        yield session
 
 
 @contextmanager
