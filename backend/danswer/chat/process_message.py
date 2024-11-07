@@ -137,25 +137,19 @@ def _translate_citations(
 ) -> MessageSpecificCitations:
     """Always cites the first instance of the document_id, assumes the db_docs
     are sorted in the order displayed in the UI"""
-    logger.info(f"Translating {len(db_docs)} citations")
     doc_id_to_saved_doc_id_map: dict[str, int] = {}
 
     for db_doc in db_docs:
-        logger.debug(f"Translating citation for {db_doc.document_id}")
         if db_doc.document_id not in doc_id_to_saved_doc_id_map:
             doc_id_to_saved_doc_id_map[db_doc.document_id] = db_doc.id
 
     citation_to_saved_doc_id_map: dict[int, int] = {}
     for citation in citations_list:
-        logger.debug(
-            f"Translating citation {citation.citation_num} for {citation.document_id}"
-        )
         if citation.citation_num not in citation_to_saved_doc_id_map:
             citation_to_saved_doc_id_map[
                 citation.citation_num
             ] = doc_id_to_saved_doc_id_map[citation.document_id]
 
-    logger.info(f"Translated {len(citation_to_saved_doc_id_map)} citations")
     return MessageSpecificCitations(citation_map=citation_to_saved_doc_id_map)
 
 
@@ -742,25 +736,15 @@ def stream_chat_message_objects(
 
         for packet in answer.processed_streamed_output:
             if isinstance(packet, StreamStopInfo):
-                logger.debug("I AM STOPPED!")
                 if packet.stop_reason is not StreamStopReason.NEW_RESPONSE:
                     break
-                logger.debug("I AM NOT STOPPED!")
-                logger.debug("Processing citations and tool results...")
                 db_citations = None
 
                 if reference_db_search_docs:
-                    logger.debug(
-                        f"Translating citations for {len(reference_db_search_docs)} reference docs"
+                    db_citations = _translate_citations(
+                        citations_list=answer.citations,
+                        db_docs=reference_db_search_docs,
                     )
-                    try:
-                        db_citations = _translate_citations(
-                            citations_list=answer.citations,
-                            db_docs=reference_db_search_docs,
-                        )
-                    except Exception:
-                        logger.exception("Failed to translate citations")
-                    logger.debug("Citations translated")
 
                 # Saving Gen AI answer and responding with message info
                 if tool_result is None:
