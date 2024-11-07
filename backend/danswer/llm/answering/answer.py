@@ -165,7 +165,10 @@ class Answer:
         else:
             raise RuntimeError("Tool call handler did not return a new LLM call")
 
-    def _get_response(self, llm_calls: list[LLMCall]) -> AnswerStream:
+    def _get_response(
+        self, llm_calls: list[LLMCall], check_for_tool_call: bool = False
+    ) -> AnswerStream:
+        print(llm_calls)
         current_llm_call = llm_calls[-1]
 
         # handle the case where no decision has to be made; we simply run the tool
@@ -231,7 +234,6 @@ class Answer:
             tool_call_handler, answer_handler, self.is_cancelled
         )
 
-        # DEBUG: good breakpoint
         stream = self.llm.stream(
             prompt=current_llm_call.prompt_builder.build(),
             tools=[tool.tool_definition() for tool in current_llm_call.tools] or None,
@@ -242,11 +244,46 @@ class Answer:
             ),
             structured_response_format=self.answer_style_config.structured_response_format,
         )
-        yield from response_handler_manager.handle_llm_response(stream)
 
-        new_llm_call = response_handler_manager.next_llm_call(current_llm_call)
+        tool_call_made = False
+        buffered_packets = []
+        for packet in response_handler_manager.handle_llm_response(stream):
+            if check_for_tool_call:
+                buffered_packets.append(packet)
+                if isinstance(packet, ToolCallKickoff):
+                    tool_call_made = True
+                    for buffered_packet in buffered_packets:
+                        yield buffered_packet
+                    buffered_packets = []
+            else:
+                yield packet
+            if isinstance(packet, ToolCallKickoff):
+                tool_call_made = True
+
+        if check_for_tool_call and not tool_call_made:
+            return
+
+        for remaining_packet in buffered_packets:
+            yield remaining_packet
+
+        new_llm_call = response_handler_manager.next_llm_call(
+            current_llm_call, tool_call_made
+        )
+
         if new_llm_call:
+            print(type(new_llm_call))
             yield from self._get_response(llm_calls + [new_llm_call])
+        else:
+            llm_call = LLMCall(
+                prompt_builder=current_llm_call.prompt_builder,
+                tools=self._get_tools_list(),
+                force_use_tool=self.force_use_tool,
+                files=self.latest_query_files,
+                tool_call_info=[],
+                using_tool_calling_llm=self.using_tool_calling_llm,
+            )
+            yield from self._get_response([llm_call], check_for_tool_call=True)
+            # print("no new llm call")
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -275,6 +312,8 @@ class Answer:
             tool_call_info=[],
             using_tool_calling_llm=self.using_tool_calling_llm,
         )
+
+        print(llm_call.tools)
 
         processed_stream = []
         for processed_packet in self._get_response([llm_call]):

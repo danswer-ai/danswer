@@ -67,6 +67,7 @@ class LLMResponseHandlerManager:
     ) -> Generator[ResponsePart, None, None]:
         all_messages: list[BaseMessage] = []
         for message in stream:
+            print(message)
             if self.is_cancelled():
                 yield StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
                 return
@@ -80,5 +81,7 @@ class LLMResponseHandlerManager:
         yield from self.tool_handler.handle_response_part(None, all_messages)
         yield from self.answer_handler.handle_response_part(None, all_messages)
 
-    def next_llm_call(self, llm_call: LLMCall) -> LLMCall | None:
-        return self.tool_handler.next_llm_call(llm_call)
+    def next_llm_call(
+        self, llm_call: LLMCall, tool_call_made: bool = False
+    ) -> LLMCall | None:
+        return self.tool_handler.next_llm_call(llm_call, tool_call_made)
