@@ -3,10 +3,11 @@
 chart-dirs:
   - deployment/helm/charts
 
+# must be kept in sync with Chart.yaml
 chart-repos:
   - vespa=https://danswer-ai.github.io/vespa-helm-charts
   - postgresql=https://charts.bitnami.com/bitnami
   
-helm-extra-args: --timeout 600s
+helm-extra-args: --debug --timeout 600s
 
 validate-maintainers: false
