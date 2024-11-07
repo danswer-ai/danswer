@@ -26,7 +26,8 @@ def upgrade() -> None:
                 FROM jsonb_array_elements(starter_messages) elem
             )
             WHERE starter_messages IS NOT NULL
-        """
+              AND jsonb_typeof(starter_messages) = 'array'
+            """
         )
     )
 
@@ -41,6 +42,7 @@ def downgrade() -> None:
                 FROM jsonb_array_elements(starter_messages) elem
             )
             WHERE starter_messages IS NOT NULL
-        """
+              AND jsonb_typeof(starter_messages) = 'array'
+            """
         )
     )
