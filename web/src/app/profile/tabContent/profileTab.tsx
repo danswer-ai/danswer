@@ -262,7 +262,7 @@ export default function ProfileTab({
           <>
             <Button
               variant="outline"
-              className="border-destructive-foreground hover:bg-destructive-foreground"
+              className="border-destructive-foreground hover:bg-destructive-100"
               onClick={() => setIsEditing(false)}
               disabled={isLoading}
             >

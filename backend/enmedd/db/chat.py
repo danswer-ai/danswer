@@ -48,8 +48,8 @@ def get_chat_session_by_id(
     chat_session_id: int,
     user_id: UUID | None,
     db_session: Session,
-    include_deleted: bool = False,
-    is_shared: bool = False,
+    include_deleted: Optional[bool] = False,
+    is_shared: Optional[bool] = False,
 ) -> ChatSession:
     stmt = select(ChatSession).where(ChatSession.id == chat_session_id)
 

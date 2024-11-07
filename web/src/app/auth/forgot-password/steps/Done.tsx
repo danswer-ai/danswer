@@ -13,7 +13,7 @@ export const SuccessChangePassword = ({
   return (
     <div className="w-full">
       <div className="flex items-center justify-center">
-        <div className="bg-primary p-3 rounded-md">
+        <div className="bg-brand-500 p-3 rounded-md">
           <PartyPopper size={60} stroke="white" />
         </div>
       </div>

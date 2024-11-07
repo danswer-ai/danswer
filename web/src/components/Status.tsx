@@ -6,6 +6,7 @@ import {
   CircleCheckBig,
   Clock,
   CirclePause,
+  CircleEllipsis,
 } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { CustomTooltip } from "./CustomTooltip";
@@ -23,7 +24,7 @@ export function IndexAttemptStatus({
 
   if (status === "failed") {
     const icon = (
-      <Badge variant="destructive">
+      <Badge variant="failed">
         <TriangleAlert size={14} /> Failed
       </Badge>
     );
@@ -34,7 +35,7 @@ export function IndexAttemptStatus({
     }
   } else if (status === "completed_with_errors") {
     const icon = (
-      <Badge variant="warning">
+      <Badge variant="completedWithErrors">
         <FiAlertTriangle />
         Completed with errors
       </Badge>
@@ -61,13 +62,13 @@ export function IndexAttemptStatus({
     );
   } else if (status === "in_progress") {
     badge = (
-      <Badge className="whitespace-nowrap">
-        <Clock size={14} /> In Progress
+      <Badge variant="inProgress">
+        <CircleEllipsis size={14} /> In Progress
       </Badge>
     );
   } else if (status === "not_started") {
     badge = (
-      <Badge variant="outline">
+      <Badge variant="scheduled">
         <Clock size={14} /> Scheduled
       </Badge>
     );
@@ -98,19 +99,19 @@ export function CCPairStatus({
 
   if (isDeleting) {
     badge = (
-      <Badge variant="destructive">
+      <Badge variant="deleting">
         <TriangleAlert size={14} /> Deleting
       </Badge>
     );
   } else if (disabled) {
     badge = (
-      <Badge variant="secondary">
+      <Badge variant="paused">
         <CirclePause size={14} /> Paused
       </Badge>
     );
   } else if (status == "in_progress") {
     badge = (
-      <Badge>
+      <Badge variant="inProgress">
         <CirclePause size={14} /> In Progress
       </Badge>
     );

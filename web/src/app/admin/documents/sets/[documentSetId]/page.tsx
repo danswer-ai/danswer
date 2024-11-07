@@ -11,12 +11,13 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { BookmarkIcon } from "@/components/icons/icons";
 import { BackButton } from "@/components/BackButton";
 import { DocumentSetCreationForm } from "../DocumentSetCreationForm";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 function Main({ documentSetId }: { documentSetId: number }) {
   const router = useRouter();
+  const { teamspaceId } = useParams();
 
   const {
     data: documentSets,
@@ -49,7 +50,7 @@ function Main({ documentSetId }: { documentSetId: number }) {
   if (ccPairsError || !ccPairs) {
     return (
       <ErrorCallout
-        errorTitle="Failed to fetch Connectors"
+        errorTitle="Failed to fetch Data Sources"
         errorMsg={ccPairsError}
       />
     );
@@ -78,7 +79,11 @@ function Main({ documentSetId }: { documentSetId: number }) {
             teamspaces={teamspaces}
             onClose={() => {
               refreshDocumentSets();
-              router.push("/admin/documents/sets");
+              router.push(
+                teamspaceId
+                  ? `/t/${teamspaceId}/admin/documents/sets`
+                  : "/admin/documents/sets"
+              );
             }}
             existingDocumentSet={documentSet}
           />

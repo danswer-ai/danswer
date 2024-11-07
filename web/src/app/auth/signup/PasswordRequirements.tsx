@@ -24,7 +24,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({
         <p className="flex items-center gap-2 whitespace-nowrap">
           <span
             className={`w-2 h-2 flex rounded-full shrink-0 ${
-              password.length >= 8 ? "bg-success" : "bg-destructive"
+              password.length >= 8 ? "bg-success-500" : "bg-destructive-500"
             }`}
           />
           At least 8 characters
@@ -32,7 +32,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({
         <p className="flex items-center gap-2 whitespace-nowrap">
           <span
             className={`w-2 h-2 flex rounded-full shrink-0 ${
-              hasUppercase ? "bg-success" : "bg-destructive"
+              hasUppercase ? "bg-success-500" : "bg-destructive-500"
             }`}
           />
           Uppercase letter
@@ -40,7 +40,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({
         <p className="flex items-center gap-2 whitespace-nowrap">
           <span
             className={`w-2 h-2 flex rounded-full shrink-0 ${
-              hasNumberOrSpecialChar ? "bg-success" : "bg-destructive"
+              hasNumberOrSpecialChar ? "bg-success-500" : "bg-destructive-500"
             }`}
           />
           Number or special character

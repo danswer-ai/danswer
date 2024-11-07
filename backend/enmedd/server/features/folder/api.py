@@ -27,8 +27,10 @@ from enmedd.server.features.folder.models import FolderUpdateRequest
 from enmedd.server.features.folder.models import GetUserFoldersResponse
 from enmedd.server.models import DisplayPriorityRequest
 from enmedd.server.query_and_chat.models import ChatSessionDetails
+from enmedd.utils.logger import setup_logger
 
 router = APIRouter(prefix="/folder")
+logger = setup_logger()
 
 
 @router.get("")
@@ -174,7 +176,7 @@ def add_chat_to_folder_endpoint(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/{folder_id}/remove-chat-session/")
+@router.post("/{folder_id}/remove-chat-session")
 def remove_chat_from_folder_endpoint(
     request: FolderChatSessionRequest,
     folder_id: int = Path(

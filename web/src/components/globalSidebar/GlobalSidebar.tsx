@@ -29,19 +29,19 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
   const workspaces = combinedSettings.workspaces;
   const defaultPage = settings.default_page;
 
-  let displayedTeamspaces = user?.groups || [];
+  let teamsapces = user?.groups || [];
   if (teamspaceId) {
-    const matchingTeamspace = displayedTeamspaces.find(
+    const matchingTeamspace = teamsapces.find(
       (group) => group.id.toString() === teamspaceId
     );
-    const otherTeamspaces = displayedTeamspaces.filter(
+    const otherTeamspaces = teamsapces.filter(
       (group) => group.id.toString() !== teamspaceId
     );
-    displayedTeamspaces = matchingTeamspace
+    teamsapces = matchingTeamspace
       ? [matchingTeamspace, ...otherTeamspaces]
       : otherTeamspaces;
   }
-  displayedTeamspaces = displayedTeamspaces.slice(0, 8);
+  const displayedTeamspaces = teamsapces.slice(0, 8);
   const showEllipsis = user?.groups && user.groups.length > 8;
 
   return (
@@ -54,7 +54,7 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
         <div className="flex flex-col items-center h-full overflow-y-auto">
           <Image
             src={ArnoldAi}
-            alt="ArnoldAi Logo"
+            alt="enMedD AI Logo"
             width={40}
             height={40}
             className="rounded-regular shrink-0"
@@ -89,8 +89,9 @@ export const GlobalSidebar = ({ openSidebar, user }: GlobalSidebarProps) => {
               ))}
               {showEllipsis && (
                 <TeamspaceModal
-                  teamspace={user.groups}
+                  teamspace={teamsapces}
                   defaultPage={defaultPage}
+                  teamspaceId={teamspaceId}
                 />
               )}
             </div>

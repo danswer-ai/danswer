@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Folder } from "./interfaces";
 import { ChatSessionDisplay } from "../sessionSidebar/ChatSessionDisplay";
 import { BasicSelectable } from "@/components/BasicClickable";
@@ -22,6 +22,11 @@ import {
   X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Popover } from "@/components/popover/Popover";
+import { CustomModal } from "@/components/CustomModal";
+import { Button } from "@/components/ui/button";
+import { useChatContext } from "@/context/ChatContext";
+import { DeleteModal } from "@/components/DeleteModal";
 
 const FolderItem = ({
   folder,
@@ -41,6 +46,7 @@ const FolderItem = ({
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { refreshChatSessions } = useChatContext();
 
   const toggleFolderExpansion = () => {
     if (!isEditing) {
@@ -96,17 +102,17 @@ const FolderItem = ({
   };
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
-  const deleteConfirmRef = useRef<HTMLDivElement>(null);
 
   const handleDeleteClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
+  const confirmDelete = async () => {
     try {
       await deleteFolder(folder.folder_id);
+      await refreshChatSessions();
+      setShowDeleteConfirm(false);
       router.refresh();
     } catch (error) {
       toast({
@@ -118,39 +124,16 @@ const FolderItem = ({
     }
   };
 
-  const cancelDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    setShowDeleteConfirm(false);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        deleteConfirmRef.current &&
-        !deleteConfirmRef.current.contains(event.target as Node)
-      ) {
-        setShowDeleteConfirm(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDragOver(false);
-    const chatSessionId = parseInt(
-      event.dataTransfer.getData(CHAT_SESSION_ID_KEY),
-      10
-    );
+    const chatSessionId = event.dataTransfer.getData(CHAT_SESSION_ID_KEY);
     try {
       await addChatToFolder(folder.folder_id, chatSessionId);
-      router.refresh(); // Refresh to show the updated folder contents
+      refreshChatSessions();
+      router.refresh();
     } catch (error) {
       toast({
         title: "Error",
@@ -207,6 +190,7 @@ const FolderItem = ({
                   onKeyDown={handleKeyDown}
                   onBlur={() => saveFolderName(true)}
                   className="text-sm px-1 flex-1 min-w-0 -my-px mr-2"
+                  placeholder="Enter folder name"
                 />
               ) : (
                 <div className="break-all overflow-hidden whitespace-nowrap mr-3 text-ellipsis">
@@ -223,7 +207,7 @@ const FolderItem = ({
                   </div>
                   <div
                     onClick={handleDeleteClick}
-                    className="hover:bg-background-inverted/10 p-1 -m-1 rounded ml-2"
+                    className="hover:bg-black/10 p-1 -m-1 rounded ml-2"
                   >
                     <Trash size={16} />
                   </div>
@@ -250,8 +234,17 @@ const FolderItem = ({
           </div>
         </div>
       </BasicSelectable>
+      {showDeleteConfirm && (
+        <DeleteModal
+          title="Are you sure you want to delete this folder?"
+          onClose={() => setShowDeleteConfirm(false)}
+          open={showDeleteConfirm}
+          description="You are about to remove this user on the teamspace."
+          onSuccess={confirmDelete}
+        />
+      )}
       {isExpanded && folders && (
-        <div className={"ml-2 pl-2 border-l border-border"}>
+        <div className={"ml-[23px] pl-2 border-l border-border"}>
           {folders.map((chatSession) => (
             <ChatSessionDisplay
               key={chatSession.id}

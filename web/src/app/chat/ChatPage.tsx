@@ -708,7 +708,7 @@ export function ChatPage({
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionIdRef.current === null) {
       setSelectedAssistant(
-        finalAssistants.find(
+        availableAssistants.find(
           (assistant: Assistant) => assistant.id === defaultAssistantId
         )
       );
@@ -897,7 +897,7 @@ export function ChatPage({
   useEffect(() => {
     adjustDocumentSidebarWidth(); // Adjust the width on initial render
     window.addEventListener("resize", adjustDocumentSidebarWidth); // Add resize event listener
-
+    refreshUser();
     return () => {
       window.removeEventListener("resize", adjustDocumentSidebarWidth); // Cleanup the event listener
     };
@@ -1467,13 +1467,19 @@ export function ChatPage({
   const onAssistantChange = (assistant: Assistant | null) => {
     if (assistant && assistant.id !== liveAssistant.id) {
       // Abort the ongoing stream if it exists
-      if (currentSessionChatState != "input") {
-        stopGenerating();
-        resetInputBar();
-      }
+      console.log("THIS IS BEEN CALLED");
+      // if (currentSessionChatState != "input") {
+      //   stopGenerating();
+      //   resetInputBar();
+      // }
 
       textAreaRef.current?.focus();
-      router.push(buildChatUrl(searchParams, null, assistant.id));
+      router.push(
+        teamspaceId
+          ? `/t/${teamspaceId}/${buildChatUrl(searchParams, null, assistant.id)}`
+          : buildChatUrl(searchParams, null, assistant.id)
+      );
+      // router.push(buildChatUrl(searchParams, null, assistant.id));
     }
   };
 
@@ -1543,7 +1549,6 @@ export function ChatPage({
   }
 
   const windowWidth = window.innerWidth;
-  const [isMobile, setIsMobile] = useState(windowWidth <= 1420);
   const [showDocSidebar, setShowDocSidebar] = useState(windowWidth >= 1420);
   const [isWide, setIsWide] = useState(windowWidth >= 1420);
 
@@ -1854,7 +1859,7 @@ export function ChatPage({
 
                     {liveAssistant && (
                       <div className="relative z-top-bar shrink-0">
-                        <div className="flex w-full items-start p-4 lg:px-0 3xl:px-4 justify-between">
+                        <div className="flex w-full items-center p-4 lg:px-0 3xl:px-4 justify-between min-h-[72px]">
                           <div className="flex lg:hidden items-center gap-2">
                             <Button
                               variant="ghost"
@@ -1907,7 +1912,7 @@ export function ChatPage({
                     )}
 
                     <div
-                      className="w-full h-full flex flex-col overflow-x-hidden relative scroll-smooth flex-1"
+                      className="w-full h-full flex flex-col overflow-x-hidden relative scroll-smooth flex-1 pt-6 lg:pt-0"
                       ref={scrollableDivRef}
                     >
                       {/* ChatBanner is a custom banner that displays a admin-specified message at 
@@ -2187,7 +2192,7 @@ export function ChatPage({
                                     isShowingRetrieved
                                   }
                                   handleShowRetrieved={(messageNumber) => {
-                                    if (isMobile) {
+                                    if (settings?.isMobile) {
                                       if (!isShowingRetrieved) {
                                         setSelectedMessageForDocDisplay(null);
                                       } else {
@@ -2242,7 +2247,7 @@ export function ChatPage({
                                       : !retrievalEnabled
                                   }
                                   handleToggleSideBar={() => {
-                                    if (isMobile) {
+                                    if (settings?.isMobile) {
                                       setShowDocSidebar(isShowingRetrieved);
                                     } else {
                                       !isShowingRetrieved
@@ -2364,7 +2369,7 @@ export function ChatPage({
                           inputPrompts={userInputPrompts}
                           selectedDocuments={selectedDocuments}
                           // assistant stuff
-                          assistantOptions={finalAssistants}
+                          assistantOptions={availableAssistants}
                           selectedAssistant={liveAssistant}
                           setSelectedAssistant={onAssistantChange}
                           setAlternativeAssistant={setAlternativeAssistant}

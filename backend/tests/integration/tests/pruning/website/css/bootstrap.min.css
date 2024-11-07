@@ -525,17 +525,17 @@ a.text-warning:hover {
 a.text-danger:hover {
   color: #843534;
 }
-.bg-primary {
+.bg-brand-500 {
   color: #fff;
   background-color: #428bca;
 }
-a.bg-primary:hover {
+a.bg-brand-500:hover {
   background-color: #3071a9;
 }
-.bg-success {
+.bg-success-500 {
   background-color: #dff0d8;
 }
-a.bg-success:hover {
+a.bg-success-500:hover {
   background-color: #c1e2b3;
 }
 .bg-info {
@@ -544,10 +544,10 @@ a.bg-success:hover {
 a.bg-info:hover {
   background-color: #afd9ee;
 }
-.bg-warning {
+.bg-warning-500 {
   background-color: #fcf8e3;
 }
-a.bg-warning:hover {
+a.bg-warning-500:hover {
   background-color: #f7ecb5;
 }
 .bg-danger {

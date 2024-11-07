@@ -10,7 +10,7 @@ import {
 import { ThreeDotsLoader } from "@/components/Loading";
 import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Teamspace } from "@/lib/types";
 import { refreshDocumentSets } from "../hooks";
 import { Bookmark } from "lucide-react";
@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 function Main() {
   const router = useRouter();
+  const { teamspaceId } = useParams();
 
   const {
     data: ccPairs,
@@ -35,7 +36,7 @@ function Main() {
   if (ccPairsError || !ccPairs) {
     return (
       <ErrorCallout
-        errorTitle="Failed to fetch Connectors"
+        errorTitle="Failed to fetch Data Sources"
         errorMsg={ccPairsError}
       />
     );
@@ -50,7 +51,11 @@ function Main() {
             teamspaces={teamspaces}
             onClose={() => {
               refreshDocumentSets();
-              router.push("/admin/documents/sets");
+              router.push(
+                teamspaceId
+                  ? `/t/${teamspaceId}/admin/documents/sets`
+                  : "/admin/documents/sets"
+              );
             }}
           />
         </CardContent>

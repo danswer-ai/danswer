@@ -9,11 +9,10 @@ import { redirect } from "next/navigation";
 import { SignupForms } from "./SignupForms";
 import Link from "next/link";
 
-import Logo from "../../../../public/logo-brand.png";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import DefaultUserChart from "../../../../public/default-user-chart.png";
-import SignupImage from "../../../../public/SignupImage.png";
+import SignupImage from "../../../../public/login_image.webp";
 import GmailIcon from "../../../../public/Gmail.png";
 import MicrosoftIcon from "../../../../public/microsoft.svg";
 import { Separator } from "@/components/ui/separator";

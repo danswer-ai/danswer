@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: dynamicSettings?.workspaces?.workspace_name || "enMedD AI",
     description:
       dynamicSettings?.workspaces?.workspace_description ||
-      "enMedD Conversational Health Platform",
+      "enMedD AI Conversational Health Platform",
     icons: {
       icon: logoLocation,
     },

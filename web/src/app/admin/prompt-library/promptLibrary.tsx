@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { CustomModal } from "@/components/CustomModal";
 import { Combobox } from "@/components/Combobox";
+import { DeleteModal } from "@/components/DeleteModal";
 
 const CategoryBubble = ({
   name,
@@ -157,29 +158,15 @@ export const PromptLibraryTable = ({
   return (
     <div className="justify-center py-4">
       {confirmDeletionId != null && (
-        <CustomModal
-          onClose={() => setConfirmDeletionId(null)}
+        <DeleteModal
           title="Are you sure you want to delete this prompt? You will not be able to recover this prompt."
-          trigger={null}
+          onClose={() => setConfirmDeletionId(null)}
           open={confirmDeletionId != null}
-        >
-          <div className="flex justify-center items-center gap-2">
-            <Button
-              onClick={() => setConfirmDeletionId(null)}
-              variant="destructive"
-            >
-              No
-            </Button>
-            <Button
-              onClick={async () => {
-                await handleDelete(confirmDeletionId);
-                setConfirmDeletionId(null);
-              }}
-            >
-              Yes
-            </Button>
-          </div>
-        </CustomModal>
+          onSuccess={async () => {
+            await handleDelete(confirmDeletionId);
+            setConfirmDeletionId(null);
+          }}
+        />
       )}
 
       <div className="w-full md:w-[500px] xl:w-[625px]">

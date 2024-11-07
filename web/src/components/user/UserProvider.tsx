@@ -42,7 +42,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     fetchUser().then(async () => {
       if (teamspaceId) {
-        const teamspaceUser = await getCurrentTeamspaceUser(teamspaceId[0]);
+        const teamspaceUser = await getCurrentTeamspaceUser(
+          teamspaceId as string
+        );
         setIsTeamspaceAdmin(teamspaceUser?.role === UserRole.ADMIN);
       } else {
         setIsTeamspaceAdmin(false);

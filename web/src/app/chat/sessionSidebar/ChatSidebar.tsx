@@ -122,14 +122,14 @@ export const ChatSidebar = ({
             )}
           </div>
 
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
             onClick={toggleSideBar}
             className="lg:hidden"
           >
             <PanelLeftClose size={24} />
-          </Button>
+          </Button> */}
         </div>
 
         <div className="h-full overflow-y-auto">
@@ -155,7 +155,7 @@ export const ChatSidebar = ({
                   href={teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"}
                   className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 justify-between ${
                     !isAssistant
-                      ? "bg-primary text-white"
+                      ? "bg-brand-500 text-white"
                       : "hover:bg-hover-light"
                   }`}
                 >
@@ -173,7 +173,7 @@ export const ChatSidebar = ({
                     href="/assistants/mine"
                     className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
                       isAssistant
-                        ? "bg-primary text-white"
+                        ? "bg-brand-500 text-white"
                         : "hover:bg-hover-light"
                     }`}
                   >

@@ -138,14 +138,14 @@ export const PendingInvites = ({
         <p className="text-sm mt-2">Invitations awaiting a response.</p>
       </div>
 
-      <div className="flex-1">
-        {invited.length > 0 ? (
-          <>
-            <Input
-              placeholder="Search user..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+      {invited.length > 0 ? (
+        <div className="flex-1 space-y-4">
+          <Input
+            placeholder="Search user..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {filteredUsers.length > 0 ? (
             <Card className="mt-4">
               <CardContent className="p-0">
                 <Table>
@@ -223,11 +223,13 @@ export const PendingInvites = ({
                 </Table>
               </CardContent>
             </Card>
-          </>
-        ) : (
-          "No invited user."
-        )}
-      </div>
+          ) : (
+            <p>No user found.</p>
+          )}
+        </div>
+      ) : (
+        <p>No invited user.</p>
+      )}
     </div>
   );
 };

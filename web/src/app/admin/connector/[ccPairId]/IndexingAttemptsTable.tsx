@@ -13,7 +13,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { InfoIcon, SearchIcon } from "@/components/icons/icons";
 import Link from "next/link";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { FiInfo } from "react-icons/fi";
 import {
   Table,
@@ -31,6 +31,7 @@ const NUM_IN_PAGE = 8;
 const BATCH_SIZE = 8;
 
 export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
+  const { teamspaceId } = useParams();
   const [indexAttemptTracePopupId, setIndexAttemptTracePopupId] = useState<
     number | null
   >(null);
@@ -162,9 +163,14 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   // This updates the page number and manages the URL
   const updatePage = (newPage: number) => {
     setPage(newPage);
-    router.push(`/admin/connector/${ccPair.id}?page=${newPage}`, {
-      scroll: false,
-    });
+    router.push(
+      teamspaceId
+        ? `/t/${teamspaceId}/admin/connector/${ccPair.id}?page=${newPage}`
+        : `/admin/connector/${ccPair.id}?page=${newPage}`,
+      {
+        scroll: false,
+      }
+    );
     window.scrollTo({
       top: 0,
       left: 0,

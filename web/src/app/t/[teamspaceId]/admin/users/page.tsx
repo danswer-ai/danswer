@@ -16,8 +16,8 @@ const Page = () => {
         <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
         <div className="pb-20 w-full">
           <AllUsers q={q} teamspaceId={teamspaceId} />
-          <Separator className="my-10" />
-          <PendingInvites q={q} teamspaceId={teamspaceId} />
+          {/* <Separator className="my-10" /> */}
+          {/* <PendingInvites q={q} teamspaceId={teamspaceId} /> */}
         </div>
       </div>
     </div>

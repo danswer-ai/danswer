@@ -12,12 +12,9 @@ import {
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { destructureValue, getFinalLLM, structureValue } from "@/lib/llm/utils";
 import { useState } from "react";
-import { Hoverable } from "@/components/Hoverable";
 import { Popover } from "@/components/popover/Popover";
-import { FiStar } from "react-icons/fi";
-import { StarFeedback } from "@/components/icons/icons";
-import { IconType } from "react-icons";
-import { Star, ThumbsUp } from "lucide-react";
+import { Star } from "lucide-react";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 export function RegenerateDropdown({
   options,
@@ -40,26 +37,26 @@ export function RegenerateDropdown({
   const Dropdown = (
     <div
       className={`
-                border 
-                rounded-lg 
-                flex 
-                flex-col 
+                border
+                rounded-lg
+                flex
+                flex-col
                 mx-2
                 bg-background
                 ${maxHeight || "max-h-96"}
-                overflow-y-auto 
+                overflow-y-auto
                 overscroll-contain relative`}
     >
       <p
         className="
-                sticky 
-                top-0 
+                sticky
+                top-0
                 flex
                 bg-background
                 font-bold
                 px-3
-                text-sm 
-                py-1.5 
+                text-sm
+                py-1.5
                 "
       >
         Pick a model
@@ -79,40 +76,24 @@ export function RegenerateDropdown({
     </div>
   );
 
-  // return (
-  //   <Popover
-  //     open={isOpen}
-  //     onOpenChange={(open) => setIsOpen(open)}
-  //     content={
-  //       <div onClick={() => setIsOpen(!isOpen)}>
-  //         {!alternate ? (
-  //           <Hoverable size={16} icon={StarFeedback as IconType} />
-  //         ) : (
-  //           <Hoverable
-  //             size={16}
-  //             icon={StarFeedback as IconType}
-  //             hoverText={getDisplayNameForModel(alternate)}
-  //           />
-  //         )}
-  //       </div>
-  //     }
-  //     popover={Dropdown}
-  //     align="start"
-  //     side={side}
-  //     sideOffset={5}
-  //     triggerMaxWidth
-  //   />
-  // );
-
   return (
     <Popover
       open={isOpen}
       onOpenChange={(open) => setIsOpen(open)}
       content={
-
-<div onClick={() => setIsOpen(!isOpen)}
-className={`hover:bg-light hover:text-accent-foreground focus-visible:ring-light p-2 rounded-xs`}>
-     <Star size={16}/></div>
+        <CustomTooltip
+          trigger={
+            <div
+              onClick={() => setIsOpen(!isOpen)}
+              className={`hover:bg-light hover:text-accent-foreground focus-visible:ring-light p-2 rounded-xs cursor-pointer`}
+            >
+              <Star size={16} />
+            </div>
+          }
+          asChild
+        >
+          Pick a model
+        </CustomTooltip>
       }
       popover={Dropdown}
       align="start"
@@ -127,12 +108,10 @@ export default function RegenerateOption({
   selectedAssistant,
   regenerate,
   overriddenModel,
-  onHoverChange,
 }: {
   selectedAssistant: Assistant;
   regenerate: (modelOverRide: LlmOverride) => Promise<void>;
   overriddenModel?: string;
-  onHoverChange: (isHovered: boolean) => void;
 }) {
   const llmOverrideManager = useLlmOverride();
 
@@ -177,11 +156,7 @@ export default function RegenerateOption({
       : llmName);
 
   return (
-    <div
-      className="group flex items-center relative"
-      onMouseEnter={() => onHoverChange(true)}
-      onMouseLeave={() => onHoverChange(false)}
-    >
+    <div className="group flex items-center relative">
       <RegenerateDropdown
         alternate={overriddenModel}
         options={llmOptions}

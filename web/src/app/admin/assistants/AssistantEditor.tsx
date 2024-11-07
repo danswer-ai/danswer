@@ -21,14 +21,12 @@ import {
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import { usePopup } from "@/components/admin/connectors/Popup";
 import { getDisplayNameForModel } from "@/lib/hooks";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
 import { checkLLMSupportsImageOutput, destructureValue } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
-import { checkUserIsNoAuthUser } from "@/lib/user";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,12 +57,6 @@ import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
-import {
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-  Tooltip,
-} from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -257,6 +249,17 @@ export function AssistantEditor({
 
   const [isRequestSuccessful, setIsRequestSuccessful] = useState(false);
 
+  async function checkAssistantNameExists(name: string) {
+    const response = await fetch(`/api/assistant`);
+    const data = await response.json();
+
+    const assistantNameExists = data.some(
+      (assistant: Assistant) => assistant.name === name
+    );
+
+    return assistantNameExists;
+  }
+
   return (
     <div>
       <Formik
@@ -281,26 +284,15 @@ export function AssistantEditor({
             llm_model_provider_override: Yup.string().nullable(),
             starter_messages: Yup.array().of(
               Yup.object().shape({
-                name: Yup.string().when("$isSubmitting", {
-                  is: true,
-                  then: (schema) =>
-                    schema.required("Each starter message must have a name"),
-                  otherwise: (schema) => schema.notRequired(),
-                }),
-                description: Yup.string().when("$isSubmitting", {
-                  is: true,
-                  then: (schema) =>
-                    schema.required(
-                      "Each starter message must have a description"
-                    ),
-                  otherwise: (schema) => schema.notRequired(),
-                }),
-                message: Yup.string().when("$isSubmitting", {
-                  is: true,
-                  then: (schema) =>
-                    schema.required("Each starter message must have a message"),
-                  otherwise: (schema) => schema.notRequired(),
-                }),
+                name: Yup.string().required(
+                  "Each starter message must have a name"
+                ),
+                description: Yup.string().required(
+                  "Each starter message must have a description"
+                ),
+                message: Yup.string().required(
+                  "Each starter message must have a message"
+                ),
               })
             ),
             search_start_date: Yup.date().nullable(),
@@ -354,6 +346,19 @@ export function AssistantEditor({
             return;
           }
 
+          const assistantNameExists = await checkAssistantNameExists(
+            values.name
+          );
+          if (assistantNameExists) {
+            toast({
+              title: "Assistant Name Taken",
+              description: `"${values.name}" is already taken. Please choose a different name.`,
+              variant: "destructive",
+            });
+            formikHelpers.setSubmitting(false);
+            return;
+          }
+
           formikHelpers.setSubmitting(true);
           let enabledTools = Object.keys(values.enabled_tools_map)
             .map((toolId) => Number(toolId))
@@ -387,9 +392,10 @@ export function AssistantEditor({
           const numChunks = searchToolEnabled ? values.num_chunks || 10 : 0;
 
           // don't set teamspace if marked as public
+          const isPublic = teamspaceId ? false : values.is_public;
           const groups = teamspaceId
             ? [Number(teamspaceId)]
-            : values.is_public
+            : isPublic
               ? []
               : values.groups;
 
@@ -400,12 +406,14 @@ export function AssistantEditor({
               id: existingAssistant.id,
               existingPromptId: existingPrompt?.id,
               ...values,
+              is_public: isPublic,
               search_start_date: values.search_start_date
                 ? new Date(values.search_start_date)
                 : null,
               num_chunks: numChunks,
-              users:
-                user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
+              // users:
+              //   user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
+              users: undefined,
               groups,
               tool_ids: enabledTools,
               remove_image: removeAssistantImage,
@@ -413,13 +421,15 @@ export function AssistantEditor({
           } else {
             [promptResponse, assistantResponse] = await createAssistant({
               ...values,
+              is_public: isPublic,
               is_default_assistant: admin!,
               num_chunks: numChunks,
               search_start_date: values.search_start_date
                 ? new Date(values.search_start_date)
                 : null,
-              users:
-                user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
+              // users:
+              //   user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
+              users: undefined,
               groups,
               tool_ids: enabledTools,
             });
@@ -555,7 +565,7 @@ export function AssistantEditor({
                   }
                   popover={
                     <div className="bg-white text-text-800 flex flex-col gap-y-1 w-[300px] border border-border rounded-lg shadow-lg p-2">
-                      <label className="flex items-center block w-full px-4 py-2 text-left rounded cursor-pointer gap-x-2 hover:bg-background-100">
+                      <label className="flex items-center w-full px-4 py-2 text-left rounded cursor-pointer gap-x-2 hover:bg-background-100">
                         <CameraIcon />
                         Upload {values.uploaded_image && " New "} Photo
                         <input
@@ -579,6 +589,7 @@ export function AssistantEditor({
                             setRemoveAssistantImage(false);
                           }}
                           variant="destructive"
+                          type="button"
                         >
                           <TrashIcon />
                           {removeAssistantImage
@@ -604,6 +615,7 @@ export function AssistantEditor({
                               setFieldValue("icon_shape", newShape.encodedGrid);
                               setFieldValue("icon_color", randomColor);
                             }}
+                            type="button"
                           >
                             <NewChatIcon />
                             Generate New Icon
@@ -619,6 +631,7 @@ export function AssistantEditor({
                               setRemoveAssistantImage(false);
                               setFieldValue("uploaded_image", null);
                             }}
+                            type="button"
                           >
                             <SwapIcon />
                             Revert to Previous Image
@@ -634,6 +647,7 @@ export function AssistantEditor({
                               setRemoveAssistantImage(true);
                             }}
                             variant="destructive"
+                            type="button"
                           >
                             <TrashIcon />
                             Remove Image
@@ -783,77 +797,67 @@ export function AssistantEditor({
 
                 <div className="flex flex-col pt-6 ml-1 gap-y-4">
                   {imageGenerationTool && (
-                    <TooltipProvider delayDuration={50}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
-                            className={`w-fit ${
-                              !currentLLMSupportsImageOutput
-                                ? "opacity-70 cursor-not-allowed"
-                                : ""
-                            }`}
-                          >
-                            <BooleanFormField
-                              name={`enabled_tools_map.${imageGenerationTool.id}`}
-                              label="Image Generation Tool"
-                              onChange={() => {
-                                toggleToolInValues(imageGenerationTool.id);
-                              }}
-                              disabled={!currentLLMSupportsImageOutput}
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        {!currentLLMSupportsImageOutput && (
-                          <TooltipContent
-                            side="top"
-                            align="center"
-                            className={`!z-modal bg-primary border-none text-inverted`}
-                          >
-                            <p>
-                              To use Image Generation, select GPT-4o or another
-                              image compatible model as the default model for
-                              this Assistant.
-                            </p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
+                    <CustomTooltip
+                      trigger={
+                        <div
+                          className={`w-fit ${
+                            !currentLLMSupportsImageOutput
+                              ? "opacity-70 cursor-not-allowed"
+                              : ""
+                          }`}
+                        >
+                          <BooleanFormField
+                            name={`enabled_tools_map.${imageGenerationTool.id}`}
+                            label="Image Generation Tool"
+                            onChange={() => {
+                              toggleToolInValues(imageGenerationTool.id);
+                            }}
+                            disabled={!currentLLMSupportsImageOutput}
+                          />
+                        </div>
+                      }
+                      asChild
+                    >
+                      {!currentLLMSupportsImageOutput && (
+                        <p>
+                          To use Image Generation, select GPT-4o or another
+                          image compatible model as the default model for this
+                          Assistant.
+                        </p>
+                      )}
+                    </CustomTooltip>
                   )}
 
                   {searchTool && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
-                            className={`w-fit ${
-                              ccPairs.length === 0
-                                ? "opacity-70 cursor-not-allowed"
-                                : ""
-                            }`}
-                          >
-                            <BooleanFormField
-                              name={`enabled_tools_map.${searchTool.id}`}
-                              label="Search Tool"
-                              onChange={() => {
-                                setFieldValue("num_chunks", null);
-                                toggleToolInValues(searchTool.id);
-                              }}
-                              disabled={ccPairs.length === 0}
-                            />
-                          </div>
-                        </TooltipTrigger>
-                        {ccPairs.length === 0 && (
-                          <TooltipContent
-                            className={`!z-modal bg-primary border-none text-inverted`}
-                          >
-                            <p>
-                              To use the Search Tool, you need to have at least
-                              one Connector-Credential pair configured.
-                            </p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
+                    <CustomTooltip
+                      trigger={
+                        <div
+                          className={`w-fit ${
+                            ccPairs.length === 0
+                              ? "opacity-70 cursor-not-allowed"
+                              : ""
+                          }`}
+                        >
+                          <BooleanFormField
+                            name={`enabled_tools_map.${searchTool.id}`}
+                            label="Search Tool"
+                            onChange={() => {
+                              setFieldValue("num_chunks", null);
+                              toggleToolInValues(searchTool.id);
+                            }}
+                            disabled={ccPairs.length === 0}
+                          />
+                        </div>
+                      }
+                      asChild
+                    >
+                      {ccPairs.length === 0 && (
+                        <p>
+                          To use the Search Tool, you need to have at least one
+                          Connector-Credential pair configured.
+                        </p>
+                      )}
+                    </CustomTooltip>
                   )}
 
                   {ccPairs.length > 0 && searchTool && (
@@ -978,9 +982,9 @@ export function AssistantEditor({
                                     name="include_citations"
                                     label="Include Citations"
                                     subtext={`
-                                      If set, the response will include bracket citations ([1], [2], etc.) 
-                                      for each document used by the LLM to help inform the response. This is 
-                                      the same technique used by the default Assistants. In general, we recommend 
+                                      If set, the response will include bracket citations ([1], [2], etc.)
+                                      for each document used by the LLM to help inform the response. This is
+                                      the same technique used by the default Assistants. In general, we recommend
                                       to leave this enabled in order to increase trust in the LLM answer.`}
                                   />
                                 </div>
@@ -1089,6 +1093,16 @@ export function AssistantEditor({
                                             <Input
                                               name={`starter_messages[${index}].name`}
                                               autoComplete="off"
+                                              value={
+                                                values.starter_messages[index]
+                                                  .name
+                                              }
+                                              onChange={(e) =>
+                                                setFieldValue(
+                                                  `starter_messages[${index}].name`,
+                                                  e.target.value
+                                                )
+                                              }
                                             />
                                             <ErrorMessage
                                               name={`starter_messages[${index}].name`}
@@ -1109,6 +1123,16 @@ export function AssistantEditor({
                                             <Input
                                               name={`starter_messages.${index}.description`}
                                               autoComplete="off"
+                                              value={
+                                                values.starter_messages[index]
+                                                  .description
+                                              }
+                                              onChange={(e) =>
+                                                setFieldValue(
+                                                  `starter_messages[${index}].description`,
+                                                  e.target.value
+                                                )
+                                              }
                                             />
                                             <ErrorMessage
                                               name={`starter_messages[${index}].description`}
@@ -1131,6 +1155,16 @@ export function AssistantEditor({
                                               name={`starter_messages[${index}].message`}
                                               autoComplete="off"
                                               className="min-h-40"
+                                              value={
+                                                values.starter_messages[index]
+                                                  .message
+                                              }
+                                              onChange={(e) =>
+                                                setFieldValue(
+                                                  `starter_messages[${index}].message`,
+                                                  e.target.value
+                                                )
+                                              }
                                             />
                                             <ErrorMessage
                                               name={`starter_messages[${index}].message`}
@@ -1143,7 +1177,11 @@ export function AssistantEditor({
                                       <div className="my-auto">
                                         <CustomTooltip
                                           trigger={
-                                            <Button variant="ghost" size="icon">
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              type="button"
+                                            >
                                               <FiX
                                                 onClick={() =>
                                                   arrayHelpers.remove(index)
@@ -1151,6 +1189,7 @@ export function AssistantEditor({
                                               />
                                             </Button>
                                           }
+                                          variant="destructive"
                                         >
                                           Remove
                                         </CustomTooltip>

@@ -1,8 +1,10 @@
 import {
   ConnectorIndexingStatus,
   DocumentBoostStatus,
+  MinimalUserwithNameSnapshot,
   Tag,
   Teamspace,
+  User,
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
@@ -123,14 +125,59 @@ export function useFilters(): FilterManager {
   };
 }
 
-export const useUsers = () => {
-  const url = "/api/manage/users";
+export const useUsers = (
+  q?: string,
+  acceptedPage?: number,
+  invitedPage?: number,
+  teamspaceId?: string | string[]
+) => {
+  const baseUrl = "/api/manage/users";
+  
+  const userApiUrl = (() => {
+    if (q || acceptedPage !== undefined || invitedPage !== undefined || teamspaceId) {
+      const queryParams = new URLSearchParams();
+      if (q) queryParams.append("q", encodeURI(q));
+      if (acceptedPage !== undefined) queryParams.append("accepted_page", (acceptedPage - 1).toString());
+      if (invitedPage !== undefined) queryParams.append("invited_page", (invitedPage - 1).toString());
+      if (teamspaceId) queryParams.append("teamspace_id", teamspaceId.toString());
 
-  const swrResponse = useSWR<UsersResponse>(url, errorHandlingFetcher);
+      return `${baseUrl}?${queryParams.toString()}`;
+    }
+    return baseUrl; 
+  })();
+
+  const swrResponse = useSWR<UsersResponse>(userApiUrl, errorHandlingFetcher);
 
   return {
     ...swrResponse,
-    refreshIndexingStatus: () => mutate(url),
+    refreshUsers: () => mutate(userApiUrl),
+  };
+};
+
+const USERS_URL = "/api/users";
+
+export const useTeamspaceUsers = (
+  teamspaceId?: string | string[]
+): {
+  data: User[] | undefined;
+  isLoading: boolean;
+  error: string;
+  refreshTeamspaceUsers: () => void;
+} => {
+  const queryParams = new URLSearchParams({
+    ...(teamspaceId ? { teamspace_id: teamspaceId.toString() } : {}),
+    include_teamspace_user: "false",
+  });
+
+  const swrResponse = useSWR<User[]>(
+    `${USERS_URL}?${queryParams}`,
+    errorHandlingFetcher
+  );
+
+  return {
+    ...swrResponse,
+    isLoading: !swrResponse.error && !swrResponse.data,
+    refreshTeamspaceUsers: () => mutate(`${USERS_URL}?${queryParams}`),
   };
 };
 

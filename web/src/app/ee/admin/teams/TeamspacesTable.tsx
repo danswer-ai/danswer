@@ -63,7 +63,7 @@ export const TeamspacesTable = ({
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Connectors</TableHead>
+              <TableHead>Data Sources</TableHead>
               <TableHead>Users</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Delete</TableHead>

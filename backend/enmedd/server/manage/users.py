@@ -70,7 +70,7 @@ from enmedd.server.manage.models import UserPreferences
 from enmedd.server.manage.models import UserRoleResponse
 from enmedd.server.models import FullUserSnapshot
 from enmedd.server.models import InvitedUserSnapshot
-from enmedd.server.models import MinimalUserSnapshot
+from enmedd.server.models import MinimalUserwithNameSnapshot
 from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -505,10 +505,15 @@ def get_valid_domains(
 def list_all_users_basic_info(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
-) -> list[MinimalUserSnapshot]:
-    users = list_users(db_session)
+    teamspace_id: Optional[int] = None,
+    include_teamspace_user: bool = True,
+    q: str = "",
+) -> list[MinimalUserwithNameSnapshot]:
+    users = list_users(db_session, q=q, teamspace_id=teamspace_id, include_teamspace_user=include_teamspace_user)
     return [
-        MinimalUserSnapshot(id=user.id, email=user.email, profile=user.profile)
+        MinimalUserwithNameSnapshot(
+            id=user.id, full_name=user.full_name, email=user.email, profile=user.profile
+        )
         for user in users
     ]
 

@@ -36,9 +36,9 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
       )}
 
       <TextFormField
-        subtext="A descriptive name for the connector. This will be used to identify the connector in the Admin UI."
+        subtext="A descriptive name for the data source. This will be used to identify the data source in the Admin UI."
         type={"text"}
-        label={"Connector Name"}
+        label={"Data Source Name"}
         name={"name"}
       />
 

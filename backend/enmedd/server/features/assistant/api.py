@@ -96,7 +96,6 @@ def patch_assistant_display_priority(
     )
 
 
-# TODO this should be current teamspace admin user
 @admin_router.get("")
 def list_assistants_admin(
     user: User | None = Depends(current_teamspace_admin_user),
@@ -203,10 +202,12 @@ def share_assistant(
 @basic_router.delete("/{assistant_id}")
 def delete_assistant(
     assistant_id: int,
-    user: User | None = Depends(current_user),
+    teamspace_id: Optional[int] = None,
+    user: User | None = Depends(current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     mark_assistant_as_deleted(
+        teamspace_id=teamspace_id,
         assistant_id=assistant_id,
         user=user,
         db_session=db_session,

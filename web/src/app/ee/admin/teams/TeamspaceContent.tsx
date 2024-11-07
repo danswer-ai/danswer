@@ -17,6 +17,7 @@ import {
 import { TeamspacesCard } from "./TeamspacesCard";
 import { ConnectorIndexingStatus, DocumentSet, Teamspace } from "@/lib/types";
 import { UsersResponse } from "@/lib/users/interfaces";
+import { AdminPageTitle } from "@/components/admin/Title";
 
 export const TeamspaceContent = ({
   assistants,
@@ -45,35 +46,38 @@ export const TeamspaceContent = ({
   return (
     <div>
       <div className="pb-10 md:pb-12 xl:pb-20">
-        <div className="flex justify-between items-center pb-10">
-          <h1 className="font-bold text-xl md:text-[28px]">Team Space</h1>
-          <CustomModal
-            trigger={
-              <Button onClick={() => setShowForm(true)}>
-                <div className="flex items-center">
-                  <Users size={20} />
-                  <Plus size={12} className="-ml-0.5" strokeWidth={4} />
-                </div>
-                Create team
-              </Button>
-            }
-            onClose={() => setShowForm(false)}
-            open={showForm}
-            title="Create a new Teamspace"
-            description="Streamline team collaboration and communication."
-          >
-            <TeamspaceCreationForm
-              onClose={() => {
-                refreshTeamspaces();
-                setShowForm(false);
-              }}
-              users={users.accepted}
-              ccPairs={ccPairs}
-              assistants={assistants}
-              documentSets={documentSets}
-            />
-          </CustomModal>
-        </div>
+        <AdminPageTitle
+          icon={<Users size={32} />}
+          title="Teamspaces"
+          farRightElement={
+            <CustomModal
+              trigger={
+                <Button onClick={() => setShowForm(true)}>
+                  <div className="flex items-center">
+                    <Users size={20} />
+                    <Plus size={12} className="-ml-0.5" strokeWidth={4} />
+                  </div>
+                  Create team
+                </Button>
+              }
+              onClose={() => setShowForm(false)}
+              open={showForm}
+              title="Create a new Teamspace"
+              description="Streamline team collaboration and communication."
+            >
+              <TeamspaceCreationForm
+                onClose={() => {
+                  refreshTeamspaces();
+                  setShowForm(false);
+                }}
+                users={users.accepted}
+                ccPairs={ccPairs}
+                assistants={assistants}
+                documentSets={documentSets}
+              />
+            </CustomModal>
+          }
+        />
 
         <div className="flex gap-4">
           <Input

@@ -6,6 +6,7 @@ import { Bookmark, Info } from "lucide-react";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import Logo from "../../../public/logo.png";
 import Image from "next/image";
+import { useEffect } from "react";
 
 export function ChatIntro({
   availableSources,
@@ -19,7 +20,6 @@ export function ChatIntro({
   user?: User | null;
 }) {
   const availableSourceMetadata = getSourceMetadataForSources(availableSources);
-
   return (
     <>
       <div className="flex 2xl:justify-center w-full my-auto md:py-20">

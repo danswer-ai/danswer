@@ -34,9 +34,9 @@ export function CustomModal({
     <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
-        <DialogHeader className="pb-4">
+        <DialogHeader className="pb-8">
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          {description && <DialogDescription className="text-base">{description}</DialogDescription>}
         </DialogHeader>
 
         {children}

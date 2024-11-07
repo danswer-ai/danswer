@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,11 +10,10 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import useSWR from "swr";
-import { UsersResponse } from "@/lib/users/interfaces";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { LoadingAnimation } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { User as UserIcon } from "lucide-react";
+import { Trash } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -29,6 +28,12 @@ import { AddUserButton } from "./AddUserButton";
 import { User, UserStatus } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/components/UserProfile";
+import { useUser } from "@/components/user/UserProvider";
+import { useUsers } from "@/lib/hooks";
+import { CustomTooltip } from "@/components/CustomTooltip";
+import { CustomModal } from "@/components/CustomModal";
+import { Badge } from "@/components/ui/badge";
+import { DeleteModal } from "@/components/DeleteModal";
 
 const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   if (!validDomains.length) {
@@ -121,15 +126,41 @@ export const AllUsers = ({
   const [invitedPage, setInvitedPage] = useState(1);
   const [acceptedPage, setAcceptedPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const userApiUrl = teamspaceId
-    ? `/api/manage/users?q=${encodeURI(q)}&accepted_page=${acceptedPage - 1}&invited_page=${invitedPage - 1}&teamspace_id=${teamspaceId}`
-    : `/api/manage/users?q=${encodeURI(q)}&accepted_page=${acceptedPage - 1}&invited_page=${invitedPage - 1}`;
-
-  const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
-    userApiUrl,
-    errorHandlingFetcher
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [teamspaceData, setTeamspaceData] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { user } = useUser();
+  const { data, isLoading, error, refreshUsers } = useUsers(
+    q,
+    acceptedPage,
+    invitedPage,
+    teamspaceId
   );
+
+  useEffect(() => {
+    if (teamspaceId && !teamspaceData) {
+      const fetchTeamspaceData = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch(
+            `/api/manage/admin/teamspace/${teamspaceId}`
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch teamspace");
+          }
+          const data = await response.json();
+          setTeamspaceData(data);
+        } catch (err) {
+          console.log("Error fetching teamspace", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchTeamspaceData();
+    }
+  }, [teamspaceId, teamspaceData]);
 
   const { trigger: promoteTrigger } = useSWRMutation(
     teamspaceId
@@ -138,7 +169,7 @@ export const AllUsers = ({
     userMutationFetcher,
     {
       onSuccess: () => {
-        mutate();
+        refreshUsers();
         toast({
           title: "User Promotion Successful",
           description: "The user has been successfully promoted to admin.",
@@ -162,7 +193,7 @@ export const AllUsers = ({
     userMutationFetcher,
     {
       onSuccess: () => {
-        mutate();
+        refreshUsers();
         toast({
           title: "Demotion Successful",
           description:
@@ -180,13 +211,61 @@ export const AllUsers = ({
     }
   );
 
+  const deleteUser = async () => {
+    console.log("FFF");
+    if (!teamspaceId || !userToDelete) return;
+
+    try {
+      const response = await fetch(
+        `/api/manage/admin/teamspace/user-remove/${teamspaceId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify([userToDelete]),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to delete user");
+      }
+
+      refreshUsers();
+      setIsDeleteModalOpen(false);
+      toast({
+        title: "User Removed",
+        description:
+          "The user has been successfully removed from the teamspace.",
+        variant: "success",
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        toast({
+          title: "Error",
+          description: `Failed to remove the user: ${error.message}`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "An unknown error occurred while removing the user.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const {
     data: validDomains,
     isLoading: isLoadingDomains,
     error: domainsError,
-  } = useSWR<string[]>("/api/manage/admin/valid-domains", errorHandlingFetcher);
+  } = !teamspaceId
+    ? useSWR<string[]>("/api/manage/admin/valid-domains", errorHandlingFetcher)
+    : { data: [], isLoading: false, error: null };
 
-  if (isLoading) {
+  if (isLoading || isLoadingDomains || loading) {
     return <LoadingAnimation text="Loading" />;
   }
 
@@ -218,63 +297,88 @@ export const AllUsers = ({
     }
   };
 
-  const filteredUsers = accepted.filter(
-    (user) =>
-      user.full_name!.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = accepted
+    .filter(
+      (user) =>
+        user.full_name!.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (a.email === teamspaceData?.creator?.email) return -1;
+      if (b.email === teamspaceData?.creator?.email) return 1;
+      return a.id === user?.id ? -1 : 1;
+    });
 
   return (
-    <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
-      <div className="xl:w-2/5">
-        <h2 className="text-lg md:text-2xl text-strong font-bold">Users</h2>
-        <ValidDomainsDisplay validDomains={validDomains} />
-        <AddUserButton />
-      </div>
-      <div className="flex-1">
-        {filteredUsers.length > 0 ? (
-          <>
-            <Input
-              placeholder="Search user..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <>
+      {isDeleteModalOpen && (
+        <DeleteModal
+          title="Are you sure you want to remove this user?"
+          onClose={() => setIsDeleteModalOpen(false)}
+          open={isDeleteModalOpen}
+          description="You are about to remove this user on the teamspace."
+          onSuccess={deleteUser}
+        />
+      )}
+
+      <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
+        <div className="xl:w-2/5">
+          <h2 className="text-lg md:text-2xl text-strong font-bold">Users</h2>
+          <ValidDomainsDisplay validDomains={validDomains} />
+          <AddUserButton
+            teamspaceId={teamspaceId}
+            refreshUsers={refreshUsers}
+          />
+        </div>
+        <div className="flex-1 space-y-4">
+          <Input
+            placeholder="Search user..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {filteredUsers.length > 0 ? (
             <Card className="mt-4">
               <CardContent className="p-0">
-                <Table>
+                <Table className="">
                   <TableHeader>
                     <TableRow>
                       <TableHead>User</TableHead>
                       <TableHead>Role</TableHead>
-                      {!teamspaceId && <TableHead></TableHead>}
+                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
+                    {filteredUsers.map((filteredUser) => (
+                      <TableRow key={filteredUser.id}>
                         <TableCell>
-                          <div className="flex gap-4">
-                            <UserProfile user={user} />
+                          <div className="flex gap-4 items-center">
+                            <UserProfile user={filteredUser} />
                             <div className="flex flex-col">
                               <span className="truncate max-w-44 font-medium">
-                                {user.full_name}
+                                {filteredUser.full_name}
                               </span>
                               <span className="text-sm text-subtle truncate max-w-44">
-                                {user.email}
+                                {filteredUser.email}
                               </span>
                             </div>
+                            {filteredUser?.email ===
+                              teamspaceData?.creator?.email && (
+                              <Badge>Creator</Badge>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <Select
                             onValueChange={(value) =>
-                              handleRoleChange(user.email, value)
+                              handleRoleChange(filteredUser.email, value)
                             }
-                            value={user.role}
+                            value={filteredUser.role}
                           >
                             <SelectTrigger className="w-32">
                               <SelectValue>
-                                {user.role === "admin" ? "Admin" : "User"}
+                                {filteredUser.role === "admin"
+                                  ? "Admin"
+                                  : "User"}
                               </SelectValue>
                             </SelectTrigger>
                             <SelectContent>
@@ -283,29 +387,53 @@ export const AllUsers = ({
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        {!teamspaceId && (
-                          <TableCell>
-                            <div className="flex justify-end">
-                              <DeactivaterButton
-                                user={user}
-                                deactivate={user.status === UserStatus.live}
-                                mutate={mutate}
-                                role={user.role}
-                              />
-                            </div>
-                          </TableCell>
-                        )}
+                        {filteredUser?.email !==
+                          teamspaceData?.creator?.email &&
+                          user?.email !== filteredUser.email && (
+                            <TableCell>
+                              {teamspaceId ? (
+                                <CustomTooltip
+                                  trigger={
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => {
+                                        setIsDeleteModalOpen(true);
+                                        setUserToDelete(filteredUser.email);
+                                      }}
+                                    >
+                                      <Trash size={16} />
+                                    </Button>
+                                  }
+                                  variant="destructive"
+                                >
+                                  Remove
+                                </CustomTooltip>
+                              ) : (
+                                <div className="flex justify-end">
+                                  <DeactivaterButton
+                                    user={filteredUser}
+                                    deactivate={
+                                      filteredUser.status === UserStatus.live
+                                    }
+                                    mutate={refreshUsers}
+                                    role={filteredUser.role}
+                                  />
+                                </div>
+                              )}
+                            </TableCell>
+                          )}
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
-          </>
-        ) : (
-          "No users."
-        )}
+          ) : (
+            <p>No users.</p>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };

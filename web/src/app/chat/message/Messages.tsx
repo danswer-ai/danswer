@@ -228,9 +228,6 @@ export const AIMessage = ({
   };
   const finalContent = processContent(content as string);
 
-  const [isRegenerateHovered, setIsRegenerateHovered] = useState(false);
-  const { isHovering, trackedElementRef, hoverElementRef } = useMouseTracking();
-
   const selectedDocumentIds =
     selectedDocuments?.map((document) => document.document_id) || [];
   let citedDocumentIds: string[] = [];
@@ -539,7 +536,7 @@ export const AIMessage = ({
                     onClose={() => setIsLikeModalOpen(false)}
                     open={isLikeModalOpen}
                     title={
-                      <div className="flex text-2xl font-bold pb-6">
+                      <div className="flex text-2xl font-bold">
                         <div className="my-auto mr-1">
                           <ThumbsUpIcon className="my-auto mr-2 text-green-500" />
                         </div>
@@ -586,7 +583,7 @@ export const AIMessage = ({
                     onClose={() => setIsDislikeModalOpen(false)}
                     open={isDislikeModalOpen}
                     title={
-                      <div className="flex text-2xl font-bold pb-6">
+                      <div className="flex text-2xl font-bold">
                         <div className="my-auto mr-1">
                           <ThumbsDownIcon className="my-auto mr-2 text-red-600" />
                         </div>
@@ -609,7 +606,6 @@ export const AIMessage = ({
             )}
             {regenerate && (
               <RegenerateOption
-                onHoverChange={setIsRegenerateHovered}
                 selectedAssistant={currentAssistant!}
                 regenerate={regenerate}
                 overriddenModel={overriddenModel}
@@ -727,7 +723,7 @@ export const HumanMessage = ({
         <div className="">
           <div className="flex">
             <div className="mx-1">
-              <UserProfile user={user} size={34} textSize="text-base" />
+              <UserProfile user={user} size={40} />
             </div>
 
             <div className="my-auto ml-2 font-bold text-inverted-inverted">

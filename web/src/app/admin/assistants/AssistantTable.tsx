@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { useUser } from "@/components/user/UserProvider";
 import Link from "next/link";
+import { DeleteModal } from "@/components/DeleteModal";
 
 function AssistantTypeDisplay({ assistant }: { assistant: Assistant }) {
   if (assistant.builtin_assistant) {
@@ -40,6 +41,10 @@ export function AssistantsTable({
   const router = useRouter();
   const { toast } = useToast();
   const { isLoadingUser, isAdmin } = useUser();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [assistantToDelete, setAssistantToDelete] = useState<Assistant | null>(
+    null
+  );
 
   const editableAssistantIds = useMemo(() => {
     return new Set(editableAssistants.map((p) => p.id.toString()));
@@ -99,6 +104,36 @@ export function AssistantsTable({
 
   return (
     <div>
+      {isDeleteModalOpen && assistantToDelete && (
+        <DeleteModal
+          title={`Are you sure you want to ${teamspaceId ? "remove" : "delete"} this assistant?`}
+          description={`This action will permanently schedule the selected assistant will ${teamspaceId ? "remove" : "deletion"}. Please confirm if you want to proceed with this irreversible action.`}
+          onClose={() => setIsDeleteModalOpen(false)}
+          open={isDeleteModalOpen}
+          onSuccess={async () => {
+            const response = await deleteAssistant(
+              assistantToDelete.id,
+              teamspaceId
+            );
+            if (response.ok) {
+              toast({
+                title: `Assistant ${teamspaceId ? "removed" : "deleted"}`,
+                description: `The assistant has been successfully ${teamspaceId ? "removed" : "deleted"}.`,
+                variant: "success",
+              });
+              setIsDeleteModalOpen(false);
+              router.refresh();
+            } else {
+              toast({
+                title: `Failed to ${teamspaceId ? "remove" : "delete"} assistant`,
+                description: `There was an issue ${teamspaceId ? "removing" : "deleting"} the assistant. Details: ${await response.text()}`,
+                variant: "destructive",
+              });
+            }
+          }}
+        />
+      )}
+
       <p className="pb-4 text-sm">
         Assistants will be displayed as options on the Chat / Search interfaces
         in the order they are displayed below. Assistants marked as hidden will
@@ -201,25 +236,9 @@ export function AssistantsTable({
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={async () => {
-                                const response = await deleteAssistant(
-                                  assistant.id
-                                );
-                                if (response.ok) {
-                                  toast({
-                                    title: "Assistant deleted",
-                                    description:
-                                      "The assistant has been successfully deleted.",
-                                    variant: "success",
-                                  });
-                                  router.refresh();
-                                } else {
-                                  toast({
-                                    title: "Failed to delete assistant",
-                                    description: `There was an issue deleting the assistant. Details: ${await response.text()}`,
-                                    variant: "destructive",
-                                  });
-                                }
+                              onClick={() => {
+                                setAssistantToDelete(assistant);
+                                setIsDeleteModalOpen(true);
                               }}
                             >
                               <Trash size={16} />

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DeleteModal } from "@/components/DeleteModal";
 
 const CredentialSelectionTable = ({
   credentials,
@@ -196,35 +197,17 @@ export default function ModifyCredential({
   return (
     <>
       {confirmDeletionCredential != null && (
-        <Modal
-          onOutsideClick={() => setConfirmDeletionCredential(null)}
-          className="max-w-sm"
-        >
-          <>
-            <p className="mb-2 text-lg">
-              Are you sure you want to delete this credential? You cannot delete
-              credentials that are linked to live connectors.
-            </p>
-            <div className="flex justify-between mt-6">
-              <button
-                className="rounded py-1.5 px-2 bg-background-800 text-text-200"
-                onClick={async () => {
-                  await onDeleteCredential(confirmDeletionCredential);
-                  setConfirmDeletionCredential(null);
-                }}
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setConfirmDeletionCredential(null)}
-                className="rounded py-1.5 px-2 bg-background-150 text-text-800"
-              >
-                {" "}
-                No
-              </button>
-            </div>
-          </>
-        </Modal>
+        <DeleteModal
+          title="Are you sure you want to delete this credential? You cannot delete
+          credentials that are linked to live connectors."
+          onClose={() => setConfirmDeletionCredential(null)}
+          open={confirmDeletionCredential != null}
+          description="You are about to remove this user on the teamspace."
+          onSuccess={async () => {
+            await onDeleteCredential(confirmDeletionCredential);
+            setConfirmDeletionCredential(null);
+          }}
+        />
       )}
 
       <div className="mb-0">

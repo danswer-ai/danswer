@@ -9,7 +9,7 @@ function Slider({
   value?: number;
 }) {
   return (
-    <div className="w-full h-2 relative rounded-pill bg-secondary-foreground">
+    <div className="w-full h-2 relative rounded-pill bg-secondary-100">
       <div
         className={`absolute left-0 h-full rounded-pill bg-${bg}`}
         style={{ width: `${value}%` }}
@@ -33,7 +33,7 @@ export default function Usage() {
       <div className="w-full grid grid-cols-2 gap-6 mt-8">
         <Card>
           <CardContent className="space-y-2">
-            <div className="bg-secondary-foreground inline-block p-2 rounded-sm">
+            <div className="bg-secondary-100 inline-block p-2 rounded-sm">
               <Database className="stroke-secondary" />
             </div>
             <div>
@@ -48,7 +48,7 @@ export default function Usage() {
 
         <Card>
           <CardContent className="space-y-2">
-            <div className="bg-primary-foreground inline-block p-2 rounded-sm">
+            <div className="bg-brand-100 inline-block p-2 rounded-sm">
               <Globe className="stroke-primary" />
             </div>
             <div>
@@ -62,7 +62,7 @@ export default function Usage() {
 
         <Card>
           <CardContent className="space-y-2">
-            <div className="bg-success-foreground inline-block p-2 rounded-sm">
+            <div className="bg-success-500-100 inline-block p-2 rounded-sm">
               <User className="stroke-success" />
             </div>
             <div>

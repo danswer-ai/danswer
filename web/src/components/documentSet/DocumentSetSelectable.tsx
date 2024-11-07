@@ -33,7 +33,7 @@ export function DocumentSetSelectable({
       onClick={handleClick} // Changed this part
     >
       <div className="flex gap-3">
-        <div className="pt-0.5">
+        <div className="pt-0.5 space-y-2">
           {Array.from(uniqueSources).map((source) => (
             <SourceIcon key={source} sourceType={source} iconSize={16} />
           ))}

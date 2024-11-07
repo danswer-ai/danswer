@@ -15,6 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "./ui/separator";
 
 interface ComboboxProps {
   items: { value: string; label: string }[] | undefined;
@@ -32,7 +33,6 @@ export function Combobox({
   selected = [],
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
-
   const [selectedItems, setSelectedItems] = React.useState<
     { value: string; label: string }[]
   >(items?.filter((item) => selected.includes(item.value)) || []);
@@ -59,6 +59,16 @@ export function Combobox({
     setSelectedItems(updatedSelectedItems);
     if (onSelect) {
       onSelect(updatedSelectedItems.map((item) => item.value));
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (items) {
+      setSelectedItems(items);
+      if (onSelect) {
+        onSelect(items.map((item) => item.value));
+      }
+      setOpen(false);
     }
   };
 
@@ -93,6 +103,10 @@ export function Combobox({
             <CommandList>
               <CommandEmpty>No items found.</CommandEmpty>
               <CommandGroup>
+                <CommandItem onSelect={handleSelectAll}>Select All</CommandItem>
+              </CommandGroup>
+              <Separator />
+              <CommandGroup>
                 {filteredItems?.map((item) => (
                   <CommandItem
                     key={item.value}
@@ -118,7 +132,7 @@ export function Combobox({
               variant="outline"
               className="cursor-pointer hover:bg-blue-200"
             >
-              {selectedItem.label}
+              <p className="truncate w-full">{selectedItem.label}</p>
               <X className="my-auto ml-1 cursor-pointer" size={14} />
             </Badge>
           ))}

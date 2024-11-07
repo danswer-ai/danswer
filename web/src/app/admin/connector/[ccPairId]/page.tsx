@@ -22,7 +22,7 @@ import { useEffect, useRef, useState } from "react";
 import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
 import { updateConnectorCredentialPairName } from "@/lib/connector";
 import DeletionErrorStatus from "./DeletionErrorStatus";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +50,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
+  const { teamspaceId } = useParams();
 
   const finishConnectorDeletion = () => {
     toast({
@@ -58,7 +59,11 @@ function Main({ ccPairId }: { ccPairId: number }) {
       variant: "success",
     });
     setTimeout(() => {
-      router.push("/admin/indexing/status");
+      router.push(
+        teamspaceId
+          ? `/t/${teamspaceId}/admin/indexing/status`
+          : "/admin/indexing/status"
+      );
     }, 2000);
   };
 
@@ -151,7 +156,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
   return (
     <>
       <BackButton />
-      <div className="flex flex-col items-start w-full gap-4 pb-5 sm:flex-row lg:items-center">
+      <div className="flex flex-col items-start w-full gap-2 pb-5 sm:flex-row lg:items-center">
         <div className="my-auto mr-2">
           <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
         </div>
@@ -272,7 +277,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
         <IndexingAttemptsTable ccPair={ccPair} />
       </div>
       <Divider />
-      <div className="flex mt-4">
+      <div className="flex mt-8">
         <div className="mx-auto">
           {ccPair.is_editable_for_current_user && (
             <DeletionButton ccPair={ccPair} />

@@ -12,8 +12,20 @@ export function SettingsProvider({
   children: React.ReactNode | JSX.Element;
   settings: CombinedSettings;
 }) {
+  const [isMobile, setIsMobile] = useState<boolean | undefined>();
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
-    <SettingsContext.Provider value={{ ...settings }}>
+    <SettingsContext.Provider value={{ ...settings, isMobile }}>
       {children}
     </SettingsContext.Provider>
   );

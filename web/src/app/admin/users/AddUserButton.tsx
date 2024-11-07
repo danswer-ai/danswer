@@ -1,14 +1,22 @@
 "use client";
 
 import BulkAdd from "@/components/admin/users/BulkAdd";
+import { BulkAddTeamspace } from "@/components/admin/users/BulkAddTeamspace";
 import { CustomModal } from "@/components/CustomModal";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { mutate } from "swr";
 
-export const AddUserButton = () => {
+export const AddUserButton = ({
+  teamspaceId,
+  refreshUsers,
+}: {
+  teamspaceId?: string | string[];
+  refreshUsers: () => void;
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
   const onSuccess = () => {
@@ -37,15 +45,25 @@ export const AddUserButton = () => {
       onClose={() => setIsModalOpen(false)}
       open={isModalOpen}
       trigger={
-        <Button onClick={() => setIsModalOpen(true)}>Invite People</Button>
+        <Button onClick={() => setIsModalOpen(true)}>
+          {teamspaceId ? "Add People" : "Invite People"}
+        </Button>
       }
     >
-      <div className="flex flex-col gap-y-3">
-        <Label>
-          Add the email addresses to import, separated by whitespaces.
-        </Label>
-        <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
-      </div>
+      {teamspaceId ? (
+        <BulkAddTeamspace
+          teamspaceId={teamspaceId}
+          refreshUsers={refreshUsers}
+          onClose={() => setIsModalOpen(false)}
+        />
+      ) : (
+        <div className="flex flex-col gap-y-3">
+          <Label>
+            Add the email addresses to import, separated by whitespaces.
+          </Label>
+          <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
+        </div>
+      )}
     </CustomModal>
   );
 };

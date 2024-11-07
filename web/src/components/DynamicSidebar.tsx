@@ -105,7 +105,7 @@ export function DynamicSidebar({
                   {children}
                 </div>
               </div>
-              <div className="h-full flex items-center justify-center absolute left-full">
+              <div className="h-full flex items-center justify-center absolute left-full z-[-1]">
                 <CustomTooltip
                   trigger={
                     <button

@@ -23,7 +23,6 @@ interface DocumentSetContentProps {
   isGlobal?: boolean;
   onSelect?: (documentSet: DocumentSet) => void;
   selectedDocumentSets?: DocumentSet[];
-  hasDocumentSet?: boolean;
 }
 
 const DocumentSetContent = ({
@@ -32,7 +31,6 @@ const DocumentSetContent = ({
   filteredDocumentSets,
   isGlobal,
   onSelect,
-  hasDocumentSet,
 }: DocumentSetContentProps) => {
   return (
     <div className={isGlobal ? "cursor-pointer" : ""}>
@@ -42,13 +40,13 @@ const DocumentSetContent = ({
         </h2>
         <div className="w-1/2">
           <SearchInput
-            placeholder="Search documentSets..."
+            placeholder="Search document sets..."
             value={searchTerm}
             onChange={setSearchTerm}
           />
         </div>
       </div>
-      {hasDocumentSet ? (
+      {filteredDocumentSets.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {filteredDocumentSets.map((documentSet) => (
             <div
@@ -226,7 +224,7 @@ export const TeamspaceDocumentSet = ({
                   trigger={
                     <div
                       key={documentSet.id}
-                      className="bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase border-[1px] border-white"
+                      className="bg-brand-500 w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase border-[1px] border-white"
                     >
                       {documentSet.name!.charAt(0)}
                     </div>
@@ -260,7 +258,6 @@ export const TeamspaceDocumentSet = ({
               .includes(searchTermCurrent.toLowerCase())
           )}
           onSelect={handleSelectDocumentSet}
-          hasDocumentSet={tempCurrentDocumentSets.length > 0}
         />
 
         <DocumentSetContent
@@ -273,7 +270,6 @@ export const TeamspaceDocumentSet = ({
           )}
           isGlobal
           onSelect={handleSelectDocumentSet}
-          hasDocumentSet={tempGlobalDocumentSets.length > 0}
         />
       </div>
       <div className="flex justify-end mt-10">

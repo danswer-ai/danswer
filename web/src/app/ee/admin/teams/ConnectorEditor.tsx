@@ -30,8 +30,8 @@ export const ConnectorEditor: React.FC<ConnectorEditorProps> = ({
       <Combobox
         items={items}
         onSelect={handleSelect}
-        placeholder="Select connectors"
-        label="Select Connectors"
+        placeholder="Select data sources"
+        label="Select Data Sources"
       />
     </div>
   );

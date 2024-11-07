@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from typing import cast
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import and_
@@ -355,12 +356,30 @@ def mark_document_set_as_to_be_deleted(
     db_session: Session,
     document_set_id: int,
     user: User | None = None,
+    teamspace_id: Optional[int] = None,
 ) -> None:
     """Cleans up all document_set -> cc_pair relationships and marks the document set
     as needing an update. The actual document set row will be deleted by the background
     job which syncs these changes to Vespa."""
 
     try:
+        if teamspace_id:
+            teamspace_link = (
+                db_session.query(DocumentSet__Teamspace)
+                .filter_by(document_set_id=document_set_id, teamspace_id=teamspace_id)
+                .first()
+            )
+
+            if teamspace_link:
+                db_session.delete(teamspace_link)
+                db_session.commit()
+            else:
+                raise ValueError(
+                    f"No relationship found for document set ID '{document_set_id}' "
+                    f"and teamspace ID '{teamspace_id}'."
+                )
+            return
+
         document_set_row = get_document_set_by_id(
             db_session=db_session,
             document_set_id=document_set_id,

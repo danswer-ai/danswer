@@ -599,7 +599,7 @@ def prepare_teamspace_for_deletion(db_session: Session, teamspace_id: int) -> No
     if db_teamspace is None:
         raise ValueError(f"Teamspace with id '{teamspace_id}' not found")
 
-    _check_teamspace_is_modifiable(db_teamspace)
+    # _check_teamspace_is_modifiable(db_teamspace)
 
     _cleanup_credential__teamspace_relationships__no_commit(
         db_session=db_session, teamspace_id=teamspace_id

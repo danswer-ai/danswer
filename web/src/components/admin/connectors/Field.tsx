@@ -90,7 +90,7 @@ export function LabelWithTooltip({
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <p className="text-sm text-subtle">{children}</p>;
+  return <p className="text-sm text-muted-foreground">{children}</p>;
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
@@ -613,7 +613,7 @@ export function SelectorFormField({
         {label && (
           <ShadcnLabel className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed">
             {label}{" "}
-            {optional && <span className="ml-1 text-text-500">(optional)</span>}
+            {optional && <span className="ml-1 text-muted-foreground">(optional)</span>}
           </ShadcnLabel>
         )}
         {subtext && <SubLabel>{subtext}</SubLabel>}

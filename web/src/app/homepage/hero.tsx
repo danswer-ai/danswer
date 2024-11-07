@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Wrapper } from "./wrapper";
-import heroImg from "../../../public/login_page_img.webp";
+import heroImg from "../../../public/login_image.webp";
 import placeholder from "../../../public/placeholder.svg";
 import Link from "next/link";
 
@@ -36,7 +36,7 @@ export default function Hero() {
               </button>
               <Link
                 href="/chat"
-                className="text-[#2039F3] py-3 px-6 hover:bg-primary-300 rounded-[5px] transition-all duration-500 ease-in-out"
+                className="text-[#2039F3] py-3 px-6 hover:bg-brand-300 rounded-[5px] transition-all duration-500 ease-in-out"
               >
                 Start for free
               </Link>

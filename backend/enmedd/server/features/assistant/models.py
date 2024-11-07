@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -72,11 +73,12 @@ class AssistantSnapshot(BaseModel):
     @classmethod
     def from_model(
         cls, assistant: Assistant, allow_deleted: bool = False
-    ) -> "AssistantSnapshot":
+    ) -> Optional["AssistantSnapshot"]:
         if assistant.deleted:
             error_msg = f"Assistant with ID {assistant.id} has been deleted"
             if not allow_deleted:
-                raise ValueError(error_msg)
+                logger.warning(error_msg)
+                return None
             else:
                 logger.warning(error_msg)
 

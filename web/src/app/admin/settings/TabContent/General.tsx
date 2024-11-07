@@ -11,15 +11,15 @@ import {
   SubLabel,
   TextFormField,
 } from "@/components/admin/connectors/Field";
-import { ImageUpload } from "./ImageUpload";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { Text } from "@tremor/react";
 import { useToast } from "@/hooks/use-toast";
+import { ImageUpload } from "../ImageUpload";
 
-export function WhitelabelingForm() {
+export default function General() {
   const { toast } = useToast();
   const router = useRouter();
   const [selectedLogo, setSelectedLogo] = useState<File | null>(null);
@@ -62,7 +62,8 @@ export function WhitelabelingForm() {
   }
 
   return (
-    <div>
+    <div className="pt-6">
+      <h3 className="mb-4">Whitelabeling</h3>
       <Formik
         initialValues={{
           workspace_name: workspaces?.workspace_name || null,
@@ -168,7 +169,7 @@ export function WhitelabelingForm() {
               subtext={`The custom description metadata you are giving ${
                 values.workspace_name || "enMedD AI"
               } for your workspace.\
-                This will be seen when sharing the link or searching through the browser.`}
+                  This will be seen when sharing the link or searching through the browser.`}
               placeholder="Custom description for your Workspace"
               disabled={isSubmitting}
             />
@@ -223,150 +224,150 @@ export function WhitelabelingForm() {
 
             {/* TODO: polish the features here*/}
             {/* <AdvancedOptionsToggle
-              showAdvancedOptions={showAdvancedOptions}
-              setShowAdvancedOptions={setShowAdvancedOptions}
-            />
-
-            {showAdvancedOptions && (
-              <div className="w-full flex flex-col gap-y-4">
-                <Text>
-                  Read{" "}
-                  <Link
-                    href={"https://docs.danswer.dev/enterprise_edition/theming"}
-                    className="text-link cursor-pointer"
-                  >
-                    the docs
-                  </Link>{" "}
-                  to see whitelabelling examples in action.
-                </Text>
-
-                <TextFormField
-                  label="Chat Header Content"
-                  name="custom_header_content"
-                  subtext={`Custom Markdown content that will be displayed as a banner at the top of the Chat page.`}
-                  placeholder="Your header content..."
-                  disabled={isSubmitting}
-                />
-
-                <BooleanFormField
-                  name="two_lines_for_chat_header"
-                  label="Two lines for chat header?"
-                  subtext="If enabled, the chat header will be displayed on two lines instead of one."
-                />
-
-                <div className="pt-2" />
-
-                <TextFormField
-                  label={
-                    values.enable_consent_screen
-                      ? "Consent Screen Header"
-                      : "Popup Header"
-                  }
-                  name="custom_popup_header"
-                  subtext={
-                    values.enable_consent_screen
-                      ? `The title for the consent screen that will be displayed for each user on their initial visit to the application. If left blank, title will default to "Terms of Use".`
-                      : `The title for the popup that will be displayed for each user on their initial visit to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${values.workspace_name || "enMedD AI"}!".`
-                  }
-                  placeholder={
-                    values.enable_consent_screen
-                      ? "Consent Screen Header"
-                      : "Initial Popup Header"
-                  }
-                  disabled={isSubmitting}
-                />
-
-                <TextFormField
-                  label={
-                    values.enable_consent_screen
-                      ? "Consent Screen Content"
-                      : "Popup Content"
-                  }
-                  name="custom_popup_content"
-                  subtext={
-                    values.enable_consent_screen
-                      ? `Custom Markdown content that will be displayed as a consent screen on initial visit to the application. If left blank, will default to "By clicking 'I Agree', you acknowledge that you agree to the terms of use of this application and consent to proceed."`
-                      : `Custom Markdown content that will be displayed as a popup on initial visit to the application.`
-                  }
-                  placeholder={
-                    values.enable_consent_screen
-                      ? "Your consent screen content..."
-                      : "Your popup content..."
-                  }
-                  isTextArea
-                  disabled={isSubmitting}
-                />
-
-                <BooleanFormField
-                  name="enable_consent_screen"
-                  label="Enable Consent Screen"
-                  subtext="If enabled, the initial popup will be transformed into a consent screen. Users will be required to agree to the terms before accessing the application on their first login."
-                  disabled={isSubmitting}
-                />
-
-                <TextFormField
-                  label="Chat Footer Text"
-                  name="custom_lower_disclaimer_content"
-                  subtext={`Custom Markdown content that will be displayed at the bottom of the Chat page.`}
-                  placeholder="Your disclaimer content..."
-                  isTextArea
-                  disabled={isSubmitting}
-                />
-
-                <div>
-                  <h3>Chat Footer Logotype</h3>
-
-                  {values.use_custom_logotype ? (
-                    <div className="mt-3">
-                      <SubLabel>Current Custom Logotype: </SubLabel>
-                      <Image
-                        src={
-                          "/api/workspace/logotype?u=" + Date.now()
-                        }
-                        alt="logotype"
-                        style={{ objectFit: "contain" }}
-                        className="w-32 h-32 mb-10 mt-4"
-                      />
-
-                      <Button
-                        color="red"
-                        size="xs"
-                        type="button"
-                        className="mb-8"
-                        onClick={async () => {
-                          const valuesWithoutLogotype = {
-                            ...values,
-                            use_custom_logotype: false,
-                          };
-                          await updateWorkspaces(valuesWithoutLogotype);
-                          setValues(valuesWithoutLogotype);
-                        }}
-                      >
-                        Delete
-                      </Button>
-
-                      <SubLabel>
-                        Override your uploaded custom logotype by uploading a
-                        new image below and clicking the Update button. This
-                        logotype is the text-based logo that will be rendered at
-                        the bottom right of the chat screen.
-                      </SubLabel>
-                    </div>
-                  ) : (
-                    <SubLabel>
-                      Add a custom logotype by uploading a new image below and
-                      clicking the Update button. This logotype is the
-                      text-based logo that will be rendered at the bottom right
-                      of the chat screen.
-                    </SubLabel>
-                  )}
-                  <ImageUpload
-                    selectedFile={selectedLogotype}
-                    setSelectedFile={setSelectedLogotype}
+                showAdvancedOptions={showAdvancedOptions}
+                setShowAdvancedOptions={setShowAdvancedOptions}
+              />
+  
+              {showAdvancedOptions && (
+                <div className="w-full flex flex-col gap-y-4">
+                  <Text>
+                    Read{" "}
+                    <Link
+                      href={"https://docs.danswer.dev/enterprise_edition/theming"}
+                      className="text-link cursor-pointer"
+                    >
+                      the docs
+                    </Link>{" "}
+                    to see whitelabelling examples in action.
+                  </Text>
+  
+                  <TextFormField
+                    label="Chat Header Content"
+                    name="custom_header_content"
+                    subtext={`Custom Markdown content that will be displayed as a banner at the top of the Chat page.`}
+                    placeholder="Your header content..."
+                    disabled={isSubmitting}
                   />
+  
+                  <BooleanFormField
+                    name="two_lines_for_chat_header"
+                    label="Two lines for chat header?"
+                    subtext="If enabled, the chat header will be displayed on two lines instead of one."
+                  />
+  
+                  <div className="pt-2" />
+  
+                  <TextFormField
+                    label={
+                      values.enable_consent_screen
+                        ? "Consent Screen Header"
+                        : "Popup Header"
+                    }
+                    name="custom_popup_header"
+                    subtext={
+                      values.enable_consent_screen
+                        ? `The title for the consent screen that will be displayed for each user on their initial visit to the application. If left blank, title will default to "Terms of Use".`
+                        : `The title for the popup that will be displayed for each user on their initial visit to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${values.workspace_name || "enMedD AI"}!".`
+                    }
+                    placeholder={
+                      values.enable_consent_screen
+                        ? "Consent Screen Header"
+                        : "Initial Popup Header"
+                    }
+                    disabled={isSubmitting}
+                  />
+  
+                  <TextFormField
+                    label={
+                      values.enable_consent_screen
+                        ? "Consent Screen Content"
+                        : "Popup Content"
+                    }
+                    name="custom_popup_content"
+                    subtext={
+                      values.enable_consent_screen
+                        ? `Custom Markdown content that will be displayed as a consent screen on initial visit to the application. If left blank, will default to "By clicking 'I Agree', you acknowledge that you agree to the terms of use of this application and consent to proceed."`
+                        : `Custom Markdown content that will be displayed as a popup on initial visit to the application.`
+                    }
+                    placeholder={
+                      values.enable_consent_screen
+                        ? "Your consent screen content..."
+                        : "Your popup content..."
+                    }
+                    isTextArea
+                    disabled={isSubmitting}
+                  />
+  
+                  <BooleanFormField
+                    name="enable_consent_screen"
+                    label="Enable Consent Screen"
+                    subtext="If enabled, the initial popup will be transformed into a consent screen. Users will be required to agree to the terms before accessing the application on their first login."
+                    disabled={isSubmitting}
+                  />
+  
+                  <TextFormField
+                    label="Chat Footer Text"
+                    name="custom_lower_disclaimer_content"
+                    subtext={`Custom Markdown content that will be displayed at the bottom of the Chat page.`}
+                    placeholder="Your disclaimer content..."
+                    isTextArea
+                    disabled={isSubmitting}
+                  />
+  
+                  <div>
+                    <h3>Chat Footer Logotype</h3>
+  
+                    {values.use_custom_logotype ? (
+                      <div className="mt-3">
+                        <SubLabel>Current Custom Logotype: </SubLabel>
+                        <Image
+                          src={
+                            "/api/workspace/logotype?u=" + Date.now()
+                          }
+                          alt="logotype"
+                          style={{ objectFit: "contain" }}
+                          className="w-32 h-32 mb-10 mt-4"
+                        />
+  
+                        <Button
+                          color="red"
+                          size="xs"
+                          type="button"
+                          className="mb-8"
+                          onClick={async () => {
+                            const valuesWithoutLogotype = {
+                              ...values,
+                              use_custom_logotype: false,
+                            };
+                            await updateWorkspaces(valuesWithoutLogotype);
+                            setValues(valuesWithoutLogotype);
+                          }}
+                        >
+                          Delete
+                        </Button>
+  
+                        <SubLabel>
+                          Override your uploaded custom logotype by uploading a
+                          new image below and clicking the Update button. This
+                          logotype is the text-based logo that will be rendered at
+                          the bottom right of the chat screen.
+                        </SubLabel>
+                      </div>
+                    ) : (
+                      <SubLabel>
+                        Add a custom logotype by uploading a new image below and
+                        clicking the Update button. This logotype is the
+                        text-based logo that will be rendered at the bottom right
+                        of the chat screen.
+                      </SubLabel>
+                    )}
+                    <ImageUpload
+                      selectedFile={selectedLogotype}
+                      setSelectedFile={setSelectedLogotype}
+                    />
+                  </div>
                 </div>
-              </div>
-            )} */}
+              )} */}
 
             <Button type="submit" className="mt-6">
               Update

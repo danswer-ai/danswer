@@ -85,7 +85,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
             label={`Make this ${objectName} Public?`}
             disabled={!isAdmin}
             subtext={
-              <span className="block mt-2 text-sm text-gray-500">
+              <span className="block text-sm text-muted-foreground">
                 If set, then this {objectName} will be usable by{" "}
                 <b>All {publicToWhom}</b>. Otherwise, only <b>Admins</b> and{" "}
                 <b>{publicToWhom}</b> who have explicitly been given access to
@@ -101,28 +101,28 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
         teamspaces &&
         teamspaces?.length > 0 && (
           <>
-            <div className="flex items-center mt-4 gap-x-2">
-              <div className="block text-base font-medium">
+            <div className="mt-3 grid gap-1.5 pb-1.5">
+              <p className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Assign group access for this {objectName}
-              </div>
+              </p>
+              {teamspacesIsLoading ? (
+                <div className="w-32 h-8 bg-gray-200 rounded animate-pulse"></div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {isAdmin || !enforceGroupSelection ? (
+                    <>
+                      This {objectName} will be visible/accessible by the groups
+                      selected below
+                    </>
+                  ) : (
+                    <>
+                      Curators must select one or more groups to give access to
+                      this {objectName}
+                    </>
+                  )}
+                </p>
+              )}
             </div>
-            {teamspacesIsLoading ? (
-              <div className="w-32 h-8 bg-gray-200 rounded animate-pulse"></div>
-            ) : (
-              <Text className="mb-3">
-                {isAdmin || !enforceGroupSelection ? (
-                  <>
-                    This {objectName} will be visible/accessible by the groups
-                    selected below
-                  </>
-                ) : (
-                  <>
-                    Curators must select one or more groups to give access to
-                    this {objectName}
-                  </>
-                )}
-              </Text>
-            )}
             <Combobox
               items={teamspaces.map((teamspace) => ({
                 value: teamspace.id.toString(),

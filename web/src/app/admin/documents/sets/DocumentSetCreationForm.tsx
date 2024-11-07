@@ -86,7 +86,11 @@ export const DocumentSetCreationForm = ({
           formikHelpers.setSubmitting(true);
           const processedValues = {
             ...values,
-            groups: teamspaceId ? [Number(teamspaceId)] : (values.is_public ? [] : values.groups)
+            groups: teamspaceId
+              ? [Number(teamspaceId)]
+              : values.is_public
+                ? []
+                : values.groups,
           };
 
           let response;
@@ -123,106 +127,104 @@ export const DocumentSetCreationForm = ({
           }
         }}
       >
-        {({ isSubmitting, values, setFieldValue }) => (
-          <Form>
-            <TextFormField
-              name="name"
-              label="Name:"
-              placeholder="A name for the document set"
-              disabled={isUpdate}
-              autoCompleteDisabled={true}
-            />
-            <TextFormField
-              name="description"
-              label="Description:"
-              placeholder="Describe what the document set represents"
-              autoCompleteDisabled={true}
-            />
+        {({ isSubmitting, values, setFieldValue }) => {
+          useEffect(() => {
+            if (teamspaceId) {
+              setFieldValue("is_public", false);
+            }
+          }, [teamspaceId, setFieldValue]);
 
-            <div>
-              <p className="mb-1 text-sm font-semibold">
-                Pick your connectors:
-              </p>
-              <Combobox
-                items={connectorItems}
-                onSelect={(selectedValues) => {
-                  const selectedIds = selectedValues.map((val) =>
-                    parseInt(val, 10)
-                  );
-                  setFieldValue("cc_pair_ids", selectedIds);
-                }}
-                placeholder="Search connectors"
-                label="Select connectors"
-                selected={values.cc_pair_ids.map((id) => id.toString())}
+          return (
+            <Form>
+              <TextFormField
+                name="name"
+                label="Name:"
+                placeholder="A name for the document set"
+                disabled={isUpdate}
+                autoCompleteDisabled={true}
               />
-            </div>
+              <TextFormField
+                name="description"
+                label="Description:"
+                placeholder="Describe what the document set represents"
+                autoCompleteDisabled={true}
+              />
 
-            {teamspaces && teamspaces.length > 0 && !teamspaceId && (
               <div>
-                <Divider />
-
-                <BooleanFormField
-                  name="is_public"
-                  label="Is Public?"
-                  subtext={
-                    <>
-                      If the document set is public, then it will be visible to{" "}
-                      <b>all users</b>. If it is not public, then only users in
-                      the specified teamspace will be able to see it.
-                    </>
-                  }
-                  alignTop
+                <p className="mb-1 text-sm font-semibold">
+                  Pick your connectors:
+                </p>
+                <Combobox
+                  items={connectorItems}
+                  onSelect={(selectedValues) => {
+                    const selectedIds = selectedValues.map((val) =>
+                      parseInt(val, 10)
+                    );
+                    setFieldValue("cc_pair_ids", selectedIds);
+                  }}
+                  placeholder="Search connectors"
+                  label="Select connectors"
+                  selected={values.cc_pair_ids.map((id) => id.toString())}
                 />
-
-                <Divider />
-                <h3 className="mb-1 text-sm">Teamspace with Access</h3>
-                {!values.is_public ? (
-                  <>
-                    <p className="mb-2 text-xs text-subtle ">
-                      If any teamspace are specified, then this Document Set
-                      will only be visible to the specified teamspace. If no
-                      teamspace are specified, then the Document Set will be
-                      visible to all users.
-                    </p>
-                    <Combobox
-                      items={teamspaces.map((teams) => ({
-                        value: teams.id.toString(),
-                        label: teams.name,
-                      }))}
-                      onSelect={(selectedTeamspaceIds) => {
-                        const selectedIds = selectedTeamspaceIds.map((val) =>
-                          parseInt(val, 10)
-                        );
-                        setFieldValue("groups", selectedIds);
-                      }}
-                      placeholder="Select teamspaces"
-                      label="Teamspaces"
-                      selected={values.groups.map((group) =>
-                        // @ts-ignore
-                        group.id.toString()
-                      )}
-                    />
-                  </>
-                ) : (
-                  <p className="text-sm text-subtle">
-                    This Document Set is public, so this does not apply. If you
-                    want to control which teamspace see this Document Set, mark
-                    it as non-public!
-                  </p>
-                )}
               </div>
-            )}
-            <div className="flex mt-6">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-64 mx-auto"
-              >
-                {isUpdate ? "Update" : "Create"}
-              </Button>
-            </div>
-          </Form>
-        )}
+
+              {teamspaces && teamspaces.length > 0 && !teamspaceId && (
+                <div>
+                  <Divider />
+                  <BooleanFormField
+                    name="is_public"
+                    label="Is Public?"
+                    subtext={
+                      <>
+                        If the document set is public, it will be visible to{" "}
+                        <b>all users</b>. If not, only users in the specified
+                        teamspace will be able to see it.
+                      </>
+                    }
+                    alignTop
+                  />
+                  {!values.is_public && (
+                    <>
+                      <h3 className="mb-1 text-sm">Teamspace with Access</h3>
+                      <p className="mb-2 text-sm text-muted-foreground">
+                        If any teamspaces are specified, this Document Set will
+                        be visible only to them. If none, it will be visible to
+                        all users.
+                      </p>
+                      <Combobox
+                        items={teamspaces.map((teams) => ({
+                          value: teams.id.toString(),
+                          label: teams.name,
+                        }))}
+                        onSelect={(selectedTeamspaceIds) => {
+                          const selectedIds = selectedTeamspaceIds.map((val) =>
+                            parseInt(val, 10)
+                          );
+                          setFieldValue("groups", selectedIds);
+                        }}
+                        placeholder="Select teamspaces"
+                        label="Teamspaces"
+                        selected={values.groups.map((group) =>
+                          group.toString()
+                        )}
+                      />
+                    </>
+                  )}
+                </div>
+              )}
+
+              <div className="flex mt-6">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-64 mx-auto"
+                >
+                  {isUpdate ? "Update" : "Create"}
+                </Button>
+              </div>
+            </Form>
+          );
+        }}
       </Formik>
     </div>
   );

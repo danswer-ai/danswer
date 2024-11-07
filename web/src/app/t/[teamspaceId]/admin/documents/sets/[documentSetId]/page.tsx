@@ -12,7 +12,10 @@ import { useParams, useRouter } from "next/navigation";
 import { Bookmark } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { DocumentSetCreationForm } from "@/app/admin/documents/sets/DocumentSetCreationForm";
-import { refreshDocumentSets, useDocumentSets } from "@/app/admin/documents/sets/hooks";
+import {
+  refreshDocumentSets,
+  useDocumentSets,
+} from "@/app/admin/documents/sets/hooks";
 
 function Main({ documentSetId }: { documentSetId: number }) {
   const router = useRouter();
@@ -49,7 +52,7 @@ function Main({ documentSetId }: { documentSetId: number }) {
   if (ccPairsError || !ccPairs) {
     return (
       <ErrorCallout
-        errorTitle="Failed to fetch Connectors"
+        errorTitle="Failed to fetch Data Sources"
         errorMsg={ccPairsError}
       />
     );

@@ -139,7 +139,7 @@ export const AddConnectorForm: React.FC<AddConnectorFormProps> = ({
             }
           }}
         >
-          Add Connectors
+          Add Data Sources
         </Button>
       </div>
     </div>

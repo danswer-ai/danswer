@@ -75,29 +75,28 @@ export function AccessTypeGroupSelector({}: {}) {
         teamspaces &&
         teamspaces?.length > 0 && (
           <>
-            <Divider />
-            <div className="flex mt-4 gap-x-2 items-center">
-              <div className="block font-medium text-base">
+            <div className="grid gap-1 pb-1.5">
+              <p className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed">
                 Assign group access for this Connector
-              </div>
+              </p>
+              {teamspacesIsLoading ? (
+                <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
+              ) : (
+                <Text className="text-sm text-muted-foreground">
+                  {isAdmin ? (
+                    <>
+                      This Connector will be visible/accessible by the groups
+                      selected below
+                    </>
+                  ) : (
+                    <>
+                      Curators must select one or more groups to give access to
+                      this Connector
+                    </>
+                  )}
+                </Text>
+              )}
             </div>
-            {teamspacesIsLoading ? (
-              <div className="animate-pulse bg-gray-200 h-8 w-32 rounded"></div>
-            ) : (
-              <Text className="mb-3">
-                {isAdmin ? (
-                  <>
-                    This Connector will be visible/accessible by the groups
-                    selected below
-                  </>
-                ) : (
-                  <>
-                    Curators must select one or more groups to give access to
-                    this Connector
-                  </>
-                )}
-              </Text>
-            )}
             <Combobox
               items={teamspaces.map((teamspace) => ({
                 value: teamspace.id.toString(),

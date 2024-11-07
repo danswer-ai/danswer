@@ -6,16 +6,16 @@ export type FetchAssistantsResponse = [Assistant[], string | null];
 export async function fetchAssistantsSS(
   teamspaceId?: string
 ): Promise<FetchAssistantsResponse> {
-  if (teamspaceId) {
-    const response = await fetchSS(`/assistant?teamspace_id=${teamspaceId}`);
-    if (response.ok) {
-      return [(await response.json()) as Assistant[], null];
-    }
-    return [[], (await response.json()).detail || "Unknown Error"];
-  }
-  const response = await fetchSS("/assistant");
+  const url = teamspaceId
+    ? `/assistant?teamspace_id=${teamspaceId}`
+    : "/assistant";
+  const response = await fetchSS(url);
+
   if (response.ok) {
-    return [(await response.json()) as Assistant[], null];
+    const data = await response.json();
+    return [data as Assistant[], null];
   }
-  return [[], (await response.json()).detail || "Unknown Error"];
+
+  const errorDetail = (await response.json()).detail || "Unknown Error";
+  return [[], errorDetail];
 }

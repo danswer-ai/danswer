@@ -108,11 +108,7 @@ function SelectFeedbackType({
   );
 }
 
-export function QueryHistoryTable({
-  teamspaceId,
-}: {
-  teamspaceId?: string | string[];
-}) {
+export function QueryHistoryTable({ teamspaceId }: { teamspaceId?: string }) {
   const {
     data: chatSessionData,
     selectedFeedbackType,

@@ -159,7 +159,9 @@ export function LLMConfiguration() {
         <Card className="md:w-96 flex border rounded shadow-sm border-border md:w-96">
           <CardContent className="p-3">
             <h3>No LLM providers configured yet</h3>
-            <p className="text-subtle text-sm pt-2">Please set one up below in order to start using enMedD AI</p>
+            <p className="text-subtle text-sm pt-2">
+              Please set one up below in order to start using enMedD AI
+            </p>
           </CardContent>
         </Card>
       )}

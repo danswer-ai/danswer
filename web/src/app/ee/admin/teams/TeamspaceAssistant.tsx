@@ -26,7 +26,6 @@ interface AssistantContentProps {
   isGlobal?: boolean;
   onSelect?: (assistant: Assistant) => void;
   selectedAssistants?: Assistant[];
-  hasAssistant?: boolean;
 }
 
 const AssistantContent = ({
@@ -35,7 +34,6 @@ const AssistantContent = ({
   filteredAssistants,
   isGlobal,
   onSelect,
-  hasAssistant,
 }: AssistantContentProps) => {
   return (
     <div className={isGlobal ? "cursor-pointer" : ""}>
@@ -51,7 +49,7 @@ const AssistantContent = ({
           />
         </div>
       </div>
-      {hasAssistant ? (
+      {filteredAssistants.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {filteredAssistants.map((assistant) => (
             <div
@@ -237,7 +235,7 @@ export const TeamspaceAssistant = ({
                   trigger={
                     <div
                       key={assistant.id}
-                      className="bg-primary w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase border-[1px] border-white"
+                      className="bg-brand-500 w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase border-[1px] border-white"
                     >
                       {assistant.name!.charAt(0)}
                     </div>
@@ -271,7 +269,6 @@ export const TeamspaceAssistant = ({
               .includes(searchTermCurrent.toLowerCase())
           )}
           onSelect={handleSelectAssistant}
-          hasAssistant={tempCurrentAssistants.length > 0}
         />
 
         <AssistantContent
@@ -284,7 +281,6 @@ export const TeamspaceAssistant = ({
           )}
           isGlobal
           onSelect={handleSelectAssistant}
-          hasAssistant={tempGlobalAssistants.length > 0}
         />
       </div>
       <div className="flex justify-end mt-10">

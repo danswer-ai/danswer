@@ -103,6 +103,7 @@ class Teamspace(BaseModel):
             assistants=[
                 AssistantSnapshot.from_model(assistant)
                 for assistant in teamspace_model.assistants
+                if AssistantSnapshot.from_model(assistant) is not None
             ],
             chat_sessions=[
                 ChatSessionDetails(

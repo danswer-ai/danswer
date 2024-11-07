@@ -1,4 +1,3 @@
-import { DefaultDropdown } from "@/components/Dropdown";
 import {
   AccessType,
   ValidAutoSyncSources,
@@ -9,6 +8,7 @@ import { useUser } from "@/components/user/UserProvider";
 import { useField } from "formik";
 import { AutoSyncOptions } from "./AutoSyncOptions";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { SelectorFormField } from "./Field";
 
 function isValidAutoSyncSource(
   value: ConfigurableSources
@@ -59,19 +59,16 @@ export function AccessTypeForm({
     <>
       {isPaidEnterpriseEnabled && isAdmin && (
         <>
-          <div className="flex gap-x-2 items-center">
-            <label className="text-text-950 font-medium">Document Access</label>
-          </div>
-          <p className="text-sm text-text-500 mb-2">
-            Control who has access to the documents indexed by this connector.
-          </p>
-          <DefaultDropdown
+          <SelectorFormField
+            name="access_type"
+            label="Document Access"
             options={options}
-            selected={access_type.value}
+            subtext="Control who has access to the documents indexed by this connector."
+            includeDefault={false}
+            defaultValue={access_type.value}
             onSelect={(selected) =>
               access_type_helpers.setValue(selected as AccessType)
             }
-            includeDefault={false}
           />
 
           {access_type.value === "sync" && isAutoSyncSupported && (

@@ -8,7 +8,7 @@ export function MetadataBadge({
   value: string | JSX.Element;
 }) {
   return (
-    <Badge variant="secondary" className="pt-2">
+    <Badge variant="secondary">
       {icon && icon}
       <div className="my-auto flex">{value}</div>
     </Badge>

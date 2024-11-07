@@ -15,7 +15,7 @@ export default function QueryHistoryPage() {
           icon={<DatabaseIcon size={32} />}
         />
 
-        <QueryHistoryTable teamspaceId={teamspaceId} />
+        <QueryHistoryTable teamspaceId={teamspaceId[0]} />
       </div>
     </div>
   );

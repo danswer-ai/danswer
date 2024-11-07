@@ -63,6 +63,7 @@ export interface MinimalUserwithNameSnapshot {
   id: string;
   email: string;
   full_name: string;
+  role: UserRole;
 }
 
 export type ValidInputTypes = "load_state" | "poll" | "event";

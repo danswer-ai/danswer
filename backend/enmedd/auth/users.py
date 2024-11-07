@@ -55,6 +55,7 @@ from enmedd.db.auth import get_user_db
 from enmedd.db.engine import get_session
 from enmedd.db.engine import get_sqlalchemy_engine
 from enmedd.db.models import AccessToken
+from enmedd.db.models import Teamspace
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
 from enmedd.db.users import get_user_by_email
@@ -290,8 +291,6 @@ def get_database_strategy(
     )
     return strategy
 
-    return strategy
-
 
 auth_backend = AuthenticationBackend(
     name="database",
@@ -447,10 +446,19 @@ async def current_teamspace_admin_user(
         .first()
     )
 
-    if not user_teamspace or user_teamspace.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied. User is not an admin in this teamspace.",
-        )
+    if user_teamspace and user_teamspace.role == UserRole.ADMIN:
+        return user
 
-    return user
+    teamspace = (
+        db_session.query(Teamspace)
+        .filter_by(id=teamspace_id, creator_id=user.id)
+        .first()
+    )
+
+    if teamspace:
+        return user
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Access denied. User is neither an admin nor the creator of this teamspace.",
+    )

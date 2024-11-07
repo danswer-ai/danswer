@@ -74,7 +74,7 @@ export const FeedbackModal = ({
         onChange={(e) => setMessage(e.target.value)}
         className="min-h-40"
       />
-      <RadioGroup className="pt-6">
+      <RadioGroup>
         {predefinedFeedbackOptions.map((feedback, index) => (
           <div
             key={index}

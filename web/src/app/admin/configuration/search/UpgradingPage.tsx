@@ -18,6 +18,7 @@ import { Connector } from "@/lib/connectors/connectors";
 import { FailedReIndexAttempts } from "@/components/embedding/FailedReIndexAttempts";
 import { useToast } from "@/hooks/use-toast";
 import { CustomModal } from "@/components/CustomModal";
+import { DeleteModal } from "@/components/DeleteModal";
 
 export default function UpgradingPage({
   futureEmbeddingModel,
@@ -92,13 +93,11 @@ export default function UpgradingPage({
   return (
     <>
       {isCancelling && (
-        <CustomModal
-          onClose={() => setIsCancelling(false)}
+        <DeleteModal
           title="Cancel Embedding Model Switch"
-          trigger={null}
+          onClose={() => setIsCancelling(false)}
           open={isCancelling}
-        >
-          <div>
+          description={
             <div>
               Are you sure you want to cancel?
               <br />
@@ -106,13 +105,9 @@ export default function UpgradingPage({
               Cancelling will revert to the previous model and all progress will
               be lost.
             </div>
-            <div className="flex">
-              <Button onClick={onCancel} className="mt-3 mx-auto" color="green">
-                Confirm
-              </Button>
-            </div>
-          </div>
-        </CustomModal>
+          }
+          onSuccess={onCancel}
+        />
       )}
 
       {futureEmbeddingModel && (

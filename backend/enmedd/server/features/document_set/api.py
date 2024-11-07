@@ -79,12 +79,14 @@ def patch_document_set(
 @router.delete("/admin/document-set/{document_set_id}")
 def delete_document_set(
     document_set_id: int,
-    user: User = Depends(current_admin_user),
+    teamspace_id: Optional[int] = None,
+    user: User = Depends(current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
         mark_document_set_as_to_be_deleted(
             db_session=db_session,
+            teamspace_id=teamspace_id,
             document_set_id=document_set_id,
             user=user,
         )

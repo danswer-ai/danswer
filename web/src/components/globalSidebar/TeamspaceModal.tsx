@@ -13,11 +13,13 @@ import { buildImgUrl } from "@/app/chat/files/images/utils";
 interface TeamspaceModalProps {
   teamspace?: MinimalTeamspaceSnapshot[] | undefined;
   defaultPage: string;
+  teamspaceId?: string | string[];
 }
 
 export const TeamspaceModal = ({
   teamspace,
   defaultPage,
+  teamspaceId,
 }: TeamspaceModalProps) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -54,13 +56,13 @@ export const TeamspaceModal = ({
       }
       onClose={() => setIsModalVisible(false)}
       open={isModalVisible}
-      title="Your Team Space"
+      title="Your Teamspace"
     >
       <div className="grid grid-cols-3 gap-4">
         {teamspace.map((team) => (
           <Link
             key={team.id}
-            className="flex items-center gap-4 border rounded-md p-4 cursor-pointer"
+            className={`flex items-center gap-4 border rounded-md p-4 cursor-pointer ${Number(teamspaceId) === team.id ? "bg-secondary-500" : ""}`}
             href={`/t/${team.id}/${defaultPage}`}
           >
             {team.logo ? (
@@ -76,7 +78,7 @@ export const TeamspaceModal = ({
             ) : (
               <div
                 style={{ background: generateGradient(team.name) }}
-                className="font-bold text-inverted w-10 h-10 shrink-0 rounded-md bg-primary flex justify-center items-center uppercase"
+                className="font-bold text-inverted w-10 h-10 shrink-0 rounded-md bg-brand-500 flex justify-center items-center uppercase"
               >
                 {team.name.charAt(0)}
               </div>

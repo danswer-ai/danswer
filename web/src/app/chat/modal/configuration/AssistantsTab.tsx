@@ -33,8 +33,9 @@ export function AssistantsTab({
 }) {
   const { refreshUser } = useUser();
   const [_, llmName] = getFinalLLM(llmProviders, null, null);
-  const { finalAssistants, refreshAssistants } = useAssistants();
-  const [assistants, setAssistants] = useState(finalAssistants);
+  // TODO Final assitant tandaan mo
+  const { assistants, refreshAssistants } = useAssistants();
+  const [assistant, setAssistants] = useState(assistants);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -47,13 +48,13 @@ export function AssistantsTab({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = assistants.findIndex(
+      const oldIndex = assistant.findIndex(
         (item) => item.id.toString() === active.id
       );
-      const newIndex = assistants.findIndex(
+      const newIndex = assistant.findIndex(
         (item) => item.id.toString() === over.id
       );
-      const updatedAssistants = arrayMove(assistants, oldIndex, newIndex);
+      const updatedAssistants = arrayMove(assistant, oldIndex, newIndex);
 
       setAssistants(updatedAssistants);
       await updateUserAssistantList(updatedAssistants.map((a) => a.id));
@@ -62,20 +63,21 @@ export function AssistantsTab({
     }
   }
 
+  console.log(assistant)
+
   return (
     <div className="py-4 w-full overflow-y-auto">
-      {/* <h3 className="px-4 text-lg font-semibold">Change Assistant</h3> */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={assistants.map((a) => a.id.toString())}
+          items={assistant.map((a) => a.id.toString())}
           strategy={verticalListSortingStrategy}
         >
           <div className="px-4 pb-2  max-h-[500px] my-3 grid grid-cols-1 gap-4">
-            {assistants.map((assistant) => (
+            {assistant.map((assistant) => (
               <DraggableAssistantCard
                 key={assistant.id.toString()}
                 assistant={assistant}

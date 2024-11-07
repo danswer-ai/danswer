@@ -1,6 +1,5 @@
+import { ChevronDown, ChevronRight } from "lucide-react";
 import React from "react";
-import { Button } from "@tremor/react";
-import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 interface AdvancedOptionsToggleProps {
   showAdvancedOptions: boolean;
@@ -13,16 +12,18 @@ export function AdvancedOptionsToggle({
 }: AdvancedOptionsToggleProps) {
   return (
     <div>
-      <Button
-        type="button"
-        variant="light"
-        size="xs"
-        icon={showAdvancedOptions ? FiChevronDown : FiChevronRight}
+      <button
         onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-        className="text-xs text-text-950 hover:text-text-500"
+        className="text-sm text-text-950 hover:text-text-500 pt-2 flex items-center gap-1 font-medium"
+        type="button"
       >
+        {showAdvancedOptions ? (
+          <ChevronDown size={16} />
+        ) : (
+          <ChevronRight size={16} />
+        )}{" "}
         Advanced Options
-      </Button>
+      </button>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Image from "next/image";
 import EnmeddLogo from "../../public/logo-brand.png";
 import React from "react";
 import { Logo } from "@/components/Logo";
+import Link from "next/link";
 
 export function TopBar({
   children,
@@ -31,7 +32,9 @@ export function TopBar({
 export function WelcomeTopBar() {
   return (
     <div className="w-full py-6 bg-background">
-      <Logo className="w-28 xl:w-32 ml-6 xl:ml-10" />
+      <Link href="/">
+        <Logo className="w-28 xl:w-32 ml-6 xl:ml-10" />
+      </Link>
     </div>
   );
 }

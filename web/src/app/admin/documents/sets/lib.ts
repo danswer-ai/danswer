@@ -64,11 +64,19 @@ export const updateDocumentSet = async ({
   });
 };
 
-export const deleteDocumentSet = async (id: number) => {
-  return fetch(`/api/manage/admin/document-set/${id}`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+export const deleteDocumentSet = async (
+  id: number,
+  teamspaceId?: string | string[]
+) => {
+  return fetch(
+    teamspaceId
+      ? `/api/manage/admin/document-set/${id}?teamspace_id=${teamspaceId}`
+      : `/api/manage/admin/document-set/${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
 };

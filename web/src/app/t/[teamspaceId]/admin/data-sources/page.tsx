@@ -126,7 +126,7 @@ export default function Page() {
         <div className="relative md:w-[500px] mt-6 ml-auto">
           <SearchInput
             ref={searchInputRef}
-            placeholder="Search existing connectors..."
+            placeholder="Search existing data sources"
             value={searchTerm}
             onChange={setSearchTerm}
             onKeyDown={handleKeyPress}

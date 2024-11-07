@@ -12,7 +12,6 @@ import { buildImgUrl } from "@/app/chat/files/images/utils";
 
 interface TeamspaceSidebarContentProps {
   teamspace: Teamspace & { gradient: string };
-  selectedTeamspaceId?: number;
   assistants: Assistant[];
   ccPairs: ConnectorIndexingStatus<any, any>[];
   documentSets: DocumentSet[];
@@ -21,7 +20,6 @@ interface TeamspaceSidebarContentProps {
 
 export const TeamspaceSidebarContent = ({
   teamspace,
-  selectedTeamspaceId,
   assistants,
   ccPairs,
   documentSets,
@@ -39,7 +37,7 @@ export const TeamspaceSidebarContent = ({
       <div style={{ background: teamspace.gradient }} className="h-40 relative">
         <div className="absolute top-full -translate-y-1/2 left-1/2 -translate-x-1/2">
           {teamspace.logo ? (
-            <div className="rounded-md w-16 h-16 bg-background rounded-md overflow-hidden">
+            <div className="rounded-md w-16 h-16 bg-background overflow-hidden">
               <img
                 src={buildImgUrl(teamspace.logo)}
                 alt="Teamspace Logo"
@@ -79,7 +77,7 @@ export const TeamspaceSidebarContent = ({
         <div className="w-full flex flex-col gap-4 pt-14">
           <TeamspaceMember
             teamspace={teamspace}
-            selectedTeamspaceId={selectedTeamspaceId}
+            refreshTeamspaces={refreshTeamspaces}
           />
           <TeamspaceAssistant
             teamspace={teamspace}

@@ -24,21 +24,21 @@ export function HelperFab() {
       <PopoverContent className="w-56 text-sm" side="top" align="end">
         <Link
           href="https://aitable.ai/share/shrTvVrDD0P7HqySRmlp8/fommkqn7v0WUqLGB43"
-          className="flex items-center gap-2 py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+          className="flex items-center gap-2 py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
           target="_blank"
         >
           <MessageCircleReply size={16} /> Feedback Forms
         </Link>
         <Link
           href=""
-          className="flex items-center gap-2 py-3 px-4 cursor-not-allowed rounded-regular hover:bg-primary hover:text-inverted opacity-50 pointer-events-none"
+          className="flex items-center gap-2 py-3 px-4 cursor-not-allowed rounded-regular hover:bg-brand-500 hover:text-inverted opacity-50 pointer-events-none"
           target="_blank"
         >
           <BookText size={16} /> User Guide & FAQ
         </Link>
         <CustomModal
           trigger={
-            <div className="flex items-center gap-2 py-3 px-4 rounded-regular hover:bg-primary hover:text-inverted">
+            <div className="flex items-center gap-2 py-3 px-4 rounded-regular hover:bg-brand-500 hover:text-inverted">
               <Command size={16} /> Shortcut Keys
             </div>
           }

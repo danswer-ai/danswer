@@ -7,7 +7,7 @@ import {
   GroupedConnectorSummaries,
   ValidSources,
 } from "@/lib/types";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   FiChevronDown,
   FiChevronRight,
@@ -70,12 +70,7 @@ function SummaryRow({
       </TableCell>
 
       <TableCell className="gap-y-2">
-        <div className="text-gray-500">Total Connectors</div>
-        <div className="text-xl font-semibold">{summary.count}</div>
-      </TableCell>
-
-      <TableCell className="gap-y-2">
-        <div className="text-gray-500">Active Connectors</div>
+        <div className="text-gray-500">Active Data Sources</div>
         <CustomTooltip
           trigger={
             <div className="flex items-center mt-1">
@@ -88,13 +83,13 @@ function SummaryRow({
             </div>
           }
         >
-          `${summary.active} out of ${summary.count} connectors are active`
+          {summary.active} out of {summary.count} data sources are active
         </CustomTooltip>
       </TableCell>
 
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell className="gap-y-2">
-          <div className="text-gray-500">Public Connectors</div>
+          <div className="text-gray-500">Public Data Sources</div>
           <p className="flex items-center mx-auto mt-1 text-xl font-semibold">
             {summary.public}/{summary.count}
           </p>
@@ -116,8 +111,10 @@ function SummaryRow({
           {summary.errors}
         </div>
       </TableCell>
-
-      <TableCell className="gap-y-2" />
+      <TableCell className="gap-y-2">
+        <div className="text-gray-500">Total Data Sources</div>
+        <div className="text-xl font-semibold">{summary.count}</div>
+      </TableCell>
     </TableRow>
   );
 }
@@ -131,12 +128,17 @@ function ConnectorRow({
   invisible?: boolean;
   isEditable: boolean;
 }) {
+  const { teamspaceId } = useParams();
   const router = useRouter();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   const handleManageClick = (e: any) => {
     e.stopPropagation();
-    router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
+    router.push(
+      teamspaceId
+        ? `/t/${teamspaceId}/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`
+        : `/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`
+    );
   };
 
   const getActivityBadge = () => {
@@ -145,8 +147,8 @@ function ConnectorRow({
       ConnectorCredentialPairStatus.DELETING
     ) {
       return (
-        <Badge variant="destructive">
-          <div className="w-3 h-3 rounded-full bg-destructive" />
+        <Badge variant="deleting">
+          <div className="w-3 h-3 shrink-0 rounded-full bg-destructive-500" />
           Deleting
         </Badge>
       );
@@ -155,8 +157,8 @@ function ConnectorRow({
       ConnectorCredentialPairStatus.PAUSED
     ) {
       return (
-        <Badge variant="secondary">
-          <div className="w-3 h-3 bg-default rounded-full" />
+        <Badge variant="paused">
+          <div className="w-3 h-3 shrink-0 bg-background rounded-full" />
           Paused
         </Badge>
       );
@@ -166,22 +168,22 @@ function ConnectorRow({
     switch (ccPairsIndexingStatus.last_status) {
       case "in_progress":
         return (
-          <Badge variant="warning">
-            <div className="w-3 h-3 rounded-full bg-default" />
+          <Badge variant="indexing">
+            <div className="w-3 h-3 shrink-0 rounded-full bg-background" />
             Indexing
           </Badge>
         );
       case "not_started":
         return (
-          <Badge variant="outline">
-            <div className="w-3 h-3 rounded-full bg-default" />
+          <Badge variant="scheduled">
+            <div className="w-3 h-3 shrink-0 rounded-full bg-background" />
             Scheduled
           </Badge>
         );
       default:
         return (
-          <Badge>
-            <div className="w-3 h-3 rounded-full bg-background" />
+          <Badge variant="active">
+            <div className="w-3 h-3 shrink-0 rounded-full bg-background" />
             Active
           </Badge>
         );
@@ -192,13 +194,17 @@ function ConnectorRow({
     <TableRow
       className={`${invisible ? "invisible h-0 !-mb-10" : ""}`}
       onClick={() => {
-        router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
+        router.push(
+          teamspaceId
+            ? `/t/${teamspaceId}/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`
+            : `/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`
+        );
       }}
     >
       <TableCell>
         <CustomTooltip
           trigger={
-            <p className="inline-block w-full truncate ellipsis">
+            <p className="w-full truncate ellipsis max-w-[480px]">
               {ccPairsIndexingStatus.name}
             </p>
           }
@@ -206,9 +212,9 @@ function ConnectorRow({
           {ccPairsIndexingStatus.name}
         </CustomTooltip>
       </TableCell>
-      <TableCell>
+      {/* <TableCell>
         {timeAgo(ccPairsIndexingStatus?.last_success) || "-"}
-      </TableCell>
+      </TableCell> */}
       <TableCell>{getActivityBadge()}</TableCell>
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell>
@@ -226,7 +232,7 @@ function ConnectorRow({
       <TableCell>{ccPairsIndexingStatus.docs_indexed}</TableCell>
       <TableCell>
         <IndexAttemptStatus
-          status={ccPairsIndexingStatus.last_finished_status || null}
+          status={ccPairsIndexingStatus.last_status || null}
           errorMsg={
             ccPairsIndexingStatus?.latest_index_attempt?.error_msg || null
           }
@@ -242,7 +248,7 @@ function ConnectorRow({
               />
             }
           >
-            Manage Connector
+            Manage Data Sources
           </CustomTooltip>
         )}
       </TableCell>
@@ -380,7 +386,7 @@ export function CCPairIndexingStatusTable({
             cc_pair_status: ConnectorCredentialPairStatus.ACTIVE,
             last_status: "success",
             connector: {
-              name: "Sample File Connector",
+              name: "Sample File Data Source",
               source: "file",
               input_type: "poll",
               connector_specific_config: {
@@ -421,7 +427,7 @@ export function CCPairIndexingStatusTable({
           <Input
             type="text"
             ref={searchInputRef}
-            placeholder="Search connectors..."
+            placeholder="Search data sources..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -444,7 +450,9 @@ export function CCPairIndexingStatusTable({
                 <TableHead className="w-[200px] xl:w-[350px]">
                   <div className="w-full">Name</div>
                 </TableHead>
-                <TableHead>Last Indexed</TableHead>
+                {/* <TableHead>
+                  Last Indexed
+                </TableHead> */}
                 <TableHead>Activity</TableHead>
                 {isPaidEnterpriseFeaturesEnabled && (
                   <TableHead>Permissions</TableHead>

@@ -1,5 +1,6 @@
 import { FiImage, FiSearch } from "react-icons/fi";
 import { Assistant } from "../admin/assistants/interfaces";
+import { Badge } from "@/components/ui/badge";
 
 export function AssistantTools({
   assistant,
@@ -24,65 +25,23 @@ export function AssistantTools({
           {assistant.tools.map((tool, ind) => {
             if (tool.name === "SearchTool") {
               return (
-                <div
-                  key={ind}
-                  className={`
-                    px-1.5
-                    py-1
-                    rounded-lg 
-                    border
-                    border-border 
-                    w-fit 
-                    flex
-                    items-center
-                    ${list ? "bg-background-125" : "bg-background-100"}`}
-                >
-                  <div className="flex gap-x-1">
-                    <FiSearch key={ind} className="ml-1 h-3 w-3 my-auto" />
-                    Search
-                  </div>
-                </div>
+                <Badge key={ind} variant="outline">
+                  <FiSearch key={ind} />
+                  Search
+                </Badge>
               );
             } else if (tool.name === "ImageGenerationTool") {
               return (
-                <div
-                  key={ind}
-                  className={`
-                    px-1.5
-                    py-1
-                    rounded-lg 
-                    border
-                    border-border 
-                    w-fit 
-                    flex
-                    ${list ? "bg-background-125" : "bg-background-100"}`}
-                >
-                  <div className="flex items-center gap-x-1">
-                    <FiImage
-                      key={ind}
-                      className="ml-1 my-auto h-3 w-3 my-auto"
-                    />
-                    Image Generation
-                  </div>
-                </div>
+                <Badge key={ind} variant="outline">
+                  <FiImage key={ind} />
+                  Image Generation
+                </Badge>
               );
             } else {
               return (
-                <div
-                  key={ind}
-                  className={`
-                  px-1.5
-                  py-1
-                  rounded-lg 
-                  border
-                  border-border 
-                  w-fit 
-                  flex
-                  items-center
-                  ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}`}
-                >
+                <Badge key={ind} variant="outline">
                   <div className="flex gap-x-1">{tool.name}</div>
-                </div>
+                </Badge>
               );
             }
           })}

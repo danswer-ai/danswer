@@ -112,7 +112,7 @@ export function _WelcomeModal({ user }: { user: User | null }) {
             <p className="mt-6 mb-2 font-bold">Step 2: Connect Data Sources</p>
             <div>
               <p>
-                Connectors are the way that enMedD AI gets data from your
+                Data sources are the way that enMedD AI gets data from your
                 organization&apos;s various data sources. Once setup, we&apos;ll
                 automatically sync data from your apps and docs into enMedD AI,
                 so you can search through all of them in one place.

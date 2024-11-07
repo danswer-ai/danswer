@@ -159,7 +159,7 @@ export const GroupDisplay = ({
 
       {/*  <div className="pt-2" /> */}
 
-      <h2 className="text-xl font-bold pt-8">Connectors</h2>
+      <h2 className="text-xl font-bold pt-8">Data Sources</h2>
       <div className="mt-4">
         {teamspace.cc_pairs.length > 0 ? (
           <Card>
@@ -167,9 +167,9 @@ export const GroupDisplay = ({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Connector</TableHead>
+                    <TableHead>Data Source</TableHead>
                     <TableHead className="ml-auto flex">
-                      <span className="m-auto mr-0">Remove Connector</span>
+                      <span className="m-auto mr-0">Remove Data Source</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -232,7 +232,7 @@ export const GroupDisplay = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="text-sm">No connectors in this teamspace...</div>
+          <div className="text-sm">No data sources in this teamspace...</div>
         )}
       </div>
 
@@ -243,7 +243,7 @@ export const GroupDisplay = ({
             onClick={() => setAddConnectorFormVisible(true)}
             disabled={!teamspace.is_up_to_date}
           >
-            Add Connectors
+            Add Data Sources
           </Button>
         }
         onClose={() => setAddConnectorFormVisible(false)}

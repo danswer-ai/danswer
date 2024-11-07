@@ -10,18 +10,18 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-inverted hover:bg-primary-foreground focus-visible:ring-primary",
+          "bg-brand-500 text-inverted hover:bg-brand-300 focus-visible:ring-primary",
         destructive:
-          "bg-destructive text-inverted hover:bg-destructive-foreground focus-visible:ring-destructive",
+          "bg-destructive-500 text-inverted hover:bg-destructive-100 focus-visible:ring-destructive",
         outline:
-          "border border-input-colored bg-background hover:bg-input-colored hover:text-accent-foreground focus-visible:ring-input-colored",
+          "border border-brand-400 bg-background hover:bg-brand-200 hover:text-brand-600 focus-visible:ring-primary-400",
         secondary:
-          "bg-secondary text-inverted hover:bg-secondary-foreground focus-visible:ring-secondary",
+          "bg-secondary-500 text-inverted hover:bg-secondary-100 focus-visible:ring-secondary",
         ghost:
           "hover:bg-light hover:text-accent-foreground focus-visible:ring-light",
         link: "text-primary underline-offset-4 hover:underline focus-visible:ring-primary",
         success:
-          "bg-success text-inverted hover:bg-success-foreground focus-visible:ring-success",
+          "bg-success-500 text-inverted hover:bg-success-500-100 focus-visible:ring-success",
       },
       size: {
         default: "h-10 px-4 py-2",

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ConnectorIndexingStatus, Teamspace } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 interface SimplifiedDataSource {
   id: number;
@@ -27,14 +28,12 @@ const DataSourceContent = ({
   filteredDataSources,
   isGlobal,
   onSelect,
-  hasDataSource,
 }: {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  filteredDataSources?: SimplifiedDataSource[];
+  filteredDataSources: SimplifiedDataSource[];
   isGlobal?: boolean;
   onSelect?: (dataSource: SimplifiedDataSource) => void;
-  hasDataSource?: boolean;
 }) => {
   return (
     <div className={isGlobal ? "cursor-pointer" : ""}>
@@ -51,7 +50,7 @@ const DataSourceContent = ({
         </div>
       </div>
 
-      {hasDataSource ? (
+      {filteredDataSources?.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
           {filteredDataSources?.map((dataSource) => (
             <div
@@ -224,9 +223,17 @@ export const TeamspaceDataSource = ({
           {teamspace.cc_pairs.length > 0 ? (
             <div className="pt-8 flex flex-wrap gap-2">
               {teamspace.cc_pairs.slice(0, 8).map((teamspaceDataSource) => (
-                <Badge key={teamspaceDataSource.id}>
-                  <div className="truncate">{teamspaceDataSource.name}</div>
-                </Badge>
+                <CustomTooltip
+                  variant="white"
+                  key={teamspaceDataSource.id}
+                  trigger={
+                    <Badge key={teamspaceDataSource.id}>
+                      <div className="truncate">{teamspaceDataSource.name}</div>
+                    </Badge>
+                  }
+                >
+                  {teamspaceDataSource.name}
+                </CustomTooltip>
               ))}
               {teamspace.cc_pairs.length > 8 && (
                 <div className="bg-background w-10 h-full rounded-full flex items-center justify-center text-sm font-semibold">
@@ -254,7 +261,6 @@ export const TeamspaceDataSource = ({
           )}
           isGlobal={false}
           onSelect={handleSelectDataSource}
-          hasDataSource={tempCurrentDataSources.length > 0}
         />
         <DataSourceContent
           searchTerm={searchTermGlobal}
@@ -266,7 +272,6 @@ export const TeamspaceDataSource = ({
           )}
           isGlobal={true}
           onSelect={handleSelectDataSource}
-          hasDataSource={tempGlobalDataSources.length > 0}
         />
       </div>
 

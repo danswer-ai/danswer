@@ -62,3 +62,41 @@ export function isCurrentlyDeleting(
     deletionAttempt.status === "PENDING" || deletionAttempt.status === "STARTED"
   );
 }
+
+export const removeCCPair = async (
+  id: number,
+  teamspaceId: string | string[]
+) => {
+  try {
+    const response = await fetch(
+      `/api/manage/admin/teamspace/connector-remove/${teamspaceId}?cc_pair_id=${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.ok) {
+      toast({
+        title: "Success",
+        description: "Connector removed successfully!",
+        variant: "success",
+      });
+    } else {
+      const errorData = await response.json();
+      toast({
+        title: "Error",
+        description: `Failed to remove connector - ${errorData.detail}`,
+        variant: "destructive",
+      });
+    }
+  } catch (error) {
+    toast({
+      title: "Error",
+      description: "An error occurred while removing the connector.",
+      variant: "destructive",
+    });
+  }
+};

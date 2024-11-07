@@ -49,7 +49,7 @@ export default function Stepper() {
               <div className="z-10 flex-shrink-0 mt-[3px] mr-4">
                 <div
                   className={`rounded-full h-3.5 w-3.5 flex items-center justify-center ${
-                    allowed ? "bg-primary" : "bg-secondary"
+                    allowed ? "bg-brand-500" : "bg-secondary-500"
                   }`}
                 >
                   {formStep === index && (
@@ -67,7 +67,7 @@ export default function Stepper() {
 
               {index !== settingSteps.length - 1 && (
                 <div
-                  className={`w-full h-2 mx-4 mt-1.5 rounded-pill ${allowed ? "bg-primary" : "bg-secondary"}`}
+                  className={`w-full h-2 mx-4 mt-1.5 rounded-pill ${allowed ? "bg-brand-500" : "bg-secondary-500"}`}
                 />
               )}
             </div>

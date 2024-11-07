@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useContext } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { User as UserTypes } from "@/lib/types";
@@ -75,7 +75,7 @@ export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
             {settings?.featureFlags.profile_page && (
               <Link
                 href="/profile"
-                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
               >
                 <User className="my-auto mr-3" size={24} strokeWidth={1.5} />
                 Profile Settings
@@ -88,7 +88,7 @@ export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
                   ? `/t/${teamspaceId}/${defaultPage}`
                   : `/${defaultPage}`
               }
-              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
             >
               <MessageCircleMore
                 className="my-auto mr-3"
@@ -100,7 +100,7 @@ export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
             {isTeamspaceAdmin && (
               <Link
                 href={`/t/${teamspaceId}/admin/indexing/status`}
-                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
               >
                 <Wrench className="my-auto mr-3" size={24} strokeWidth={1.5} />
                 Teamspace Admin Panel
@@ -109,7 +109,7 @@ export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
             {isAdmin && (
               <Link
                 href="/admin/indexing/status"
-                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-primary hover:text-inverted"
+                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
               >
                 <Wrench className="my-auto mr-3" size={24} strokeWidth={1.5} />
                 Workspace Admin Panel
@@ -123,7 +123,7 @@ export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
                   ))}
                 <div
                   onClick={handleLogout}
-                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-destructive hover:text-inverted rounded-regular"
+                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-destructive-500 hover:text-inverted rounded-regular"
                 >
                   <LogOut
                     className="my-auto mr-3"

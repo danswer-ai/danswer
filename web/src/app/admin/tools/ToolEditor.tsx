@@ -219,7 +219,7 @@ function ToolForm({
         setShowAdvancedOptions={setShowAdvancedOptions}
       />
       {showAdvancedOptions && (
-        <div>
+        <div className="pt-4">
           <h3 className="mb-2 text-xl font-bold text-primary-600">
             Custom Headers
           </h3>

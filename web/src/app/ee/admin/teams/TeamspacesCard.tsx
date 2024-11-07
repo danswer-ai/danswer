@@ -47,16 +47,14 @@ const DeleteArchiveModal = ({
   return (
     <CustomModal
       trigger={trigger}
-      title={`Are you sure you want to ${type} this Team Space?`}
+      title={`Are you sure you want to ${type.toLowerCase()} this Teamspace?`}
       onClose={onClose}
       open={open}
+      description={`You are about to ${type} this Team Space. Members will no longer have
+        access to it, and it will be removed from their sidebar`}
     >
-      <p className="pb-4">
-        You are about to {type} this Team Space. Members will no longer have
-        access to it, and it will be removed from their sidebar
-      </p>
       <div className="flex justify-end w-full gap-2 pt-6 border-t">
-        <Button onClick={onClose} variant="secondary">
+        <Button onClick={onClose} variant="ghost">
           Cancel
         </Button>
         <Button onClick={onConfirm} variant="destructive">
@@ -96,7 +94,7 @@ export const TeamspacesCard = ({
             <DeleteArchiveModal
               trigger={
                 <button
-                  className="flex w-full px-4 py-2 text-sm cursor-pointer rounded-regular hover:bg-primary hover:text-inverted focus:outline-none"
+                  className="flex w-full px-4 py-2 text-sm cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted focus:outline-none"
                   onClick={() => setIsArchiveModalOpen(true)}
                 >
                   Archive
@@ -113,7 +111,7 @@ export const TeamspacesCard = ({
             <DeleteArchiveModal
               trigger={
                 <button
-                  className="flex w-full px-4 py-2 text-sm cursor-pointer rounded-regular hover:bg-primary hover:text-inverted focus:outline-none"
+                  className="flex w-full px-4 py-2 text-sm cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted focus:outline-none"
                   onClick={() => setIsDeleteModalOpen(true)}
                 >
                   Delete
@@ -183,8 +181,8 @@ export const TeamspacesCard = ({
                   <div
                     className={`inline-block ml-2 w-2.5 h-2.5 rounded-full ${
                       teamspace.is_up_to_date
-                        ? "bg-success"
-                        : "bg-secondary loading dots"
+                        ? "bg-success-500"
+                        : "bg-secondary-500 loading dots"
                     }`}
                   />
                 }

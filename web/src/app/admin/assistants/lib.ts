@@ -265,10 +265,18 @@ export async function updateAssistant(
   return [promptResponse, updateAssistantResponse];
 }
 
-export function deleteAssistant(assistantId: number) {
-  return fetch(`/api/assistant/${assistantId}`, {
-    method: "DELETE",
-  });
+export function deleteAssistant(
+  assistantId: number,
+  teamspaceId?: string | string[] | undefined
+) {
+  return fetch(
+    teamspaceId
+      ? `/api/assistant/${assistantId}?teamspace_id=${teamspaceId}`
+      : `/api/assistant/${assistantId}`,
+    {
+      method: "DELETE",
+    }
+  );
 }
 
 export function buildFinalPrompt(

@@ -1,5 +1,6 @@
 import datetime
 from collections import defaultdict
+from typing import Optional
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from ee.enmedd.db.analytics import fetch_per_user_query_analytics
 from ee.enmedd.db.analytics import fetch_query_analytics
-from enmedd.auth.users import current_admin_user
+from enmedd.auth.users import current_teamspace_admin_user
 from enmedd.db.engine import get_session
 from enmedd.db.models import User
 
@@ -26,15 +27,17 @@ class QueryAnalyticsResponse(BaseModel):
 def get_query_analytics(
     start: datetime.datetime | None = None,
     end: datetime.datetime | None = None,
-    _: User | None = Depends(current_admin_user),
+    teamspace_id: Optional[int] = None,
+    _: User | None = Depends(current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[QueryAnalyticsResponse]:
+    start = start or (datetime.datetime.utcnow() - datetime.timedelta(days=30))
+    end = end or datetime.datetime.utcnow()
+
     daily_query_usage_info = fetch_query_analytics(
-        start=start
-        or (
-            datetime.datetime.utcnow() - datetime.timedelta(days=30)
-        ),  # default is 30d lookback
-        end=end or datetime.datetime.utcnow(),
+        start=start,
+        end=end,
+        teamspace_id=teamspace_id,
         db_session=db_session,
     )
     return [
@@ -57,7 +60,8 @@ class UserAnalyticsResponse(BaseModel):
 def get_user_analytics(
     start: datetime.datetime | None = None,
     end: datetime.datetime | None = None,
-    _: User | None = Depends(current_admin_user),
+    teamspace_id: Optional[int] = None,
+    _: User | None = Depends(current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[UserAnalyticsResponse]:
     daily_query_usage_info_per_user = fetch_per_user_query_analytics(
@@ -66,6 +70,7 @@ def get_user_analytics(
             datetime.datetime.utcnow() - datetime.timedelta(days=30)
         ),  # default is 30d lookback
         end=end or datetime.datetime.utcnow(),
+        teamspace_id=teamspace_id,
         db_session=db_session,
     )
 
