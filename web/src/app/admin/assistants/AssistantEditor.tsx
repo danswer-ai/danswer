@@ -431,7 +431,7 @@ export function AssistantEditor({
           );
 
           return (
-            <Form className="w-full text-text-950">
+            <Form className="bg-background w-full text-text-950">
               <div className="w-full flex gap-x-2 justify-center">
                 <Popover
                   open={isIconDropdownOpen}
@@ -473,7 +473,7 @@ export function AssistantEditor({
                     </div>
                   }
                   popover={
-                    <div className="bg-white text-text-800 flex flex-col gap-y-1 w-[300px] border border-border rounded-lg shadow-lg p-2">
+                    <div className="text-text-800 flex flex-col gap-y-1 w-[300px] border border-border rounded-lg shadow-lg p-2">
                       <label className="block w-full flex gap-x-2 text-left items-center px-4 py-2 hover:bg-background-100 rounded cursor-pointer">
                         <CameraIcon />
                         Upload {values.uploaded_image && " New "} Photo
@@ -932,9 +932,9 @@ export function AssistantEditor({
                                     name="include_citations"
                                     label="Include Citations"
                                     subtext={`
-                                      If set, the response will include bracket citations ([1], [2], etc.) 
-                                      for each document used by the LLM to help inform the response. This is 
-                                      the same technique used by the default Assistants. In general, we recommend 
+                                      If set, the response will include bracket citations ([1], [2], etc.)
+                                      for each document used by the LLM to help inform the response. This is
+                                      the same technique used by the default Assistants. In general, we recommend
                                       to leave this enabled in order to increase trust in the LLM answer.`}
                                   />
                                 </div>
@@ -1040,13 +1040,13 @@ export function AssistantEditor({
                                           <Field
                                             name={`starter_messages[${index}].name`}
                                             className={`
-                                            border 
-                                            border-border 
-                                            bg-background 
-                                            rounded 
-                                            w-full 
-                                            py-2 
-                                            px-3 
+                                            border
+                                            border-border
+                                            bg-background
+                                            rounded
+                                            w-full
+                                            py-2
+                                            px-3
                                             mr-4
                                           `}
                                             autoComplete="off"
@@ -1070,13 +1070,13 @@ export function AssistantEditor({
                                           <Field
                                             name={`starter_messages.${index}.description`}
                                             className={`
-                                            border 
-                                            border-border 
-                                            bg-background 
-                                            rounded 
-                                            w-full 
-                                            py-2 
-                                            px-3 
+                                            border
+                                            border-border
+                                            bg-background
+                                            rounded
+                                            w-full
+                                            py-2
+                                            px-3
                                             mr-4
                                           `}
                                             autoComplete="off"
@@ -1101,13 +1101,13 @@ export function AssistantEditor({
                                           <Field
                                             name={`starter_messages[${index}].message`}
                                             className={`
-                                              border 
-                                              border-border 
-                                              bg-background 
-                                              rounded 
-                                              w-full 
-                                              py-2 
-                                              px-3 
+                                              border
+                                              border-border
+                                              bg-background
+                                              rounded
+                                              w-full
+                                              py-2
+                                              px-3
                                               mr-4
                                           `}
                                             as="textarea"

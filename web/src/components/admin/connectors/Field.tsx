@@ -224,19 +224,19 @@ export function TextFormField({
           id={name}
           className={`
             ${small && "text-sm"}
-            border 
-            border-border 
+            border
+            border-border
             rounded-md
-            w-full 
-            py-2 
-            px-3 
+            w-full
+            py-2
+            px-3
             mt-1
-            placeholder:font-description 
-            placeholder:text-base 
-            placeholder:text-text-400
+            placeholder:font-description
+            placeholder:text-base
+            placeholder:text-neutral-600
             ${heightString}
             ${fontSize}
-            ${disabled ? " bg-background-strong" : " bg-white"}
+            ${disabled ? " bg-background-strong" : " bg-background-chatbar"}
             ${isCode ? " font-mono" : ""}
           `}
           disabled={disabled}
@@ -440,7 +440,7 @@ export const BooleanFormField = ({
           checked={checked !== undefined ? checked : field.value}
           disabled={disabled}
           onChange={handleChange}
-          className={`${removeIndent ? "mr-2" : "mx-3"}     
+          className={`${removeIndent ? "mr-2" : "mx-3"}
               px-5 w-3.5 h-3.5 ${alignTop ? "mt-1" : "my-auto"}`}
         />
         {!noLabel && (
@@ -508,13 +508,13 @@ export function TextArrayField<T extends Yup.AnyObject>({
                       name={`${name}.${index}`}
                       id={name}
                       className={`
-                      border 
-                      border-border 
-                      bg-background 
-                      rounded 
-                      w-full 
-                      py-2 
-                      px-3 
+                      border
+                      border-border
+                      bg-background
+                      rounded
+                      w-full
+                      py-2
+                      px-3
                       mr-4
                       `}
                       // Disable autocomplete since the browser doesn't know how to handle an array of text fields
