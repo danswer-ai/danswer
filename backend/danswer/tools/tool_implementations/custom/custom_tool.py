@@ -15,7 +15,7 @@ from langchain_core.messages import SystemMessage
 from pydantic import BaseModel
 
 from danswer.configs.constants import FileOrigin
-from danswer.db.engine import get_session_with_tenant
+from danswer.db.engine import get_session_with_default_tenant
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import InMemoryChatFile
@@ -187,7 +187,7 @@ class CustomTool(BaseTool):
     def _save_and_get_file_references(
         self, file_content: bytes | str, content_type: str
     ) -> List[str]:
-        with get_session_with_tenant() as db_session:
+        with get_session_with_default_tenant() as db_session:
             file_store = get_default_file_store(db_session)
 
             file_id = str(uuid.uuid4())
@@ -299,7 +299,7 @@ class CustomTool(BaseTool):
 
         # Load files from storage
         files = []
-        with get_session_with_tenant() as db_session:
+        with get_session_with_default_tenant() as db_session:
             file_store = get_default_file_store(db_session)
 
             for file_id in response.tool_result.file_ids:
