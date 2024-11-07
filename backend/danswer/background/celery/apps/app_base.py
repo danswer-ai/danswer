@@ -11,11 +11,13 @@ from celery.states import READY_STATES
 from celery.utils.log import get_task_logger
 from celery.worker import strategy  # type: ignore
 from sentry_sdk.integrations.celery import CeleryIntegration
+from sqlalchemy import text
 
 from danswer.background.celery.apps.task_formatters import CeleryTaskColoredFormatter
 from danswer.background.celery.apps.task_formatters import CeleryTaskPlainFormatter
 from danswer.background.celery.celery_utils import celery_is_worker_primary
 from danswer.configs.constants import DanswerRedisLocks
+from danswer.db.engine import SqlEngine
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
@@ -145,7 +147,7 @@ def wait_for_redis(sender: Any, **kwargs: Any) -> None:
     WAIT_LIMIT = 60
 
     time_start = time.monotonic()
-    logger.info("Redis: Readiness check starting.")
+    logger.info("Redis: Readiness probe starting.")
     while True:
         try:
             if r.ping():
@@ -155,11 +157,11 @@ def wait_for_redis(sender: Any, **kwargs: Any) -> None:
 
         time_elapsed = time.monotonic() - time_start
         logger.info(
-            f"Redis: Ping failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+            f"Redis: Readiness probe failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
         )
         if time_elapsed > WAIT_LIMIT:
             msg = (
-                f"Redis: Readiness check did not succeed within the timeout "
+                f"Redis: Readiness probe did not succeed within the timeout "
                 f"({WAIT_LIMIT} seconds). Exiting..."
             )
             logger.error(msg)
@@ -167,7 +169,40 @@ def wait_for_redis(sender: Any, **kwargs: Any) -> None:
 
         time.sleep(WAIT_INTERVAL)
 
-    logger.info("Redis: Readiness check succeeded. Continuing...")
+    logger.info("Redis: Readiness probe succeeded. Continuing...")
+    return
+
+
+def wait_for_db(sender: Any, **kwargs: Any) -> None:
+    WAIT_INTERVAL = 5
+    WAIT_LIMIT = 60
+
+    time_start = time.monotonic()
+    logger.info("Database: Readiness probe starting.")
+    while True:
+        try:
+            with SqlEngine.get_engine() as db_session:
+                result = db_session.execute(text("SELECT NOW()")).scalar()
+                if result:
+                    break
+        except Exception:
+            pass
+
+        time_elapsed = time.monotonic() - time_start
+        logger.info(
+            f"Database: Readiness probe failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        )
+        if time_elapsed > WAIT_LIMIT:
+            msg = (
+                f"Database: Readiness probe did not succeed within the timeout "
+                f"({WAIT_LIMIT} seconds). Exiting..."
+            )
+            logger.error(msg)
+            raise WorkerShutdown(msg)
+
+        time.sleep(WAIT_INTERVAL)
+
+    logger.info("Database: Readiness probe succeeded. Continuing...")
     return
 
 
