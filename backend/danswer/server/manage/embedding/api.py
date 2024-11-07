@@ -35,7 +35,6 @@ def test_embedding_configuration(
     test_llm_request: TestEmbeddingRequest,
     _: User | None = Depends(current_admin_user),
 ) -> None:
-    print("test_llm_request: ", test_llm_request.__dict__)
     try:
         test_model = EmbeddingModel(
             server_host=MODEL_SERVER_HOST,
