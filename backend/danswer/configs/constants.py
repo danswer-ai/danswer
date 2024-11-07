@@ -80,6 +80,8 @@ CELERY_INDEXING_LOCK_TIMEOUT = 60 * 60  # 60 min
 # if we can get callbacks as object bytes download, we could lower this a lot.
 CELERY_PRUNING_LOCK_TIMEOUT = 300  # 5 min
 
+CELERY_PERMISSIONS_SYNC_LOCK_TIMEOUT = 300  # 5 min
+
 DANSWER_REDIS_FUNCTION_LOCK_PREFIX = "da_function_lock:"
 
 
@@ -212,6 +214,7 @@ class DanswerCeleryQueues:
     CONNECTOR_DELETION = "connector_deletion"
     CONNECTOR_PRUNING = "connector_pruning"
     CONNECTOR_INDEXING = "connector_indexing"
+    CONNECTOR_DOC_PERMISSIONS_SYNC = "connector_doc_permissions_sync"
 
 
 class DanswerRedisLocks:
@@ -220,6 +223,9 @@ class DanswerRedisLocks:
     CHECK_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:check_connector_deletion_beat"
     CHECK_PRUNE_BEAT_LOCK = "da_lock:check_prune_beat"
     CHECK_INDEXING_BEAT_LOCK = "da_lock:check_indexing_beat"
+    CHECK_CONNECTOR_DOC_PERMISSIONS_SYNC_BEAT_LOCK = (
+        "da_lock:check_connector_doc_permissions_sync_beat"
+    )
     MONITOR_VESPA_SYNC_BEAT_LOCK = "da_lock:monitor_vespa_sync_beat"
 
     PRUNING_LOCK_PREFIX = "da_lock:pruning"

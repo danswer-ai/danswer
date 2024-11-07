@@ -35,20 +35,17 @@ from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_paginated_index_attempts_for_cc_pair_id
 from danswer.db.models import User
 from danswer.db.search_settings import get_current_search_settings
-from danswer.db.tasks import check_task_is_live_and_not_timed_out
-from danswer.db.tasks import get_latest_task
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import CCStatusUpdateRequest
-from danswer.server.documents.models import CeleryTaskStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
 from danswer.server.documents.models import PaginatedIndexAttempts
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from ee.danswer.background.task_name_builders import (
-    name_sync_external_doc_permissions_task,
+from ee.danswer.background.celery.tasks.permissions.tasks import (
+    try_creating_permissions_sync_task,
 )
 from ee.danswer.db.user_group import validate_user_creation_permissions
 
@@ -294,7 +291,7 @@ def get_cc_pair_latest_sync(
     cc_pair_id: int,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
-) -> CeleryTaskStatus:
+) -> datetime | None:
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id=cc_pair_id,
         db_session=db_session,
@@ -304,25 +301,10 @@ def get_cc_pair_latest_sync(
     if not cc_pair:
         raise HTTPException(
             status_code=400,
-            detail="Connection not found for current user's permissions",
+            detail="cc_pair not found for current user's permissions",
         )
 
-    # look up the last sync task for this connector (if it exists)
-    sync_task_name = name_sync_external_doc_permissions_task(cc_pair_id=cc_pair_id)
-    last_sync_task = get_latest_task(sync_task_name, db_session)
-    if not last_sync_task:
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND,
-            detail="No sync task found.",
-        )
-
-    return CeleryTaskStatus(
-        id=last_sync_task.task_id,
-        name=last_sync_task.task_name,
-        status=last_sync_task.status,
-        start_time=last_sync_task.start_time,
-        register_time=last_sync_task.register_time,
-    )
+    return cc_pair.last_time_perm_sync
 
 
 @router.post("/admin/cc-pair/{cc_pair_id}/sync")
@@ -330,11 +312,9 @@ def sync_cc_pair(
     cc_pair_id: int,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> StatusResponse[list[int]]:
-    # avoiding circular refs
-    from ee.danswer.background.celery.apps.primary import (
-        sync_external_doc_permissions_task,
-    )
+    """Triggers permissions sync on a particular cc_pair immediately"""
 
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id=cc_pair_id,
@@ -348,27 +328,33 @@ def sync_cc_pair(
             detail="Connection not found for current user's permissions",
         )
 
-    sync_task_name = name_sync_external_doc_permissions_task(cc_pair_id=cc_pair_id)
-    last_sync_task = get_latest_task(sync_task_name, db_session)
+    r = get_redis_client(tenant_id=tenant_id)
 
-    if last_sync_task and check_task_is_live_and_not_timed_out(
-        last_sync_task, db_session
-    ):
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    if redis_connector.permissions.fenced:
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
-            detail="Sync task already in progress.",
+            detail="Pruning task already in progress.",
         )
 
-    logger.info(f"Syncing the {cc_pair.connector.name} connector.")
-    sync_external_doc_permissions_task.apply_async(
-        kwargs=dict(
-            cc_pair_id=cc_pair_id, tenant_id=CURRENT_TENANT_ID_CONTEXTVAR.get()
-        ),
+    logger.info(
+        f"permissions sync cc_pair: cc_pair_id={cc_pair_id} "
+        f"connector_id={cc_pair.connector_id} "
+        f"credential_id={cc_pair.credential_id} "
+        f"{cc_pair.connector.name} connector."
     )
+    tasks_created = try_creating_permissions_sync_task(
+        primary_app, cc_pair, r, CURRENT_TENANT_ID_CONTEXTVAR.get()
+    )
+    if not tasks_created:
+        raise HTTPException(
+            status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+            detail="Permissions sync task creation failed.",
+        )
 
     return StatusResponse(
         success=True,
-        message="Successfully created the sync task.",
+        message="Successfully created the permissions sync task.",
     )
 
 

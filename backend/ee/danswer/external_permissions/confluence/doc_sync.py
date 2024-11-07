@@ -4,17 +4,14 @@ https://confluence.atlassian.com/conf85/check-who-can-view-a-page-1283360557.htm
 """
 from typing import Any
 
-from sqlalchemy.orm import Session
-
+from danswer.access.models import DocumentExternalAccess
 from danswer.access.models import ExternalAccess
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
 from danswer.connectors.confluence.utils import get_user_email_from_username__server
 from danswer.connectors.models import SlimDocument
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.document import upsert_document_external_perms__no_commit
 
 logger = setup_logger()
 
@@ -190,12 +187,12 @@ def _fetch_all_page_restrictions_for_space(
     confluence_client: OnyxConfluence,
     slim_docs: list[SlimDocument],
     space_permissions_by_space_key: dict[str, ExternalAccess],
-) -> dict[str, ExternalAccess]:
+) -> list[DocumentExternalAccess]:
     """
     For all pages, if a page has restrictions, then use those restrictions.
     Otherwise, use the space's restrictions.
     """
-    document_restrictions: dict[str, ExternalAccess] = {}
+    document_restrictions: list[DocumentExternalAccess] = []
 
     for slim_doc in slim_docs:
         if slim_doc.perm_sync_data is None:
@@ -207,11 +204,21 @@ def _fetch_all_page_restrictions_for_space(
             restrictions=slim_doc.perm_sync_data.get("restrictions", {}),
         )
         if restrictions:
-            document_restrictions[slim_doc.id] = restrictions
+            document_restrictions.append(
+                DocumentExternalAccess(
+                    doc_id=slim_doc.id,
+                    external_access=restrictions,
+                )
+            )
         else:
             space_key = slim_doc.perm_sync_data.get("space_key")
             if space_permissions := space_permissions_by_space_key.get(space_key):
-                document_restrictions[slim_doc.id] = space_permissions
+                document_restrictions.append(
+                    DocumentExternalAccess(
+                        doc_id=slim_doc.id,
+                        external_access=space_permissions,
+                    )
+                )
             else:
                 logger.warning(f"No permissions found for document {slim_doc.id}")
 
@@ -219,9 +226,8 @@ def _fetch_all_page_restrictions_for_space(
 
 
 def confluence_doc_sync(
-    db_session: Session,
     cc_pair: ConnectorCredentialPair,
-) -> None:
+) -> list[DocumentExternalAccess]:
     """
     Adds the external permissions to the documents in postgres
     if the document doesn't already exists in postgres, we create
@@ -247,20 +253,8 @@ def confluence_doc_sync(
     for doc_batch in confluence_connector.retrieve_all_slim_documents():
         slim_docs.extend(doc_batch)
 
-    permissions_by_doc_id = _fetch_all_page_restrictions_for_space(
+    return _fetch_all_page_restrictions_for_space(
         confluence_client=confluence_client,
         slim_docs=slim_docs,
         space_permissions_by_space_key=space_permissions_by_space_key,
     )
-
-    all_emails = set()
-    for doc_id, page_specific_access in permissions_by_doc_id.items():
-        upsert_document_external_perms__no_commit(
-            db_session=db_session,
-            doc_id=doc_id,
-            external_access=page_specific_access,
-            source_type=cc_pair.connector.source,
-        )
-        all_emails.update(page_specific_access.external_user_emails)
-
-    batch_add_non_web_user_if_not_exists__no_commit(db_session, list(all_emails))

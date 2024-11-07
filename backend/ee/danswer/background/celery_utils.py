@@ -9,19 +9,13 @@ from danswer.db.tasks import check_task_is_live_and_not_timed_out
 from danswer.db.tasks import get_latest_task
 from danswer.utils.logger import setup_logger
 from ee.danswer.background.task_name_builders import name_chat_ttl_task
-from ee.danswer.background.task_name_builders import (
-    name_sync_external_doc_permissions_task,
-)
-from ee.danswer.background.task_name_builders import (
-    name_sync_external_group_permissions_task,
-)
-from ee.danswer.external_permissions.sync_params import PERMISSION_SYNC_PERIODS
+from ee.danswer.external_permissions.sync_params import DOC_PERMISSION_SYNC_PERIODS
 
 logger = setup_logger()
 
 
 def _is_time_to_run_sync(cc_pair: ConnectorCredentialPair) -> bool:
-    source_sync_period = PERMISSION_SYNC_PERIODS.get(cc_pair.connector.source)
+    source_sync_period = DOC_PERMISSION_SYNC_PERIODS.get(cc_pair.connector.source)
 
     # If RESTRICTED_FETCH_PERIOD[source] is None, we always run the sync.
     if not source_sync_period:
@@ -59,35 +53,14 @@ def should_perform_chat_ttl_check(
     return True
 
 
-def should_perform_external_doc_permissions_check(
-    cc_pair: ConnectorCredentialPair, db_session: Session
-) -> bool:
-    if cc_pair.access_type != AccessType.SYNC:
-        return False
-
-    task_name = name_sync_external_doc_permissions_task(cc_pair_id=cc_pair.id)
-
-    latest_task = get_latest_task(task_name, db_session)
-    if not latest_task:
-        return True
-
-    if check_task_is_live_and_not_timed_out(latest_task, db_session):
-        logger.debug(f"{task_name} is already being performed. Skipping.")
-        return False
-
-    if not _is_time_to_run_sync(cc_pair):
-        return False
-
-    return True
-
-
 def should_perform_external_group_permissions_check(
     cc_pair: ConnectorCredentialPair, db_session: Session
 ) -> bool:
     if cc_pair.access_type != AccessType.SYNC:
         return False
 
-    task_name = name_sync_external_group_permissions_task(cc_pair_id=cc_pair.id)
+    # task_name = name_sync_external_group_permissions_task(cc_pair_id=cc_pair.id)
+    task_name = ""
 
     latest_task = get_latest_task(task_name, db_session)
     if not latest_task:

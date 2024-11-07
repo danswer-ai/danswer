@@ -41,6 +41,12 @@ tasks_to_schedule = [
         "schedule": timedelta(seconds=5),
         "options": {"priority": DanswerCeleryPriority.HIGH},
     },
+    {
+        "name": "check-for-doc-permissions-sync",
+        "task": "check_for_doc_permissions_sync",
+        "schedule": timedelta(seconds=10),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
 ]
 
 

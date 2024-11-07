@@ -17,6 +17,13 @@ class ExternalAccess:
 
 
 @dataclass(frozen=True)
+class DocumentExternalAccess:
+    external_access: ExternalAccess
+    # The document ID
+    doc_id: str
+
+
+@dataclass(frozen=True)
 class DocumentAccess(ExternalAccess):
     # User emails for Danswer users, None indicates admin
     user_emails: set[str | None]

@@ -21,6 +21,10 @@ pruning_ctx: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar(
     "pruning_ctx", default=dict()
 )
 
+external_doc_permissions_ctx: contextvars.ContextVar[
+    dict[str, Any]
+] = contextvars.ContextVar("external_doc_permissions_ctx", default=dict())
+
 
 class IndexAttemptSingleton:
     """Used to tell if this process is an indexing job, and if so what is the
@@ -69,6 +73,7 @@ class DanswerLoggingAdapter(logging.LoggerAdapter):
         index_attempt_id = IndexAttemptSingleton.get_index_attempt_id()
         cc_pair_id = IndexAttemptSingleton.get_connector_credential_pair_id()
 
+        external_doc_permissions_ctx_dict = external_doc_permissions_ctx.get()
         pruning_ctx_dict = pruning_ctx.get()
         if len(pruning_ctx_dict) > 0:
             if "request_id" in pruning_ctx_dict:
@@ -76,6 +81,9 @@ class DanswerLoggingAdapter(logging.LoggerAdapter):
 
             if "cc_pair_id" in pruning_ctx_dict:
                 msg = f"[CC Pair: {pruning_ctx_dict['cc_pair_id']}] {msg}"
+        elif len(external_doc_permissions_ctx_dict) > 0:
+            if "request_id" in external_doc_permissions_ctx_dict:
+                msg = f"[External Doc Permissions: {external_doc_permissions_ctx_dict['request_id']}] {msg}"
         else:
             if index_attempt_id is not None:
                 msg = f"[Index Attempt: {index_attempt_id}] {msg}"

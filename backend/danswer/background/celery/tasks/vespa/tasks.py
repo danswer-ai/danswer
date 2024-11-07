@@ -27,6 +27,7 @@ from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector import fetch_connector_by_id
+from danswer.db.connector import mark_ccpair_as_permissions_synced
 from danswer.db.connector import mark_ccpair_as_pruned
 from danswer.db.connector_credential_pair import add_deletion_failure_message
 from danswer.db.connector_credential_pair import (
@@ -58,6 +59,7 @@ from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
+from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorDocPermSyncs
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_document_set import RedisDocumentSet
@@ -546,6 +548,42 @@ def monitor_ccpair_pruning_taskset(
     redis_connector.prune.set_fence(False)
 
 
+def monitor_ccpair_permissions_taskset(
+    tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
+) -> None:
+    fence_key = key_bytes.decode("utf-8")
+    cc_pair_id_str = RedisConnector.get_id_from_fence_key(fence_key)
+    if cc_pair_id_str is None:
+        task_logger.warning(
+            f"monitor_ccpair_permissions_taskset: could not parse cc_pair_id from {fence_key}"
+        )
+        return
+
+    cc_pair_id = int(cc_pair_id_str)
+
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    if not redis_connector.permissions.fenced:
+        return
+
+    initial = redis_connector.permissions.generator_complete
+    if initial is None:
+        return
+
+    remaining = redis_connector.permissions.get_remaining()
+    task_logger.info(
+        f"Permissions sync progress: cc_pair={cc_pair_id} remaining={remaining} initial={initial}"
+    )
+    if remaining > 0:
+        return
+
+    mark_ccpair_as_permissions_synced(int(cc_pair_id), db_session)
+    task_logger.info(f"Successfully synced permissions for cc_pair={cc_pair_id}")
+
+    redis_connector.permissions.taskset_clear()
+    redis_connector.permissions.generator_clear()
+    redis_connector.permissions.set_fence(False)
+
+
 def monitor_ccpair_indexing_taskset(
     tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
@@ -740,6 +778,12 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
             lock_beat.reacquire()
             with get_session_with_tenant(tenant_id) as db_session:
                 monitor_ccpair_indexing_taskset(tenant_id, key_bytes, r, db_session)
+
+        lock_beat.reacquire()
+        for key_bytes in r.scan_iter(RedisConnectorDocPermSyncs.FENCE_PREFIX + "*"):
+            lock_beat.reacquire()
+            with get_session_with_tenant(tenant_id) as db_session:
+                monitor_ccpair_permissions_taskset(tenant_id, key_bytes, r, db_session)
 
         # uncomment for debugging if needed
         # r_celery = celery_app.broker_connection().channel().client

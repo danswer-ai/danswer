@@ -20,6 +20,7 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
 from danswer.db.engine import SqlEngine
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
+from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorDocPermSyncs
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_connector_stop import RedisConnectorStop
@@ -130,6 +131,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     RedisConnectorIndex.reset_all(r)
 
     RedisConnectorStop.reset_all(r)
+
+    RedisConnectorDocPermSyncs.reset_all(r)
 
 
 @worker_ready.connect

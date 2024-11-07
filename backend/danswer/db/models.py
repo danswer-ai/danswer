@@ -420,6 +420,9 @@ class ConnectorCredentialPair(Base):
     last_time_perm_sync: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    last_time_external_group_sync: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # Time finished, not used for calculating backend jobs which uses time started (created)
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
