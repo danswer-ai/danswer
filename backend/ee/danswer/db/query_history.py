@@ -30,7 +30,7 @@ def fetch_chat_sessions_eagerly_by_time(
     ]
 
     if initial_time:
-        filters.append(ChatSession.time_created < initial_time)
+        filters.append(ChatSession.time_created > initial_time)
 
     subquery = (
         db_session.query(ChatSession.id, ChatSession.time_created)

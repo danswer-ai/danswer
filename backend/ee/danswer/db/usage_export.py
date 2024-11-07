@@ -21,7 +21,7 @@ def get_empty_chat_messages_entries__paginated(
     period: tuple[datetime, datetime],
     limit: int | None = 500,
     initial_time: datetime | None = None,
-) -> list[ChatMessageSkeleton]:
+) -> tuple[int, list[ChatMessageSkeleton]]:
     chat_sessions = fetch_chat_sessions_eagerly_by_time(
         start=period[0],
         end=period[1],
@@ -53,8 +53,9 @@ def get_empty_chat_messages_entries__paginated(
                     time_sent=message.time_sent,
                 )
             )
-
-    return message_skeletons
+    if len(chat_sessions) == 0:
+        return None, []
+    return chat_sessions[0].time_created, message_skeletons
 
 
 def get_all_empty_chat_message_entries(
@@ -65,22 +66,20 @@ def get_all_empty_chat_message_entries(
     ind = 0
     while True:
         ind += 1
-        print(ind)
-        print(initial_time)
-        message_skeletons = get_empty_chat_messages_entries__paginated(
+
+        time_created, message_skeletons = get_empty_chat_messages_entries__paginated(
             db_session,
             period,
             initial_time=initial_time,
         )
-        print("length", len(message_skeletons))
+
         if not message_skeletons:
             return
 
         yield message_skeletons
 
         # Update initial_time for the next iteration
-        last_message = message_skeletons[-1]
-        initial_time = last_message.time_sent
+        initial_time = time_created
 
 
 def get_all_usage_reports(db_session: Session) -> list[UsageReportMetadata]:
