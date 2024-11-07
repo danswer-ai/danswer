@@ -142,42 +142,55 @@ def on_celeryd_init(sender: Any = None, conf: Any = None, **kwargs: Any) -> None
 
 
 def wait_for_redis(sender: Any, **kwargs: Any) -> None:
+    """Waits for redis to become ready subject to a hardcoded timeout.
+    Will raise WorkerShutdown to kill the celery worker if the timeout is reached."""
+
     r = get_redis_client(tenant_id=None)
 
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
 
+    ready = False
     time_start = time.monotonic()
     logger.info("Redis: Readiness probe starting.")
     while True:
         try:
             if r.ping():
+                ready = True
                 break
         except Exception:
             pass
 
         time_elapsed = time.monotonic() - time_start
-        logger.info(
-            f"Redis: Readiness probe failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
-        )
         if time_elapsed > WAIT_LIMIT:
-            msg = (
-                f"Redis: Readiness probe did not succeed within the timeout "
-                f"({WAIT_LIMIT} seconds). Exiting..."
-            )
-            logger.error(msg)
-            raise WorkerShutdown(msg)
+            break
+
+        logger.info(
+            f"Redis: Readiness probe ongoing. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        )
 
         time.sleep(WAIT_INTERVAL)
+
+    if not ready:
+        msg = (
+            f"Redis: Readiness probe did not succeed within the timeout "
+            f"({WAIT_LIMIT} seconds). Exiting..."
+        )
+        logger.error(msg)
+        raise WorkerShutdown(msg)
 
     logger.info("Redis: Readiness probe succeeded. Continuing...")
     return
 
 
 def wait_for_db(sender: Any, **kwargs: Any) -> None:
+    """Waits for the db to become ready subject to a hardcoded timeout.
+    Will raise WorkerShutdown to kill the celery worker if the timeout is reached."""
+
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
 
+    ready = False
     time_start = time.monotonic()
     logger.info("Database: Readiness probe starting.")
     while True:
@@ -185,23 +198,28 @@ def wait_for_db(sender: Any, **kwargs: Any) -> None:
             with Session(get_sqlalchemy_engine()) as db_session:
                 result = db_session.execute(text("SELECT NOW()")).scalar()
                 if result:
+                    ready = True
                     break
         except Exception:
             pass
 
         time_elapsed = time.monotonic() - time_start
-        logger.info(
-            f"Database: Readiness probe failed. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
-        )
         if time_elapsed > WAIT_LIMIT:
-            msg = (
-                f"Database: Readiness probe did not succeed within the timeout "
-                f"({WAIT_LIMIT} seconds). Exiting..."
-            )
-            logger.error(msg)
-            raise WorkerShutdown(msg)
+            break
+
+        logger.info(
+            f"Database: Readiness probe ongoing. elapsed={time_elapsed:.1f} timeout={WAIT_LIMIT:.1f}"
+        )
 
         time.sleep(WAIT_INTERVAL)
+
+    if not ready:
+        msg = (
+            f"Database: Readiness probe did not succeed within the timeout "
+            f"({WAIT_LIMIT} seconds). Exiting..."
+        )
+        logger.error(msg)
+        raise WorkerShutdown(msg)
 
     logger.info("Database: Readiness probe succeeded. Continuing...")
     return
