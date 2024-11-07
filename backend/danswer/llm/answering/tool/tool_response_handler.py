@@ -182,15 +182,6 @@ class ToolResponseHandler:
             or self.tool_kickoff is None
             or self.tool_final_result is None
         ):
-            if self.tool_runner is None:
-                print("tool runner is none")
-            if self.tool_call_summary is None:
-                print("tool call summary is none")
-            if self.tool_kickoff is None:
-                print("tool kickoff is none")
-            if self.tool_final_result is None:
-                print("tool final result is none")
-
             return None
 
         tool_runner = self.tool_runner

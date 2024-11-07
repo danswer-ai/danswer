@@ -375,6 +375,8 @@ class DefaultMultiLLM(LLM):
             yield self.invoke(prompt, tools, tool_choice, structured_response_format)
             return
 
+        print("------------------\n\nPROMPT\n\n\n")
+        print(prompt)
         output = None
         response = cast(
             litellm.CustomStreamWrapper,

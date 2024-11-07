@@ -67,7 +67,6 @@ class LLMResponseHandlerManager:
     ) -> Generator[ResponsePart, None, None]:
         all_messages: list[BaseMessage] = []
         for message in stream:
-            print(message)
             if self.is_cancelled():
                 yield StreamStopInfo(stop_reason=StreamStopReason.CANCELLED)
                 return
