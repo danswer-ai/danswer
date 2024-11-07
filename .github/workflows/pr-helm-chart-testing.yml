@@ -64,6 +64,6 @@ jobs:
 
     - name: Run chart-testing (install)
 #       if: steps.list-changed.outputs.changed == 'true'
-      run: ct install --all --debug --config ct.yaml
+      run: ct install --all --helm-extra-set-args="--set=nginx.enabled=false" --debug --config ct.yaml
 #       run: ct install --target-branch ${{ github.event.repository.default_branch }}
       
