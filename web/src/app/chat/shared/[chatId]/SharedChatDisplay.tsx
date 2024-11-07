@@ -17,6 +17,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button } from "@/components/ui/button";
+import { usePopup } from "@/components/admin/connectors/Popup";
 
 function BackToDanswerButton() {
   const router = useRouter();
@@ -57,6 +58,7 @@ export function SharedChatDisplay({
       </div>
     );
   }
+  const { popup, setPopup } = usePopup();
 
   const messages = buildLatestMessageChain(
     processRawChatHistory(chatSession.messages)
@@ -64,6 +66,7 @@ export function SharedChatDisplay({
 
   return (
     <div className="w-full h-[100dvh] overflow-hidden">
+      {popup}
       <div className="flex max-h-full overflow-hidden pb-[72px]">
         <div className="flex w-full overflow-hidden overflow-y-scroll">
           <div className="w-full h-full flex-col flex max-w-message-max mx-auto">
@@ -93,6 +96,7 @@ export function SharedChatDisplay({
                   } else {
                     return (
                       <AIMessage
+                        setPopup={setPopup}
                         shared
                         currentPersona={persona}
                         key={message.messageId}

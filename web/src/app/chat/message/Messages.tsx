@@ -62,6 +62,7 @@ import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
 import { extractCodeText } from "./codeUtils";
 import ToolResult from "../../../components/tools/ToolResult";
 import CsvContent from "../../../components/tools/CSVContent";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -153,6 +154,9 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
+  setPopup,
+  hasChildAI,
+  hasParentAI,
   regenerate,
   overriddenModel,
   continueGenerating,
@@ -179,6 +183,9 @@ export const AIMessage = ({
   otherMessagesCanSwitchTo,
   onMessageSelection,
 }: {
+  setPopup?: (popupSpec: PopupSpec | null) => void;
+  hasChildAI?: boolean;
+  hasParentAI?: boolean;
   shared?: boolean;
   isActive?: boolean;
   continueGenerating?: () => void;
@@ -226,6 +233,13 @@ export const AIMessage = ({
       if (!lastMatch.endsWith("```")) {
         return content;
       }
+    }
+    if (
+      isComplete &&
+      toolCall?.tool_result &&
+      toolCall.tool_name == IMAGE_GENERATION_TOOL_NAME
+    ) {
+      return content + ` [${toolCall.tool_name}]()`;
     }
 
     return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
@@ -296,7 +310,9 @@ export const AIMessage = ({
 
   const markdownComponents = useMemo(
     () => ({
-      a: MemoizedLink,
+      a: (props: any) => (
+        <MemoizedLink {...props} toolCall={toolCall} setPopup={setPopup} />
+      ),
       p: MemoizedParagraph,
       code: ({ node, className, children, ...props }: any) => {
         const codeText = extractCodeText(
@@ -312,7 +328,7 @@ export const AIMessage = ({
         );
       },
     }),
-    [finalContent]
+    [finalContent, toolCall]
   );
 
   const renderedMarkdown = useMemo(() => {
@@ -338,7 +354,7 @@ export const AIMessage = ({
     <div
       id="danswer-ai-message"
       ref={trackedElementRef}
-      className={"py-5 ml-4 px-5 relative flex "}
+      className={`${hasParentAI ? "pb-5" : "py-5"} px-2 lg:px-5 relative flex `}
     >
       <div
         className={`mx-auto ${
@@ -347,10 +363,14 @@ export const AIMessage = ({
       >
         <div className={`desktop:mr-12 ${!shared && "mobile:ml-0 md:ml-8"}`}>
           <div className="flex">
-            <AssistantIcon
-              size="small"
-              assistant={alternativeAssistant || currentPersona}
-            />
+            {!hasParentAI ? (
+              <AssistantIcon
+                size="small"
+                assistant={alternativeAssistant || currentPersona}
+              />
+            ) : (
+              <div className="w-6" />
+            )}
 
             <div className="w-full">
               <div className="max-w-message-max break-words">
@@ -514,7 +534,8 @@ export const AIMessage = ({
                     )}
                   </div>
 
-                  {handleFeedback &&
+                  {!hasChildAI &&
+                    handleFeedback &&
                     (isActive ? (
                       <div
                         className={`

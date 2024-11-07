@@ -131,8 +131,6 @@ export function ChatPage({
 
   const {
     chatSessions,
-    availableSources,
-    availableDocumentSets,
     llmProviders,
     folders,
     openedFolders,
@@ -2173,6 +2171,25 @@ export function ChatPage({
                                 ) {
                                   return <></>;
                                 }
+                                const mostRecentNonAIParent = messageHistory
+                                  .slice(0, i)
+                                  .reverse()
+                                  .find((msg) => msg.type !== "assistant");
+
+                                const hasChildMessage =
+                                  message.latestChildMessageId !== null &&
+                                  message.latestChildMessageId !== undefined;
+                                const childMessage = hasChildMessage
+                                  ? messageMap.get(
+                                      message.latestChildMessageId!
+                                    )
+                                  : null;
+
+                                const hasParentAI =
+                                  parentMessage?.type == "assistant";
+                                const hasChildAI =
+                                  childMessage?.type == "assistant";
+
                                 return (
                                   <div
                                     id={`message-${message.messageId}`}
@@ -2184,6 +2201,9 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      setPopup={setPopup}
+                                      hasChildAI={hasChildAI}
+                                      hasParentAI={hasParentAI}
                                       continueGenerating={
                                         i == messageHistory.length - 1 &&
                                         currentCanContinue()
@@ -2193,7 +2213,7 @@ export function ChatPage({
                                       overriddenModel={message.overridden_model}
                                       regenerate={createRegenerator({
                                         messageId: message.messageId,
-                                        parentMessage: parentMessage!,
+                                        parentMessage: mostRecentNonAIParent!,
                                       })}
                                       otherMessagesCanSwitchTo={
                                         parentMessage?.childrenMessageIds || []
@@ -2340,6 +2360,7 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <AIMessage
+                                      setPopup={setPopup}
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
                                       content={
@@ -2382,6 +2403,7 @@ export function ChatPage({
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                               >
                                 <AIMessage
+                                  setPopup={setPopup}
                                   key={-3}
                                   currentPersona={liveAssistant}
                                   alternativeAssistant={
@@ -2406,6 +2428,7 @@ export function ChatPage({
                             {loadingError && (
                               <div key={-1}>
                                 <AIMessage
+                                  setPopup={setPopup}
                                   currentPersona={liveAssistant}
                                   messageId={-1}
                                   content={
