@@ -8,6 +8,6 @@ chart-repos:
   - vespa=https://danswer-ai.github.io/vespa-helm-charts
   - postgresql=https://charts.bitnami.com/bitnami
   
-helm-extra-args: --debug --timeout 600s
+helm-extra-args: --set nginx.enabled=false --debug --timeout 600s
 
 validate-maintainers: false
