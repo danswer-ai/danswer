@@ -582,6 +582,7 @@ def get_feedback_visibility() -> FeedbackVisibility:
 
 
 class TenantSocketModeClient(SocketModeClient):
-    def __init__(self, tenant_id: str | None, *args: Any, **kwargs: Any):
+    def __init__(self, tenant_id: str | None, app_id: int, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.tenant_id = tenant_id
+        self.app_id = app_id
