@@ -133,12 +133,24 @@ def _check_tokenizer_cache(
     return _TOKENIZER_CACHE[id_tuple]
 
 
+_DEFAULT_TOKENIZER: BaseTokenizer = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
+
+
 def get_tokenizer(
     model_name: str | None, provider_type: EmbeddingProvider | str | None
 ) -> BaseTokenizer:
+    if isinstance(provider_type, EmbeddingProvider):
+        return _check_tokenizer_cache(provider_type, model_name)
+
     if isinstance(provider_type, str):
-        provider_type = EmbeddingProvider(provider_type)
-    return _check_tokenizer_cache(provider_type, model_name)
+        try:
+            provider_type = EmbeddingProvider(provider_type.upper())
+            return _check_tokenizer_cache(provider_type, model_name)
+        except ValueError:
+            pass
+
+    global _DEFAULT_TOKENIZER
+    return _DEFAULT_TOKENIZER
 
 
 def tokenizer_trim_content(
