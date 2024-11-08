@@ -1,14 +1,20 @@
 import time
+from datetime import datetime
 from typing import cast
 from uuid import uuid4
 
 import redis
 from celery import Celery
+from pydantic import BaseModel
 
 from danswer.access.models import DocExternalAccess
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
+
+
+class RedisConnectorDocPermSyncFenceData(BaseModel):
+    started: datetime
 
 
 class RedisConnectorDocPermSync:
@@ -67,13 +73,32 @@ class RedisConnectorDocPermSync:
     def fenced(self) -> bool:
         if self.redis.exists(self.fence_key):
             return True
+
         return False
 
-    def set_fence(self, value: bool) -> None:
-        if not value:
+    @property
+    def payload(self) -> RedisConnectorDocPermSyncFenceData | None:
+        # read related data and evaluate/print task progress
+        fence_bytes = cast(bytes, self.redis.get(self.fence_key))
+        if fence_bytes is None:
+            return None
+
+        fence_str = fence_bytes.decode("utf-8")
+        payload = RedisConnectorDocPermSyncFenceData.model_validate_json(
+            cast(str, fence_str)
+        )
+
+        return payload
+
+    def set_fence(
+        self,
+        payload: RedisConnectorDocPermSyncFenceData | None,
+    ) -> None:
+        if not payload:
             self.redis.delete(self.fence_key)
             return
-        self.redis.set(self.fence_key, 0)
+
+        self.redis.set(self.fence_key, payload.model_dump_json())
 
     @property
     def generator_complete(self) -> int | None:
@@ -82,7 +107,8 @@ class RedisConnectorDocPermSync:
         fence_bytes = self.redis.get(self.generator_complete_key)
         if fence_bytes is None:
             return None
-        fence_int = cast(int, fence_bytes)
+
+        fence_int = int(fence_bytes.decode())
         return fence_int
 
     @generator_complete.setter
@@ -92,6 +118,7 @@ class RedisConnectorDocPermSync:
         if payload is None:
             self.redis.delete(self.generator_complete_key)
             return
+
         self.redis.set(self.generator_complete_key, payload)
 
     def generate_tasks(
@@ -120,10 +147,10 @@ class RedisConnectorDocPermSync:
                 "update_external_document_permissions_task",
                 kwargs=dict(
                     tenant_id=self.tenant_id,
-                    document_external_access=doc_perm.to_dict(),
+                    serialized_doc_external_access=doc_perm.to_dict(),
                     source_string=source_string,
                 ),
-                queue=DanswerCeleryQueues.CONNECTOR_DOC_PERMISSIONS_SYNC,
+                queue=DanswerCeleryQueues.CONNECTOR_DOC_PERMISSIONS_UPSERT,
                 task_id=custom_task_id,
                 priority=DanswerCeleryPriority.MEDIUM,
             )

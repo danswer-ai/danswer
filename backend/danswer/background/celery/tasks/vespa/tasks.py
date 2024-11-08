@@ -60,6 +60,9 @@ from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
 from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorDocPermSync
+from danswer.redis.redis_connector_doc_perm_sync import (
+    RedisConnectorDocPermSyncFenceData,
+)
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_document_set import RedisDocumentSet
@@ -576,7 +579,12 @@ def monitor_ccpair_permissions_taskset(
     if remaining > 0:
         return
 
-    mark_ccpair_as_permissions_synced(int(cc_pair_id), db_session)
+    payload: RedisConnectorDocPermSyncFenceData | None = (
+        redis_connector.permissions.payload
+    )
+    start_time: datetime | None = payload.started if payload else None
+
+    mark_ccpair_as_permissions_synced(db_session, int(cc_pair_id), start_time)
     task_logger.info(f"Successfully synced permissions for cc_pair={cc_pair_id}")
 
     redis_connector.permissions.taskset_clear()
@@ -706,13 +714,17 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
         n_pruning = celery_get_queue_length(
             DanswerCeleryQueues.CONNECTOR_PRUNING, r_celery
         )
+        n_permissions_sync = celery_get_queue_length(
+            DanswerCeleryQueues.CONNECTOR_DOC_PERMISSIONS_SYNC, r_celery
+        )
 
         task_logger.info(
             f"Queue lengths: celery={n_celery} "
             f"indexing={n_indexing} "
             f"sync={n_sync} "
             f"deletion={n_deletion} "
-            f"pruning={n_pruning}"
+            f"pruning={n_pruning} "
+            f"permissions_sync={n_permissions_sync}"
         )
 
         # do some cleanup before clearing fences

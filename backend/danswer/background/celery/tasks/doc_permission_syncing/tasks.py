@@ -26,6 +26,9 @@ from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists
 from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector_doc_perm_sync import (
+    RedisConnectorDocPermSyncFenceData,
+)
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import external_doc_permissions_ctx
 from danswer.utils.logger import setup_logger
@@ -129,11 +132,6 @@ def try_creating_permissions_sync_task(
     Returns None if no syncing is required."""
     redis_connector = RedisConnector(tenant_id, cc_pair.id)
 
-    # if not ALLOW_SIMULTANEOUS_PRUNING:
-    # count = redis_connector.permissions.get_active_task_count()
-    # if count > 0:
-    #     return None
-
     LOCK_TIMEOUT = 30
 
     lock = r.lock(
@@ -174,7 +172,12 @@ def try_creating_permissions_sync_task(
             priority=DanswerCeleryPriority.HIGH,
         )
 
-        redis_connector.permissions.set_fence(True)
+        # set a basic fence to start
+        payload = RedisConnectorDocPermSyncFenceData(
+            started=None,
+        )
+
+        redis_connector.permissions.set_fence(payload)
         return 1
 
     except Exception:
@@ -240,6 +243,12 @@ def connector_permission_sync_generator_task(
                 raise ValueError(f"No doc sync func found for {source_type}")
 
             logger.info(f"Syncing docs for {source_type}")
+
+            payload = RedisConnectorDocPermSyncFenceData(
+                started=datetime.now(timezone.utc),
+            )
+            redis_connector.permissions.set_fence(payload)
+
             document_external_accesses: list[DocExternalAccess] = doc_sync_func(cc_pair)
 
             task_logger.info(
@@ -252,7 +261,7 @@ def connector_permission_sync_generator_task(
                 return None
 
             task_logger.info(
-                f"RedisConnector.prune.generate_tasks finished. "
+                f"RedisConnector.permissions.generate_tasks finished. "
                 f"cc_pair={cc_pair_id} tasks_generated={tasks_generated}"
             )
 
@@ -280,11 +289,11 @@ def connector_permission_sync_generator_task(
 def update_external_document_permissions_task(
     self: Task,
     tenant_id: str | None,
-    document_external_access_dict: dict,
+    serialized_doc_external_access: dict,
     source_string: str,
 ) -> bool:
     document_external_access = DocExternalAccess.from_dict(
-        document_external_access_dict
+        serialized_doc_external_access
     )
     doc_id = document_external_access.doc_id
     external_access = document_external_access.external_access
@@ -302,7 +311,7 @@ def update_external_document_permissions_task(
                 source_type=DocumentSource(source_string),
             )
 
-            logger.info(
+            logger.debug(
                 f"Successfully synced postgres document permissions for {doc_id}"
             )
         return True

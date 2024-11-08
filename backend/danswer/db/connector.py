@@ -284,7 +284,9 @@ def mark_ccpair_as_pruned(cc_pair_id: int, db_session: Session) -> None:
     db_session.commit()
 
 
-def mark_ccpair_as_permissions_synced(cc_pair_id: int, db_session: Session) -> None:
+def mark_ccpair_as_permissions_synced(
+    db_session: Session, cc_pair_id: int, start_time: datetime | None
+) -> None:
     stmt = select(ConnectorCredentialPair).where(
         ConnectorCredentialPair.id == cc_pair_id
     )
@@ -292,5 +294,5 @@ def mark_ccpair_as_permissions_synced(cc_pair_id: int, db_session: Session) -> N
     if cc_pair is None:
         raise ValueError(f"No cc_pair with ID: {cc_pair_id}")
 
-    cc_pair.last_time_perm_sync = datetime.now(timezone.utc)
+    cc_pair.last_time_perm_sync = start_time
     db_session.commit()

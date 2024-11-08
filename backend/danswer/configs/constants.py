@@ -215,6 +215,7 @@ class DanswerCeleryQueues:
     CONNECTOR_PRUNING = "connector_pruning"
     CONNECTOR_INDEXING = "connector_indexing"
     CONNECTOR_DOC_PERMISSIONS_SYNC = "connector_doc_permissions_sync"
+    CONNECTOR_DOC_PERMISSIONS_UPSERT = "connector_doc_permissions_upsert"
 
 
 class DanswerRedisLocks:
