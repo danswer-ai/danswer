@@ -5,6 +5,7 @@ import {
   TableHead,
   TableBody,
   TableCell,
+  TableHeader,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,12 @@ import {
   FiRefreshCw,
   FiPauseCircle,
 } from "react-icons/fi";
-import { Tooltip } from "@/components/tooltip/Tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { SourceIcon } from "@/components/SourceIcon";
 import { getSourceDisplayName } from "@/lib/sources";
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
@@ -76,21 +82,26 @@ function SummaryRow({
 
       <TableCell>
         <div className="text-sm text-gray-500">Active Connectors</div>
-        <Tooltip
-          content={`${summary.active} out of ${summary.count} connectors are active`}
-        >
-          <div className="flex items-center mt-1">
-            <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
-              <div
-                className="bg-green-500 h-2 rounded-full"
-                style={{ width: `${activePercentage}%` }}
-              ></div>
-            </div>
-            <span className="text-sm font-medium whitespace-nowrap">
-              {summary.active} ({activePercentage.toFixed(0)}%)
-            </span>
-          </div>
-        </Tooltip>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center mt-1">
+                <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
+                  <div
+                    className="bg-green-500 h-2 rounded-full"
+                    style={{ width: `${activePercentage}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm font-medium whitespace-nowrap">
+                  {summary.active} ({activePercentage.toFixed(0)}%)
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {summary.active} out of {summary.count} connectors are active
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </TableCell>
 
       {isPaidEnterpriseFeaturesEnabled && (
@@ -167,7 +178,7 @@ function ConnectorRow({
         );
       case "not_started":
         return (
-          <Badge circle variant="secondary">
+          <Badge circle variant="purple">
             Scheduled
           </Badge>
         );
@@ -182,15 +193,15 @@ function ConnectorRow({
 
   return (
     <TableRow
-      className={`border hover:bg-hover-light ${
+      className={`hover:bg-hover-light ${
         invisible ? "invisible !h-0 !-mb-10" : "!border !border-border"
       }  w-full cursor-pointer relative `}
       onClick={() => {
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
       }}
     >
-      <TableCell className="!w-[300px]">
-        <p className="w-[200px] xl:w-[400px] inline-block ellipsis truncate">
+      <TableCell className="">
+        <p className="lg:w-[200px] xl:w-[400px] inline-block ellipsis truncate">
           {ccPairsIndexingStatus.name}
         </p>
       </TableCell>
@@ -201,21 +212,19 @@ function ConnectorRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell>
           {ccPairsIndexingStatus.access_type === "public" ? (
-            <Badge variant="success" icon={FiUnlock}>
+            <Badge variant={isEditable ? "success" : "default"} icon={FiUnlock}>
               Public
             </Badge>
           ) : ccPairsIndexingStatus.access_type === "sync" ? (
             <Badge
-              variant="outline"
-              color={isEditable ? "orange" : "gray"}
+              variant={isEditable ? "orange" : "default"}
               icon={FiRefreshCw}
             >
               Sync
             </Badge>
           ) : (
             <Badge
-              size="md"
-              variant={isEditable ? "outline" : "default"}
+              variant={isEditable ? "in_progress" : "default"}
               icon={FiLock}
             >
               Private
@@ -363,52 +372,54 @@ export function CCPairIndexingStatusTable({
 
   return (
     <Table>
-      <ConnectorRow
-        invisible
-        ccPairsIndexingStatus={{
-          cc_pair_id: 1,
-          name: "Sample File Connector",
-          cc_pair_status: ConnectorCredentialPairStatus.ACTIVE,
-          last_status: "success",
-          connector: {
+      <TableHeader>
+        <ConnectorRow
+          invisible
+          ccPairsIndexingStatus={{
+            cc_pair_id: 1,
             name: "Sample File Connector",
-            source: "file",
-            input_type: "poll",
-            connector_specific_config: {
-              file_locations: ["/path/to/sample/file.txt"],
+            cc_pair_status: ConnectorCredentialPairStatus.ACTIVE,
+            last_status: "success",
+            connector: {
+              name: "Sample File Connector",
+              source: "file",
+              input_type: "poll",
+              connector_specific_config: {
+                file_locations: ["/path/to/sample/file.txt"],
+              },
+              refresh_freq: 86400,
+              prune_freq: null,
+              indexing_start: new Date("2023-07-01T12:00:00Z"),
+              id: 1,
+              credential_ids: [],
+              time_created: "2023-07-01T12:00:00Z",
+              time_updated: "2023-07-01T12:00:00Z",
             },
-            refresh_freq: 86400,
-            prune_freq: null,
-            indexing_start: new Date("2023-07-01T12:00:00Z"),
-            id: 1,
-            credential_ids: [],
-            time_created: "2023-07-01T12:00:00Z",
-            time_updated: "2023-07-01T12:00:00Z",
-          },
-          credential: {
-            id: 1,
-            name: "Sample Credential",
-            source: "file",
-            user_id: "1",
-            time_created: "2023-07-01T12:00:00Z",
-            time_updated: "2023-07-01T12:00:00Z",
-            credential_json: {},
-            admin_public: false,
-          },
-          access_type: "public",
-          docs_indexed: 1000,
-          last_success: "2023-07-01T12:00:00Z",
-          last_finished_status: "success",
-          latest_index_attempt: null,
-          owner: "1",
-          error_msg: "",
-          deletion_attempt: null,
-          is_deletable: true,
-          in_progress: false,
-          groups: [], // Add this line
-        }}
-        isEditable={false}
-      />
+            credential: {
+              id: 1,
+              name: "Sample Credential",
+              source: "file",
+              user_id: "1",
+              time_created: "2023-07-01T12:00:00Z",
+              time_updated: "2023-07-01T12:00:00Z",
+              credential_json: {},
+              admin_public: false,
+            },
+            access_type: "public",
+            docs_indexed: 1000,
+            last_success: "2023-07-01T12:00:00Z",
+            last_finished_status: "success",
+            latest_index_attempt: null,
+            owner: "1",
+            error_msg: "",
+            deletion_attempt: null,
+            is_deletable: true,
+            in_progress: false,
+            groups: [], // Add this line
+          }}
+          isEditable={false}
+        />
+      </TableHeader>
       <div className="flex -mt-12 items-center w-0 m4 gap-x-2">
         <input
           type="text"
@@ -416,7 +427,7 @@ export function CCPairIndexingStatusTable({
           placeholder="Search connectors..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="ml-1 w-96 h-9 flex-none rounded-md border border-border bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="ml-1 w-96 h-9 flex-none rounded-md bg-background-50 px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
 
         <Button className="h-9" onClick={() => toggleSources()}>

@@ -22,35 +22,38 @@ from danswer.background.celery.versioned_apps.primary import app as primary_app
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
-from danswer.connectors.gmail.connector_auth import delete_gmail_service_account_key
-from danswer.connectors.gmail.connector_auth import delete_google_app_gmail_cred
-from danswer.connectors.gmail.connector_auth import get_gmail_auth_url
-from danswer.connectors.gmail.connector_auth import get_gmail_service_account_key
-from danswer.connectors.gmail.connector_auth import get_google_app_gmail_cred
-from danswer.connectors.gmail.connector_auth import (
-    update_gmail_credential_access_tokens,
+from danswer.connectors.google_utils.google_auth import (
+    get_google_oauth_creds,
 )
-from danswer.connectors.gmail.connector_auth import (
-    upsert_gmail_service_account_key,
+from danswer.connectors.google_utils.google_kv import (
+    build_service_account_creds,
 )
-from danswer.connectors.gmail.connector_auth import upsert_google_app_gmail_cred
-from danswer.connectors.google_drive.connector_auth import build_service_account_creds
-from danswer.connectors.google_drive.connector_auth import DB_CREDENTIALS_DICT_TOKEN_KEY
-from danswer.connectors.google_drive.connector_auth import delete_google_app_cred
-from danswer.connectors.google_drive.connector_auth import delete_service_account_key
-from danswer.connectors.google_drive.connector_auth import get_auth_url
-from danswer.connectors.google_drive.connector_auth import get_google_app_cred
-from danswer.connectors.google_drive.connector_auth import (
-    get_google_drive_creds_for_authorized_user,
+from danswer.connectors.google_utils.google_kv import (
+    delete_google_app_cred,
 )
-from danswer.connectors.google_drive.connector_auth import get_service_account_key
-from danswer.connectors.google_drive.connector_auth import GOOGLE_DRIVE_SCOPES
-from danswer.connectors.google_drive.connector_auth import (
+from danswer.connectors.google_utils.google_kv import (
+    delete_service_account_key,
+)
+from danswer.connectors.google_utils.google_kv import get_auth_url
+from danswer.connectors.google_utils.google_kv import (
+    get_google_app_cred,
+)
+from danswer.connectors.google_utils.google_kv import (
+    get_service_account_key,
+)
+from danswer.connectors.google_utils.google_kv import (
     update_credential_access_tokens,
 )
-from danswer.connectors.google_drive.connector_auth import upsert_google_app_cred
-from danswer.connectors.google_drive.connector_auth import upsert_service_account_key
-from danswer.connectors.google_drive.connector_auth import verify_csrf
+from danswer.connectors.google_utils.google_kv import (
+    upsert_google_app_cred,
+)
+from danswer.connectors.google_utils.google_kv import (
+    upsert_service_account_key,
+)
+from danswer.connectors.google_utils.google_kv import verify_csrf
+from danswer.connectors.google_utils.shared_constants import (
+    DB_CREDENTIALS_DICT_TOKEN_KEY,
+)
 from danswer.db.connector import create_connector
 from danswer.db.connector import delete_connector
 from danswer.db.connector import fetch_connector_by_id
@@ -64,8 +67,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.credentials import cleanup_gmail_credentials
 from danswer.db.credentials import cleanup_google_drive_credentials
 from danswer.db.credentials import create_credential
-from danswer.db.credentials import delete_gmail_service_account_credentials
-from danswer.db.credentials import delete_google_drive_service_account_credentials
+from danswer.db.credentials import delete_service_account_credentials
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
 from danswer.db.document import get_document_counts_for_cc_pairs
@@ -125,7 +127,7 @@ def check_google_app_gmail_credentials_exist(
     _: User = Depends(current_curator_or_admin_user),
 ) -> dict[str, str]:
     try:
-        return {"client_id": get_google_app_gmail_cred().web.client_id}
+        return {"client_id": get_google_app_cred(DocumentSource.GMAIL).web.client_id}
     except KvKeyNotFoundError:
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
@@ -135,7 +137,7 @@ def upsert_google_app_gmail_credentials(
     app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
     try:
-        upsert_google_app_gmail_cred(app_credentials)
+        upsert_google_app_cred(app_credentials, DocumentSource.GMAIL)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -150,7 +152,7 @@ def delete_google_app_gmail_credentials(
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
-        delete_google_app_gmail_cred()
+        delete_google_app_cred(DocumentSource.GMAIL)
         cleanup_gmail_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -165,7 +167,9 @@ def check_google_app_credentials_exist(
     _: User = Depends(current_curator_or_admin_user),
 ) -> dict[str, str]:
     try:
-        return {"client_id": get_google_app_cred().web.client_id}
+        return {
+            "client_id": get_google_app_cred(DocumentSource.GOOGLE_DRIVE).web.client_id
+        }
     except KvKeyNotFoundError:
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
@@ -175,7 +179,7 @@ def upsert_google_app_credentials(
     app_credentials: GoogleAppCredentials, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
     try:
-        upsert_google_app_cred(app_credentials)
+        upsert_google_app_cred(app_credentials, DocumentSource.GOOGLE_DRIVE)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -190,7 +194,7 @@ def delete_google_app_credentials(
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
-        delete_google_app_cred()
+        delete_google_app_cred(DocumentSource.GOOGLE_DRIVE)
         cleanup_google_drive_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -205,7 +209,11 @@ def check_google_service_gmail_account_key_exist(
     _: User = Depends(current_curator_or_admin_user),
 ) -> dict[str, str]:
     try:
-        return {"service_account_email": get_gmail_service_account_key().client_email}
+        return {
+            "service_account_email": get_service_account_key(
+                DocumentSource.GMAIL
+            ).client_email
+        }
     except KvKeyNotFoundError:
         raise HTTPException(
             status_code=404, detail="Google Service Account Key not found"
@@ -217,7 +225,7 @@ def upsert_google_service_gmail_account_key(
     service_account_key: GoogleServiceAccountKey, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
     try:
-        upsert_gmail_service_account_key(service_account_key)
+        upsert_service_account_key(service_account_key, DocumentSource.GMAIL)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -232,7 +240,7 @@ def delete_google_service_gmail_account_key(
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
-        delete_gmail_service_account_key()
+        delete_service_account_key(DocumentSource.GMAIL)
         cleanup_gmail_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -247,7 +255,11 @@ def check_google_service_account_key_exist(
     _: User = Depends(current_curator_or_admin_user),
 ) -> dict[str, str]:
     try:
-        return {"service_account_email": get_service_account_key().client_email}
+        return {
+            "service_account_email": get_service_account_key(
+                DocumentSource.GOOGLE_DRIVE
+            ).client_email
+        }
     except KvKeyNotFoundError:
         raise HTTPException(
             status_code=404, detail="Google Service Account Key not found"
@@ -259,7 +271,7 @@ def upsert_google_service_account_key(
     service_account_key: GoogleServiceAccountKey, _: User = Depends(current_admin_user)
 ) -> StatusResponse:
     try:
-        upsert_service_account_key(service_account_key)
+        upsert_service_account_key(service_account_key, DocumentSource.GOOGLE_DRIVE)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -274,7 +286,7 @@ def delete_google_service_account_key(
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     try:
-        delete_service_account_key()
+        delete_service_account_key(DocumentSource.GOOGLE_DRIVE)
         cleanup_google_drive_credentials(db_session=db_session)
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -296,13 +308,13 @@ def upsert_service_account_credential(
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GOOGLE_DRIVE,
-            primary_admin_email=service_account_credential_request.google_drive_primary_admin,
+            primary_admin_email=service_account_credential_request.google_primary_admin,
         )
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
-    delete_google_drive_service_account_credentials(user, db_session)
+    delete_service_account_credentials(user, db_session, DocumentSource.GOOGLE_DRIVE)
     # `user=None` since this credential is not a personal credential
     credential = create_credential(
         credential_data=credential_base, user=user, db_session=db_session
@@ -322,13 +334,13 @@ def upsert_gmail_service_account_credential(
     try:
         credential_base = build_service_account_creds(
             DocumentSource.GMAIL,
-            primary_admin_email=service_account_credential_request.gmail_delegated_user,
+            primary_admin_email=service_account_credential_request.google_primary_admin,
         )
     except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
-    delete_gmail_service_account_credentials(user, db_session)
+    delete_service_account_credentials(user, db_session, DocumentSource.GMAIL)
     # `user=None` since this credential is not a personal credential
     credential = create_credential(
         credential_data=credential_base, user=user, db_session=db_session
@@ -349,9 +361,9 @@ def check_drive_tokens(
     ):
         return AuthStatus(authenticated=False)
     token_json_str = str(db_credentials.credential_json[DB_CREDENTIALS_DICT_TOKEN_KEY])
-    google_drive_creds = get_google_drive_creds_for_authorized_user(
+    google_drive_creds = get_google_oauth_creds(
         token_json_str=token_json_str,
-        scopes=GOOGLE_DRIVE_SCOPES,
+        source=DocumentSource.GOOGLE_DRIVE,
     )
     if google_drive_creds is None:
         return AuthStatus(authenticated=False)
@@ -881,7 +893,7 @@ def gmail_auth(
         httponly=True,
         max_age=600,
     )
-    return AuthUrl(auth_url=get_gmail_auth_url(int(credential_id)))
+    return AuthUrl(auth_url=get_auth_url(int(credential_id), DocumentSource.GMAIL))
 
 
 @router.get("/connector/google-drive/authorize/{credential_id}")
@@ -895,7 +907,9 @@ def google_drive_auth(
         httponly=True,
         max_age=600,
     )
-    return AuthUrl(auth_url=get_auth_url(int(credential_id)))
+    return AuthUrl(
+        auth_url=get_auth_url(int(credential_id), DocumentSource.GOOGLE_DRIVE)
+    )
 
 
 @router.get("/connector/gmail/callback")
@@ -912,12 +926,10 @@ def gmail_callback(
         )
     credential_id = int(credential_id_cookie)
     verify_csrf(credential_id, callback.state)
-    if (
-        update_gmail_credential_access_tokens(
-            callback.code, credential_id, user, db_session
-        )
-        is None
-    ):
+    credentials: Credentials | None = update_credential_access_tokens(
+        callback.code, credential_id, user, db_session, DocumentSource.GMAIL
+    )
+    if credentials is None:
         raise HTTPException(
             status_code=500, detail="Unable to fetch Gmail access tokens"
         )
@@ -941,7 +953,7 @@ def google_drive_callback(
     verify_csrf(credential_id, callback.state)
 
     credentials: Credentials | None = update_credential_access_tokens(
-        callback.code, credential_id, user, db_session
+        callback.code, credential_id, user, db_session, DocumentSource.GOOGLE_DRIVE
     )
     if credentials is None:
         raise HTTPException(

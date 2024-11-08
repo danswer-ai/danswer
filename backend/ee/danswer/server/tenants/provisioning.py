@@ -10,9 +10,17 @@ from alembic.config import Config
 from danswer.db.engine import build_connection_string
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.engine import get_sqlalchemy_engine
+from danswer.db.llm import upsert_cloud_embedding_provider
+from danswer.db.llm import upsert_llm_provider
 from danswer.db.models import UserTenantMapping
+from danswer.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
+from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.utils.logger import setup_logger
+from ee.danswer.configs.app_configs import ANTHROPIC_DEFAULT_API_KEY
+from ee.danswer.configs.app_configs import COHERE_DEFAULT_API_KEY
+from ee.danswer.configs.app_configs import OPENAI_DEFAULT_API_KEY
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
+from shared_configs.enums import EmbeddingProvider
 
 logger = setup_logger()
 
@@ -50,6 +58,29 @@ def run_alembic_migrations(schema_name: str) -> None:
     except Exception as e:
         logger.exception(f"Alembic migration failed for schema {schema_name}: {str(e)}")
         raise
+
+
+def configure_default_api_keys(db_session: Session) -> None:
+    open_provider = LLMProviderUpsertRequest(
+        name="OpenAI",
+        provider="OpenAI",
+        api_key=OPENAI_DEFAULT_API_KEY,
+        default_model_name="gpt-4o",
+    )
+    anthropic_provider = LLMProviderUpsertRequest(
+        name="Anthropic",
+        provider="Anthropic",
+        api_key=ANTHROPIC_DEFAULT_API_KEY,
+        default_model_name="claude-3-5-sonnet-20240620",
+    )
+    upsert_llm_provider(open_provider, db_session)
+    upsert_llm_provider(anthropic_provider, db_session)
+
+    cloud_embedding_provider = CloudEmbeddingProviderCreationRequest(
+        provider_type=EmbeddingProvider.COHERE,
+        api_key=COHERE_DEFAULT_API_KEY,
+    )
+    upsert_cloud_embedding_provider(db_session, cloud_embedding_provider)
 
 
 def ensure_schema_exists(tenant_id: str) -> bool:

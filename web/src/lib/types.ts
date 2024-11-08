@@ -8,6 +8,7 @@ interface UserPreferences {
   visible_assistants: number[];
   hidden_assistants: number[];
   default_model: string | null;
+  recent_assistants: number[];
 }
 
 export enum UserStatus {
@@ -279,6 +280,7 @@ export type ConfigurableSources = Exclude<
 export const validAutoSyncSources = [
   "confluence",
   "google_drive",
+  "gmail",
   "slack",
 ] as const;
 export type ValidAutoSyncSources = (typeof validAutoSyncSources)[number];

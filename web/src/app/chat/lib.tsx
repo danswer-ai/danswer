@@ -12,7 +12,7 @@ import {
   ChatSession,
   DocumentsResponse,
   FileDescriptor,
-  ImageGenerationDisplay,
+  FileChatDisplay,
   Message,
   MessageResponseIDInfo,
   RetrievalType,
@@ -103,7 +103,7 @@ export type PacketType =
   | BackendMessage
   | AnswerPiecePacket
   | DocumentsResponse
-  | ImageGenerationDisplay
+  | FileChatDisplay
   | StreamingError
   | MessageResponseIDInfo
   | StreamStopInfo;
@@ -428,7 +428,7 @@ export function processRawChatHistory(
             citations: messageInfo?.citations || {},
           }
         : {}),
-      toolCalls: messageInfo.tool_calls,
+      toolCall: messageInfo.tool_call,
       parentMessageId: messageInfo.parent_message,
       childrenMessageIds: [],
       latestChildMessageId: messageInfo.latest_child_message,

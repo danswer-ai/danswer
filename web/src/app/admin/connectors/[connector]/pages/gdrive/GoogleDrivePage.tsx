@@ -101,12 +101,14 @@ const GDriveMain = ({}: {}) => {
     | Credential<GoogleDriveCredentialJson>
     | undefined = credentialsData.find(
     (credential) =>
-      credential.credential_json?.google_drive_tokens && credential.admin_public
+      credential.credential_json?.google_tokens &&
+      credential.admin_public &&
+      credential.source === "google_drive"
   );
   const googleDriveServiceAccountCredential:
     | Credential<GoogleDriveServiceAccountCredentialJson>
     | undefined = credentialsData.find(
-    (credential) => credential.credential_json?.google_drive_service_account_key
+    (credential) => credential.credential_json?.google_service_account_key
   );
 
   const googleDriveConnectorIndexingStatuses: ConnectorIndexingStatus<

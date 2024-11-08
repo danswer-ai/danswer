@@ -156,7 +156,7 @@ class QAResponse(SearchResponse, DanswerAnswer):
     error_msg: str | None = None
 
 
-class ImageGenerationDisplay(BaseModel):
+class FileChatDisplay(BaseModel):
     file_ids: list[str]
 
 
@@ -170,7 +170,7 @@ AnswerQuestionPossibleReturn = (
     | DanswerQuotes
     | CitationInfo
     | DanswerContexts
-    | ImageGenerationDisplay
+    | FileChatDisplay
     | CustomToolResponse
     | StreamingError
     | StreamStopInfo

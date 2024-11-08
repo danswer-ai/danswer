@@ -29,6 +29,7 @@ from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_SIZE
 from danswer.configs.app_configs import POSTGRES_DB
 from danswer.configs.app_configs import POSTGRES_HOST
+from danswer.configs.app_configs import POSTGRES_IDLE_SESSIONS_TIMEOUT
 from danswer.configs.app_configs import POSTGRES_PASSWORD
 from danswer.configs.app_configs import POSTGRES_POOL_PRE_PING
 from danswer.configs.app_configs import POSTGRES_POOL_RECYCLE
@@ -309,8 +310,12 @@ async def get_async_session_with_tenant(
         try:
             # Set the search_path to the tenant's schema
             await session.execute(text(f'SET search_path = "{tenant_id}"'))
-        except Exception as e:
-            logger.error(f"Error setting search_path: {str(e)}")
+            if POSTGRES_IDLE_SESSIONS_TIMEOUT:
+                await session.execute(
+                    f"SET SESSION idle_in_transaction_session_timeout = {POSTGRES_IDLE_SESSIONS_TIMEOUT}"
+                )
+        except Exception:
+            logger.exception("Error setting search_path.")
             # You can choose to re-raise the exception or handle it
             # Here, we'll re-raise to prevent proceeding with an incorrect session
             raise
@@ -319,23 +324,37 @@ async def get_async_session_with_tenant(
 
 
 @contextmanager
+def get_session_with_default_tenant() -> Generator[Session, None, None]:
+    """
+    Get a database session using the current tenant ID from the context variable.
+    """
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+    with get_session_with_tenant(tenant_id) as session:
+        yield session
+
+
+@contextmanager
 def get_session_with_tenant(
     tenant_id: str | None = None,
 ) -> Generator[Session, None, None]:
     """
-    Generate a database session bound to a connection with the appropriate tenant schema set.
-    This preserves the tenant ID across the session and reverts to the previous tenant ID
-    after the session is closed.
+    Generate a database session for a specific tenant.
+
+    This function:
+    1. Sets the database schema to the specified tenant's schema.
+    2. Preserves the tenant ID across the session.
+    3. Reverts to the previous tenant ID after the session is closed.
+    4. Uses the default schema if no tenant ID is provided.
     """
     engine = get_sqlalchemy_engine()
 
     # Store the previous tenant ID
-    previous_tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+    previous_tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get() or POSTGRES_DEFAULT_SCHEMA
 
     if tenant_id is None:
-        tenant_id = previous_tenant_id
-    else:
-        CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
+        tenant_id = POSTGRES_DEFAULT_SCHEMA
+
+    CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
 
     event.listen(engine, "checkout", set_search_path_on_checkout)
 
@@ -352,6 +371,10 @@ def get_session_with_tenant(
             cursor = dbapi_connection.cursor()
             try:
                 cursor.execute(f'SET search_path = "{tenant_id}"')
+                if POSTGRES_IDLE_SESSIONS_TIMEOUT:
+                    cursor.execute(
+                        f"SET SESSION idle_in_transaction_session_timeout = {POSTGRES_IDLE_SESSIONS_TIMEOUT}"
+                    )
             finally:
                 cursor.close()
 

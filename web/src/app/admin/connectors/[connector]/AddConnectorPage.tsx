@@ -142,8 +142,8 @@ export default function AddConnector({
   const { popup, setPopup } = usePopup();
 
   // Hooks for Google Drive and Gmail credentials
-  const { liveGDriveCredential } = useGoogleDriveCredentials();
-  const { liveGmailCredential } = useGmailCredentials();
+  const { liveGDriveCredential } = useGoogleDriveCredentials(connector);
+  const { liveGmailCredential } = useGmailCredentials(connector);
 
   // Check if credential is activated
   const credentialActivated =

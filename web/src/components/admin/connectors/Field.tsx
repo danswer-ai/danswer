@@ -22,10 +22,10 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@radix-ui/react-tooltip";
+} from "@/components/ui/tooltip";
 import ReactMarkdown from "react-markdown";
 import { FaMarkdown } from "react-icons/fa";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import remarkGfm from "remark-gfm";
 import { EditIcon } from "@/components/icons/icons";
 import { Button } from "@/components/ui/button";
@@ -107,15 +107,13 @@ export function ToolTipDetails({
   children: string | JSX.Element;
 }) {
   return (
-    <TooltipProvider delayDuration={50}>
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger>
           <FiInfo size={12} />
         </TooltipTrigger>
         <TooltipContent side="top" align="center">
-          <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-inverted">
-            {children}
-          </p>
+          {children}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -594,7 +592,6 @@ export function SelectorFormField({
   label,
   options,
   subtext,
-  includeDefault = false,
   side = "bottom",
   maxHeight,
   onSelect,
@@ -603,6 +600,11 @@ export function SelectorFormField({
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
+  const currentlySelected = options.find(
+    (option) => option.value?.toString() === field.value?.toString()
+  );
 
   return (
     <div>
@@ -613,32 +615,42 @@ export function SelectorFormField({
         </div>
       )}
       {subtext && <SubLabel>{subtext}</SubLabel>}
-      <div className="mt-2">
+      <div className="mt-2" ref={setContainer}>
         <Select
-          value={field.value}
+          value={field.value || defaultValue}
           onValueChange={
             onSelect || ((selected) => setFieldValue(name, selected))
           }
           defaultValue={defaultValue}
         >
           <SelectTrigger>
-            <SelectValue
-              placeholder={includeDefault ? "Select..." : undefined}
-            />
+            <SelectValue placeholder="Select...">
+              {currentlySelected?.name || defaultValue || ""}
+            </SelectValue>
           </SelectTrigger>
-          <SelectContent
-            side={side}
-            className={maxHeight ? `max-h-[${maxHeight}]` : undefined}
-          >
-            {includeDefault && (
-              <SelectItem value="default">Select...</SelectItem>
-            )}
-            {options.map((option) => (
-              <SelectItem key={option.value} value={String(option.value)}>
-                {option.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
+
+          {container && (
+            <SelectContent
+              side={side}
+              className={maxHeight ? `max-h-[${maxHeight}]` : undefined}
+              container={container}
+            >
+              {options.length === 0 ? (
+                <SelectItem value="default">Select...</SelectItem>
+              ) : (
+                options.map((option) => (
+                  <SelectItem
+                    icon={option.icon}
+                    key={option.value}
+                    value={String(option.value)}
+                    selected={field.value === option.value}
+                  >
+                    {option.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          )}
         </Select>
       </div>
 

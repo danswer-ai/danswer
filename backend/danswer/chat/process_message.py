@@ -11,8 +11,8 @@ from danswer.chat.models import AllCitations
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import FileChatDisplay
 from danswer.chat.models import FinalUsedContextDocsResponse
-from danswer.chat.models import ImageGenerationDisplay
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import MessageResponseIDInfo
 from danswer.chat.models import MessageSpecificCitations
@@ -275,7 +275,7 @@ ChatPacket = (
     | DanswerAnswerPiece
     | AllCitations
     | CitationInfo
-    | ImageGenerationDisplay
+    | FileChatDisplay
     | CustomToolResponse
     | MessageSpecificCitations
     | MessageResponseIDInfo
@@ -769,7 +769,6 @@ def stream_chat_message_objects(
                         yield LLMRelevanceFilterResponse(
                             llm_selected_doc_indices=llm_indices
                         )
-
                 elif packet.id == FINAL_CONTEXT_DOCUMENTS_ID:
                     yield FinalUsedContextDocsResponse(
                         final_context_docs=packet.response
@@ -787,7 +786,7 @@ def stream_chat_message_objects(
                         FileDescriptor(id=str(file_id), type=ChatFileType.IMAGE)
                         for file_id in file_ids
                     ]
-                    yield ImageGenerationDisplay(
+                    yield FileChatDisplay(
                         file_ids=[str(file_id) for file_id in file_ids]
                     )
                 elif packet.id == INTERNET_SEARCH_RESPONSE_ID:
@@ -801,10 +800,30 @@ def stream_chat_message_objects(
                     yield qa_docs_response
                 elif packet.id == CUSTOM_TOOL_RESPONSE_ID:
                     custom_tool_response = cast(CustomToolCallSummary, packet.response)
-                    yield CustomToolResponse(
-                        response=custom_tool_response.tool_result,
-                        tool_name=custom_tool_response.tool_name,
-                    )
+
+                    if (
+                        custom_tool_response.response_type == "image"
+                        or custom_tool_response.response_type == "csv"
+                    ):
+                        file_ids = custom_tool_response.tool_result.file_ids
+                        ai_message_files = [
+                            FileDescriptor(
+                                id=str(file_id),
+                                type=ChatFileType.IMAGE
+                                if custom_tool_response.response_type == "image"
+                                else ChatFileType.CSV,
+                            )
+                            for file_id in file_ids
+                        ]
+                        yield FileChatDisplay(
+                            file_ids=[str(file_id) for file_id in file_ids]
+                        )
+                    else:
+                        yield CustomToolResponse(
+                            response=custom_tool_response.tool_result,
+                            tool_name=custom_tool_response.tool_name,
+                        )
+
             elif isinstance(packet, StreamStopInfo):
                 pass
             else:
@@ -864,17 +883,15 @@ def stream_chat_message_objects(
             if message_specific_citations
             else None,
             error=None,
-            tool_calls=(
-                [
-                    ToolCall(
-                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                        tool_name=tool_result.tool_name,
-                        tool_arguments=tool_result.tool_args,
-                        tool_result=tool_result.tool_result,
-                    )
-                ]
+            tool_call=(
+                ToolCall(
+                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                    tool_name=tool_result.tool_name,
+                    tool_arguments=tool_result.tool_args,
+                    tool_result=tool_result.tool_result,
+                )
                 if tool_result
-                else []
+                else None
             ),
         )
 

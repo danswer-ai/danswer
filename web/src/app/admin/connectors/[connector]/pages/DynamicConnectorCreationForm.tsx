@@ -104,7 +104,6 @@ const RenderField: FC<RenderFieldProps> = ({
           type={field.type}
           label={label}
           name={field.name}
-          isTextArea={true}
         />
       )}
     </>

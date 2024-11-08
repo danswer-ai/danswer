@@ -253,7 +253,7 @@ def stream_answer_objects(
         return_contexts=query_req.return_contexts,
         skip_gen_ai_answer_generation=query_req.skip_gen_ai_answer_generation,
     )
-    # won't be any ImageGenerationDisplay responses since that tool is never passed in
+    # won't be any FileChatDisplay responses since that tool is never passed in
     for packet in cast(AnswerObjectIterator, answer.processed_streamed_output):
         # for one-shot flow, don't currently do anything with these
         if isinstance(packet, ToolResponse):

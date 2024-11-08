@@ -30,23 +30,21 @@ import WrappedSearch from "./WrappedSearch";
 import { SearchProvider } from "@/components/context/SearchContext";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "../admin/configuration/llm/interfaces";
-import { AssistantsProvider } from "@/components/context/AssistantsContext";
 import { headers } from "next/headers";
 import {
   hasCompletedWelcomeFlowSS,
   WelcomeModal,
 } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
+export default async function Home(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const searchParams = await props.searchParams;
   // Disable caching so we always get the up to date connector / document set / persona info
   // importantly, this prevents users from adding a connector, going back to the main page,
   // and then getting hit with a "No Connectors" popup
   noStore();
-
+  const requestCookies = await cookies();
   const tasks = [
     getAuthTypeMetadataSS(),
     getCurrentUserSS(),
@@ -88,7 +86,7 @@ export default async function Home({
   const authDisabled = authTypeMetadata?.authType === "disabled";
 
   if (!authDisabled && !user) {
-    const headersList = headers();
+    const headersList = await headers();
     const fullUrl = headersList.get("x-url") || "/search";
     const searchParamsString = new URLSearchParams(
       searchParams as unknown as Record<string, string>
@@ -146,7 +144,7 @@ export default async function Home({
   }
 
   // needs to be done in a non-client side component due to nextjs
-  const storedSearchType = cookies().get("searchType")?.value as
+  const storedSearchType = requestCookies.get("searchType")?.value as
     | string
     | undefined;
   const searchTypeDefault: SearchType =
@@ -159,7 +157,7 @@ export default async function Home({
 
   const shouldShowWelcomeModal =
     !llmProviders.length &&
-    !hasCompletedWelcomeFlowSS() &&
+    !hasCompletedWelcomeFlowSS(requestCookies) &&
     !hasAnyConnectors &&
     (!user || user.role === "admin");
 
@@ -168,8 +166,10 @@ export default async function Home({
     ccPairs.length === 0 &&
     !shouldShowWelcomeModal;
 
-  const sidebarToggled = cookies().get(SIDEBAR_TOGGLED_COOKIE_NAME);
-  const agenticSearchToggle = cookies().get(AGENTIC_SEARCH_TYPE_COOKIE_NAME);
+  const sidebarToggled = requestCookies.get(SIDEBAR_TOGGLED_COOKIE_NAME);
+  const agenticSearchToggle = requestCookies.get(
+    AGENTIC_SEARCH_TYPE_COOKIE_NAME
+  );
 
   const toggleSidebar = sidebarToggled
     ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
@@ -183,7 +183,9 @@ export default async function Home({
     <>
       <HealthCheckBanner />
       <InstantSSRAutoRefresh />
-      {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+      {shouldShowWelcomeModal && (
+        <WelcomeModal user={user} requestCookies={requestCookies} />
+      )}
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
       Only used in the EE version of the app. */}
       <ChatPopup />

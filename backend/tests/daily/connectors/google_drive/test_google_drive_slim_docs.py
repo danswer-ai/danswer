@@ -5,16 +5,33 @@ from unittest.mock import patch
 
 from danswer.access.models import ExternalAccess
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
-from danswer.connectors.google_drive.google_utils import execute_paginated_retrieval
+from danswer.connectors.google_utils.google_utils import execute_paginated_retrieval
+from danswer.connectors.google_utils.resources import get_admin_service
 from ee.danswer.external_permissions.google_drive.doc_sync import (
     _get_permissions_from_slim_doc,
 )
-from tests.daily.connectors.google_drive.helpers import ACCESS_MAPPING
-from tests.daily.connectors.google_drive.helpers import DRIVE_ID_MAPPING
-from tests.daily.connectors.google_drive.helpers import EMAIL_MAPPING
-from tests.daily.connectors.google_drive.helpers import file_name_template
-from tests.daily.connectors.google_drive.helpers import print_discrepencies
-from tests.daily.connectors.google_drive.helpers import PUBLIC_RANGE
+from tests.daily.connectors.google_drive.consts_and_utils import ACCESS_MAPPING
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_FOLDER_3_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import file_name_template
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import FOLDER_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import print_discrepencies
+from tests.daily.connectors.google_drive.consts_and_utils import PUBLIC_RANGE
+from tests.daily.connectors.google_drive.consts_and_utils import SECTIONS_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import SHARED_DRIVE_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import SHARED_DRIVE_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_1_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_1_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_2_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_2_FILE_IDS
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_3_EMAIL
+from tests.daily.connectors.google_drive.consts_and_utils import TEST_USER_3_FILE_IDS
 
 
 def get_keys_available_to_user_from_access_map(
@@ -72,7 +89,10 @@ def assert_correct_access_for_user(
 # This function is supposed to map to the group_sync.py file for the google drive connector
 # TODO: Call it directly
 def get_group_map(google_drive_connector: GoogleDriveConnector) -> dict[str, list[str]]:
-    admin_service = google_drive_connector.get_google_resource("admin", "directory_v1")
+    admin_service = get_admin_service(
+        creds=google_drive_connector.creds,
+        user_email=google_drive_connector.primary_admin_email,
+    )
 
     group_map: dict[str, list[str]] = {}
     for group in execute_paginated_retrieval(
@@ -111,64 +131,71 @@ def test_all_permissions(
     )
 
     access_map: dict[str, ExternalAccess] = {}
+    found_file_names = set()
     for slim_doc_batch in google_drive_connector.retrieve_all_slim_documents(
         0, time.time()
     ):
         for slim_doc in slim_doc_batch:
-            access_map[
-                (slim_doc.perm_sync_data or {})["name"]
-            ] = _get_permissions_from_slim_doc(
+            name = (slim_doc.perm_sync_data or {})["name"]
+            access_map[name] = _get_permissions_from_slim_doc(
                 google_drive_connector=google_drive_connector,
                 slim_doc=slim_doc,
             )
+            found_file_names.add(name)
 
     for file_name, external_access in access_map.items():
         print(file_name, external_access)
 
     expected_file_range = (
-        DRIVE_ID_MAPPING["ADMIN"]
-        + DRIVE_ID_MAPPING["TEST_USER_1"]
-        + DRIVE_ID_MAPPING["TEST_USER_2"]
-        + DRIVE_ID_MAPPING["TEST_USER_3"]
-        + DRIVE_ID_MAPPING["SHARED_DRIVE_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1_1"]
-        + DRIVE_ID_MAPPING["FOLDER_1_2"]
-        + DRIVE_ID_MAPPING["SHARED_DRIVE_2"]
-        + DRIVE_ID_MAPPING["FOLDER_2"]
-        + DRIVE_ID_MAPPING["FOLDER_2_1"]
-        + DRIVE_ID_MAPPING["FOLDER_2_2"]
+        ADMIN_FILE_IDS  # Admin's My Drive
+        + ADMIN_FOLDER_3_FILE_IDS  # Admin's Folder 3
+        + TEST_USER_1_FILE_IDS  # TEST_USER_1's My Drive
+        + TEST_USER_2_FILE_IDS  # TEST_USER_2's My Drive
+        + TEST_USER_3_FILE_IDS  # TEST_USER_3's My Drive
+        + SHARED_DRIVE_1_FILE_IDS  # Shared Drive 1
+        + FOLDER_1_FILE_IDS  # Folder 1
+        + FOLDER_1_1_FILE_IDS  # Folder 1_1
+        + FOLDER_1_2_FILE_IDS  # Folder 1_2
+        + SHARED_DRIVE_2_FILE_IDS  # Shared Drive 2
+        + FOLDER_2_FILE_IDS  # Folder 2
+        + FOLDER_2_1_FILE_IDS  # Folder 2_1
+        + FOLDER_2_2_FILE_IDS  # Folder 2_2
+        + SECTIONS_FILE_IDS  # Sections
     )
+    expected_file_names = {
+        file_name_template.format(file_id) for file_id in expected_file_range
+    }
 
     # Should get everything
-    assert len(access_map) == len(expected_file_range)
+    print_discrepencies(expected_file_names, found_file_names)
+    assert expected_file_names == found_file_names
 
     group_map = get_group_map(google_drive_connector)
 
     print("groups:\n", group_map)
 
     assert_correct_access_for_user(
-        user_email=EMAIL_MAPPING["ADMIN"],
-        expected_access_ids=ACCESS_MAPPING["ADMIN"],
+        user_email=ADMIN_EMAIL,
+        expected_access_ids=ACCESS_MAPPING[ADMIN_EMAIL],
         group_map=group_map,
         retrieved_access_map=access_map,
     )
     assert_correct_access_for_user(
-        user_email=EMAIL_MAPPING["TEST_USER_1"],
-        expected_access_ids=ACCESS_MAPPING["TEST_USER_1"],
+        user_email=TEST_USER_1_EMAIL,
+        expected_access_ids=ACCESS_MAPPING[TEST_USER_1_EMAIL],
         group_map=group_map,
         retrieved_access_map=access_map,
     )
 
     assert_correct_access_for_user(
-        user_email=EMAIL_MAPPING["TEST_USER_2"],
-        expected_access_ids=ACCESS_MAPPING["TEST_USER_2"],
+        user_email=TEST_USER_2_EMAIL,
+        expected_access_ids=ACCESS_MAPPING[TEST_USER_2_EMAIL],
         group_map=group_map,
         retrieved_access_map=access_map,
     )
     assert_correct_access_for_user(
-        user_email=EMAIL_MAPPING["TEST_USER_3"],
-        expected_access_ids=ACCESS_MAPPING["TEST_USER_3"],
+        user_email=TEST_USER_3_EMAIL,
+        expected_access_ids=ACCESS_MAPPING[TEST_USER_3_EMAIL],
         group_map=group_map,
         retrieved_access_map=access_map,
     )
