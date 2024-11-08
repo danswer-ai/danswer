@@ -578,104 +578,6 @@ export function AssistantEditor({
                 </TooltipProvider>
               </div>
 
-              {categories && categories.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex gap-x-2 items-center">
-                    <div className="block font-medium text-base">Category</div>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <FiInfo size={12} />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="center">
-                          Group similar assistants together by category
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <SelectorFormField
-                    name="category_id"
-                    options={categories.map((category) => ({
-                      name: category.name,
-                      value: category.id,
-                    }))}
-                  />
-                </div>
-              )}
-
-              {admin && (
-                <div className="mb-6">
-                  <div className="flex gap-x-2 items-center mb-2">
-                    <div className="block font-medium text-base">
-                      Create New Category
-                    </div>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <FiInfo size={12} />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="center">
-                          Create a new category to group similar assistants
-                          together
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-
-                  <div className="grid grid-cols-[1fr,1fr,auto] gap-4">
-                    <TextFormField
-                      fontSize="sm"
-                      name="newCategoryName"
-                      label="Category Name"
-                      placeholder="e.g. Development"
-                    />
-                    <TextFormField
-                      fontSize="sm"
-                      name="newCategoryDescription"
-                      label="Category Description"
-                      placeholder="e.g. Assistants for software development"
-                    />
-                    <div className="flex items-end">
-                      <Button
-                        type="button"
-                        onClick={async () => {
-                          const name = values.newCategoryName;
-                          const description = values.newCategoryDescription;
-                          if (!name || !description) return;
-
-                          try {
-                            const response = await createAssistantCategory(
-                              name,
-                              description
-                            );
-                            if (response.ok) {
-                              setPopup({
-                                message: `Category "${name}" created successfully`,
-                                type: "success",
-                              });
-                            } else {
-                              throw new Error(await response.text());
-                            }
-                          } catch (error) {
-                            setPopup({
-                              message: `Failed to create category - ${error}`,
-                              type: "error",
-                            });
-                          }
-
-                          await refreshCategories();
-
-                          setFieldValue("newCategoryName", "");
-                          setFieldValue("newCategoryDescription", "");
-                        }}
-                      >
-                        Create
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <TextFormField
                 name="name"
                 tooltip="Used to identify the Assistant in the UI."
@@ -1069,6 +971,106 @@ export function AssistantEditor({
                   )}
                 </div>
               </div>
+
+              {admin && (
+                <div className="my-2">
+                  <div className="flex gap-x-2 items-center mb-2">
+                    <div className="block font-medium text-base">
+                      Create New Category
+                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <FiInfo size={12} />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                          Create a new category to group similar assistants
+                          together
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+
+                  <div className="grid grid-cols-[1fr,3fr,auto] gap-4">
+                    <TextFormField
+                      fontSize="sm"
+                      name="newCategoryName"
+                      label="Category Name"
+                      placeholder="e.g. Development"
+                    />
+                    <TextFormField
+                      fontSize="sm"
+                      name="newCategoryDescription"
+                      label="Category Description"
+                      placeholder="e.g. Assistants for software development"
+                    />
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        onClick={async () => {
+                          const name = values.newCategoryName;
+                          const description = values.newCategoryDescription;
+                          if (!name || !description) return;
+
+                          try {
+                            const response = await createAssistantCategory(
+                              name,
+                              description
+                            );
+                            if (response.ok) {
+                              setPopup({
+                                message: `Category "${name}" created successfully`,
+                                type: "success",
+                              });
+                            } else {
+                              throw new Error(await response.text());
+                            }
+                          } catch (error) {
+                            setPopup({
+                              message: `Failed to create category - ${error}`,
+                              type: "error",
+                            });
+                          }
+
+                          await refreshCategories();
+
+                          setFieldValue("newCategoryName", "");
+                          setFieldValue("newCategoryDescription", "");
+                        }}
+                      >
+                        Create
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {categories && categories.length > 0 && (
+                <div className="my-2">
+                  <div className="flex gap-x-2 items-center">
+                    <div className="block font-medium text-base">Category</div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <FiInfo size={12} />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" align="center">
+                          Group similar assistants together by category
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <SelectorFormField
+                    includeReset
+                    name="category_id"
+                    options={categories.map((category) => ({
+                      name: category.name,
+                      value: category.id,
+                    }))}
+                  />
+                </div>
+              )}
+
               <Separator />
               <AdvancedOptionsToggle
                 showAdvancedOptions={showAdvancedOptions}

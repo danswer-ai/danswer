@@ -150,13 +150,13 @@ export function AssistantGalleryCard({
       {assistant.tools.length > 0 && (
         <AssistantTools list assistant={assistant} />
       )}
-      {assistant.category_id && (
+      {assistant.category_id && categories && (
         <AssistantCategory
           assistantCategory={
             categories?.find(
               (category: PersonaCategory) =>
                 category.id === assistant.category_id
-            )?.name!
+            )!
           }
         />
       )}
@@ -274,9 +274,9 @@ export function AssistantsGallery() {
         {categories && categories?.length > 0 && (
           <div className="mb-8">
             <Select
-              value={selectedCategory?.toString() || ""}
+              value={selectedCategory?.toString() || "all"}
               onValueChange={(value) =>
-                setSelectedCategory(value ? parseInt(value) : null)
+                setSelectedCategory(value === "all" ? null : parseInt(value))
               }
             >
               <SelectTrigger
@@ -302,6 +302,12 @@ export function AssistantsGallery() {
                   <SelectLabel className="text-sm font-medium text-text-400">
                     Categories
                   </SelectLabel>
+                  <SelectItem
+                    value="all"
+                    className="cursor-pointer hover:bg-background-emphasis"
+                  >
+                    All Categories
+                  </SelectItem>
                   {categories.map((category) => (
                     <SelectItem
                       key={category.id}

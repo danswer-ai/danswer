@@ -211,7 +211,12 @@ export function TextFormField({
     <div className={`w-full ${width}`}>
       <div className="flex gap-x-2 items-center">
         {!removeLabel && (
-          <Label className={`text-text-950 ${sizeClass.label}`} small={small}>
+          <Label
+            className={`${
+              small ? "text-text-950" : "text-text-700 font-normal"
+            } ${sizeClass.label}`}
+            small={small}
+          >
             {label}
           </Label>
         )}
@@ -604,6 +609,7 @@ interface SelectorFormFieldProps {
   onSelect?: (selected: string | number | null) => void;
   defaultValue?: string;
   tooltip?: string;
+  includeReset?: boolean;
 }
 
 export function SelectorFormField({
@@ -616,6 +622,7 @@ export function SelectorFormField({
   onSelect,
   defaultValue,
   tooltip,
+  includeReset = false,
 }: SelectorFormFieldProps) {
   const [field] = useField<string>(name);
   const { setFieldValue } = useFormikContext();
@@ -638,7 +645,11 @@ export function SelectorFormField({
         <Select
           value={field.value || defaultValue}
           onValueChange={
-            onSelect || ((selected) => setFieldValue(name, selected))
+            onSelect ||
+            ((selected) =>
+              selected == "__none__"
+                ? setFieldValue(name, null)
+                : setFieldValue(name, selected))
           }
           defaultValue={defaultValue}
         >
@@ -667,6 +678,14 @@ export function SelectorFormField({
                     {option.name}
                   </SelectItem>
                 ))
+              )}
+              {includeReset && (
+                <SelectItem
+                  value={"__none__"}
+                  onSelect={() => setFieldValue(name, null)}
+                >
+                  None
+                </SelectItem>
               )}
             </SelectContent>
           )}
