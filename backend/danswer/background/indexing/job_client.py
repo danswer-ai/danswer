@@ -4,9 +4,11 @@ not follow the expected behavior, etc.
 
 NOTE: cannot use Celery directly due to
 https://github.com/celery/celery/issues/7007#issuecomment-1740139367"""
+import traceback
 from collections.abc import Callable
 from dataclasses import dataclass
 from multiprocessing import Process
+from multiprocessing import Queue
 from typing import Any
 from typing import Literal
 from typing import Optional
@@ -56,6 +58,8 @@ class SimpleJob:
 
     id: int
     process: Optional["Process"] = None
+    process: Optional[Process] = None
+    exception_info: Optional[str] = None
 
     def cancel(self) -> bool:
         return self.release()
@@ -89,18 +93,17 @@ class SimpleJob:
     def exception(self) -> str:
         """Needed to match the Dask API, but not implemented since we don't currently
         have a way to get back the exception information from the child process."""
-        return (
-            f"Job with ID '{self.id}' was killed or encountered an unhandled exception."
-        )
+
+        if self.exception_info:
+            return self.exception_info
+        else:
+            return f"Job with ID '{self.id}' was killed or encountered an unhandled exception."
 
 
 class SimpleJobClient:
-    """Drop in replacement for `dask.distributed.Client`"""
-
-    def __init__(self, n_workers: int = 1) -> None:
-        self.n_workers = n_workers
-        self.job_id_counter = 0
-        self.jobs: dict[int, SimpleJob] = {}
+    def __init__(self):
+        self.jobs: list[SimpleJob] = []
+        self.job_counter = 0
 
     def _cleanup_completed_jobs(self) -> None:
         current_job_ids = list(self.jobs.keys())
@@ -110,22 +113,24 @@ class SimpleJobClient:
                 logger.debug(f"Cleaning up job with id: '{job.id}'")
                 del self.jobs[job.id]
 
-    def submit(self, func: Callable, *args: Any, pure: bool = True) -> SimpleJob | None:
-        """NOTE: `pure` arg is needed so this can be a drop in replacement for Dask"""
-        self._cleanup_completed_jobs()
-        if len(self.jobs) >= self.n_workers:
-            logger.debug(
-                f"No available workers to run job. Currently running '{len(self.jobs)}' jobs, with a limit of '{self.n_workers}'."
-            )
-            return None
+    def submit(self, func: Callable, *args, **kwargs) -> Optional[SimpleJob]:
+        self.job_counter += 1
+        job_id = self.job_counter
 
-        job_id = self.job_id_counter
-        self.job_id_counter += 1
+        def wrapper(q, *args, **kwargs):
+            try:
+                func(*args, **kwargs)
+            except Exception:
+                error_trace = traceback.format_exc()
+                q.put(error_trace)
+                # Re-raise the exception to ensure the process exits with a non-zero code
+                raise
 
-        process = Process(target=_run_in_process, args=(func, args), daemon=True)
-        job = SimpleJob(id=job_id, process=process)
-        process.start()
-
-        self.jobs[job_id] = job
-
+        q = Queue()
+        p = Process(target=wrapper, args=(q, *args), kwargs=kwargs)
+        job = SimpleJob(id=job_id, process=p)
+        p.start()
+        job.process = p
+        job.exception_queue = q  # Store the queue in the job object
+        self.jobs.append(job)
         return job

@@ -440,15 +440,24 @@ def connector_indexing_proxy_task(
 
                 if not index_attempt.is_finished():
                     continue
+        # After job.done() returns True
+        if job.process:
+            exit_code = job.process.exitcode
+            task_logger.info(
+                f"Job exit code: {exit_code} for attempt={index_attempt_id} "
+                f"tenant={tenant_id} cc_pair={cc_pair_id} search_settings={search_settings_id}"
+            )
 
         if job.status == "error":
+            if job.exception_queue and not job.exception_queue.empty():
+                error_message = job.exception_queue.get()
+            else:
+                error_message = job.exception()
             task_logger.error(
                 f"Indexing proxy - spawned task exceptioned: "
-                f"attempt={index_attempt_id} "
-                f"tenant={tenant_id} "
-                f"cc_pair={cc_pair_id} "
-                f"search_settings={search_settings_id} "
-                f"error={job.exception()}"
+                f"attempt={index_attempt_id} tenant={tenant_id} "
+                f"cc_pair={cc_pair_id} search_settings={search_settings_id} "
+                f"error={error_message}"
             )
 
         job.release()
