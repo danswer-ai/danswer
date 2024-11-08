@@ -35,7 +35,7 @@ def fetch_chat_sessions_eagerly_by_time(
     subquery = (
         db_session.query(ChatSession.id, ChatSession.time_created)
         .filter(*filters)
-        .order_by(time_order, ChatSession.id)
+        .order_by(ChatSession.id, time_order)
         .distinct(ChatSession.id)
         .limit(limit)
         .subquery()
