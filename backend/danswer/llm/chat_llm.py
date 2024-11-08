@@ -293,6 +293,7 @@ class DefaultMultiLLM(LLM):
         elif isinstance(prompt, str):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
+        print("\n\n\n\n----\n\nprompt\n", prompt)
         try:
             return litellm.completion(
                 # model choice
@@ -375,8 +376,6 @@ class DefaultMultiLLM(LLM):
             yield self.invoke(prompt, tools, tool_choice, structured_response_format)
             return
 
-        print("------------------\n\nPROMPT\n\n\n")
-        print(prompt)
         output = None
         response = cast(
             litellm.CustomStreamWrapper,

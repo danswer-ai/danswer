@@ -80,3 +80,39 @@ class Tool(abc.ABC):
         using_tool_calling_llm: bool,
     ) -> "AnswerPromptBuilder":
         raise NotImplementedError
+
+    # This is the prompt builder that is used when the tool call AND LLM response has been updated
+    # and we need to build the next prompt (for LLM calling tools)
+    # @abc.abstractmethod
+
+    # def build_prompt_after_tool_call(
+    #     self,
+    #     prompt_builder: "AnswerPromptBuilder",
+    #     query: str,
+    #     llm_answer: str,
+    # ) -> "AnswerPromptBuilder":
+    #     print("Messages in order")
+    #     for message in prompt_builder.message_history:
+    #         print(message)
+
+    #     print("Assisant message")
+    #     print(prompt_builder.system_message_and_token_cnt)
+    #     print("User message")
+    #     print(prompt_builder.user_message_and_token_cnt)
+
+    #     print("llm answer")
+    #     print(llm_answer)
+    #     print("Query")
+    #     print(query)
+    #     prompt_builder.
+    #     pass
+
+    #     # raise NotImplementedError
+
+    def build_prompt_after_tool_call(
+        self,
+        prompt_builder: "AnswerPromptBuilder",
+        query: str,
+        llm_answer: str,
+    ) -> "AnswerPromptBuilder":
+        pass

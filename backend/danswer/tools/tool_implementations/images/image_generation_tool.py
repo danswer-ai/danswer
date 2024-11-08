@@ -4,6 +4,8 @@ from enum import Enum
 from typing import Any
 from typing import cast
 
+from langchain_core.messages import AIMessage
+from langchain_core.messages import HumanMessage
 from litellm import image_generation  # type: ignore
 from pydantic import BaseModel
 
@@ -21,6 +23,9 @@ from danswer.tools.models import ToolResponse
 from danswer.tools.tool import Tool
 from danswer.tools.tool_implementations.images.prompt import (
     build_image_generation_user_prompt,
+)
+from danswer.tools.tool_implementations.images.prompt import (
+    build_image_generation_user_task_prompt,
 )
 from danswer.utils.headers import build_llm_extra_headers
 from danswer.utils.logger import setup_logger
@@ -297,3 +302,60 @@ class ImageGenerationTool(Tool):
         )
 
         return prompt_builder
+
+    def build_prompt_after_tool_call(
+        self,
+        prompt_builder: "AnswerPromptBuilder",
+        query: str,
+        llm_answer: str,
+        tool_responses: "ToolResponse",
+    ) -> "AnswerPromptBuilder":
+        # Append the assistant's previous response to the message history
+
+        img_generation_response = cast(
+            list[ImageGenerationResponse], tool_responses.response
+        )
+
+        if img_generation_response is None:
+            raise ValueError("No image generation response found")
+
+        img_urls = [img.url for img in img_generation_response]
+
+        # Build a user message that includes the images generated
+        user_message = build_image_generation_user_task_prompt(
+            img_urls=img_urls,
+        )
+        prompt_builder.update_user_prompt(HumanMessage(content=query))
+
+        # Update the user prompt with the new message containing images
+        prompt_builder.append_message(user_message)
+
+        prompt_builder.append_message(
+            AIMessage(
+                content=f"The images I generated can be described as the following: {llm_answer}"
+            )
+        )
+
+        # Append a new user message reminding the assistant of the original query and what remains to be done
+        prompt_builder.update_task_reminder(
+            HumanMessage(
+                content=f"Reminder: the original request was: '{query}'.\n\n"
+                "You generated the above images as part of this request. "
+                "If any parts have not been fulfilled, please proceed to complete them using the appropriate tools. "
+                "If the original request has been fulfilled with the prior messages,"
+                "you can provide a final summary and DO NOT call a tool."
+            )
+        )
+
+        return prompt_builder
+
+    # # This is the prompt builder that is used when the tool call AND LLM response has been updated
+    # # and we need to build the next prompt (for LLM calling tools)
+    # def build_prompt_after_tool_call(
+    #     self,
+    #     prompt_builder: AnswerPromptBuilder,
+    #     tool_call_summary: ToolCallSummary,
+    #     tool_responses: list[ToolResponse],
+    #     using_tool_calling_llm: bool,
+    # ) -> AnswerPromptBuilder:
+    #     return prompt_builder

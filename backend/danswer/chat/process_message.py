@@ -943,6 +943,8 @@ def stream_chat_message_objects(
         for tool_id, tool_list in tool_dict.items():
             for tool in tool_list:
                 tool_name_to_tool_id[tool.name] = tool_id
+        if answer.llm_answer == "":
+            return
 
         gen_ai_response_message = partial_response(
             reserved_message_id=reserved_message_id,

@@ -10,12 +10,28 @@ Can you please summarize them in a sentence or two? Do NOT include image urls or
 """
 
 
+IMG_GENERATION_USER_PROMPT = """
+These are the IMAGES you generated
+"""
+
+
 def build_image_generation_user_prompt(
     query: str, img_urls: list[str] | None = None
 ) -> HumanMessage:
     return HumanMessage(
         content=build_content_with_imgs(
             message=IMG_GENERATION_SUMMARY_PROMPT.format(query=query).strip(),
+            img_urls=img_urls,
+        )
+    )
+
+
+def build_image_generation_user_task_prompt(
+    img_urls: list[str] | None = None,
+) -> HumanMessage:
+    return HumanMessage(
+        content=build_content_with_imgs(
+            message=IMG_GENERATION_USER_PROMPT,
             img_urls=img_urls,
         )
     )

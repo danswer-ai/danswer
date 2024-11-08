@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import cast
 
+from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
@@ -96,6 +97,30 @@ class AnswerPromptBuilder:
         )
 
         self.new_messages_and_token_cnts: list[tuple[BaseMessage, int]] = []
+        self.task_reminder: tuple[HumanMessage, int] | None = None
+
+    def update_task_reminder(self, task_reminder: HumanMessage) -> None:
+        token_count = check_message_tokens(
+            task_reminder, self.llm_tokenizer_encode_func
+        )
+        self.task_reminder = (task_reminder, token_count)
+
+    def build_next_prompter(
+        self, question: str, llm_answer: str, task_reminder: str | None = None
+    ):
+        # Append the AI's previous response
+        self.append_message(AIMessage(content=llm_answer))
+        # Add a new user message prompting the assistant to continue
+        self.append_message(
+            HumanMessage(
+                content=(
+                    f"If your previous responses did not fully answer the original query: '{question}', "
+                    "please continue and complete the answer. Only add information if the original question "
+                    "wasn't fully addressed. Use any necessary tools to provide a comprehensive response. "
+                    "If the original query was already completely fulfilled, do NOT call a tool."
+                )
+            )
+        )
 
     def update_system_prompt(self, system_message: SystemMessage | None) -> None:
         if not system_message:
@@ -141,6 +166,8 @@ class AnswerPromptBuilder:
 
         if self.new_messages_and_token_cnts:
             final_messages_with_tokens.extend(self.new_messages_and_token_cnts)
+        if self.task_reminder:
+            final_messages_with_tokens.append(self.task_reminder)
 
         return drop_messages_history_overflow(
             final_messages_with_tokens, self.max_tokens
