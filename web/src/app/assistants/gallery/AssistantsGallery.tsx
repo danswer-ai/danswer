@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { FiList, FiMinus, FiPlus } from "react-icons/fi";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
+import { AssistantsNavigation } from "../AssistantsNavigation";
 import {
   addAssistantToList,
   removeAssistantFromList,
@@ -176,28 +177,9 @@ export function AssistantsGallery() {
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>Assistant Gallery</AssistantsPageTitle>
 
-        <div className="grid grid-cols-2 gap-4 mt-4 mb-6">
-          <Button
-            onClick={() => router.push("/assistants/new")}
-            variant="default"
-            className="p-6 text-base"
-            icon={FiPlus}
-          >
-            Create New Assistant
-          </Button>
-
-          <Button
-            onClick={() => router.push("/assistants/mine")}
-            variant="outline"
-            className="text-base py-6"
-            icon={FiList}
-          >
-            Your Assistants
-          </Button>
-        </div>
-
-        <div className="mt-4 mb-12">
-          <div className="relative">
+        <AssistantsNavigation />
+        <div className="h-[52px] flex items-center justify-between mb-4">
+          <div className="w-[600px] relative">
             <input
               type="text"
               placeholder="Search assistants..."
@@ -205,13 +187,13 @@ export function AssistantsGallery() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="
                 w-full
-                py-3
+                py-2
                 px-4
                 pl-10
-                text-lg
+                text-base
                 border-2
                 border-background-strong
-                rounded-full
+                rounded-md
                 bg-background-50
                 text-text-700
                 placeholder-text-400
@@ -236,11 +218,20 @@ export function AssistantsGallery() {
               </svg>
             </div>
           </div>
+
+          <Button
+            onClick={() => router.push("/assistants/new")}
+            variant="submit"
+            className="flex items-center gap-2 h-[40px]"
+          >
+            <FiPlus size={20} />
+            Create Assistant
+          </Button>
         </div>
 
-        {defaultAssistants.length == 0 &&
-          nonDefaultAssistants.length == 0 &&
-          assistants.length != 0 && (
+        {defaultAssistants.length === 0 &&
+          nonDefaultAssistants.length === 0 &&
+          assistants.length !== 0 && (
             <div className="text-text-500">
               No assistants found for this search
             </div>

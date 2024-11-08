@@ -26,6 +26,7 @@ import { DefaultPopover } from "@/components/popover/DefaultPopover";
 import { PopupSpec, usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { AssistantsPageTitle } from "../AssistantsPageTitle";
+import { AssistantsNavigation } from "../AssistantsNavigation";
 import { checkUserOwnsAssistant } from "@/lib/assistants/checkOwnership";
 import { AssistantSharingModal } from "./AssistantSharingModal";
 import { AssistantSharedStatusDisplay } from "../AssistantSharedStatus";
@@ -392,23 +393,16 @@ export function AssistantsList() {
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>Your Assistants</AssistantsPageTitle>
 
-        <div className="grid grid-cols-2 gap-4 mt-4 mb-8">
-          <Button
-            variant="default"
-            className="p-6 text-base"
-            onClick={() => router.push("/assistants/new")}
-            icon={FiPlus}
-          >
-            Create New Assistant
-          </Button>
+        <AssistantsNavigation />
 
+        <div className="h-[52px] flex items-center justify-end mb-4">
           <Button
-            onClick={() => router.push("/assistants/gallery")}
-            variant="outline"
-            className="text-base py-6"
-            icon={FiList}
+            onClick={() => router.push("/assistants/new")}
+            variant="submit"
+            className="flex items-center gap-2 h-[40px]"
           >
-            Assistant Gallery
+            <FiPlus size={20} />
+            Create Assistant
           </Button>
         </div>
 
