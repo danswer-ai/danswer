@@ -604,13 +604,13 @@ export const AIMessage = ({
                 Bad response
               </CustomTooltip>
             )}
-            {regenerate && (
+            {/* {regenerate && (
               <RegenerateOption
                 selectedAssistant={currentAssistant!}
                 regenerate={regenerate}
                 overriddenModel={overriddenModel}
               />
-            )}
+            )} */}
           </div>
         )}
         {(!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME) &&

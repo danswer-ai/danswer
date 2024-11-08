@@ -205,7 +205,7 @@ except ValueError:
 POLL_CONNECTOR_OFFSET = 30  # Minutes overlap between poll windows
 
 # If this is empty, all connectors are enabled, this is an option for security heavy orgs where
-# only very select connectors are enabled and admins cannot add other connector types
+# only very Select data sources are enabled and admins cannot add other connector types
 ENABLED_CONNECTOR_TYPES = os.environ.get("ENABLED_CONNECTOR_TYPES") or ""
 
 # Some calls to get information on expert users are quite costly especially with rate limiting

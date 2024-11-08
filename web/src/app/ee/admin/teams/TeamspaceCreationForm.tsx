@@ -68,39 +68,6 @@ export const TeamspaceCreationForm = ({
     return response.json();
   };
 
-  // const setTokenRateLimit = async (teamspaceId: number) => {
-  //   const response = await fetch(
-  //     `/api/admin/token-rate-limits/teamspace/${teamspaceId}`,
-  //     {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         enabled: true,
-  //         token_budget: tokenBudget,
-  //         period_hours: periodHours,
-  //       }),
-  //     }
-  //   );
-  //   if (!response.ok) {
-  //     const errorMsg =
-  //       (await response.json()).detail || "Failed to set token rate limit.";
-  //     toast({
-  //       title: "Operation Failed",
-  //       description: `Could not set token rate limit: ${errorMsg}`,
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
-
-  //   toast({
-  //     title: "Token Rate Limit Set",
-  //     description: "The token rate limit has been successfully set.",
-  //     variant: "success",
-  //   });
-  // };
-
   return (
     <div>
       <Formik
@@ -116,11 +83,30 @@ export const TeamspaceCreationForm = ({
           user_ids: Yup.array().of(Yup.string().required()),
           cc_pair_ids: Yup.array().of(Yup.number().required()),
           document_set_ids: Yup.array().of(Yup.number().required()),
-          assistant_ids: Yup.array().of(Yup.number().required()),
+          assistant_ids: Yup.array().of(
+            Yup.number().required("Please select an assistant")
+          ),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);
-
+          if (values.user_ids.length === 0) {
+            formikHelpers.setSubmitting(false);
+            toast({
+              title: "Operation Failed",
+              description: "Please select at least one user",
+              variant: "destructive",
+            });
+            return;
+          }
+          if (values.assistant_ids.length === 0) {
+            formikHelpers.setSubmitting(false);
+            toast({
+              title: "Operation Failed",
+              description: "Please select an assistant",
+              variant: "destructive",
+            });
+            return;
+          }
           let response;
           response = await createTeamspace(values);
           formikHelpers.setSubmitting(false);
@@ -224,7 +210,7 @@ export const TeamspaceCreationForm = ({
 
               <div className="flex flex-col justify-between gap-2 pb-4 lg:flex-row">
                 <p className="w-1/2 font-semibold whitespace-nowrap">
-                  Select connectors
+                  Select data sources
                 </p>
                 <div className="w-full">
                   <ConnectorEditor

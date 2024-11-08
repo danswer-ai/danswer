@@ -25,6 +25,7 @@ export const Assistants: React.FC<AssistantsProps> = ({
   return (
     <div>
       <Combobox
+        key={items.length}
         items={items}
         onSelect={handleSelect}
         placeholder="Select assistants"

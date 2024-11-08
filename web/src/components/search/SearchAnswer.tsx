@@ -49,8 +49,6 @@ export default function SearchAnswer({
     setCurrentFeedback([feedbackType, messageId]);
   };
 
-  const settings = useContext(SettingsContext);
-
   useEffect(() => {
     const checkOverflow = () => {
       if (answerContainerRef.current) {
@@ -174,10 +172,12 @@ export default function SearchAnswer({
         </div>
       </div>
 
-
       {!searchAnswerExpanded && searchAnswerOverflowing && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center content-center w-full h-12 px-4 z-10">
-          <Button onClick={() => setSearchAnswerExpanded(true)} variant='secondary'>
+          <Button
+            onClick={() => setSearchAnswerExpanded(true)}
+            variant="secondary"
+          >
             Show more
             <ToggleDown className="stroke-white" />
           </Button>
@@ -186,7 +186,6 @@ export default function SearchAnswer({
       {!searchAnswerExpanded && searchAnswerOverflowing && (
         <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-b from-background/5 via-background/60 to-background/90"></div>
       )}
-
     </div>
   );
 }

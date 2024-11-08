@@ -6,7 +6,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     command: >
-      /bin/sh -c "alembic upgrade 24cad828e24c &&
+      /bin/sh -c "alembic upgrade 5d10c5647eca &&
       alembic upgrade 5d12a446f5c0 &&
       echo \"Starting enMedD AI Api Server\" &&
       uvicorn enmedd.main:app --host 0.0.0.0 --port 8080"

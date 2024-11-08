@@ -10,13 +10,13 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --secondary: #eedddd;
-    --secondary-foreground: #ddbbbb;
+    --secondary: #ebeefe;
+    --secondary-foreground: #ebeefe;
     --success: #69c57d;
     --success-foreground: rgba(27, 232, 72, 0.1);
-    --muted: #ddbbbb;
-    --muted-foreground: #a06f6f;
-    --accent: #ddbbbb;
+    --muted: #e7e7e7;
+    --muted-foreground: #8a8a8a;
+    --accent: #d1d1d1;
     --accent-foreground: #000000;
     --destructive: #f16d69;
     --destructive-foreground: #f7a9a7;

@@ -219,7 +219,9 @@ class TwofactorAuth(Base):
     __tablename__ = "two_factor_auth"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+    )
     code: Mapped[str] = mapped_column(String, unique=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

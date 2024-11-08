@@ -163,7 +163,7 @@ export const DocumentSetCreationForm = ({
                     setFieldValue("cc_pair_ids", selectedIds);
                   }}
                   placeholder="Search connectors"
-                  label="Select connectors"
+                  label="Select data sources"
                   selected={values.cc_pair_ids.map((id) => id.toString())}
                 />
               </div>
