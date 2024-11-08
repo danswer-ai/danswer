@@ -3,6 +3,7 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from danswer.auth.users import api_key_dep
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import IndexAttemptMetadata
@@ -22,7 +23,6 @@ from danswer.server.danswer_api.models import DocMinimalInfo
 from danswer.server.danswer_api.models import IngestionDocument
 from danswer.server.danswer_api.models import IngestionResult
 from danswer.utils.logger import setup_logger
-from ee.danswer.auth.users import api_key_dep
 
 logger = setup_logger()
 

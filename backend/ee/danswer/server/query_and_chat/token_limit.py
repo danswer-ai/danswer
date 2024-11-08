@@ -12,6 +12,7 @@ from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from danswer.db.api_key import is_api_key_email_address
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
@@ -24,7 +25,6 @@ from danswer.server.query_and_chat.token_limit import _get_cutoff_time
 from danswer.server.query_and_chat.token_limit import _is_rate_limited
 from danswer.server.query_and_chat.token_limit import _user_is_rate_limited_by_global
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from ee.danswer.db.api_key import is_api_key_email_address
 from ee.danswer.db.token_limit import fetch_all_user_token_rate_limits
 
 

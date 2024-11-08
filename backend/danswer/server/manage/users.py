@@ -37,6 +37,7 @@ from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
+from danswer.db.api_key import is_api_key_email_address
 from danswer.db.auth import get_total_users_count
 from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_session
@@ -60,7 +61,6 @@ from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.server.utils import send_user_email_invite
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.api_key import is_api_key_email_address
 from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
 from ee.danswer.db.user_group import remove_curator_status__no_commit
 from ee.danswer.server.tenants.billing import register_tenant_users

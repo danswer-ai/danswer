@@ -52,6 +52,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
 
+from danswer.auth.api_key import get_hashed_api_key_from_request
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
@@ -74,6 +75,7 @@ from danswer.configs.constants import AuthType
 from danswer.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
 from danswer.configs.constants import DANSWER_API_KEY_PREFIX
 from danswer.configs.constants import UNNAMED_KEY_PLACEHOLDER
+from danswer.db.api_key import fetch_user_for_api_key
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
@@ -851,3 +853,22 @@ def get_oauth_router(
         return redirect_response
 
     return router
+
+
+def api_key_dep(
+    request: Request, db_session: Session = Depends(get_session)
+) -> User | None:
+    if AUTH_TYPE == AuthType.DISABLED:
+        return None
+
+    hashed_api_key = get_hashed_api_key_from_request(request)
+    if not hashed_api_key:
+        raise HTTPException(status_code=401, detail="Missing API key")
+
+    if hashed_api_key:
+        user = fetch_user_for_api_key(hashed_api_key, db_session)
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    return user
