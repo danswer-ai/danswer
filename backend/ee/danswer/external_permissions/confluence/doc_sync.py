@@ -4,7 +4,7 @@ https://confluence.atlassian.com/conf85/check-who-can-view-a-page-1283360557.htm
 """
 from typing import Any
 
-from danswer.access.models import DocumentExternalAccess
+from danswer.access.models import DocExternalAccess
 from danswer.access.models import ExternalAccess
 from danswer.connectors.confluence.connector import ConfluenceConnector
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
@@ -187,12 +187,12 @@ def _fetch_all_page_restrictions_for_space(
     confluence_client: OnyxConfluence,
     slim_docs: list[SlimDocument],
     space_permissions_by_space_key: dict[str, ExternalAccess],
-) -> list[DocumentExternalAccess]:
+) -> list[DocExternalAccess]:
     """
     For all pages, if a page has restrictions, then use those restrictions.
     Otherwise, use the space's restrictions.
     """
-    document_restrictions: list[DocumentExternalAccess] = []
+    document_restrictions: list[DocExternalAccess] = []
 
     for slim_doc in slim_docs:
         if slim_doc.perm_sync_data is None:
@@ -205,7 +205,7 @@ def _fetch_all_page_restrictions_for_space(
         )
         if restrictions:
             document_restrictions.append(
-                DocumentExternalAccess(
+                DocExternalAccess(
                     doc_id=slim_doc.id,
                     external_access=restrictions,
                 )
@@ -214,7 +214,7 @@ def _fetch_all_page_restrictions_for_space(
             space_key = slim_doc.perm_sync_data.get("space_key")
             if space_permissions := space_permissions_by_space_key.get(space_key):
                 document_restrictions.append(
-                    DocumentExternalAccess(
+                    DocExternalAccess(
                         doc_id=slim_doc.id,
                         external_access=space_permissions,
                     )
@@ -227,7 +227,7 @@ def _fetch_all_page_restrictions_for_space(
 
 def confluence_doc_sync(
     cc_pair: ConnectorCredentialPair,
-) -> list[DocumentExternalAccess]:
+) -> list[DocExternalAccess]:
     """
     Adds the external permissions to the documents in postgres
     if the document doesn't already exists in postgres, we create

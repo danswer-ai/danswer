@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from danswer.access.models import DocumentExternalAccess
+from danswer.access.models import DocExternalAccess
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import ConnectorCredentialPair
 from ee.danswer.db.external_perm import ExternalUserGroup
@@ -16,7 +16,7 @@ DocSyncFuncType = Callable[
     [
         ConnectorCredentialPair,
     ],
-    list[DocumentExternalAccess],
+    list[DocExternalAccess],
 ]
 
 GroupSyncFuncType = Callable[

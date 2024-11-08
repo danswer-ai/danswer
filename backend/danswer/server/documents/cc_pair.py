@@ -12,6 +12,9 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
+from danswer.background.celery.tasks.doc_permission_syncing.tasks import (
+    try_creating_permissions_sync_task,
+)
 from danswer.background.celery.tasks.pruning.tasks import (
     try_creating_prune_generator_task,
 )
@@ -44,9 +47,6 @@ from danswer.server.documents.models import ConnectorCredentialPairMetadata
 from danswer.server.documents.models import PaginatedIndexAttempts
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from ee.danswer.background.celery.tasks.permissions.tasks import (
-    try_creating_permissions_sync_task,
-)
 from ee.danswer.db.user_group import validate_user_creation_permissions
 
 

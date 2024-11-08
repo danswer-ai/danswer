@@ -268,7 +268,7 @@ def get_access_info_for_documents(
     return db_session.execute(stmt).all()  # type: ignore
 
 
-def upsert_documents(
+def _upsert_documents(
     db_session: Session,
     document_metadata_batch: list[DocumentMetadata],
     initial_boost: int = DEFAULT_BOOST,
@@ -306,6 +306,8 @@ def upsert_documents(
         ]
     )
 
+    # This does not update the permissions of the document if
+    # the document already exists.
     on_conflict_stmt = insert_stmt.on_conflict_do_update(
         index_elements=["id"],  # Conflict target
         set_={
@@ -322,7 +324,7 @@ def upsert_documents(
     db_session.commit()
 
 
-def upsert_document_by_connector_credential_pair(
+def _upsert_document_by_connector_credential_pair(
     db_session: Session, document_metadata_batch: list[DocumentMetadata]
 ) -> None:
     """NOTE: this function is Postgres specific. Not all DBs support the ON CONFLICT clause."""
@@ -404,8 +406,8 @@ def upsert_documents_complete(
     db_session: Session,
     document_metadata_batch: list[DocumentMetadata],
 ) -> None:
-    upsert_documents(db_session, document_metadata_batch)
-    upsert_document_by_connector_credential_pair(db_session, document_metadata_batch)
+    _upsert_documents(db_session, document_metadata_batch)
+    _upsert_document_by_connector_credential_pair(db_session, document_metadata_batch)
     logger.info(
         f"Upserted {len(document_metadata_batch)} document store entries into DB"
     )

@@ -1,7 +1,7 @@
 from datetime import datetime
 from datetime import timezone
 
-from danswer.access.models import DocumentExternalAccess
+from danswer.access.models import DocExternalAccess
 from danswer.access.models import ExternalAccess
 from danswer.connectors.gmail.connector import GmailConnector
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
@@ -29,7 +29,7 @@ def _get_slim_doc_generator(
 
 def gmail_doc_sync(
     cc_pair: ConnectorCredentialPair,
-) -> list[DocumentExternalAccess]:
+) -> list[DocExternalAccess]:
     """
     Adds the external permissions to the documents in postgres
     if the document doesn't already exists in postgres, we create
@@ -41,7 +41,7 @@ def gmail_doc_sync(
 
     slim_doc_generator = _get_slim_doc_generator(cc_pair, gmail_connector)
 
-    document_external_access: list[DocumentExternalAccess] = []
+    document_external_access: list[DocExternalAccess] = []
     for slim_doc_batch in slim_doc_generator:
         for slim_doc in slim_doc_batch:
             if slim_doc.perm_sync_data is None:
@@ -54,7 +54,7 @@ def gmail_doc_sync(
                     is_public=False,
                 )
                 document_external_access.append(
-                    DocumentExternalAccess(
+                    DocExternalAccess(
                         doc_id=slim_doc.id,
                         external_access=ext_access,
                     )

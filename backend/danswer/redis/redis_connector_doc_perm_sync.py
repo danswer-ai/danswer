@@ -4,20 +4,18 @@ from uuid import uuid4
 
 import redis
 from celery import Celery
-from sqlalchemy.orm import Session
 
-from danswer.access.models import DocumentExternalAccess
+from danswer.access.models import DocExternalAccess
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
-from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 
 
-class RedisConnectorDocPermSyncs:
+class RedisConnectorDocPermSync:
     """Manages interactions with redis for permission sync tasks. Should only be accessed
     through RedisConnector."""
 
-    PREFIX = "connector_doc_permissions"
+    PREFIX = "connectordocpermissions"
 
     FENCE_PREFIX = f"{PREFIX}_fence"
 
@@ -61,7 +59,7 @@ class RedisConnectorDocPermSyncs:
     def get_active_task_count(self) -> int:
         """Count of active permission sync tasks"""
         count = 0
-        for key in self.redis.scan_iter(RedisConnectorDocPermSyncs.FENCE_PREFIX + "*"):
+        for _ in self.redis.scan_iter(RedisConnectorDocPermSync.FENCE_PREFIX + "*"):
             count += 1
         return count
 
@@ -99,17 +97,14 @@ class RedisConnectorDocPermSyncs:
     def generate_tasks(
         self,
         celery_app: Celery,
-        db_session: Session,
         lock: redis.lock.Lock | None,
-        new_permissions: list[DocumentExternalAccess],
+        new_permissions: list[DocExternalAccess],
+        source_string: str,
     ) -> int | None:
         last_lock_time = time.monotonic()
-
         async_results = []
-        cc_pair = get_connector_credential_pair_from_id(int(self.id), db_session)
-        if not cc_pair:
-            return None
 
+        # Create a task for each document permission sync
         for doc_perm in new_permissions:
             current_time = time.monotonic()
             if lock and current_time - last_lock_time >= (
@@ -124,9 +119,9 @@ class RedisConnectorDocPermSyncs:
             result = celery_app.send_task(
                 "update_external_document_permissions_task",
                 kwargs=dict(
-                    cc_pair_id=cc_pair.id,
                     tenant_id=self.tenant_id,
-                    document_external_access=doc_perm,
+                    document_external_access=doc_perm.to_dict(),
+                    source_string=source_string,
                 ),
                 queue=DanswerCeleryQueues.CONNECTOR_DOC_PERMISSIONS_SYNC,
                 task_id=custom_task_id,
@@ -138,25 +133,25 @@ class RedisConnectorDocPermSyncs:
 
     @staticmethod
     def remove_from_taskset(id: int, task_id: str, r: redis.Redis) -> None:
-        taskset_key = f"{RedisConnectorDocPermSyncs.TASKSET_PREFIX}_{id}"
+        taskset_key = f"{RedisConnectorDocPermSync.TASKSET_PREFIX}_{id}"
         r.srem(taskset_key, task_id)
         return
 
     @staticmethod
     def reset_all(r: redis.Redis) -> None:
         """Deletes all redis values for all connectors"""
-        for key in r.scan_iter(RedisConnectorDocPermSyncs.TASKSET_PREFIX + "*"):
+        for key in r.scan_iter(RedisConnectorDocPermSync.TASKSET_PREFIX + "*"):
             r.delete(key)
 
         for key in r.scan_iter(
-            RedisConnectorDocPermSyncs.GENERATOR_COMPLETE_PREFIX + "*"
+            RedisConnectorDocPermSync.GENERATOR_COMPLETE_PREFIX + "*"
         ):
             r.delete(key)
 
         for key in r.scan_iter(
-            RedisConnectorDocPermSyncs.GENERATOR_PROGRESS_PREFIX + "*"
+            RedisConnectorDocPermSync.GENERATOR_PROGRESS_PREFIX + "*"
         ):
             r.delete(key)
 
-        for key in r.scan_iter(RedisConnectorDocPermSyncs.FENCE_PREFIX + "*"):
+        for key in r.scan_iter(RedisConnectorDocPermSync.FENCE_PREFIX + "*"):
             r.delete(key)

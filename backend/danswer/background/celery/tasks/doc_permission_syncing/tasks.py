@@ -9,9 +9,8 @@ from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
 
-from danswer.access.models import DocumentExternalAccess
+from danswer.access.models import DocExternalAccess
 from danswer.background.celery.apps.app_base import task_logger
-from danswer.configs.app_configs import ALLOW_SIMULTANEOUS_PRUNING
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_PERMISSIONS_SYNC_LOCK_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -19,14 +18,13 @@ from danswer.configs.constants import DANSWER_REDIS_FUNCTION_LOCK_PREFIX
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.configs.constants import DanswerRedisLocks
+from danswer.configs.constants import DocumentSource
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists
-from danswer.document_index.factory import get_current_primary_default_document_index
-from danswer.document_index.interfaces import UpdateRequest
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import external_doc_permissions_ctx
@@ -77,11 +75,11 @@ def _is_external_doc_permissions_sync_due(cc_pair: ConnectorCredentialPair) -> b
 
 
 @shared_task(
-    name="check_for_permissions_sync",
+    name="check_for_doc_permissions_sync",
     soft_time_limit=JOB_TIMEOUT,
     bind=True,
 )
-def check_for_permissions_sync(self: Task, *, tenant_id: str | None) -> None:
+def check_for_doc_permissions_sync(self: Task, *, tenant_id: str | None) -> None:
     r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat = r.lock(
@@ -131,10 +129,10 @@ def try_creating_permissions_sync_task(
     Returns None if no syncing is required."""
     redis_connector = RedisConnector(tenant_id, cc_pair.id)
 
-    if not ALLOW_SIMULTANEOUS_PRUNING:
-        count = redis_connector.permissions.get_active_task_count()
-        if count > 0:
-            return None
+    # if not ALLOW_SIMULTANEOUS_PRUNING:
+    # count = redis_connector.permissions.get_active_task_count()
+    # if count > 0:
+    #     return None
 
     LOCK_TIMEOUT = 30
 
@@ -168,7 +166,7 @@ def try_creating_permissions_sync_task(
         app.send_task(
             "connector_permission_sync_generator_task",
             kwargs=dict(
-                cc_pair=cc_pair,
+                cc_pair_id=cc_pair.id,
                 tenant_id=tenant_id,
             ),
             queue=DanswerCeleryQueues.CONNECTOR_DOC_PERMISSIONS_SYNC,
@@ -242,15 +240,13 @@ def connector_permission_sync_generator_task(
                 raise ValueError(f"No doc sync func found for {source_type}")
 
             logger.info(f"Syncing docs for {source_type}")
-            document_external_accesses: list[DocumentExternalAccess] = doc_sync_func(
-                cc_pair
-            )
+            document_external_accesses: list[DocExternalAccess] = doc_sync_func(cc_pair)
 
             task_logger.info(
                 f"RedisConnector.permissions.generate_tasks starting. cc_pair={cc_pair_id}"
             )
             tasks_generated = redis_connector.permissions.generate_tasks(
-                self.app, db_session, lock, document_external_accesses
+                self.app, lock, document_external_accesses, source_type
             )
             if tasks_generated is None:
                 return None
@@ -283,9 +279,13 @@ def connector_permission_sync_generator_task(
 )
 def update_external_document_permissions_task(
     self: Task,
-    document_external_access: DocumentExternalAccess,
     tenant_id: str | None,
+    document_external_access_dict: dict,
+    source_string: str,
 ) -> bool:
+    document_external_access = DocExternalAccess.from_dict(
+        document_external_access_dict
+    )
     doc_id = document_external_access.doc_id
     external_access = document_external_access.external_access
     try:
@@ -295,23 +295,16 @@ def update_external_document_permissions_task(
                 db_session=db_session,
                 emails=list(external_access.external_user_emails),
             )
-            doc_access = upsert_document_external_perms(
+            upsert_document_external_perms(
                 db_session=db_session,
                 doc_id=doc_id,
                 external_access=external_access,
-            )
-            update_request = UpdateRequest(
-                document_ids=[doc_id],
-                access=doc_access,
+                source_type=DocumentSource(source_string),
             )
 
-            # Don't bother sync-ing secondary, it will be sync-ed after switch anyway
-            document_index = get_current_primary_default_document_index(db_session)
-
-            # update vespa
-            document_index.update([update_request])
-
-            logger.info(f"Successfully synced docs for {doc_id}")
+            logger.info(
+                f"Successfully synced postgres document permissions for {doc_id}"
+            )
         return True
     except Exception:
         logger.exception("Error Syncing Document Permissions")

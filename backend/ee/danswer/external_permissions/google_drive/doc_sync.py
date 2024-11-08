@@ -2,7 +2,7 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 
-from danswer.access.models import DocumentExternalAccess
+from danswer.access.models import DocExternalAccess
 from danswer.access.models import ExternalAccess
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.google_utils.google_utils import execute_paginated_retrieval
@@ -124,7 +124,7 @@ def _get_permissions_from_slim_doc(
 
 def gdrive_doc_sync(
     cc_pair: ConnectorCredentialPair,
-) -> list[DocumentExternalAccess]:
+) -> list[DocExternalAccess]:
     """
     Adds the external permissions to the documents in postgres
     if the document doesn't already exists in postgres, we create
@@ -146,7 +146,7 @@ def gdrive_doc_sync(
                 slim_doc=slim_doc,
             )
             document_external_accesses.append(
-                DocumentExternalAccess(
+                DocExternalAccess(
                     external_access=ext_access,
                     doc_id=slim_doc.id,
                 )

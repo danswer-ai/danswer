@@ -1,6 +1,6 @@
 from slack_sdk import WebClient
 
-from danswer.access.models import DocumentExternalAccess
+from danswer.access.models import DocExternalAccess
 from danswer.access.models import ExternalAccess
 from danswer.connectors.slack.connector import get_channels
 from danswer.connectors.slack.connector import make_paginated_slack_api_call_w_retries
@@ -115,7 +115,7 @@ def _fetch_channel_permissions(
 
 def slack_doc_sync(
     cc_pair: ConnectorCredentialPair,
-) -> list[DocumentExternalAccess]:
+) -> list[DocExternalAccess]:
     """
     Adds the external permissions to the documents in postgres
     if the document doesn't already exists in postgres, we create
@@ -147,7 +147,7 @@ def slack_doc_sync(
 
         for doc_id in doc_ids:
             document_external_accesses.append(
-                DocumentExternalAccess(
+                DocExternalAccess(
                     external_access=ext_access,
                     doc_id=doc_id,
                 )
