@@ -266,6 +266,7 @@ const validSources = [
   "not_applicable",
   "ingestion_api",
   "freshdesk",
+  "fireflies",
 ] as const;
 
 export type ValidSources = (typeof validSources)[number];
