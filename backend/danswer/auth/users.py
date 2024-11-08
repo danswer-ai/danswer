@@ -48,7 +48,6 @@ from httpx_oauth.integrations.fastapi import OAuth2AuthorizeCallback
 from httpx_oauth.oauth2 import BaseOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
 from pydantic import BaseModel
-from sqlalchemy import select
 from sqlalchemy import text
 from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
@@ -83,20 +82,18 @@ from danswer.db.auth import SQLAlchemyUserAdminDB
 from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.engine import get_session
 from danswer.db.engine import get_session_with_tenant
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
 from danswer.db.models import User
-from danswer.db.models import UserTenantMapping
 from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from ee.danswer.server.tenants.provisioning import get_or_create_tenant_id
+from ee.danswer.server.tenants.user_mapping import get_tenant_id_for_email
 from shared_configs.configs import MULTI_TENANT
-from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
-
 
 logger = setup_logger()
 
@@ -190,20 +187,6 @@ def verify_email_domain(email: str) -> None:
             )
 
 
-def get_tenant_id_for_email(email: str) -> str:
-    if not MULTI_TENANT:
-        return POSTGRES_DEFAULT_SCHEMA
-    # Implement logic to get tenant_id from the mapping table
-    with Session(get_sqlalchemy_engine()) as db_session:
-        result = db_session.execute(
-            select(UserTenantMapping.tenant_id).where(UserTenantMapping.email == email)
-        )
-        tenant_id = result.scalar_one_or_none()
-    if tenant_id is None:
-        raise exceptions.UserNotExists()
-    return tenant_id
-
-
 def send_user_verification_email(
     user_email: str,
     token: str,
@@ -238,19 +221,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        try:
-            tenant_id = (
-                get_tenant_id_for_email(user_create.email)
-                if MULTI_TENANT
-                else POSTGRES_DEFAULT_SCHEMA
-            )
-        except exceptions.UserNotExists:
-            raise HTTPException(status_code=401, detail="User not found")
-
-        if not tenant_id:
-            raise HTTPException(
-                status_code=401, detail="User does not belong to an organization"
-            )
+        tenant_id = await get_or_create_tenant_id(user_create.email)
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
@@ -271,7 +242,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     user_create.role = UserRole.ADMIN
                 else:
                     user_create.role = UserRole.BASIC
-            user = None
+
             try:
                 user = await super().create(user_create, safe=safe, request=request)  # type: ignore
             except exceptions.UserAlreadyExists:
@@ -292,7 +263,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 else:
                     raise exceptions.UserAlreadyExists()
 
-            CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
+            finally:
+                CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
+
             return user
 
     async def oauth_callback(
@@ -308,19 +281,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
-        # Get tenant_id from mapping table
-        try:
-            tenant_id = (
-                get_tenant_id_for_email(account_email)
-                if MULTI_TENANT
-                else POSTGRES_DEFAULT_SCHEMA
-            )
-        except exceptions.UserNotExists:
-            raise HTTPException(status_code=401, detail="User not found")
+        tenant_id = await get_or_create_tenant_id(account_email)
 
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")
 
+        # Proceed with the tenant context
         token = None
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
@@ -371,9 +337,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     # Explicitly set the Postgres schema for this session to ensure
                     # OAuth account creation happens in the correct tenant schema
                     await db_session.execute(text(f'SET search_path = "{tenant_id}"'))
-                    user = await self.user_db.add_oauth_account(
-                        user, oauth_account_dict
-                    )
+
+                    # Add OAuth account
+                    await self.user_db.add_oauth_account(user, oauth_account_dict)
                     await self.on_after_register(user, request)
 
             else:

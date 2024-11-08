@@ -277,12 +277,14 @@ def get_application() -> FastAPI:
             prefix="/auth",
             tags=["auth"],
         )
+
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_register_router(UserRead, UserCreate),
             prefix="/auth",
             tags=["auth"],
         )
+
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_reset_password_router(),
