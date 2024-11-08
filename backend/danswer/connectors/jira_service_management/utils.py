@@ -1,4 +1,5 @@
-from typing import Dict, Any
+from typing import Any
+from typing import Dict
 
 
 # https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/
@@ -10,5 +11,5 @@ def get_text_adf(data: Dict[str, Any]) -> str:
     return ""
 
 
-def get_with_default(d, key, default):
+def get_with_default(d: Dict[str, Any], key: str, default: Any) -> Any:
     return d.get(key, default) if d.get(key) is not None else default
