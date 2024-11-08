@@ -1,19 +1,21 @@
 import os
+import time
 from collections.abc import Iterator
 from datetime import datetime
 from typing import Any, List
 
+from danswer.configs.app_configs import INDEX_BATCH_SIZE
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
-from danswer.utils.logger import setup_logger
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
-from danswer.configs.constants import DocumentSource
 from danswer.connectors.jira_service_management.client import JiraServiceManagementAPI, JSMIssue
 from danswer.connectors.models import BasicExpertInfo, Section, Document
+from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+JQL_DATE_FORMAT = "%Y-%m-%d %H:%M"
 
 class JSMConnector(LoadConnector, PollConnector):
 
@@ -35,7 +37,7 @@ class JSMConnector(LoadConnector, PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        jsm_issues: Iterator[JSMIssue] = self.jsm_client.get_issues(self.project_id, datetime.fromtimestamp(start).isoformat(), datetime.fromtimestamp(end).isoformat()) if start and end else self.jsm_client.get_issues(self.project_id)
+        jsm_issues: Iterator[JSMIssue] = self.jsm_client.get_issues(self.project_id, datetime.fromtimestamp(start).strftime(JQL_DATE_FORMAT), datetime.fromtimestamp(end).strftime(JQL_DATE_FORMAT)) if start or end else self.jsm_client.get_issues(self.project_id)
         docs_batch = []
         for jsm_issue in jsm_issues:
             docs_batch.append(self._message_to_doc(jsm_issue))
@@ -50,9 +52,13 @@ class JSMConnector(LoadConnector, PollConnector):
 
     @staticmethod
     def _message_to_doc(jsm_issue: JSMIssue):
-        issue_content: str = f"{jsm_issue.description}\n" + "\n".join([f"Comment: {comment}" for comment in jsm_issue.comments if comment])
+        issue_content: str = f"{jsm_issue.description}"
+        comments_str: str = "\n".join([f"Comment: {comment}" for comment in jsm_issue.comments if comment])
+        if comments_str:
+            issue_content += "\n" + comments_str
         return Document(
             id=jsm_issue.id,
+            title=jsm_issue.summary,
             sections=[Section(link=jsm_issue.url, text=issue_content)],
             doc_updated_at=jsm_issue.last_modified_time,
             source=DocumentSource.JIRA_SERVICE_MANAGEMENT,
@@ -69,8 +75,8 @@ class JSMConnector(LoadConnector, PollConnector):
 if __name__ == '__main__':
     jsm_connector = JSMConnector(os.environ["JSM_PROJECT_ID"])
     jsm_connector.load_credentials({
-        "api_token": os.environ["JSM_API_TOKEN"],
-        "email_id": os.environ["JSM_EMAIL_ID"],
-        "domain_id": os.environ["JSM_DOMAIN_ID"],
+        "jsm_api_key": os.environ["JSM_API_TOKEN"],
+        "jsm_email_id": os.environ["JSM_EMAIL_ID"],
+        "jsm_domain_id": os.environ["JSM_DOMAIN_ID"],
     })
-    print(list(jsm_connector.load_from_state()))
+    print(list(jsm_connector.poll_source(0, time.time())))

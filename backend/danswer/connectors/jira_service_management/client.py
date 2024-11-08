@@ -81,7 +81,7 @@ class JiraServiceManagementAPI:
     def _issue_json_to_object(issue: Dict[str, Any]):
         issue_fields: Dict[str, Any] = issue["fields"]
         summary: str = issue_fields['summary']
-        description: str = issue_fields['description']
+        description: str = get_text_adf(issue_fields['description'])
         comments: List[str] = [get_text_adf(comment.get('body', {})) for comment in get_with_default(issue_fields, "comment", {}).get('comments', [])]
         created_by: Person = Person(issue_fields['creator']['displayName'], issue_fields['creator']['emailAddress'])
         assigned_to: Person = Person(issue_fields['assignee']['displayName'],
@@ -103,5 +103,6 @@ class JiraServiceManagementAPI:
         )
 
     def __del__(self):
-        # closing the session when the object is destroyed
-        self.jsm_client.close()
+        if self.jsm_client:
+            # closing the session when the object is destroyed
+            self.jsm_client.close()
