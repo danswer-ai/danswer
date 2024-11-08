@@ -952,12 +952,12 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
   },
   jira_service_management: {
     description: "Configure Jira Service Management(JSM) connector",
-    subtext: `Specify any link to a Jira page below and click "Index" to Index. Based on the provided link, we will index the ENTIRE PROJECT, not just the specified page. For example, entering https://danswer.atlassian.net/jira/software/projects/DAN/boards/1 and clicking the Index button will index the whole DAN Jira project.`,
+    subtext: `Specify any project ID / key  of you Jira Service Management Workspace below and click "Index" to Index. Based on the provided ID/Key, we will index the ENTIRE PROJECT. For example, entering PROJECT KEY InformationTechnology and clicking the Index button will index the whole InformationTechnology project.`,
     values: [
       {
         type: "text",
-        query: "Enter the Jira Service Management project ID:",
-        label: "Jira Service Management Project ID",
+        query: "Enter the Jira Service Management project ID / Key:",
+        label: "Jira Service Management Project ID / Key",
         name: "jsm_project_id",
         optional: false,
       },
