@@ -142,7 +142,7 @@ def get_tokenizer(
     if provider_type is not None:
         if isinstance(provider_type, str):
             try:
-                provider_type = EmbeddingProvider(provider_type.upper())
+                provider_type = EmbeddingProvider(provider_type)
             except ValueError:
                 logger.debug(
                     f"Invalid provider_type '{provider_type}'. Falling back to default tokenizer."

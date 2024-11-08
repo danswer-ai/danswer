@@ -335,7 +335,7 @@ def get_session_with_tenant(
     engine = get_sqlalchemy_engine()
 
     # Store the previous tenant ID
-    previous_tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+    previous_tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get() or POSTGRES_DEFAULT_SCHEMA
 
     if tenant_id is None:
         tenant_id = previous_tenant_id
