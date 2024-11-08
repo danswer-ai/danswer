@@ -68,6 +68,7 @@ import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.png";
 import salesforceIcon from "../../../public/Salesforce.png";
 import freshdeskIcon from "../../../public/Freshdesk.png";
+import firefliesIcon from "../../../public/Fireflies.png";
 
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
@@ -1295,10 +1296,17 @@ export const FreshdeskIcon = ({
 );
 
 export const JiraServiceManagementIcon = ({
-    size = 16,
-    className = defaultTailwindCSS,
+  size = 16,
+  className = defaultTailwindCSS,
 }: IconProps) => (
-    <LogoIcon size={size} className={className} src={jiraServiceManagementIcon} />
+  <LogoIcon size={size} className={className} src={jiraServiceManagementIcon} />
+);
+
+export const FirefliesIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => (
+  <LogoIcon size={size} className={className} src={firefliesIcon} />
 );
 
 /* 

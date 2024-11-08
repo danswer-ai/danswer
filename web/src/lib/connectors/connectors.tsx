@@ -972,7 +972,12 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
       },
     ],
     advanced_values: [],
-  }
+  },
+  fireflies: {
+    description: "Configure Fireflies connector",
+    values: [],
+    advanced_values: [],
+  },
 };
 export function createConnectorInitialValues(
   connector: ConfigurableSources
@@ -1236,6 +1241,8 @@ export interface JiraServiceManagementConfig {
   jsm_project_id: string;
   issue_label_blacklist?: string[];
 }
+
+export interface FirefliesConfig {}
 
 export interface MediaWikiConfig extends MediaWikiBaseConfig {
   hostname: string;

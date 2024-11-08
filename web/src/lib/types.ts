@@ -267,6 +267,7 @@ const validSources = [
   "ingestion_api",
   "freshdesk",
   "jira_service_management",
+  "fireflies",
 ] as const;
 
 export type ValidSources = (typeof validSources)[number];

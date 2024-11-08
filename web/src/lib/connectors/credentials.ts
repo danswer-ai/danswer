@@ -194,6 +194,10 @@ export interface JiraServiceManagementCredentialJson {
   jsm_email_id: string;
 }
 
+export interface FirefliesCredentialJson {
+  fireflies_api_key: string;
+}
+
 export interface MediaWikiCredentialJson {}
 export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
 
@@ -302,6 +306,9 @@ export const credentialTemplates: Record<ValidSources, any> = {
     jsm_domain_id: "",
     jsm_email_id: "",
   } as JiraServiceManagementCredentialJson,
+  fireflies: {
+    fireflies_api_key: "",
+  } as FirefliesCredentialJson,
   xenforo: null,
   google_sites: null,
   file: null,
@@ -443,7 +450,11 @@ export const credentialDisplayNames: Record<string, string> = {
   jsm_domain_id: "Jira Service Management Domain ID",
   jsm_api_key: "Jira Service Management API Key",
   jsm_email_id: "Jira Service Management Email ID",
+
+  // Fireflies
+  fireflies_api_key: "Fireflies API Key",
 };
+
 export function getDisplayNameForCredentialKey(key: string): string {
   return credentialDisplayNames[key] || key;
 }

@@ -127,6 +127,7 @@ class DocumentSource(str, Enum):
     NOT_APPLICABLE = "not_applicable"
     FRESHDESK = "freshdesk"
     JIRA_SERVICE_MANAGEMENT = "jira_service_management"
+    FIREFLIES = "fireflies"
 
 
 DocumentSourceRequiringTenantContext: list[DocumentSource] = [DocumentSource.FILE]
