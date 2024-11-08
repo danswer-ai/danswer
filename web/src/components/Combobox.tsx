@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "./ui/separator";
+import { CustomTooltip } from "./CustomTooltip";
 
 interface ComboboxProps {
   items: { value: string; label: string }[] | undefined;
@@ -126,15 +127,21 @@ export function Combobox({
       {selectedItems.length > 0 && (
         <div className="flex flex-wrap gap-2 pt-2">
           {selectedItems.map((selectedItem) => (
-            <Badge
+            <CustomTooltip
               key={selectedItem.value}
-              onClick={() => handleRemove(selectedItem.value)}
-              variant="outline"
-              className="cursor-pointer hover:bg-blue-200"
+              trigger={
+                <Badge
+                  onClick={() => handleRemove(selectedItem.value)}
+                  variant="outline"
+                  className="cursor-pointer hover:bg-blue-200"
+                >
+                  <p className="truncate w-full">{selectedItem.label}</p>
+                  <X className="my-auto ml-1 cursor-pointer" size={14} />
+                </Badge>
+              }
             >
-              <p className="truncate w-full">{selectedItem.label}</p>
-              <X className="my-auto ml-1 cursor-pointer" size={14} />
-            </Badge>
+              {selectedItem.label}
+            </CustomTooltip>
           ))}
         </div>
       )}

@@ -31,8 +31,10 @@ export default async function Page() {
     }
     return redirect("/auth/login");
   }
-
-  if (!authTypeMetadata?.requiresVerification || currentUser.is_verified) {
+  if (
+    !authTypeMetadata?.requiresVerification &&
+    currentUser.is_verified === "true"
+  ) {
     return redirect("/");
   }
 

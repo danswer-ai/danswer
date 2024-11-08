@@ -22,7 +22,7 @@ export default async function Page() {
     console.log(`Some fetch failed for the login page - ${e}`);
   }
 
-  if (!authTypeMetadata?.requiresVerification || currentUser?.is_verified) {
+  if (!authTypeMetadata?.requiresVerification && currentUser?.is_verified) {
     return redirect("/");
   }
 

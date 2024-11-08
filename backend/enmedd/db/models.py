@@ -207,7 +207,7 @@ class InputPrompt__User(Base):
         ForeignKey("inputprompt.id"), primary_key=True
     )
     user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("inputprompt.id"), primary_key=True
+        ForeignKey("inputprompt.id", ondelete="CASCADE"), primary_key=True
     )
 
 
@@ -236,7 +236,9 @@ class ApiKey(Base):
     hashed_api_key: Mapped[str] = mapped_column(String, unique=True)
     api_key_display: Mapped[str] = mapped_column(String, unique=True)
     # the ID of the "user" who represents the access credentials for the API key
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=False
+    )
     # the ID of the user who owns the key
     owner_id: Mapped[UUID | None] = mapped_column(ForeignKey("user.id"), nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(
@@ -371,7 +373,9 @@ class Workspace__Users(Base):
     workspace_id: Mapped[int] = mapped_column(
         ForeignKey("workspace.id"), primary_key=True
     )
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
+    )
 
 
 class Workspace__Teamspace(Base):
@@ -1842,7 +1846,9 @@ class User__ExternalTeamspaceId(Base):
 
     __tablename__ = "user__external_teamspace_id"
 
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
+    )
     # These group ids have been prefixed by the source type
     external_teamspace_id: Mapped[str] = mapped_column(String, primary_key=True)
     cc_pair_id: Mapped[int] = mapped_column(ForeignKey("connector_credential_pair.id"))
