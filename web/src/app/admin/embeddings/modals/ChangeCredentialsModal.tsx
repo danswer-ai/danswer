@@ -11,6 +11,7 @@ import {
   LLM_PROVIDERS_ADMIN_URL,
 } from "../../configuration/llm/constants";
 import { mutate } from "swr";
+import { testEmbedding } from "../pages/utils";
 
 export function ChangeCredentialsModal({
   provider,
@@ -112,16 +113,15 @@ export function ChangeCredentialsModal({
     const normalizedProviderType = provider.provider_type
       .toLowerCase()
       .split(" ")[0];
+
     try {
-      const testResponse = await fetch("/api/admin/embedding/test-embedding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider_type: normalizedProviderType,
-          api_key: apiKey,
-          api_url: apiUrl,
-          model_name: modelName,
-        }),
+      const testResponse = await testEmbedding({
+        provider_type: normalizedProviderType,
+        modelName,
+        apiKey,
+        apiUrl,
+        apiVersion: null,
+        deploymentName: null,
       });
 
       if (!testResponse.ok) {
