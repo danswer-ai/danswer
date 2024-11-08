@@ -20,12 +20,14 @@ from danswer.db.models import User
 from danswer.db.notification import create_notification
 from danswer.db.persona import create_assistant_category
 from danswer.db.persona import create_update_persona
+from danswer.db.persona import delete_persona_category
 from danswer.db.persona import get_assistant_categories
 from danswer.db.persona import get_persona_by_id
 from danswer.db.persona import get_personas
 from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import mark_persona_as_not_deleted
 from danswer.db.persona import update_all_personas_display_priority
+from danswer.db.persona import update_persona_category
 from danswer.db.persona import update_persona_public_status
 from danswer.db.persona import update_persona_shared_users
 from danswer.db.persona import update_persona_visibility
@@ -189,6 +191,11 @@ def update_persona(
     )
 
 
+class PersonaCategoryPatchRequest(BaseModel):
+    category_description: str
+    category_name: str
+
+
 @basic_router.get("/categories")
 def get_categories(
     db: Session = Depends(get_session),
@@ -207,6 +214,30 @@ def create_category(
     create_assistant_category(
         name=category.name, description=category.description, db_session=db
     )
+
+
+@admin_router.patch("/category/{category_id}")
+def patch_persona_category(
+    category_id: int,
+    persona_category_patch_request: PersonaCategoryPatchRequest,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    update_persona_category(
+        category_id=category_id,
+        category_description=persona_category_patch_request.category_description,
+        category_name=persona_category_patch_request.category_name,
+        db_session=db_session,
+    )
+
+
+@admin_router.delete("/category/{category_id}")
+def delete_category(
+    category_id: int,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    delete_persona_category(category_id=category_id, db_session=db_session)
 
 
 class PersonaShareRequest(BaseModel):

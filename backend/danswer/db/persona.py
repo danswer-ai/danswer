@@ -756,3 +756,26 @@ def get_assistant_categories(db_session: Session) -> list[PersonaCategory]:
 def create_assistant_category(db_session: Session, name: str, description: str) -> None:
     db_session.add(PersonaCategory(name=name, description=description))
     db_session.commit()
+
+
+def update_persona_category(
+    category_id: int,
+    category_description: str,
+    category_name: str,
+    db_session: Session,
+) -> None:
+    persona_category = (
+        db_session.query(PersonaCategory)
+        .filter(PersonaCategory.id == category_id)
+        .one_or_none()
+    )
+    if persona_category is None:
+        raise ValueError(f"Persona category with ID {category_id} does not exist")
+    persona_category.description = category_description
+    persona_category.name = category_name
+    db_session.commit()
+
+
+def delete_persona_category(category_id: int, db_session: Session) -> None:
+    db_session.query(PersonaCategory).filter(PersonaCategory.id == category_id).delete()
+    db_session.commit()

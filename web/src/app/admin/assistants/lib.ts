@@ -119,6 +119,33 @@ export const createAssistantCategory = (name: string, description: string) => {
     body: JSON.stringify({ name, description }),
   });
 };
+
+export const deleteAssistantCategory = (categoryId: number) => {
+  return fetch(`/api/admin/persona/category/${categoryId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+};
+
+export const updateAssistantCategory = (
+  id: number,
+  name: string,
+  description: string
+) => {
+  return fetch(`/api/admin/persona/category/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      category_name: name,
+      category_description: description,
+    }),
+  });
+};
+
 function buildPersonaAPIBody(
   creationRequest: PersonaCreationRequest | PersonaUpdateRequest,
   promptId: number,

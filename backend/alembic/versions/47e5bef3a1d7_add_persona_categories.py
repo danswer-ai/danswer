@@ -30,7 +30,12 @@ def upgrade() -> None:
     # Add category_id to persona table
     op.add_column("persona", sa.Column("category_id", sa.Integer(), nullable=True))
     op.create_foreign_key(
-        "fk_persona_category", "persona", "persona_category", ["category_id"], ["id"]
+        "fk_persona_category",
+        "persona",
+        "persona_category",
+        ["category_id"],
+        ["id"],
+        ondelete="SET NULL",
     )
 
 
