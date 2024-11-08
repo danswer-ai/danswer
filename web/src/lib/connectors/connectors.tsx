@@ -950,6 +950,29 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     values: [],
     advanced_values: [],
   },
+  jira_service_management: {
+    description: "Configure Jira Service Management(JSM) connector",
+    subtext: `Specify any link to a Jira page below and click "Index" to Index. Based on the provided link, we will index the ENTIRE PROJECT, not just the specified page. For example, entering https://danswer.atlassian.net/jira/software/projects/DAN/boards/1 and clicking the Index button will index the whole DAN Jira project.`,
+    values: [
+      {
+        type: "text",
+        query: "Enter the Jira Service Management project ID:",
+        label: "Jira Service Management Project ID",
+        name: "jsm_project_id",
+        optional: false,
+      },
+      {
+        type: "list",
+        query: "Enter list of labels to be blacklisted from indexing:",
+        label: "Issue Label Blacklist",
+        name: "issue_label_blacklist",
+        description:
+          "This is generally useful to ignore certain bots. Add user emails which comments should NOT be indexed.",
+        optional: true,
+      },
+    ],
+    advanced_values: [],
+  }
 };
 export function createConnectorInitialValues(
   connector: ConfigurableSources
@@ -1208,6 +1231,11 @@ export interface AsanaConfig {
 }
 
 export interface FreshdeskConfig {}
+
+export interface JiraServiceManagementConfig {
+  jsm_project_id: string;
+  issue_label_blacklist?: string[];
+}
 
 export interface MediaWikiConfig extends MediaWikiBaseConfig {
   hostname: string;

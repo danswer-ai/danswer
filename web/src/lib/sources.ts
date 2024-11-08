@@ -37,6 +37,7 @@ import {
   ColorSlackIcon,
   XenforoIcon,
   FreshdeskIcon,
+  JiraServiceManagementIcon
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -288,6 +289,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Freshdesk",
     category: SourceCategory.CustomerSupport,
     docs: "https://docs.danswer.dev/connectors/freshdesk",
+  },
+  jira_service_management: {
+    icon: JiraServiceManagementIcon,
+    displayName: "Jira Service Management",
+    category: SourceCategory.ProjectManagement,
+    docs: "https://docs.danswer.dev/connectors/jira_service_management",
   },
   // currently used for the Internet Search tool docs, which is why
   // a globe is used

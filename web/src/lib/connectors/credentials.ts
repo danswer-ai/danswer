@@ -188,6 +188,12 @@ export interface FreshdeskCredentialJson {
   freshdesk_api_key: string;
 }
 
+export interface JiraServiceManagementCredentialJson {
+  jsm_domain_id: string;
+  jsm_api_key: string;
+  jsm_email_id: string;
+}
+
 export interface MediaWikiCredentialJson {}
 export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
 
@@ -291,6 +297,11 @@ export const credentialTemplates: Record<ValidSources, any> = {
     freshdesk_password: "",
     freshdesk_api_key: "",
   } as FreshdeskCredentialJson,
+  jira_service_management: {
+    jsm_api_key: "",
+    jsm_domain_id: "",
+    jsm_email_id: "",
+  } as JiraServiceManagementCredentialJson,
   xenforo: null,
   google_sites: null,
   file: null,
@@ -427,6 +438,11 @@ export const credentialDisplayNames: Record<string, string> = {
   freshdesk_domain: "Freshdesk Domain",
   freshdesk_password: "Freshdesk Password",
   freshdesk_api_key: "Freshdesk API Key",
+
+  //Jira Service Management
+  jsm_domain_id: "Jira Service Management Domain ID",
+  jsm_api_key: "Jira Service Management API Key",
+  jsm_email_id: "Jira Service Management Email ID",
 };
 export function getDisplayNameForCredentialKey(key: string): string {
   return credentialDisplayNames[key] || key;

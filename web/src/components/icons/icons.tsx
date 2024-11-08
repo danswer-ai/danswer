@@ -62,6 +62,7 @@ import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import dropboxIcon from "../../../public/Dropbox.png";
 import slackIcon from "../../../public/Slack.png";
+import jiraServiceManagementIcon from "../../../public/JiraServiceManagement.png";
 
 import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.png";
@@ -1291,6 +1292,13 @@ export const FreshdeskIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => (
   <LogoIcon size={size} className={className} src={freshdeskIcon} />
+);
+
+export const JiraServiceManagementIcon = ({
+    size = 16,
+    className = defaultTailwindCSS,
+}: IconProps) => (
+    <LogoIcon size={size} className={className} src={jiraServiceManagementIcon} />
 );
 
 /* 
