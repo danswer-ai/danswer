@@ -89,7 +89,6 @@ import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 import xenforoIcon from "../../../public/Xenforo.svg";
 import { FaRobot } from "react-icons/fa";
-import { size } from "lodash";
 
 export interface IconProps {
   size?: number;

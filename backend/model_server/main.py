@@ -28,8 +28,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
 HF_CACHE_PATH = Path("/root/.cache/huggingface/")
-# Changed this to be compatible with Linux
-TEMP_HF_CACHE_PATH = Path.home() / ".cache" / "temp_huggingface"
+TEMP_HF_CACHE_PATH = Path("/root/.cache/temp_huggingface/")
 
 transformer_logging.set_verbosity_error()
 
