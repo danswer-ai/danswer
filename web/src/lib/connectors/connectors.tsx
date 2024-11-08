@@ -963,11 +963,11 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
       },
       {
         type: "list",
-        query: "Enter list of labels to be blacklisted from indexing:",
-        label: "Issue Label Blacklist",
+        query: "Enter list of labels to be skipped from indexing:",
+        label: "Labels to be skipped",
         name: "issue_label_blacklist",
         description:
-          "This is generally useful to ignore certain bots. Add user emails which comments should NOT be indexed.",
+          "This is generally useful to ignore any business sensitive data. Add labels which issues should NOT be indexed.",
         optional: true,
       },
     ],

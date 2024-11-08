@@ -1,15 +1,14 @@
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from string import Template
 from typing import List, Set, Dict, Any
 
 from requests import Response, session
 from requests.auth import HTTPBasicAuth
 
-from backend.danswer.connectors.jira_service_management.utils import get_text_adf
-from backend.danswer.utils.logger import setup_logger
-from danswer.connectors.jira_service_management.utils import get_with_default
+from .utils import get_text_adf, get_with_default
+from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 CUSTOM_HOST_TEMPLATE = Template("https://$custom_domain.atlassian.net")
@@ -39,15 +38,14 @@ class JSMIssue:
 
 class JiraServiceManagementAPI:
     def __init__(self,
-                 api_token: str,
-                 email_id: str,
-                 domain_id: str,
+                 jsm_api_key: str,
+                 jsm_email_id: str,
+                 jsm_domain_id: str,
                  labels_to_skip: List[str] | None = None
                  ):
-        self.domain_id: str = domain_id
-        self._base_url = CUSTOM_HOST_TEMPLATE.substitute(custom_domain=domain_id)
+        self._base_url = CUSTOM_HOST_TEMPLATE.substitute(custom_domain=jsm_domain_id)
         self.jsm_client = session()
-        self.jsm_client.auth = HTTPBasicAuth(email_id, api_token)
+        self.jsm_client.auth = HTTPBasicAuth(jsm_email_id, jsm_api_key)
         self.labels_to_skip: Set[str] = set(labels_to_skip) if labels_to_skip is not None else set()
 
     def get_issues(self, project_id: str, start_date: str = "", end_date: str = "") -> Iterator[JSMIssue]:
@@ -88,7 +86,7 @@ class JiraServiceManagementAPI:
         created_by: Person = Person(issue_fields['creator']['displayName'], issue_fields['creator']['emailAddress'])
         assigned_to: Person = Person(issue_fields['assignee']['displayName'],
                                      issue_fields['assignee']['emailAddress']) if issue_fields.get("assignee") else None
-        last_modified_time: datetime = datetime.fromisoformat(issue_fields["updated"])
+        last_modified_time: datetime = datetime.fromisoformat(issue_fields["updated"]).astimezone(timezone.utc)
         return JSMIssue(
             id=issue["id"],
             url=issue["self"],

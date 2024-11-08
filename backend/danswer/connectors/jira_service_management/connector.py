@@ -3,9 +3,11 @@ from collections.abc import Iterator
 from datetime import datetime
 from typing import Any, List
 
-from backend.danswer.connectors.interfaces import LoadConnector, PollConnector, SecondsSinceUnixEpoch, \
-    GenerateDocumentsOutput
-from backend.danswer.utils.logger import setup_logger
+from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
+from danswer.utils.logger import setup_logger
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.jira_service_management.client import JiraServiceManagementAPI, JSMIssue
@@ -15,11 +17,11 @@ logger = setup_logger()
 
 class JSMConnector(LoadConnector, PollConnector):
 
-    def __init__(self, project_id: str, batch_size: int = INDEX_BATCH_SIZE, labels_to_skip: List[str] | None = None):
+    def __init__(self, jsm_project_id: str, batch_size: int = INDEX_BATCH_SIZE, issue_label_blacklist: List[str] | None = None):
         self.jsm_client = None
-        self.project_id = project_id
+        self.project_id = jsm_project_id
         self.batch_size = batch_size
-        self.labels_to_skip = labels_to_skip
+        self.labels_to_skip = issue_label_blacklist
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.jsm_client = JiraServiceManagementAPI(**credentials, labels_to_skip=self.labels_to_skip)
