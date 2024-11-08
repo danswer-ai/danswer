@@ -406,7 +406,6 @@ def connector_indexing_proxy_task(
         search_settings_id,
         tenant_id,
         global_version.is_ee_version(),
-        pure=False,
     )
 
     if not job:
@@ -440,7 +439,7 @@ def connector_indexing_proxy_task(
 
                 if not index_attempt.is_finished():
                     continue
-        # After job.done() returns True
+
         if job.process:
             exit_code = job.process.exitcode
             task_logger.info(

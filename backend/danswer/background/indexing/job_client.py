@@ -7,6 +7,7 @@ https://github.com/celery/celery/issues/7007#issuecomment-1740139367"""
 import traceback
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
 from multiprocessing import Process
 from multiprocessing import Queue
 from typing import Any
@@ -58,8 +59,8 @@ class SimpleJob:
 
     id: int
     process: Optional["Process"] = None
-    process: Optional[Process] = None
     exception_info: Optional[str] = None
+    exception_queue: Optional[Queue] = None
 
     def cancel(self) -> bool:
         return self.release()
@@ -100,10 +101,21 @@ class SimpleJob:
             return f"Job with ID '{self.id}' was killed or encountered an unhandled exception."
 
 
+def _wrapper(q: Queue, func: Callable, *args: Any, **kwargs: Any) -> None:
+    try:
+        func(*args, **kwargs)
+    except Exception:
+        error_trace = traceback.format_exc()
+        q.put(error_trace)
+        # Re-raise the exception to ensure the process exits with a non-zero code
+        raise
+
+
 class SimpleJobClient:
-    def __init__(self):
-        self.jobs: list[SimpleJob] = []
-        self.job_counter = 0
+    def __init__(self, n_workers: int = 1) -> None:
+        self.n_workers = n_workers
+        self.job_id_counter = 0
+        self.jobs: dict[int, SimpleJob] = {}
 
     def _cleanup_completed_jobs(self) -> None:
         current_job_ids = list(self.jobs.keys())
@@ -113,24 +125,16 @@ class SimpleJobClient:
                 logger.debug(f"Cleaning up job with id: '{job.id}'")
                 del self.jobs[job.id]
 
-    def submit(self, func: Callable, *args, **kwargs) -> Optional[SimpleJob]:
-        self.job_counter += 1
-        job_id = self.job_counter
+    def submit(self, func: Callable, *args: Any, **kwargs: Any) -> Optional[SimpleJob]:
+        self.job_id_counter += 1
+        job_id = self.job_id_counter
 
-        def wrapper(q, *args, **kwargs):
-            try:
-                func(*args, **kwargs)
-            except Exception:
-                error_trace = traceback.format_exc()
-                q.put(error_trace)
-                # Re-raise the exception to ensure the process exits with a non-zero code
-                raise
-
-        q = Queue()
-        p = Process(target=wrapper, args=(q, *args), kwargs=kwargs)
+        q: Queue = Queue()
+        wrapped_func = partial(_wrapper, q, func)
+        p = Process(target=wrapped_func, args=args, kwargs=kwargs)
         job = SimpleJob(id=job_id, process=p)
         p.start()
         job.process = p
         job.exception_queue = q  # Store the queue in the job object
-        self.jobs.append(job)
+        self.jobs[job_id] = job
         return job
