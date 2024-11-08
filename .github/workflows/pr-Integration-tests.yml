@@ -210,17 +210,18 @@ jobs:
             echo "All integration tests passed successfully."
           fi
 
-      - name: Stop Docker containers
-        run: |
-          cd deployment/docker_compose
-          docker compose -f docker-compose.dev.yml -p danswer-stack down -v
-
+      # save before stopping the containers so the logs can be captured
       - name: Save Docker logs
         if: success() || failure()
         run: |
           cd deployment/docker_compose
           docker compose -f docker-compose.dev.yml -p danswer-stack logs > docker-compose.log
           mv docker-compose.log ${{ github.workspace }}/docker-compose.log
+
+      - name: Stop Docker containers
+        run: |
+          cd deployment/docker_compose
+          docker compose -f docker-compose.dev.yml -p danswer-stack down -v
       
       - name: Upload logs
         if: success() || failure()
