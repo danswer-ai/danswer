@@ -53,7 +53,7 @@ function SummaryRow({
   return (
     <TableRow
       onClick={onToggle}
-      className="border-border bg-white py-4 rounded-sm !border cursor-pointer"
+      className="border-border py-4 rounded-sm !border cursor-pointer"
     >
       <TableCell>
         <div className="text-xl flex items-center truncate ellipsis gap-x-2 font-semibold">
@@ -183,7 +183,7 @@ function ConnectorRow({
   return (
     <TableRow
       className={`border hover:bg-hover-light ${
-        invisible ? "invisible !h-0 !-mb-10" : "!border !border-border"
+        invisible ? "invisible !h-0 !-mb-10 border-none" : "border-none"
       }  w-full cursor-pointer relative `}
       onClick={() => {
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);

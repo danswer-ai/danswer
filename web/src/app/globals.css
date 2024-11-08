@@ -337,3 +337,8 @@ ul > li > p {
   margin-bottom: 0;
   display: inline;
 }
+
+/* List Item Text Color */
+li {
+  color: var(--text-600);
+}

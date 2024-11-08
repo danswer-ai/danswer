@@ -405,7 +405,7 @@ export const AIMessage = ({
                               filteredDocs.slice(0, 2).map((doc, ind) => (
                                 <div
                                   key={doc.document_id}
-                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
+                                  className={`w-[200px] bg-background-100 rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
                               `}
                                 >
                                   <a
@@ -445,7 +445,7 @@ export const AIMessage = ({
                                 }
                               }}
                               key={-1}
-                              className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b"
+                              className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 bg-background-125 hover:bg-background-200 px-4 py-2"
                             >
                               <div className="text-sm flex justify-between font-semibold text-text-700">
                                 <p className="line-clamp-1">See context</p>
@@ -562,7 +562,7 @@ export const AIMessage = ({
                         translate-y-2 ${
                           (isHovering || settings?.isMobile) && "!translate-y-0"
                         }
-                        transition-transform duration-300 ease-in-out 
+                        transition-transform duration-300 ease-in-out
                         flex md:flex-row gap-x-0.5 bg-background-125/40 -mx-1.5 p-1.5 rounded-lg
                         `}
                       >
@@ -751,9 +751,9 @@ export const HumanMessage = ({
                       w-full
                       flex
                       flex-col
-                      border 
-                      border-border 
-                      rounded-lg 
+                      border
+                      border-border
+                      rounded-lg
                       bg-background-emphasis
                       pb-2
                       [&:has(textarea:focus)]::ring-1
@@ -763,23 +763,23 @@ export const HumanMessage = ({
                       <textarea
                         ref={textareaRef}
                         className={`
-                        m-0 
-                        w-full 
+                        m-0
+                        w-full
                         h-auto
                         shrink
                         border-0
-                        rounded-lg 
+                        rounded-lg
                         overflow-y-hidden
-                        bg-background-emphasis 
-                        whitespace-normal 
+                        bg-background-emphasis
+                        whitespace-normal
                         break-word
                         overscroll-contain
-                        outline-none 
-                        placeholder-gray-400 
+                        outline-none
+                        placeholder-gray-400
                         resize-none
                         pl-4
                         overflow-y-auto
-                        pr-12 
+                        pr-12
                         py-4`}
                         aria-multiline
                         role="textarea"
@@ -806,15 +806,15 @@ export const HumanMessage = ({
                         <button
                           className={`
                           w-fit
-                          bg-accent 
-                          text-inverted 
+                          bg-accent
+                          text-inverted
                           text-sm
-                          rounded-lg 
-                          inline-flex 
-                          items-center 
-                          justify-center 
-                          flex-shrink-0 
-                          font-medium 
+                          rounded-lg
+                          inline-flex
+                          items-center
+                          justify-center
+                          flex-shrink-0
+                          font-medium
                           min-h-[38px]
                           py-2
                           px-3
@@ -826,17 +826,17 @@ export const HumanMessage = ({
                         </button>
                         <button
                           className={`
-                          inline-flex 
-                          items-center 
-                          justify-center 
-                          flex-shrink-0 
-                          font-medium 
-                          min-h-[38px] 
-                          py-2 
-                          px-3 
-                          w-fit 
+                          inline-flex
+                          items-center
+                          justify-center
+                          flex-shrink-0
+                          font-medium
+                          min-h-[38px]
+                          py-2
+                          px-3
+                          w-fit
                           bg-hover
-                          bg-background-strong 
+                          bg-background-strong
                           text-sm
                           rounded-lg
                           hover:bg-hover-emphasis
