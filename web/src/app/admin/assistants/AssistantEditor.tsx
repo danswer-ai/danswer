@@ -989,41 +989,43 @@ export function AssistantEditor({
                 </div>
               </div>
 
-              {categories && categories.length > 0 && (
-                <div className="my-2">
-                  <div className="flex gap-x-2 items-center">
-                    <div className="block font-medium text-base">Category</div>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <FiInfo size={12} />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" align="center">
-                          Group similar assistants together by category
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <SelectorFormField
-                    includeReset
-                    name="category_id"
-                    options={categories.map((category) => ({
-                      name: category.name,
-                      value: category.id,
-                    }))}
-                  />
-                </div>
-              )}
+              <AdvancedOptionsToggle
+                title="Persona Categories"
+                showAdvancedOptions={showPersonaCategory}
+                setShowAdvancedOptions={setShowPersonaCategory}
+              />
 
-              {admin && (
+              {showPersonaCategory && (
                 <>
-                  <AdvancedOptionsToggle
-                    title="Persona Categories"
-                    showAdvancedOptions={showPersonaCategory}
-                    setShowAdvancedOptions={setShowPersonaCategory}
-                  />
+                  {categories && categories.length > 0 && (
+                    <div className="my-2">
+                      <div className="flex gap-x-2 items-center">
+                        <div className="block font-medium text-base">
+                          Category
+                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <FiInfo size={12} />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" align="center">
+                              Group similar assistants together by category
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <SelectorFormField
+                        includeReset
+                        name="category_id"
+                        options={categories.map((category) => ({
+                          name: category.name,
+                          value: category.id,
+                        }))}
+                      />
+                    </div>
+                  )}
 
-                  {showPersonaCategory && (
+                  {admin && (
                     <>
                       <div className="my-2">
                         <div className="flex gap-x-2 items-center mb-2">
