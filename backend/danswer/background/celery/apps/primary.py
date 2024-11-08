@@ -76,6 +76,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     SqlEngine.init_engine(pool_size=8, max_overflow=0)
 
     app_base.wait_for_redis(sender, **kwargs)
+    app_base.wait_for_db(sender, **kwargs)
+    app_base.wait_for_vespa(sender, **kwargs)
 
     logger.info("Running as the primary celery worker.")
 
