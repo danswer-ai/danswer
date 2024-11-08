@@ -293,7 +293,7 @@ const SOURCE_METADATA_MAP: SourceMap = {
   fireflies: {
     icon: FirefliesIcon,
     displayName: "Fireflies",
-    category: SourceCategory.CustomerSupport,
+    category: SourceCategory.Other,
     docs: "https://docs.danswer.dev/connectors/fireflies",
   },
   // currently used for the Internet Search tool docs, which is why
