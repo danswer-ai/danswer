@@ -359,6 +359,7 @@ def try_creating_indexing_task(
             task_id=custom_task_id,
             priority=DanswerCeleryPriority.MEDIUM,
         )
+
         if not result:
             raise RuntimeError("send_task for connector_indexing_proxy_task failed.")
 
@@ -389,7 +390,7 @@ def connector_indexing_proxy_task(
     cc_pair_id: int,
     search_settings_id: int,
     tenant_id: str | None,
-) -> None:
+) -> None | int:
     """celery tasks are forked, but forking is unstable.  This proxies work to a spawned task."""
     task_logger.info(
         f"Indexing proxy - starting: attempt={index_attempt_id} "
@@ -468,7 +469,7 @@ def connector_indexing_proxy_task(
         f"cc_pair={cc_pair_id} "
         f"search_settings={search_settings_id}"
     )
-    return
+    return 1
 
 
 def connector_indexing_task(
@@ -477,7 +478,7 @@ def connector_indexing_task(
     search_settings_id: int,
     tenant_id: str | None,
     is_ee: bool,
-) -> int | None:
+) -> None:
     """Indexing task. For a cc pair, this task pulls all document IDs from the source
     and compares those IDs to locally stored documents and deletes all locally stored IDs missing
     from the most recently pulled document ID list
@@ -634,6 +635,7 @@ def connector_indexing_task(
         # get back the total number of indexed docs and return it
         n_final_progress = redis_connector_index.get_progress()
         redis_connector_index.set_generator_complete(HTTPStatus.OK.value)
+
     except Exception as e:
         logger.exception(
             f"Indexing spawned task failed: attempt={index_attempt_id} "
@@ -655,5 +657,5 @@ def connector_indexing_task(
         f"tenant={tenant_id} "
         f"cc_pair={cc_pair_id} "
         f"search_settings={search_settings_id}"
+        f"n_indexed_docs={n_final_progress}"
     )
-    return n_final_progress

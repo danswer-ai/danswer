@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: celery-worker-heavy
-          image: danswer/danswer-backend:v0.11.0-cloud.beta.8
+          image: danswer/danswer-backend:v0.12.0-cloud.beta.1
           imagePullPolicy: Always
           command:
             [
@@ -34,7 +34,7 @@ spec:
                   name: danswer-secrets
                   key: redis_password
             - name: DANSWER_VERSION
-              value: "v0.11.0-cloud.beta.8"
+              value: "v0.12.0-cloud.beta.1"
           envFrom:
             - configMapRef:
                 name: env-configmap

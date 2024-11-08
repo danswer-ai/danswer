@@ -98,7 +98,7 @@ class SimpleJob:
         if self.exception_info:
             return self.exception_info
         else:
-            return f"Job with ID '{self.id}' was killed or encountered an unhandled exception."
+            return f"No exception info available for job with ID '{self.id}'."
 
 
 def _wrapper(q: Queue, func: Callable, *args: Any, **kwargs: Any) -> None:
