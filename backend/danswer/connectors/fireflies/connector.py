@@ -26,8 +26,8 @@ _FIREFLIES_API_URL = "https://api.fireflies.ai/graphql"
 _FIREFLIES_TRANSCRIPT_QUERY_SIZE = 50  # Max page size is 50
 
 _FIREFLIES_API_QUERY = """
-    query Transcripts($fromDate: DateTime, $toDate: DateTime) {
-        transcripts(fromDate: $fromDate, toDate: $toDate) {
+    query Transcripts($fromDate: DateTime, $toDate: DateTime, $limit: Int!, $skip: Int!) {
+        transcripts(fromDate: $fromDate, toDate: $toDate, limit: $limit, skip: $skip) {
             id
             title
             host_email
@@ -53,21 +53,21 @@ def _create_doc_from_transcript(transcript: dict) -> Document | None:
     else:
         return None
 
-    meeting_link = transcript.get("transcript_url", "")
+    meeting_link = transcript["transcript_url"]
 
-    fireflies_id = _FIREFLIES_ID_PREFIX + transcript.get("id", "")
+    fireflies_id = _FIREFLIES_ID_PREFIX + transcript["id"]
 
-    meeting_title = transcript.get("title", "")
+    meeting_title = transcript["title"] or "No Title"
 
-    meeting_date_unix = transcript.get("date", "")
+    meeting_date_unix = transcript["date"]
     meeting_date = datetime.fromtimestamp(meeting_date_unix / 1000, tz=timezone.utc)
 
-    meeting_host_email = transcript.get("host_email", "")
-    host_email_user_info = BasicExpertInfo(email=meeting_host_email)
+    meeting_host_email = transcript["host_email"]
+    host_email_user_info = [BasicExpertInfo(email=meeting_host_email)]
 
     meeting_participants_email_list = []
     for participant in transcript.get("participants", []):
-        if participant != meeting_host_email:
+        if participant != meeting_host_email and participant:
             meeting_participants_email_list.append(BasicExpertInfo(email=participant))
 
     return Document(
@@ -125,6 +125,7 @@ class FirefliesConnector(PollConnector, LoadConnector):
             variables["toDate"] = end_datetime
 
         while True:
+            variables["skip"] = skip
             response = requests.post(
                 _FIREFLIES_API_URL,
                 headers=headers,
@@ -147,7 +148,6 @@ class FirefliesConnector(PollConnector, LoadConnector):
                 break
 
             skip += _FIREFLIES_TRANSCRIPT_QUERY_SIZE
-            variables["skip"] = skip
 
     def _process_transcripts(
         self, start: str | None = None, end: str | None = None
