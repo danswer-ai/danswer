@@ -8,8 +8,8 @@ metadata:
 spec:
   scaleTargetRef:
     name: celery-worker-indexing
-  minReplicaCount: 1
-  maxReplicaCount: 10
+  minReplicaCount: 0
+  maxReplicaCount: 0
   triggers:
     - type: redis
       metadata:
