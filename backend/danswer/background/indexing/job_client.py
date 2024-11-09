@@ -126,6 +126,12 @@ class SimpleJobClient:
                 del self.jobs[job.id]
 
     def submit(self, func: Callable, *args: Any, **kwargs: Any) -> Optional[SimpleJob]:
+        self._cleanup_completed_jobs()
+        if len(self.jobs) >= self.n_workers:
+            logger.debug(
+                f"No available workers to run job. Currently running '{len(self.jobs)}' jobs, with a limit of '{self.n_workers}'."
+            )
+            return None
         self.job_id_counter += 1
         job_id = self.job_id_counter
 
