@@ -45,7 +45,7 @@ jobs:
       id: list-changed
       run: |
         echo "default_branch: ${{ github.event.repository.default_branch }}"
-        changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+        changed=$(ct list-changed --remote origin --target-branch ${{ github.event.repository.default_branch }})
         echo "list-changed output: $changed"
         if [[ -n "$changed" ]]; then
           echo "changed=true" >> "$GITHUB_OUTPUT"
