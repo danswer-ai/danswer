@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from danswer.db.models import Persona
+from danswer.db.models import PersonaCategory
 from danswer.db.models import StarterMessage
 from danswer.search.enums import RecencyBiasSetting
 from danswer.server.features.document_set.models import DocumentSet
@@ -143,5 +144,10 @@ class PersonaCategoryResponse(BaseModel):
     name: str
     description: str | None
 
-    class Config:
-        from_attributes = True
+    @classmethod
+    def from_model(cls, category: PersonaCategory) -> "PersonaCategoryResponse":
+        return PersonaCategoryResponse(
+            id=category.id,
+            name=category.name,
+            description=category.description,
+        )

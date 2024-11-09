@@ -201,7 +201,10 @@ def get_categories(
     db: Session = Depends(get_session),
     _: User | None = Depends(current_user),
 ) -> list[PersonaCategoryResponse]:
-    return get_assistant_categories(db_session=db)
+    return [
+        PersonaCategoryResponse.from_model(category)
+        for category in get_assistant_categories(db_session=db)
+    ]
 
 
 @admin_router.post("/categories")
