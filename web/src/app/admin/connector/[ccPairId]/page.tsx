@@ -283,7 +283,7 @@ export default function Page(props: { params: Promise<{ ccPairId: string }> }) {
   const ccPairId = parseInt(params.ccPairId);
 
   return (
-    <div className="mx-auto container">
+    <div className="container">
       <Main ccPairId={ccPairId} />
     </div>
   );
