@@ -41,6 +41,7 @@ jobs:
     - name: Set up chart-testing
       uses: helm/chart-testing-action@v2.6.1
 
+    # even though we specify chart-dirs in ct.yaml, it isn't used by ct for the list-changed command...
     - name: Run chart-testing (list-changed)
       id: list-changed
       run: |

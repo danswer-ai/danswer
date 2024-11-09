@@ -1,5 +1,6 @@
 # See https://github.com/helm/chart-testing#configuration
 
+# still have to specify this on the command line for list-changed
 chart-dirs:
   - deployment/helm/charts
 
