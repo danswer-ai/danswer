@@ -226,7 +226,6 @@ def get_application() -> FastAPI:
     else:
         logger.debug("Sentry DSN not provided, skipping Sentry initialization")
 
-    application.add_exception_handler(BasicAuthenticationError, log_http_error)
     application.add_exception_handler(status.HTTP_400_BAD_REQUEST, log_http_error)
     application.add_exception_handler(status.HTTP_401_UNAUTHORIZED, log_http_error)
     application.add_exception_handler(status.HTTP_403_FORBIDDEN, log_http_error)
