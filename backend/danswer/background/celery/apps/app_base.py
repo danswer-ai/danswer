@@ -146,6 +146,8 @@ def on_celeryd_init(sender: Any = None, conf: Any = None, **kwargs: Any) -> None
 def wait_for_redis(sender: Any, **kwargs: Any) -> None:
     """Waits for redis to become ready subject to a hardcoded timeout.
     Will raise WorkerShutdown to kill the celery worker if the timeout is reached."""
+    if MULTI_TENANT:
+        return
 
     r = get_redis_client(tenant_id=None)
 
@@ -188,7 +190,8 @@ def wait_for_redis(sender: Any, **kwargs: Any) -> None:
 def wait_for_db(sender: Any, **kwargs: Any) -> None:
     """Waits for the db to become ready subject to a hardcoded timeout.
     Will raise WorkerShutdown to kill the celery worker if the timeout is reached."""
-
+    if MULTI_TENANT:
+        return
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
 
@@ -230,6 +233,8 @@ def wait_for_db(sender: Any, **kwargs: Any) -> None:
 def wait_for_vespa(sender: Any, **kwargs: Any) -> None:
     """Waits for Vespa to become ready subject to a hardcoded timeout.
     Will raise WorkerShutdown to kill the celery worker if the timeout is reached."""
+    if MULTI_TENANT:
+        return
 
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60

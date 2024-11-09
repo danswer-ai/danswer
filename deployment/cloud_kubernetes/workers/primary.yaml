@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: celery-worker-primary
-          image: danswer/danswer-backend:v0.11.0-cloud.beta.8
+          image: danswer/danswer-backend-cloud:v0.12.0-cloud.beta.2
           imagePullPolicy: Always
           command:
             [
@@ -25,7 +25,9 @@ spec:
               "--loglevel=INFO",
               "--hostname=primary@%n",
               "-Q",
-              "celery,periodic_tasks,vespa_metadata_sync",
+              "celery,periodic_tasks",
+              "--prefetch-multiplier=1",
+              "--concurrency=10",
             ]
           env:
             - name: REDIS_PASSWORD
