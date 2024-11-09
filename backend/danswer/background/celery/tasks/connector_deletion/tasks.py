@@ -33,7 +33,6 @@ class TaskDependencyError(RuntimeError):
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
     bind=True,
-    queue="zzzzzzz",
 )
 def check_for_connector_deletion_task(self: Task, *, tenant_id: str | None) -> None:
     r = get_redis_client(tenant_id=tenant_id)

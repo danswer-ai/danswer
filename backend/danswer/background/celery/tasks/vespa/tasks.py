@@ -80,7 +80,6 @@ logger = setup_logger()
     name="check_for_vespa_sync_task",
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
-    queue="zzzzz",
     bind=True,
 )
 def check_for_vespa_sync_task(self: Task, *, tenant_id: str | None) -> None:
@@ -631,7 +630,7 @@ def monitor_ccpair_indexing_taskset(
     redis_connector_index.reset()
 
 
-@shared_task(name="monitor_vespa_sync", soft_time_limit=300, bind=True, queue="zzzzz")
+@shared_task(name="monitor_vespa_sync", soft_time_limit=300, bind=True)
 def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
     """This is a celery beat task that monitors and finalizes metadata sync tasksets.
     It scans for fence values and then gets the counts of any associated tasksets.
