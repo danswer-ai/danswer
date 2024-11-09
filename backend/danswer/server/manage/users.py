@@ -62,10 +62,6 @@ from danswer.server.models import MinimalUserSnapshot
 from danswer.server.utils import send_user_email_invite
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
-from ee.danswer.server.tenants.billing import register_tenant_users
-from ee.danswer.server.tenants.provisioning import add_users_to_tenant
-from ee.danswer.server.tenants.user_mapping import get_tenant_id_for_email
-from ee.danswer.server.tenants.user_mapping import remove_users_from_tenant
 from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
@@ -207,7 +203,9 @@ def bulk_invite_users(
 
     if MULTI_TENANT:
         try:
-            add_users_to_tenant(normalized_emails, tenant_id)
+            fetch_ee_implementation_or_noop(
+                "danswer.server.tenants.provisioning", "add_users_to_tenant", None
+            )(normalized_emails, tenant_id)
 
         except IntegrityError as e:
             if isinstance(e.orig, UniqueViolation):
@@ -228,9 +226,9 @@ def bulk_invite_users(
         return number_of_invited_users
     try:
         logger.info("Registering tenant users")
-        register_tenant_users(
-            CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session)
-        )
+        fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.billing", "register_tenant_users", None
+        )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session))
         if ENABLE_EMAIL_INVITES:
             try:
                 for email in all_emails:
@@ -245,7 +243,9 @@ def bulk_invite_users(
             "Reverting changes: removing users from tenant and resetting invited users"
         )
         write_invited_users(initial_invited_users)  # Reset to original state
-        remove_users_from_tenant(normalized_emails, tenant_id)
+        fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.user_mapping", "remove_users_from_tenant", None
+        )(normalized_emails, tenant_id)
         raise e
 
 
@@ -259,14 +259,16 @@ def remove_invited_user(
     remaining_users = [user for user in user_emails if user != user_email.user_email]
 
     tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-    remove_users_from_tenant([user_email.user_email], tenant_id)
+    fetch_ee_implementation_or_noop(
+        "danswer.server.tenants.user_mapping", "remove_users_from_tenant", None
+    )([user_email.user_email], tenant_id)
     number_of_invited_users = write_invited_users(remaining_users)
 
     try:
         if MULTI_TENANT:
-            register_tenant_users(
-                CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session)
-            )
+            fetch_ee_implementation_or_noop(
+                "danswer.server.tenants.billing", "register_tenant_users", None
+            )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session))
     except Exception:
         logger.error(
             "Request to update number of seats taken in control plane failed. "
@@ -503,7 +505,9 @@ def verify_user_logged_in(
     token_created_at = (
         None if MULTI_TENANT else get_current_token_creation(user, db_session)
     )
-    organization_name = get_tenant_id_for_email(user.email)
+    organization_name = fetch_ee_implementation_or_noop(
+        "danswer.server.tenants.user_mapping", "get_tenant_id_for_email", None
+    )(user.email)
 
     user_info = UserInfo.from_model(
         user,

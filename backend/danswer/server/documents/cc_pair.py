@@ -331,9 +331,6 @@ def sync_cc_pair(
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[list[int]]:
     # avoiding circular refs
-    from ee.danswer.background.celery.apps.primary import (
-        sync_external_doc_permissions_task,
-    )
 
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id=cc_pair_id,
@@ -359,11 +356,18 @@ def sync_cc_pair(
         )
 
     logger.info(f"Syncing the {cc_pair.connector.name} connector.")
-    sync_external_doc_permissions_task.apply_async(
-        kwargs=dict(
-            cc_pair_id=cc_pair_id, tenant_id=CURRENT_TENANT_ID_CONTEXTVAR.get()
-        ),
+    sync_external_doc_permissions_task = fetch_ee_implementation_or_noop(
+        "danswer.background.celery.apps.primary",
+        "sync_external_doc_permissions_task",
+        None,
     )
+
+    if sync_external_doc_permissions_task:
+        sync_external_doc_permissions_task.apply_async(
+            kwargs=dict(
+                cc_pair_id=cc_pair_id, tenant_id=CURRENT_TENANT_ID_CONTEXTVAR.get()
+            ),
+        )
 
     return StatusResponse(
         success=True,
