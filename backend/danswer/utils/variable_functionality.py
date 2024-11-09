@@ -24,7 +24,6 @@ global_version = DanswerVersion()
 
 
 def set_is_ee_based_on_env_variable() -> None:
-    print("ENTERPRISE_EDITION_ENABLED", ENTERPRISE_EDITION_ENABLED)
     if ENTERPRISE_EDITION_ENABLED and not global_version.is_ee_version():
         logger.notice("Enterprise Edition enabled")
         global_version.set_ee()
@@ -140,7 +139,7 @@ def fetch_ee_implementation_or_noop(
         Exception: If EE is enabled but the fetch fails.
     """
     if not global_version.is_ee_version():
-        return noop_return_value
+        return lambda *args, **kwargs: noop_return_value
 
     try:
         return fetch_versioned_implementation(module, attribute)

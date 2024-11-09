@@ -134,7 +134,7 @@ MULTI_TENANT = os.environ.get("MULTI_TENANT", "").lower() == "true"
 POSTGRES_DEFAULT_SCHEMA = os.environ.get("POSTGRES_DEFAULT_SCHEMA") or "public"
 
 
-async def async_return_default_schema(*args, **kwargs):
+async def async_return_default_schema(*args, **kwargs) -> str:
     return POSTGRES_DEFAULT_SCHEMA
 
 
