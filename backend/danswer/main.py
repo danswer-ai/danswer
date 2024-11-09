@@ -25,6 +25,7 @@ from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
+from danswer.auth.users import BasicAuthenticationError
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
@@ -194,7 +195,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 def log_http_error(_: Request, exc: Exception) -> JSONResponse:
     status_code = getattr(exc, "status_code", 500)
-    if status_code >= 400:
+
+    if isinstance(exc, BasicAuthenticationError):
+        # For BasicAuthenticationError, just log a brief message without stack trace (almost always spam)
+        logger.error(f"Authentication failed: {str(exc)}")
+
+    elif status_code >= 400:
         error_msg = f"{str(exc)}\n"
         error_msg += "".join(traceback.format_tb(exc.__traceback__))
         logger.error(error_msg)
@@ -220,7 +226,6 @@ def get_application() -> FastAPI:
     else:
         logger.debug("Sentry DSN not provided, skipping Sentry initialization")
 
-    # Add the custom exception handler
     application.add_exception_handler(status.HTTP_400_BAD_REQUEST, log_http_error)
     application.add_exception_handler(status.HTTP_401_UNAUTHORIZED, log_http_error)
     application.add_exception_handler(status.HTTP_403_FORBIDDEN, log_http_error)

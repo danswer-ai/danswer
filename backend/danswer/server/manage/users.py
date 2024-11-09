@@ -11,7 +11,6 @@ from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
-from fastapi import status
 from psycopg2.errors import UniqueViolation
 from pydantic import BaseModel
 from sqlalchemy import Column
@@ -27,6 +26,7 @@ from danswer.auth.noauth_user import fetch_no_auth_user
 from danswer.auth.noauth_user import set_no_auth_user_preferences
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserStatus
+from danswer.auth.users import BasicAuthenticationError
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
@@ -492,13 +492,10 @@ def verify_user_logged_in(
             store = get_kv_store()
             return fetch_no_auth_user(store)
 
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="User Not Authenticated"
-        )
+        raise BasicAuthenticationError(detail="User Not Authenticated")
 
     if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User's OIDC token has expired.",
         )
 
