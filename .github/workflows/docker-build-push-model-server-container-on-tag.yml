@@ -6,7 +6,13 @@ on:
       - '*'
 
 env:
-  REGISTRY_IMAGE: danswer/danswer-model-server
+  REGISTRY_IMAGE: ${{ contains(github.ref_name, 'cloud') && 'danswer/danswer-model-server-cloud' || 'danswer/danswer-model-server' }}
+  LATEST_TAG: ${{ contains(github.ref_name, 'latest') }}
+
+jobs:
+  build-and-push:
+    # See https://runs-on.com/runners/linux/
+    runs-on: [runs-on,runner=8cpu-linux-x64,"run-id=${{ github.run_id }}"]
   LATEST_TAG: ${{ contains(github.ref_name, 'latest') }}
   
 jobs:
