@@ -91,10 +91,10 @@ from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
-from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop_async
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from shared_configs.configs import async_return_default_schema
 from shared_configs.configs import MULTI_TENANT
-from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
@@ -223,11 +223,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        tenant_id = await fetch_ee_implementation_or_noop_async(
+        tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
-            POSTGRES_DEFAULT_SCHEMA,
-            kwargs={"email": user_create.email},
+            async_return_default_schema,
+        )(
+            email=user_create.email,
         )
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
@@ -288,11 +289,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
-        tenant_id = await fetch_ee_implementation_or_noop_async(
+        tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
-            POSTGRES_DEFAULT_SCHEMA,
-            kwargs={"email": account_email},
+            async_return_default_schema,
+        )(
+            email=account_email,
         )
 
         if not tenant_id:
@@ -431,11 +433,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         email = credentials.username
 
         # Get tenant_id from mapping table
-        tenant_id = await fetch_ee_implementation_or_noop_async(
+        tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
-            POSTGRES_DEFAULT_SCHEMA,
-            kwargs={"email": email},
+            async_return_default_schema,
+        )(
+            email=email,
         )
         if not tenant_id:
             # User not found in mapping
@@ -494,11 +497,12 @@ cookie_transport = CookieTransport(
 # This strategy is used to add tenant_id to the JWT token
 class TenantAwareJWTStrategy(JWTStrategy):
     async def _create_token_data(self, user: User, impersonate: bool = False) -> dict:
-        tenant_id = await fetch_ee_implementation_or_noop_async(
+        tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
-            POSTGRES_DEFAULT_SCHEMA,
-            kwargs={"email": user.email},
+            async_return_default_schema,
+        )(
+            email=user.email,
         )
 
         data = {

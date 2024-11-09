@@ -139,46 +139,11 @@ def fetch_ee_implementation_or_noop(
     Raises:
         Exception: If EE is enabled but the fetch fails.
     """
-    print("CALLED WITH ", attribute)
     if not global_version.is_ee_version():
-        print("RETURNING DEFAULT", attribute)
         return noop_return_value
 
     try:
         return fetch_versioned_implementation(module, attribute)
-    except Exception as e:
-        logger.error(f"Failed to fetch implementation for {module}.{attribute}: {e}")
-        raise
-
-
-async def fetch_ee_implementation_or_noop_async(
-    module: str,
-    attribute: str,
-    noop_return_value: Any = None,
-    kwargs: dict[str, Any] = {},
-) -> Any:
-    """
-    Fetches an EE implementation if EE is enabled, otherwise returns a no-op function or value.
-    This is for asynchronous use.
-
-    Args:
-        module (str): The name of the module from which to fetch the attribute.
-        attribute (str): The name of the attribute to fetch from the module.
-        noop_return_value (Any): The value to return if EE is not enabled.
-
-    Returns:
-        Any: The fetched EE implementation if successful and EE is enabled,
-             otherwise the noop_return_value.
-
-    Raises:
-        Exception: If EE is enabled but the fetch fails.
-    """
-    if not global_version.is_ee_version():
-        return noop_return_value
-
-    try:
-        implementation = fetch_versioned_implementation(module, attribute)
-        return await implementation(**kwargs)
     except Exception as e:
         logger.error(f"Failed to fetch implementation for {module}.{attribute}: {e}")
         raise
