@@ -1,4 +1,7 @@
 from danswer.background.celery.apps.primary import celery_app
+from danswer.background.task_name_builders import (
+    name_sync_external_doc_permissions_task,
+)
 from danswer.background.task_utils import build_celery_task_wrapper
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.db.chat import delete_chat_sessions_older_than
@@ -14,9 +17,6 @@ from ee.danswer.background.celery_utils import (
     should_perform_external_group_permissions_check,
 )
 from ee.danswer.background.task_name_builders import name_chat_ttl_task
-from ee.danswer.background.task_name_builders import (
-    name_sync_external_doc_permissions_task,
-)
 from ee.danswer.background.task_name_builders import (
     name_sync_external_group_permissions_task,
 )

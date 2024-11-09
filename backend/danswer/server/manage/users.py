@@ -37,6 +37,7 @@ from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
+from danswer.db.api_key import is_api_key_email_address
 from danswer.db.auth import get_total_users_count
 from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_session
@@ -60,13 +61,7 @@ from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.server.utils import send_user_email_invite
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.api_key import is_api_key_email_address
-from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
-from ee.danswer.db.user_group import remove_curator_status__no_commit
-from ee.danswer.server.tenants.billing import register_tenant_users
-from ee.danswer.server.tenants.provisioning import add_users_to_tenant
-from ee.danswer.server.tenants.user_mapping import get_tenant_id_for_email
-from ee.danswer.server.tenants.user_mapping import remove_users_from_tenant
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
@@ -105,7 +100,10 @@ def set_user_role(
         )
 
     if user_to_update.role == UserRole.CURATOR:
-        remove_curator_status__no_commit(db_session, user_to_update)
+        fetch_ee_implementation_or_noop(
+            "danswer.db.user_group",
+            "remove_curator_status__no_commit",
+        )(db_session, user_to_update)
 
     user_to_update.role = user_role_update_request.new_role.value
 
@@ -205,7 +203,9 @@ def bulk_invite_users(
 
     if MULTI_TENANT:
         try:
-            add_users_to_tenant(normalized_emails, tenant_id)
+            fetch_ee_implementation_or_noop(
+                "danswer.server.tenants.provisioning", "add_users_to_tenant", None
+            )(normalized_emails, tenant_id)
 
         except IntegrityError as e:
             if isinstance(e.orig, UniqueViolation):
@@ -226,9 +226,9 @@ def bulk_invite_users(
         return number_of_invited_users
     try:
         logger.info("Registering tenant users")
-        register_tenant_users(
-            CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session)
-        )
+        fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.billing", "register_tenant_users", None
+        )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session))
         if ENABLE_EMAIL_INVITES:
             try:
                 for email in all_emails:
@@ -243,7 +243,9 @@ def bulk_invite_users(
             "Reverting changes: removing users from tenant and resetting invited users"
         )
         write_invited_users(initial_invited_users)  # Reset to original state
-        remove_users_from_tenant(normalized_emails, tenant_id)
+        fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.user_mapping", "remove_users_from_tenant", None
+        )(normalized_emails, tenant_id)
         raise e
 
 
@@ -257,14 +259,16 @@ def remove_invited_user(
     remaining_users = [user for user in user_emails if user != user_email.user_email]
 
     tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-    remove_users_from_tenant([user_email.user_email], tenant_id)
+    fetch_ee_implementation_or_noop(
+        "danswer.server.tenants.user_mapping", "remove_users_from_tenant", None
+    )([user_email.user_email], tenant_id)
     number_of_invited_users = write_invited_users(remaining_users)
 
     try:
         if MULTI_TENANT:
-            register_tenant_users(
-                CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session)
-            )
+            fetch_ee_implementation_or_noop(
+                "danswer.server.tenants.billing", "register_tenant_users", None
+            )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session))
     except Exception:
         logger.error(
             "Request to update number of seats taken in control plane failed. "
@@ -331,7 +335,10 @@ async def delete_user(
         for oauth_account in user_to_delete.oauth_accounts:
             db_session.delete(oauth_account)
 
-        delete_user__ext_group_for_user__no_commit(
+        fetch_ee_implementation_or_noop(
+            "danswer.db.external_perm",
+            "delete_user__ext_group_for_user__no_commit",
+        )(
             db_session=db_session,
             user_id=user_to_delete.id,
         )
@@ -498,7 +505,9 @@ def verify_user_logged_in(
     token_created_at = (
         None if MULTI_TENANT else get_current_token_creation(user, db_session)
     )
-    organization_name = get_tenant_id_for_email(user.email)
+    organization_name = fetch_ee_implementation_or_noop(
+        "danswer.server.tenants.user_mapping", "get_tenant_id_for_email", None
+    )(user.email)
 
     user_info = UserInfo.from_model(
         user,

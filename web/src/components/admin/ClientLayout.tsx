@@ -289,20 +289,20 @@ export function ClientLayout({
                                 ),
                                 link: "/admin/groups",
                               },
-                              {
-                                name: (
-                                  <div className="flex">
-                                    <KeyIconSkeleton
-                                      className="text-icon-settings-sidebar"
-                                      size={18}
-                                    />
-                                    <div className="ml-1">API Keys</div>
-                                  </div>
-                                ),
-                                link: "/admin/api-key",
-                              },
                             ]
                           : []),
+                        {
+                          name: (
+                            <div className="flex">
+                              <KeyIconSkeleton
+                                className="text-icon-settings-sidebar"
+                                size={18}
+                              />
+                              <div className="ml-1">API Keys</div>
+                            </div>
+                          ),
+                          link: "/admin/api-key",
+                        },
                         {
                           name: (
                             <div className="flex">

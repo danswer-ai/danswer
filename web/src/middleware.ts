@@ -7,7 +7,6 @@ import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "./lib/consta
 export const config = {
   matcher: [
     "/admin/groups/:path*",
-    "/admin/api-key/:path*",
     "/admin/performance/usage/:path*",
     "/admin/performance/query-history/:path*",
     "/admin/whitelabeling/:path*",

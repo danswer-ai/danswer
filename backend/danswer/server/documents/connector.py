@@ -108,7 +108,7 @@ from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.documents.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.user_group import validate_user_creation_permissions
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 
 logger = setup_logger()
 
@@ -658,7 +658,10 @@ def create_connector_from_model(
 ) -> ObjectCreationIdResponse:
     try:
         _validate_connector_allowed(connector_data.source)
-        validate_user_creation_permissions(
+
+        fetch_ee_implementation_or_noop(
+            "danswer.db.user_group", "validate_user_creation_permissions", None
+        )(
             db_session=db_session,
             user=user,
             target_group_ids=connector_data.groups,
@@ -732,7 +735,9 @@ def update_connector_from_model(
 ) -> ConnectorSnapshot | StatusResponse[int]:
     try:
         _validate_connector_allowed(connector_data.source)
-        validate_user_creation_permissions(
+        fetch_ee_implementation_or_noop(
+            "danswer.db.user_group", "validate_user_creation_permissions", None
+        )(
             db_session=db_session,
             user=user,
             target_group_ids=connector_data.groups,

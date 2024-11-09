@@ -52,6 +52,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
 
+from danswer.auth.api_key import get_hashed_api_key_from_request
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
@@ -74,6 +75,7 @@ from danswer.configs.constants import AuthType
 from danswer.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
 from danswer.configs.constants import DANSWER_API_KEY_PREFIX
 from danswer.configs.constants import UNNAMED_KEY_PLACEHOLDER
+from danswer.db.api_key import fetch_user_for_api_key
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
@@ -89,9 +91,9 @@ from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 from danswer.utils.variable_functionality import fetch_versioned_implementation
-from ee.danswer.server.tenants.provisioning import get_or_create_tenant_id
-from ee.danswer.server.tenants.user_mapping import get_tenant_id_for_email
+from shared_configs.configs import async_return_default_schema
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
@@ -221,7 +223,13 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        tenant_id = await get_or_create_tenant_id(user_create.email)
+        tenant_id = await fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.provisioning",
+            "get_or_create_tenant_id",
+            async_return_default_schema,
+        )(
+            email=user_create.email,
+        )
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
@@ -281,7 +289,13 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
-        tenant_id = await get_or_create_tenant_id(account_email)
+        tenant_id = await fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.provisioning",
+            "get_or_create_tenant_id",
+            async_return_default_schema,
+        )(
+            email=account_email,
+        )
 
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")
@@ -419,7 +433,13 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         email = credentials.username
 
         # Get tenant_id from mapping table
-        tenant_id = get_tenant_id_for_email(email)
+        tenant_id = await fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.provisioning",
+            "get_or_create_tenant_id",
+            async_return_default_schema,
+        )(
+            email=email,
+        )
         if not tenant_id:
             # User not found in mapping
             self.password_helper.hash(credentials.password)
@@ -477,7 +497,14 @@ cookie_transport = CookieTransport(
 # This strategy is used to add tenant_id to the JWT token
 class TenantAwareJWTStrategy(JWTStrategy):
     async def _create_token_data(self, user: User, impersonate: bool = False) -> dict:
-        tenant_id = get_tenant_id_for_email(user.email)
+        tenant_id = await fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.provisioning",
+            "get_or_create_tenant_id",
+            async_return_default_schema,
+        )(
+            email=user.email,
+        )
+
         data = {
             "sub": str(user.id),
             "aud": self.token_audience,
@@ -851,3 +878,22 @@ def get_oauth_router(
         return redirect_response
 
     return router
+
+
+def api_key_dep(
+    request: Request, db_session: Session = Depends(get_session)
+) -> User | None:
+    if AUTH_TYPE == AuthType.DISABLED:
+        return None
+
+    hashed_api_key = get_hashed_api_key_from_request(request)
+    if not hashed_api_key:
+        raise HTTPException(status_code=401, detail="Missing API key")
+
+    if hashed_api_key:
+        user = fetch_user_for_api_key(hashed_api_key, db_session)
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    return user
