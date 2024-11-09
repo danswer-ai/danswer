@@ -390,7 +390,7 @@ def connector_indexing_proxy_task(
     cc_pair_id: int,
     search_settings_id: int,
     tenant_id: str | None,
-) -> None | int:
+) -> None:
     """celery tasks are forked, but forking is unstable.  This proxies work to a spawned task."""
     task_logger.info(
         f"Indexing proxy - starting: attempt={index_attempt_id} "
