@@ -60,7 +60,7 @@ const Page = async () => {
         <div className="absolute top-10x w-full"></div>
         <div className="flex w-full flex-col justify-center">
           <h2 className="text-center text-xl text-strong font-bold">
-            {cloud ? "Complete your sign up" : "Sign Up for Danswer"}
+            {cloud ? "Complete your sign up" : "Sign Up for Buddy"}
           </h2>
 
           {cloud && authUrl && (

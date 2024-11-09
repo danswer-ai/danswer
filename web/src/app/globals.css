@@ -36,7 +36,8 @@
     --background-emphasis: #1b1f27;
     --background-strong: #1b1f27;
 
-    --border: #26222c;
+    /* --border: #26222c; */
+    --border: #3e3a4a;
     --border-light: #322e3b;
     --border-medium: #3e3a4a;
     --border-strong: #4a4659;
@@ -68,7 +69,7 @@
 
     /* Other UI Elements - Adjusted for better contrast */
     --non-selectable: #1b1f27;
-    --highlight-text: #e7e5eb;
+    --highlight-text:#350b6b;
     --user-bubble: #1a172f;
     --ai-bubble: #07060d;
     --document-color: #ff647d;
@@ -243,6 +244,7 @@ body {
 .prose :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
   background-color: #1b1f27;
   font-size: 0.875rem;
+  color: var(--text-600);
 }
 
 pre[class*="language-"],
@@ -338,7 +340,33 @@ ul > li > p {
   display: inline;
 }
 
-/* List Item Text Color */
+/* List Item Text Color
 li {
   color: var(--text-600);
+} */
+
+  /* Apply default text color to all text elements */
+body, h1, h2, h3, h4, h5, h6, p, span, strong, em, blockquote, li, a {
+  color: var(--text-600);
+}
+
+
+/* Disable focus styles universally */
+*:focus, *:hover, *:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Specifically target form elements */
+/* button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  box-shadow: none !important;
+} */
+
+/* Optionally disable hover styles */
+*:hover {
+  border-color: #3e3a4a;
 }

@@ -40,7 +40,7 @@ export const ApiKeyForm = ({
           )
         }
       >
-        <TabsList className="mt-3 mb-4">
+        <TabsList className="mt-3 mb-4 bg-background-125">
           {providerOptions.map((provider) => (
             <TabsTrigger
               key={provider.name}

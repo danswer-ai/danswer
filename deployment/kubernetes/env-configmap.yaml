@@ -9,11 +9,11 @@ data:
   ENCRYPTION_KEY_SECRET: ""  # This should not be specified directly in the yaml, this is just for reference
   SESSION_EXPIRE_TIME_SECONDS: "86400"  # 1 Day Default
   VALID_EMAIL_DOMAINS: ""  # Can be something like danswer.ai, as an extra double-check
-  SMTP_SERVER: "" # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
-  SMTP_PORT: "" # For sending verification emails, if unspecified then defaults to '587'
-  SMTP_USER: ""  # 'your-email@company.com'
-  SMTP_PASS: ""  # 'your-gmail-password'
-  EMAIL_FROM: ""  # 'your-email@company.com' SMTP_USER missing used instead
+  SMTP_SERVER: "email-smtp.ap-southeast-2.amazonaws.com" 
+  SMTP_PORT: "587" 
+  SMTP_USER: "AKIA2UC3C2QOXZL2KURQ"
+  SMTP_PASS: "BIafi405bPXpQDa5omj8B4DIb/wqJc4drNVnEbo/+1hl"
+  EMAIL_FROM: "buddy@enigmas.io"
   CORS_ALLOWED_ORIGIN: ""
   # Gen AI Settings
   GEN_AI_MAX_TOKENS: ""
@@ -79,9 +79,11 @@ data:
   LOG_VESPA_TIMING_INFORMATION: ""
   # Shared or Non-backend Related
   INTERNAL_URL: "http://api-server-service:80"  # for web server
-  WEB_DOMAIN: "http://localhost:3000"  # for web server and api server
+  WEB_DOMAIN: "http://buddy.enigmas.io:8080"  # for web server and api server
   DOMAIN: "localhost"  # for nginx
   # Chat Configs
   HARD_DELETE_CHATS: ""
   ENABLE_PAID_ENTERPRISE_EDITION_FEATURES: "true"
   NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED: "true"
+  REQUIRE_EMAIL_VERIFICATION: "true"
+  ENABLE_EMAIL_INVITES: "true"

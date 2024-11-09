@@ -199,7 +199,7 @@ const FolderItem = ({
                   onChange={handleFolderNameChange}
                   onKeyDown={handleKeyDown}
                   onBlur={() => saveFolderName(true)}
-                  className="text-sm px-1 flex-1 min-w-0 -my-px mr-2"
+                  className="bg-background-search text-sm px-1 flex-1 min-w-0 -my-px mr-2"
                 />
               ) : (
                 <div className="flex-1 break-all min-w-0">

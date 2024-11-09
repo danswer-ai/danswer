@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 dark:ring-offset-neutral-950 dark:focus-visible:ring-neutral-300",
+  "dark inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 dark:ring-offset-neutral-950 dark:focus-visible:ring-neutral-300",
   {
     variants: {
       variant: {
@@ -38,8 +38,7 @@ const buttonVariants = cva(
         "link-reverse":
           "text-neutral-50 underline-offset-4 hover:underline dark:text-neutral-900",
         submit:
-          "bg-green-500 text-green-100 hover:bg-green-600/90 dark:bg-neutral-50 dark:text-blue-500 dark:hover:bg-green-100/90",
-
+          "bg-green-500 text-neutral-50",
         // "bg-blue-600 text-neutral-50 hover:bg-blue-600/80 dark:bg-blue-600 dark:text-neutral-50 dark:hover:bg-blue-600/90",
         "submit-reverse":
           "bg-neutral-50 text-blue-600 hover:bg-neutral-50/80 dark:bg-neutral-50 dark:text-blue-600 dark:hover:bg-neutral-50/90",

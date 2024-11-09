@@ -1,6 +1,6 @@
 services:
   api_server:
-    image: danswer/danswer-backend:${IMAGE_TAG:-latest}
+    #image: danswer/danswer-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -18,19 +18,21 @@ services:
       - "8080:8080"
     environment:
       # Auth Settings
-      - AUTH_TYPE=${AUTH_TYPE:-disabled}
+      - AUTH_TYPE=basic
       - SESSION_EXPIRE_TIME_SECONDS=${SESSION_EXPIRE_TIME_SECONDS:-}
       - ENCRYPTION_KEY_SECRET=${ENCRYPTION_KEY_SECRET:-}
       - VALID_EMAIL_DOMAINS=${VALID_EMAIL_DOMAINS:-}
       - GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}
       - GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}
-      - REQUIRE_EMAIL_VERIFICATION=${REQUIRE_EMAIL_VERIFICATION:-}
-      - SMTP_SERVER=${SMTP_SERVER:-} # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
-      - SMTP_PORT=${SMTP_PORT:-587} # For sending verification emails, if unspecified then defaults to '587'
-      - SMTP_USER=${SMTP_USER:-}
-      - SMTP_PASS=${SMTP_PASS:-}
-      - ENABLE_EMAIL_INVITES=${ENABLE_EMAIL_INVITES:-} # If enabled, will send users (using SMTP settings) an email to join the workspace
-      - EMAIL_FROM=${EMAIL_FROM:-}
+      - REQUIRE_EMAIL_VERIFICATION=true
+      - SMTP_SERVER=email-smtp.ap-southeast-2.amazonaws.com # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'
+      - SMTP_PORT=587 # For sending verification emails, if unspecified then defaults to '587'
+      - SMTP_USER=AKIA2UC3C2QOXZL2KURQ
+      - SMTP_PASS=BIafi405bPXpQDa5omj8B4DIb/wqJc4drNVnEbo/+1hl
+      - ENABLE_EMAIL_INVITES=true # If enabled, will send users (using SMTP settings) an email to join the workspace
+      #- EMAIL_FROM=${EMAIL_FROM:-}
+      #- EMAIL_FROM=noreply@enigmas.io
+      - EMAIL_FROM=buddy@enigmas.io
       - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID:-}
       - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET:-}
       - OPENID_CONFIG_URL=${OPENID_CONFIG_URL:-}
@@ -98,7 +100,7 @@ services:
       - HARD_DELETE_CHATS=${HARD_DELETE_CHATS:-}
 
       # Enterprise Edition only
-      - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+      - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
       # Seeding configuration
     extra_hosts:
@@ -227,7 +229,7 @@ services:
     #   - ${CA_CERT_PATH:-./custom-ca.crt}:/etc/ssl/certs/custom-ca.crt:ro
 
   web_server:
-    image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
+    #image: danswer/danswer-web-server:${IMAGE_TAG:-latest}
     build:
       context: ../../web
       dockerfile: Dockerfile

@@ -138,7 +138,7 @@ function AssistantListItem({
         <div className="flex justify-between items-center">
           <AssistantIcon assistant={assistant} />
 
-          <h2 className="ml-6 w-fit flex-grow space-y-3 text-start flex text-xl font-semibold line-clamp-2 text-gray-800">
+          <h2 className="ml-6 w-fit flex-grow space-y-3 text-start flex text-xl font-semibold line-clamp-2">
             {assistant.name}
           </h2>
 

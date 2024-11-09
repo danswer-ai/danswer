@@ -104,24 +104,24 @@ export function SearchMultiSelectDropdown({
             setSearchTerm(e.target.value);
           }}
           onFocus={() => setIsOpen(true)}
-          className={`inline-flex 
-          justify-between 
-          w-full 
-          px-4 
-          py-2 
-          text-sm 
+          className={`inline-flex
+          justify-between
+          w-full
+          px-4
+          py-2
+          text-sm
           bg-background
           border
           border-border
-          rounded-md 
-          shadow-sm 
+          rounded-md
+          shadow-sm
           `}
           onClick={(e) => e.stopPropagation()}
         />
         <button
           type="button"
-          className={`absolute top-0 right-0 
-            text-sm 
+          className={`absolute top-0 right-0
+            text-sm
             h-full px-2 border-l border-border`}
           aria-expanded="true"
           aria-haspopup="true"
@@ -257,11 +257,11 @@ export function DefaultDropdownElement({
         flex
         mx-1
         px-2
-        text-sm 
-        py-1.5 
+        text-sm
+        py-1.5
         my-1
-        select-none 
-        cursor-pointer 
+        select-none
+        cursor-pointer
         bg-background
         rounded
         hover:bg-hover-light
@@ -321,14 +321,14 @@ export const DefaultDropdown = forwardRef<HTMLDivElement, DefaultDropdownProps>(
     const Content = (
       <div
         className={`
-          flex 
-          text-sm 
-          bg-background 
+          flex
+          text-sm
+          bg-background
           px-3
-          py-1.5 
-          rounded-lg 
-          border 
-          border-border 
+          py-1.5
+          rounded-lg
+          border
+          border-border-medium
           cursor-pointer`}
       >
         <p className="line-clamp-1">
@@ -345,14 +345,14 @@ export const DefaultDropdown = forwardRef<HTMLDivElement, DefaultDropdownProps>(
       <div
         ref={ref}
         className={`
-        border 
-        border 
-        rounded-lg 
-        flex 
-        flex-col 
+        border
+        border-border-medium
+        rounded-lg
+        flex
+        flex-col
         bg-background
         ${maxHeight || "max-h-96"}
-        overflow-y-auto 
+        overflow-y-auto
         overscroll-contain`}
       >
         {includeDefault && (
@@ -438,14 +438,14 @@ export function ControlledPopup({
       {isOpen && (
         <div
           className={`
-            absolute 
-            top-0 
-            bg-background 
-            border 
-            border-border 
-            z-30 
-            rounded 
-            text-emphasis 
+            absolute
+            top-0
+            bg-background
+            border
+            border-border
+            z-30
+            rounded
+            text-emphasis
             shadow-lg`}
           style={{ transform: "translateY(calc(-100% - 5px))" }}
         >
