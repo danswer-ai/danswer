@@ -17,7 +17,7 @@ def run_id(admin_user: DATestUser | None, thread_id: UUID) -> str:
     response = requests.post(
         f"{BASE_URL}/threads/{thread_id}/runs",
         json={
-            "assistant_id": "test_assistant",
+            "assistant_id": 0,
         },
         headers=admin_user.headers if admin_user else GENERAL_HEADERS,
     )
@@ -31,7 +31,7 @@ def test_create_run(
     response = requests.post(
         f"{BASE_URL}/threads/{thread_id}/runs",
         json={
-            "assistant_id": "test_assistant",
+            "assistant_id": 0,
             "model": "gpt-3.5-turbo",
             "instructions": "Test instructions",
         },
@@ -43,7 +43,7 @@ def test_create_run(
     assert "id" in response_json
     assert response_json["object"] == "thread.run"
     assert "created_at" in response_json
-    assert response_json["assistant_id"] == "test_assistant"
+    assert response_json["assistant_id"] == 0
     assert UUID(response_json["thread_id"]) == thread_id
     assert response_json["status"] == "queued"
     assert response_json["model"] == "gpt-3.5-turbo"
@@ -94,7 +94,7 @@ def test_list_runs(
         requests.post(
             f"{BASE_URL}/threads/{thread_id}/runs",
             json={
-                "assistant_id": "test_assistant",
+                "assistant_id": 0,
             },
             headers=admin_user.headers if admin_user else GENERAL_HEADERS,
         )
