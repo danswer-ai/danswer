@@ -448,8 +448,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             has_web_login = attributes.get_attribute(user, "has_web_login")
 
             if not has_web_login:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
+                raise BasicAuthenticationError(
                     detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
                 )
 
