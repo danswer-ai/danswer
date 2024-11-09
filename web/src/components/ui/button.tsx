@@ -38,7 +38,7 @@ const buttonVariants = cva(
         "link-reverse":
           "text-neutral-50 underline-offset-4 hover:underline dark:text-neutral-900",
         submit:
-          "bg-green-500 text-green-100 hover:bg-green-600/90 dark:bg-neutral-50 dark:text-blue-500 dark:hover:bg-green-100/90",
+          "bg-green-500 text-inverted hover:bg-green-600/90 dark:bg-neutral-50 dark:text-blue-500 dark:hover:bg-green-100/90",
 
         // "bg-blue-600 text-neutral-50 hover:bg-blue-600/80 dark:bg-blue-600 dark:text-neutral-50 dark:hover:bg-blue-600/90",
         "submit-reverse":
