@@ -12,13 +12,6 @@ from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.server.danswer_api.ingestion import api_key_dep
 from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 
-control_plane_dep = fetch_ee_implementation_or_noop(
-    "danswer.server.tenants.access", "control_plane_dep"
-)
-current_cloud_superuser = fetch_ee_implementation_or_noop(
-    "danswer.auth.users", "current_cloud_superuser"
-)
-
 
 PUBLIC_ENDPOINT_SPECS = [
     # built-in documentation functions
@@ -87,6 +80,14 @@ def check_router_auth(
     (1) have auth enabled OR
     (2) are explicitly marked as a public endpoint
     """
+
+    control_plane_dep = fetch_ee_implementation_or_noop(
+        "danswer.server.tenants.access", "control_plane_dep"
+    )
+    current_cloud_superuser = fetch_ee_implementation_or_noop(
+        "danswer.auth.users", "current_cloud_superuser"
+    )
+
     for route in application.routes:
         # explicitly marked as public
         if is_route_in_spec_list(route, public_endpoint_specs):
