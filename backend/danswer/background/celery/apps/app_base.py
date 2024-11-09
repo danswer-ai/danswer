@@ -31,7 +31,6 @@ from danswer.redis.redis_usergroup import RedisUserGroup
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
-from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import SENTRY_DSN
 
 
@@ -273,10 +272,6 @@ def wait_for_vespa(sender: Any, **kwargs: Any) -> None:
 
 def on_secondary_worker_init(sender: Any, **kwargs: Any) -> None:
     logger.info("Running as a secondary celery worker.")
-
-    # Exit early if multi-tenant since primary worker check not needed
-    if MULTI_TENANT:
-        return
 
     # Set up variables for waiting on primary worker
     WAIT_INTERVAL = 5
