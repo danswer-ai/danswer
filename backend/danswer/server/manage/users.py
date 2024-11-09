@@ -61,8 +61,7 @@ from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.server.utils import send_user_email_invite
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
-from ee.danswer.db.user_group import remove_curator_status__no_commit
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 from ee.danswer.server.tenants.billing import register_tenant_users
 from ee.danswer.server.tenants.provisioning import add_users_to_tenant
 from ee.danswer.server.tenants.user_mapping import get_tenant_id_for_email
@@ -105,7 +104,10 @@ def set_user_role(
         )
 
     if user_to_update.role == UserRole.CURATOR:
-        remove_curator_status__no_commit(db_session, user_to_update)
+        fetch_ee_implementation_or_noop(
+            "danswer.db.user_group",
+            "remove_curator_status__no_commit",
+        )(db_session, user_to_update)
 
     user_to_update.role = user_role_update_request.new_role.value
 
@@ -331,7 +333,10 @@ async def delete_user(
         for oauth_account in user_to_delete.oauth_accounts:
             db_session.delete(oauth_account)
 
-        delete_user__ext_group_for_user__no_commit(
+        fetch_ee_implementation_or_noop(
+            "danswer.db.external_perm",
+            "delete_user__ext_group_for_user__no_commit",
+        )(
             db_session=db_session,
             user_id=user_to_delete.id,
         )

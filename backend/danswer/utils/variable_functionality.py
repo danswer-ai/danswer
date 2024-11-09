@@ -121,7 +121,9 @@ def noop_fallback(*args: Any, **kwargs: Any) -> None:
     """
 
 
-def fetch_ee_implementation_or_noop(module: str, attribute: str) -> Any:
+def fetch_ee_implementation_or_noop(
+    module: str, attribute: str, noop_return_value: Any = None
+) -> Any:
     """
     Fetches an EE implementation if EE is enabled, otherwise returns a no-op function.
     Raises an exception if EE is enabled but the fetch fails.

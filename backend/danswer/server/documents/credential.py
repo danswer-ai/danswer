@@ -28,7 +28,7 @@ from danswer.server.documents.models import CredentialSwapRequest
 from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.user_group import validate_user_creation_permissions
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 
 logger = setup_logger()
 
@@ -121,7 +121,9 @@ def create_credential_from_model(
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     if not _ignore_credential_permissions(credential_info.source):
-        validate_user_creation_permissions(
+        fetch_ee_implementation_or_noop(
+            "danswer.db.user_group", "validate_user_creation_permissions", None
+        )(
             db_session=db_session,
             user=user,
             target_group_ids=credential_info.groups,

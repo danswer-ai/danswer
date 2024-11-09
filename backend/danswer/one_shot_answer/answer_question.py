@@ -65,7 +65,7 @@ from danswer.tools.tool_implementations.search.search_tool import (
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
-from ee.danswer.server.query_and_chat.utils import create_temporary_persona
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 
 logger = setup_logger()
 
@@ -125,11 +125,11 @@ def stream_answer_objects(
     )
 
     temporary_persona: Persona | None = None
+
     if query_req.persona_config is not None:
-        new_persona = create_temporary_persona(
-            db_session=db_session, persona_config=query_req.persona_config, user=user
-        )
-        temporary_persona = new_persona
+        temporary_persona = fetch_ee_implementation_or_noop(
+            "danswer.server.query_and_chat.utils", "create_temporary_persona", None
+        )(db_session=db_session, persona_config=query_req.persona_config, user=user)
 
     persona = temporary_persona if temporary_persona else chat_session.persona
 

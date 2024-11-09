@@ -10,8 +10,14 @@ from danswer.auth.users import current_user
 from danswer.auth.users import current_user_with_expired_token
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.server.danswer_api.ingestion import api_key_dep
-from ee.danswer.auth.users import current_cloud_superuser
-from ee.danswer.server.tenants.access import control_plane_dep
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
+
+control_plane_dep = fetch_ee_implementation_or_noop(
+    "ee.danswer.server.tenants.access", "control_plane_dep"
+)
+current_cloud_superuser = fetch_ee_implementation_or_noop(
+    "ee.danswer.auth.users", "current_cloud_superuser"
+)
 
 
 PUBLIC_ENDPOINT_SPECS = [
