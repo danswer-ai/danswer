@@ -469,7 +469,7 @@ def connector_indexing_proxy_task(
         f"cc_pair={cc_pair_id} "
         f"search_settings={search_settings_id}"
     )
-    return 1
+    return
 
 
 def connector_indexing_task(

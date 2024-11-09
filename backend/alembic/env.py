@@ -132,8 +132,7 @@ async def run_async_migrations() -> None:
                     )
             except Exception as e:
                 logger.error(f"Error migrating schema {schema}: {e}")
-                logger.warning("CONTINUING")
-                # raise
+                raise
     else:
         try:
             logger.info(f"Migrating schema: {schema_name}")
