@@ -21,11 +21,11 @@ from danswer.db.models import TokenRateLimit__UserGroup
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.db.models import UserGroup
+from danswer.db.token_limit import fetch_all_user_token_rate_limits
 from danswer.server.query_and_chat.token_limit import _get_cutoff_time
 from danswer.server.query_and_chat.token_limit import _is_rate_limited
 from danswer.server.query_and_chat.token_limit import _user_is_rate_limited_by_global
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
-from ee.danswer.db.token_limit import fetch_all_user_token_rate_limits
 
 
 def _check_token_rate_limits(user: User | None, tenant_id: str | None) -> None:
