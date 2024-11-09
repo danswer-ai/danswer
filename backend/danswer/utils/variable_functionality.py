@@ -142,7 +142,7 @@ def fetch_ee_implementation_or_noop(
         return noop_fallback
 
     try:
-        return fetch_versioned_implementation(module, attribute)
+        return fetch_versioned_implementation(f"ee.{module}", attribute)
     except Exception as e:
         logger.error(f"Failed to fetch EE implementation for {module}.{attribute}: {e}")
         raise

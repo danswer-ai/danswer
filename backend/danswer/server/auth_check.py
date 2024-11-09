@@ -13,10 +13,10 @@ from danswer.server.danswer_api.ingestion import api_key_dep
 from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 
 control_plane_dep = fetch_ee_implementation_or_noop(
-    "ee.danswer.server.tenants.access", "control_plane_dep"
+    "danswer.server.tenants.access", "control_plane_dep"
 )
 current_cloud_superuser = fetch_ee_implementation_or_noop(
-    "ee.danswer.auth.users", "current_cloud_superuser"
+    "danswer.auth.users", "current_cloud_superuser"
 )
 
 

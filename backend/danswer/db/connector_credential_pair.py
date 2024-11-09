@@ -352,7 +352,7 @@ def add_credential_to_connector(
 
     if access_type == AccessType.SYNC:
         if not fetch_ee_implementation_or_noop(
-            "danswer.db.connector_credential_pair",
+            "danswer.external_permissions.sync_params",
             "check_if_valid_sync_source",
             noop_return_value=True,
         )(connector.source):
