@@ -14,7 +14,7 @@ from danswer.configs.constants import DanswerCeleryQueues
 
 
 class RedisConnectorDocPermSyncFenceData(BaseModel):
-    started: datetime
+    started: datetime | None
 
 
 class RedisConnectorDocPermSync:
@@ -108,7 +108,10 @@ class RedisConnectorDocPermSync:
         if fence_bytes is None:
             return None
 
-        fence_int = int(fence_bytes.decode())
+        if fence_bytes == b"None":
+            return None
+
+        fence_int = int(cast(bytes, fence_bytes).decode())
         return fence_int
 
     @generator_complete.setter

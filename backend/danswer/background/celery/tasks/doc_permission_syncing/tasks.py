@@ -272,7 +272,7 @@ def connector_permission_sync_generator_task(
 
         redis_connector.permissions.generator_clear()
         redis_connector.permissions.taskset_clear()
-        redis_connector.permissions.set_fence(False)
+        redis_connector.permissions.set_fence(None)
         raise e
     finally:
         if lock.owned():

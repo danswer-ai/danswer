@@ -589,7 +589,7 @@ def monitor_ccpair_permissions_taskset(
 
     redis_connector.permissions.taskset_clear()
     redis_connector.permissions.generator_clear()
-    redis_connector.permissions.set_fence(False)
+    redis_connector.permissions.set_fence(None)
 
 
 def monitor_ccpair_indexing_taskset(
