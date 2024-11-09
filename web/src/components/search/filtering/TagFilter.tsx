@@ -75,7 +75,7 @@ export function TagFilter({
     <div className="relative">
       <input
         ref={inputRef}
-        className="w-full border border-border py-0.5 px-2 rounded text-sm h-8"
+        className="w-full border border-border py-0.5 px-2 rounded text-sm h-8 bg-background-chatbar"
         placeholder="Find a tag"
         value={filterValue}
         onChange={handleFilterChange}
@@ -122,15 +122,15 @@ export function TagFilter({
                     key={tag.tag_key + tag.tag_value}
                     onClick={() => onSelectTag(tag)}
                     className={`
-                    text-sm 
+                    text-sm
                     max-w-full
-                    border 
-                    border-border 
-                    py-0.5 
-                    px-2 
-                    rounded 
-                    cursor-pointer 
-                    bg-background 
+                    border
+                    border-border
+                    py-0.5
+                    px-2
+                    rounded
+                    cursor-pointer
+                    bg-background
                     hover:bg-hover
                     ${selectedTags.includes(tag) ? "bg-hover" : ""}
                   `}
