@@ -98,6 +98,11 @@ from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 logger = setup_logger()
 
 
+class BasicAuthenticationError(HTTPException):
+    def __init__(self, detail: str):
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+
 def is_user_admin(user: User | None) -> bool:
     if AUTH_TYPE == AuthType.DISABLED:
         return True
@@ -594,14 +599,12 @@ async def double_check_user(
         return None
 
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User is not authenticated.",
         )
 
     if user_needs_to_be_verified() and not user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User is not verified.",
         )
 
@@ -610,8 +613,7 @@ async def double_check_user(
         and user.oidc_expiry < datetime.now(timezone.utc)
         and not include_expired
     ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User's OIDC token has expired.",
         )
 
@@ -637,15 +639,13 @@ async def current_curator_or_admin_user(
         return None
 
     if not user or not hasattr(user, "role"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User is not authenticated or lacks role information.",
         )
 
     allowed_roles = {UserRole.GLOBAL_CURATOR, UserRole.CURATOR, UserRole.ADMIN}
     if user.role not in allowed_roles:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User is not a curator or admin.",
         )
 
@@ -657,8 +657,7 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
         return None
 
     if not user or not hasattr(user, "role") or user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User must be an admin to perform this action.",
         )
 
