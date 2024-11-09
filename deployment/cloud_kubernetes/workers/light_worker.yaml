@@ -26,6 +26,8 @@ spec:
               "--hostname=light@%n",
               "-Q",
               "vespa_metadata_sync,connector_deletion",
+              "--prefetch-multiplier=1",
+              "--concurrency=10",
             ]
           env:
             - name: REDIS_PASSWORD

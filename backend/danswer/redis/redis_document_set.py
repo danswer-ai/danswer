@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
-from danswer.configs.constants import DanswerCeleryQueues
 from danswer.db.document_set import construct_document_select_by_docset
 from danswer.redis.redis_object_helper import RedisObjectHelper
 
@@ -77,7 +76,7 @@ class RedisDocumentSet(RedisObjectHelper):
             result = celery_app.send_task(
                 "vespa_metadata_sync_task",
                 kwargs=dict(document_id=doc.id, tenant_id=tenant_id),
-                queue=DanswerCeleryQueues.VESPA_METADATA_SYNC,
+                queue="zzzzzz",
                 task_id=custom_task_id,
                 priority=DanswerCeleryPriority.LOW,
             )

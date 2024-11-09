@@ -209,10 +209,10 @@ class PostgresAdvisoryLocks(Enum):
 
 
 class DanswerCeleryQueues:
-    VESPA_METADATA_SYNC = "vespa_metadata_sync"
-    CONNECTOR_DELETION = "connector_deletion"
-    CONNECTOR_PRUNING = "connector_pruning"
-    CONNECTOR_INDEXING = "connector_indexing"
+    VESPA_METADATA_SYNC = "zzzzz"
+    CONNECTOR_DELETION = "zzzzz"
+    CONNECTOR_PRUNING = "zzzzz"
+    CONNECTOR_INDEXING = "zzzzz"
 
 
 class DanswerRedisLocks:

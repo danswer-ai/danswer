@@ -26,6 +26,8 @@ spec:
               "--hostname=indexing@%n",
               "-Q",
               "connector_indexing",
+              "--prefetch-multiplier=1",
+              "--concurrency=10",
             ]
           env:
             - name: REDIS_PASSWORD

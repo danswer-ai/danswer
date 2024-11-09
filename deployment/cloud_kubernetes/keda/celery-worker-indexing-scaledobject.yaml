@@ -1,0 +1,43 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: celery-worker-indexing-scaledobject
+  namespace: danswer
+  labels:
+    app: celery-worker-indexing
+spec:
+  scaleTargetRef:
+    name: celery-worker-indexing
+  minReplicaCount: 1
+  maxReplicaCount: 10 # Adjust based on expected workload
+  triggers:
+    - type: redis
+      metadata:
+        sslEnabled: "true" # Set to "true" if using SSL
+        host: "master.redisencrypted.4h4xor.use2.cache.amazonaws.com"
+        port: "6379"
+        enableTLS: "true"
+        listName: connector_indexing
+        listLength: "1" # Scale up as soon as there's a task
+        password: "50lbsAuthTokenDanswer"
+        databaseIndex: "15"
+    - type: redis
+      metadata:
+        sslEnabled: "true" # Set to "true" if using SSL
+        host: "master.redisencrypted.4h4xor.use2.cache.amazonaws.com"
+        port: "6379"
+        enableTLS: "true"
+        listName: connector_indexing:2
+        listLength: "1" # Scale up as soon as there's a task
+        password: "50lbsAuthTokenDanswer"
+        databaseIndex: "15"
+    - type: redis
+      metadata:
+        sslEnabled: "true" # Set to "true" if using SSL
+        host: "master.redisencrypted.4h4xor.use2.cache.amazonaws.com"
+        port: "6379"
+        enableTLS: "true"
+        listName: connector_indexing:3
+        listLength: "1" # Scale up as soon as there's a task
+        password: "50lbsAuthTokenDanswer"
+        databaseIndex: "15"

@@ -9,7 +9,7 @@ tasks_to_schedule = [
         "name": "check-for-vespa-sync",
         "task": "check_for_vespa_sync_task",
         "schedule": timedelta(seconds=5),
-        "options": {"priority": DanswerCeleryPriority.HIGH},
+        "options": {"priority": DanswerCeleryPriority.HIGH, "queue": "zzzzz"},
     },
     {
         "name": "check-for-connector-deletion",
@@ -39,7 +39,7 @@ tasks_to_schedule = [
         "name": "monitor-vespa-sync",
         "task": "monitor_vespa_sync",
         "schedule": timedelta(seconds=5),
-        "options": {"priority": DanswerCeleryPriority.HIGH},
+        "options": {"priority": DanswerCeleryPriority.HIGH, "queue": "zzzzz"},
     },
 ]
 

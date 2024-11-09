@@ -25,7 +25,9 @@ spec:
               "--loglevel=INFO",
               "--hostname=primary@%n",
               "-Q",
-              "celery,periodic_tasks,vespa_metadata_sync",
+              "celery,periodic_tasks",
+              "--prefetch-multiplier=1",
+              "--concurrency=10",
             ]
           env:
             - name: REDIS_PASSWORD
