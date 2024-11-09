@@ -31,7 +31,6 @@ from danswer.redis.redis_usergroup import RedisUserGroup
 from danswer.utils.logger import ColoredFormatter
 from danswer.utils.logger import PlainFormatter
 from danswer.utils.logger import setup_logger
-from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import SENTRY_DSN
 
 
@@ -146,8 +145,6 @@ def on_celeryd_init(sender: Any = None, conf: Any = None, **kwargs: Any) -> None
 def wait_for_redis(sender: Any, **kwargs: Any) -> None:
     """Waits for redis to become ready subject to a hardcoded timeout.
     Will raise WorkerShutdown to kill the celery worker if the timeout is reached."""
-    if MULTI_TENANT:
-        return
 
     r = get_redis_client(tenant_id=None)
 
@@ -190,8 +187,7 @@ def wait_for_redis(sender: Any, **kwargs: Any) -> None:
 def wait_for_db(sender: Any, **kwargs: Any) -> None:
     """Waits for the db to become ready subject to a hardcoded timeout.
     Will raise WorkerShutdown to kill the celery worker if the timeout is reached."""
-    if MULTI_TENANT:
-        return
+
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
 
@@ -233,8 +229,6 @@ def wait_for_db(sender: Any, **kwargs: Any) -> None:
 def wait_for_vespa(sender: Any, **kwargs: Any) -> None:
     """Waits for Vespa to become ready subject to a hardcoded timeout.
     Will raise WorkerShutdown to kill the celery worker if the timeout is reached."""
-    if MULTI_TENANT:
-        return
 
     WAIT_INTERVAL = 5
     WAIT_LIMIT = 60
@@ -278,10 +272,6 @@ def wait_for_vespa(sender: Any, **kwargs: Any) -> None:
 
 def on_secondary_worker_init(sender: Any, **kwargs: Any) -> None:
     logger.info("Running as a secondary celery worker.")
-
-    # Exit early if multi-tenant since primary worker check not needed
-    if MULTI_TENANT:
-        return
 
     # Set up variables for waiting on primary worker
     WAIT_INTERVAL = 5
