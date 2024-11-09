@@ -11,6 +11,7 @@ chart-repos:
 helm-extra-args: --debug --timeout 600s
 
 # nginx appears to not work on kind, likely due to lack of loadbalancer support
+# helm-extra-set-args also only works on the command line, not in this yaml
 # helm-extra-set-args: --set=nginx.enabled=false
 
 validate-maintainers: false
