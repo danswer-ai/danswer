@@ -164,9 +164,18 @@ class SlackbotHandler:
 
     def acquire_tenants(self) -> None:
         tenant_ids = get_all_tenant_ids()
+
+        # This is temporary
         logger.debug(f"Found {len(tenant_ids)} total tenants in Postgres")
+        allowed_tenant_ids = os.environ.get("ALLOWED_TENANT_IDS")
+        allowed_tenant_list = (
+            allowed_tenant_ids.split(",") if allowed_tenant_ids else None
+        )
 
         for tenant_id in tenant_ids:
+            if allowed_tenant_list and tenant_id not in allowed_tenant_list:
+                logger.debug(f"Tenant {tenant_id} not in allowed list, skipping")
+                continue
             if tenant_id in self.tenant_ids:
                 logger.debug(f"Tenant {tenant_id} already in self.tenant_ids")
                 continue
