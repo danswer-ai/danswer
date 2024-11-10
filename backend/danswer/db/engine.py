@@ -211,10 +211,18 @@ def get_all_tenant_ids() -> list[str] | list[None]:
         )
         tenant_ids = [row[0] for row in result]
 
+    ignored_tenants = [
+        "tenant_i-0dbc199db55ad29a3",
+        "tenant_i-043470d740845ec56",
+        "tenant_i-06a83ec44869babc4",
+        "tenant_i-06064a5b18ca0bb7b",
+    ]
+
     valid_tenants = [
         tenant
         for tenant in tenant_ids
-        if tenant is None or tenant.startswith(TENANT_ID_PREFIX)
+        if tenant is None
+        or (tenant.startswith(TENANT_ID_PREFIX) and tenant not in ignored_tenants)
     ]
 
     return valid_tenants

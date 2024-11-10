@@ -15,7 +15,7 @@ spec:
   triggers:
     - type: redis
       metadata:
-        host: "{host}"
+        host: "master.redisencrypted.4h4xor.use2.cache.amazonaws.com"
         port: "6379"
         enableTLS: "true"
         listName: celery
@@ -26,7 +26,7 @@ spec:
 
     - type: redis
       metadata:
-        host: "{host}"
+        host: "master.redisencrypted.4h4xor.use2.cache.amazonaws.com"
         port: "6379"
         enableTLS: "true"
         listName: celery:1
@@ -36,7 +36,7 @@ spec:
         name: celery-worker-auth
     - type: redis
       metadata:
-        host: "{host}"
+        host: "master.redisencrypted.4h4xor.use2.cache.amazonaws.com"
         port: "6379"
         enableTLS: "true"
         listName: celery:2
@@ -46,7 +46,7 @@ spec:
         name: celery-worker-auth
     - type: redis
       metadata:
-        host: "{host}"
+        host: "master.redisencrypted.4h4xor.use2.cache.amazonaws.com"
         port: "6379"
         enableTLS: "true"
         listName: celery:3
@@ -56,7 +56,7 @@ spec:
         name: celery-worker-auth
     - type: redis
       metadata:
-        host: "{host}"
+        host: "master.redisencrypted.4h4xor.use2.cache.amazonaws.com"
         port: "6379"
         enableTLS: "true"
         listName: periodic_tasks
@@ -66,7 +66,7 @@ spec:
         name: celery-worker-auth
     - type: redis
       metadata:
-        host: "{host}"
+        host: "master.redisencrypted.4h4xor.use2.cache.amazonaws.com"
         port: "6379"
         enableTLS: "true"
         listName: periodic_tasks:2
