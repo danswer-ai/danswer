@@ -118,15 +118,13 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                         embedding_model=embedding_model,
                     )
 
-        cc_pair_ids: list[int] = []
-        with get_session_with_tenant(tenant_id) as db_session:
+            cc_pair_ids: list[int] = []
             cc_pairs = fetch_connector_credential_pairs(db_session)
             for cc_pair_entry in cc_pairs:
                 cc_pair_ids.append(cc_pair_entry.id)
 
-        for cc_pair_id in cc_pair_ids:
-            redis_connector = RedisConnector(tenant_id, cc_pair_id)
-            with get_session_with_tenant(tenant_id) as db_session:
+            for cc_pair_id in cc_pair_ids:
+                redis_connector = RedisConnector(tenant_id, cc_pair_id)
                 # Get the primary search settings
                 primary_search_settings = get_current_search_settings(db_session)
                 search_settings = [primary_search_settings]
