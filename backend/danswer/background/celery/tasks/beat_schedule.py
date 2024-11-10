@@ -6,6 +6,9 @@ from danswer.configs.constants import DanswerCeleryPriority
 
 tasks_to_schedule = [
     {
+        # 15 light workers can check for 1144 in a minute,
+        # but previously we were creating (4 * 120 * 15 = 7,200 per minute)
+        # This should be more reasonably accomplishable.
         "name": "check-for-vespa-sync",
         "task": "check_for_vespa_sync_task",
         "schedule": timedelta(seconds=60),
