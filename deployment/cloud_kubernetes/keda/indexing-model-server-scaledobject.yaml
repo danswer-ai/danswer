@@ -11,7 +11,7 @@ spec:
   pollingInterval: 15 # Check every 15 seconds
   cooldownPeriod: 30 # Wait 30 seconds before scaling down
   minReplicaCount: 1
-  maxReplicaCount: 5
+  maxReplicaCount: 12
   triggers:
     - type: cpu
       metadata:

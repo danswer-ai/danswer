@@ -55,6 +55,7 @@ class DynamicTenantScheduler(PersistentScheduler):
             logger.info("Fetching all tenant IDs")
             tenant_ids = get_all_tenant_ids()
             logger.info(f"Found {len(tenant_ids)} tenants")
+            logger.info(f"Tenant IDs: {', '.join(str(id) for id in tenant_ids)}")
 
             logger.info("Fetching tasks to schedule")
             tasks_to_schedule = fetch_versioned_implementation(
