@@ -11,7 +11,7 @@ tasks_to_schedule = [
         # This should be more reasonably accomplishable.
         "name": "check-for-vespa-sync",
         "task": "check_for_vespa_sync_task",
-        "schedule": timedelta(minutes=5),
+        "schedule": timedelta(seconds=20),
         "options": {"priority": DanswerCeleryPriority.HIGH},
     },
     {
