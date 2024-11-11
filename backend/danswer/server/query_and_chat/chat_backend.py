@@ -347,7 +347,6 @@ def handle_new_chat_message(
             for packet in stream_chat_message(
                 new_msg_req=chat_message_req,
                 user=user,
-                use_existing_user_message=chat_message_req.use_existing_user_message,
                 litellm_additional_headers=extract_headers(
                     request.headers, LITELLM_PASS_THROUGH_HEADERS
                 ),
