@@ -8,8 +8,6 @@ import requests
 from danswer.connectors.models import InputType
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
-from danswer.db.enums import TaskStatus
-from danswer.server.documents.models import CeleryTaskStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import DocumentSource
@@ -339,7 +337,7 @@ class CCPairManager:
     def get_sync_task(
         cc_pair: DATestCCPair,
         user_performing_action: DATestUser | None = None,
-    ) -> CeleryTaskStatus:
+    ) -> datetime | None:
         response = requests.get(
             url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/sync",
             headers=user_performing_action.headers
@@ -347,7 +345,16 @@ class CCPairManager:
             else GENERAL_HEADERS,
         )
         response.raise_for_status()
-        return CeleryTaskStatus(**response.json())
+        response_str = response.json()
+
+        # If the response itself is a datetime string, parse it
+        if not isinstance(response_str, str):
+            return None
+
+        try:
+            return datetime.fromisoformat(response_str)
+        except ValueError:
+            return None
 
     @staticmethod
     def wait_for_sync(
@@ -359,25 +366,21 @@ class CCPairManager:
         """after: The task register time must be after this time."""
         start = time.monotonic()
         while True:
-            task = CCPairManager.get_sync_task(cc_pair, user_performing_action)
-            if not task:
-                raise ValueError("Sync task not found.")
-
-            if not task.register_time or task.register_time < after:
-                raise ValueError("Sync task register time is too early.")
-
-            if task.status == TaskStatus.SUCCESS:
-                # Sync succeeded
-                return
+            last_synced = CCPairManager.get_sync_task(cc_pair, user_performing_action)
+            if last_synced and last_synced > after:
+                print(f"last_synced: {last_synced}")
+                print(f"sync command start time: {after}")
+                print(f"Sync complete: cc_pair={cc_pair.id}")
+                break
 
             elapsed = time.monotonic() - start
             if elapsed > timeout:
                 raise TimeoutError(
-                    f"CC pair syncing was not completed within {timeout} seconds"
+                    f"CC pair sync was not completed within {timeout} seconds"
                 )
 
             print(
-                f"Waiting for CC syncing to complete. elapsed={elapsed:.2f} timeout={timeout}"
+                f"Waiting for CC sync to complete. elapsed={elapsed:.2f} timeout={timeout}"
             )
             time.sleep(5)
 

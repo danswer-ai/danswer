@@ -284,7 +284,7 @@ def mark_ccpair_as_pruned(cc_pair_id: int, db_session: Session) -> None:
     db_session.commit()
 
 
-def mark_ccpair_as_permissions_synced(
+def mark_cc_pair_as_permissions_synced(
     db_session: Session, cc_pair_id: int, start_time: datetime | None
 ) -> None:
     stmt = select(ConnectorCredentialPair).where(

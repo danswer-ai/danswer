@@ -27,7 +27,7 @@ from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector import fetch_connector_by_id
-from danswer.db.connector import mark_ccpair_as_permissions_synced
+from danswer.db.connector import mark_cc_pair_as_permissions_synced
 from danswer.db.connector import mark_ccpair_as_pruned
 from danswer.db.connector_credential_pair import add_deletion_failure_message
 from danswer.db.connector_credential_pair import (
@@ -584,7 +584,7 @@ def monitor_ccpair_permissions_taskset(
     )
     start_time: datetime | None = payload.started if payload else None
 
-    mark_ccpair_as_permissions_synced(db_session, int(cc_pair_id), start_time)
+    mark_cc_pair_as_permissions_synced(db_session, int(cc_pair_id), start_time)
     task_logger.info(f"Successfully synced permissions for cc_pair={cc_pair_id}")
 
     redis_connector.permissions.taskset_clear()
