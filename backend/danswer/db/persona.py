@@ -753,9 +753,13 @@ def get_assistant_categories(db_session: Session) -> list[PersonaCategory]:
     return db_session.query(PersonaCategory).all()
 
 
-def create_assistant_category(db_session: Session, name: str, description: str) -> None:
-    db_session.add(PersonaCategory(name=name, description=description))
+def create_assistant_category(
+    db_session: Session, name: str, description: str
+) -> PersonaCategory:
+    category = PersonaCategory(name=name, description=description)
+    db_session.add(category)
     db_session.commit()
+    return category
 
 
 def update_persona_category(

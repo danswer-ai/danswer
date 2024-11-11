@@ -43,19 +43,20 @@ def test_persona_category_management(reset: None) -> None:
             category=updated_persona_category,
             user_performing_action=regular_user,
         )
-    assert "Permission denied" in str(exc_info.value)
+    assert exc_info.value.response.status_code == 403
 
     assert PersonaCategoryManager.verify(
         category=persona_category,
         user_performing_action=admin_user,
     ), "Persona category should not have been updated by non-admin user"
 
-    with pytest.raises(Exception) as exc_info:
-        PersonaCategoryManager.delete(
-            category=persona_category,
-            user_performing_action=regular_user,
-        )
-    assert "Permission denied" in str(exc_info.value)
+    result = PersonaCategoryManager.delete(
+        category=persona_category,
+        user_performing_action=regular_user,
+    )
+    assert (
+        result is False
+    ), "Regular user should not be able to delete the persona category"
 
     assert PersonaCategoryManager.verify(
         category=persona_category,
