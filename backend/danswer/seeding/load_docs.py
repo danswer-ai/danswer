@@ -91,7 +91,9 @@ def _create_indexable_chunks(
     return list(ids_to_documents.values()), chunks
 
 
-def seed_initial_documents(db_session: Session, tenant_id: str | None) -> None:
+def seed_initial_documents(
+    db_session: Session, tenant_id: str | None, cohere_enabled: bool = False
+) -> None:
     """
     Seed initial documents so users don't have an empty index to start
 
@@ -132,7 +134,9 @@ def seed_initial_documents(db_session: Session, tenant_id: str | None) -> None:
         return
 
     search_settings = get_current_search_settings(db_session)
-    if search_settings.model_name != DEFAULT_DOCUMENT_ENCODER_MODEL:
+    if search_settings.model_name != DEFAULT_DOCUMENT_ENCODER_MODEL and not (
+        search_settings.model_name == "embed-english-v3.0" and cohere_enabled
+    ):
         logger.info("Embedding model has been updated, skipping")
         return
 
@@ -174,8 +178,13 @@ def seed_initial_documents(db_session: Session, tenant_id: str | None) -> None:
     cc_pair_id = cast(int, result.data)
 
     initial_docs_path = os.path.join(
-        os.getcwd(), "danswer", "seeding", "initial_docs.json"
+        os.getcwd(),
+        "danswer",
+        "seeding",
+        "initial_docs_cohere.json" if cohere_enabled else "initial_docs.json",
     )
+    print(f"Loading docs from {initial_docs_path}")
+
     processed_docs = json.load(open(initial_docs_path))
 
     docs, chunks = _create_indexable_chunks(processed_docs, tenant_id)
