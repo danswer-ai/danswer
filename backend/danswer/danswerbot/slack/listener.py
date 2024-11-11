@@ -246,14 +246,14 @@ class SlackbotHandler:
 
                             self.slack_bot_tokens[tenant_id] = slack_bot_tokens
 
-                            if tenant_id in self.socket_clients:
+                            if self.socket_clients.get(tenant_id):
                                 asyncio.run(self.socket_clients[tenant_id].close())
 
                             self.start_socket_client(tenant_id, slack_bot_tokens)
 
                     except KvKeyNotFoundError:
                         logger.debug(f"Missing Slack Bot tokens for tenant {tenant_id}")
-                        if tenant_id in self.socket_clients:
+                        if self.socket_clients.get(tenant_id):
                             asyncio.run(self.socket_clients[tenant_id].close())
                             del self.socket_clients[tenant_id]
                             del self.slack_bot_tokens[tenant_id]
@@ -292,8 +292,9 @@ class SlackbotHandler:
     def stop_socket_clients(self) -> None:
         logger.info(f"Stopping {len(self.socket_clients)} socket clients")
         for tenant_id, client in self.socket_clients.items():
-            asyncio.run(client.close())
-            logger.info(f"Stopped SocketModeClient for tenant {tenant_id}")
+            if client:
+                asyncio.run(client.close())
+                logger.info(f"Stopped SocketModeClient for tenant {tenant_id}")
 
     def shutdown(self, signum: int | None, frame: FrameType | None) -> None:
         if not self.running:
@@ -306,6 +307,16 @@ class SlackbotHandler:
         # Stop all socket clients
         logger.info(f"Stopping {len(self.socket_clients)} socket clients")
         self.stop_socket_clients()
+
+        # Release locks for all tenants
+        logger.info(f"Releasing locks for {len(self.tenant_ids)} tenants")
+        for tenant_id in self.tenant_ids:
+            try:
+                redis_client = get_redis_client(tenant_id=tenant_id)
+                redis_client.delete(DanswerRedisLocks.SLACK_BOT_LOCK)
+                logger.info(f"Released lock for tenant {tenant_id}")
+            except Exception as e:
+                logger.error(f"Error releasing lock for tenant {tenant_id}: {e}")
 
         # Wait for background threads to finish (with timeout)
         logger.info("Waiting for background threads to finish...")
