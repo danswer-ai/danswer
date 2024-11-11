@@ -103,45 +103,44 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
         with get_session_with_tenant(tenant_id=tenant_id) as db_session:
             old_search_settings = check_index_swap(db_session=db_session)
             current_search_settings = get_current_search_settings(db_session)
-            # So that the first time users aren't surprised by really slow speed of first
-            # batch of documents indexed
-            if current_search_settings.provider_type is None and not MULTI_TENANT:
-                if old_search_settings:
-                    embedding_model = EmbeddingModel.from_db_model(
-                        search_settings=current_search_settings,
-                        server_host=INDEXING_MODEL_SERVER_HOST,
-                        server_port=INDEXING_MODEL_SERVER_PORT,
-                    )
 
-                    # only warm up if search settings were changed
-                    warm_up_bi_encoder(
-                        embedding_model=embedding_model,
-                    )
+        # So that the first time users aren't surprised by really slow speed of first
+        # batch of documents indexed
+        if current_search_settings.provider_type is None and not MULTI_TENANT:
+            if old_search_settings:
+                embedding_model = EmbeddingModel.from_db_model(
+                    search_settings=current_search_settings,
+                    server_host=INDEXING_MODEL_SERVER_HOST,
+                    server_port=INDEXING_MODEL_SERVER_PORT,
+                )
 
-            cc_pair_ids: list[int] = []
+                # only warm up if search settings were changed
+                warm_up_bi_encoder(
+                    embedding_model=embedding_model,
+                )
+
+        with get_session_with_tenant(tenant_id=tenant_id) as db_session:
             cc_pairs = fetch_connector_credential_pairs(db_session)
-            for cc_pair_entry in cc_pairs:
-                cc_pair_ids.append(cc_pair_entry.id)
+        cc_pair_ids: list[int] = [cc_pair_entry.id for cc_pair_entry in cc_pairs]
 
-            for cc_pair_id in cc_pair_ids:
-                redis_connector = RedisConnector(tenant_id, cc_pair_id)
-                # Get the primary search settings
-                primary_search_settings = get_current_search_settings(db_session)
-                search_settings = [primary_search_settings]
+        with get_session_with_tenant(tenant_id=tenant_id) as db_session:
+            primary_search_settings = get_current_search_settings(db_session)
+            secondary_search_settings = get_secondary_search_settings(db_session)
 
-                # Check for secondary search settings
-                secondary_search_settings = get_secondary_search_settings(db_session)
-                if secondary_search_settings is not None:
-                    # If secondary settings exist, add them to the list
-                    search_settings.append(secondary_search_settings)
+        search_settings = [primary_search_settings]
+        if secondary_search_settings is not None:
+            search_settings.append(secondary_search_settings)
 
-                for search_settings_instance in search_settings:
-                    redis_connector_index = redis_connector.new_index(
-                        search_settings_instance.id
-                    )
-                    if redis_connector_index.fenced:
-                        continue
+        for cc_pair_id in cc_pair_ids:
+            redis_connector = RedisConnector(tenant_id, cc_pair_id)
+            for search_settings_instance in search_settings:
+                redis_connector_index = redis_connector.new_index(
+                    search_settings_instance.id
+                )
+                if redis_connector_index.fenced:
+                    continue
 
+                with get_session_with_tenant(tenant_id=tenant_id) as db_session:
                     cc_pair = get_connector_credential_pair_from_id(
                         cc_pair_id, db_session
                     )
@@ -178,6 +177,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                             f"search_settings={search_settings_instance.id} "
                         )
                         tasks_created += 1
+
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."

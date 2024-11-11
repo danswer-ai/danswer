@@ -38,7 +38,6 @@ from danswer.configs.app_configs import POSTGRES_USER
 from danswer.configs.app_configs import USER_AUTH_SECRET
 from danswer.configs.constants import POSTGRES_UNKNOWN_APP_NAME
 from danswer.utils.logger import setup_logger
-from shared_configs.configs import IGNORED_SYNCING_TENANT_LIST
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.configs import TENANT_ID_PREFIX
@@ -190,13 +189,6 @@ class SqlEngine:
             return ""
         return cls._app_name
 
-    @classmethod
-    def reset_engine(cls) -> None:
-        with cls._lock:
-            if cls._engine:
-                cls._engine.dispose()
-                cls._engine = None
-
 
 def get_all_tenant_ids() -> list[str] | list[None]:
     if not MULTI_TENANT:
@@ -215,14 +207,7 @@ def get_all_tenant_ids() -> list[str] | list[None]:
     valid_tenants = [
         tenant
         for tenant in tenant_ids
-        if tenant is None
-        or (
-            tenant.startswith(TENANT_ID_PREFIX)
-            and (
-                IGNORED_SYNCING_TENANT_LIST is None
-                or tenant not in IGNORED_SYNCING_TENANT_LIST
-            )
-        )
+        if tenant is None or tenant.startswith(TENANT_ID_PREFIX)
     ]
 
     return valid_tenants
