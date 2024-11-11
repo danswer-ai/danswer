@@ -74,6 +74,9 @@ from danswer.server.manage.search_settings import router as search_settings_rout
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.users import router as user_router
 from danswer.server.middleware.latency_logging import add_latency_logging_middleware
+from danswer.server.openai_assistants_api.full_openai_assistants_api import (
+    get_full_openai_assistants_api_router,
+)
 from danswer.server.query_and_chat.chat_backend import router as chat_router
 from danswer.server.query_and_chat.query_backend import (
     admin_router as admin_query_router,
@@ -270,6 +273,9 @@ def get_application() -> FastAPI:
         application, token_rate_limit_settings_router
     )
     include_router_with_global_prefix_prepended(application, indexing_router)
+    include_router_with_global_prefix_prepended(
+        application, get_full_openai_assistants_api_router()
+    )
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
