@@ -212,11 +212,12 @@ def create_category(
     category: AssistantCategoryCreate,
     db: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
-) -> None:
+) -> PersonaCategoryResponse:
     """Create a new assistant category"""
-    create_assistant_category(
+    category = create_assistant_category(
         name=category.name, description=category.description, db_session=db
     )
+    return PersonaCategoryResponse.from_model(category)
 
 
 @admin_router.patch("/category/{category_id}")
