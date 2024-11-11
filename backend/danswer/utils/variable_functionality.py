@@ -1,5 +1,6 @@
 import functools
 import importlib
+import inspect
 from typing import Any
 from typing import TypeVar
 
@@ -139,8 +140,19 @@ def fetch_ee_implementation_or_noop(
         Exception: If EE is enabled but the fetch fails.
     """
     if not global_version.is_ee_version():
-        return lambda *args, **kwargs: noop_return_value
+        if inspect.iscoroutinefunction(noop_return_value):
 
+            async def async_noop(*args: Any, **kwargs: Any) -> Any:
+                return await noop_return_value(*args, **kwargs)
+
+            return async_noop
+
+        else:
+
+            def sync_noop(*args: Any, **kwargs: Any) -> Any:
+                return noop_return_value
+
+            return sync_noop
     try:
         return fetch_versioned_implementation(module, attribute)
     except Exception as e:
