@@ -68,7 +68,7 @@ export function IndexAttemptStatus({
     );
   } else if (status === "in_progress") {
     badge = (
-      <Badge variant="in_progress" icon={FiClock}>
+      <Badge className="flex-none" variant="in_progress" icon={FiClock}>
         In Progress
       </Badge>
     );
