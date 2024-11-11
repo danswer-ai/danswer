@@ -3,8 +3,11 @@ name: Build and Push Cloud Web Image on Tag
 
 on:
   push:
-    tags:
-      - "*"
+    branches: [ deactivated-for-now ]
+#  push:
+#    tags:
+#      - '*'
+
 
 env:
   REGISTRY_IMAGE: danswer/danswer-web-server-cloud

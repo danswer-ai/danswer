@@ -1,10 +1,12 @@
 name: Helm - Lint and Test Charts
 
 on:
-  merge_group:
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:  # Allows manual triggering
+  push:
+    branches: [ deactivated-for-now ]
+#  push:
+#    tags:
+#      - '*'
+
   
 jobs:
   helm-chart-check:

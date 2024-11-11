@@ -3,8 +3,12 @@ name: Backport on Merge
 # Note this workflow does not trigger the builds, be sure to manually tag the branches to trigger the builds
 
 on:
-  pull_request:
-    types: [closed]  # Later we check for merge so only PRs that go in can get backported
+  push:
+    branches: [ deactivated-for-now ]
+#  push:
+#    tags:
+#      - '*'
+
 
 permissions:
   contents: write

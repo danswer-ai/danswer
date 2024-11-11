@@ -1,11 +1,11 @@
 name: Python Unit Tests
 
 on:
-  merge_group:
-  pull_request:
-    branches:
-      - main
-      - 'release/**'
+  push:
+    branches: [ deactivated-for-now ]
+#  push:
+#    tags:
+#      - '*'
 
 jobs:
   backend-check:

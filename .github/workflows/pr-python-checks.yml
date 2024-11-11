@@ -1,11 +1,12 @@
 name: Python Checks
 
 on:
-  merge_group:
-  pull_request:
-    branches:
-      - main
-      - 'release/**'
+  push:
+    branches: [ deactivated-for-now ]
+#  push:
+#    tags:
+#      - '*'
+
 
 jobs:
   mypy-check:

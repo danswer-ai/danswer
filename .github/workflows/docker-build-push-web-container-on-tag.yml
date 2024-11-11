@@ -2,8 +2,11 @@ name: Build and Push Web Image on Tag
 
 on:
   push:
-    tags:
-      - '*'
+    branches: [ deactivated-for-now ]
+#  push:
+#    tags:
+#      - '*'
+
 
 env:
   REGISTRY_IMAGE: danswer/danswer-web-server

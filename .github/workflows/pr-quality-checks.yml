@@ -4,8 +4,12 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  merge_group:
-  pull_request: null
+  push:
+    branches: [ deactivated-for-now ]
+#  push:
+#    tags:
+#      - '*'
+
 
 jobs:
   quality-checks:

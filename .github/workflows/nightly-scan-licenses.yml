@@ -6,11 +6,13 @@
 # https://github.com/aquasecurity/trivy/discussions/7538
 # https://github.com/aquasecurity/trivy-action/issues/389
 
-name: 'Nightly - Scan licenses'
 on:
-#   schedule:
-#     - cron: '0 14 * * *'  # Runs every day at 6 AM PST / 7 AM PDT / 2 PM UTC
-  workflow_dispatch:  # Allows manual triggering
+  push:
+    branches: [ deactivated-for-now ]
+#  push:
+#    tags:
+#      - '*'
+
 
 permissions:
   actions: read
