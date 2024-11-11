@@ -218,7 +218,10 @@ def get_all_tenant_ids() -> list[str] | list[None]:
         if tenant is None
         or (
             tenant.startswith(TENANT_ID_PREFIX)
-            and tenant not in IGNORED_SYNCING_TENANT_LIST
+            and (
+                IGNORED_SYNCING_TENANT_LIST is None
+                or tenant not in IGNORED_SYNCING_TENANT_LIST
+            )
         )
     ]
 
