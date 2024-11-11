@@ -3,6 +3,7 @@ import json
 import os
 from typing import cast
 
+from cohere import Client
 from sqlalchemy.orm import Session
 
 from danswer.access.models import default_public_access
@@ -32,7 +33,7 @@ from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.server.documents.models import ConnectorBase
 from danswer.utils.logger import setup_logger
 from danswer.utils.retry_wrapper import retry_builder
-
+from ee.danswer.configs.app_configs import COHERE_DEFAULT_API_KEY
 
 logger = setup_logger()
 
@@ -177,15 +178,31 @@ def seed_initial_documents(
     )
     cc_pair_id = cast(int, result.data)
 
-    initial_docs_path = os.path.join(
-        os.getcwd(),
-        "danswer",
-        "seeding",
-        "initial_docs_cohere.json" if cohere_enabled else "initial_docs.json",
-    )
-    print(f"Loading docs from {initial_docs_path}")
+    if cohere_enabled:
+        initial_docs_path = os.path.join(
+            os.getcwd(), "danswer", "seeding", "initial_docs_cohere.json"
+        )
 
-    processed_docs = json.load(open(initial_docs_path))
+        cohere_client = Client(COHERE_DEFAULT_API_KEY)
+        processed_docs = json.load(open(initial_docs_path))
+        for doc in processed_docs:
+            title_embedding = cohere_client.embed(
+                texts=[doc["title"]], model="embed-english-v3.0"
+            ).embeddings[0]
+            content_embedding = cohere_client.embed(
+                texts=[doc["content"]], model="embed-english-v3.0"
+            ).embeddings[0]
+            doc["title_embedding"] = title_embedding
+            doc["content_embedding"] = content_embedding
+
+    else:
+        initial_docs_path = os.path.join(
+            os.getcwd(),
+            "danswer",
+            "seeding",
+            "initial_docs.json",
+        )
+        processed_docs = json.load(open(initial_docs_path))
 
     docs, chunks = _create_indexable_chunks(processed_docs, tenant_id)
 
