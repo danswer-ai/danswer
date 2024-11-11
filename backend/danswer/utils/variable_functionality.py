@@ -119,3 +119,30 @@ def noop_fallback(*args: Any, **kwargs: Any) -> None:
     Returns:
         None
     """
+
+
+def fetch_ee_implementation_or_noop(
+    module: str, attribute: str, noop_return_value: Any = None
+) -> Any:
+    """
+    Fetches an EE implementation if EE is enabled, otherwise returns a no-op function.
+    Raises an exception if EE is enabled but the fetch fails.
+
+    Args:
+        module (str): The name of the module from which to fetch the attribute.
+        attribute (str): The name of the attribute to fetch from the module.
+
+    Returns:
+        Any: The fetched EE implementation if successful and EE is enabled, otherwise a no-op function.
+
+    Raises:
+        Exception: If EE is enabled but the fetch fails.
+    """
+    if not global_version.is_ee_version():
+        return lambda *args, **kwargs: noop_return_value
+
+    try:
+        return fetch_versioned_implementation(module, attribute)
+    except Exception as e:
+        logger.error(f"Failed to fetch implementation for {module}.{attribute}: {e}")
+        raise

@@ -19,16 +19,10 @@ from danswer.chat.models import MessageSpecificCitations
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.chat.models import StreamStopInfo
-from danswer.configs.app_configs import AZURE_DALLE_API_BASE
-from danswer.configs.app_configs import AZURE_DALLE_API_KEY
-from danswer.configs.app_configs import AZURE_DALLE_API_VERSION
-from danswer.configs.app_configs import AZURE_DALLE_DEPLOYMENT_NAME
-from danswer.configs.chat_configs import BING_API_KEY
 from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
 from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.constants import MessageType
-from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.db.chat import attach_files_to_chat_message
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
@@ -41,7 +35,6 @@ from danswer.db.chat import reserve_message_id
 from danswer.db.chat import translate_db_message_to_chat_message_detail
 from danswer.db.chat import translate_db_search_doc_to_server_search_doc
 from danswer.db.engine import get_session_context_manager
-from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.models import SearchDoc as DbSearchDoc
 from danswer.db.models import ToolCall
 from danswer.db.models import User
@@ -61,14 +54,13 @@ from danswer.llm.answering.models import PromptConfig
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
-from danswer.llm.interfaces import LLMConfig
 from danswer.llm.utils import litellm_exception_to_error_msg
 from danswer.natural_language_processing.utils import get_tokenizer
-from danswer.search.enums import LLMEvaluationType
 from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import InferenceSection
+from danswer.search.models import RetrievalDetails
 from danswer.search.retrieval.search_runner import inference_sections_from_ids
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
@@ -77,14 +69,14 @@ from danswer.search.utils import relevant_sections_to_indices
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
-from danswer.tools.built_in_tools import get_built_in_tool_by_id
 from danswer.tools.force import ForceUseTool
-from danswer.tools.models import DynamicSchemaInfo
 from danswer.tools.models import ToolResponse
 from danswer.tools.tool import Tool
-from danswer.tools.tool_implementations.custom.custom_tool import (
-    build_custom_tools_from_openapi_schema_and_headers,
-)
+from danswer.tools.tool_constructor import construct_tools
+from danswer.tools.tool_constructor import CustomToolConfig
+from danswer.tools.tool_constructor import ImageGenerationToolConfig
+from danswer.tools.tool_constructor import InternetSearchToolConfig
+from danswer.tools.tool_constructor import SearchToolConfig
 from danswer.tools.tool_implementations.custom.custom_tool import (
     CUSTOM_TOOL_RESPONSE_ID,
 )
@@ -94,9 +86,6 @@ from danswer.tools.tool_implementations.images.image_generation_tool import (
 )
 from danswer.tools.tool_implementations.images.image_generation_tool import (
     ImageGenerationResponse,
-)
-from danswer.tools.tool_implementations.images.image_generation_tool import (
-    ImageGenerationTool,
 )
 from danswer.tools.tool_implementations.internet_search.internet_search_tool import (
     INTERNET_SEARCH_RESPONSE_ID,
@@ -122,9 +111,6 @@ from danswer.tools.tool_implementations.search.search_tool import (
     SECTION_RELEVANCE_LIST_ID,
 )
 from danswer.tools.tool_runner import ToolCallFinalResult
-from danswer.tools.utils import compute_all_tool_tokens
-from danswer.tools.utils import explicit_tool_calling_supported
-from danswer.utils.headers import header_dict_to_header_list
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
@@ -295,7 +281,6 @@ def stream_chat_message_objects(
     max_document_percentage: float = CHAT_TARGET_CHUNK_PERCENTAGE,
     # if specified, uses the last user message and does not create a new user message based
     # on the `new_msg_req.message`. Currently, requires a state where the last message is a
-    use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
     custom_tool_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
@@ -307,6 +292,9 @@ def stream_chat_message_objects(
     3. [always] A set of streamed LLM tokens or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
     """
+    use_existing_user_message = new_msg_req.use_existing_user_message
+    existing_assistant_message_id = new_msg_req.existing_assistant_message_id
+
     # Currently surrounding context is not supported for chat
     # Chat is already token heavy and harder for the model to process plus it would roll history over much faster
     new_msg_req.chunks_above = 0
@@ -428,12 +416,20 @@ def stream_chat_message_objects(
             final_msg, history_msgs = create_chat_chain(
                 chat_session_id=chat_session_id, db_session=db_session
             )
-            if final_msg.message_type != MessageType.USER:
-                raise RuntimeError(
-                    "The last message was not a user message. Cannot call "
-                    "`stream_chat_message_objects` with `is_regenerate=True` "
-                    "when the last message is not a user message."
-                )
+            if existing_assistant_message_id is None:
+                if final_msg.message_type != MessageType.USER:
+                    raise RuntimeError(
+                        "The last message was not a user message. Cannot call "
+                        "`stream_chat_message_objects` with `is_regenerate=True` "
+                        "when the last message is not a user message."
+                    )
+            else:
+                if final_msg.id != existing_assistant_message_id:
+                    raise RuntimeError(
+                        "The last message was not the existing assistant message. "
+                        f"Final message id: {final_msg.id}, "
+                        f"existing assistant message id: {existing_assistant_message_id}"
+                    )
 
         # Disable Query Rephrasing for the first message
         # This leads to a better first response since the LLM rephrasing the question
@@ -504,13 +500,19 @@ def stream_chat_message_objects(
                 ),
                 max_window_percentage=max_document_percentage,
             )
-        reserved_message_id = reserve_message_id(
-            db_session=db_session,
-            chat_session_id=chat_session_id,
-            parent_message=user_message.id
-            if user_message is not None
-            else parent_message.id,
-            message_type=MessageType.ASSISTANT,
+
+        # we don't need to reserve a message id if we're using an existing assistant message
+        reserved_message_id = (
+            final_msg.id
+            if existing_assistant_message_id is not None
+            else reserve_message_id(
+                db_session=db_session,
+                chat_session_id=chat_session_id,
+                parent_message=user_message.id
+                if user_message is not None
+                else parent_message.id,
+                message_type=MessageType.ASSISTANT,
+            )
         )
         yield MessageResponseIDInfo(
             user_message_id=user_message.id if user_message else None,
@@ -525,7 +527,13 @@ def stream_chat_message_objects(
         partial_response = partial(
             create_new_chat_message,
             chat_session_id=chat_session_id,
-            parent_message=final_msg,
+            # if we're using an existing assistant message, then this will just be an
+            # update operation, in which case the parent should be the parent of
+            # the latest. If we're creating a new assistant message, then the parent
+            # should be the latest message (latest user message)
+            parent_message=(
+                final_msg if existing_assistant_message_id is None else parent_message
+            ),
             prompt_id=prompt_id,
             overridden_model=overridden_model,
             # message=,
@@ -537,6 +545,7 @@ def stream_chat_message_objects(
             # reference_docs=,
             db_session=db_session,
             commit=False,
+            reserved_message_id=reserved_message_id,
         )
 
         if not final_msg.prompt:
@@ -560,141 +569,38 @@ def stream_chat_message_objects(
             structured_response_format=new_msg_req.structured_response_format,
         )
 
-        # find out what tools to use
-        search_tool: SearchTool | None = None
-        tool_dict: dict[int, list[Tool]] = {}  # tool_id to tool
-        for db_tool_model in persona.tools:
-            # handle in-code tools specially
-            if db_tool_model.in_code_tool_id:
-                tool_cls = get_built_in_tool_by_id(db_tool_model.id, db_session)
-                if tool_cls.__name__ == SearchTool.__name__ and not latest_query_files:
-                    search_tool = SearchTool(
-                        db_session=db_session,
-                        user=user,
-                        persona=persona,
-                        retrieval_options=retrieval_options,
-                        prompt_config=prompt_config,
-                        llm=llm,
-                        fast_llm=fast_llm,
-                        pruning_config=document_pruning_config,
-                        answer_style_config=answer_style_config,
-                        selected_sections=selected_sections,
-                        chunks_above=new_msg_req.chunks_above,
-                        chunks_below=new_msg_req.chunks_below,
-                        full_doc=new_msg_req.full_doc,
-                        evaluation_type=(
-                            LLMEvaluationType.BASIC
-                            if persona.llm_relevance_filter
-                            else LLMEvaluationType.SKIP
-                        ),
-                    )
-                    tool_dict[db_tool_model.id] = [search_tool]
-                elif tool_cls.__name__ == ImageGenerationTool.__name__:
-                    img_generation_llm_config: LLMConfig | None = None
-                    if (
-                        llm
-                        and llm.config.api_key
-                        and llm.config.model_provider == "openai"
-                    ):
-                        img_generation_llm_config = LLMConfig(
-                            model_provider=llm.config.model_provider,
-                            model_name="dall-e-3",
-                            temperature=GEN_AI_TEMPERATURE,
-                            api_key=llm.config.api_key,
-                            api_base=llm.config.api_base,
-                            api_version=llm.config.api_version,
-                        )
-                    elif (
-                        llm.config.model_provider == "azure"
-                        and AZURE_DALLE_API_KEY is not None
-                    ):
-                        img_generation_llm_config = LLMConfig(
-                            model_provider="azure",
-                            model_name=f"azure/{AZURE_DALLE_DEPLOYMENT_NAME}",
-                            temperature=GEN_AI_TEMPERATURE,
-                            api_key=AZURE_DALLE_API_KEY,
-                            api_base=AZURE_DALLE_API_BASE,
-                            api_version=AZURE_DALLE_API_VERSION,
-                        )
-                    else:
-                        llm_providers = fetch_existing_llm_providers(db_session)
-                        openai_provider = next(
-                            iter(
-                                [
-                                    llm_provider
-                                    for llm_provider in llm_providers
-                                    if llm_provider.provider == "openai"
-                                ]
-                            ),
-                            None,
-                        )
-                        if not openai_provider or not openai_provider.api_key:
-                            raise ValueError(
-                                "Image generation tool requires an OpenAI API key"
-                            )
-                        img_generation_llm_config = LLMConfig(
-                            model_provider=openai_provider.provider,
-                            model_name="dall-e-3",
-                            temperature=GEN_AI_TEMPERATURE,
-                            api_key=openai_provider.api_key,
-                            api_base=openai_provider.api_base,
-                            api_version=openai_provider.api_version,
-                        )
-                    tool_dict[db_tool_model.id] = [
-                        ImageGenerationTool(
-                            api_key=cast(str, img_generation_llm_config.api_key),
-                            api_base=img_generation_llm_config.api_base,
-                            api_version=img_generation_llm_config.api_version,
-                            additional_headers=litellm_additional_headers,
-                            model=img_generation_llm_config.model_name,
-                        )
-                    ]
-                elif tool_cls.__name__ == InternetSearchTool.__name__:
-                    bing_api_key = BING_API_KEY
-                    if not bing_api_key:
-                        raise ValueError(
-                            "Internet search tool requires a Bing API key, please contact your Danswer admin to get it added!"
-                        )
-                    tool_dict[db_tool_model.id] = [
-                        InternetSearchTool(
-                            api_key=bing_api_key,
-                            answer_style_config=answer_style_config,
-                            prompt_config=prompt_config,
-                        )
-                    ]
-
-                continue
-
-            # handle all custom tools
-            if db_tool_model.openapi_schema:
-                tool_dict[db_tool_model.id] = cast(
-                    list[Tool],
-                    build_custom_tools_from_openapi_schema_and_headers(
-                        db_tool_model.openapi_schema,
-                        dynamic_schema_info=DynamicSchemaInfo(
-                            chat_session_id=chat_session_id,
-                            message_id=user_message.id if user_message else None,
-                        ),
-                        custom_headers=(db_tool_model.custom_headers or [])
-                        + (
-                            header_dict_to_header_list(
-                                custom_tool_additional_headers or {}
-                            )
-                        ),
-                    ),
-                )
-
+        tool_dict = construct_tools(
+            persona=persona,
+            prompt_config=prompt_config,
+            db_session=db_session,
+            user=user,
+            llm=llm,
+            fast_llm=fast_llm,
+            search_tool_config=SearchToolConfig(
+                answer_style_config=answer_style_config,
+                document_pruning_config=document_pruning_config,
+                retrieval_options=retrieval_options or RetrievalDetails(),
+                selected_sections=selected_sections,
+                chunks_above=new_msg_req.chunks_above,
+                chunks_below=new_msg_req.chunks_below,
+                full_doc=new_msg_req.full_doc,
+                latest_query_files=latest_query_files,
+            ),
+            internet_search_tool_config=InternetSearchToolConfig(
+                answer_style_config=answer_style_config,
+            ),
+            image_generation_tool_config=ImageGenerationToolConfig(
+                additional_headers=litellm_additional_headers,
+            ),
+            custom_tool_config=CustomToolConfig(
+                chat_session_id=chat_session_id,
+                message_id=user_message.id if user_message else None,
+                additional_headers=custom_tool_additional_headers,
+            ),
+        )
         tools: list[Tool] = []
         for tool_list in tool_dict.values():
             tools.extend(tool_list)
-
-        # factor in tool definition size when pruning
-        document_pruning_config.tool_num_tokens = compute_all_tool_tokens(
-            tools, llm_tokenizer
-        )
-        document_pruning_config.using_tool_message = explicit_tool_calling_supported(
-            llm_provider, llm_model_name
-        )
 
         # LLM prompt building, response capturing, etc.
         answer = Answer(
@@ -871,7 +777,6 @@ def stream_chat_message_objects(
                 tool_name_to_tool_id[tool.name] = tool_id
 
         gen_ai_response_message = partial_response(
-            reserved_message_id=reserved_message_id,
             message=answer.llm_answer,
             rephrased_query=(
                 qa_docs_response.rephrased_query if qa_docs_response else None
@@ -879,9 +784,11 @@ def stream_chat_message_objects(
             reference_docs=reference_db_search_docs,
             files=ai_message_files,
             token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-            citations=message_specific_citations.citation_map
-            if message_specific_citations
-            else None,
+            citations=(
+                message_specific_citations.citation_map
+                if message_specific_citations
+                else None
+            ),
             error=None,
             tool_call=(
                 ToolCall(
@@ -915,7 +822,6 @@ def stream_chat_message_objects(
 def stream_chat_message(
     new_msg_req: CreateChatMessageRequest,
     user: User | None,
-    use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
     custom_tool_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
@@ -925,7 +831,6 @@ def stream_chat_message(
             new_msg_req=new_msg_req,
             user=user,
             db_session=db_session,
-            use_existing_user_message=use_existing_user_message,
             litellm_additional_headers=litellm_additional_headers,
             custom_tool_additional_headers=custom_tool_additional_headers,
             is_connected=is_connected,

@@ -3,6 +3,9 @@ from datetime import timezone
 
 from sqlalchemy.orm import Session
 
+from danswer.background.task_name_builders import (
+    name_sync_external_doc_permissions_task,
+)
 from danswer.db.enums import AccessType
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.tasks import check_task_is_live_and_not_timed_out

@@ -13,6 +13,14 @@ from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.test_models import DATestUser
 
 
+DOMAIN = "test.com"
+DEFAULT_PASSWORD = "test"
+
+
+def build_email(name: str) -> str:
+    return f"{name}@test.com"
+
+
 class UserManager:
     @staticmethod
     def create(
@@ -23,9 +31,9 @@ class UserManager:
             name = f"test{str(uuid4())}"
 
         if email is None:
-            email = f"{name}@test.com"
+            email = build_email(name)
 
-        password = "test"
+        password = DEFAULT_PASSWORD
 
         body = {
             "email": email,

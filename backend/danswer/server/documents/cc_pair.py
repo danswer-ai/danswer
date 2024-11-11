@@ -19,6 +19,9 @@ from danswer.background.celery.tasks.pruning.tasks import (
     try_creating_prune_generator_task,
 )
 from danswer.background.celery.versioned_apps.primary import app as primary_app
+from danswer.background.task_name_builders import (
+    name_sync_external_doc_permissions_task,
+)
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import remove_credential_from_connector
@@ -48,7 +51,6 @@ from danswer.server.documents.models import PaginatedIndexAttempts
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.user_group import validate_user_creation_permissions
-
 
 logger = setup_logger()
 router = APIRouter(prefix="/manage")
@@ -352,6 +354,13 @@ def sync_cc_pair(
             detail="Permissions sync task creation failed.",
         )
 
+    if sync_external_doc_permissions_task:
+        sync_external_doc_permissions_task.apply_async(
+            kwargs=dict(
+                cc_pair_id=cc_pair_id, tenant_id=CURRENT_TENANT_ID_CONTEXTVAR.get()
+            ),
+        )
+
     return StatusResponse(
         success=True,
         message="Successfully created the permissions sync task.",
@@ -366,7 +375,9 @@ def associate_credential_to_connector(
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
-    validate_user_creation_permissions(
+    fetch_ee_implementation_or_noop(
+        "danswer.db.user_group", "validate_user_creation_permissions", None
+    )(
         db_session=db_session,
         user=user,
         target_group_ids=metadata.groups,

@@ -12,6 +12,7 @@ from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import SqlEngine
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger(__name__)
 
@@ -119,10 +120,10 @@ class DynamicTenantScheduler(PersistentScheduler):
             else:
                 logger.info("Schedule is up to date, no changes needed")
 
-        except (AttributeError, KeyError) as e:
-            logger.exception(f"Failed to process task configuration: {str(e)}")
-        except Exception as e:
-            logger.exception(f"Unexpected error updating tenant tasks: {str(e)}")
+        except (AttributeError, KeyError):
+            logger.exception("Failed to process task configuration")
+        except Exception:
+            logger.exception("Unexpected error updating tenant tasks")
 
     def _should_update_schedule(
         self, current_schedule: dict, new_schedule: dict
@@ -143,6 +144,11 @@ def on_beat_init(sender: Any, **kwargs: Any) -> None:
     # Celery beat shouldn't touch the db at all. But just setting a low minimum here.
     SqlEngine.set_app_name(POSTGRES_CELERY_BEAT_APP_NAME)
     SqlEngine.init_engine(pool_size=2, max_overflow=0)
+
+    # Startup checks are not needed in multi-tenant case
+    if MULTI_TENANT:
+        return
+
     app_base.wait_for_redis(sender, **kwargs)
 
 

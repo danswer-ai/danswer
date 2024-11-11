@@ -110,20 +110,27 @@ export function ProviderCreationModal({
     setErrorMsg("");
     try {
       const customConfig = Object.fromEntries(values.custom_config);
+      const providerType = values.provider_type.toLowerCase().split(" ")[0];
+      const isOpenAI = providerType === "openai";
+
+      const testModelName =
+        isOpenAI || isAzure ? "text-embedding-3-small" : values.model_name;
+
+      const testEmbeddingPayload = {
+        provider_type: providerType,
+        api_key: values.api_key,
+        api_url: values.api_url,
+        model_name: testModelName,
+        api_version: values.api_version,
+        deployment_name: values.deployment_name,
+      };
 
       const initialResponse = await fetch(
         "/api/admin/embedding/test-embedding",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            provider_type: values.provider_type.toLowerCase().split(" ")[0],
-            api_key: values.api_key,
-            api_url: values.api_url,
-            model_name: values.model_name,
-            api_version: values.api_version,
-            deployment_name: values.deployment_name,
-          }),
+          body: JSON.stringify(testEmbeddingPayload),
         }
       );
 
