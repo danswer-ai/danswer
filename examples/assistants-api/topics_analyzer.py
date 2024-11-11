@@ -1,5 +1,4 @@
 import argparse
-import json
 import os
 import time
 from datetime import datetime
@@ -27,12 +26,6 @@ Please analyze and provide insights about this topic: {topic}.
 IMPORTANT: do not mention things that are not relevant to the specified topic. \
 If there is no relevant information, just say "No relevant information found."
 """
-
-
-def show_json(obj):
-    print()
-    print(json.loads(obj.model_dump_json()))
-    print()
 
 
 def wait_on_run(client: OpenAI, run, thread):
