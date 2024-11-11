@@ -232,6 +232,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
             async_return_default_schema,
+            is_async=True,
         )(
             email=user_create.email,
         )
@@ -298,6 +299,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
             async_return_default_schema,
+            is_async=True,
         )(
             email=account_email,
         )
@@ -442,6 +444,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
             async_return_default_schema,
+            is_async=True,
         )(
             email=email,
         )
@@ -505,6 +508,7 @@ class TenantAwareJWTStrategy(JWTStrategy):
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
             async_return_default_schema,
+            is_async=True,
         )(
             email=user.email,
         )

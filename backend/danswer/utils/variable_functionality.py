@@ -122,7 +122,7 @@ def noop_fallback(*args: Any, **kwargs: Any) -> None:
 
 
 def fetch_ee_implementation_or_noop(
-    module: str, attribute: str, noop_return_value: Any = None
+    module: str, attribute: str, noop_return_value: Any = None, is_async: bool = False
 ) -> Any:
     """
     Fetches an EE implementation if EE is enabled, otherwise returns a no-op function.
@@ -139,6 +139,8 @@ def fetch_ee_implementation_or_noop(
         Exception: If EE is enabled but the fetch fails.
     """
     if not global_version.is_ee_version():
+        if is_async:
+            return noop_return_value
         return lambda *args, **kwargs: noop_return_value
 
     try:
