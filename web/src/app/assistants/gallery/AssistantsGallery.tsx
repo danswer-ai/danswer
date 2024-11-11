@@ -1,6 +1,9 @@
 "use client";
 
-import { Persona, PersonaCategory } from "@/app/admin/assistants/interfaces";
+import {
+  Persona,
+  PersonaCategory as PersonaCategoryType,
+} from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -154,7 +157,7 @@ export function AssistantGalleryCard({
         <PersonaCategory
           personaCategory={
             categories?.find(
-              (category: PersonaCategory) =>
+              (category: PersonaCategoryType) =>
                 category.id === assistant.category_id
             )!
           }
