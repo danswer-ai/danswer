@@ -23,6 +23,7 @@ from danswer.db.models import User
 from danswer.search.models import RetrievalDetails
 from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
+from danswer.tools.tool_implementations.search.search_tool import SearchTool
 from danswer.utils.logger import setup_logger
 
 
@@ -79,6 +80,7 @@ def process_run_in_background(
     chat_session_id: UUID,
     assistant_id: int,
     instructions: str,
+    tools: list[dict],
     user: User | None,
     db_session: Session,
 ) -> None:
@@ -89,6 +91,16 @@ def process_run_in_background(
         db_session=db_session,
     )
 
+    search_tool_retrieval_details = RetrievalDetails()
+    for tool in tools:
+        if tool["type"] == SearchTool.__name__ and (
+            retrieval_details := tool.get("retrieval_details")
+        ):
+            search_tool_retrieval_details = RetrievalDetails.model_validate(
+                retrieval_details
+            )
+            break
+
     new_msg_req = CreateChatMessageRequest(
         chat_session_id=chat_session_id,
         parent_message_id=int(parent_message_id) if parent_message_id else None,
@@ -96,7 +108,7 @@ def process_run_in_background(
         file_descriptors=[],
         prompt_id=chat_session.persona.prompts[0].id,
         search_doc_ids=None,
-        retrieval_options=RetrievalDetails(),  # Adjust as needed
+        retrieval_options=search_tool_retrieval_details,  # Adjust as needed
         query_override=None,
         regenerate=None,
         llm_override=None,
@@ -189,6 +201,7 @@ def create_run(
         chat_session.id,
         run_request.assistant_id,
         run_request.instructions or "",
+        run_request.tools or [],
         user,
         db_session,
     )

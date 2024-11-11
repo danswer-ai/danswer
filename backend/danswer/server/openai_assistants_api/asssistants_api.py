@@ -141,7 +141,7 @@ def create_assistant(
         user=user,
         name=request.name or f"Assistant-{uuid4()}",
         description=request.description or "",
-        num_chunks=10,  # Default value
+        num_chunks=25,
         llm_relevance_filter=True,
         llm_filter_extraction=True,
         recency_bias=RecencyBiasSetting.AUTO,
@@ -163,6 +163,9 @@ def create_assistant(
         db_session.commit()
 
     return persona_to_assistant(persona)
+
+
+""
 
 
 @router.get("/{assistant_id}")

@@ -570,12 +570,12 @@ def stream_chat_message_objects(
 
         tool_dict = construct_tools(
             persona=persona,
+            prompt_config=prompt_config,
             db_session=db_session,
             user=user,
             llm=llm,
             fast_llm=fast_llm,
             search_tool_config=SearchToolConfig(
-                prompt_config=prompt_config,
                 answer_style_config=answer_style_config,
                 document_pruning_config=document_pruning_config,
                 retrieval_options=retrieval_options,
@@ -586,7 +586,6 @@ def stream_chat_message_objects(
                 latest_query_files=latest_query_files,
             ),
             internet_search_tool_config=InternetSearchToolConfig(
-                prompt_config=prompt_config,
                 answer_style_config=answer_style_config,
             ),
             image_generation_tool_config=ImageGenerationToolConfig(

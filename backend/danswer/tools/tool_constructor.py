@@ -1,7 +1,8 @@
 from typing import cast
 from uuid import UUID
 
-from openai import BaseModel
+from pydantic import BaseModel
+from pydantic import Field
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import AZURE_DALLE_API_BASE
@@ -15,6 +16,7 @@ from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.answering.models import AnswerStyleConfig
+from danswer.llm.answering.models import CitationConfig
 from danswer.llm.answering.models import DocumentPruningConfig
 from danswer.llm.answering.models import PromptConfig
 from danswer.llm.interfaces import LLM
@@ -93,10 +95,13 @@ def _get_image_generation_config(llm: LLM, db_session: Session) -> LLMConfig | N
 
 
 class SearchToolConfig(BaseModel):
-    prompt_config: PromptConfig
-    answer_style_config: AnswerStyleConfig | None = None
-    document_pruning_config: DocumentPruningConfig
-    retrieval_options: RetrievalDetails | None = None
+    answer_style_config: AnswerStyleConfig = Field(
+        default_factory=lambda: AnswerStyleConfig(citation_config=CitationConfig())
+    )
+    document_pruning_config: DocumentPruningConfig = Field(
+        default_factory=DocumentPruningConfig
+    )
+    retrieval_options: RetrievalDetails = Field(default_factory=RetrievalDetails)
     selected_sections: list[InferenceSection] | None = None
     chunks_above: int = 0
     chunks_below: int = 0
@@ -105,8 +110,11 @@ class SearchToolConfig(BaseModel):
 
 
 class InternetSearchToolConfig(BaseModel):
-    prompt_config: PromptConfig
-    answer_style_config: AnswerStyleConfig | None = None
+    answer_style_config: AnswerStyleConfig = Field(
+        default_factory=lambda: AnswerStyleConfig(
+            citation_config=CitationConfig(all_docs_useful=True)
+        )
+    )
 
 
 class ImageGenerationToolConfig(BaseModel):
@@ -114,13 +122,14 @@ class ImageGenerationToolConfig(BaseModel):
 
 
 class CustomToolConfig(BaseModel):
-    chat_session_id: UUID
-    message_id: int | None
+    chat_session_id: UUID | None = None
+    message_id: int | None = None
     additional_headers: dict[str, str] | None = None
 
 
 def construct_tools(
     persona: Persona,
+    prompt_config: PromptConfig,
     db_session: Session,
     user: User | None,
     llm: LLM,
@@ -129,7 +138,6 @@ def construct_tools(
     internet_search_tool_config: InternetSearchToolConfig | None = None,
     image_generation_tool_config: ImageGenerationToolConfig | None = None,
     custom_tool_config: CustomToolConfig | None = None,
-    continue_on_error: bool = False,
 ) -> dict[int, list[Tool]]:
     """Constructs tools based on persona configuration and available APIs"""
     tool_dict: dict[int, list[Tool]] = {}
@@ -141,17 +149,14 @@ def construct_tools(
             # Handle Search Tool
             if tool_cls.__name__ == SearchTool.__name__:
                 if not search_tool_config:
-                    if continue_on_error:
-                        logger.error("Search tool config is required but not provided")
-                        continue
-                    raise ValueError("Search tool config is required")
+                    search_tool_config = SearchToolConfig()
 
                 search_tool = SearchTool(
                     db_session=db_session,
                     user=user,
                     persona=persona,
                     retrieval_options=search_tool_config.retrieval_options,
-                    prompt_config=search_tool_config.prompt_config,
+                    prompt_config=prompt_config,
                     llm=llm,
                     fast_llm=fast_llm,
                     pruning_config=search_tool_config.document_pruning_config,
@@ -171,22 +176,11 @@ def construct_tools(
             # Handle Image Generation Tool
             elif tool_cls.__name__ == ImageGenerationTool.__name__:
                 if not image_generation_tool_config:
-                    if continue_on_error:
-                        logger.error(
-                            "Image generation tool config is required but not provided"
-                        )
-                        continue
-                    raise ValueError("Image generation tool config is required")
+                    image_generation_tool_config = ImageGenerationToolConfig()
 
-                try:
-                    img_generation_llm_config = _get_image_generation_config(
-                        llm, db_session
-                    )
-                except ValueError as e:
-                    if continue_on_error:
-                        logger.error(f"Failed to get image generation config: {str(e)}")
-                        continue
-                    raise
+                img_generation_llm_config = _get_image_generation_config(
+                    llm, db_session
+                )
 
                 tool_dict[db_tool_model.id] = [
                     ImageGenerationTool(
@@ -201,17 +195,9 @@ def construct_tools(
             # Handle Internet Search Tool
             elif tool_cls.__name__ == InternetSearchTool.__name__:
                 if not internet_search_tool_config:
-                    if continue_on_error:
-                        logger.error(
-                            "Internet search tool config is required but not provided"
-                        )
-                        continue
-                    raise ValueError("Internet search tool config is required")
+                    internet_search_tool_config = InternetSearchToolConfig()
 
                 if not BING_API_KEY:
-                    if continue_on_error:
-                        logger.error("Internet search tool requires a Bing API key")
-                        continue
                     raise ValueError(
                         "Internet search tool requires a Bing API key, please contact your Danswer admin to get it added!"
                     )
@@ -219,17 +205,14 @@ def construct_tools(
                     InternetSearchTool(
                         api_key=BING_API_KEY,
                         answer_style_config=internet_search_tool_config.answer_style_config,
-                        prompt_config=internet_search_tool_config.prompt_config,
+                        prompt_config=prompt_config,
                     )
                 ]
 
         # Handle custom tools
         elif db_tool_model.openapi_schema:
             if not custom_tool_config:
-                if continue_on_error:
-                    logger.error("Custom tool config is required but not provided")
-                    continue
-                raise ValueError("Custom tool config is required")
+                custom_tool_config = CustomToolConfig()
 
             tool_dict[db_tool_model.id] = cast(
                 list[Tool],
