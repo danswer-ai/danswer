@@ -142,14 +142,14 @@ def fetch_ee_implementation_or_noop(
     if not global_version.is_ee_version():
         if inspect.iscoroutinefunction(noop_return_value):
 
-            async def async_noop(*args, **kwargs):
+            async def async_noop(*args: Any, **kwargs: Any) -> Any:
                 return await noop_return_value(*args, **kwargs)
 
             return async_noop
 
         else:
 
-            def sync_noop(*args, **kwargs):
+            def sync_noop(*args: Any, **kwargs: Any) -> Any:
                 return noop_return_value
 
             return sync_noop
