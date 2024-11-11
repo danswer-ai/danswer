@@ -146,6 +146,7 @@ def fetch_ee_implementation_or_noop(
                 return await noop_return_value(*args, **kwargs)
 
             return async_noop
+
         else:
 
             def sync_noop(*args, **kwargs):
