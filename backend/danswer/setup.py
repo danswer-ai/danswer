@@ -59,7 +59,9 @@ from shared_configs.model_server_models import SupportedEmbeddingModel
 logger = setup_logger()
 
 
-def setup_danswer(db_session: Session, tenant_id: str | None) -> None:
+def setup_danswer(
+    db_session: Session, tenant_id: str | None, cohere_enabled: bool = False
+) -> None:
     """
     Setup Danswer for a particular tenant. In the Single Tenant case, it will set it up for the default schema
     on server startup. In the MT case, it will be called when the tenant is created.
@@ -148,7 +150,7 @@ def setup_danswer(db_session: Session, tenant_id: str | None) -> None:
     # update multipass indexing setting based on GPU availability
     update_default_multipass_indexing(db_session)
 
-    seed_initial_documents(db_session, tenant_id)
+    seed_initial_documents(db_session, tenant_id, cohere_enabled)
 
 
 def translate_saved_search_settings(db_session: Session) -> None:
