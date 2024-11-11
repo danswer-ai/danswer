@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { PersonaCategory } from "../admin/assistants/interfaces";
+import { PersonaCategory as PersonaCategoryType } from "../admin/assistants/interfaces";
 
 import {
   Tooltip,
@@ -8,19 +8,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export default function AssistantCategory({
-  assistantCategory,
+export default function PersonaCategory({
+  personaCategory,
 }: {
-  assistantCategory: PersonaCategory;
+  personaCategory: PersonaCategoryType;
 }) {
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger className="cursor-help">
-          <Badge variant="purple">{assistantCategory.name}</Badge>
+          <Badge variant="purple">{personaCategory.name}</Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{assistantCategory.description}</p>
+          <p>{personaCategory.description}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

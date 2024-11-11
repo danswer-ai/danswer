@@ -56,10 +56,10 @@ import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, PersonaCategory, StarterMessage } from "./interfaces";
 import {
-  createAssistantCategory,
+  createPersonaCategory,
   createPersona,
-  deleteAssistantCategory,
-  updateAssistantCategory,
+  deletePersonaCategory,
+  updatePersonaCategory,
   updatePersona,
 } from "./lib";
 import { Popover } from "@/components/popover/Popover";
@@ -990,7 +990,7 @@ export function AssistantEditor({
               </div>
 
               <AdvancedOptionsToggle
-                title="Persona Categories"
+                title="Categories"
                 showAdvancedOptions={showPersonaCategory}
                 setShowAdvancedOptions={setShowPersonaCategory}
               />
@@ -1068,11 +1068,10 @@ export function AssistantEditor({
                                 if (!name || !description) return;
 
                                 try {
-                                  const response =
-                                    await createAssistantCategory(
-                                      name,
-                                      description
-                                    );
+                                  const response = await createPersonaCategory(
+                                    name,
+                                    description
+                                  );
                                   if (response.ok) {
                                     setPopup({
                                       message: `Category "${name}" created successfully`,
@@ -1127,7 +1126,7 @@ export function AssistantEditor({
                                   category={category}
                                   onUpdate={async (id, name, description) => {
                                     const response =
-                                      await updateAssistantCategory(
+                                      await updatePersonaCategory(
                                         id,
                                         name,
                                         description
@@ -1146,7 +1145,7 @@ export function AssistantEditor({
                                   }}
                                   onDelete={async (id) => {
                                     const response =
-                                      await deleteAssistantCategory(id);
+                                      await deletePersonaCategory(id);
                                     if (response?.ok) {
                                       setPopup({
                                         message: `Category deleted successfully`,

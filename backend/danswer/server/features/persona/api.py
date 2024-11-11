@@ -34,9 +34,9 @@ from danswer.db.persona import update_persona_visibility
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
 from danswer.llm.answering.prompts.utils import build_dummy_prompt
-from danswer.server.features.persona.models import AssistantCategoryCreate
 from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import ImageGenerationToolStatus
+from danswer.server.features.persona.models import PersonaCategoryCreate
 from danswer.server.features.persona.models import PersonaCategoryResponse
 from danswer.server.features.persona.models import PersonaSharedNotificationData
 from danswer.server.features.persona.models import PersonaSnapshot
@@ -209,7 +209,7 @@ def get_categories(
 
 @admin_router.post("/categories")
 def create_category(
-    category: AssistantCategoryCreate,
+    category: PersonaCategoryCreate,
     db: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> PersonaCategoryResponse:

@@ -134,7 +134,7 @@ class ImageGenerationToolStatus(BaseModel):
     is_available: bool
 
 
-class AssistantCategoryCreate(BaseModel):
+class PersonaCategoryCreate(BaseModel):
     name: str
     description: str
 

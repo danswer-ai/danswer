@@ -17,7 +17,7 @@ import { AssistantTools } from "../ToolsDisplay";
 import { classifyAssistants } from "@/lib/assistants/utils";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import { useUser } from "@/components/user/UserProvider";
-import AssistantCategory from "../AssistantCategory";
+import PersonaCategory from "../PersonaCategory";
 import { useCategories } from "@/lib/hooks";
 import {
   Select,
@@ -151,8 +151,8 @@ export function AssistantGalleryCard({
         <AssistantTools list assistant={assistant} />
       )}
       {assistant.category_id && categories && (
-        <AssistantCategory
-          assistantCategory={
+        <PersonaCategory
+          personaCategory={
             categories?.find(
               (category: PersonaCategory) =>
                 category.id === assistant.category_id

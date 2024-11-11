@@ -110,7 +110,7 @@ function updatePrompt({
   });
 }
 
-export const createAssistantCategory = (name: string, description: string) => {
+export const createPersonaCategory = (name: string, description: string) => {
   return fetch("/api/admin/persona/categories", {
     method: "POST",
     headers: {
@@ -120,7 +120,7 @@ export const createAssistantCategory = (name: string, description: string) => {
   });
 };
 
-export const deleteAssistantCategory = (categoryId: number) => {
+export const deletePersonaCategory = (categoryId: number) => {
   return fetch(`/api/admin/persona/category/${categoryId}`, {
     method: "DELETE",
     headers: {
@@ -129,7 +129,7 @@ export const deleteAssistantCategory = (categoryId: number) => {
   });
 };
 
-export const updateAssistantCategory = (
+export const updatePersonaCategory = (
   id: number,
   name: string,
   description: string
