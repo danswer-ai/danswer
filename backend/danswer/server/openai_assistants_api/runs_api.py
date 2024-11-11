@@ -184,8 +184,8 @@ def create_run(
     # Schedule the background task
     background_tasks.add_task(
         process_run_in_background,
-        new_message.id,  # This is now an int
-        latest_message.id,  # This is now an int
+        new_message.id,
+        latest_message.id,
         chat_session.id,
         run_request.assistant_id,
         run_request.instructions or "",
