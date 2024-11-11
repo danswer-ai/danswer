@@ -11,6 +11,7 @@ from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import DocumentSource
+from danswer.server.documents.models import DocumentSyncStatus
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS
 from tests.integration.common_utils.constants import MAX_DELAY
@@ -357,10 +358,37 @@ class CCPairManager:
             return None
 
     @staticmethod
+    def get_doc_sync_statuses(
+        cc_pair: DATestCCPair,
+        user_performing_action: DATestUser | None = None,
+    ) -> list[DocumentSyncStatus]:
+        response = requests.get(
+            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/get-docs-sync-status",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        doc_sync_statuses: list[DocumentSyncStatus] = []
+        for doc_sync_status in response.json():
+            doc_sync_statuses.append(
+                DocumentSyncStatus(
+                    doc_id=doc_sync_status["doc_id"],
+                    last_synced=datetime.fromisoformat(doc_sync_status["last_synced"]),
+                    last_modified=datetime.fromisoformat(
+                        doc_sync_status["last_modified"]
+                    ),
+                )
+            )
+
+        return doc_sync_statuses
+
+    @staticmethod
     def wait_for_sync(
         cc_pair: DATestCCPair,
         after: datetime,
         timeout: float = MAX_DELAY,
+        number_of_updated_docs: int = 0,
         user_performing_action: DATestUser | None = None,
     ) -> None:
         """after: The task register time must be after this time."""
@@ -370,17 +398,52 @@ class CCPairManager:
             if last_synced and last_synced > after:
                 print(f"last_synced: {last_synced}")
                 print(f"sync command start time: {after}")
-                print(f"Sync complete: cc_pair={cc_pair.id}")
+                print(f"permission sync complete: cc_pair={cc_pair.id}")
                 break
 
             elapsed = time.monotonic() - start
             if elapsed > timeout:
                 raise TimeoutError(
-                    f"CC pair sync was not completed within {timeout} seconds"
+                    f"Permission sync was not completed within {timeout} seconds"
                 )
 
             print(
                 f"Waiting for CC sync to complete. elapsed={elapsed:.2f} timeout={timeout}"
+            )
+            time.sleep(5)
+
+        # TODO: remove this sleep, this shouldnt be necessary but
+        # time.sleep(5)
+
+        print("waiting for vespa sync")
+        # wait for the vespa sync to complete once the permission sync is complete
+        start = time.monotonic()
+        while True:
+            doc_sync_statuses = CCPairManager.get_doc_sync_statuses(
+                cc_pair=cc_pair,
+                user_performing_action=user_performing_action,
+            )
+            synced_docs = 0
+            for doc_sync_status in doc_sync_statuses:
+                if (
+                    doc_sync_status.last_synced >= doc_sync_status.last_modified
+                    and doc_sync_status.last_synced >= after
+                    and doc_sync_status.last_modified >= after
+                ):
+                    synced_docs += 1
+
+            if synced_docs >= number_of_updated_docs:
+                print(f"all docs synced: cc_pair={cc_pair.id}")
+                break
+
+            elapsed = time.monotonic() - start
+            if elapsed > timeout:
+                raise TimeoutError(
+                    f"Vespa sync was not completed within {timeout} seconds"
+                )
+
+            print(
+                f"Waiting for vespa sync to complete. elapsed={elapsed:.2f} timeout={timeout}"
             )
             time.sleep(5)
 

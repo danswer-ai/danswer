@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import null
 
 from danswer.configs.constants import DEFAULT_BOOST
+from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.feedback import delete_document_feedback_for_documents__no_commit
@@ -91,6 +92,18 @@ def construct_document_select_for_connector_credential_pair_by_needs_sync(
     return stmt
 
 
+def get_all_documents_needing_vespa_sync_for_cc_pair(
+    db_session: Session, cc_pair_id: int
+) -> list[DbDocument]:
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id, db_session=db_session
+    )
+    stmt = construct_document_select_for_connector_credential_pair_by_needs_sync(
+        cc_pair.connector_id, cc_pair.credential_id
+    )
+    return list(db_session.scalars(stmt).all())
+
+
 def construct_document_select_for_connector_credential_pair(
     connector_id: int, credential_id: int | None = None
 ) -> Select:
@@ -102,6 +115,19 @@ def construct_document_select_for_connector_credential_pair(
     )
     stmt = select(DbDocument).where(DbDocument.id.in_(initial_doc_ids_stmt)).distinct()
     return stmt
+
+
+def get_documents_for_cc_pair(
+    db_session: Session,
+    cc_pair_id: int,
+) -> list[DbDocument]:
+    cc_pair = get_connector_credential_pair_from_id(
+        cc_pair_id=cc_pair_id, db_session=db_session
+    )
+    stmt = construct_document_select_for_connector_credential_pair(
+        connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
+    )
+    return list(db_session.scalars(stmt).all())
 
 
 def get_document_ids_for_connector_credential_pair(

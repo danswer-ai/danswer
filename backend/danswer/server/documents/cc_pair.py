@@ -26,6 +26,7 @@ from danswer.db.connector_credential_pair import (
     update_connector_credential_pair_from_id,
 )
 from danswer.db.document import get_document_counts_for_cc_pairs
+from danswer.db.document import get_documents_for_cc_pair
 from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
@@ -44,6 +45,7 @@ from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import CCStatusUpdateRequest
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorCredentialPairMetadata
+from danswer.server.documents.models import DocumentSyncStatus
 from danswer.server.documents.models import PaginatedIndexAttempts
 from danswer.server.models import StatusResponse
 from danswer.utils.logger import setup_logger
@@ -355,6 +357,19 @@ def sync_cc_pair(
         success=True,
         message="Successfully created the permissions sync task.",
     )
+
+
+@router.get("/admin/cc-pair/{cc_pair_id}/get-docs-sync-status")
+def get_docs_sync_status(
+    cc_pair_id: int,
+    _: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[DocumentSyncStatus]:
+    all_docs_for_cc_pair = get_documents_for_cc_pair(
+        db_session=db_session,
+        cc_pair_id=cc_pair_id,
+    )
+    return [DocumentSyncStatus.from_model(doc) for doc in all_docs_for_cc_pair]
 
 
 @router.put("/connector/{connector_id}/credential/{credential_id}")

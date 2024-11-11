@@ -1,5 +1,4 @@
 import os
-import time
 from datetime import datetime
 from datetime import timezone
 from typing import Any
@@ -120,7 +119,6 @@ def test_slack_permission_sync(
     )
 
     # Run permission sync
-    before = datetime.now(timezone.utc)
     CCPairManager.sync(
         cc_pair=cc_pair,
         user_performing_action=admin_user,
@@ -128,9 +126,9 @@ def test_slack_permission_sync(
     CCPairManager.wait_for_sync(
         cc_pair=cc_pair,
         after=before,
+        number_of_updated_docs=2,
         user_performing_action=admin_user,
     )
-    time.sleep(15)
 
     # Search as admin with access to both channels
     print("\nSearching as admin user")
@@ -179,6 +177,7 @@ def test_slack_permission_sync(
 
     # ----------------------MAKE THE CHANGES--------------------------
     print("\n Removing test_user_1 from the private channel")
+    before = datetime.now(timezone.utc)
     # Remove test_user_1 from the private channel
     desired_channel_members = [admin_user]
     SlackManager.set_channel_members(
@@ -196,23 +195,13 @@ def test_slack_permission_sync(
     CCPairManager.wait_for_sync(
         cc_pair=cc_pair,
         after=before,
+        number_of_updated_docs=1,
         user_performing_action=admin_user,
     )
-    time.sleep(15)
 
     # ----------------------------VERIFY THE CHANGES---------------------------
     # Ensure test_user_1 can no longer see messages from the private channel
     # Search as test_user_1 with access to only the public channel
-    # print("\n Searching as admin user")
-    # danswer_doc_message_strings = DocumentSearchManager.search_documents(
-    #     query="favorite number",
-    #     user_performing_action=admin_user,
-    # )
-    # print(
-    #     "\n documents retrieved by admin user: ",
-    #     danswer_doc_message_strings,
-    # )
-    # print("\nSearching as test_user_1 after being removed from private channel")
 
     danswer_doc_message_strings = DocumentSearchManager.search_documents(
         query="favorite number",
