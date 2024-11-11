@@ -25,6 +25,7 @@ from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
 from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorDocPermSync
+from danswer.redis.redis_connector_ext_group_sync import RedisConnectorExternalGroupSync
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_document_set import RedisDocumentSet
 from danswer.redis.redis_pool import get_redis_client
@@ -141,6 +142,14 @@ def on_task_postrun(
         cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
         if cc_pair_id is not None:
             RedisConnectorDocPermSync.remove_from_taskset(int(cc_pair_id), task_id, r)
+        return
+
+    if task_id.startswith(RedisConnectorExternalGroupSync.SUBTASK_PREFIX):
+        cc_pair_id = RedisConnector.get_id_from_task_id(task_id)
+        if cc_pair_id is not None:
+            RedisConnectorExternalGroupSync.remove_from_taskset(
+                int(cc_pair_id), task_id, r
+            )
         return
 
 

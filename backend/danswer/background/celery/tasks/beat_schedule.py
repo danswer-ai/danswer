@@ -47,6 +47,12 @@ tasks_to_schedule = [
         "schedule": timedelta(seconds=10),
         "options": {"priority": DanswerCeleryPriority.HIGH},
     },
+    {
+        "name": "check-for-external-group-sync",
+        "task": "check_for_external_group_sync",
+        "schedule": timedelta(seconds=10),
+        "options": {"priority": DanswerCeleryPriority.HIGH},
+    },
 ]
 
 

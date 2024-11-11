@@ -6,16 +6,6 @@ from danswer.background.celery.tasks.beat_schedule import (
 )
 
 ee_tasks_to_schedule = [
-    # {
-    #     "name": "sync-external-doc-permissions",
-    #     "task": "check_for_doc_permissions_sync",
-    #     "schedule": timedelta(seconds=30),  # TODO: optimize this
-    # },
-    # {
-    #     "name": "sync-external-group-permissions",
-    #     "task": "check_sync_external_group_permissions_task",
-    #     "schedule": timedelta(seconds=60),  # TODO: optimize this
-    # },
     {
         "name": "autogenerate_usage_report",
         "task": "autogenerate_usage_report_task",

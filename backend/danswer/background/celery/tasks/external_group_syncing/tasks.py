@@ -9,38 +9,32 @@ from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
 
-from danswer.access.models import DocExternalAccess
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.configs.app_configs import JOB_TIMEOUT
-from danswer.configs.constants import CELERY_PERMISSIONS_SYNC_LOCK_TIMEOUT
+from danswer.configs.constants import CELERY_EXTERNAL_GROUP_SYNC_LOCK_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DANSWER_REDIS_FUNCTION_LOCK_PREFIX
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.configs.constants import DanswerRedisLocks
-from danswer.configs.constants import DocumentSource
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.users import batch_add_non_web_user_if_not_exists
 from danswer.redis.redis_connector import RedisConnector
-from danswer.redis.redis_connector_doc_perm_sync import (
-    RedisConnectorDocPermSyncFenceData,
-)
 from danswer.redis.redis_pool import get_redis_client
-from danswer.utils.logger import external_doc_permissions_ctx
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.connector_credential_pair import get_all_auto_sync_cc_pairs
-from ee.danswer.db.document import upsert_document_external_perms
-from ee.danswer.external_permissions.sync_params import DOC_PERMISSION_SYNC_PERIODS
-from ee.danswer.external_permissions.sync_params import DOC_PERMISSIONS_FUNC_MAP
+from ee.danswer.db.external_perm import ExternalUserGroup
+from ee.danswer.db.external_perm import replace_user__ext_group_for_cc_pair
+from ee.danswer.external_permissions.sync_params import EXTERNAL_GROUP_SYNC_PERIOD
+from ee.danswer.external_permissions.sync_params import GROUP_PERMISSIONS_FUNC_MAP
 
 logger = setup_logger()
 
 
-DOCUMENT_PERMISSIONS_UPDATE_MAX_RETRIES = 3
+EXTERNAL_GROUPS_UPDATE_MAX_RETRIES = 3
 
 
 # 5 seconds more than RetryDocumentIndex STOP_AFTER+MAX_WAIT
@@ -48,8 +42,8 @@ LIGHT_SOFT_TIME_LIMIT = 105
 LIGHT_TIME_LIMIT = LIGHT_SOFT_TIME_LIMIT + 15
 
 
-def _is_external_doc_permissions_sync_due(cc_pair: ConnectorCredentialPair) -> bool:
-    """Returns boolean indicating if external doc permissions sync is due."""
+def _is_external_group_sync_due(cc_pair: ConnectorCredentialPair) -> bool:
+    """Returns boolean indicating if external group sync is due."""
 
     if cc_pair.access_type != AccessType.SYNC:
         return False
@@ -59,18 +53,18 @@ def _is_external_doc_permissions_sync_due(cc_pair: ConnectorCredentialPair) -> b
         return False
 
     # If the last sync is None, it has never been run so we run the sync
-    last_perm_sync = cc_pair.last_time_perm_sync
-    if last_perm_sync is None:
+    last_ext_group_sync = cc_pair.last_time_external_group_sync
+    if last_ext_group_sync is None:
         return True
 
-    source_sync_period = DOC_PERMISSION_SYNC_PERIODS.get(cc_pair.connector.source)
+    source_sync_period = EXTERNAL_GROUP_SYNC_PERIOD
 
     # If RESTRICTED_FETCH_PERIOD[source] is None, we always run the sync.
     if not source_sync_period:
         return True
 
     # If the last sync is greater than the full fetch period, we run the sync
-    next_sync = last_perm_sync + timedelta(seconds=source_sync_period)
+    next_sync = last_ext_group_sync + timedelta(seconds=source_sync_period)
     if datetime.now(timezone.utc) >= next_sync:
         return True
 
@@ -78,15 +72,15 @@ def _is_external_doc_permissions_sync_due(cc_pair: ConnectorCredentialPair) -> b
 
 
 @shared_task(
-    name="check_for_doc_permissions_sync",
+    name="check_for_external_group_sync",
     soft_time_limit=JOB_TIMEOUT,
     bind=True,
 )
-def check_for_doc_permissions_sync(self: Task, *, tenant_id: str | None) -> None:
+def check_for_external_group_sync(self: Task, *, tenant_id: str | None) -> None:
     r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat = r.lock(
-        DanswerRedisLocks.CHECK_CONNECTOR_DOC_PERMISSIONS_SYNC_BEAT_LOCK,
+        DanswerRedisLocks.CHECK_CONNECTOR_EXTERNAL_GROUP_SYNC_BEAT_LOCK,
         timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
     )
 
@@ -101,7 +95,7 @@ def check_for_doc_permissions_sync(self: Task, *, tenant_id: str | None) -> None
 
         for cc_pair in cc_pairs:
             with get_session_with_tenant(tenant_id) as db_session:
-                if not _is_external_doc_permissions_sync_due(cc_pair):
+                if not _is_external_group_sync_due(cc_pair):
                     continue
 
                 tasks_created = try_creating_permissions_sync_task(
@@ -135,7 +129,7 @@ def try_creating_permissions_sync_task(
     LOCK_TIMEOUT = 30
 
     lock = r.lock(
-        DANSWER_REDIS_FUNCTION_LOCK_PREFIX + "try_generate_permissions_sync_tasks",
+        DANSWER_REDIS_FUNCTION_LOCK_PREFIX + "try_generate_external_group_sync_tasks",
         timeout=LOCK_TIMEOUT,
     )
 
@@ -144,7 +138,7 @@ def try_creating_permissions_sync_task(
         return None
 
     try:
-        if redis_connector.permissions.fenced:
+        if redis_connector.external_group_sync.fenced:
             return None
 
         if redis_connector.delete.fenced:
@@ -156,30 +150,31 @@ def try_creating_permissions_sync_task(
         if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
             return None
 
-        redis_connector.permissions.generator_clear()
-        redis_connector.permissions.taskset_clear()
+        redis_connector.external_group_sync.generator_clear()
+        redis_connector.external_group_sync.taskset_clear()
 
-        custom_task_id = f"{redis_connector.permissions.generator_task_key}_{uuid4()}"
+        custom_task_id = (
+            f"{redis_connector.external_group_sync.generator_task_key}_{uuid4()}"
+        )
 
         app.send_task(
-            "connector_permission_sync_generator_task",
+            "connector_external_group_sync_generator_task",
             kwargs=dict(
                 cc_pair_id=cc_pair.id,
                 tenant_id=tenant_id,
             ),
-            queue=DanswerCeleryQueues.CONNECTOR_DOC_PERMISSIONS_SYNC,
+            queue=DanswerCeleryQueues.CONNECTOR_EXTERNAL_GROUP_SYNC,
             task_id=custom_task_id,
             priority=DanswerCeleryPriority.HIGH,
         )
 
         # set a basic fence to start
-        payload = RedisConnectorDocPermSyncFenceData(
-            started=None,
-        )
+        redis_connector.external_group_sync.set_fence(True)
 
-        redis_connector.permissions.set_fence(payload)
     except Exception:
-        task_logger.exception(f"Unexpected exception: cc_pair={cc_pair.id}")
+        task_logger.exception(
+            f"Unexpected exception while trying to create external group sync task: cc_pair={cc_pair.id}"
+        )
         return None
     finally:
         if lock.owned():
@@ -189,14 +184,14 @@ def try_creating_permissions_sync_task(
 
 
 @shared_task(
-    name="connector_permission_sync_generator_task",
+    name="connector_external_group_sync_generator_task",
     acks_late=False,
     soft_time_limit=JOB_TIMEOUT,
     track_started=True,
     trail=False,
     bind=True,
 )
-def connector_permission_sync_generator_task(
+def connector_external_group_sync_generator_task(
     self: Task,
     cc_pair_id: int,
     tenant_id: str | None,
@@ -206,30 +201,29 @@ def connector_permission_sync_generator_task(
     This task assumes that the task has already been properly fenced
     """
 
-    external_doc_permissions_ctx_dict = external_doc_permissions_ctx.get()
-    external_doc_permissions_ctx_dict["cc_pair_id"] = cc_pair_id
-    external_doc_permissions_ctx_dict["request_id"] = self.request.id
-    external_doc_permissions_ctx.set(external_doc_permissions_ctx_dict)
-
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
 
     r = get_redis_client(tenant_id=tenant_id)
 
     lock = r.lock(
-        DanswerRedisLocks.CONNECTOR_DOC_PERMISSIONS_SYNC_LOCK_PREFIX
+        DanswerRedisLocks.CONNECTOR_EXTERNAL_GROUP_SYNC_LOCK_PREFIX
         + f"_{redis_connector.id}",
-        timeout=CELERY_PERMISSIONS_SYNC_LOCK_TIMEOUT,
+        timeout=CELERY_EXTERNAL_GROUP_SYNC_LOCK_TIMEOUT,
     )
 
     acquired = lock.acquire(blocking=False)
     if not acquired:
         task_logger.warning(
-            f"Permission sync task already running, exiting...: cc_pair={cc_pair_id}"
+            f"External group sync task already running, exiting...: cc_pair={cc_pair_id}"
         )
         return None
 
     try:
         with get_session_with_tenant(tenant_id) as db_session:
+            # skip external group sync if already running
+            if redis_connector.external_group_sync.fenced:
+                return None
+
             cc_pair = get_connector_credential_pair_from_id(cc_pair_id, db_session)
             if cc_pair is None:
                 raise ValueError(
@@ -238,83 +232,37 @@ def connector_permission_sync_generator_task(
 
             source_type = cc_pair.connector.source
 
-            doc_sync_func = DOC_PERMISSIONS_FUNC_MAP.get(source_type)
-            if doc_sync_func is None:
-                raise ValueError(f"No doc sync func found for {source_type}")
+            ext_group_sync_func = GROUP_PERMISSIONS_FUNC_MAP.get(source_type)
+            if ext_group_sync_func is None:
+                raise ValueError(f"No external group sync func found for {source_type}")
 
             logger.info(f"Syncing docs for {source_type}")
 
-            payload = RedisConnectorDocPermSyncFenceData(
-                started=datetime.now(timezone.utc),
-            )
-            redis_connector.permissions.set_fence(payload)
+            external_user_groups: list[ExternalUserGroup] = ext_group_sync_func(cc_pair)
 
-            document_external_accesses: list[DocExternalAccess] = doc_sync_func(cc_pair)
-
-            task_logger.info(
-                f"RedisConnector.permissions.generate_tasks starting. cc_pair={cc_pair_id}"
-            )
-            tasks_generated = redis_connector.permissions.generate_tasks(
-                self.app, lock, document_external_accesses, source_type
-            )
-            if tasks_generated is None:
-                return None
-
-            task_logger.info(
-                f"RedisConnector.permissions.generate_tasks finished. "
-                f"cc_pair={cc_pair_id} tasks_generated={tasks_generated}"
+            logger.info(
+                f"Syncing {len(external_user_groups)} external user groups for {source_type}"
             )
 
-            redis_connector.permissions.generator_complete = tasks_generated
+            replace_user__ext_group_for_cc_pair(
+                db_session=db_session,
+                cc_pair_id=cc_pair.id,
+                group_defs=external_user_groups,
+                source=cc_pair.connector.source,
+            )
+            logger.info(
+                f"Synced {len(external_user_groups)} external user groups for {source_type}"
+            )
+
+            redis_connector.external_group_sync.generator_complete = True
 
     except Exception as e:
         task_logger.exception(f"Failed to run permission sync: cc_pair={cc_pair_id} ")
 
-        redis_connector.permissions.generator_clear()
-        redis_connector.permissions.taskset_clear()
-        redis_connector.permissions.set_fence(None)
+        redis_connector.external_group_sync.generator_clear()
+        redis_connector.external_group_sync.taskset_clear()
+        redis_connector.external_group_sync.set_fence(False)
         raise e
     finally:
         if lock.owned():
             lock.release()
-
-
-@shared_task(
-    name="update_external_document_permissions_task",
-    soft_time_limit=LIGHT_SOFT_TIME_LIMIT,
-    time_limit=LIGHT_TIME_LIMIT,
-    max_retries=DOCUMENT_PERMISSIONS_UPDATE_MAX_RETRIES,
-    bind=True,
-)
-def update_external_document_permissions_task(
-    self: Task,
-    tenant_id: str | None,
-    serialized_doc_external_access: dict,
-    source_string: str,
-) -> bool:
-    document_external_access = DocExternalAccess.from_dict(
-        serialized_doc_external_access
-    )
-    doc_id = document_external_access.doc_id
-    external_access = document_external_access.external_access
-    try:
-        with get_session_with_tenant(tenant_id) as db_session:
-            # Then we build the update requests to update vespa
-            batch_add_non_web_user_if_not_exists(
-                db_session=db_session,
-                emails=list(external_access.external_user_emails),
-            )
-            upsert_document_external_perms(
-                db_session=db_session,
-                doc_id=doc_id,
-                external_access=external_access,
-                source_type=DocumentSource(source_string),
-            )
-
-            logger.debug(
-                f"Successfully synced postgres document permissions for {doc_id}"
-            )
-        return True
-    except Exception:
-        logger.exception("Error Syncing Document Permissions")
-        return False

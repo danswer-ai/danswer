@@ -92,5 +92,6 @@ celery_app.autodiscover_tasks(
     [
         "danswer.background.celery.tasks.pruning",
         "danswer.background.celery.tasks.doc_permission_syncing",
+        "danswer.background.celery.tasks.external_group_syncing",
     ]
 )

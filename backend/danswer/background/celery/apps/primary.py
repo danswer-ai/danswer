@@ -21,6 +21,7 @@ from danswer.db.engine import SqlEngine
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
 from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorDocPermSync
+from danswer.redis.redis_connector_ext_group_sync import RedisConnectorExternalGroupSync
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_connector_stop import RedisConnectorStop
@@ -137,6 +138,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
 
     RedisConnectorDocPermSync.reset_all(r)
 
+    RedisConnectorExternalGroupSync.reset_all(r)
+
 
 @worker_ready.connect
 def on_worker_ready(sender: Any, **kwargs: Any) -> None:
@@ -237,6 +240,7 @@ celery_app.autodiscover_tasks(
         "danswer.background.celery.tasks.indexing",
         "danswer.background.celery.tasks.periodic",
         "danswer.background.celery.tasks.doc_permission_syncing",
+        "danswer.background.celery.tasks.external_group_syncing",
         "danswer.background.celery.tasks.pruning",
         "danswer.background.celery.tasks.shared",
         "danswer.background.celery.tasks.vespa",

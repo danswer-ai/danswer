@@ -55,6 +55,8 @@ DOC_PERMISSION_SYNC_PERIODS: dict[DocumentSource, int] = {
     DocumentSource.SLACK: 5 * 60,
 }
 
+EXTERNAL_GROUP_SYNC_PERIOD: int = 30  # 30 seconds
+
 
 def check_if_valid_sync_source(source_type: DocumentSource) -> bool:
     return source_type in DOC_PERMISSIONS_FUNC_MAP
