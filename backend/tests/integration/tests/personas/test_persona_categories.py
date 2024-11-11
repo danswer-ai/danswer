@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 import pytest
+from requests.exceptions import HTTPError
 
 from tests.integration.common_utils.managers.persona import (
     PersonaCategoryManager,
@@ -38,7 +39,7 @@ def test_persona_category_management(reset: None) -> None:
         name=f"Updated {persona_category.name}",
         description="An updated description",
     )
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(HTTPError) as exc_info:
         PersonaCategoryManager.update(
             category=updated_persona_category,
             user_performing_action=regular_user,
