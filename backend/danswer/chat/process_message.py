@@ -60,6 +60,7 @@ from danswer.search.enums import OptionalSearchSetting
 from danswer.search.enums import QueryFlow
 from danswer.search.enums import SearchType
 from danswer.search.models import InferenceSection
+from danswer.search.models import RetrievalDetails
 from danswer.search.retrieval.search_runner import inference_sections_from_ids
 from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.search.utils import dedupe_documents
@@ -578,7 +579,7 @@ def stream_chat_message_objects(
             search_tool_config=SearchToolConfig(
                 answer_style_config=answer_style_config,
                 document_pruning_config=document_pruning_config,
-                retrieval_options=retrieval_options,
+                retrieval_options=retrieval_options or RetrievalDetails(),
                 selected_sections=selected_sections,
                 chunks_above=new_msg_req.chunks_above,
                 chunks_below=new_msg_req.chunks_below,

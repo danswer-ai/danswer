@@ -82,7 +82,7 @@ def analyze_topics(topics: list[str]) -> None:
     assistant = client.beta.assistants.create(
         name=ASSISTANT_NAME,
         instructions=SYSTEM_PROMPT,
-        tools=[{"type": "SearchTool"}],
+        tools=[{"type": "SearchTool"}],  # type: ignore
         model="gpt-4o",
     )
 
@@ -99,7 +99,7 @@ def analyze_topics(topics: list[str]) -> None:
             thread_id=thread.id,
             assistant_id=assistant.id,
             tools=[
-                {
+                {  # type: ignore
                     "type": "SearchTool",
                     "retrieval_details": {
                         "run_search": "always",

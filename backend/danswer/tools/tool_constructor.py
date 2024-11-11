@@ -14,7 +14,7 @@ from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.models import Persona
 from danswer.db.models import User
-from danswer.file_store.models import FileDescriptor
+from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import CitationConfig
 from danswer.llm.answering.models import DocumentPruningConfig
@@ -46,7 +46,7 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-def _get_image_generation_config(llm: LLM, db_session: Session) -> LLMConfig | None:
+def _get_image_generation_config(llm: LLM, db_session: Session) -> LLMConfig:
     """Helper function to get image generation LLM config based on available providers"""
     if llm and llm.config.api_key and llm.config.model_provider == "openai":
         return LLMConfig(
@@ -106,7 +106,7 @@ class SearchToolConfig(BaseModel):
     chunks_above: int = 0
     chunks_below: int = 0
     full_doc: bool = False
-    latest_query_files: list[FileDescriptor] | None = None
+    latest_query_files: list[InMemoryChatFile] | None = None
 
 
 class InternetSearchToolConfig(BaseModel):
