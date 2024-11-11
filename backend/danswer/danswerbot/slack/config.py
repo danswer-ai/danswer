@@ -55,10 +55,10 @@ def validate_channel_names(
 # Scaling configurations for multi-tenant Slack bot handling
 TENANT_LOCK_EXPIRATION = 1800  # How long a pod can hold exclusive access to a tenant before other pods can acquire it
 TENANT_HEARTBEAT_INTERVAL = (
-    30  # How often pods send heartbeats to indicate they are still processing a tenant
+    15  # How often pods send heartbeats to indicate they are still processing a tenant
 )
 TENANT_HEARTBEAT_EXPIRATION = (
-    60  # How long before a tenant's heartbeat expires, allowing other pods to take over
+    30  # How long before a tenant's heartbeat expires, allowing other pods to take over
 )
 TENANT_ACQUISITION_INTERVAL = 60  # How often pods attempt to acquire unprocessed tenants and checks for new tokens
 
