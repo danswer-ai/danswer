@@ -143,7 +143,7 @@ async def async_return_default_schema(*args: Any, **kwargs: Any) -> str:
 TENANT_ID_PREFIX = "tenant_"
 
 ALLOWED_SLACK_BOT_TENANT_IDS = os.environ.get("ALLOWED_SLACK_BOT_TENANT_IDS")
-ALLOWED_SLACK_BOT_TENANT_LIST = (
+DISALLOWED_SLACK_BOT_TENANT_LIST = (
     [tenant.strip() for tenant in ALLOWED_SLACK_BOT_TENANT_IDS.split(",")]
     if ALLOWED_SLACK_BOT_TENANT_IDS
     else None

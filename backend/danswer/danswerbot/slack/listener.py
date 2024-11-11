@@ -75,7 +75,7 @@ from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
-from shared_configs.configs import ALLOWED_SLACK_BOT_TENANT_LIST
+from shared_configs.configs import DISALLOWED_SLACK_BOT_TENANT_LIST
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
@@ -168,10 +168,10 @@ class SlackbotHandler:
 
         for tenant_id in tenant_ids:
             if (
-                ALLOWED_SLACK_BOT_TENANT_LIST is not None
-                and tenant_id not in ALLOWED_SLACK_BOT_TENANT_LIST
+                DISALLOWED_SLACK_BOT_TENANT_LIST is not None
+                and tenant_id in DISALLOWED_SLACK_BOT_TENANT_LIST
             ):
-                logger.debug(f"Tenant {tenant_id} not in allowed list, skipping")
+                logger.debug(f"Tenant {tenant_id} is in the disallowed list, skipping")
                 continue
 
             if tenant_id in self.tenant_ids:
