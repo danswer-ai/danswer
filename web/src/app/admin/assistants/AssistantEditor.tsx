@@ -136,7 +136,7 @@ export function AssistantEditor({
   ];
 
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [showPersonaCategory, setShowPersonaCategory] = useState(false);
+  const [showPersonaCategory, setShowPersonaCategory] = useState(!admin);
 
   // state to persist across formik reformatting
   const [defautIconColor, _setDeafultIconColor] = useState(
@@ -989,11 +989,13 @@ export function AssistantEditor({
                 </div>
               </div>
 
-              <AdvancedOptionsToggle
-                title="Categories"
-                showAdvancedOptions={showPersonaCategory}
-                setShowAdvancedOptions={setShowPersonaCategory}
-              />
+              {admin && (
+                <AdvancedOptionsToggle
+                  title="Categories"
+                  showAdvancedOptions={showPersonaCategory}
+                  setShowAdvancedOptions={setShowPersonaCategory}
+                />
+              )}
 
               {showPersonaCategory && (
                 <>
