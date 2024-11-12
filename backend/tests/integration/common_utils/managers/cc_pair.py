@@ -414,8 +414,9 @@ class CCPairManager:
             )
             time.sleep(5)
 
-        # TODO: remove this sleep, this shouldnt be necessary but
-        # time.sleep(5)
+        # TODO: remove this sleep,
+        # this shouldnt be necessary but something is off with the timing for the sync jobs
+        time.sleep(5)
 
         print("waiting for vespa sync")
         # wait for the vespa sync to complete once the permission sync is complete
