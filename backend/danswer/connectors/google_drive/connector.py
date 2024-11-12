@@ -192,33 +192,23 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def _update_traversed_parent_ids(self, folder_id: str) -> None:
         self._retrieved_ids.add(folder_id)
 
-    def _get_all_user_emails(self) -> list[str]:
-        # Start with primary admin email
-        user_emails = [self.primary_admin_email]
-
-        # Only fetch additional users if using service account
-        if not isinstance(self.creds, ServiceAccountCredentials):
-            return user_emails
-
+    def _get_all_user_emails(self, admins_only: bool) -> list[str]:
         admin_service = get_admin_service(
             creds=self.creds,
             user_email=self.primary_admin_email,
         )
-
-        # Get admins first since they're more likely to have access to most files
-        for is_admin in [True, False]:
-            query = "isAdmin=true" if is_admin else "isAdmin=false"
-            for user in execute_paginated_retrieval(
-                retrieval_function=admin_service.users().list,
-                list_key="users",
-                fields=USER_FIELDS,
-                domain=self.google_domain,
-                query=query,
-            ):
-                if email := user.get("primaryEmail"):
-                    if email not in user_emails:
-                        user_emails.append(email)
-        return user_emails
+        query = "isAdmin=true" if admins_only else "isAdmin=false"
+        emails = []
+        for user in execute_paginated_retrieval(
+            retrieval_function=admin_service.users().list,
+            list_key="users",
+            fields=USER_FIELDS,
+            domain=self.google_domain,
+            query=query,
+        ):
+            if email := user.get("primaryEmail"):
+                emails.append(email)
+        return emails
 
     def _get_all_drive_ids(self) -> set[str]:
         primary_drive_service = get_drive_service(
@@ -236,7 +226,14 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         return all_drive_ids
 
     def _initialize_all_class_variables(self) -> None:
-        self._all_org_emails = self._get_all_user_emails()
+        # Get all user emails
+        # Get admins first becuase they are more likely to have access to the most files
+        user_emails = [self.primary_admin_email]
+        for admins_only in [True, False]:
+            for email in self._get_all_user_emails(admins_only=admins_only):
+                if email not in user_emails:
+                    user_emails.append(email)
+        self._all_org_emails = user_emails
 
         self._all_drive_ids: set[str] = self._get_all_drive_ids()
 
