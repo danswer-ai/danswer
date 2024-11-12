@@ -213,13 +213,18 @@ class PostgresAdvisoryLocks(Enum):
 
 
 class DanswerCeleryQueues:
+    # Light queue
     VESPA_METADATA_SYNC = "vespa_metadata_sync"
+    DOC_PERMISSIONS_UPSERT = "doc_permissions_upsert"
     CONNECTOR_DELETION = "connector_deletion"
+
+    # Heavy queue
     CONNECTOR_PRUNING = "connector_pruning"
-    CONNECTOR_INDEXING = "connector_indexing"
     CONNECTOR_DOC_PERMISSIONS_SYNC = "connector_doc_permissions_sync"
     CONNECTOR_EXTERNAL_GROUP_SYNC = "connector_external_group_sync"
-    CONNECTOR_DOC_PERMISSIONS_UPSERT = "connector_doc_permissions_upsert"
+
+    # Indexing queue
+    CONNECTOR_INDEXING = "connector_indexing"
 
 
 class DanswerRedisLocks:

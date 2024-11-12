@@ -18,10 +18,10 @@ class RedisConnectorDocPermSyncFenceData(BaseModel):
 
 
 class RedisConnectorDocPermSync:
-    """Manages interactions with redis for permission sync tasks. Should only be accessed
+    """Manages interactions with redis for doc permission sync tasks. Should only be accessed
     through RedisConnector."""
 
-    PREFIX = "connectordocpermissions"
+    PREFIX = "connectordocpermissionsync"
 
     FENCE_PREFIX = f"{PREFIX}_fence"
 
@@ -153,7 +153,7 @@ class RedisConnectorDocPermSync:
                     serialized_doc_external_access=doc_perm.to_dict(),
                     source_string=source_string,
                 ),
-                queue=DanswerCeleryQueues.CONNECTOR_DOC_PERMISSIONS_UPSERT,
+                queue=DanswerCeleryQueues.DOC_PERMISSIONS_UPSERT,
                 task_id=custom_task_id,
                 priority=DanswerCeleryPriority.MEDIUM,
             )

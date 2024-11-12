@@ -53,6 +53,9 @@ def _is_external_group_sync_due(cc_pair: ConnectorCredentialPair) -> bool:
     if cc_pair.status != ConnectorCredentialPairStatus.ACTIVE:
         return False
 
+    if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
+        return False
+
     # If the last sync is None, it has never been run so we run the sync
     last_ext_group_sync = cc_pair.last_time_external_group_sync
     if last_ext_group_sync is None:
@@ -60,7 +63,7 @@ def _is_external_group_sync_due(cc_pair: ConnectorCredentialPair) -> bool:
 
     source_sync_period = EXTERNAL_GROUP_SYNC_PERIOD
 
-    # If RESTRICTED_FETCH_PERIOD[source] is None, we always run the sync.
+    # If EXTERNAL_GROUP_SYNC_PERIOD is None, we always run the sync.
     if not source_sync_period:
         return True
 
@@ -90,22 +93,22 @@ def check_for_external_group_sync(self: Task, *, tenant_id: str | None) -> None:
         if not lock_beat.acquire(blocking=False):
             return
 
-        cc_pairs: list[ConnectorCredentialPair] = []
+        cc_pair_ids_to_sync: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
             cc_pairs = get_all_auto_sync_cc_pairs(db_session)
 
-        for cc_pair in cc_pairs:
-            with get_session_with_tenant(tenant_id) as db_session:
-                if not _is_external_group_sync_due(cc_pair):
-                    continue
+            for cc_pair in cc_pairs:
+                if _is_external_group_sync_due(cc_pair):
+                    cc_pair_ids_to_sync.append(cc_pair.id)
 
-                tasks_created = try_creating_permissions_sync_task(
-                    self.app, cc_pair, r, tenant_id
-                )
-                if not tasks_created:
-                    continue
+        for cc_pair_id in cc_pair_ids_to_sync:
+            tasks_created = try_creating_permissions_sync_task(
+                self.app, cc_pair_id, r, tenant_id
+            )
+            if not tasks_created:
+                continue
 
-                task_logger.info(f"Doc permissions sync queued: cc_pair={cc_pair.id}")
+            task_logger.info(f"External group sync queued: cc_pair={cc_pair_id}")
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."
@@ -119,13 +122,13 @@ def check_for_external_group_sync(self: Task, *, tenant_id: str | None) -> None:
 
 def try_creating_permissions_sync_task(
     app: Celery,
-    cc_pair: ConnectorCredentialPair,
+    cc_pair_id: int,
     r: Redis,
     tenant_id: str | None,
 ) -> int | None:
     """Returns an int if syncing is needed. The int represents the number of sync tasks generated.
     Returns None if no syncing is required."""
-    redis_connector = RedisConnector(tenant_id, cc_pair.id)
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
 
     LOCK_TIMEOUT = 30
 
@@ -143,9 +146,6 @@ def try_creating_permissions_sync_task(
         if redis_connector.external_group_sync.fenced:
             return None
 
-        if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
-            return None
-
         redis_connector.external_group_sync.generator_clear()
         redis_connector.external_group_sync.taskset_clear()
 
@@ -154,7 +154,7 @@ def try_creating_permissions_sync_task(
         _ = app.send_task(
             "connector_external_group_sync_generator_task",
             kwargs=dict(
-                cc_pair_id=cc_pair.id,
+                cc_pair_id=cc_pair_id,
                 tenant_id=tenant_id,
             ),
             queue=DanswerCeleryQueues.CONNECTOR_EXTERNAL_GROUP_SYNC,
@@ -166,7 +166,7 @@ def try_creating_permissions_sync_task(
 
     except Exception:
         task_logger.exception(
-            f"Unexpected exception while trying to create external group sync task: cc_pair={cc_pair.id}"
+            f"Unexpected exception while trying to create external group sync task: cc_pair={cc_pair_id}"
         )
         return None
     finally:

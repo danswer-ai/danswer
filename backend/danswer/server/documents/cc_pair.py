@@ -335,11 +335,11 @@ def sync_cc_pair(
     if redis_connector.permissions.fenced:
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
-            detail="Pruning task already in progress.",
+            detail="Doc permissions sync task already in progress.",
         )
 
     logger.info(
-        f"permissions sync cc_pair: cc_pair_id={cc_pair_id} "
+        f"Doc permissions sync cc_pair={cc_pair_id} "
         f"connector_id={cc_pair.connector_id} "
         f"credential_id={cc_pair.credential_id} "
         f"{cc_pair.connector.name} connector."
@@ -350,12 +350,12 @@ def sync_cc_pair(
     if not tasks_created:
         raise HTTPException(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail="Permissions sync task creation failed.",
+            detail="Doc permissions sync task creation failed.",
         )
 
     return StatusResponse(
         success=True,
-        message="Successfully created the permissions sync task.",
+        message="Successfully created the doc permissions sync task.",
     )
 
 

@@ -154,15 +154,16 @@ def try_creating_prune_generator_task(
         return None
 
     try:
-        if redis_connector.prune.fenced:  # skip pruning if already pruning
+        # skip pruning if already pruning
+        if redis_connector.prune.fenced:
             return None
 
-        if redis_connector.delete.fenced:  # skip pruning if the cc_pair is deleting
+        # skip pruning if the cc_pair is deleting
+        if redis_connector.delete.fenced:
             return None
 
-        if (
-            redis_connector.permissions.fenced
-        ):  # skip pruning if the cc_pair is deleting
+        # skip pruning if doc permissions sync is running
+        if redis_connector.permissions.fenced:
             return None
 
         db_session.refresh(cc_pair)

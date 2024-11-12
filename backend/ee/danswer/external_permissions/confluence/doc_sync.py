@@ -160,7 +160,13 @@ def _extract_read_access_restrictions(
                     f"Email for user {user['username']} not found in Confluence"
                 )
         else:
-            logger.warning(f"User {user} does not have an email or username")
+            if user.get("email") is not None:
+                logger.warning(f"Cant find email for user {user.get('displayName')}")
+                logger.warning(
+                    "This user needs to make their email accessible in Confluence Settings"
+                )
+
+            logger.warning(f"no user email or username for {user}")
 
     # Extract the groups with read access
     read_access_group = read_access_restrictions.get("group", {})
@@ -210,17 +216,21 @@ def _fetch_all_page_restrictions_for_space(
                     external_access=restrictions,
                 )
             )
-        else:
-            space_key = slim_doc.perm_sync_data.get("space_key")
-            if space_permissions := space_permissions_by_space_key.get(space_key):
-                document_restrictions.append(
-                    DocExternalAccess(
-                        doc_id=slim_doc.id,
-                        external_access=space_permissions,
-                    )
+            # If there are restrictions, then we don't need to use the space's restrictions
+            continue
+
+        space_key = slim_doc.perm_sync_data.get("space_key")
+        if space_permissions := space_permissions_by_space_key.get(space_key):
+            # If there are no restrictions, then use the space's restrictions
+            document_restrictions.append(
+                DocExternalAccess(
+                    doc_id=slim_doc.id,
+                    external_access=space_permissions,
                 )
-            else:
-                logger.warning(f"No permissions found for document {slim_doc.id}")
+            )
+            continue
+
+        logger.warning(f"No permissions found for document {slim_doc.id}")
 
     return document_restrictions
 

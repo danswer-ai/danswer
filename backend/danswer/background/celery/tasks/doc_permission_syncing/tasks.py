@@ -30,7 +30,7 @@ from danswer.redis.redis_connector_doc_perm_sync import (
     RedisConnectorDocPermSyncFenceData,
 )
 from danswer.redis.redis_pool import get_redis_client
-from danswer.utils.logger import external_doc_permissions_ctx
+from danswer.utils.logger import doc_permission_sync_ctx
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.connector_credential_pair import get_all_auto_sync_cc_pairs
 from ee.danswer.db.document import upsert_document_external_perms
@@ -54,8 +54,11 @@ def _is_external_doc_permissions_sync_due(cc_pair: ConnectorCredentialPair) -> b
     if cc_pair.access_type != AccessType.SYNC:
         return False
 
-    # skip pruning if not active
+    # skip doc permissions sync if not active
     if cc_pair.status != ConnectorCredentialPairStatus.ACTIVE:
+        return False
+
+    if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
         return False
 
     # If the last sync is None, it has never been run so we run the sync
@@ -95,21 +98,23 @@ def check_for_doc_permissions_sync(self: Task, *, tenant_id: str | None) -> None
         if not lock_beat.acquire(blocking=False):
             return
 
-        cc_pairs: list[ConnectorCredentialPair] = []
+        # get all cc pairs that need to be synced
+        cc_pair_ids_to_sync: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
             cc_pairs = get_all_auto_sync_cc_pairs(db_session)
 
             for cc_pair in cc_pairs:
-                if not _is_external_doc_permissions_sync_due(cc_pair):
-                    continue
+                if _is_external_doc_permissions_sync_due(cc_pair):
+                    cc_pair_ids_to_sync.append(cc_pair.id)
 
-                tasks_created = try_creating_permissions_sync_task(
-                    self.app, cc_pair, r, tenant_id
-                )
-                if not tasks_created:
-                    continue
+        for cc_pair_id in cc_pair_ids_to_sync:
+            tasks_created = try_creating_permissions_sync_task(
+                self.app, cc_pair_id, r, tenant_id
+            )
+            if not tasks_created:
+                continue
 
-                task_logger.info(f"Doc permissions sync queued: cc_pair={cc_pair.id}")
+            task_logger.info(f"Doc permissions sync queued: cc_pair={cc_pair_id}")
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."
@@ -123,13 +128,13 @@ def check_for_doc_permissions_sync(self: Task, *, tenant_id: str | None) -> None
 
 def try_creating_permissions_sync_task(
     app: Celery,
-    cc_pair: ConnectorCredentialPair,
+    cc_pair_id: int,
     r: Redis,
     tenant_id: str | None,
 ) -> int | None:
     """Returns an int if syncing is needed. The int represents the number of sync tasks generated.
     Returns None if no syncing is required."""
-    redis_connector = RedisConnector(tenant_id, cc_pair.id)
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
 
     LOCK_TIMEOUT = 30
 
@@ -152,9 +157,6 @@ def try_creating_permissions_sync_task(
         if redis_connector.prune.fenced:
             return None
 
-        if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
-            return None
-
         redis_connector.permissions.generator_clear()
         redis_connector.permissions.taskset_clear()
 
@@ -163,7 +165,7 @@ def try_creating_permissions_sync_task(
         app.send_task(
             "connector_permission_sync_generator_task",
             kwargs=dict(
-                cc_pair_id=cc_pair.id,
+                cc_pair_id=cc_pair_id,
                 tenant_id=tenant_id,
             ),
             queue=DanswerCeleryQueues.CONNECTOR_DOC_PERMISSIONS_SYNC,
@@ -178,7 +180,7 @@ def try_creating_permissions_sync_task(
 
         redis_connector.permissions.set_fence(payload)
     except Exception:
-        task_logger.exception(f"Unexpected exception: cc_pair={cc_pair.id}")
+        task_logger.exception(f"Unexpected exception: cc_pair={cc_pair_id}")
         return None
     finally:
         if lock.owned():
@@ -205,10 +207,10 @@ def connector_permission_sync_generator_task(
     This task assumes that the task has already been properly fenced
     """
 
-    external_doc_permissions_ctx_dict = external_doc_permissions_ctx.get()
-    external_doc_permissions_ctx_dict["cc_pair_id"] = cc_pair_id
-    external_doc_permissions_ctx_dict["request_id"] = self.request.id
-    external_doc_permissions_ctx.set(external_doc_permissions_ctx_dict)
+    doc_permission_sync_ctx_dict = doc_permission_sync_ctx.get()
+    doc_permission_sync_ctx_dict["cc_pair_id"] = cc_pair_id
+    doc_permission_sync_ctx_dict["request_id"] = self.request.id
+    doc_permission_sync_ctx.set(doc_permission_sync_ctx_dict)
 
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
 
@@ -267,7 +269,7 @@ def connector_permission_sync_generator_task(
             redis_connector.permissions.generator_complete = tasks_generated
 
     except Exception as e:
-        task_logger.exception(f"Failed to run permission sync: cc_pair={cc_pair_id} ")
+        task_logger.exception(f"Failed to run permission sync: cc_pair={cc_pair_id}")
 
         redis_connector.permissions.generator_clear()
         redis_connector.permissions.taskset_clear()
