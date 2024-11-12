@@ -166,10 +166,9 @@ def build_confluence_document_id(
     Returns:
         str: The document id
     """
-    if is_cloud:
-        return f"{base_url}/wiki{content_url}"
-    else:
-        return f"{base_url}/wiki{content_url}"
+    if is_cloud and not base_url.endswith("/wiki"):
+        base_url += "/wiki"
+    return f"{base_url}{content_url}"
 
 
 def extract_referenced_attachment_names(page_text: str) -> list[str]:
