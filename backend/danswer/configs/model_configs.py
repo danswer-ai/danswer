@@ -121,6 +121,8 @@ if _LITELLM_PASS_THROUGH_HEADERS_RAW:
         )
 
 
+# if specified, will merge the specified JSON with the existing body of the
+# request before sending it to the LLM
 LITELLM_EXTRA_BODY: dict | None = None
 _LITELLM_EXTRA_BODY_RAW = os.environ.get("LITELLM_EXTRA_BODY")
 if _LITELLM_EXTRA_BODY_RAW:
