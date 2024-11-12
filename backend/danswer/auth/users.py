@@ -294,10 +294,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         refresh_token: Optional[str] = None,
         request: Optional[Request] = None,
         *,
-        referral_source: Optional[str] = None,
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
+        referral_source = request.state.referral_source
+
         tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
@@ -840,6 +841,7 @@ def get_oauth_router(
 
         next_url = state_data.get("next_url", "/")
         referral_source = state_data.get("referral_source", None)
+        request.state.referral_source = referral_source
 
         # Proceed to authenticate or create the user
         try:
@@ -851,7 +853,6 @@ def get_oauth_router(
                 token.get("expires_at"),
                 token.get("refresh_token"),
                 request,
-                referral_source=referral_source,
                 associate_by_email=associate_by_email,
                 is_verified_by_default=is_verified_by_default,
             )
