@@ -197,7 +197,8 @@ jobs:
             -e SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN} \
             -e TEST_WEB_HOSTNAME=test-runner \
             danswer/danswer-integration:test \
-            /app/tests/integration/tests
+            /app/tests/integration/tests \
+            /app/tests/integration/connector_job_tests
         continue-on-error: true
         id: run_tests
 

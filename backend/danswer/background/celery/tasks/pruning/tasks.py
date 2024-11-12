@@ -38,6 +38,35 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+def _is_pruning_due(cc_pair: ConnectorCredentialPair) -> bool:
+    """Returns boolean indicating if pruning is due."""
+
+    # skip pruning if no prune frequency is set
+    # pruning can still be forced via the API which will run a pruning task directly
+    if not cc_pair.connector.prune_freq:
+        return False
+
+    # skip pruning if not active
+    if cc_pair.status != ConnectorCredentialPairStatus.ACTIVE:
+        return False
+
+    # skip pruning if the next scheduled prune time hasn't been reached yet
+    last_pruned = cc_pair.last_pruned
+    if not last_pruned:
+        if not cc_pair.last_successful_index_time:
+            # if we've never indexed, we can't prune
+            return False
+
+        # if never pruned, use the last time the connector indexed successfully
+        last_pruned = cc_pair.last_successful_index_time
+
+    next_prune = last_pruned + timedelta(seconds=cc_pair.connector.prune_freq)
+    if datetime.now(timezone.utc) < next_prune:
+        return False
+
+    return True
+
+
 @shared_task(
     name="check_for_pruning",
     soft_time_limit=JOB_TIMEOUT,
@@ -69,7 +98,7 @@ def check_for_pruning(self: Task, *, tenant_id: str | None) -> None:
                 if not cc_pair:
                     continue
 
-                if not is_pruning_due(cc_pair, db_session, r):
+                if not _is_pruning_due(cc_pair):
                     continue
 
                 tasks_created = try_creating_prune_generator_task(
@@ -88,47 +117,6 @@ def check_for_pruning(self: Task, *, tenant_id: str | None) -> None:
     finally:
         if lock_beat.owned():
             lock_beat.release()
-
-
-def is_pruning_due(
-    cc_pair: ConnectorCredentialPair,
-    db_session: Session,
-    r: Redis,
-) -> bool:
-    """Returns an int if pruning is triggered.
-    The int represents the number of prune tasks generated (in this case, only one
-    because the task is a long running generator task.)
-    Returns None if no pruning is triggered (due to not being needed or
-    other reasons such as simultaneous pruning restrictions.
-
-    Checks for scheduling related conditions, then delegates the rest of the checks to
-    try_creating_prune_generator_task.
-    """
-
-    # skip pruning if no prune frequency is set
-    # pruning can still be forced via the API which will run a pruning task directly
-    if not cc_pair.connector.prune_freq:
-        return False
-
-    # skip pruning if not active
-    if cc_pair.status != ConnectorCredentialPairStatus.ACTIVE:
-        return False
-
-    # skip pruning if the next scheduled prune time hasn't been reached yet
-    last_pruned = cc_pair.last_pruned
-    if not last_pruned:
-        if not cc_pair.last_successful_index_time:
-            # if we've never indexed, we can't prune
-            return False
-
-        # if never pruned, use the last time the connector indexed successfully
-        last_pruned = cc_pair.last_successful_index_time
-
-    next_prune = last_pruned + timedelta(seconds=cc_pair.connector.prune_freq)
-    if datetime.now(timezone.utc) < next_prune:
-        return False
-
-    return True
 
 
 def try_creating_prune_generator_task(
@@ -166,10 +154,16 @@ def try_creating_prune_generator_task(
         return None
 
     try:
-        if redis_connector.prune.fenced:  # skip pruning if already pruning
+        # skip pruning if already pruning
+        if redis_connector.prune.fenced:
             return None
 
-        if redis_connector.delete.fenced:  # skip pruning if the cc_pair is deleting
+        # skip pruning if the cc_pair is deleting
+        if redis_connector.delete.fenced:
+            return None
+
+        # skip pruning if doc permissions sync is running
+        if redis_connector.permissions.fenced:
             return None
 
         db_session.refresh(cc_pair)

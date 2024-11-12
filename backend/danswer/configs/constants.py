@@ -80,6 +80,10 @@ CELERY_INDEXING_LOCK_TIMEOUT = 60 * 60  # 60 min
 # if we can get callbacks as object bytes download, we could lower this a lot.
 CELERY_PRUNING_LOCK_TIMEOUT = 300  # 5 min
 
+CELERY_PERMISSIONS_SYNC_LOCK_TIMEOUT = 300  # 5 min
+
+CELERY_EXTERNAL_GROUP_SYNC_LOCK_TIMEOUT = 300  # 5 min
+
 DANSWER_REDIS_FUNCTION_LOCK_PREFIX = "da_function_lock:"
 
 
@@ -209,9 +213,17 @@ class PostgresAdvisoryLocks(Enum):
 
 
 class DanswerCeleryQueues:
+    # Light queue
     VESPA_METADATA_SYNC = "vespa_metadata_sync"
+    DOC_PERMISSIONS_UPSERT = "doc_permissions_upsert"
     CONNECTOR_DELETION = "connector_deletion"
+
+    # Heavy queue
     CONNECTOR_PRUNING = "connector_pruning"
+    CONNECTOR_DOC_PERMISSIONS_SYNC = "connector_doc_permissions_sync"
+    CONNECTOR_EXTERNAL_GROUP_SYNC = "connector_external_group_sync"
+
+    # Indexing queue
     CONNECTOR_INDEXING = "connector_indexing"
 
 
@@ -221,8 +233,18 @@ class DanswerRedisLocks:
     CHECK_CONNECTOR_DELETION_BEAT_LOCK = "da_lock:check_connector_deletion_beat"
     CHECK_PRUNE_BEAT_LOCK = "da_lock:check_prune_beat"
     CHECK_INDEXING_BEAT_LOCK = "da_lock:check_indexing_beat"
+    CHECK_CONNECTOR_DOC_PERMISSIONS_SYNC_BEAT_LOCK = (
+        "da_lock:check_connector_doc_permissions_sync_beat"
+    )
+    CHECK_CONNECTOR_EXTERNAL_GROUP_SYNC_BEAT_LOCK = (
+        "da_lock:check_connector_external_group_sync_beat"
+    )
     MONITOR_VESPA_SYNC_BEAT_LOCK = "da_lock:monitor_vespa_sync_beat"
 
+    CONNECTOR_DOC_PERMISSIONS_SYNC_LOCK_PREFIX = (
+        "da_lock:connector_doc_permissions_sync"
+    )
+    CONNECTOR_EXTERNAL_GROUP_SYNC_LOCK_PREFIX = "da_lock:connector_external_group_sync"
     PRUNING_LOCK_PREFIX = "da_lock:pruning"
     INDEXING_METADATA_PREFIX = "da_metadata:indexing"
 
