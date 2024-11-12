@@ -99,8 +99,7 @@ def check_for_doc_permissions_sync(self: Task, *, tenant_id: str | None) -> None
         with get_session_with_tenant(tenant_id) as db_session:
             cc_pairs = get_all_auto_sync_cc_pairs(db_session)
 
-        for cc_pair in cc_pairs:
-            with get_session_with_tenant(tenant_id) as db_session:
+            for cc_pair in cc_pairs:
                 if not _is_external_doc_permissions_sync_due(cc_pair):
                     continue
 

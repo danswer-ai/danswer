@@ -54,7 +54,7 @@ class RedisConnectorExternalGroupSync:
     def get_active_task_count(self) -> int:
         """Count of active external group syncing tasks"""
         count = 0
-        for key in self.redis.scan_iter(
+        for _ in self.redis.scan_iter(
             RedisConnectorExternalGroupSync.FENCE_PREFIX + "*"
         ):
             count += 1
@@ -83,7 +83,10 @@ class RedisConnectorExternalGroupSync:
         if fence_bytes is None:
             return None
 
-        fence_int = cast(int, fence_bytes)
+        if fence_bytes == b"None":
+            return None
+
+        fence_int = int(cast(bytes, fence_bytes).decode())
         return fence_int
 
     @generator_complete.setter

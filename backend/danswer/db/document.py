@@ -47,13 +47,21 @@ def count_documents_by_needs_sync(session: Session) -> int:
     """Get the count of all documents where:
     1. last_modified is newer than last_synced
     2. last_synced is null (meaning we've never synced)
+    AND the document has a relationship with a connector/credential pair
+
+    TODO: The documents without a relationship with a connector/credential pair
+    should be cleaned up somehow eventually.
 
     This function executes the query and returns the count of
     documents matching the criteria."""
 
     count = (
-        session.query(func.count())
+        session.query(func.count(DbDocument.id.distinct()))
         .select_from(DbDocument)
+        .join(
+            DocumentByConnectorCredentialPair,
+            DbDocument.id == DocumentByConnectorCredentialPair.id,
+        )
         .filter(
             or_(
                 DbDocument.last_modified > DbDocument.last_synced,
