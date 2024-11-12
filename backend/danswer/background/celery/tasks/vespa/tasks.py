@@ -59,9 +59,9 @@ from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
-from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorDocPermSync
+from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorPermissionSync
 from danswer.redis.redis_connector_doc_perm_sync import (
-    RedisConnectorDocPermSyncFenceData,
+    RedisConnectorPermissionSyncData,
 )
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
@@ -579,7 +579,7 @@ def monitor_ccpair_permissions_taskset(
     if remaining > 0:
         return
 
-    payload: RedisConnectorDocPermSyncFenceData | None = (
+    payload: RedisConnectorPermissionSyncData | None = (
         redis_connector.permissions.payload
     )
     start_time: datetime | None = payload.started if payload else None
@@ -794,7 +794,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                 monitor_ccpair_indexing_taskset(tenant_id, key_bytes, r, db_session)
 
         lock_beat.reacquire()
-        for key_bytes in r.scan_iter(RedisConnectorDocPermSync.FENCE_PREFIX + "*"):
+        for key_bytes in r.scan_iter(RedisConnectorPermissionSync.FENCE_PREFIX + "*"):
             lock_beat.reacquire()
             with get_session_with_tenant(tenant_id) as db_session:
                 monitor_ccpair_permissions_taskset(tenant_id, key_bytes, r, db_session)

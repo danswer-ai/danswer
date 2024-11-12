@@ -27,7 +27,7 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_non_web_user_if_not_exists
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_doc_perm_sync import (
-    RedisConnectorDocPermSyncFenceData,
+    RedisConnectorPermissionSyncData,
 )
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import doc_permission_sync_ctx
@@ -174,7 +174,7 @@ def try_creating_permissions_sync_task(
         )
 
         # set a basic fence to start
-        payload = RedisConnectorDocPermSyncFenceData(
+        payload = RedisConnectorPermissionSyncData(
             started=None,
         )
 
@@ -245,7 +245,7 @@ def connector_permission_sync_generator_task(
 
             logger.info(f"Syncing docs for {source_type}")
 
-            payload = RedisConnectorDocPermSyncFenceData(
+            payload = RedisConnectorPermissionSyncData(
                 started=datetime.now(timezone.utc),
             )
             redis_connector.permissions.set_fence(payload)

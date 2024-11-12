@@ -13,11 +13,11 @@ from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
 
 
-class RedisConnectorDocPermSyncFenceData(BaseModel):
+class RedisConnectorPermissionSyncData(BaseModel):
     started: datetime | None
 
 
-class RedisConnectorDocPermSync:
+class RedisConnectorPermissionSync:
     """Manages interactions with redis for doc permission sync tasks. Should only be accessed
     through RedisConnector."""
 
@@ -65,7 +65,7 @@ class RedisConnectorDocPermSync:
     def get_active_task_count(self) -> int:
         """Count of active permission sync tasks"""
         count = 0
-        for _ in self.redis.scan_iter(RedisConnectorDocPermSync.FENCE_PREFIX + "*"):
+        for _ in self.redis.scan_iter(RedisConnectorPermissionSync.FENCE_PREFIX + "*"):
             count += 1
         return count
 
@@ -77,14 +77,14 @@ class RedisConnectorDocPermSync:
         return False
 
     @property
-    def payload(self) -> RedisConnectorDocPermSyncFenceData | None:
+    def payload(self) -> RedisConnectorPermissionSyncData | None:
         # read related data and evaluate/print task progress
         fence_bytes = cast(bytes, self.redis.get(self.fence_key))
         if fence_bytes is None:
             return None
 
         fence_str = fence_bytes.decode("utf-8")
-        payload = RedisConnectorDocPermSyncFenceData.model_validate_json(
+        payload = RedisConnectorPermissionSyncData.model_validate_json(
             cast(str, fence_str)
         )
 
@@ -92,7 +92,7 @@ class RedisConnectorDocPermSync:
 
     def set_fence(
         self,
-        payload: RedisConnectorDocPermSyncFenceData | None,
+        payload: RedisConnectorPermissionSyncData | None,
     ) -> None:
         if not payload:
             self.redis.delete(self.fence_key)
@@ -163,25 +163,25 @@ class RedisConnectorDocPermSync:
 
     @staticmethod
     def remove_from_taskset(id: int, task_id: str, r: redis.Redis) -> None:
-        taskset_key = f"{RedisConnectorDocPermSync.TASKSET_PREFIX}_{id}"
+        taskset_key = f"{RedisConnectorPermissionSync.TASKSET_PREFIX}_{id}"
         r.srem(taskset_key, task_id)
         return
 
     @staticmethod
     def reset_all(r: redis.Redis) -> None:
         """Deletes all redis values for all connectors"""
-        for key in r.scan_iter(RedisConnectorDocPermSync.TASKSET_PREFIX + "*"):
+        for key in r.scan_iter(RedisConnectorPermissionSync.TASKSET_PREFIX + "*"):
             r.delete(key)
 
         for key in r.scan_iter(
-            RedisConnectorDocPermSync.GENERATOR_COMPLETE_PREFIX + "*"
+            RedisConnectorPermissionSync.GENERATOR_COMPLETE_PREFIX + "*"
         ):
             r.delete(key)
 
         for key in r.scan_iter(
-            RedisConnectorDocPermSync.GENERATOR_PROGRESS_PREFIX + "*"
+            RedisConnectorPermissionSync.GENERATOR_PROGRESS_PREFIX + "*"
         ):
             r.delete(key)
 
-        for key in r.scan_iter(RedisConnectorDocPermSync.FENCE_PREFIX + "*"):
+        for key in r.scan_iter(RedisConnectorPermissionSync.FENCE_PREFIX + "*"):
             r.delete(key)

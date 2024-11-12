@@ -345,7 +345,7 @@ def sync_cc_pair(
         f"{cc_pair.connector.name} connector."
     )
     tasks_created = try_creating_permissions_sync_task(
-        primary_app, cc_pair, r, CURRENT_TENANT_ID_CONTEXTVAR.get()
+        primary_app, cc_pair_id, r, CURRENT_TENANT_ID_CONTEXTVAR.get()
     )
     if not tasks_created:
         raise HTTPException(
