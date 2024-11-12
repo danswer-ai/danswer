@@ -56,6 +56,11 @@ def _is_external_group_sync_due(cc_pair: ConnectorCredentialPair) -> bool:
     if cc_pair.status == ConnectorCredentialPairStatus.DELETING:
         return False
 
+    # If there is not group sync function for the connector, we don't run the sync
+    # This is fine because all sources dont necessarily have a concept of groups
+    if not GROUP_PERMISSIONS_FUNC_MAP.get(cc_pair.connector.source):
+        return False
+
     # If the last sync is None, it has never been run so we run the sync
     last_ext_group_sync = cc_pair.last_time_external_group_sync
     if last_ext_group_sync is None:
