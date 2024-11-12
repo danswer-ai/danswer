@@ -228,7 +228,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        referral_source = request.cookies.get("referral_source", None)
+        referral_source = None
+        if request is not None:
+            referral_source = request.cookies.get("referral_source", None)
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
@@ -297,7 +299,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
-        referral_source = request.state.referral_source
+        referral_source = None
+        if request:
+            referral_source = getattr(request.state, "referral_source", None)
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
@@ -841,6 +845,7 @@ def get_oauth_router(
 
         next_url = state_data.get("next_url", "/")
         referral_source = state_data.get("referral_source", None)
+
         request.state.referral_source = referral_source
 
         # Proceed to authenticate or create the user
