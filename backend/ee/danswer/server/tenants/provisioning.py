@@ -41,7 +41,9 @@ from shared_configs.enums import EmbeddingProvider
 logger = logging.getLogger(__name__)
 
 
-async def get_or_create_tenant_id(email: str) -> str:
+async def get_or_create_tenant_id(
+    email: str, referral_source: str | None = None
+) -> str:
     """Get existing tenant ID for an email or create a new tenant if none exists."""
     if not MULTI_TENANT:
         return POSTGRES_DEFAULT_SCHEMA
@@ -51,7 +53,7 @@ async def get_or_create_tenant_id(email: str) -> str:
     except exceptions.UserNotExists:
         # If tenant does not exist and in Multi tenant mode, provision a new tenant
         try:
-            tenant_id = await create_tenant(email)
+            tenant_id = await create_tenant(email, referral_source)
         except Exception as e:
             logger.error(f"Tenant provisioning failed: {e}")
             raise HTTPException(status_code=500, detail="Failed to provision tenant.")
@@ -64,13 +66,13 @@ async def get_or_create_tenant_id(email: str) -> str:
     return tenant_id
 
 
-async def create_tenant(email: str) -> str:
+async def create_tenant(email: str, referral_source: str | None = None) -> str:
     tenant_id = TENANT_ID_PREFIX + str(uuid.uuid4())
     try:
         # Provision tenant on data plane
         await provision_tenant(tenant_id, email)
         # Notify control plane
-        await notify_control_plane(tenant_id, email)
+        await notify_control_plane(tenant_id, email, referral_source)
     except Exception as e:
         logger.error(f"Tenant provisioning failed: {e}")
         await rollback_tenant_provisioning(tenant_id)
@@ -117,14 +119,18 @@ async def provision_tenant(tenant_id: str, email: str) -> None:
             CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
 
-async def notify_control_plane(tenant_id: str, email: str) -> None:
+async def notify_control_plane(
+    tenant_id: str, email: str, referral_source: str | None = None
+) -> None:
     logger.info("Fetching billing information")
     token = generate_data_plane_token()
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
-    payload = TenantCreationPayload(tenant_id=tenant_id, email=email)
+    payload = TenantCreationPayload(
+        tenant_id=tenant_id, email=email, referral_source=referral_source
+    )
 
     async with aiohttp.ClientSession() as session:
         async with session.post(
