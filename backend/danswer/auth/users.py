@@ -655,7 +655,7 @@ async def current_user_with_expired_token(
 async def current_limited_user(
     user: User | None = Depends(optional_user),
 ) -> User | None:
-    return double_check_user(user)
+    return await double_check_user(user)
 
 
 async def current_user(
