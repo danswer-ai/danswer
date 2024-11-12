@@ -98,9 +98,13 @@ def get_all_documents_needing_vespa_sync_for_cc_pair(
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id=cc_pair_id, db_session=db_session
     )
+    if not cc_pair:
+        raise ValueError(f"No CC pair found with ID: {cc_pair_id}")
+
     stmt = construct_document_select_for_connector_credential_pair_by_needs_sync(
         cc_pair.connector_id, cc_pair.credential_id
     )
+
     return list(db_session.scalars(stmt).all())
 
 
@@ -124,6 +128,8 @@ def get_documents_for_cc_pair(
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id=cc_pair_id, db_session=db_session
     )
+    if not cc_pair:
+        raise ValueError(f"No CC pair found with ID: {cc_pair_id}")
     stmt = construct_document_select_for_connector_credential_pair(
         connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
     )

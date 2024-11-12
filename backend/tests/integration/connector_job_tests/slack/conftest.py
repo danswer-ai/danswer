@@ -5,11 +5,10 @@ from typing import Any
 import pytest
 
 from tests.integration.connector_job_tests.slack.slack_api_utils import SlackManager
-from tests.load_env_vars import load_env_vars
 
+# from tests.load_env_vars import load_env_vars
 
-# Load environment variables at the module level
-load_env_vars()
+# load_env_vars()
 
 
 @pytest.fixture()

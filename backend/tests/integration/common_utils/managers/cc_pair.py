@@ -426,7 +426,9 @@ class CCPairManager:
             synced_docs = 0
             for doc_sync_status in doc_sync_statuses:
                 if (
-                    doc_sync_status.last_synced >= doc_sync_status.last_modified
+                    doc_sync_status.last_synced is not None
+                    and doc_sync_status.last_modified is not None
+                    and doc_sync_status.last_synced >= doc_sync_status.last_modified
                     and doc_sync_status.last_synced >= after
                     and doc_sync_status.last_modified >= after
                 ):
