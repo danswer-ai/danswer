@@ -47,8 +47,7 @@ const ReferralSourceSelector: React.FC<ReferralSourceSelectorProps> = ({
     <div className="w-full max-w-sm gap-y-2 flex flex-col mx-auto">
       <Label className="text-text-950" small={false}>
         <>
-          How did you hear about us?{" "}
-          <span className=" text-sm italic">(optional)</span>
+          How did you hear about us?
         </>
       </Label>
       <Select value={referralSource} onValueChange={handleChange}>
