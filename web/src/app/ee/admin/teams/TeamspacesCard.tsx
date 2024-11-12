@@ -21,16 +21,6 @@ import Image from "next/image";
 import "../../../../components/loading.css";
 import { buildImgUrl } from "@/app/chat/files/images/utils";
 
-interface TeamspaceWithGradient extends Teamspace {
-  gradient?: string;
-}
-
-interface TeamspacesCardProps {
-  teamspace: TeamspaceWithGradient;
-  refresh: () => void;
-  onClick: (teamspaceId: number) => void;
-}
-
 const DeleteArchiveModal = ({
   trigger,
   onClose,
@@ -64,6 +54,16 @@ const DeleteArchiveModal = ({
     </CustomModal>
   );
 };
+
+interface TeamspaceWithGradient extends Teamspace {
+  gradient?: string;
+}
+
+interface TeamspacesCardProps {
+  teamspace: TeamspaceWithGradient;
+  refresh: () => void;
+  onClick: (teamspaceId: number) => void;
+}
 
 export const TeamspacesCard = ({
   teamspace,

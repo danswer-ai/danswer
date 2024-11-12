@@ -68,10 +68,15 @@ class MinimalWorkspaceSnapshot(BaseModel):
     workspace_name: Optional[str] = None
 
 
+class MinimalTeamspaceSnapshotName(BaseModel):
+    id: int
+    name: Optional[str] = None
+
+
 class MinimalTeamspaceSnapshot(BaseModel):
     id: int
     name: Optional[str] = None
-    workspace: Optional[list[MinimalWorkspaceSnapshot]] = []
+    workspace: Optional[list[MinimalWorkspaceSnapshot]] = None
 
 
 # TODO add aditional teamspace info to include in the response

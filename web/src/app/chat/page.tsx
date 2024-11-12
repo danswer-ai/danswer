@@ -8,6 +8,7 @@ import { NoCompleteSourcesModal } from "@/components/initialSetup/search/NoCompl
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { ChatProvider } from "@/context/ChatContext";
 import { AssistantsProvider } from "@/context/AssistantsContext";
+import { NoSourcesModal } from "@/components/initialSetup/search/NoSourcesModal";
 
 export default async function Page({
   searchParams,
@@ -46,7 +47,6 @@ export default async function Page({
     <>
       <InstantSSRAutoRefresh />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-
       {shouldDisplaySourcesIncompleteModal && (
         <NoCompleteSourcesModal ccPairs={ccPairs} />
       )}

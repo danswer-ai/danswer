@@ -28,6 +28,7 @@ import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FileSearch } from "lucide-react";
 
 function Main() {
   const settings = useContext(SettingsContext);
@@ -167,13 +168,14 @@ function Main() {
 function Page() {
   return (
     <div className="w-full h-full overflow-y-auto">
-    <div className="container mx-auto">
-      <AdminPageTitle
-        title="Search Settings"
-        icon={<EmbeddingIcon size={32} className="my-auto" />}
-      />
-      <Main />
-    </div></div>
+      <div className="container mx-auto">
+        <AdminPageTitle
+          title="Search Settings"
+          icon={<FileSearch size={32} className="my-auto" />}
+        />
+        <Main />
+      </div>
+    </div>
   );
 }
 

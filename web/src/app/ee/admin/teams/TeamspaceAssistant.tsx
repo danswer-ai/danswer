@@ -12,6 +12,7 @@ import { Assistant } from "@/app/admin/assistants/interfaces";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 
 interface TeamspaceAssistantProps {
   teamspace: Teamspace & { gradient: string };
@@ -57,13 +58,8 @@ const AssistantContent = ({
               className="border rounded-md flex items-start gap-4"
               onClick={() => onSelect && onSelect(assistant)}
             >
-              <div className="rounded-l-md flex items-center justify-center p-4 border-r">
-                <Image
-                  src={Logo}
-                  alt={assistant.name}
-                  width={150}
-                  height={150}
-                />
+              <div className="rounded-l-md h-full w-auto object-contain flex items-center justify-center p-4 border-r">
+                <AssistantIcon assistant={assistant} size="xlarge" />
               </div>
               <div className="w-full p-4">
                 <div className="flex items-center justify-between w-full">

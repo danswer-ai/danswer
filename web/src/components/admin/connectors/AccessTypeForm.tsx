@@ -33,7 +33,7 @@ export function AccessTypeForm({
       name: "Private",
       value: "private",
       description:
-        "Only users who have expliticly been given access to this connector (through the User Groups page) can access the documents pulled in by this connector",
+        "Only users who have expliticly been given access to this data source (through the Teamspace page) can access the documents pulled in by this data source",
     },
   ];
 
@@ -42,7 +42,7 @@ export function AccessTypeForm({
       name: "Public",
       value: "public",
       description:
-        "Everyone with an account on enMedD AI can access the documents pulled in by this connector",
+        "Everyone with an account on enMedD AI can access the documents pulled in by this data source",
     });
   }
 
@@ -63,7 +63,7 @@ export function AccessTypeForm({
             name="access_type"
             label="Document Access"
             options={options}
-            subtext="Control who has access to the documents indexed by this connector."
+            subtext="Control who has access to the documents indexed by this data source."
             includeDefault={false}
             defaultValue={access_type.value}
             onSelect={(selected) =>

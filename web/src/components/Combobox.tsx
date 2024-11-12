@@ -24,6 +24,7 @@ interface ComboboxProps {
   placeholder?: string;
   label?: string;
   selected?: string[];
+  isOnModal?: boolean;
 }
 
 export function Combobox({
@@ -32,6 +33,7 @@ export function Combobox({
   placeholder = "Select an item...",
   label = "Select item",
   selected = [],
+  isOnModal,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedItems, setSelectedItems] = React.useState<
@@ -73,13 +75,24 @@ export function Combobox({
     }
   };
 
+  const handleDeselectAll = () => {
+    setSelectedItems([]);
+    if (onSelect) {
+      onSelect([]);
+    }
+    setOpen(false);
+  };
+
   const filteredItems = items?.filter(
     (item) => !selectedItems.some((selected) => selected.value === item.value)
   );
 
+  const allItemsSelected = selectedItems.length === items?.length;
+  const noItemsLeft = filteredItems && filteredItems.length === 0;
+
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover modal={isOnModal} open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -104,7 +117,16 @@ export function Combobox({
             <CommandList>
               <CommandEmpty>No items found.</CommandEmpty>
               <CommandGroup>
-                <CommandItem onSelect={handleSelectAll}>Select All</CommandItem>
+                {!allItemsSelected && (
+                  <CommandItem onSelect={handleSelectAll}>
+                    Select All
+                  </CommandItem>
+                )}
+                {selectedItems.length > 0 && noItemsLeft && (
+                  <CommandItem onSelect={handleDeselectAll}>
+                    Deselect All
+                  </CommandItem>
+                )}
               </CommandGroup>
               <Separator />
               <CommandGroup>

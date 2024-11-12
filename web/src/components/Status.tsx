@@ -29,7 +29,11 @@ export function IndexAttemptStatus({
       </Badge>
     );
     if (errorMsg) {
-      badge = <CustomTooltip trigger={icon}>{errorMsg}</CustomTooltip>;
+      badge = (
+        <CustomTooltip trigger={icon} variant="destructive">
+          {errorMsg}
+        </CustomTooltip>
+      );
     } else {
       badge = icon;
     }

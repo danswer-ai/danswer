@@ -66,13 +66,13 @@ export function ShareChatSessionModal({
       title="Share link to Chat"
       trigger={
         onPopover ? (
-          <Button
+          <div
             onClick={() => setIsShareModalOpen(true)}
-             variant='ghost'
+            className="relative flex cursor-pointer select-none items-center gap-1.5 rounded-sm px-3 py-2.5 text-sm outline-none transition-colors hover:bg-brand-500 hover:text-inverted data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
           >
             <Share className="mr-2" size={16} />
             Share
-          </Button>
+          </div>
         ) : (
           <CustomTooltip
             trigger={
@@ -92,7 +92,7 @@ export function ShareChatSessionModal({
       onClose={() => setIsShareModalOpen(false)}
       open={isShareModalOpen}
     >
-      <div className="flex mt-2">
+      <div className="flex">
         {shareLink ? (
           <div>
             <p>

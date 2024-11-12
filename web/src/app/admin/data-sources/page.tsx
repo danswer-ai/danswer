@@ -8,7 +8,7 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { Input } from "@/components/ui/input";
 import { SourceCategory, SourceMetadata } from "@/lib/search/interfaces";
 import { listSourceMetadata } from "@/lib/sources";
-import { CloudUpload, Search } from "lucide-react";
+import { CloudUpload, PlugZap, Search } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -112,7 +112,7 @@ export default function Page() {
   return (
     <div className="h-full w-full overflow-y-auto">
       <div className="container">
-        <AdminPageTitle icon={<CloudUpload size={24} />} title="Data Sources" />
+        <AdminPageTitle icon={<PlugZap size={32} />} title="Data Sources" />
 
         <p>
           Connect enMedD AI to your organization&apos;s knowledge sources.

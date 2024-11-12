@@ -32,6 +32,7 @@ export const ConnectorEditor: React.FC<ConnectorEditorProps> = ({
         onSelect={handleSelect}
         placeholder="Select data sources"
         label="Select Data Sources"
+        isOnModal
       />
     </div>
   );

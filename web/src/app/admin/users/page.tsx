@@ -5,13 +5,14 @@ import { UsersIcon } from "@/components/icons/icons";
 import { AllUsers } from "./AllUsers";
 import { PendingInvites } from "./PedingInvites";
 import { Separator } from "@/components/ui/separator";
+import { UserIcon } from "lucide-react";
 
 const Page = () => {
   const [q, setQ] = useState("");
   return (
     <div className="h-full w-full overflow-y-auto">
       <div className="container">
-        <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
+        <AdminPageTitle title="Manage Users" icon={<UserIcon size={32} />} />
         <div className="pb-20 w-full">
           <AllUsers q={q} />
           <Separator className="my-10" />

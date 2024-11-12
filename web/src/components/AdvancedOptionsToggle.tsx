@@ -11,7 +11,7 @@ export function AdvancedOptionsToggle({
   setShowAdvancedOptions,
 }: AdvancedOptionsToggleProps) {
   return (
-    <div>
+    <div className="pb-4">
       <button
         onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
         className="text-sm text-text-950 hover:text-text-500 pt-2 flex items-center gap-1 font-medium"

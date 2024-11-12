@@ -7,6 +7,7 @@ import { CustomTooltip } from "@/components/CustomTooltip";
 import Logo from "../../../public/logo.png";
 import Image from "next/image";
 import { useEffect } from "react";
+import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 
 export function ChatIntro({
   availableSources,
@@ -25,11 +26,7 @@ export function ChatIntro({
       <div className="flex 2xl:justify-center w-full my-auto md:py-20">
         <div className="max-w-full mx-auto 2xl:w-searchbar px-5 md:px-8 lg:px-5 2xl:px-0 mt-10 md:mt-16 lg:mt-0 2xl:mt-14">
           <div className="flex flex-col items-center gap-4 md:pb-6">
-            <Image
-              src={Logo}
-              alt="logo"
-              className="w-16 h-16 md:w-24 md:h-24"
-            />
+            <AssistantIcon assistant={liveAssistant} size="xxlarge" />
             <h1 className="text-[1.5rem] md:text-[2.5rem] font-semibold leading-[1.2] tracking-tighter text-dark-900 text-center">
               {liveAssistant?.name || "enMedD AI"}
             </h1>

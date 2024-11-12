@@ -13,7 +13,7 @@ export default function ConnectorWrapper({
   teamspaceId,
 }: {
   connector: ConfigurableSources;
-  teamspaceId?: string | string[];
+  teamspaceId?: string;
 }) {
   return (
     <FormProvider connector={connector}>

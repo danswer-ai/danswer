@@ -17,12 +17,12 @@ import { FiExternalLink, FiInfo, FiTrash } from "react-icons/fi";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { CustomEmbeddingModelForm } from "@/components/embedding/CustomEmbeddingModelForm";
 import { deleteSearchSettings } from "./utils";
-import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { AdvancedSearchConfiguration } from "../interfaces";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import {Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import { DeleteModal } from "@/components/DeleteModal";
 
 export default function CloudEmbeddingPage({
   currentModel,
@@ -113,7 +113,11 @@ export default function CloudEmbeddingPage({
                 {provider.provider_type}{" "}
                 {provider.provider_type == "Cohere" && "(recommended)"}
               </h2>
-              <CustomTooltip trigger={<FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />}>
+              <CustomTooltip
+                trigger={
+                  <FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />
+                }
+              >
                 {provider.description}
               </CustomTooltip>
             </div>
@@ -170,10 +174,13 @@ export default function CloudEmbeddingPage({
                 "(recommended)"}
             </h2>
 
-<CustomTooltip trigger={<FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />}>
-{LITELLM_CLOUD_PROVIDER.description}
-              </CustomTooltip>
-
+            <CustomTooltip
+              trigger={
+                <FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />
+              }
+            >
+              {LITELLM_CLOUD_PROVIDER.description}
+            </CustomTooltip>
           </div>
           <div className="w-full flex flex-col items-start pt-4">
             {!liteLLMProvider ? (
@@ -193,7 +200,7 @@ export default function CloudEmbeddingPage({
             )}
 
             {!liteLLMProvider && (
-         <Card className="mt-4 w-full sm:w-96">
+              <Card className="mt-4 w-full sm:w-96">
                 <CardContent>
                   <Text className="text-lg font-semibold mb-2">
                     API URL Required
@@ -209,7 +216,7 @@ export default function CloudEmbeddingPage({
                       Once configured, you&apos;ll be able to add and manage
                       your LiteLLM models here.
                     </Text>
-                </div>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -244,16 +251,16 @@ export default function CloudEmbeddingPage({
                   }`}
                 >
                   <CardContent>
-                  <CustomEmbeddingModelForm
-                    embeddingType={EmbeddingProvider.LITELLM}
-                    provider={liteLLMProvider}
-                    currentValues={
-                      currentModel.provider_type === EmbeddingProvider.LITELLM
-                        ? (currentModel as CloudEmbeddingModel)
-                        : null
-                    }
-                    setShowTentativeModel={setShowTentativeModel}
-                  />
+                    <CustomEmbeddingModelForm
+                      embeddingType={EmbeddingProvider.LITELLM}
+                      provider={liteLLMProvider}
+                      currentValues={
+                        currentModel.provider_type === EmbeddingProvider.LITELLM
+                          ? (currentModel as CloudEmbeddingModel)
+                          : null
+                      }
+                      setShowTentativeModel={setShowTentativeModel}
+                    />
                   </CardContent>
                 </Card>
               </>
@@ -272,10 +279,13 @@ export default function CloudEmbeddingPage({
               {AZURE_CLOUD_PROVIDER.provider_type}{" "}
             </h2>
 
-<CustomTooltip trigger={<FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />}>
-{AZURE_CLOUD_PROVIDER.description}
-              </CustomTooltip>
-
+            <CustomTooltip
+              trigger={
+                <FiInfo className="ml-2 mt-2 cursor-pointer" size={18} />
+              }
+            >
+              {AZURE_CLOUD_PROVIDER.description}
+            </CustomTooltip>
           </div>
         </div>
 
@@ -288,8 +298,8 @@ export default function CloudEmbeddingPage({
                 Configure Azure OpenAI
               </Button>
               <Card className="mt-4 w-full sm:w-96">
-              <CardContent>
-                <Text className="text-base font-medium mb-2">
+                <CardContent>
+                  <Text className="text-base font-medium mb-2">
                     Configure Azure OpenAI for Embeddings
                   </Text>
                   <Text className="text-sm text-gray-600 mb-3">
@@ -302,8 +312,9 @@ export default function CloudEmbeddingPage({
                       You&apos;ll need: API version, base URL, API key, model
                       name, and deployment name.
                     </Text>
-                  </div></CardContent>
-                </Card>
+                  </div>
+                </CardContent>
+              </Card>
             </>
           ) : (
             <>
@@ -313,30 +324,30 @@ export default function CloudEmbeddingPage({
                 </Text>
 
                 {azureProviderDetails ? (
-                  <Card >
+                  <Card>
                     <CardContent>
                       <div className="p-4 space-y-3">
-                      <div className="flex justify-between">
-                        <span className="font-medium">API Version:</span>
-                        <span>{azureProviderDetails.api_version}</span>
+                        <div className="flex justify-between">
+                          <span className="font-medium">API Version:</span>
+                          <span>{azureProviderDetails.api_version}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Base URL:</span>
+                          <span>{azureProviderDetails.api_url}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Deployment Name:</span>
+                          <span>{azureProviderDetails.deployment_name}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Base URL:</span>
-                        <span>{azureProviderDetails.api_url}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Deployment Name:</span>
-                        <span>{azureProviderDetails.deployment_name}</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() =>
-                        setChangeCredentialsProvider(AZURE_CLOUD_PROVIDER)
-                      }
-                      className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                    >
-                      Delete Current Azure Provider
-                    </button>
+                      <button
+                        onClick={() =>
+                          setChangeCredentialsProvider(AZURE_CLOUD_PROVIDER)
+                        }
+                        className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                      >
+                        Delete Current Azure Provider
+                      </button>
                     </CardContent>
                   </Card>
                 ) : (
@@ -402,33 +413,34 @@ export function CloudModelCard({
     model.provider_type?.toLowerCase() ==
       currentModel.provider_type?.toLowerCase();
 
-      const deleteModel = async () => {
-        if (!model.id) {
-          toast({
-            title: "Deletion Error",
-            description: "Model cannot be deleted",
-            variant: "destructive",
-          });
-          return;
-        }
-      
-        const response = await deleteSearchSettings(model.id);
-      
-        if (response.ok) {
-          toast({
-            title: "Success",
-            description: "Model deleted successfully",
-            variant: "success",
-          });
-          setShowDeleteModel(false);
-        } else {
-          toast({
-            title: "Deletion Failed",
-            description: "Failed to delete model. Ensure you are not attempting to delete a currently active model.",
-            variant: "destructive",
-          });
-        }
-      };
+  const deleteModel = async () => {
+    if (!model.id) {
+      toast({
+        title: "Deletion Error",
+        description: "Model cannot be deleted",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const response = await deleteSearchSettings(model.id);
+
+    if (response.ok) {
+      toast({
+        title: "Success",
+        description: "Model deleted successfully",
+        variant: "success",
+      });
+      setShowDeleteModel(false);
+    } else {
+      toast({
+        title: "Deletion Failed",
+        description:
+          "Failed to delete model. Ensure you are not attempting to delete a currently active model.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div
@@ -439,51 +451,56 @@ export function CloudModelCard({
       } ${!provider.configured && "opacity-80 hover:opacity-100"}`}
     >
       <div>
-      {showDeleteModel && (
-        <DeleteEntityModal
-          entityName={model.model_name}
-          entityType="embedding model configuration"
-          onSubmit={() => deleteModel()}
-          onClose={() => setShowDeleteModel(false)}
-          showDeleteModel={showDeleteModel}
-        />
-      )}
+        {showDeleteModel && (
+          <DeleteModal
+            title="Delete embedding model configuration?"
+            description={
+              <>
+                Click below to confirm that you want to delete{" "}
+                <b>&quot;{model.model_name}&quot;</b>
+              </>
+            }
+            onClose={() => setShowDeleteModel(false)}
+            open={showDeleteModel}
+            onSuccess={() => deleteModel()}
+          />
+        )}
 
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-lg">{model.model_name}</h3>
-        <div className="flex gap-x-2">
-          {model.provider_type == EmbeddingProvider.LITELLM.toLowerCase() && (
-            <Button
-            variant='destructive'
-              onClickCapture={() => setShowDeleteModel(true)}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-lg">{model.model_name}</h3>
+          <div className="flex gap-x-2">
+            {model.provider_type == EmbeddingProvider.LITELLM.toLowerCase() && (
+              <Button
+                variant="destructive"
+                onClickCapture={() => setShowDeleteModel(true)}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FiTrash size={18} />
+              </Button>
+            )}
+            <a
+              href={provider.website}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
+              className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
             >
-              <FiTrash size={18} />
-            </Button>
-          )}
-          <a
-            href={provider.website}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="text-blue-500 hover:text-blue-700 transition-colors duration-200"
-          >
-            <FiExternalLink size={18} />
-          </a>
+              <FiExternalLink size={18} />
+            </a>
+          </div>
         </div>
-      </div>
-      <p className="text-sm text-gray-600 mb-2">{model.description}</p>
-      {model?.provider_type?.toLowerCase() !=
-        EmbeddingProvider.LITELLM.toLowerCase() && (
-        <div className="text-xs text-gray-500 mb-2">
-          ${model.pricePerMillion}/M tokens
-        </div>
-      )}
+        <p className="text-sm text-gray-600 mb-2">{model.description}</p>
+        {model?.provider_type?.toLowerCase() !=
+          EmbeddingProvider.LITELLM.toLowerCase() && (
+          <div className="text-xs text-gray-500 mb-2">
+            ${model.pricePerMillion}/M tokens
+          </div>
+        )}
       </div>
       <div className="mt-auto">
         <Button
           className="w-full"
-          variant='outline'
+          variant="outline"
           onClick={() => {
             if (enabled) {
               setAlreadySelectedModel(model);

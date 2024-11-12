@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { IndexAttemptStatus } from "@/components/Status";
-import { timeAgo } from "@/lib/time";
 import {
   ConnectorIndexingStatus,
   ConnectorSummary,
@@ -8,13 +7,6 @@ import {
   ValidSources,
 } from "@/lib/types";
 import { useParams, useRouter } from "next/navigation";
-import {
-  FiChevronDown,
-  FiChevronRight,
-  FiSettings,
-  FiLock,
-  FiUnlock,
-} from "react-icons/fi";
 import { SourceIcon } from "@/components/SourceIcon";
 import { getSourceDisplayName } from "@/lib/sources";
 import { Warning } from "@phosphor-icons/react";
@@ -34,10 +26,17 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Unlock } from "lucide-react";
-import { Slider } from "@/components/ui/slider";
+import {
+  ChevronDown,
+  ChevronRight,
+  Lock,
+  Settings,
+  Unlock,
+  X,
+} from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { CustomTooltip } from "@/components/CustomTooltip";
+import FilterButton from "./FilterButton";
 
 function SummaryRow({
   source,
@@ -58,23 +57,19 @@ function SummaryRow({
       <TableCell className="gap-y-2">
         <div className="flex items-center text-xl font-semibold truncate ellipsis gap-x-2">
           <div className="cursor-pointer">
-            {isOpen ? (
-              <FiChevronDown size={20} />
-            ) : (
-              <FiChevronRight size={20} />
-            )}
+            {isOpen ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
           <SourceIcon iconSize={20} sourceType={source} />
           {getSourceDisplayName(source)}
         </div>
       </TableCell>
 
-      <TableCell className="gap-y-2">
+      <TableCell className="gap-y-2 truncate">
         <div className="text-gray-500">Active Data Sources</div>
         <CustomTooltip
           trigger={
             <div className="flex items-center mt-1">
-              <div className="w-full h-2 mr-2 bg-gray-200 rounded-full">
+              <div className="w-full h-2 mr-2 bg-gray-200 rounded-full shrink-0">
                 <Progress value={activePercentage} />
               </div>
               <span className="whitespace-nowrap">
@@ -242,9 +237,10 @@ function ConnectorRow({
         {isEditable && (
           <CustomTooltip
             trigger={
-              <FiSettings
+              <Settings
                 className="cursor-pointer"
                 onClick={handleManageClick}
+                size={16}
               />
             }
           >
@@ -269,6 +265,12 @@ export function CCPairIndexingStatusTable({
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
+  const [activityFilter, setActivityFilter] = useState<string | null>(null);
+  const [permissionsFilter, setPermissionsFilter] = useState<string | null>(
+    null
+  );
+  const [docsFilter, setDocsFilter] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchInputRef.current) {
@@ -375,6 +377,22 @@ export function CCPairIndexingStatusTable({
     Object.values(connectorsToggled).filter(Boolean).length <
     sortedSources.length / 2;
 
+  const activityLabels: { [key: string]: string } = {
+    Active: "Active",
+    Pause: "Pause",
+    Deleting: "Deleting",
+    not_started: "Scheduled",
+    in_progress: "Indexing",
+  };
+
+  const statusLabels: { [key: string]: string } = {
+    success: "Success",
+    in_progress: "Scheduled",
+    not_started: "Not Started",
+    failed: "Failed",
+    completed_with_errors: "Completed with errors",
+  };
+
   return (
     <div className="-mt-20">
       <div>
@@ -423,22 +441,76 @@ export function CCPairIndexingStatusTable({
           }}
           isEditable={false}
         />
-        <div className="flex items-center mt-4 gap-x-2">
-          <Input
-            type="text"
-            ref={searchInputRef}
-            placeholder="Search data sources..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div>
+          <div className="w-full flex flex-col md:flex-row justify-between gap-2 mt-4">
+            <div className="w-full md:w-1/2 flex items-center gap-x-2">
+              <Input
+                type="text"
+                ref={searchInputRef}
+                placeholder="Search data sources..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <FilterButton
+                setActivityFilter={setActivityFilter}
+                setPermissionsFilter={setPermissionsFilter}
+                setDocsFilter={setDocsFilter}
+                setStatusFilter={setStatusFilter}
+              />
+            </div>
+            <Button
+              onClick={() => toggleSources()}
+              className="md:w-[110px]"
+              variant="outline"
+            >
+              {!shouldExpand ? "Collapse All" : "Expand All"}
+            </Button>
+          </div>
+        </div>
 
-          <Button
-            onClick={() => toggleSources()}
-            className="w-[110px]"
-            variant="outline"
-          >
-            {!shouldExpand ? "Collapse All" : "Expand All"}
-          </Button>
+        <div className="flex flex-wrap gap-2 pt-2">
+          {activityFilter && (
+            <Badge>
+              {activityLabels[activityFilter] || activityFilter}
+              <X
+                size={14}
+                className="cursor-pointer"
+                onClick={() => setActivityFilter(null)}
+              />
+            </Badge>
+          )}
+          {permissionsFilter && (
+            <Badge>
+              {permissionsFilter}
+              <X
+                size={14}
+                className="cursor-pointer"
+                onClick={() => setPermissionsFilter(null)}
+              />
+            </Badge>
+          )}
+          {docsFilter !== null && (
+            <Badge>
+              {docsFilter}
+              {docsFilter > 0 && "+"}
+              <X
+                size={14}
+                className="cursor-pointer"
+                onClick={() => setDocsFilter(null)}
+              />
+            </Badge>
+          )}
+
+          {statusFilter && (
+            <Badge>
+              {statusLabels[statusFilter] || statusFilter}
+              <X
+                size={14}
+                className="cursor-pointer"
+                onClick={() => setStatusFilter(null)}
+              />
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -459,24 +531,88 @@ export function CCPairIndexingStatusTable({
                 )}
                 <TableHead>Total Docs</TableHead>
                 <TableHead className="!w-[140px]">Last Status</TableHead>
-                <TableHead className="!w-[100px]"></TableHead>
+                <TableHead className="!w-[160px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedSources
                 .filter(
                   (source) =>
-                    source != "not_applicable" && source != "ingestion_api"
+                    source !== "not_applicable" && source !== "ingestion_api"
                 )
                 .map((source, ind) => {
                   const sourceMatches = source
                     .toLowerCase()
                     .includes(searchTerm.toLowerCase());
                   const matchingConnectors = groupedStatuses[source].filter(
-                    (status) =>
-                      (status.name || "")
+                    (status) => {
+                      const nameMatches = (status.name || "")
                         .toLowerCase()
-                        .includes(searchTerm.toLowerCase())
+                        .includes(searchTerm.toLowerCase());
+
+                      let matchesActivity = true;
+                      let matchesPermissions = true;
+                      let matchesDocs = true;
+                      let matchesStatus = true;
+
+                      if (activityFilter) {
+                        const statusToMatch =
+                          status.cc_pair_status.toLowerCase();
+
+                        if (statusToMatch === "active") {
+                          const lastStatusToMatch = status.last_status
+                            ? status.last_status.toLowerCase()
+                            : "";
+
+                          switch (lastStatusToMatch) {
+                            case "in_progress":
+                              matchesActivity =
+                                activityFilter.toLowerCase() === "in_progress";
+                              break;
+                            case "not_started":
+                              matchesActivity =
+                                activityFilter.toLowerCase() === "not_started";
+                              break;
+                            default:
+                              matchesActivity =
+                                activityFilter.toLowerCase() === "active";
+                              break;
+                          }
+                        } else {
+                          matchesActivity = statusToMatch.includes(
+                            activityFilter.toLowerCase()
+                          );
+                        }
+                      }
+
+                      if (permissionsFilter) {
+                        matchesPermissions = status.access_type
+                          .toLowerCase()
+                          .includes(permissionsFilter.toLowerCase());
+                      }
+
+                      if (docsFilter !== null) {
+                        if (docsFilter === 0) {
+                          matchesDocs = status.docs_indexed === 0;
+                        } else {
+                          matchesDocs = status.docs_indexed >= docsFilter;
+                        }
+                      }
+
+                      if (statusFilter && status.last_status) {
+                        matchesStatus = status.last_status
+                          .toLowerCase()
+                          .includes(statusFilter.toLowerCase());
+                      }
+
+                      return (
+                        (sourceMatches || nameMatches) &&
+                        matchesActivity &&
+                        matchesPermissions &&
+                        matchesDocs &&
+                        matchesStatus
+                      );
+                    }
                   );
                   if (sourceMatches || matchingConnectors.length > 0) {
                     return (
@@ -490,10 +626,7 @@ export function CCPairIndexingStatusTable({
 
                         {connectorsToggled[source] && (
                           <>
-                            {(sourceMatches
-                              ? groupedStatuses[source]
-                              : matchingConnectors
-                            ).map((ccPairsIndexingStatus) => (
+                            {matchingConnectors.map((ccPairsIndexingStatus) => (
                               <ConnectorRow
                                 key={ccPairsIndexingStatus.cc_pair_id}
                                 ccPairsIndexingStatus={ccPairsIndexingStatus}

@@ -38,6 +38,7 @@ export const UserEditor = ({
       onSelect={handleSelect} // Updated onSelect
       placeholder="user"
       label="Select user"
+      isOnModal
     />
   );
 };

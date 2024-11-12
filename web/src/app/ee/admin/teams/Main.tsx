@@ -14,7 +14,7 @@ import { useDocumentSets } from "@/app/admin/documents/sets/hooks";
 import { useParams } from "next/navigation";
 
 const generateGradient = (teamspaceName: string) => {
-  const colors = ["#f9a8d4", "#8b5cf6", "#34d399", "#60a5fa", "#f472b6"];
+  const colors = ["#CCCCCC", "#999999", "#666666", "#333333", "#000000"];
   const index = teamspaceName.charCodeAt(0) % colors.length;
   return `linear-gradient(135deg, ${colors[index]}, ${
     colors[(index + 1) % colors.length]

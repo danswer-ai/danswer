@@ -1,7 +1,7 @@
 "use client";
 
 import { UserSettingsButton } from "@/components/UserSettingsButton";
-import ArnoldAi from "../../../public/arnold_ai.png";
+import ArnoldAi from "../../../public/logo-brand.png";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@/lib/types";
 import { CustomTooltip } from "@/components/CustomTooltip";

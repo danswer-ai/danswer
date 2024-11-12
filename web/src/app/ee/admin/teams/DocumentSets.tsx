@@ -30,6 +30,7 @@ export const DocumentSets: React.FC<DocumentSetsProps> = ({
         onSelect={handleSelect}
         placeholder="Select document sets"
         label="Select document sets"
+        isOnModal
       />
     </div>
   );

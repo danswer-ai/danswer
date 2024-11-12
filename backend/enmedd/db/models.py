@@ -1620,10 +1620,10 @@ class Teamspace__ConnectorCredentialPair(Base):
         default=True,
         primary_key=True,
     )
-
     cc_pair: Mapped[ConnectorCredentialPair] = relationship(
         "ConnectorCredentialPair",
     )
+    teamspace: Mapped["Teamspace"] = relationship("Teamspace", lazy="joined")
 
 
 class Assistant__Teamspace(Base):
@@ -1876,9 +1876,26 @@ class UsageReport(Base):
         DateTime(timezone=True)
     )
     period_to: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
-
+    groups: Mapped[list["Teamspace"]] = relationship(
+        "Teamspace",
+        secondary="usage_report__teamspace",
+        viewonly=True,
+    )
     requestor = relationship("User")
     file = relationship("PGFileStore")
+
+
+class UsageReport__Teamspace(Base):
+    """This maps usage reports to the Teamspace they were generated for"""
+
+    __tablename__ = "usage_report__teamspace"
+
+    report_id: Mapped[int] = mapped_column(
+        ForeignKey("usage_reports.id"), primary_key=True
+    )
+    teamspace_id: Mapped[int] = mapped_column(
+        ForeignKey("teamspace.id"), primary_key=True
+    )
 
 
 """

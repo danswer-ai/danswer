@@ -2,13 +2,12 @@
 
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
-import { HealthCheckBanner } from "@/components/health/healthcheck";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { buildSimilarCredentialInfoURL } from "@/app/admin/connector/[ccPairId]/lib";
 import { useFormContext } from "@/context/FormContext";
 import { getSourceDisplayName } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { deleteCredential, linkCredential } from "@/lib/credential";
 import { submitFiles } from "./pages/utils/files";
 import { submitGoogleSite } from "./pages/utils/google_site";
@@ -51,7 +50,6 @@ import { useRouter } from "next/navigation";
 import Stepper from "./Stepper";
 import { useToast } from "@/hooks/use-toast";
 import { CustomModal } from "@/components/CustomModal";
-import { Badge } from "@/components/ui/badge";
 
 const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 
@@ -115,7 +113,7 @@ export default function AddConnector({
   teamspaceId,
 }: {
   connector: ConfigurableSources;
-  teamspaceId?: string | string[];
+  teamspaceId?: string;
 }) {
   const { toast } = useToast();
   const router = useRouter();
@@ -213,27 +211,25 @@ export default function AddConnector({
   const onSuccess = () => {
     toast({
       title: "Data Source Created",
-      description: "Redirecting to Add Data Source page",
+      description:
+        "Successfully added data source. Redirecting to Add Data Source page",
       variant: "success",
     });
-    setTimeout(() => {
-      window.open(
-        teamspaceId
-          ? `/t/${teamspaceId}/admin/data-sources`
-          : "/admin/data-sources",
-        "_self"
-      );
-    }, 1000);
+    router.push(
+      teamspaceId
+        ? `/t/${teamspaceId}/admin/indexing/status?message=connector-created`
+        : "/admin/indexing/status?message=connector-created"
+    );
   };
 
   return (
     <Formik
-      initialValues={createConnectorInitialValues(connector)}
+      initialValues={createConnectorInitialValues(connector, teamspaceId)}
       validationSchema={createConnectorValidationSchema(connector)}
       onSubmit={async (values) => {
         const {
           name,
-          // groups,
+          groups,
           access_type,
           pruneFreq,
           indexingStart,
@@ -242,7 +238,7 @@ export default function AddConnector({
           ...connector_specific_config
         } = values;
 
-        const groups = teamspaceId
+        values.groups = teamspaceId
           ? [Number(teamspaceId)]
           : values.is_public
             ? []
@@ -288,15 +284,16 @@ export default function AddConnector({
             advancedConfiguration.pruneFreq,
             advancedConfiguration.indexingStart,
             isPublic,
+            groups,
             name
           );
           if (response) {
+            onSuccess();
             toast({
               title: "Google Site Submitted",
               description: "Your Google site has been successfully submitted!",
               variant: "success",
             });
-            onSuccess();
           } else {
             toast({
               title: "Error",
@@ -316,7 +313,6 @@ export default function AddConnector({
             isPublic,
             groups
           );
-          console.log(response);
           if (response) {
             onSuccess();
             toast({
@@ -456,7 +452,7 @@ export default function AddConnector({
                           </Button>
                         )}
 
-                        {/* NOTE: connector will never be google_drive, since the ternary above will 
+                        {/* NOTE: connector will never be google_drive, since the ternary above will
     prevent that, but still keeping this here for safety in case the above changes. */}
                         {(connector as ValidSources) !== "google_drive" &&
                           createConnectorToggle && (

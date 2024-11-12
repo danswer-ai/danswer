@@ -12,6 +12,7 @@ from ee.enmedd.server.reporting.usage_export_models import FlowType
 from ee.enmedd.server.reporting.usage_export_models import UsageReportMetadata
 from enmedd.configs.constants import MessageType
 from enmedd.db.models import UsageReport
+from enmedd.db.models import UsageReport__Teamspace
 from enmedd.file_store.file_store import get_default_file_store
 
 
@@ -67,7 +68,16 @@ def get_all_empty_chat_message_entries(
         initial_id = message_skeletons[-1].message_id
 
 
-def get_all_usage_reports(db_session: Session) -> list[UsageReportMetadata]:
+def get_all_usage_reports(
+    db_session: Session, teamspace_id: int | None = None
+) -> list[UsageReportMetadata]:
+    query = db_session.query(UsageReport)
+
+    if teamspace_id is not None:
+        query = query.join(UsageReport__Teamspace).filter(
+            UsageReport__Teamspace.teamspace_id == teamspace_id
+        )
+
     return [
         UsageReportMetadata(
             report_name=r.report_name,
@@ -76,7 +86,7 @@ def get_all_usage_reports(db_session: Session) -> list[UsageReportMetadata]:
             period_from=r.period_from,
             period_to=r.period_to,
         )
-        for r in db_session.query(UsageReport).all()
+        for r in query.all()
     ]
 
 
@@ -104,3 +114,12 @@ def write_usage_report(
     db_session.add(new_report)
     db_session.commit()
     return new_report
+
+
+def link_report_to_teamspace(db_session: Session, report_id: int, teamspace_id: int):
+    new_link = UsageReport__Teamspace(
+        report_id=report_id,
+        teamspace_id=teamspace_id,
+    )
+    db_session.add(new_link)
+    db_session.commit()

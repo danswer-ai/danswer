@@ -176,35 +176,35 @@ export default async function Home() {
     <div className="h-full">
       <HealthCheckBanner />
       <div className="relative flex h-full">
-        <BarLayout user={user} BarComponent={SearchSidebar} />
-        {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-        {shouldDisplayNoSourcesModal && <NoSourcesModal />}
-        {shouldDisplaySourcesIncompleteModal && (
-          <NoCompleteSourcesModal ccPairs={ccPairs} />
-        )}
-        {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
-      Only used in the EE version of the app. */}
-        {/* <ChatPopup /> */}
-        <InstantSSRAutoRefresh />
-        <div className="w-full h-full overflow-hidden overflow-y-auto min-h-screen">
-          <div className="pt-20 lg:pt-14 lg:px-14 container">
-            <SearchProvider
-              value={{
-                querySessions,
-                ccPairs,
-                documentSets,
-                assistants,
-                tags,
-                agenticSearchEnabled,
-                disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
-                shouldShowWelcomeModal,
-                shouldDisplayNoSources: shouldDisplayNoSourcesModal,
-              }}
-            >
+        <SearchProvider
+          value={{
+            querySessions,
+            ccPairs,
+            documentSets,
+            assistants,
+            tags,
+            agenticSearchEnabled,
+            disabledAgentic: DISABLE_LLM_DOC_RELEVANCE,
+            shouldShowWelcomeModal,
+            shouldDisplayNoSources: shouldDisplayNoSourcesModal,
+          }}
+        >
+          <BarLayout user={user} BarComponent={SearchSidebar} />
+          {shouldShowWelcomeModal && <WelcomeModal user={user} />}
+          {shouldDisplayNoSourcesModal && <NoSourcesModal />}
+          {shouldDisplaySourcesIncompleteModal && (
+            <NoCompleteSourcesModal ccPairs={ccPairs} />
+          )}
+          {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
+        Only used in the EE version of the app. */}
+          {/* <ChatPopup /> */}
+          <InstantSSRAutoRefresh />
+          <div className="w-full h-full overflow-hidden overflow-y-auto min-h-screen">
+            <div className="pt-20 lg:pt-14 lg:px-14 container">
               <SearchSection defaultSearchType={searchTypeDefault} />
-            </SearchProvider>
+            </div>
           </div>
-        </div>
+        </SearchProvider>
       </div>
       {/* <HelperFab /> */}
     </div>

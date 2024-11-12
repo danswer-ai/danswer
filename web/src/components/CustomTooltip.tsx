@@ -27,7 +27,7 @@ export const TooltipGroup: React.FC<{ children: React.ReactNode }> = ({
     <TooltipGroupContext.Provider
       value={{ groupHovered, setGroupHovered, hoverCountRef }}
     >
-      <div className="inline-flex">{children}</div>
+      <div className="inline-flex gap-3">{children}</div>
     </TooltipGroupContext.Provider>
   );
 };
@@ -47,7 +47,7 @@ export function CustomTooltip({
   style,
   asChild,
   variant = "primary",
-  open
+  open,
 }: {
   children: React.ReactNode;
   trigger: string | React.ReactNode;

@@ -7,6 +7,7 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import Link from "next/link";
 import { useConnectorCredentialIndexingStatus } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
+import { Blocks } from "lucide-react";
 
 function Main() {
   const {
@@ -75,7 +76,7 @@ export default function Status() {
     <div className="w-full h-full overflow-hidden overflow-y-auto">
       <div className="container">
         <AdminPageTitle
-          icon={<NotebookIcon size={32} />}
+          icon={<Blocks size={32} />}
           title="Existing Data Sources"
           farRightElement={
             <Link href="/admin/data-sources">

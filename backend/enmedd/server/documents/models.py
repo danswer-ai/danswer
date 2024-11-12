@@ -21,6 +21,7 @@ from enmedd.db.models import IndexAttemptError as DbIndexAttemptError
 from enmedd.db.models import IndexingStatus
 from enmedd.db.models import TaskStatus
 from enmedd.server.models import MinimalTeamspaceSnapshot
+from enmedd.server.models import MinimalTeamspaceSnapshotName
 from enmedd.server.utils import mask_credential_dict
 
 
@@ -299,7 +300,7 @@ class ConnectorIndexingStatus(BaseModel):
     connector: ConnectorSnapshot
     credential: CredentialSnapshot
     owner: str
-    groups: list[int]
+    groups: list[MinimalTeamspaceSnapshotName]
     access_type: AccessType
     last_finished_status: IndexingStatus | None
     last_status: IndexingStatus | None

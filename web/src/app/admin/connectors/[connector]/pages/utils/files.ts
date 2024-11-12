@@ -21,14 +21,15 @@ export const submitFiles = async (
   });
   const responseJson = await response.json();
   if (!response.ok) {
-    console.log(`Unable to upload files - ${responseJson.detail}`)
+    console.log(`Unable to upload files - ${responseJson.detail}`);
     return;
   }
 
   const filePaths = responseJson.file_paths as string[];
 
   const [connectorErrorMsg, connector] = await createConnector<FileConfig>({
-    name: "FileConnector-" + Date.now(),
+    // name: "FileConnector-" + Date.now(),
+    name: name,
     source: "file",
     input_type: "load_state",
     connector_specific_config: {
@@ -41,7 +42,7 @@ export const submitFiles = async (
     groups: groups,
   });
   if (connectorErrorMsg || !connector) {
-    console.log(`Unable to create connector - ${connectorErrorMsg}`)
+    console.log(`Unable to create connector - ${connectorErrorMsg}`);
     return;
   }
 
@@ -59,7 +60,7 @@ export const submitFiles = async (
   });
   if (!createCredentialResponse.ok) {
     const errorMsg = await createCredentialResponse.text();
-    console.log(`Error creating credential for CC Pair - ${errorMsg}`)
+    console.log(`Error creating credential for CC Pair - ${errorMsg}`);
     return;
     false;
   }
@@ -74,13 +75,15 @@ export const submitFiles = async (
   );
   if (!credentialResponse.ok) {
     const credentialResponseJson = await credentialResponse.json();
-    console.log(`Unable to link connector to credential - ${credentialResponseJson.detail}`)
+    console.log(
+      `Unable to link connector to credential - ${credentialResponseJson.detail}`
+    );
     return false;
   }
 
   const runConnectorErrorMsg = await runConnector(connector.id, [0]);
   if (runConnectorErrorMsg) {
-    console.log(`Unable to run connector - ${runConnectorErrorMsg}`)
+    console.log(`Unable to run connector - ${runConnectorErrorMsg}`);
     return false;
   }
 

@@ -23,10 +23,8 @@ import { createFolder } from "../folders/FolderManagement";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 import EnmeddLogo from "../../../../public/logo-brand.png";
-import { useChatContext } from "@/context/ChatContext";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";

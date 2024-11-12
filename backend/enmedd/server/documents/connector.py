@@ -98,6 +98,7 @@ from enmedd.server.documents.models import GoogleServiceAccountKey
 from enmedd.server.documents.models import IndexAttemptSnapshot
 from enmedd.server.documents.models import ObjectCreationIdResponse
 from enmedd.server.documents.models import RunConnectorRequest
+from enmedd.server.models import MinimalTeamspaceSnapshotName
 from enmedd.server.models import StatusResponse
 from enmedd.utils.logger import setup_logger
 
@@ -534,10 +535,15 @@ def get_connector_indexing_status(
         db_session=db_session,
         cc_pair_ids=[cc_pair.id for cc_pair in cc_pairs],
     )
-    group_cc_pair_relationships_dict: dict[int, list[int]] = {}
+
+    group_cc_pair_relationships_dict: dict[int, list[MinimalTeamspaceSnapshotName]] = {}
     for relationship in group_cc_pair_relationships:
+        teamspace_snapshot = MinimalTeamspaceSnapshotName(
+            id=relationship.teamspace_id,
+            name=relationship.teamspace.name if relationship.teamspace else None,
+        )
         group_cc_pair_relationships_dict.setdefault(relationship.cc_pair_id, []).append(
-            relationship.teamspace_id
+            teamspace_snapshot
         )
 
     for cc_pair in cc_pairs:

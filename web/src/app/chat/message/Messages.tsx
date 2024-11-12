@@ -139,7 +139,6 @@ export const AIMessage = ({
   currentFeedback,
   onClose,
   onSubmit,
-  isStreaming,
   otherMessagesCanSwitchTo,
   onMessageSelection,
 }: {
@@ -173,11 +172,12 @@ export const AIMessage = ({
   handleToggleSideBar?: () => void;
   currentFeedback?: [FeedbackType, number] | null;
   onClose?: () => void;
-  onSubmit?: (feedbackDetails: {
-    message: string;
-    predefinedFeedback?: string;
-  }) => void;
-  isStreaming?: boolean;
+  onSubmit?: (
+    messageId: number,
+    feedbackType: FeedbackType,
+    feedbackDetails: string,
+    predefinedFeedback: string | undefined
+  ) => Promise<void>;
 }) => {
   const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
   const [isDislikeModalOpen, setIsDislikeModalOpen] = useState(false);
@@ -185,17 +185,37 @@ export const AIMessage = ({
   const [showLikeButton, setShowLikeButton] = useState(true);
   const [showDislikeButton, setShowDislikeButton] = useState(true);
 
-  const handleLikeSubmit = async (feedbackDetails: FeedbackDetails) => {
+  const handleLikeSubmit = async (
+    messageId: number,
+    feedbackType: FeedbackType,
+    feedbackDetails: string,
+    predefinedFeedback: string | undefined
+  ) => {
     if (onSubmit) {
-      await onSubmit(feedbackDetails);
+      await onSubmit(
+        messageId,
+        feedbackType,
+        feedbackDetails,
+        predefinedFeedback
+      );
       setFeedbackSubmitted(true);
       setShowDislikeButton(false);
     }
   };
 
-  const handleDislikeSubmit = async (feedbackDetails: FeedbackDetails) => {
+  const handleDislikeSubmit = async (
+    messageId: number,
+    feedbackType: FeedbackType,
+    feedbackDetails: string,
+    predefinedFeedback: string | undefined
+  ) => {
     if (onSubmit) {
-      await onSubmit(feedbackDetails);
+      await onSubmit(
+        messageId,
+        feedbackType,
+        feedbackDetails,
+        predefinedFeedback
+      );
       setFeedbackSubmitted(true);
       setShowLikeButton(false);
     }
@@ -549,6 +569,7 @@ export const AIMessage = ({
                       onClose={onClose}
                       onSubmit={handleLikeSubmit}
                       onModalClose={() => setIsLikeModalOpen(false)}
+                      currentFeedback={currentFeedback}
                     />
                   </CustomModal>
                 }
@@ -596,6 +617,7 @@ export const AIMessage = ({
                       onClose={onClose}
                       onSubmit={handleDislikeSubmit}
                       onModalClose={() => setIsDislikeModalOpen(false)}
+                      currentFeedback={currentFeedback}
                     />
                   </CustomModal>
                 }

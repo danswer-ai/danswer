@@ -19,24 +19,32 @@ import { Separator } from "@/components/ui/separator";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED } from "@/lib/constants";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Logo } from "@/components/Logo";
+import { SearchTab } from "../chat/sessionSidebar/SearchTab";
+import { useSearchContext } from "@/context/SearchContext";
+import { ChatSession } from "../chat/interfaces";
 
 export const SearchSidebar = ({
   isExpanded,
+  currentSearchSession,
   openSidebar,
   teamspaceId,
   toggleSideBar,
 }: {
   isExpanded?: boolean;
+  currentSearchSession?: ChatSession | null | undefined;
   openSidebar?: boolean;
   teamspaceId?: string;
   toggleSideBar?: () => void;
 }) => {
+  const { querySessions } = useSearchContext();
   const combinedSettings = useContext(SettingsContext);
   if (!combinedSettings) {
     return null;
   }
   const settings = combinedSettings.settings;
   const workspaces = combinedSettings.workspaces;
+
+  const currentSearchId = currentSearchSession?.id;
 
   return (
     <>
@@ -115,6 +123,12 @@ export const SearchSidebar = ({
               </>
             )}
             <Separator className="mt-4" />
+            <SearchTab
+              existingChats={querySessions}
+              currentChatId={currentSearchId}
+              toggleSideBar={toggleSideBar}
+              teamspaceId={teamspaceId}
+            />
           </div>
         </div>
       </div>

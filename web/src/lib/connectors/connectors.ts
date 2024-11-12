@@ -837,13 +837,14 @@ Hint: Use the singular form of the object name (e.g., 'Opportunity' instead of '
   },
 };
 export function createConnectorInitialValues(
-  connector: ConfigurableSources
+  connector: ConfigurableSources,
+  teamspaceId?: string | string[]
 ): Record<string, any> & AccessTypeGroupSelectorFormType {
   const configuration = connectorConfigs[connector];
 
   return {
     name: "",
-    groups: [],
+    groups: teamspaceId ? [Number(teamspaceId)] : [],
     access_type: "public",
     ...configuration.values.reduce(
       (acc, field) => {

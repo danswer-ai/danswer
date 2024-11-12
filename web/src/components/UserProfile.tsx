@@ -16,21 +16,9 @@ const getNameInitials = (fullName: string) => {
 };
 
 const generateGradient = (initials: string) => {
-  const colors = {
-    primary: "#2039f3",
-    primaryForeground: "#b8d7ff",
-    success: "#69c57d",
-  };
-  const color1 =
-    initials.charCodeAt(0) % 2 === 0 ? colors.primary : colors.success;
-  const color2 =
-    initials.charCodeAt(1) % 2 === 0
-      ? colors.primaryForeground
-      : colors.success;
-  const color3 =
-    initials.charCodeAt(2) % 2 === 0
-      ? colors.primary
-      : colors.primaryForeground;
+  const color1 = "#666666";
+  const color2 = "#333333";
+  const color3 = "#000000";
   return `linear-gradient(to right, ${color1}, ${color2}, ${color3})`;
 };
 

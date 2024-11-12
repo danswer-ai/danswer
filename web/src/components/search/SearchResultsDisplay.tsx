@@ -167,7 +167,6 @@ export const SearchResultsDisplay = ({
             {!DISABLE_LLM_DOC_RELEVANCE &&
               (contentEnriched || searchResponse.additional_relevance) && (
                 <CustomTooltip
-                  delayDuration={1000}
                   asChild
                   trigger={
                     <button

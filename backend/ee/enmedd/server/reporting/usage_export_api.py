@@ -1,5 +1,6 @@
 from collections.abc import Generator
 from datetime import datetime
+from typing import Optional
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -31,6 +32,7 @@ def generate_report(
     params: GenerateUsageReportParams,
     user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
+    teamspace_id: Optional[int] = None,
 ) -> UsageReportMetadata:
     period = None
     if params.period_from and params.period_to:
@@ -42,7 +44,9 @@ def generate_report(
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
-    new_report = create_new_usage_report(db_session, user.id if user else None, period)
+    new_report = create_new_usage_report(
+        db_session, user.id if user else None, period, teamspace_id
+    )
     return new_report
 
 
@@ -75,8 +79,9 @@ def read_usage_report(
 def fetch_usage_reports(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
+    teamspace_id: Optional[int] = None,
 ) -> list[UsageReportMetadata]:
     try:
-        return get_all_usage_reports(db_session)
+        return get_all_usage_reports(db_session, teamspace_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

@@ -346,17 +346,19 @@ export function AssistantEditor({
             return;
           }
 
-          const assistantNameExists = await checkAssistantNameExists(
-            values.name
-          );
-          if (assistantNameExists) {
-            toast({
-              title: "Assistant Name Taken",
-              description: `"${values.name}" is already taken. Please choose a different name.`,
-              variant: "destructive",
-            });
-            formikHelpers.setSubmitting(false);
-            return;
+          if (!isUpdate) {
+            const assistantNameExists = await checkAssistantNameExists(
+              values.name
+            );
+            if (assistantNameExists) {
+              toast({
+                title: "Assistant Name Taken",
+                description: `"${values.name}" is already taken. Please choose a different name.`,
+                variant: "destructive",
+              });
+              formikHelpers.setSubmitting(false);
+              return;
+            }
           }
 
           formikHelpers.setSubmitting(true);

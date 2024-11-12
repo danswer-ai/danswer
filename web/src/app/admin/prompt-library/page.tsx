@@ -1,9 +1,9 @@
 "use client";
 
 import { AdminPageTitle } from "@/components/admin/Title";
-import { ClosedBookIcon } from "@/components/icons/icons";
 import { useAdminInputPrompts } from "./hooks";
 import { PromptSection } from "./promptSection";
+import { LibraryBigIcon } from "lucide-react";
 
 const Page = () => {
   const {
@@ -15,19 +15,20 @@ const Page = () => {
 
   return (
     <div className="w-full h-full overflow-y-auto">
-    <div className="container mx-auto">
-      <AdminPageTitle
-        icon={<ClosedBookIcon size={32} />}
-        title="Prompt Library"
-      />
-      <PromptSection
-        promptLibrary={promptLibrary || []}
-        isLoading={promptLibraryIsLoading}
-        error={promptLibraryError}
-        refreshPrompts={refreshPrompts}
-        isPublic={true}
-      />
-    </div></div>
+      <div className="container mx-auto">
+        <AdminPageTitle
+          icon={<LibraryBigIcon size={32} />}
+          title="Prompt Library"
+        />
+        <PromptSection
+          promptLibrary={promptLibrary || []}
+          isLoading={promptLibraryIsLoading}
+          error={promptLibraryError}
+          refreshPrompts={refreshPrompts}
+          isPublic={true}
+        />
+      </div>
+    </div>
   );
 };
 export default Page;

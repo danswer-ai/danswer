@@ -1,17 +1,22 @@
-"use client";
-
-import { useState, useRef, useContext, useEffect } from "react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { User as UserTypes } from "@/lib/types";
-import { checkUserIsNoAuthUser, logout } from "@/lib/user";
-import { LOGOUT_DISABLED } from "@/lib/constants";
 import { LogOut, MessageCircleMore, User, Wrench } from "lucide-react";
-import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover";
-import { SettingsContext } from "./settings/SettingsProvider";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { UserProfile } from "./UserProfile";
+import { useContext, useRef, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useParams, useRouter } from "next/navigation";
 import { useUser } from "./user/UserProvider";
+import { SettingsContext } from "./settings/SettingsProvider";
+import { checkUserIsNoAuthUser, logout } from "@/lib/user";
+import Link from "next/link";
+import { LOGOUT_DISABLED } from "@/lib/constants";
 
 export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
@@ -39,48 +44,38 @@ export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
     user && !checkUserIsNoAuthUser(user.id) && !LOGOUT_DISABLED;
 
   return (
-    <div className="relative flex" ref={userInfoRef}>
-      <Popover>
-        <PopoverTrigger
+    <DropdownMenu>
+      <DropdownMenuTrigger className="focus:outline-none">
+        <UserProfile
+          user={user}
           onClick={() => setUserInfoVisible(!userInfoVisible)}
-          className="w-full relative cursor-pointer"
-        >
-          <UserProfile
-            user={user}
-            onClick={() => setUserInfoVisible(!userInfoVisible)}
-          />
-        </PopoverTrigger>
-        <PopoverContent
-          className="w-[250px] !z-modal mb-2 ml-4 text-sm"
-          side="right"
-          align="end"
-          sideOffset={-5}
-          alignOffset={-10}
-        >
-          <div className="w-full">
-            <>
-              <div className="flex py-3 px-4 rounded-regular items-center gap-3 group">
-                <UserProfile user={user} />
-                <div className="flex flex-col w-[160px]">
-                  <span className="truncate">
-                    {user?.full_name || "Unknown User"}
-                  </span>
-                  <span className="text-dark-500 truncate">
-                    {user?.email || "anonymous@gmail.com"}
-                  </span>
-                </div>
-              </div>
-              <div className="my-1 border-b border-border" />
-            </>
-            {settings?.featureFlags.profile_page && (
-              <Link
-                href="/profile"
-                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
-              >
-                <User className="my-auto mr-3" size={24} strokeWidth={1.5} />
-                Profile Settings
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="right" align="end">
+        <DropdownMenuLabel>
+          <div className="flex rounded-regular items-center gap-3 group">
+            <UserProfile user={user} />
+            <div className="flex flex-col w-[160px]">
+              <span className="truncate">
+                {user?.full_name || "Unknown User"}
+              </span>
+              <span className="text-dark-500 truncate font-normal">
+                {user?.email || "anonymous@gmail.com"}
+              </span>
+            </div>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          {settings?.featureFlags.profile_page && (
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="flex gap-2 items-center">
+                <User size={16} strokeWidth={1.5} />
+                <span>Profile Settings</span>
               </Link>
-            )}
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem asChild>
             <Link
               // redirect to default page
               href={
@@ -88,55 +83,44 @@ export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
                   ? `/t/${teamspaceId}/${defaultPage}`
                   : `/${defaultPage}`
               }
-              className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
+              className="flex gap-2 items-center"
             >
-              <MessageCircleMore
-                className="my-auto mr-3"
-                size={24}
-                strokeWidth={1.5}
-              />
-              Chat & Search
+              <MessageCircleMore size={16} strokeWidth={1.5} />
+              <span>Chat & Search</span>
             </Link>
-            {isTeamspaceAdmin && (
+          </DropdownMenuItem>
+          {isTeamspaceAdmin && (
+            <DropdownMenuItem asChild>
               <Link
                 href={`/t/${teamspaceId}/admin/indexing/status`}
-                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
+                className="flex gap-2 items-center"
               >
-                <Wrench className="my-auto mr-3" size={24} strokeWidth={1.5} />
-                Teamspace Admin Panel
+                <Wrench size={16} strokeWidth={1.5} />
+                <span>Teamspace Admin Panel</span>
               </Link>
-            )}
-            {isAdmin && (
+            </DropdownMenuItem>
+          )}
+          {isAdmin && (
+            <DropdownMenuItem asChild>
               <Link
                 href="/admin/indexing/status"
-                className="flex py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
+                className="flex gap-2 items-center"
               >
-                <Wrench className="my-auto mr-3" size={24} strokeWidth={1.5} />
-                Workspace Admin Panel
+                <Wrench size={16} strokeWidth={1.5} />
+                <span>Workspace Admin Panel</span>
               </Link>
-            )}
-            {showLogout && (
-              <>
-                {isAdmin ||
-                  (isTeamspaceAdmin && (
-                    <div className="my-1 border-t border-border" />
-                  ))}
-                <div
-                  onClick={handleLogout}
-                  className="mt-1 flex py-3 px-4 cursor-pointer hover:bg-destructive-500 hover:text-inverted rounded-regular"
-                >
-                  <LogOut
-                    className="my-auto mr-3"
-                    size={24}
-                    strokeWidth={1.5}
-                  />
-                  Log out
-                </div>
-              </>
-            )}
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
+            </DropdownMenuItem>
+          )}
+          {showLogout && (
+            <DropdownMenuItem asChild onClick={handleLogout}>
+              <div className="flex gap-2 items-center">
+                <LogOut size={16} strokeWidth={1.5} />
+                <span>Log out</span>
+              </div>
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

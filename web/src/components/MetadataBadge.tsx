@@ -10,7 +10,7 @@ export function MetadataBadge({
   return (
     <Badge variant="secondary">
       {icon && icon}
-      <div className="my-auto flex">{value}</div>
+      <div className="my-auto flex truncate">{value}</div>
     </Badge>
   );
 }

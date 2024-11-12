@@ -13,7 +13,14 @@ import Link from "next/link";
 
 import { ShareChatSessionModal } from "../modal/ShareChatSessionModal";
 import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
-import { Ellipsis, X, Check, Pencil, MessageCircleMore } from "lucide-react";
+import {
+  Ellipsis,
+  X,
+  Check,
+  Pencil,
+  MessageCircleMore,
+  Trash,
+} from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -23,9 +30,16 @@ import { Button } from "@/components/ui/button";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { WarningCircle } from "@phosphor-icons/react";
-import { DeleteChatModal } from "@/components/modals/DeleteEntityModal";
 import { useToast } from "@/hooks/use-toast";
 import { useChatContext } from "@/context/ChatContext";
+import { DeleteModal } from "@/components/DeleteModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function ChatSessionDisplay({
   chatSession,
@@ -180,17 +194,21 @@ export function ChatSessionDisplay({
                           </CustomTooltip>
                         )}
                         <div className={"-m-1"}>
-                          <Popover
+                          <DropdownMenu
                             onOpenChange={(open) => setIsPopoverOpen(open)}
                           >
-                            <PopoverTrigger asChild>
+                            <DropdownMenuTrigger
+                              className="focus:outline-none"
+                              asChild
+                            >
                               <div className="hover:bg-background-inverted/10 p-1 rounded flex items-center justify-center">
                                 <Ellipsis size={16} />
                               </div>
-                            </PopoverTrigger>
-                            <PopoverContent>
-                              <div className="flex flex-col w-full">
-                                {combinedSettings?.featureFlags.share_chat && (
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuGroup>
+                                {/* {combinedSettings?.featureFlags.share_chat && ( */}
+                                <DropdownMenuItem asChild>
                                   <ShareChatSessionModal
                                     chatSessionId={chatSession.id}
                                     existingSharedStatus={
@@ -198,53 +216,70 @@ export function ChatSessionDisplay({
                                     }
                                     onPopover
                                   />
-                                )}
-                                <Button
-                                  variant="ghost"
+                                </DropdownMenuItem>
+                                {/* )} */}
+
+                                <DropdownMenuItem
+                                  asChild
                                   onClick={() => setIsRenamingChat(true)}
-                                  className="w-full hover:bg-brand-500 hover:text-inverted"
                                 >
-                                  <Pencil className="mr-2" size={16} />
-                                  Rename
-                                </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                                  <div>
+                                    <Pencil className="mr-2" size={16} />
+                                    <span>Rename</span>
+                                  </div>
+                                </DropdownMenuItem>
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
 
-                      <DeleteChatModal
-                        open={openDeleteModal}
-                        openDeleteModal={() => setOpenDeleteModal(true)}
-                        onClose={() => setOpenDeleteModal(false)}
-                        onSubmit={async () => {
-                          const response = await deleteChatSession(
-                            chatSession.id
-                          );
-                          if (response.ok) {
-                            // go back to the main page
-                            router.push(
-                              teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"
-                            );
-                            refreshChatSessions();
-                            setOpenDeleteModal(false);
-                            toast({
-                              title: "Chat session deleted",
-                              description:
-                                "The chat session has been successfully deleted.",
-                              variant: "success",
-                            });
-                          } else {
-                            toast({
-                              title: "Failed to delete chat session",
-                              description:
-                                "There was an issue deleting the chat session.",
-                              variant: "destructive",
-                            });
+                      <div
+                        className="hover:bg-background-inverted/10 p-1 rounded"
+                        onClick={() => setOpenDeleteModal(true)}
+                      >
+                        <Trash size={16} />
+                      </div>
+
+                      {openDeleteModal && (
+                        <DeleteModal
+                          title="Delete chat?"
+                          description={
+                            <>
+                              Click below to confirm that you want to delete{" "}
+                              <b>&quot;{chatSession.name.slice(0, 30)}&quot;</b>
+                            </>
                           }
-                        }}
-                        chatSessionName={chatSession.name}
-                      />
+                          onClose={() => setOpenDeleteModal(false)}
+                          open={openDeleteModal}
+                          onSuccess={async () => {
+                            const response = await deleteChatSession(
+                              chatSession.id
+                            );
+                            if (response.ok) {
+                              // go back to the main page
+                              router.push(
+                                teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"
+                              );
+                              refreshChatSessions();
+                              setOpenDeleteModal(false);
+                              toast({
+                                title: "Chat session deleted",
+                                description:
+                                  "The chat session has been successfully deleted.",
+                                variant: "success",
+                              });
+                            } else {
+                              toast({
+                                title: "Failed to delete chat session",
+                                description:
+                                  "There was an issue deleting the chat session.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                        />
+                      )}
                     </div>
                   ))}
               </div>

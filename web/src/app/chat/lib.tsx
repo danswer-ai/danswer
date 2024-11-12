@@ -360,7 +360,7 @@ export function groupSessionsByDateRange(chatSessions: ChatSession[]) {
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Set to start of today for accurate comparison
 
-  const teamspace: Record<string, ChatSession[]> = {
+  const group: Record<string, ChatSession[]> = {
     Today: [],
     "Previous 7 Days": [],
     "Previous 30 Days": [],
@@ -374,17 +374,17 @@ export function groupSessionsByDateRange(chatSessions: ChatSession[]) {
     const diffDays = diffTime / (1000 * 3600 * 24); // Convert time difference to days
 
     if (diffDays < 1) {
-      teamspace["Today"].push(chatSession);
+      group["Today"].push(chatSession);
     } else if (diffDays <= 7) {
-      teamspace["Previous 7 Days"].push(chatSession);
+      group["Previous 7 Days"].push(chatSession);
     } else if (diffDays <= 30) {
-      teamspace["Previous 30 Days"].push(chatSession);
+      group["Previous 30 Days"].push(chatSession);
     } else {
-      teamspace["Over 30 days ago"].push(chatSession);
+      group["Over 30 days ago"].push(chatSession);
     }
   });
 
-  return teamspace;
+  return group;
 }
 
 export function getLastSuccessfulMessageId(messageHistory: Message[]) {

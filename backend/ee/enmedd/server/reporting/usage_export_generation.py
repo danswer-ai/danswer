@@ -10,6 +10,7 @@ from fastapi_users_db_sqlalchemy import UUID_ID
 from sqlalchemy.orm import Session
 
 from ee.enmedd.db.usage_export import get_all_empty_chat_message_entries
+from ee.enmedd.db.usage_export import link_report_to_teamspace
 from ee.enmedd.db.usage_export import write_usage_report
 from ee.enmedd.server.reporting.usage_export_models import UsageReportMetadata
 from ee.enmedd.server.reporting.usage_export_models import UserSkeleton
@@ -110,6 +111,7 @@ def create_new_usage_report(
     db_session: Session,
     user_id: UUID_ID | None,  # None = auto-generated
     period: tuple[datetime, datetime] | None,
+    teamspace_id: int | None = None,
 ) -> UsageReportMetadata:
     report_id = str(uuid.uuid4())
     file_store = get_default_file_store(db_session)
@@ -125,10 +127,7 @@ def create_new_usage_report(
             chat_messages_tmpfile = file_store.read_file(
                 messages_filename, mode="b", use_tempfile=True
             )
-            zip_file.writestr(
-                "chat_messages.csv",
-                chat_messages_tmpfile.read(),
-            )
+            zip_file.writestr("chat_messages.csv", chat_messages_tmpfile.read())
 
             # write users
             users_tmpfile = file_store.read_file(
@@ -153,6 +152,10 @@ def create_new_usage_report(
 
     # add report after zip file is written
     new_report = write_usage_report(db_session, report_name, user_id, period)
+
+    # If teamspace_id is provided, save the relationship
+    if teamspace_id is not None:
+        link_report_to_teamspace(db_session, new_report.id, teamspace_id)
 
     return UsageReportMetadata(
         report_name=new_report.report_name,

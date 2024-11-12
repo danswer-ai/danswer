@@ -22,6 +22,7 @@ import { Quote, SearchResponse } from "@/lib/search/interfaces";
 import { QuotesSection } from "./results/QuotesSection";
 import { Button } from "../ui/button";
 import { CustomTooltip } from "../CustomTooltip";
+import { ChevronsDown } from "lucide-react";
 
 export default function SearchAnswer({
   searchAnswerExpanded,
@@ -173,13 +174,9 @@ export default function SearchAnswer({
       </div>
 
       {!searchAnswerExpanded && searchAnswerOverflowing && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center content-center w-full h-12 px-4 z-10">
-          <Button
-            onClick={() => setSearchAnswerExpanded(true)}
-            variant="secondary"
-          >
-            Show more
-            <ToggleDown className="stroke-white" />
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center justify-center w-full h-12 px-4 z-10">
+          <Button onClick={() => setSearchAnswerExpanded(true)} variant="ghost">
+            <ChevronsDown size={16} className="stroke-brand-500" />
           </Button>
         </div>
       )}

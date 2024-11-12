@@ -33,11 +33,7 @@ const QuoteDisplay = ({ quoteInfo }: { quoteInfo: Quote }) => {
     >
       <div className="text-sm flex gap-2 items-center">
         <div>
-          <b>Quote:</b>{" "}
-          <i>
-            {quoteInfo.quote} Quote: React lets you build user interfaces out of
-            individual pieces called components.
-          </i>
+          <b>Quote:</b> <i>{quoteInfo.quote}</i>
         </div>
 
         <Button

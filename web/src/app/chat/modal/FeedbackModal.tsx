@@ -20,11 +20,14 @@ const predefinedNegativeFeedbackOptions =
 interface FeedbackModalProps {
   feedbackType: FeedbackType;
   onClose?: () => void;
-  onSubmit?: (feedbackDetails: {
-    message: string;
-    predefinedFeedback?: string;
-  }) => void;
+  onSubmit?: (
+    messageId: number,
+    feedbackType: FeedbackType,
+    feedbackDetails: string,
+    predefinedFeedback: string | undefined
+  ) => Promise<void>;
   onModalClose: () => void;
+  currentFeedback?: [FeedbackType, number] | null;
 }
 
 export const FeedbackModal = ({
@@ -32,6 +35,7 @@ export const FeedbackModal = ({
   onClose,
   onSubmit,
   onModalClose,
+  currentFeedback,
 }: FeedbackModalProps) => {
   const [message, setMessage] = useState("");
   const [predefinedFeedback, setPredefinedFeedback] = useState<
@@ -48,8 +52,13 @@ export const FeedbackModal = ({
       : predefinedNegativeFeedbackOptions;
 
   const handleSubmit = () => {
-    if (onSubmit) {
-      onSubmit({ message, predefinedFeedback });
+    if (onSubmit && currentFeedback) {
+      onSubmit(
+        currentFeedback[1],
+        currentFeedback[0],
+        message,
+        predefinedFeedback
+      );
       setMessage("");
       setPredefinedFeedback(undefined);
       onModalClose();
@@ -60,7 +69,7 @@ export const FeedbackModal = ({
   };
 
   return (
-    <div>
+    <div className="space-y-4">
       <Textarea
         autoFocus
         role="textarea"
@@ -74,7 +83,7 @@ export const FeedbackModal = ({
         onChange={(e) => setMessage(e.target.value)}
         className="min-h-40"
       />
-      <RadioGroup>
+      <RadioGroup className="pb-4">
         {predefinedFeedbackOptions.map((feedback, index) => (
           <div
             key={index}
@@ -86,7 +95,7 @@ export const FeedbackModal = ({
           </div>
         ))}
       </RadioGroup>
-      <div className="pt-6 w-full flex items-center justify-center">
+      <div className="w-full flex items-center justify-center">
         <Button onClick={handleSubmit}>Submit feedback</Button>
       </div>
     </div>

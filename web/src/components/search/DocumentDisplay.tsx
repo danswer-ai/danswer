@@ -133,14 +133,13 @@ export function DocumentMetadataBlock({
   //   score < 50 ? "destructive" : score < 80 ? "warning" : "success";
 
   return (
-    <div className="flex flex-col">
+    <div className="flex gap-2 flex-wrap">
       {document.updated_at && (
         <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
       )}
 
       {Object.entries(document.metadata).length > 0 && (
         <>
-          <div className="pl-1 border-l border-border" />
           {Object.entries(document.metadata)
             .filter(
               ([key, value]) => (key + value).length <= MAXIMUM_TAG_LENGTH
@@ -195,22 +194,15 @@ export const DocumentDisplay = ({
     <div
       key={document.semantic_identifier}
       className="text-sm border-b border-border px-4 py-8 break-words break-all relative"
-      onMouseEnter={() => {
-        setIsHovered(true);
-      }}
+      onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
         transitionDelay: `${index! * 10}ms`, // Add a delay to the transition based on index
       }}
     >
-      <div
-        className={`absolute overflow-y-auto flex top-2 right-2`}
-      >
+      <div className={`absolute overflow-y-auto flex top-3 right-3`}>
         {!hide && (document.is_relevant || additional_relevance?.relevant) && (
-          <Star
-            size={16}
-            className="shrink-0"
-          />
+          <Star size={16} className="shrink-0" />
         )}
       </div>
       <div
@@ -265,7 +257,7 @@ export const DocumentDisplay = ({
             </TooltipGroup>
           </div>
         </div>
-        <div >
+        <div>
           <DocumentMetadataBlock document={document} />
         </div>
 
@@ -303,17 +295,15 @@ export const AgenticDocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className={`text-sm mobile:ml-4 border-b border-border transition-all duration-500
-      ${!hide ? "transform translate-x-full opacity-0" : ""} 
-      ${hide ? "py-3" : "border-transparent"} relative`}
+      className="text-sm border-b border-border px-4 py-8 break-words break-all relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
-        transitionDelay: `${index! * 10}ms`,
+        transitionDelay: `${index! * 10}ms`, // Add a delay to the transition based on index
       }}
     >
       <div
-        className={`collapsible ${!hide && "collapsible-closed overflow-y-auto border-transparent"}`}
+        className={`collapsible space-y-2.5 ${!hide && "collapsible-closed overflow-y-auto border-transparent"}`}
       >
         <div className="flex relative">
           <a
@@ -348,10 +338,14 @@ export const AgenticDocumentDisplay = ({
                         (alternativeToggled) => !alternativeToggled
                       )
                     }
+                    className="flex items-center justify-center"
                   >
                     <CustomTooltip
                       trigger={
-                        <BookIcon className="ml-2 my-auto text-blue-400" />
+                        <BookIcon
+                          size={20}
+                          className="my-auto flex flex-shrink-0 text-brand-500"
+                        />
                       }
                     >
                       Toggle Content
@@ -361,11 +355,11 @@ export const AgenticDocumentDisplay = ({
             </TooltipGroup>
           </div>
         </div>
-        <div className="mt-1">
+        <div>
           <DocumentMetadataBlock document={document} />
         </div>
 
-        <div className="pt-2 break-words flex gap-x-2">
+        <div className="break-words flex gap-x-2">
           <p
             className="break-words text-wrap"
             style={{ transition: "height 0.30s ease-in-out" }}

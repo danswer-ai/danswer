@@ -9,6 +9,7 @@ import { Lock } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { FileText } from "lucide-react";
 
 function Main() {
   const {
@@ -125,7 +126,7 @@ function Page() {
       <div className="container mx-auto">
         <AdminPageTitle
           title="Document Processing"
-          icon={<DocumentIcon2 size={32} className="my-auto" />}
+          icon={<FileText size={32} className="my-auto" />}
         />
         <Main />
       </div>
