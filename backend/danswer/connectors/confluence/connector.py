@@ -146,7 +146,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         # The url and the id are the same
         object_url = build_confluence_document_id(
-            self.wiki_base, confluence_object["_links"]["webui"]
+            self.wiki_base, confluence_object["_links"]["webui"], self.is_cloud
         )
 
         object_text = None
@@ -278,7 +278,9 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 doc_metadata_list.append(
                     SlimDocument(
                         id=build_confluence_document_id(
-                            self.wiki_base, page["_links"]["webui"]
+                            self.wiki_base,
+                            page["_links"]["webui"],
+                            self.is_cloud,
                         ),
                         perm_sync_data=perm_sync_data,
                     )
@@ -293,7 +295,9 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                         doc_metadata_list.append(
                             SlimDocument(
                                 id=build_confluence_document_id(
-                                    self.wiki_base, attachment["_links"]["webui"]
+                                    self.wiki_base,
+                                    attachment["_links"]["webui"],
+                                    self.is_cloud,
                                 ),
                                 perm_sync_data=perm_sync_data,
                             )

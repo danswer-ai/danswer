@@ -153,7 +153,9 @@ def attachment_to_content(
     return extracted_text
 
 
-def build_confluence_document_id(base_url: str, content_url: str) -> str:
+def build_confluence_document_id(
+    base_url: str, content_url: str, is_cloud: bool
+) -> str:
     """For confluence, the document id is the page url for a page based document
         or the attachment download url for an attachment based document
 
@@ -164,7 +166,10 @@ def build_confluence_document_id(base_url: str, content_url: str) -> str:
     Returns:
         str: The document id
     """
-    return f"{base_url}{content_url}"
+    if is_cloud:
+        return f"{base_url}/wiki{content_url}"
+    else:
+        return f"{base_url}{content_url}"
 
 
 def extract_referenced_attachment_names(page_text: str) -> list[str]:
