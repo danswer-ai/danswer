@@ -287,7 +287,7 @@ def prune_cc_pair(
     )
 
 
-@router.get("/admin/cc-pair/{cc_pair_id}/sync")
+@router.get("/admin/cc-pair/{cc_pair_id}/sync-permissions")
 def get_cc_pair_latest_sync(
     cc_pair_id: int,
     user: User = Depends(current_curator_or_admin_user),
@@ -308,7 +308,7 @@ def get_cc_pair_latest_sync(
     return cc_pair.last_time_perm_sync
 
 
-@router.post("/admin/cc-pair/{cc_pair_id}/sync")
+@router.post("/admin/cc-pair/{cc_pair_id}/sync-permissions")
 def sync_cc_pair(
     cc_pair_id: int,
     user: User = Depends(current_curator_or_admin_user),

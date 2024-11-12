@@ -327,12 +327,14 @@ class CCPairManager:
         user_performing_action: DATestUser | None = None,
     ) -> None:
         result = requests.post(
-            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/sync",
+            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/sync-permissions",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
         )
-        result.raise_for_status()
+        #
+        if result.status_code != 409:
+            result.raise_for_status()
 
     @staticmethod
     def get_sync_task(
@@ -340,7 +342,7 @@ class CCPairManager:
         user_performing_action: DATestUser | None = None,
     ) -> datetime | None:
         response = requests.get(
-            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/sync",
+            url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/sync-permissions",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
