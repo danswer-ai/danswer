@@ -287,7 +287,6 @@ class DefaultMultiLLM(LLM):
         tool_choice: ToolChoiceOptions | None,
         stream: bool,
         structured_response_format: dict | None = None,
-        extra_body: dict | None = None,
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
         if isinstance(prompt, list):
             prompt = [
