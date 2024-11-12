@@ -840,7 +840,7 @@ def get_oauth_router(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
         next_url = state_data.get("next_url", "/")
-        referral_source = state_data.get("referral_source", "/")
+        referral_source = state_data.get("referral_source", None)
 
         # Proceed to authenticate or create the user
         try:
