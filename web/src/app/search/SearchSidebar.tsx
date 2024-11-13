@@ -22,7 +22,7 @@ import { SearchTab } from "../chat/sessionSidebar/SearchTab";
 import { useSearchContext } from "@/context/SearchContext";
 import { ChatSession } from "../chat/interfaces";
 import { Logo } from "@/components/Logo";
-import ArnoldAi from "../../../../public/arnold_ai.png";
+import ArnoldAi from "../../../public/arnold_ai.png";
 
 export const SearchSidebar = ({
   isExpanded,
