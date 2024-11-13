@@ -131,10 +131,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
 
         self.include_shared_drives = include_shared_drives
         shared_drive_url_list = _extract_str_list_from_comma_str(shared_drive_urls)
-        self._requested_shared_drive_ids = (
-            set(_extract_ids_from_urls(shared_drive_url_list))
-            if include_shared_drives
-            else set()
+        self._requested_shared_drive_ids = set(
+            _extract_ids_from_urls(shared_drive_url_list)
         )
 
         self.include_my_drives = include_my_drives
@@ -228,22 +226,34 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             user_email=self.primary_admin_email,
         )
         all_drive_ids = set()
+        # We don't want to fail if we're using OAuth because you can
+        # access your my drive as a non admin user in an org still
+        ignore_fetch_failure = isinstance(self.creds, OAuthCredentials)
         for drive in execute_paginated_retrieval(
             retrieval_function=primary_drive_service.drives().list,
             list_key="drives",
-            continue_on_404_or_403=isinstance(self.creds, OAuthCredentials),
+            continue_on_404_or_403=ignore_fetch_failure,
             useDomainAdminAccess=True,
             fields="drives(id)",
         ):
             all_drive_ids.add(drive["id"])
-        return all_drive_ids or set(self._requested_shared_drive_ids)
+
+        if not all_drive_ids:
+            logger.warning(
+                "No drives found. This is likely because oauth user "
+                "is not an admin and cannot view all drive IDs. "
+                "Continuing with only the shared drive IDs specified in the config."
+            )
+            all_drive_ids = set(self._requested_shared_drive_ids)
+
+        return all_drive_ids
 
     def _impersonate_user_for_retrieval(
         self,
         user_email: str,
         is_slim: bool,
-        filtered_folder_ids: set[str],
         filtered_drive_ids: set[str],
+        filtered_folder_ids: set[str],
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
@@ -311,9 +321,17 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             logger.warning("Checking for folder access instead...")
             filtered_folder_ids.update(invalid_drive_ids)
 
-        filtered_drive_ids = self._requested_shared_drive_ids - invalid_drive_ids
-        if not filtered_drive_ids:
-            filtered_drive_ids = all_drive_ids
+        # If including shared drives, use the requested IDs if provided,
+        # otherwise use all drive IDs
+        filtered_drive_ids = set()
+        if self.include_shared_drives:
+            if self._requested_shared_drive_ids:
+                # Remove invalid drive IDs from requested IDs
+                filtered_drive_ids = (
+                    self._requested_shared_drive_ids - invalid_drive_ids
+                )
+            else:
+                filtered_drive_ids = all_drive_ids
 
         # Process users in parallel using ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -322,8 +340,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                     self._impersonate_user_for_retrieval,
                     email,
                     is_slim,
-                    filtered_folder_ids,
                     filtered_drive_ids,
+                    filtered_folder_ids,
                     start,
                     end,
                 ): email
@@ -334,7 +352,9 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
             for future in as_completed(future_to_email):
                 yield from future.result()
 
-        remaining_folders = self._requested_folder_ids - self._retrieved_ids
+        remaining_folders = (
+            filtered_drive_ids | filtered_folder_ids
+        ) - self._retrieved_ids
         if remaining_folders:
             logger.warning(
                 f"Some folders/drives were not retrieved. IDs: {remaining_folders}"
