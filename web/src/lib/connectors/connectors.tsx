@@ -221,8 +221,11 @@ export const connectorConfigs: Record<
       },
       {
         type: "text",
-        description:
-          "Enter a comma separated list of the URLs for the shared drive you would like to index. Leave this blank to index all shared drives.",
+        description: (currentCredential) => {
+          return currentCredential?.credential_json?.google_tokens
+            ? "If you are a non-admin user authenticated using Google Oauth, you will need to specify the URLs for the shared drives you would like to index. Leaving this blank will NOT index any shared drives."
+            : "Enter a comma separated list of the URLs for the shared drive you would like to index. Leave this blank to index all shared drives.";
+        },
         label: "Shared Drive URLs",
         name: "shared_drive_urls",
         visibleCondition: (values) => values.include_shared_drives,

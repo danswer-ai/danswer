@@ -192,23 +192,33 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
     def _update_traversed_parent_ids(self, folder_id: str) -> None:
         self._retrieved_ids.add(folder_id)
 
-    def _get_all_user_emails(self, admins_only: bool) -> list[str]:
+    def _get_all_user_emails(self) -> list[str]:
+        # Start with primary admin email
+        user_emails = [self.primary_admin_email]
+
+        # Only fetch additional users if using service account
+        if isinstance(self.creds, OAuthCredentials):
+            return user_emails
+
         admin_service = get_admin_service(
             creds=self.creds,
             user_email=self.primary_admin_email,
         )
-        query = "isAdmin=true" if admins_only else "isAdmin=false"
-        emails = []
-        for user in execute_paginated_retrieval(
-            retrieval_function=admin_service.users().list,
-            list_key="users",
-            fields=USER_FIELDS,
-            domain=self.google_domain,
-            query=query,
-        ):
-            if email := user.get("primaryEmail"):
-                emails.append(email)
-        return emails
+
+        # Get admins first since they're more likely to have access to most files
+        for is_admin in [True, False]:
+            query = "isAdmin=true" if is_admin else "isAdmin=false"
+            for user in execute_paginated_retrieval(
+                retrieval_function=admin_service.users().list,
+                list_key="users",
+                fields=USER_FIELDS,
+                domain=self.google_domain,
+                query=query,
+            ):
+                if email := user.get("primaryEmail"):
+                    if email not in user_emails:
+                        user_emails.append(email)
+        return user_emails
 
     def _get_all_drive_ids(self) -> set[str]:
         primary_drive_service = get_drive_service(
@@ -219,40 +229,12 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         for drive in execute_paginated_retrieval(
             retrieval_function=primary_drive_service.drives().list,
             list_key="drives",
+            continue_on_404_or_403=isinstance(self.creds, OAuthCredentials),
             useDomainAdminAccess=True,
             fields="drives(id)",
         ):
             all_drive_ids.add(drive["id"])
-        return all_drive_ids
-
-    def _initialize_all_class_variables(self) -> None:
-        # Get all user emails
-        # Get admins first becuase they are more likely to have access to the most files
-        user_emails = [self.primary_admin_email]
-        for admins_only in [True, False]:
-            for email in self._get_all_user_emails(admins_only=admins_only):
-                if email not in user_emails:
-                    user_emails.append(email)
-        self._all_org_emails = user_emails
-
-        self._all_drive_ids: set[str] = self._get_all_drive_ids()
-
-        # remove drive ids from the folder ids because they are queried differently
-        self._requested_folder_ids -= self._all_drive_ids
-
-        # Remove drive_ids that are not in the all_drive_ids and check them as folders instead
-        invalid_drive_ids = self._requested_shared_drive_ids - self._all_drive_ids
-        if invalid_drive_ids:
-            logger.warning(
-                f"Some shared drive IDs were not found. IDs: {invalid_drive_ids}"
-            )
-            logger.warning("Checking for folder access instead...")
-            self._requested_folder_ids.update(invalid_drive_ids)
-
-        if not self.include_shared_drives:
-            self._requested_shared_drive_ids = set()
-        elif not self._requested_shared_drive_ids:
-            self._requested_shared_drive_ids = self._all_drive_ids
+        return all_drive_ids or set(self._requested_shared_drive_ids)
 
     def _impersonate_user_for_retrieval(
         self,
@@ -302,7 +284,26 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
-        self._initialize_all_class_variables()
+        all_org_emails = self._get_all_user_emails()
+
+        all_drive_ids: set[str] = self._get_all_drive_ids()
+
+        # remove drive ids from the folder ids because they are queried differently
+        self._requested_folder_ids -= all_drive_ids
+
+        # Remove drive_ids that are not in the all_drive_ids and check them as folders instead
+        invalid_drive_ids = self._requested_shared_drive_ids - all_drive_ids
+        if invalid_drive_ids:
+            logger.warning(
+                f"Some shared drive IDs were not found. IDs: {invalid_drive_ids}"
+            )
+            logger.warning("Checking for folder access instead...")
+            self._requested_folder_ids.update(invalid_drive_ids)
+
+        if not self.include_shared_drives:
+            self._requested_shared_drive_ids = set()
+        elif not self._requested_shared_drive_ids:
+            self._requested_shared_drive_ids = all_drive_ids
 
         # Process users in parallel using ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -310,7 +311,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 executor.submit(
                     self._impersonate_user_for_retrieval, email, is_slim, start, end
                 ): email
-                for email in self._all_org_emails
+                for email in all_org_emails
             }
 
             # Yield results as they complete
