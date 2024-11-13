@@ -110,8 +110,13 @@ def _get_permissions_from_slim_doc(
         elif permission_type == "group":
             group_emails.add(permission["emailAddress"])
         elif permission_type == "domain" and company_domain:
-            if permission["domain"] == company_domain:
+            if permission.get("domain") == company_domain:
                 public = True
+            else:
+                logger.warning(
+                    "Permission is type domain but does not match company domain:"
+                    f"\n {permission}"
+                )
         elif permission_type == "anyone":
             public = True
 

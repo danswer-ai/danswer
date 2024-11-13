@@ -47,7 +47,7 @@ export const AssistantsProvider: React.FC<{
   const [assistants, setAssistants] = useState<Persona[]>(
     initialAssistants || []
   );
-  const { user, isLoadingUser, refreshUser, isAdmin } = useUser();
+  const { user, isLoadingUser, isAdmin } = useUser();
   const [editablePersonas, setEditablePersonas] = useState<Persona[]>([]);
   const [allAssistants, setAllAssistants] = useState<Persona[]>([]);
 

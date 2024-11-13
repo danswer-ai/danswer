@@ -18,6 +18,7 @@ export enum UserStatus {
 }
 
 export enum UserRole {
+  LIMITED = "limited",
   BASIC = "basic",
   ADMIN = "admin",
   CURATOR = "curator",
@@ -25,6 +26,7 @@ export enum UserRole {
 }
 
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  [UserRole.LIMITED]: "Limited",
   [UserRole.BASIC]: "Basic",
   [UserRole.ADMIN]: "Admin",
   [UserRole.GLOBAL_CURATOR]: "Global Curator",

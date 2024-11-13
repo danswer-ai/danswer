@@ -126,8 +126,8 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     # if specified, controls the assistants that are shown to the user + their order
     # if not specified, all assistants are shown
-    chosen_assistants: Mapped[list[int]] = mapped_column(
-        postgresql.JSONB(), nullable=False, default=[-2, -1, 0]
+    chosen_assistants: Mapped[list[int] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True, default=None
     )
     visible_assistants: Mapped[list[int]] = mapped_column(
         postgresql.JSONB(), nullable=False, default=[]

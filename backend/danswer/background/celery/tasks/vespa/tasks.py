@@ -869,7 +869,9 @@ def vespa_metadata_sync_task(
         )
     except Exception as ex:
         if isinstance(ex, RetryError):
-            task_logger.warning(f"Retry failed: {ex.last_attempt.attempt_number}")
+            task_logger.warning(
+                f"Tenacity retry failed: num_attempts={ex.last_attempt.attempt_number}"
+            )
 
             # only set the inner exception if it is of type Exception
             e_temp = ex.last_attempt.exception()
