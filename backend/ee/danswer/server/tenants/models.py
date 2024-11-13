@@ -33,3 +33,9 @@ class CheckoutSessionCreationResponse(BaseModel):
 
 class ImpersonateRequest(BaseModel):
     email: str
+
+
+class TenantCreationPayload(BaseModel):
+    tenant_id: str
+    email: str
+    referral_source: str | None = None

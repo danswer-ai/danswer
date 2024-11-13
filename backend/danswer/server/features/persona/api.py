@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
+from danswer.auth.users import current_limited_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import NotificationType
@@ -272,7 +273,7 @@ def list_personas(
 @basic_router.get("/{persona_id}")
 def get_persona(
     persona_id: int,
-    user: User | None = Depends(current_user),
+    user: User | None = Depends(current_limited_user),
     db_session: Session = Depends(get_session),
 ) -> PersonaSnapshot:
     return PersonaSnapshot.from_model(

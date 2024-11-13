@@ -51,13 +51,13 @@ def get_drive_service(
 
 def get_admin_service(
     creds: ServiceAccountCredentials | OAuthCredentials,
-    user_email: str,
+    user_email: str | None = None,
 ) -> AdminService:
     return _get_google_service("admin", "directory_v1", creds, user_email)
 
 
 def get_gmail_service(
     creds: ServiceAccountCredentials | OAuthCredentials,
-    user_email: str,
+    user_email: str | None = None,
 ) -> GmailService:
     return _get_google_service("gmail", "v1", creds, user_email)

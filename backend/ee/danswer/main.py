@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from httpx_oauth.clients.google import GoogleOAuth2
 from httpx_oauth.clients.openid import OpenID
 
 from danswer.auth.users import auth_backend
@@ -12,11 +13,11 @@ from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import AuthType
 from danswer.main import get_application as get_application_base
 from danswer.main import include_router_with_global_prefix_prepended
+from danswer.server.api_key.api import router as api_key_router
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
 from ee.danswer.configs.app_configs import OPENID_CONFIG_URL
 from ee.danswer.server.analytics.api import router as analytics_router
-from ee.danswer.server.api_key.api import router as api_key_router
 from ee.danswer.server.auth_check import check_ee_router_auth
 from ee.danswer.server.enterprise_settings.api import (
     admin_router as enterprise_settings_admin_router,
@@ -59,6 +60,31 @@ def get_application() -> FastAPI:
     if MULTI_TENANT:
         add_tenant_id_middleware(application, logger)
 
+    if AUTH_TYPE == AuthType.CLOUD:
+        oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
+        include_router_with_global_prefix_prepended(
+            application,
+            create_danswer_oauth_router(
+                oauth_client,
+                auth_backend,
+                USER_AUTH_SECRET,
+                associate_by_email=True,
+                is_verified_by_default=True,
+                # Points the user back to the login page
+                redirect_url=f"{WEB_DOMAIN}/auth/oauth/callback",
+            ),
+            prefix="/auth/oauth",
+            tags=["auth"],
+        )
+
+        # Need basic auth router for `logout` endpoint
+        include_router_with_global_prefix_prepended(
+            application,
+            fastapi_users.get_logout_router(auth_backend),
+            prefix="/auth",
+            tags=["auth"],
+        )
+
     if AUTH_TYPE == AuthType.OIDC:
         include_router_with_global_prefix_prepended(
             application,
@@ -73,6 +99,7 @@ def get_application() -> FastAPI:
             prefix="/auth/oidc",
             tags=["auth"],
         )
+
         # need basic auth router for `logout` endpoint
         include_router_with_global_prefix_prepended(
             application,

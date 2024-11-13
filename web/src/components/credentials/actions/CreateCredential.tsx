@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ValidSources } from "@/lib/types";
 import { FaAccusoft } from "react-icons/fa";
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
@@ -15,8 +14,6 @@ import {
   credentialTemplates,
   getDisplayNameForCredentialKey,
 } from "@/lib/connectors/credentials";
-import { getCurrentUser } from "@/lib/user";
-import { User, UserRole } from "@/lib/types";
 import { PlusCircleIcon } from "../../icons/icons";
 import { GmailMain } from "@/app/admin/connectors/[connector]/pages/gmail/GmailPage";
 import { ActionType, dictionaryType } from "../types";
@@ -203,7 +200,7 @@ export default function CreateCredential({
               for information on setting up this connector.
             </p>
           )}
-          <CardSection className="!border-0 mt-4 flex flex-col gap-y-6">
+          <CardSection className="w-full  !border-0 mt-4 flex flex-col gap-y-6">
             <TextFormField
               name="name"
               placeholder="(Optional) credential name.."

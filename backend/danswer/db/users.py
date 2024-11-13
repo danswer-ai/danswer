@@ -97,3 +97,18 @@ def batch_add_non_web_user_if_not_exists__no_commit(
     db_session.flush()  # generate ids
 
     return found_users + new_users
+
+
+def batch_add_non_web_user_if_not_exists(
+    db_session: Session, emails: list[str]
+) -> list[User]:
+    found_users, missing_user_emails = get_users_by_emails(db_session, emails)
+
+    new_users: list[User] = []
+    for email in missing_user_emails:
+        new_users.append(_generate_non_web_user(email=email))
+
+    db_session.add_all(new_users)
+    db_session.commit()
+
+    return found_users + new_users

@@ -4,7 +4,6 @@ from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic import Field
-from pydantic import model_validator
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
@@ -15,11 +14,26 @@ from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
+from danswer.db.models import Document as DbDocument
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexAttemptError as DbIndexAttemptError
 from danswer.db.models import IndexingStatus
 from danswer.db.models import TaskStatus
 from danswer.server.utils import mask_credential_dict
+
+
+class DocumentSyncStatus(BaseModel):
+    doc_id: str
+    last_synced: datetime | None
+    last_modified: datetime | None
+
+    @classmethod
+    def from_model(cls, doc: DbDocument) -> "DocumentSyncStatus":
+        return DocumentSyncStatus(
+            doc_id=doc.id,
+            last_synced=doc.last_synced,
+            last_modified=doc.last_modified,
+        )
 
 
 class DocumentInfo(BaseModel):
@@ -50,11 +64,11 @@ class ConnectorBase(BaseModel):
 
 
 class ConnectorUpdateRequest(ConnectorBase):
-    is_public: bool = True
+    access_type: AccessType
     groups: list[int] = Field(default_factory=list)
 
     def to_connector_base(self) -> ConnectorBase:
-        return ConnectorBase(**self.model_dump(exclude={"is_public", "groups"}))
+        return ConnectorBase(**self.model_dump(exclude={"access_type", "groups"}))
 
 
 class ConnectorSnapshot(ConnectorBase):
@@ -223,6 +237,8 @@ class CCPairFullInfo(BaseModel):
     is_editable_for_current_user: bool
     deletion_failure_message: str | None
     indexing: bool
+    creator: UUID | None
+    creator_email: str | None
 
     @classmethod
     def from_models(
@@ -268,6 +284,10 @@ class CCPairFullInfo(BaseModel):
             is_editable_for_current_user=is_editable_for_current_user,
             deletion_failure_message=cc_pair_model.deletion_failure_message,
             indexing=indexing,
+            creator=cc_pair_model.creator_id,
+            creator_email=cc_pair_model.creator.email
+            if cc_pair_model.creator
+            else None,
         )
 
 
@@ -377,18 +397,7 @@ class GoogleServiceAccountKey(BaseModel):
 
 
 class GoogleServiceAccountCredentialRequest(BaseModel):
-    google_drive_primary_admin: str | None = None  # email of user to impersonate
-    gmail_primary_admin: str | None = None  # email of user to impersonate
-
-    @model_validator(mode="after")
-    def check_user_delegation(self) -> "GoogleServiceAccountCredentialRequest":
-        if (self.google_drive_primary_admin is None) == (
-            self.gmail_primary_admin is None
-        ):
-            raise ValueError(
-                "Exactly one of google_drive_primary_admin or gmail_primary_admin must be set"
-            )
-        return self
+    google_primary_admin: str | None = None  # email of user to impersonate
 
 
 class FileUploadResponse(BaseModel):

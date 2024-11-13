@@ -221,6 +221,10 @@ services:
         max-size: "50m"
         max-file: "6"
     # Uncomment the following lines if you need to include a custom CA certificate
+    # This section enables the use of a custom CA certificate
+    # If present, the custom CA certificate is mounted as a volume
+    # The container checks for its existence and updates the system's CA certificates
+    # This allows for secure communication with services using custom SSL certificates
     # Optional volume mount for CA certificate
     # volumes:
     #   # Maps to the CA_CERT_PATH environment variable in the Dockerfile

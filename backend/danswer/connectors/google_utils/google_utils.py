@@ -23,7 +23,7 @@ add_retries = retry_builder(tries=50, max_delay=30)
 
 def _execute_with_retry(request: Any) -> Any:
     max_attempts = 10
-    attempt = 0
+    attempt = 1
 
     while attempt < max_attempts:
         # Note for reasons unknown, the Google API will sometimes return a 429
@@ -81,7 +81,8 @@ def _execute_with_retry(request: Any) -> Any:
 
 def execute_paginated_retrieval(
     retrieval_function: Callable,
-    list_key: str,
+    list_key: str | None = None,
+    continue_on_404_or_403: bool = False,
     **kwargs: Any,
 ) -> Iterator[GoogleDriveFileType]:
     """Execute a paginated retrieval from Google Drive API
@@ -95,8 +96,30 @@ def execute_paginated_retrieval(
         if next_page_token:
             request_kwargs["pageToken"] = next_page_token
 
-        results = add_retries(lambda: retrieval_function(**request_kwargs).execute())()
+        try:
+            results = retrieval_function(**request_kwargs).execute()
+        except HttpError as e:
+            if e.resp.status >= 500:
+                results = add_retries(
+                    lambda: retrieval_function(**request_kwargs).execute()
+                )()
+            elif e.resp.status == 404 or e.resp.status == 403:
+                if continue_on_404_or_403:
+                    logger.debug(f"Error executing request: {e}")
+                    results = {}
+                else:
+                    raise e
+            elif e.resp.status == 429:
+                results = _execute_with_retry(
+                    lambda: retrieval_function(**request_kwargs).execute()
+                )
+            else:
+                logger.exception("Error executing request:")
+                raise e
 
         next_page_token = results.get("nextPageToken")
-        for item in results.get(list_key, []):
-            yield item
+        if list_key:
+            for item in results.get(list_key, []):
+                yield item
+        else:
+            yield results

@@ -8,6 +8,7 @@ interface UserPreferences {
   visible_assistants: number[];
   hidden_assistants: number[];
   default_model: string | null;
+  recent_assistants: number[];
 }
 
 export enum UserStatus {
@@ -17,6 +18,7 @@ export enum UserStatus {
 }
 
 export enum UserRole {
+  LIMITED = "limited",
   BASIC = "basic",
   ADMIN = "admin",
   CURATOR = "curator",
@@ -24,6 +26,7 @@ export enum UserRole {
 }
 
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  [UserRole.LIMITED]: "Limited",
   [UserRole.BASIC]: "Basic",
   [UserRole.ADMIN]: "Admin",
   [UserRole.GLOBAL_CURATOR]: "Global Curator",
@@ -265,6 +268,7 @@ const validSources = [
   "not_applicable",
   "ingestion_api",
   "freshdesk",
+  "fireflies",
 ] as const;
 
 export type ValidSources = (typeof validSources)[number];

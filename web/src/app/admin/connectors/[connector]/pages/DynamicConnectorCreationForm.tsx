@@ -104,6 +104,7 @@ const RenderField: FC<RenderFieldProps> = ({
           type={field.type}
           label={label}
           name={field.name}
+          isTextArea={true}
         />
       )}
     </>
@@ -164,7 +165,7 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
       )}
 
       <AccessTypeForm connector={connector} />
-      <AccessTypeGroupSelector />
+      <AccessTypeGroupSelector connector={connector} />
 
       {config.advanced_values.length > 0 && (
         <>

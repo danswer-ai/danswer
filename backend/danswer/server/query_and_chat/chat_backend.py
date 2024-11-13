@@ -18,6 +18,7 @@ from PIL import Image
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from danswer.auth.users import current_limited_user
 from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.chat_utils import extract_headers
@@ -309,7 +310,7 @@ async def is_connected(request: Request) -> Callable[[], bool]:
 def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     request: Request,
-    user: User | None = Depends(current_user),
+    user: User | None = Depends(current_limited_user),
     _: None = Depends(check_token_rate_limits),
     is_connected_func: Callable[[], bool] = Depends(is_connected),
 ) -> StreamingResponse:
@@ -347,7 +348,6 @@ def handle_new_chat_message(
             for packet in stream_chat_message(
                 new_msg_req=chat_message_req,
                 user=user,
-                use_existing_user_message=chat_message_req.use_existing_user_message,
                 litellm_additional_headers=extract_headers(
                     request.headers, LITELLM_PASS_THROUGH_HEADERS
                 ),
@@ -359,7 +359,7 @@ def handle_new_chat_message(
                 yield json.dumps(packet) if isinstance(packet, dict) else packet
 
         except Exception as e:
-            logger.exception(f"Error in chat message streaming: {e}")
+            logger.exception("Error in chat message streaming")
             yield json.dumps({"error": str(e)})
 
         finally:
@@ -392,7 +392,7 @@ def set_message_as_latest(
 @router.post("/create-chat-message-feedback")
 def create_chat_feedback(
     feedback: ChatFeedbackRequest,
-    user: User | None = Depends(current_user),
+    user: User | None = Depends(current_limited_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     user_id = user.id if user else None

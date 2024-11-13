@@ -126,14 +126,17 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     # if specified, controls the assistants that are shown to the user + their order
     # if not specified, all assistants are shown
-    chosen_assistants: Mapped[list[int]] = mapped_column(
-        postgresql.JSONB(), nullable=False, default=[-2, -1, 0]
+    chosen_assistants: Mapped[list[int] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True, default=None
     )
     visible_assistants: Mapped[list[int]] = mapped_column(
         postgresql.JSONB(), nullable=False, default=[]
     )
     hidden_assistants: Mapped[list[int]] = mapped_column(
         postgresql.JSONB(), nullable=False, default=[]
+    )
+    recent_assistants: Mapped[list[dict]] = mapped_column(
+        postgresql.JSONB(), nullable=False, default=list, server_default="[]"
     )
 
     oidc_expiry: Mapped[datetime.datetime] = mapped_column(
@@ -170,6 +173,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
     has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
+    cc_pairs: Mapped[list["ConnectorCredentialPair"]] = relationship(
+        "ConnectorCredentialPair",
+        back_populates="creator",
+        primaryjoin="User.id == foreign(ConnectorCredentialPair.creator_id)",
+    )
 
 
 class InputPrompt(Base):
@@ -417,6 +425,9 @@ class ConnectorCredentialPair(Base):
     last_time_perm_sync: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    last_time_external_group_sync: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # Time finished, not used for calculating backend jobs which uses time started (created)
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
@@ -447,6 +458,14 @@ class ConnectorCredentialPair(Base):
     )
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="connector_credential_pair"
+    )
+
+    # the user id of the user that created this cc pair
+    creator_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    creator: Mapped["User"] = relationship(
+        "User",
+        back_populates="cc_pairs",
+        primaryjoin="foreign(ConnectorCredentialPair.creator_id) == remote(User.id)",
     )
 
 
@@ -1321,7 +1340,6 @@ class StarterMessage(TypedDict):
     in Postgres"""
 
     name: str
-    description: str
     message: str
 
 

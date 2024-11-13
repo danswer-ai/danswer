@@ -79,6 +79,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
+from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.configs import SLACK_CHANNEL_ID
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
@@ -249,23 +250,31 @@ class SlackbotHandler:
                 continue
 
             logger.debug(f"Acquired lock for tenant {tenant_id}")
-            with get_session_with_tenant(tenant_id) as db_session:
-                try:
-                    apps = fetch_slack_apps(db_session=db_session)
-                    for app in apps:
-                        self._do_shit_for_tenant_and_app(
-                            db_session=db_session,
-                            tenant_id=tenant_id,
-                            app=app,
-                        )
-                except KvKeyNotFoundError:
-                    logger.debug(f"Missing Slack Bot tokens for tenant {tenant_id}")
-                    if tenant_id in self.socket_clients:
-                        asyncio.run(self.socket_clients[tenant_id, app.id].close())
-                        del self.socket_clients[tenant_id, app.id]
-                        del self.slack_bot_tokens[tenant_id, app.id]
-                except Exception as e:
-                    logger.exception(f"Error handling tenant {tenant_id}: {e}")
+
+            token = CURRENT_TENANT_ID_CONTEXTVAR.set(
+                tenant_id or POSTGRES_DEFAULT_SCHEMA
+            )
+            try:
+                with get_session_with_tenant(tenant_id) as db_session:
+                    try:
+                      apps = fetch_slack_apps(db_session=db_session)
+                      for app in apps:
+                          self._do_shit_for_tenant_and_app(
+                              db_session=db_session,
+                              tenant_id=tenant_id,
+                              app=app,
+                          )
+
+                    except KvKeyNotFoundError:
+                        logger.debug(f"Missing Slack Bot tokens for tenant {tenant_id}")
+                        if tenant_id in self.socket_clients:
+                            asyncio.run(self.socket_clients[tenant_id].close())
+                            del self.socket_clients[tenant_id]
+                            del self.slack_bot_tokens[tenant_id]
+                    except Exception as e:
+                        logger.exception(f"Error handling tenant {tenant_id}: {e}")
+            finally:
+                CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
     def send_heartbeats(self) -> None:
         current_time = int(time.time())

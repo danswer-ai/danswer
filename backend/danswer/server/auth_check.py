@@ -6,12 +6,12 @@ from starlette.routing import BaseRoute
 
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
+from danswer.auth.users import current_limited_user
 from danswer.auth.users import current_user
 from danswer.auth.users import current_user_with_expired_token
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.server.danswer_api.ingestion import api_key_dep
-from ee.danswer.auth.users import current_cloud_superuser
-from ee.danswer.server.tenants.access import control_plane_dep
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 
 
 PUBLIC_ENDPOINT_SPECS = [
@@ -81,6 +81,14 @@ def check_router_auth(
     (1) have auth enabled OR
     (2) are explicitly marked as a public endpoint
     """
+
+    control_plane_dep = fetch_ee_implementation_or_noop(
+        "danswer.server.tenants.access", "control_plane_dep"
+    )
+    current_cloud_superuser = fetch_ee_implementation_or_noop(
+        "danswer.auth.users", "current_cloud_superuser"
+    )
+
     for route in application.routes:
         # explicitly marked as public
         if is_route_in_spec_list(route, public_endpoint_specs):
@@ -95,7 +103,8 @@ def check_router_auth(
             for dependency in route_dependant_obj.dependencies:
                 depends_fn = dependency.cache_key[0]
                 if (
-                    depends_fn == current_user
+                    depends_fn == current_limited_user
+                    or depends_fn == current_user
                     or depends_fn == current_admin_user
                     or depends_fn == current_curator_or_admin_user
                     or depends_fn == api_key_dep
@@ -111,5 +120,5 @@ def check_router_auth(
             # print(f"(\"{route.path}\", {set(route.methods)}),")
 
             raise RuntimeError(
-                f"Did not find current_user or current_admin_user dependency in route - {route}"
+                f"Did not find user dependency in private route - {route}"
             )

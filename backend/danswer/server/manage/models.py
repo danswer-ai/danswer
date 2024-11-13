@@ -43,7 +43,7 @@ class UserPreferences(BaseModel):
     chosen_assistants: list[int] | None = None
     hidden_assistants: list[int] = []
     visible_assistants: list[int] = []
-
+    recent_assistants: list[int] | None = None
     default_model: str | None = None
 
 

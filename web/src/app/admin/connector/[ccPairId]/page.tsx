@@ -209,14 +209,20 @@ function Main({ ccPairId }: { ccPairId: number }) {
         isDeleting={isDeleting}
       />
       <div className="text-sm mt-1">
+        Creator:{" "}
+        <b className="text-emphasis">{ccPair.creator_email ?? "Unknown"}</b>
+      </div>
+      <div className="text-sm mt-1">
         Total Documents Indexed:{" "}
         <b className="text-emphasis">{ccPair.num_docs_indexed}</b>
       </div>
       {!ccPair.is_editable_for_current_user && (
         <div className="text-sm mt-2 text-neutral-500 italic">
-          {ccPair.is_public
+          {ccPair.access_type === "public"
             ? "Public connectors are not editable by curators."
-            : "This connector belongs to groups where you don't have curator permissions, so it's not editable."}
+            : ccPair.access_type === "sync"
+              ? "Sync connectors are not editable by curators unless the curator is also the owner."
+              : "This connector belongs to groups where you don't have curator permissions, so it's not editable."}
         </div>
       )}
 
