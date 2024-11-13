@@ -12,8 +12,8 @@ from ee.enmedd.background.task_name_builders import (
     name_sync_external_doc_permissions_task,
 )
 from ee.enmedd.db.teamspace import validate_user_creation_permissions
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.background.celery.celery_utils import get_deletion_attempt_snapshot
 from enmedd.background.celery.celery_utils import skip_cc_pair_pruning_by_task
 from enmedd.background.task_utils import name_cc_prune_task
@@ -52,7 +52,7 @@ def get_cc_pair_index_attempts(
     cc_pair_id: int,
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=1000),
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> PaginatedIndexAttempts:
     cc_pair = get_connector_credential_pair_from_id(
@@ -82,7 +82,7 @@ def get_cc_pair_index_attempts(
 @router.get("/admin/cc-pair/{cc_pair_id}")
 def get_cc_pair_full_info(
     cc_pair_id: int,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> CCPairFullInfo:
     cc_pair = get_connector_credential_pair_from_id(
@@ -140,7 +140,7 @@ def get_cc_pair_full_info(
 def update_cc_pair_status(
     cc_pair_id: int,
     status_update_request: CCStatusUpdateRequest,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     cc_pair = get_connector_credential_pair_from_id(
@@ -172,7 +172,7 @@ def update_cc_pair_status(
 def update_cc_pair_name(
     cc_pair_id: int,
     new_name: str,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
     cc_pair = get_connector_credential_pair_from_id(
@@ -200,7 +200,7 @@ def update_cc_pair_name(
 @router.get("/admin/cc-pair/{cc_pair_id}/prune")
 def get_cc_pair_latest_prune(
     cc_pair_id: int,
-    user: User = Depends(current_admin_user),
+    user: User = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> CeleryTaskStatus:
     cc_pair = get_connector_credential_pair_from_id(
@@ -238,7 +238,7 @@ def get_cc_pair_latest_prune(
 @router.post("/admin/cc-pair/{cc_pair_id}/prune")
 def prune_cc_pair(
     cc_pair_id: int,
-    user: User = Depends(current_admin_user),
+    user: User = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[list[int]]:
     # avoiding circular refs
@@ -286,7 +286,7 @@ def prune_cc_pair(
 @router.get("/admin/cc-pair/{cc_pair_id}/sync")
 def get_cc_pair_latest_sync(
     cc_pair_id: int,
-    user: User = Depends(current_admin_user),
+    user: User = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> CeleryTaskStatus:
     cc_pair = get_connector_credential_pair_from_id(
@@ -322,7 +322,7 @@ def get_cc_pair_latest_sync(
 @router.post("/admin/cc-pair/{cc_pair_id}/sync")
 def sync_cc_pair(
     cc_pair_id: int,
-    user: User = Depends(current_admin_user),
+    user: User = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[list[int]]:
     # avoiding circular refs
@@ -377,7 +377,7 @@ def associate_credential_to_connector(
     connector_id: int,
     credential_id: int,
     metadata: ConnectorCredentialPairMetadata,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse[int]:
     validate_user_creation_permissions(

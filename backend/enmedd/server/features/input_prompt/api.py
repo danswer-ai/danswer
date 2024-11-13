@@ -3,8 +3,8 @@ from fastapi import Depends
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.db.engine import get_session
 from enmedd.db.input_prompt import fetch_input_prompt_by_id
 from enmedd.db.input_prompt import fetch_input_prompts_by_user
@@ -111,7 +111,7 @@ def delete_input_prompt(
 @admin_router.delete("/{input_prompt_id}")
 def delete_public_input_prompt(
     input_prompt_id: int,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
@@ -125,7 +125,7 @@ def delete_public_input_prompt(
 
 @admin_router.get("")
 def list_public_input_prompts(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[InputPromptSnapshot]:
     user_prompts = fetch_public_input_prompts(

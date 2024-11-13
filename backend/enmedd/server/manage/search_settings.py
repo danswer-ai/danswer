@@ -4,8 +4,8 @@ from fastapi import HTTPException
 from fastapi import status
 from sqlalchemy.orm import Session
 
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from enmedd.db.connector_credential_pair import get_connector_credential_pairs
 from enmedd.db.connector_credential_pair import resync_cc_pair
@@ -40,7 +40,7 @@ logger = setup_logger()
 @router.post("/set-new-search-settings")
 def set_new_search_settings(
     search_settings_new: SearchSettingsCreationRequest,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> IdReturn:
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
@@ -120,7 +120,7 @@ def set_new_search_settings(
 
 @router.post("/cancel-new-embedding")
 def cancel_new_embedding(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     secondary_search_settings = get_secondary_search_settings(db_session)
@@ -140,7 +140,7 @@ def cancel_new_embedding(
 @router.delete("/delete-search-settings")
 def delete_search_settings_endpoint(
     deletion_request: SearchSettingsDeleteRequest,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
@@ -192,7 +192,7 @@ def get_all_search_settings(
 @router.post("/update-inference-settings")
 def update_saved_search_settings(
     search_settings: SavedSearchSettings,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     update_current_search_settings(
@@ -202,7 +202,7 @@ def update_saved_search_settings(
 
 @router.get("/unstructured-api-key-set")
 def unstructured_api_key_set(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> bool:
     api_key = get_unstructured_api_key()
     print(api_key)
@@ -212,13 +212,13 @@ def unstructured_api_key_set(
 @router.put("/upsert-unstructured-api-key")
 def upsert_unstructured_api_key(
     unstructured_api_key: str,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> None:
     update_unstructured_api_key(unstructured_api_key)
 
 
 @router.delete("/delete-unstructured-api-key")
 def delete_unstructured_api_key_endpoint(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> None:
     delete_unstructured_api_key()

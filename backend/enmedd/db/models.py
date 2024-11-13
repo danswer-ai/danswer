@@ -376,6 +376,9 @@ class Workspace__Users(Base):
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
     )
+    role: Mapped[UserRole] = mapped_column(
+        Enum(UserRole, native_enum=False, default=UserRole.BASIC)
+    )
 
 
 class Workspace__Teamspace(Base):

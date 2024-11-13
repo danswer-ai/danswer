@@ -165,7 +165,7 @@ export const AllUsers = ({
   const { trigger: promoteTrigger } = useSWRMutation(
     teamspaceId
       ? `/api/manage/admin/teamspace/user-role/${teamspaceId}`
-      : "/api/manage/promote-user-to-admin",
+      : "/api/manage/promote-workspace-user-to-admin",
     userMutationFetcher,
     {
       onSuccess: () => {
@@ -189,7 +189,7 @@ export const AllUsers = ({
   const { trigger: demoteTrigger } = useSWRMutation(
     teamspaceId
       ? `/api/manage/admin/teamspace/user-role/${teamspaceId}`
-      : "/api/manage/demote-admin-to-basic",
+      : "/api/manage/demote-workspace-admin-to-basic",
     userMutationFetcher,
     {
       onSuccess: () => {

@@ -2,7 +2,7 @@ from typing import cast
 
 from fastapi import Depends
 
-from enmedd.auth.users import current_admin_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.db.models import User
 from enmedd.key_value_store.factory import get_kv_store
 from enmedd.key_value_store.interface import KvKeyNotFoundError
@@ -27,7 +27,7 @@ def load_feature_flags() -> FeatureFlags:
 
 
 def store_feature_flags(
-    feature_flag: FeatureFlags, _: User | None = Depends(current_admin_user)
+    feature_flag: FeatureFlags, _: User | None = Depends(current_workspace_admin_user)
 ) -> None:
     logger.info("Updating feature flag values")
     get_kv_store().store(_FEATURE_FLAG_KEY, feature_flag.model_dump())

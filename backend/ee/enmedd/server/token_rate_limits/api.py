@@ -9,7 +9,7 @@ from ee.enmedd.db.token_limit import fetch_all_user_token_rate_limits
 from ee.enmedd.db.token_limit import fetch_teamspace_token_rate_limits
 from ee.enmedd.db.token_limit import insert_teamspace_token_rate_limit
 from ee.enmedd.db.token_limit import insert_user_token_rate_limit
-from enmedd.auth.users import current_admin_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.db.engine import get_session
 from enmedd.db.models import User
 from enmedd.server.query_and_chat.token_limit import any_rate_limit_exists
@@ -26,7 +26,7 @@ Group Token Limit Settings
 
 @router.get("/teamspaces")
 def get_all_group_token_limit_settings(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> dict[str, list[TokenRateLimitDisplay]]:
     teamspaces_to_token_rate_limits = (
@@ -45,7 +45,7 @@ def get_all_group_token_limit_settings(
 @router.get("/teamspace/{team_id}")
 def get_group_token_limit_settings(
     team_id: int,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[TokenRateLimitDisplay]:
     return [
@@ -60,7 +60,7 @@ def get_group_token_limit_settings(
 def create_group_token_limit_settings(
     team_id: int,
     token_limit_settings: TokenRateLimitArgs,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> TokenRateLimitDisplay:
     rate_limit_display = TokenRateLimitDisplay.from_db(
@@ -82,7 +82,7 @@ User Token Limit Settings
 
 @router.get("/users")
 def get_user_token_limit_settings(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[TokenRateLimitDisplay]:
     return [
@@ -94,7 +94,7 @@ def get_user_token_limit_settings(
 @router.post("/users")
 def create_user_token_limit_settings(
     token_limit_settings: TokenRateLimitArgs,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> TokenRateLimitDisplay:
     rate_limit_display = TokenRateLimitDisplay.from_db(

@@ -7,8 +7,8 @@ from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.auth.users import is_user_admin
 from enmedd.configs.constants import KV_REINDEX_KEY
 from enmedd.configs.constants import NotificationType
@@ -41,7 +41,7 @@ basic_router = APIRouter(prefix="/settings")
 def put_settings(
     settings: Settings,
     db: Session = Depends(get_session),
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     teamspace_id: Optional[int] = None,
 ) -> None:
     try:

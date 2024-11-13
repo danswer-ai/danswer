@@ -36,8 +36,8 @@ const PromoterButton = ({
 }) => {
   const { trigger, isMutating } = useSWRMutation(
     promote
-      ? "/api/manage/promote-user-to-admin"
-      : "/api/manage/demote-admin-to-basic",
+      ? "/api/manage/promote-workspace-user-to-admin"
+      : "/api/manage/demote-workspace-admin-to-basic",
     userMutationFetcher,
     { onSuccess, onError }
   );

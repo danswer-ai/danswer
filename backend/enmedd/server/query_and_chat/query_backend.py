@@ -4,8 +4,8 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.configs.constants import DocumentSource
 from enmedd.configs.constants import MessageType
 from enmedd.db.chat import get_chat_messages_by_session
@@ -50,7 +50,7 @@ basic_router = APIRouter(prefix="/query")
 @admin_router.post("/search")
 def admin_search(
     question: AdminSearchRequest,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> AdminSearchResponse:
     query = question.query

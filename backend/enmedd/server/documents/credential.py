@@ -5,8 +5,8 @@ from fastapi import Query
 from sqlalchemy.orm import Session
 
 from ee.enmedd.db.teamspace import validate_user_creation_permissions
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.db.credentials import alter_credential
 from enmedd.db.credentials import create_credential
 from enmedd.db.credentials import CREDENTIAL_PERMISSIONS_TO_IGNORE
@@ -42,7 +42,7 @@ def _ignore_credential_permissions(source: DocumentSource) -> bool:
 
 @router.get("/admin/credential")
 def list_credentials_admin(
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[CredentialSnapshot]:
     """Lists all public credentials"""
@@ -60,7 +60,7 @@ def list_credentials_admin(
 @router.get("/admin/similar-credentials/{source_type}")
 def get_cc_source_full_info(
     source_type: DocumentSource,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
     get_editable: bool = Query(
         False, description="If true, return editable credentials"
@@ -93,7 +93,7 @@ def list_credentials_by_id(
 @router.delete("/admin/credential/{credential_id}")
 def delete_credential_by_id_admin(
     credential_id: int,
-    _: User = Depends(current_admin_user),
+    _: User = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
     """Same as the user endpoint, but can delete any credential (not just the user's own)"""
@@ -126,7 +126,7 @@ def swap_credentials_for_connector(
 @router.post("/credential")
 def create_credential_from_model(
     credential_info: CredentialBase,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     if not _ignore_credential_permissions(credential_info.source):

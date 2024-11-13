@@ -6,8 +6,8 @@ from fastapi import HTTPException
 from fastapi import Query
 from sqlalchemy.orm import Session
 
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.db.engine import get_session
 from enmedd.db.llm import fetch_existing_llm_providers
 from enmedd.db.llm import fetch_provider
@@ -37,7 +37,7 @@ basic_router = APIRouter(prefix="/llm")
 
 @admin_router.get("/built-in/options")
 def fetch_llm_options(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> list[WellKnownLLMProviderDescriptor]:
     return fetch_available_well_known_llms()
 
@@ -45,7 +45,7 @@ def fetch_llm_options(
 @admin_router.post("/test")
 def test_llm_configuration(
     test_llm_request: TestLLMRequest,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> None:
     llm = get_llm(
         provider=test_llm_request.provider,
@@ -88,7 +88,7 @@ def test_llm_configuration(
 
 @admin_router.post("/test/default")
 def test_default_provider(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> None:
     try:
         llm, fast_llm = get_default_llms()
@@ -112,7 +112,7 @@ def test_default_provider(
 
 @admin_router.get("/provider")
 def list_llm_providers(
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[FullLLMProvider]:
     return [
@@ -128,7 +128,7 @@ def put_llm_provider(
         False,
         description="True if updating an existing provider, False if creating a new one",
     ),
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> FullLLMProvider:
     # validate request (e.g. if we're intending to create but the name already exists we should throw an error)
@@ -154,7 +154,7 @@ def put_llm_provider(
 @admin_router.delete("/provider/{provider_id}")
 def delete_llm_provider(
     provider_id: int,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     remove_llm_provider(db_session, provider_id)
@@ -163,7 +163,7 @@ def delete_llm_provider(
 @admin_router.post("/provider/{provider_id}/default")
 def set_provider_as_default(
     provider_id: int,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     update_default_provider(provider_id=provider_id, db_session=db_session)

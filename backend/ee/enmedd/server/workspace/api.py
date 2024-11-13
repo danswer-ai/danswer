@@ -14,7 +14,7 @@ from ee.enmedd.server.workspace.store import _LOGO_FILENAME
 from ee.enmedd.server.workspace.store import load_analytics_script
 from ee.enmedd.server.workspace.store import store_analytics_script
 from ee.enmedd.server.workspace.store import upload_logo
-from enmedd.auth.users import current_admin_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.db.engine import get_session
 from enmedd.db.models import User
 from enmedd.db.workspace import get_workspace_settings
@@ -31,7 +31,7 @@ basic_router = APIRouter(prefix="/workspace")
 @admin_router.post("")
 def create_workspace(
     workspace: WorkspaceCreate,
-    user: User = Depends(current_admin_user),
+    user: User = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> Workspaces:
     try:
@@ -49,7 +49,7 @@ def create_workspace(
 # def put_settings(
 #     workspace_id: int,
 #     settings: Workspaces,
-#     _: User | None = Depends(current_admin_user),
+#     _: User | None = Depends(current_workspace_admin_user),
 #     db_session: Session = Depends(get_session)
 # ) -> None:
 #     try:
@@ -81,7 +81,7 @@ def create_workspace(
 @admin_router.put("")
 def put_settings(
     settings: Workspaces,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
@@ -108,7 +108,7 @@ def put_settings(
 # @basic_router.get("/{workspace_id}")
 # def fetch_settings_by_id(
 #     workspace_id: int,
-#     _: User = Depends(current_admin_user),
+#     _: User = Depends(current_workspace_admin_user),
 #     db_session: Session = Depends(get_session),
 # ) -> Workspaces:
 #     db_workspace = get_workspace_for_user_by_id(
@@ -133,7 +133,7 @@ def fetch_settings(db_session: Session = Depends(get_session)) -> Workspaces:
 def put_logo(
     file: UploadFile,
     db_session: Session = Depends(get_session),
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> None:
     upload_logo(file=file, db_session=db_session)
 
@@ -152,7 +152,8 @@ def fetch_logo(db_session: Session = Depends(get_session)) -> Response:
 
 @admin_router.put("/custom-analytics-script")
 def upload_custom_analytics_script(
-    script_upload: AnalyticsScriptUpload, _: User | None = Depends(current_admin_user)
+    script_upload: AnalyticsScriptUpload,
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> None:
     try:
         store_analytics_script(script_upload)

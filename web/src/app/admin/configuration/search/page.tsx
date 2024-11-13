@@ -112,9 +112,7 @@ function Main() {
                       </div>
 
                       <div>
-                        <p className="font-semibold">
-                          Multilingual Expansion
-                        </p>
+                        <p className="font-semibold">Multilingual Expansion</p>
                         <p className="text-gray-700">
                           {searchSettings.multilingual_expansion.length > 0
                             ? searchSettings.multilingual_expansion.join(", ")
@@ -123,9 +121,7 @@ function Main() {
                       </div>
 
                       <div>
-                        <p className="font-semibold">
-                          Multipass Indexing
-                        </p>
+                        <p className="font-semibold">Multipass Indexing</p>
                         <p className="text-gray-700">
                           {searchSettings.multipass_indexing
                             ? "Enabled"

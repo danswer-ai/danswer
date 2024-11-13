@@ -6,8 +6,8 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.db.engine import get_session
 from enmedd.db.models import User
 from enmedd.db.tools import create_tool
@@ -37,7 +37,7 @@ def _validate_tool_definition(definition: dict[str, Any]) -> None:
 def create_custom_tool(
     tool_data: CustomToolCreate,
     db_session: Session = Depends(get_session),
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
 ) -> ToolSnapshot:
     _validate_tool_definition(tool_data.definition)
     tool = create_tool(
@@ -56,7 +56,7 @@ def update_custom_tool(
     tool_id: int,
     tool_data: CustomToolUpdate,
     db_session: Session = Depends(get_session),
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
 ) -> ToolSnapshot:
     if tool_data.definition:
         _validate_tool_definition(tool_data.definition)
@@ -76,7 +76,7 @@ def update_custom_tool(
 def delete_custom_tool(
     tool_id: int,
     db_session: Session = Depends(get_session),
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> None:
     try:
         delete_tool(tool_id, db_session)
@@ -98,7 +98,7 @@ class ValidateToolResponse(BaseModel):
 @admin_router.post("/custom/validate")
 def validate_tool(
     tool_data: ValidateToolRequest,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> ValidateToolResponse:
     _validate_tool_definition(tool_data.definition)
     method_specs = openapi_to_method_specs(tool_data.definition)

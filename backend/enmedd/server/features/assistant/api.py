@@ -9,9 +9,9 @@ from fastapi import UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_teamspace_admin_user
 from enmedd.auth.users import current_user
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.configs.constants import FileOrigin
 from enmedd.db.assistant import create_update_assistant
 from enmedd.db.assistant import get_assistant_by_id
@@ -54,7 +54,7 @@ class IsPublicRequest(BaseModel):
 def patch_assistant_visibility(
     assistant_id: int,
     is_visible_request: IsVisibleRequest,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     update_assistant_visibility(
@@ -87,7 +87,7 @@ def patch_user_assistant_public_status(
 @admin_router.put("/display-priority")
 def patch_assistant_display_priority(
     display_priority_request: DisplayPriorityRequest,
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     update_all_assistants_display_priority(
@@ -122,7 +122,7 @@ def list_assistants_admin(
 @admin_router.patch("/{assistant_id}/undelete")
 def undelete_assistant(
     assistant_id: int,
-    user: User | None = Depends(current_admin_user),
+    user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     mark_assistant_as_not_deleted(

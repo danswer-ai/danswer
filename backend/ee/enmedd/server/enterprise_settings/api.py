@@ -22,8 +22,8 @@ from ee.enmedd.server.enterprise_settings.store import load_settings
 from ee.enmedd.server.enterprise_settings.store import store_analytics_script
 from ee.enmedd.server.enterprise_settings.store import store_settings
 from ee.enmedd.server.enterprise_settings.store import upload_logo
-from enmedd.auth.users import current_admin_user
 from enmedd.auth.users import current_user_with_expired_token
+from enmedd.auth.users import current_workspace_admin_user
 from enmedd.auth.users import get_user_manager
 from enmedd.auth.users import UserManager
 from enmedd.db.engine import get_session
@@ -112,7 +112,7 @@ async def refresh_access_token(
 
 @admin_router.put("")
 def put_settings(
-    settings: EnterpriseSettings, _: User | None = Depends(current_admin_user)
+    settings: EnterpriseSettings, _: User | None = Depends(current_workspace_admin_user)
 ) -> None:
     try:
         settings.check_validity()
@@ -131,7 +131,7 @@ def put_logo(
     file: UploadFile,
     is_logotype: bool = False,
     db_session: Session = Depends(get_session),
-    _: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> None:
     upload_logo(file=file, db_session=db_session, is_logotype=is_logotype)
 
@@ -165,7 +165,8 @@ def fetch_logo(
 
 @admin_router.put("/custom-analytics-script")
 def upload_custom_analytics_script(
-    script_upload: AnalyticsScriptUpload, _: User | None = Depends(current_admin_user)
+    script_upload: AnalyticsScriptUpload,
+    _: User | None = Depends(current_workspace_admin_user),
 ) -> None:
     try:
         store_analytics_script(script_upload)
