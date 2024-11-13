@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
-from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserRole
 from danswer.db.api_key import get_api_key_email_pattern
 from danswer.db.engine import get_async_session
@@ -36,18 +35,20 @@ def get_default_admin_user_emails() -> list[str]:
     return get_default_admin_user_emails_fn()
 
 
-def get_total_users_count(db_session: Session) -> int:
+def get_total_active_users_count(db_session: Session) -> int:
     """
     Returns the total number of users in the system.
     This is the sum of users and invited users.
     """
     user_count = (
         db_session.query(User)
-        .filter(~User.email.endswith(get_api_key_email_pattern()))  # type: ignore
+        .filter(
+            ~User.email.endswith(get_api_key_email_pattern()),  # type: ignore
+            User.has_web_login is True,
+        )
         .count()
     )
-    invited_users = len(get_invited_users())
-    return user_count + invited_users
+    return user_count
 
 
 async def get_user_count() -> int:

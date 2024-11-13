@@ -38,7 +38,7 @@ from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
 from danswer.db.api_key import is_api_key_email_address
-from danswer.db.auth import get_total_users_count
+from danswer.db.auth import get_total_active_users_count
 from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
@@ -228,7 +228,7 @@ def bulk_invite_users(
         logger.info("Registering tenant users")
         fetch_ee_implementation_or_noop(
             "danswer.server.tenants.billing", "register_tenant_users", None
-        )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session))
+        )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_active_users_count(db_session))
         if ENABLE_EMAIL_INVITES:
             try:
                 for email in all_emails:
@@ -268,7 +268,10 @@ def remove_invited_user(
         if MULTI_TENANT:
             fetch_ee_implementation_or_noop(
                 "danswer.server.tenants.billing", "register_tenant_users", None
-            )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session))
+            )(
+                CURRENT_TENANT_ID_CONTEXTVAR.get(),
+                get_total_active_users_count(db_session),
+            )
     except Exception:
         logger.error(
             "Request to update number of seats taken in control plane failed. "
