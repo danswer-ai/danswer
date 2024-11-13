@@ -743,5 +743,37 @@ def delete_persona_by_name(
     )
 
     db_session.execute(stmt)
-
     db_session.commit()
+
+
+def get_ordered_assistants_for_user(
+    user: User | None, db_session: Session
+) -> list[Persona]:
+    assistants = get_personas(
+        db_session=db_session,
+        user=user,
+        include_deleted=True,
+        joinedload_all=True,
+    )
+
+    if user:
+        visible_assistants = [
+            assistant
+            for assistant in assistants
+            if assistant.id in (user.visible_assistants or [])
+        ]
+    else:
+        visible_assistants = [
+            assistant for assistant in assistants if assistant.is_default_persona
+        ]
+
+    def get_assistant_priority(assistant):
+        if user and user.chosen_assistants:
+            chosen_assistants = user.chosen_assistants
+            if assistant.id in chosen_assistants:
+                return chosen_assistants.index(assistant.id)
+        return assistant.display_priority or float("inf")
+
+    visible_assistants.sort(key=get_assistant_priority)
+
+    return visible_assistants
