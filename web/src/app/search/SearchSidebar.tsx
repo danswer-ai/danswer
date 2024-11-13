@@ -18,10 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED } from "@/lib/constants";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { Logo } from "@/components/Logo";
 import { SearchTab } from "../chat/sessionSidebar/SearchTab";
 import { useSearchContext } from "@/context/SearchContext";
 import { ChatSession } from "../chat/interfaces";
+import { Logo } from "@/components/Logo";
+import ArnoldAi from "../../../../public/arnold_ai.png";
 
 export const SearchSidebar = ({
   isExpanded,
@@ -59,12 +60,17 @@ export const SearchSidebar = ({
         id="chat-sidebar"
       >
         <div className="flex items-center gap-2 w-full relative justify-center px-4 pb-4">
-          <div className="flex">
-            {workspaces && workspaces.workspace_name ? (
-              <Image src={EnmeddLogo} alt="enmedd-logo" height={40} />
+          <div className="flex h-full items-center gap-1">
+            {workspaces && workspaces.use_custom_logo ? (
+              <Logo />
             ) : (
-              <Image src={EnmeddLogo} alt="enmedd-logo" height={40} />
+              <Image src={ArnoldAi} alt="arnoldai-logo" height={32} />
             )}
+            <span className="text-lg font-semibold">
+              {workspaces && workspaces.workspace_name
+                ? workspaces.workspace_name
+                : "Arnold AI"}
+            </span>
           </div>
 
           {/* <Button
