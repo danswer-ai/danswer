@@ -505,7 +505,6 @@ def delete_documents_complete__no_commit(
     db_session: Session, document_ids: list[str]
 ) -> None:
     """This completely deletes the documents from the db, including all foreign key relationships"""
-    logger.info(f"Deleting {len(document_ids)} documents from the DB")
     delete_documents_by_connector_credential_pair__no_commit(db_session, document_ids)
     delete_document_feedback_for_documents__no_commit(
         document_ids=document_ids, db_session=db_session
