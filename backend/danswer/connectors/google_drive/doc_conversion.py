@@ -7,6 +7,7 @@ from googleapiclient.errors import HttpError  # type: ignore
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
+from danswer.connectors.google_drive.constants import DRIVE_FOLDER_TYPE
 from danswer.connectors.google_drive.constants import DRIVE_SHORTCUT_TYPE
 from danswer.connectors.google_drive.constants import UNSUPPORTED_FILE_TYPE_CONTENT
 from danswer.connectors.google_drive.models import GDriveMimeType
@@ -16,6 +17,7 @@ from danswer.connectors.google_utils.resources import GoogleDocsService
 from danswer.connectors.google_utils.resources import GoogleDriveService
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
+from danswer.connectors.models import SlimDocument
 from danswer.file_processing.extract_file_text import docx_to_text
 from danswer.file_processing.extract_file_text import pptx_to_text
 from danswer.file_processing.extract_file_text import read_pdf_file
@@ -24,6 +26,7 @@ from danswer.file_processing.unstructured import unstructured_to_text
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
 
 # these errors don't represent a failure in the connector, but simply files
 # that can't / shouldn't be indexed
@@ -120,6 +123,10 @@ def convert_drive_item_to_document(
         if file.get("mimeType") == DRIVE_SHORTCUT_TYPE:
             logger.info("Ignoring Drive Shortcut Filetype")
             return None
+        # Skip files that are folders
+        if file.get("mimeType") == DRIVE_FOLDER_TYPE:
+            logger.info("Ignoring Drive Folder Filetype")
+            return None
 
         sections: list[Section] = []
 
@@ -133,7 +140,6 @@ def convert_drive_item_to_document(
                     f"Ran into exception '{e}' when pulling sections from Google Doc '{file['name']}'."
                     " Falling back to basic extraction."
                 )
-
         # NOTE: this will run for either (1) the above failed or (2) the file is not a Google Doc
         if not sections:
             try:
@@ -150,7 +156,6 @@ def convert_drive_item_to_document(
                     return None
 
                 raise
-
         if not sections:
             return None
 
@@ -173,3 +178,20 @@ def convert_drive_item_to_document(
 
         logger.exception("Ran into exception when pulling a file from Google Drive")
     return None
+
+
+def build_slim_document(file: GoogleDriveFileType) -> SlimDocument | None:
+    # Skip files that are folders or shortcuts
+    if file.get("mimeType") in [DRIVE_FOLDER_TYPE, DRIVE_SHORTCUT_TYPE]:
+        return None
+
+    return SlimDocument(
+        id=file["webViewLink"],
+        perm_sync_data={
+            "doc_id": file.get("id"),
+            "permissions": file.get("permissions", []),
+            "permission_ids": file.get("permissionIds", []),
+            "name": file.get("name"),
+            "owner_email": file.get("owners", [{}])[0].get("emailAddress"),
+        },
+    )

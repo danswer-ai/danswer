@@ -37,6 +37,7 @@ import {
   ColorSlackIcon,
   XenforoIcon,
   FreshdeskIcon,
+  FirefliesIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -288,6 +289,12 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Freshdesk",
     category: SourceCategory.CustomerSupport,
     docs: "https://docs.danswer.dev/connectors/freshdesk",
+  },
+  fireflies: {
+    icon: FirefliesIcon,
+    displayName: "Fireflies",
+    category: SourceCategory.Other,
+    docs: "https://docs.danswer.dev/connectors/fireflies",
   },
   // currently used for the Internet Search tool docs, which is why
   // a globe is used

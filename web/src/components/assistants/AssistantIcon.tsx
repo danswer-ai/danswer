@@ -25,7 +25,7 @@ export function AssistantIcon({
   disableToolip,
 }: {
   assistant: Persona;
-  size?: "small" | "medium" | "large" | "header";
+  size?: "xs" | "small" | "medium" | "large" | "header";
   border?: boolean;
   disableToolip?: boolean;
 }) {
@@ -52,7 +52,9 @@ export function AssistantIcon({
                     ? "w-14 h-14"
                     : size === "medium"
                       ? "w-8 h-8"
-                      : "w-6 h-6"
+                      : size === "xs"
+                        ? "w-4 h-4"
+                        : "w-6 h-6"
               }`}
             src={buildImgUrl(assistant.uploaded_image_id)}
             loading="lazy"
@@ -68,7 +70,9 @@ export function AssistantIcon({
                         ? "w-14 h-14"
                         : size === "medium"
                           ? "w-8 h-8"
-                          : "w-6 h-6"
+                          : size === "xs"
+                            ? "w-4 h-4"
+                            : "w-6 h-6"
                   } `}
           >
             {createSVG(
@@ -80,7 +84,9 @@ export function AssistantIcon({
                   ? 56
                   : size === "medium"
                     ? 32
-                    : 24
+                    : size === "xs"
+                      ? 16
+                      : 24
             )}
           </div>
         ) : (
@@ -90,6 +96,7 @@ export function AssistantIcon({
                   ${size === "large" ? "w-10 h-10" : ""}
                   ${size === "header" ? "w-14 h-14" : ""}
                   ${size === "medium" ? "w-8 h-8" : ""}
+                  ${size === "xs" ? "w-4 h-4" : ""}
                   ${!size || size === "small" ? "w-6 h-6" : ""} `}
             style={{ backgroundColor: color }}
           />

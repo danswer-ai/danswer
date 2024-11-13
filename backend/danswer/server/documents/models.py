@@ -4,7 +4,6 @@ from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic import Field
-from pydantic import model_validator
 
 from danswer.configs.app_configs import MASK_CREDENTIAL_PREFIX
 from danswer.configs.constants import DocumentSource
@@ -15,11 +14,26 @@ from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
+from danswer.db.models import Document as DbDocument
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexAttemptError as DbIndexAttemptError
 from danswer.db.models import IndexingStatus
 from danswer.db.models import TaskStatus
 from danswer.server.utils import mask_credential_dict
+
+
+class DocumentSyncStatus(BaseModel):
+    doc_id: str
+    last_synced: datetime | None
+    last_modified: datetime | None
+
+    @classmethod
+    def from_model(cls, doc: DbDocument) -> "DocumentSyncStatus":
+        return DocumentSyncStatus(
+            doc_id=doc.id,
+            last_synced=doc.last_synced,
+            last_modified=doc.last_modified,
+        )
 
 
 class DocumentInfo(BaseModel):
@@ -377,18 +391,7 @@ class GoogleServiceAccountKey(BaseModel):
 
 
 class GoogleServiceAccountCredentialRequest(BaseModel):
-    google_drive_primary_admin: str | None = None  # email of user to impersonate
-    gmail_primary_admin: str | None = None  # email of user to impersonate
-
-    @model_validator(mode="after")
-    def check_user_delegation(self) -> "GoogleServiceAccountCredentialRequest":
-        if (self.google_drive_primary_admin is None) == (
-            self.gmail_primary_admin is None
-        ):
-            raise ValueError(
-                "Exactly one of google_drive_primary_admin or gmail_primary_admin must be set"
-            )
-        return self
+    google_primary_admin: str | None = None  # email of user to impersonate
 
 
 class FileUploadResponse(BaseModel):

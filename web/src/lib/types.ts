@@ -8,6 +8,7 @@ interface UserPreferences {
   visible_assistants: number[];
   hidden_assistants: number[];
   default_model: string | null;
+  recent_assistants: number[];
 }
 
 export enum UserStatus {
@@ -265,6 +266,7 @@ const validSources = [
   "not_applicable",
   "ingestion_api",
   "freshdesk",
+  "fireflies",
 ] as const;
 
 export type ValidSources = (typeof validSources)[number];

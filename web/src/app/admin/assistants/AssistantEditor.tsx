@@ -5,6 +5,7 @@ import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
   ArrayHelpers,
@@ -244,9 +245,6 @@ export function AssistantEditor({
               Yup.object().shape({
                 name: Yup.string().required(
                   "Each starter message must have a name"
-                ),
-                description: Yup.string().required(
-                  "Each starter message must have a description"
                 ),
                 message: Yup.string().required(
                   "Each starter message must have a message"
@@ -1053,36 +1051,6 @@ export function AssistantEditor({
                                         </div>
 
                                         <div className="mt-3">
-                                          <Label small>Description</Label>
-                                          <SubLabel>
-                                            A description which tells the user
-                                            what they might want to use this
-                                            Starter Message for. For example
-                                            &quot;to a client about a new
-                                            feature&quot;
-                                          </SubLabel>
-                                          <Field
-                                            name={`starter_messages.${index}.description`}
-                                            className={`
-                                            border 
-                                            border-border 
-                                            bg-background 
-                                            rounded 
-                                            w-full 
-                                            py-2 
-                                            px-3 
-                                            mr-4
-                                          `}
-                                            autoComplete="off"
-                                          />
-                                          <ErrorMessage
-                                            name={`starter_messages[${index}].description`}
-                                            component="div"
-                                            className="text-error text-sm mt-1"
-                                          />
-                                        </div>
-
-                                        <div className="mt-3">
                                           <Label small>Message</Label>
                                           <SubLabel>
                                             The actual message to be sent as the
@@ -1102,7 +1070,9 @@ export function AssistantEditor({
                                               w-full 
                                               py-2 
                                               px-3 
+                                              min-h-12
                                               mr-4
+                                              line-clamp-
                                           `}
                                             as="textarea"
                                             autoComplete="off"

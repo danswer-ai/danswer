@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserRole
+from danswer.db.api_key import get_api_key_email_pattern
 from danswer.db.engine import get_async_session
 from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.models import AccessToken
@@ -22,7 +23,6 @@ from danswer.db.models import User
 from danswer.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,
 )
-from ee.danswer.db.api_key import get_api_key_email_pattern
 
 
 def get_default_admin_user_emails() -> list[str]:

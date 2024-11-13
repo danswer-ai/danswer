@@ -20,6 +20,8 @@ from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
 from danswer.db.engine import SqlEngine
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
+from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorPermissionSync
+from danswer.redis.redis_connector_ext_group_sync import RedisConnectorExternalGroupSync
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_connector_stop import RedisConnectorStop
@@ -75,12 +77,15 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME)
     SqlEngine.init_engine(pool_size=8, max_overflow=0)
 
-    app_base.wait_for_redis(sender, **kwargs)
-
-    logger.info("Running as the primary celery worker.")
-
+    # Startup checks are not needed in multi-tenant case
     if MULTI_TENANT:
         return
+
+    app_base.wait_for_redis(sender, **kwargs)
+    app_base.wait_for_db(sender, **kwargs)
+    app_base.wait_for_vespa(sender, **kwargs)
+
+    logger.info("Running as the primary celery worker.")
 
     # This is singleton work that should be done on startup exactly once
     # by the primary worker. This is unnecessary in the multi tenant scenario
@@ -130,6 +135,10 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     RedisConnectorIndex.reset_all(r)
 
     RedisConnectorStop.reset_all(r)
+
+    RedisConnectorPermissionSync.reset_all(r)
+
+    RedisConnectorExternalGroupSync.reset_all(r)
 
 
 @worker_ready.connect
@@ -230,6 +239,8 @@ celery_app.autodiscover_tasks(
         "danswer.background.celery.tasks.connector_deletion",
         "danswer.background.celery.tasks.indexing",
         "danswer.background.celery.tasks.periodic",
+        "danswer.background.celery.tasks.doc_permission_syncing",
+        "danswer.background.celery.tasks.external_group_syncing",
         "danswer.background.celery.tasks.pruning",
         "danswer.background.celery.tasks.shared",
         "danswer.background.celery.tasks.vespa",
