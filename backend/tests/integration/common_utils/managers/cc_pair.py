@@ -326,6 +326,10 @@ class CCPairManager:
         cc_pair: DATestCCPair,
         user_performing_action: DATestUser | None = None,
     ) -> None:
+        """This function triggers a permission sync.
+        Naming / intent of this function probably could use improvement, but currently it's letting
+        409 Conflict pass through since if it's running that's what we were trying to do anyway.
+        """
         result = requests.post(
             url=f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair.id}/sync-permissions",
             headers=user_performing_action.headers
