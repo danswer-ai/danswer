@@ -4,18 +4,10 @@ from uuid import UUID
 from fastapi_users.password import PasswordHelper
 from sqlalchemy import func
 from sqlalchemy import select
-from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from danswer.auth.noauth_user import fetch_no_auth_user
-from danswer.auth.noauth_user import set_no_auth_user_preferences
 from danswer.auth.schemas import UserRole
-from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.constants import AuthType
-from danswer.db.models import Persona
 from danswer.db.models import User
-from danswer.db.persona import get_personas
-from danswer.key_value_store.factory import get_kv_store
 
 
 def list_users(
@@ -105,58 +97,6 @@ def batch_add_non_web_user_if_not_exists__no_commit(
     db_session.flush()  # generate ids
 
     return found_users + new_users
-
-
-def get_ordered_assistants_for_user(
-    user: User | None, db_session: Session
-) -> list[Persona]:
-    assistants = get_personas(
-        db_session=db_session,
-        user=user,
-        include_deleted=True,
-        joinedload_all=True,
-    )
-
-    def get_assistant_priority(assistant: Persona) -> tuple[int, float]:
-        if user and user.chosen_assistants:
-            chosen_assistants = user.chosen_assistants
-            if assistant.id in chosen_assistants:
-                return (0, chosen_assistants.index(assistant.id))
-        return (1, assistant.display_priority or float("inf"))
-
-    assistants.sort(key=get_assistant_priority)
-
-    return assistants
-
-
-def add_assistant_to_user_chosen_assistants(
-    user: User | None, persona_id: int, db_session: Session
-) -> None:
-    assistant_id = persona_id
-    ordered_assistants_ids = [
-        assistant.id for assistant in get_ordered_assistants_for_user(user, db_session)
-    ]
-
-    if assistant_id not in ordered_assistants_ids:
-        ordered_assistants_ids.append(assistant_id)
-
-    if user is None:
-        if AUTH_TYPE == AuthType.DISABLED:
-            store = get_kv_store()
-            no_auth_user = fetch_no_auth_user(store)
-            no_auth_user.preferences.chosen_assistants = ordered_assistants_ids
-            set_no_auth_user_preferences(store, no_auth_user.preferences)
-            return
-        else:
-            raise RuntimeError("This should never happen")
-
-    # Update the user's chosen assistants
-    db_session.execute(
-        update(User)
-        .where(User.id == user.id)
-        .values(chosen_assistants=ordered_assistants_ids)
-    )
-    db_session.commit()
 
 
 def batch_add_non_web_user_if_not_exists(

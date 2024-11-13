@@ -178,8 +178,6 @@ export const AssistantsProvider: React.FC<{
       assistants
     );
 
-    console.log(assistants);
-    console.log(visibleAssistants);
     const finalAssistants = user
       ? orderAssistantsForUser(visibleAssistants, user)
       : visibleAssistants;

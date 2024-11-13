@@ -47,7 +47,6 @@ from danswer.db.models import Persona__User
 from danswer.db.models import SamlAccount
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
-from danswer.db.users import get_ordered_assistants_for_user
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
 from danswer.key_value_store.factory import get_kv_store
@@ -660,17 +659,6 @@ def update_user_assistant_visibility(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
-    # Fetch all assistants and get the current visible assistants for the user
-
-    ordered_assistants = [
-        assistant.id for assistant in get_ordered_assistants_for_user(user, db_session)
-    ]
-
-    # If we are showing the assistant and it is not already in the list, add it.
-    # Otherwise, leave as is and hide the assistant in `update_assistant_visibility`
-    if assistant_id not in ordered_assistants and show:
-        ordered_assistants.append(assistant_id)
-
     if user is None:
         if AUTH_TYPE == AuthType.DISABLED:
             store = get_kv_store()
@@ -680,7 +668,8 @@ def update_user_assistant_visibility(
                 preferences, assistant_id, show
             )
             if updated_preferences.chosen_assistants is not None:
-                updated_preferences.chosen_assistants = ordered_assistants
+                updated_preferences.chosen_assistants.append(assistant_id)
+
             set_no_auth_user_preferences(store, updated_preferences)
             return
         else:
@@ -691,7 +680,7 @@ def update_user_assistant_visibility(
         user_preferences, assistant_id, show
     )
     if updated_preferences.chosen_assistants is not None:
-        updated_preferences.chosen_assistants = ordered_assistants
+        updated_preferences.chosen_assistants.append(assistant_id)
     db_session.execute(
         update(User)
         .where(User.id == user.id)  # type: ignore
