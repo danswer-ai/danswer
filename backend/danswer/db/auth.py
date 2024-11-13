@@ -44,7 +44,7 @@ def get_total_active_users_count(db_session: Session) -> int:
         db_session.query(User)
         .filter(
             ~User.email.endswith(get_api_key_email_pattern()),  # type: ignore
-            User.has_web_login is True,
+            User.has_web_login is True,  # type: ignore
         )
         .count()
     )
