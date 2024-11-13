@@ -5,6 +5,7 @@ import {
   IndexAttemptSnapshot,
   ValidStatuses,
 } from "@/lib/types";
+import { UUID } from "crypto";
 
 export enum ConnectorCredentialPairStatus {
   ACTIVE = "ACTIVE",
@@ -26,6 +27,8 @@ export interface CCPairFullInfo {
   is_editable_for_current_user: boolean;
   deletion_failure_message: string | null;
   indexing: boolean;
+  creator: UUID | null;
+  creator_email: string | null;
 }
 
 export interface PaginatedIndexAttempts {

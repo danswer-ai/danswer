@@ -45,6 +45,7 @@ def test_connector_creation(reset: None) -> None:
     assert cc_pair_info
     assert cc_pair_info.creator
     assert str(cc_pair_info.creator) == admin_user.id
+    assert cc_pair_info.creator_email == admin_user.email
 
 
 def test_connector_deletion(reset: None, vespa_client: vespa_fixture) -> None:

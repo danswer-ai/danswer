@@ -238,6 +238,7 @@ class CCPairFullInfo(BaseModel):
     deletion_failure_message: str | None
     indexing: bool
     creator: UUID | None
+    creator_email: str | None
 
     @classmethod
     def from_models(
@@ -284,6 +285,7 @@ class CCPairFullInfo(BaseModel):
             deletion_failure_message=cc_pair_model.deletion_failure_message,
             indexing=indexing,
             creator=cc_pair_model.creator_id,
+            creator_email=cc_pair_model.creator.email,
         )
 
 
