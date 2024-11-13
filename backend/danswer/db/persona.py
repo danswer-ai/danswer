@@ -743,5 +743,4 @@ def delete_persona_by_name(
     )
 
     db_session.execute(stmt)
-
     db_session.commit()

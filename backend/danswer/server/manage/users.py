@@ -630,31 +630,25 @@ def update_user_assistant_list(
     db_session.commit()
 
 
-def update_assistant_list(
+def update_assistant_visibility(
     preferences: UserPreferences, assistant_id: int, show: bool
 ) -> UserPreferences:
     visible_assistants = preferences.visible_assistants or []
     hidden_assistants = preferences.hidden_assistants or []
-    chosen_assistants = preferences.chosen_assistants or []
 
     if show:
         if assistant_id not in visible_assistants:
             visible_assistants.append(assistant_id)
         if assistant_id in hidden_assistants:
             hidden_assistants.remove(assistant_id)
-        if assistant_id not in chosen_assistants:
-            chosen_assistants.append(assistant_id)
     else:
         if assistant_id in visible_assistants:
             visible_assistants.remove(assistant_id)
         if assistant_id not in hidden_assistants:
             hidden_assistants.append(assistant_id)
-        if assistant_id in chosen_assistants:
-            chosen_assistants.remove(assistant_id)
 
     preferences.visible_assistants = visible_assistants
     preferences.hidden_assistants = hidden_assistants
-    preferences.chosen_assistants = chosen_assistants
     return preferences
 
 
@@ -670,15 +664,23 @@ def update_user_assistant_visibility(
             store = get_kv_store()
             no_auth_user = fetch_no_auth_user(store)
             preferences = no_auth_user.preferences
-            updated_preferences = update_assistant_list(preferences, assistant_id, show)
+            updated_preferences = update_assistant_visibility(
+                preferences, assistant_id, show
+            )
+            if updated_preferences.chosen_assistants is not None:
+                updated_preferences.chosen_assistants.append(assistant_id)
+
             set_no_auth_user_preferences(store, updated_preferences)
             return
         else:
             raise RuntimeError("This should never happen")
 
     user_preferences = UserInfo.from_model(user).preferences
-    updated_preferences = update_assistant_list(user_preferences, assistant_id, show)
-
+    updated_preferences = update_assistant_visibility(
+        user_preferences, assistant_id, show
+    )
+    if updated_preferences.chosen_assistants is not None:
+        updated_preferences.chosen_assistants.append(assistant_id)
     db_session.execute(
         update(User)
         .where(User.id == user.id)  # type: ignore

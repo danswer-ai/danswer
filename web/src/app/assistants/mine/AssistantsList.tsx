@@ -343,8 +343,6 @@ export function AssistantsList() {
 
       setCurrentlyVisibleAssistants(updatedAssistants);
       await updateUserAssistantList(updatedAssistants.map((a) => a.id));
-      await refreshUser();
-      await refreshAssistants();
     }
   }
 
