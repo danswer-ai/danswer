@@ -162,7 +162,7 @@ export const SearchResultsDisplay = ({
     <div>
       {documents && documents.length > 0 && (
         <div className="mt-4">
-          <div className="font-bold flex justify-between text-emphasis border-b pb-1 border-border text-lg">
+          <div className="font-bold flex justify-between text-emphasis border-b pb-3 border-border text-lg">
             <p>Results</p>
             {!DISABLE_LLM_DOC_RELEVANCE &&
               (contentEnriched || searchResponse.additional_relevance) && (
@@ -176,10 +176,8 @@ export const SearchResultsDisplay = ({
                           setShowAll((showAll) => !showAll);
                         }
                       }}
-                      className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 text-xs transition-all duration-300 w-20 h-8 ${
-                        !sweep
-                          ? "bg-background-agentic-toggled text-text-agentic-toggled"
-                          : "bg-background-agentic-untoggled text-text-agentic-untoggled"
+                      className={`flex items-center justify-center animate-fade-in-up rounded-lg p-1 px-3 text-xs transition-all duration-300 w-auto h-8 ${
+                        !sweep ? "bg-success-500" : "bg-destructive-500"
                       }`}
                     >
                       <div className={`flex items-center`}>

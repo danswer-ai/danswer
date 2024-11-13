@@ -48,25 +48,26 @@ export const AnimatedToggle = ({
         >
           <div ref={contentRef} className="flex items-center">
             <Switch checked={isOn} onCheckedChange={handleToggle} />
-            <p className="ml-2 text-sm">Agentic</p>
+            <p className="ml-2 text-sm">Smart Search</p>
           </div>
         </div>
       }
       asChild
     >
       <div className="p-2">
-        <h2 className="mb-2 text-xl font-bold text-text-800">Agentic Search</h2>
+        <h2 className="mb-2 text-xl font-bold text-text-800">Smart Search</h2>
         <p className="mb-4 text-sm text-text-700">
-          Our most powerful search, have an AI agent guide you to pinpoint
+          Our most powerful search, making use of{" "}
+          <strong>Agentic Search</strong> technology to guide you pinpoint
           exactly what you&apos;re looking for.
         </p>
         <Divider />
         <h2 className="mb-2 text-xl font-bold text-text-800">Fast Search</h2>
         <p className="mb-4 text-sm text-text-700">
-          Get quality results immediately, best suited for instant access to
-          your documents.
+          Make use of <strong>Full-text search</strong>. Get quality results
+          immediately, best suited for instant access to your documents.
         </p>
-        <p className="flex mt-2 text-xs">Shortcut: ({commandSymbol}/)</p>
+        <p className="flex mt-2 text-xs">Shortcut: ({commandSymbol} /)</p>
       </div>
     </CustomTooltip>
   );

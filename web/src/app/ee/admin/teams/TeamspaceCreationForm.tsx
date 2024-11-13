@@ -83,9 +83,7 @@ export const TeamspaceCreationForm = ({
           user_ids: Yup.array().of(Yup.string().required()),
           cc_pair_ids: Yup.array().of(Yup.number().required()),
           document_set_ids: Yup.array().of(Yup.number().required()),
-          assistant_ids: Yup.array().of(
-            Yup.number().required("Please select an assistant")
-          ),
+          assistant_ids: Yup.array().of(Yup.number().required()),
         })}
         onSubmit={async (values, formikHelpers) => {
           formikHelpers.setSubmitting(true);

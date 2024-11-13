@@ -111,6 +111,38 @@ h3 {
   overflow: hidden;
 }
 
+.loading-text {
+  display: inline-block;
+  color: #e5e5e5;
+
+  background: linear-gradient(
+    -90deg,
+    #a3a3a3 0%,
+    #000000 5%,
+    #a3a3a3 10%,
+    #a3a3a3 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmerTransition 1.5s ease-out infinite;
+}
+
+.collapsible {
+  max-height: 300px;
+  transition:
+    max-height 0.5s ease-in-out,
+    opacity 0.5s ease-in-out;
+  opacity: 1;
+}
+
+.collapsible-closed {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
 /* Base styles for code blocks */
 .prose :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
   background-color: theme("colors.code-bg");

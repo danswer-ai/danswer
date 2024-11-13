@@ -96,7 +96,7 @@ export function CustomDatePicker({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="border-border border-r-0 rounded-r-none items-center gap-2"
+            className="items-center gap-2 border-border rounded-r-none"
           >
             <CalendarIcon size={16} />
             {displayRange}

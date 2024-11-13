@@ -4,7 +4,7 @@ import {
   SearchEnmeddDocument,
 } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
@@ -148,7 +148,7 @@ export function DocumentMetadataBlock({
               return (
                 <MetadataBadge
                   key={key}
-                  icon={<Tag size={12} />}
+                  icon={<Tag size={12} className="shrink-0" />}
                   value={`${key}=${value}`}
                 />
               );
@@ -200,11 +200,6 @@ export const DocumentDisplay = ({
         transitionDelay: `${index! * 10}ms`, // Add a delay to the transition based on index
       }}
     >
-      <div className={`absolute overflow-y-auto flex top-3 right-3`}>
-        {!hide && (document.is_relevant || additional_relevance?.relevant) && (
-          <Star size={16} className="shrink-0" />
-        )}
-      </div>
       <div
         className={`collapsible space-y-2.5 ${
           hide ? "collapsible-closed overflow-y-auto border-transparent" : ""
@@ -242,11 +237,12 @@ export const DocumentDisplay = ({
                         (alternativeToggled) => !alternativeToggled
                       )
                     }
+                    className="flex items-center justify-center"
                   >
                     <CustomTooltip
                       trigger={
                         <LightBulbIcon
-                          className={`${alternativeToggled ? "text-green-600" : "text-blue-600"} my-auto ml-2 h-4 w-4 cursor-pointer`}
+                          className={`${alternativeToggled ? "text-green-600" : "text-blue-600"} my-auto h-4 w-4 cursor-pointer`}
                         />
                       }
                     >
@@ -255,6 +251,13 @@ export const DocumentDisplay = ({
                   </button>
                 )}
             </TooltipGroup>
+            {!hide &&
+              (document.is_relevant || additional_relevance?.relevant) && (
+                <Badge variant="success" className="ml-2">
+                  <Star size={16} className="shrink-0" />
+                  Relevant
+                </Badge>
+              )}
           </div>
         </div>
         <div>

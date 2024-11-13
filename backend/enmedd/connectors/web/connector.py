@@ -84,7 +84,7 @@ def protected_url_check(url: str) -> None:
 
 def check_internet_connection(url: str) -> None:
     try:
-        response = requests.get(url, timeout=3)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         # Extract status code from the response, defaulting to -1 if response is None
