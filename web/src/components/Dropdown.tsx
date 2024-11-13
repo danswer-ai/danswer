@@ -139,6 +139,7 @@ export function SearchMultiSelectDropdown({
             mt-3
             w-full
             rounded-md
+            z-50
             shadow-lg
             bg-background
             border
