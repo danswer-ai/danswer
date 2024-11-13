@@ -131,8 +131,10 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
 
         self.include_shared_drives = include_shared_drives
         shared_drive_url_list = _extract_str_list_from_comma_str(shared_drive_urls)
-        self._requested_shared_drive_ids = set(
-            _extract_ids_from_urls(shared_drive_url_list)
+        self._requested_shared_drive_ids = (
+            set(_extract_ids_from_urls(shared_drive_url_list))
+            if include_shared_drives
+            else set()
         )
 
         self.include_my_drives = include_my_drives
@@ -240,6 +242,8 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         self,
         user_email: str,
         is_slim: bool,
+        filtered_folder_ids: set[str],
+        filtered_drive_ids: set[str],
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
@@ -263,7 +267,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 end=end,
             )
 
-        remaining_drive_ids = self._requested_shared_drive_ids - self._retrieved_ids
+        remaining_drive_ids = filtered_drive_ids - self._retrieved_ids
         for drive_id in remaining_drive_ids:
             yield from get_files_in_shared_drive(
                 service=drive_service,
@@ -274,7 +278,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 end=end,
             )
 
-        remaining_folders = self._requested_folder_ids - self._retrieved_ids
+        remaining_folders = filtered_folder_ids - self._retrieved_ids
         for folder_id in remaining_folders:
             yield from crawl_folders_for_files(
                 service=drive_service,
@@ -296,7 +300,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         all_drive_ids: set[str] = self._get_all_drive_ids()
 
         # remove drive ids from the folder ids because they are queried differently
-        self._requested_folder_ids -= all_drive_ids
+        filtered_folder_ids = self._requested_folder_ids - all_drive_ids
 
         # Remove drive_ids that are not in the all_drive_ids and check them as folders instead
         invalid_drive_ids = self._requested_shared_drive_ids - all_drive_ids
@@ -305,18 +309,23 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
                 f"Some shared drive IDs were not found. IDs: {invalid_drive_ids}"
             )
             logger.warning("Checking for folder access instead...")
-            self._requested_folder_ids.update(invalid_drive_ids)
+            filtered_folder_ids.update(invalid_drive_ids)
 
-        if not self.include_shared_drives:
-            self._requested_shared_drive_ids = set()
-        elif not self._requested_shared_drive_ids:
-            self._requested_shared_drive_ids = all_drive_ids
+        filtered_drive_ids = self._requested_shared_drive_ids - invalid_drive_ids
+        if not filtered_drive_ids:
+            filtered_drive_ids = all_drive_ids
 
         # Process users in parallel using ThreadPoolExecutor
         with ThreadPoolExecutor(max_workers=10) as executor:
             future_to_email = {
                 executor.submit(
-                    self._impersonate_user_for_retrieval, email, is_slim, start, end
+                    self._impersonate_user_for_retrieval,
+                    email,
+                    is_slim,
+                    filtered_folder_ids,
+                    filtered_drive_ids,
+                    start,
+                    end,
                 ): email
                 for email in all_org_emails
             }
