@@ -12,11 +12,14 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
+from danswer.configs.app_configs import AUTH_TYPE
+from danswer.configs.constants import AuthType
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import NotificationType
 from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.notification import create_notification
+from danswer.db.persona import add_assistant_to_user_chosen_assistants
 from danswer.db.persona import create_update_persona
 from danswer.db.persona import get_persona_by_id
 from danswer.db.persona import get_personas
@@ -160,12 +163,17 @@ def create_persona(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> PersonaSnapshot:
-    return create_update_persona(
+    persona = create_update_persona(
         persona_id=None,
         create_persona_request=create_persona_request,
         user=user,
         db_session=db_session,
     )
+    if AUTH_TYPE == AuthType.DISABLED:
+        return persona
+
+    add_assistant_to_user_chosen_assistants(user, persona.id, db_session)
+    return persona
 
 
 @basic_router.patch("/{persona_id}")

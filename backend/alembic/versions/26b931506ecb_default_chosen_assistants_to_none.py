@@ -16,7 +16,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     op.add_column(
         "user", sa.Column("chosen_assistants_new", postgresql.JSONB(), nullable=True)
     )
@@ -39,7 +39,7 @@ def upgrade():
     )
 
 
-def downgrade():
+def downgrade() -> None:
     op.add_column(
         "user",
         sa.Column(

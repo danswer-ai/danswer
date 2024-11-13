@@ -756,24 +756,33 @@ def get_ordered_assistants_for_user(
         joinedload_all=True,
     )
 
-    if user:
-        visible_assistants = [
-            assistant
-            for assistant in assistants
-            if assistant.id in (user.visible_assistants or [])
-        ]
-    else:
-        visible_assistants = [
-            assistant for assistant in assistants if assistant.is_default_persona
-        ]
-
-    def get_assistant_priority(assistant):
+    def get_assistant_priority(assistant: Persona) -> tuple[int, float]:
         if user and user.chosen_assistants:
             chosen_assistants = user.chosen_assistants
             if assistant.id in chosen_assistants:
-                return chosen_assistants.index(assistant.id)
-        return assistant.display_priority or float("inf")
+                return (0, chosen_assistants.index(assistant.id))
+        return (1, assistant.display_priority or float("inf"))
 
-    visible_assistants.sort(key=get_assistant_priority)
+    assistants.sort(key=get_assistant_priority)
 
-    return visible_assistants
+    return assistants
+
+
+def add_assistant_to_user_chosen_assistants(
+    user: User, persona_id: int, db_session: Session
+) -> None:
+    assistant_id = persona_id
+    ordered_assistants_ids = [
+        assistant.id for assistant in get_ordered_assistants_for_user(user, db_session)
+    ]
+
+    if assistant_id not in ordered_assistants_ids:
+        ordered_assistants_ids.append(assistant_id)
+
+    # Update the user's chosen assistants
+    db_session.execute(
+        update(User)
+        .where(User.id == user.id)
+        .values(chosen_assistants=ordered_assistants_ids)
+    )
+    db_session.commit()

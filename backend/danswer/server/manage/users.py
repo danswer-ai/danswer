@@ -666,12 +666,14 @@ def update_user_assistant_visibility(
     ]
 
     # If we are showing the assistant and it is not already in the list, add it.
-    # Otherwise, leave as is and hide the assistant in `update_assistant_visibilitys`
+    # Otherwise, leave as is and hide the assistant in `update_assistant_visibility`
     if assistant_id not in ordered_assistants and show:
+        print("Adding assistant to list", assistant_id)
         ordered_assistants.append(assistant_id)
 
     if user is None:
         if AUTH_TYPE == AuthType.DISABLED:
+            print("AUTH_TYPE == AuthType.DISABLED")
             store = get_kv_store()
             no_auth_user = fetch_no_auth_user(store)
             preferences = no_auth_user.preferences
@@ -688,6 +690,7 @@ def update_user_assistant_visibility(
     updated_preferences = update_assistant_visibility(
         user_preferences, assistant_id, show
     )
+    print("Updating user preferences", updated_preferences)
     updated_preferences.chosen_assistants = ordered_assistants
     db_session.execute(
         update(User)
