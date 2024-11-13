@@ -15,7 +15,6 @@ import { ChatSession } from "../interfaces";
 
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_ASSISTANT } from "@/lib/constants";
 
-import { ChatTab } from "./ChatTab";
 import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
@@ -190,8 +189,7 @@ export const ChatSidebar = ({
             )}
             <Separator className="mt-4" />
           </div>
-
-          <ChatTab
+          <PageTab
             existingChats={existingChats}
             currentChatId={currentChatId}
             folders={folders}
