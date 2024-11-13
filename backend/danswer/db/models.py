@@ -176,7 +176,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     cc_pairs: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
         back_populates="creator",
-        primaryjoin="User.id == ConnectorCredentialPair.creator_id",
+        primaryjoin="User.id == foreign(ConnectorCredentialPair.creator_id)",
     )
 
 
@@ -465,7 +465,7 @@ class ConnectorCredentialPair(Base):
     creator: Mapped["User"] = relationship(
         "User",
         back_populates="cc_pairs",
-        primaryjoin="ConnectorCredentialPair.creator_id == User.id",
+        primaryjoin="foreign(ConnectorCredentialPair.creator_id) == remote(User.id)",
     )
 
 
