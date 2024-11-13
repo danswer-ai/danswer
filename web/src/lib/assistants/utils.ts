@@ -100,11 +100,6 @@ export function orderAssistantsForUser(
   );
 
   remainingAssistants.sort((a, b) => {
-    // First, prioritize default personas
-    if (a.is_default_persona !== b.is_default_persona) {
-      return a.is_default_persona ? -1 : 1;
-    }
-    // If both are default or both are not default, then sort by display priority
     const priorityA = a.display_priority ?? Number.MAX_SAFE_INTEGER;
     const priorityB = b.display_priority ?? Number.MAX_SAFE_INTEGER;
     return priorityA - priorityB;
