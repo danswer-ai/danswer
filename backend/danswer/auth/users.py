@@ -228,12 +228,17 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
+        referral_source = None
+        if request is not None:
+            referral_source = request.cookies.get("referral_source", None)
+
         tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
             async_return_default_schema,
         )(
             email=user_create.email,
+            referral_source=referral_source,
         )
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
@@ -294,12 +299,17 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> models.UOAP:
+        referral_source = None
+        if request:
+            referral_source = getattr(request.state, "referral_source", None)
+
         tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
             "get_or_create_tenant_id",
             async_return_default_schema,
         )(
             email=account_email,
+            referral_source=referral_source,
         )
 
         if not tenant_id:
@@ -711,8 +721,6 @@ def generate_state_token(
 
 
 # refer to https://github.com/fastapi-users/fastapi-users/blob/42ddc241b965475390e2bce887b084152ae1a2cd/fastapi_users/fastapi_users.py#L91
-
-
 def create_danswer_oauth_router(
     oauth_client: BaseOAuth2,
     backend: AuthenticationBackend,
@@ -762,15 +770,22 @@ def get_oauth_router(
         response_model=OAuth2AuthorizeResponse,
     )
     async def authorize(
-        request: Request, scopes: List[str] = Query(None)
+        request: Request,
+        scopes: List[str] = Query(None),
     ) -> OAuth2AuthorizeResponse:
+        referral_source = request.cookies.get("referral_source", None)
+
         if redirect_url is not None:
             authorize_redirect_url = redirect_url
         else:
             authorize_redirect_url = str(request.url_for(callback_route_name))
 
         next_url = request.query_params.get("next", "/")
-        state_data: Dict[str, str] = {"next_url": next_url}
+
+        state_data: Dict[str, str] = {
+            "next_url": next_url,
+            "referral_source": referral_source or "default_referral",
+        }
         state = generate_state_token(state_data, state_secret)
         authorization_url = await oauth_client.get_authorization_url(
             authorize_redirect_url,
@@ -829,8 +844,11 @@ def get_oauth_router(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
         next_url = state_data.get("next_url", "/")
+        referral_source = state_data.get("referral_source", None)
 
-        # Authenticate user
+        request.state.referral_source = referral_source
+
+        # Proceed to authenticate or create the user
         try:
             user = await user_manager.oauth_callback(
                 oauth_client.name,
@@ -872,7 +890,6 @@ def get_oauth_router(
             redirect_response.status_code = response.status_code
         if hasattr(response, "media_type"):
             redirect_response.media_type = response.media_type
-
         return redirect_response
 
     return router
