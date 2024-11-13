@@ -56,7 +56,7 @@ class IndexingPipelineProtocol(Protocol):
         ...
 
 
-def upsert_documents_in_db(
+def _upsert_documents_in_db(
     documents: list[Document],
     index_attempt_metadata: IndexAttemptMetadata,
     db_session: Session,
@@ -243,7 +243,7 @@ def index_doc_batch_prepare(
 
     # Create records in the source of truth about these documents,
     # does not include doc_updated_at which is also used to indicate a successful update
-    upsert_documents_in_db(
+    _upsert_documents_in_db(
         documents=documents,
         index_attempt_metadata=index_attempt_metadata,
         db_session=db_session,
