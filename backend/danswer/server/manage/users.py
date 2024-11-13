@@ -47,7 +47,7 @@ from danswer.db.models import Persona__User
 from danswer.db.models import SamlAccount
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
-from danswer.db.persona import get_ordered_assistants_for_user
+from danswer.db.users import get_ordered_assistants_for_user
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
 from danswer.key_value_store.factory import get_kv_store
