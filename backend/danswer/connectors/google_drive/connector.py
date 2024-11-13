@@ -244,9 +244,16 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
         drive_service = get_drive_service(self.creds, user_email)
+
+        # if we are including my drives, try to get the current user's my
+        # drive if any of the following are true:
+        # - no specific emails were requested
+        # - the current user's email is in the requested emails
+        # - we are using OAuth (in which case we assume that is the only email we will try)
         if self.include_my_drives and (
             not self._requested_my_drive_emails
             or user_email in self._requested_my_drive_emails
+            or isinstance(self.creds, OAuthCredentials)
         ):
             yield from get_all_files_in_my_drive(
                 service=drive_service,
@@ -284,7 +291,7 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         start: SecondsSinceUnixEpoch | None = None,
         end: SecondsSinceUnixEpoch | None = None,
     ) -> Iterator[GoogleDriveFileType]:
-        all_org_emails = self._get_all_user_emails()
+        all_org_emails: list[str] = self._get_all_user_emails()
 
         all_drive_ids: set[str] = self._get_all_drive_ids()
 
