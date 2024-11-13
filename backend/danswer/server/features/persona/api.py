@@ -26,7 +26,6 @@ from danswer.db.persona import update_all_personas_display_priority
 from danswer.db.persona import update_persona_public_status
 from danswer.db.persona import update_persona_shared_users
 from danswer.db.persona import update_persona_visibility
-from danswer.db.users import add_assistant_to_user_chosen_assistants
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
 from danswer.llm.answering.prompts.utils import build_dummy_prompt
@@ -161,14 +160,12 @@ def create_persona(
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> PersonaSnapshot:
-    persona = create_update_persona(
+    return create_update_persona(
         persona_id=None,
         create_persona_request=create_persona_request,
         user=user,
         db_session=db_session,
     )
-    add_assistant_to_user_chosen_assistants(user, persona.id, db_session)
-    return persona
 
 
 @basic_router.patch("/{persona_id}")

@@ -661,6 +661,7 @@ def update_user_assistant_visibility(
     db_session: Session = Depends(get_session),
 ) -> None:
     # Fetch all assistants and get the current visible assistants for the user
+
     ordered_assistants = [
         assistant.id for assistant in get_ordered_assistants_for_user(user, db_session)
     ]
@@ -678,7 +679,8 @@ def update_user_assistant_visibility(
             updated_preferences = update_assistant_visibility(
                 preferences, assistant_id, show
             )
-            updated_preferences.chosen_assistants = ordered_assistants
+            if updated_preferences.chosen_assistants is not None:
+                updated_preferences.chosen_assistants = ordered_assistants
             set_no_auth_user_preferences(store, updated_preferences)
             return
         else:
@@ -688,7 +690,8 @@ def update_user_assistant_visibility(
     updated_preferences = update_assistant_visibility(
         user_preferences, assistant_id, show
     )
-    updated_preferences.chosen_assistants = ordered_assistants
+    if updated_preferences.chosen_assistants is not None:
+        updated_preferences.chosen_assistants = ordered_assistants
     db_session.execute(
         update(User)
         .where(User.id == user.id)  # type: ignore
