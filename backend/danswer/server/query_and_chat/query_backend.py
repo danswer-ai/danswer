@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_curator_or_admin_user
+from danswer.auth.users import current_limited_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
@@ -262,7 +263,7 @@ def stream_query_validation(
 @basic_router.post("/stream-answer-with-quote")
 def get_answer_with_quote(
     query_request: DirectQARequest,
-    user: User = Depends(current_user),
+    user: User = Depends(current_limited_user),
     _: None = Depends(check_token_rate_limits),
 ) -> StreamingResponse:
     query = query_request.messages[0].message

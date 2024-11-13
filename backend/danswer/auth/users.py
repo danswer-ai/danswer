@@ -662,10 +662,24 @@ async def current_user_with_expired_token(
     return await double_check_user(user, include_expired=True)
 
 
-async def current_user(
+async def current_limited_user(
     user: User | None = Depends(optional_user),
 ) -> User | None:
     return await double_check_user(user)
+
+
+async def current_user(
+    user: User | None = Depends(optional_user),
+) -> User | None:
+    user = await double_check_user(user)
+    if not user:
+        return None
+
+    if user.role == UserRole.LIMITED:
+        raise BasicAuthenticationError(
+            detail="Access denied. User role is LIMITED. BASIC or higher permissions are required.",
+        )
+    return user
 
 
 async def current_curator_or_admin_user(
