@@ -14,7 +14,9 @@ VALID_SLACK_FILTERS = [
 
 
 def get_slack_bot_config_for_app_and_channel(
-    app_id: int, channel_name: str | None, db_session: Session
+    db_session: Session,
+    app_id: int,
+    channel_name: str | None,
 ) -> SlackBotConfig | None:
     if not channel_name:
         return None
@@ -30,10 +32,10 @@ def get_slack_bot_config_for_app_and_channel(
 
 
 def validate_channel_names(
+    db_session: Session,
     app_id: int,
     channel_names: list[str],
     current_slack_bot_config_id: int | None,
-    db_session: Session,
 ) -> list[str]:
     """Make sure that these channel_names don't exist in other slack bot configs.
     Returns a list of cleaned up channel names (e.g. '#' removed if present)"""

@@ -25,7 +25,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
 from danswer.connectors.slack.utils import expert_info_from_slack_id
-from danswer.danswerbot.slack.config import get_slack_bot_config_for_channel
+from danswer.danswerbot.slack.config import get_slack_bot_config_for_app_and_channel
 from danswer.danswerbot.slack.config import MAX_TENANTS_PER_POD
 from danswer.danswerbot.slack.config import TENANT_ACQUISITION_INTERVAL
 from danswer.danswerbot.slack.config import TENANT_HEARTBEAT_EXPIRATION
@@ -263,10 +263,10 @@ class SlackbotHandler:
 
                     except KvKeyNotFoundError:
                         logger.debug(f"Missing Slack Bot tokens for tenant {tenant_id}")
-                        if tenant_id in self.socket_clients:
-                            asyncio.run(self.socket_clients[tenant_id].close())
-                            del self.socket_clients[tenant_id]
-                            del self.slack_bot_tokens[tenant_id]
+                        if (tenant_id, app.id) in self.socket_clients:
+                            asyncio.run(self.socket_clients[tenant_id, app.id].close())
+                            del self.socket_clients[tenant_id, app.id]
+                            del self.slack_bot_tokens[tenant_id, app.id]
                     except Exception as e:
                         logger.exception(f"Error handling tenant {tenant_id}: {e}")
             finally:
@@ -293,7 +293,7 @@ class SlackbotHandler:
         )
 
         # Append the event handler
-        process_slack_event = create_process_slack_event(app_id=app_id)
+        process_slack_event = create_process_slack_event()
         socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 
         # Establish a WebSocket connection to the Socket Mode servers
@@ -406,8 +406,10 @@ def prefilter_requests(req: SocketModeRequest, client: TenantSocketModeClient) -
             )
 
             with get_session_with_tenant(client.tenant_id) as db_session:
-                slack_bot_config = get_slack_bot_config_for_channel(
-                    channel_name=channel_name, db_session=db_session
+                slack_bot_config = get_slack_bot_config_for_app_and_channel(
+                    db_session=db_session,
+                    app_id=client.app_id,
+                    channel_name=channel_name,
                 )
             # If DanswerBot is not specifically tagged and the channel is not set to respond to bots, ignore the message
             if (not bot_tag_id or bot_tag_id not in msg) and (
@@ -617,8 +619,10 @@ def process_message(
         token = CURRENT_TENANT_ID_CONTEXTVAR.set(client.tenant_id)
     try:
         with get_session_with_tenant(client.tenant_id) as db_session:
-            slack_bot_config = get_slack_bot_config_for_channel(
-                channel_name=channel_name, db_session=db_session
+            slack_bot_config = get_slack_bot_config_for_app_and_channel(
+                db_session=db_session,
+                app_id=client.app_id,
+                channel_name=channel_name,
             )
 
             # Be careful about this default, don't want to accidentally spam every channel
@@ -697,9 +701,9 @@ def view_routing(req: SocketModeRequest, client: TenantSocketModeClient) -> None
             return process_feedback(req, client)
 
 
-def create_process_slack_event(
-    app_id: int,
-) -> Callable[[TenantSocketModeClient, SocketModeRequest], None]:
+def create_process_slack_event() -> (
+    Callable[[TenantSocketModeClient, SocketModeRequest], None]
+):
     def process_slack_event(
         client: TenantSocketModeClient, req: SocketModeRequest
     ) -> None:
@@ -710,11 +714,11 @@ def create_process_slack_event(
         try:
             if req.type == "interactive":
                 if req.payload.get("type") == "block_actions":
-                    return action_routing(app_id, req, client)
+                    return action_routing(req, client)
                 elif req.payload.get("type") == "view_submission":
                     return view_routing(req, client)
             elif req.type == "events_api" or req.type == "slash_commands":
-                return process_message(app_id, req, client)
+                return process_message(req, client)
         except Exception:
             logger.exception("Failed to process slack event")
 

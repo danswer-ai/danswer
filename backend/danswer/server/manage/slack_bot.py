@@ -51,10 +51,10 @@ def _form_channel_config(
 
     try:
         cleaned_channel_names = validate_channel_names(
+            db_session=db_session,
             app_id=slack_bot_config_creation_request.app_id,
             channel_names=raw_channel_names,
             current_slack_bot_config_id=current_slack_bot_config_id,
-            db_session=db_session,
         )
     except ValueError as e:
         raise HTTPException(

@@ -11,7 +11,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
 from danswer.key_value_store.factory import get_kv_store
-from danswer.danswerbot.slack.tokens import KV_SLACK_BOT_TOKENS_CONFIG_KEY
 from danswer.db.models import EncryptedString, SlackApp
 
 # revision identifiers, used by Alembic.
@@ -49,7 +48,7 @@ def upgrade() -> None:
     try:
         logger.info(f"{revision}: Checking for existing Slack bot.")
 
-        tokens = cast(dict, get_kv_store().load(KV_SLACK_BOT_TOKENS_CONFIG_KEY))
+        tokens = cast(dict, get_kv_store().load("slack_bot_tokens_config_key"))
 
         bot_token = tokens.get("bot_token")
         if not bot_token:
@@ -106,7 +105,7 @@ def upgrade() -> None:
     # Delete the tokens in dynamic config
     if bot_token and app_token:
         logger.info(f"{revision}: Removing old bot and app tokens.")
-        get_kv_store().delete(KV_SLACK_BOT_TOKENS_CONFIG_KEY)
+        get_kv_store().delete("slack_bot_tokens_config_key")
 
     logger.info(f"{revision}: Applying foreign key constraint to Slack bot configs.")
     sa.ForeignKeyConstraint(

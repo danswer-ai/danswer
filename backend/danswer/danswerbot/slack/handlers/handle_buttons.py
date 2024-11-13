@@ -118,7 +118,9 @@ def handle_generate_answer_button(
 
     with get_session_with_tenant(client.tenant_id) as db_session:
         slack_bot_config = get_slack_bot_config_for_app_and_channel(
-            app_id=client.app_id, channel_name=channel_name, db_session=db_session
+            db_session=db_session,
+            app_id=client.app_id,
+            channel_name=channel_name,
         )
 
         handle_regular_answer(
@@ -257,7 +259,9 @@ def handle_followup_button(
             client=client.web_client, channel_id=channel_id
         )
         slack_bot_config = get_slack_bot_config_for_app_and_channel(
-            app_id=client.app_id, channel_name=channel_name, db_session=db_session
+            db_session=db_session,
+            app_id=client.app_id,
+            channel_name=channel_name,
         )
         if slack_bot_config:
             tag_names = slack_bot_config.channel_config.get("follow_up_tags")
