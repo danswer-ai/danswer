@@ -60,7 +60,6 @@ export async function submitConnector<T>(
   if (!connector.connector_specific_config) {
     connector.connector_specific_config = {} as T;
   }
-  console.log(connector);
 
   try {
     if (fakeCredential) {
@@ -112,7 +111,6 @@ export default function AddConnector({
   connector: ConfigurableSources;
 }) {
   const router = useRouter();
-  console.log(connector);
 
   // State for managing credentials and files
   const [currentCredential, setCurrentCredential] =
@@ -294,7 +292,6 @@ export default function AddConnector({
           }
           return;
         }
-        console.log(connector);
 
         const { message, isSuccess, response } = await submitConnector<any>(
           {

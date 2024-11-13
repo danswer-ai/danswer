@@ -217,7 +217,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
           {ccPair.access_type === "public"
             ? "Public connectors are not editable by curators."
             : ccPair.access_type === "sync"
-              ? "Sync connectors are not editable by curators."
+              ? "Sync connectors are not editable by curators unless the curator is also the owner."
               : "This connector belongs to groups where you don't have curator permissions, so it's not editable."}
         </div>
       )}
