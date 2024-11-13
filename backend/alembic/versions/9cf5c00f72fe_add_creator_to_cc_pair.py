@@ -24,9 +24,6 @@ def upgrade() -> None:
             nullable=True,
         ),
     )
-    op.create_foreign_key(
-        None, "connector_credential_pair", "user", ["creator_id"], ["id"]
-    )
 
 
 def downgrade() -> None:
