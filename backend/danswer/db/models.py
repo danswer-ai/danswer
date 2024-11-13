@@ -174,7 +174,9 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
     has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
     cc_pairs: Mapped[list["ConnectorCredentialPair"]] = relationship(
-        "ConnectorCredentialPair", back_populates="creator"
+        "ConnectorCredentialPair",
+        back_populates="creator",
+        primaryjoin="User.id == ConnectorCredentialPair.creator_id",
     )
 
 
@@ -461,7 +463,9 @@ class ConnectorCredentialPair(Base):
     # the user id of the user that created this cc pair
     creator_id: Mapped[UUID | None] = mapped_column(nullable=True)
     creator: Mapped["User"] = relationship(
-        "User", back_populates="cc_pairs", foreign_keys=[creator_id]
+        "User",
+        back_populates="cc_pairs",
+        primaryjoin="ConnectorCredentialPair.creator_id == User.id",
     )
 
 
