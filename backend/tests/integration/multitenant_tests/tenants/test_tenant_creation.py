@@ -26,7 +26,7 @@ def test_tenant_creation(reset_multitenant: None) -> None:
     test_connector = ConnectorManager.create(
         name="admin_test_connector",
         source=DocumentSource.FILE,
-        is_public=False,
+        access_type=AccessType.PRIVATE,
         user_performing_action=test_user,
     )
 
