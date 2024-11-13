@@ -28,12 +28,14 @@ import CollapsibleSection from "../assistants/CollapsibleSection";
 import { StandardAnswerCategoryResponse } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 import { StandardAnswerCategoryDropdownField } from "@/components/standardAnswers/StandardAnswerCategoryDropdown";
 
-export const SlackBotCreationForm = ({
+export const SlackBotConfigCreationForm = ({
+  app_id,
   documentSets,
   personas,
   standardAnswerCategoryResponse,
   existingSlackBotConfig,
 }: {
+  app_id: number;
   documentSets: DocumentSet[];
   personas: Persona[];
   standardAnswerCategoryResponse: StandardAnswerCategoryResponse;
@@ -58,6 +60,7 @@ export const SlackBotCreationForm = ({
         {popup}
         <Formik
           initialValues={{
+            app_id: app_id,
             channel_names: existingSlackBotConfig
               ? existingSlackBotConfig.channel_config.channel_names
               : ([""] as string[]),
@@ -99,6 +102,7 @@ export const SlackBotCreationForm = ({
               : [],
           }}
           validationSchema={Yup.object().shape({
+            app_id: Yup.number().required(),
             channel_names: Yup.array().of(Yup.string()),
             response_type: Yup.string()
               .oneOf(["quotes", "citations"])
@@ -148,7 +152,7 @@ export const SlackBotCreationForm = ({
             }
             formikHelpers.setSubmitting(false);
             if (response.ok) {
-              router.push(`/admin/bot?u=${Date.now()}`);
+              router.push(`/admin/bot/app/${app_id}?u=${Date.now()}`);
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;

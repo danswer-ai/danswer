@@ -6,6 +6,7 @@ import {
 import { Persona } from "../assistants/interfaces";
 
 interface SlackBotConfigCreationRequest {
+  app_id: number;
   document_sets: number[];
   persona_id: number | null;
   enable_auto_filters: boolean;
@@ -38,6 +39,7 @@ const buildRequestBodyFromCreationRequest = (
   creationRequest: SlackBotConfigCreationRequest
 ) => {
   return JSON.stringify({
+    app_id: creationRequest.app_id,
     channel_names: creationRequest.channel_names,
     respond_tag_only: creationRequest.respond_tag_only,
     respond_to_bots: creationRequest.respond_to_bots,
@@ -84,16 +86,6 @@ export const deleteSlackBotConfig = async (id: number) => {
     headers: {
       "Content-Type": "application/json",
     },
-  });
-};
-
-export const setSlackBotTokens = async (slackBotTokens: SlackBotTokens) => {
-  return fetch(`/api/manage/admin/slack-bot/tokens`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(slackBotTokens),
   });
 };
 

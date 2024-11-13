@@ -1,30 +1,39 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import { CPUIcon } from "@/components/icons/icons";
-import { SlackBotCreationForm } from "../SlackBotConfigCreationForm";
+import { SlackBotConfigCreationForm } from "../SlackBotConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet } from "@/lib/types";
 import { BackButton } from "@/components/BackButton";
+import { fetchAssistantsSS } from "@/lib/assistants/fetchAssistantsSS";
 import {
-  FetchAssistantsResponse,
-  fetchAssistantsSS,
-} from "@/lib/assistants/fetchAssistantsSS";
-import { getStandardAnswerCategoriesIfEE } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
+  getStandardAnswerCategoriesIfEE,
+  StandardAnswerCategoryResponse,
+} from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
+import { redirect } from "next/navigation";
+import { Persona } from "../../assistants/interfaces";
 
-async function Page() {
-  const tasks = [fetchSS("/manage/document-set"), fetchAssistantsSS()];
+async function NewSlackBotConfigPage({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const app_id_raw = searchParams?.app_id || null;
+  const app_id = app_id_raw ? parseInt(app_id_raw as string, 10) : null;
+  if (!app_id || isNaN(app_id)) {
+    redirect("/admin/bot");
+    return null;
+  }
+
   const [
     documentSetsResponse,
-    [assistants, assistantsFetchError],
-    standardAnswerCategoriesResponse,
-  ] = (await Promise.all(tasks)) as [
-    Response,
-    FetchAssistantsResponse,
-    Response,
-  ];
-
-  const eeStandardAnswerCategoryResponse =
-    await getStandardAnswerCategoriesIfEE();
+    assistantsResponse,
+    standardAnswerCategoryResponse,
+  ] = await Promise.all([
+    fetchSS("/manage/document-set") as Promise<Response>,
+    fetchAssistantsSS() as Promise<[Persona[], string | null]>,
+    getStandardAnswerCategoriesIfEE() as Promise<StandardAnswerCategoryResponse>,
+  ]);
 
   if (!documentSetsResponse.ok) {
     return (
@@ -36,11 +45,11 @@ async function Page() {
   }
   const documentSets = (await documentSetsResponse.json()) as DocumentSet[];
 
-  if (assistantsFetchError) {
+  if (assistantsResponse[1]) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch assistants - ${assistantsFetchError}`}
+        errorMsg={`Failed to fetch assistants - ${assistantsResponse[1]}`}
       />
     );
   }
@@ -53,13 +62,14 @@ async function Page() {
         title="New Slack Bot Config"
       />
 
-      <SlackBotCreationForm
+      <SlackBotConfigCreationForm
+        app_id={app_id}
         documentSets={documentSets}
-        personas={assistants}
-        standardAnswerCategoryResponse={eeStandardAnswerCategoryResponse}
+        personas={assistantsResponse[0]}
+        standardAnswerCategoryResponse={standardAnswerCategoryResponse}
       />
     </div>
   );
 }
 
-export default Page;
+export default NewSlackBotConfigPage;

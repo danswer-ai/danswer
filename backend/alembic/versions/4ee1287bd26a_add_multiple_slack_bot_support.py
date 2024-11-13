@@ -1,7 +1,7 @@
 """add_multiple_slack_bot_support
 
 Revision ID: 4ee1287bd26a
-Revises: 33cb72ea4d80
+Revises: 9cf5c00f72fe
 Create Date: 2024-11-06 13:15:53.302644
 
 """
@@ -15,7 +15,7 @@ from danswer.db.models import EncryptedString, SlackApp
 
 # revision identifiers, used by Alembic.
 revision = "4ee1287bd26a"
-down_revision = "33cb72ea4d80"
+down_revision = "9cf5c00f72fe"
 branch_labels: None = None
 depends_on: None = None
 
@@ -63,7 +63,7 @@ def upgrade() -> None:
         logger.info(f"{revision}: Found bot and app tokens.")
     except ValueError as vex:
         # Ignore if the dynamic config is not found
-        logger.exception(f"{revision}: Exception: {vex}")
+        logger.debug(f"{revision}: Exception: {vex}")
         logger.info(f"{revision}: This is OK if there was not an existing Slack bot.")
 
     logger.info(f"{revision}: Migrating slack app settings.")

@@ -1,6 +1,6 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import { CPUIcon } from "@/components/icons/icons";
-import { SlackBotCreationForm } from "../SlackBotConfigCreationForm";
+import { SlackBotConfigCreationForm } from "../SlackBotConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet, SlackBotConfig } from "@/lib/types";
@@ -13,7 +13,9 @@ import {
 } from "@/lib/assistants/fetchAssistantsSS";
 import { getStandardAnswerCategoriesIfEE } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 
-async function Page(props: { params: Promise<{ id: string }> }) {
+async function EditSlackBotConfigPage(props: {
+  params: Promise<{ id: number }>;
+}) {
   const params = await props.params;
   const tasks = [
     fetchSS("/manage/admin/slack-bot/config"),
@@ -44,9 +46,12 @@ async function Page(props: { params: Promise<{ id: string }> }) {
   }
   const allSlackBotConfigs =
     (await slackBotsResponse.json()) as SlackBotConfig[];
+  console.log("allSlackBotConfigs", allSlackBotConfigs);
+  console.log("params.id", params.id);
   const slackBotConfig = allSlackBotConfigs.find(
-    (config) => config.id.toString() === params.id
+    (config) => config.id === Number(params.id)
   );
+  console.log("slackBotConfig", slackBotConfig);
   if (!slackBotConfig) {
     return (
       <ErrorCallout
@@ -90,7 +95,8 @@ async function Page(props: { params: Promise<{ id: string }> }) {
         DanswerBot behaves in the specified channels.
       </Text>
 
-      <SlackBotCreationForm
+      <SlackBotConfigCreationForm
+        app_id={slackBotConfig.app_id}
         documentSets={documentSets}
         personas={assistants}
         standardAnswerCategoryResponse={eeStandardAnswerCategoryResponse}
@@ -100,4 +106,4 @@ async function Page(props: { params: Promise<{ id: string }> }) {
   );
 }
 
-export default Page;
+export default EditSlackBotConfigPage;
