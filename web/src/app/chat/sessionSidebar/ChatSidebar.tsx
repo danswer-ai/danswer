@@ -27,6 +27,7 @@ import { CustomTooltip } from "@/components/CustomTooltip";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Logo } from "@/components/Logo";
 import ArnoldAi from "../../../../public/arnold_ai.png";
+import { PageTab } from "@/components/PageTab";
 
 export const ChatSidebar = ({
   existingChats,
