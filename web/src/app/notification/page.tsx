@@ -1,7 +1,5 @@
-import { ChatProvider } from "@/context/ChatContext";
 import { DynamicSidebar } from "@/components/DynamicSidebar";
 import { User } from "@/lib/types";
-import { unstable_noStore as noStore } from "next/cache";
 import {
   AuthTypeMetadata,
   getAuthTypeMetadataSS,

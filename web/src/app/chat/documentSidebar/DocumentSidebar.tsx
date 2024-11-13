@@ -16,7 +16,7 @@ function SectionHeader({
   closeHeader?: () => void;
 }) {
   return (
-    <div className="flex justify-between w-full mt-auto items-center py-[26px] pb-6 text-lg font-medium border-b border-border">
+    <div className="flex justify-between w-full mt-auto items-center py-[22px] text-lg font-medium border-b border-border">
       <p className="flex truncate text-dark-900">
         {icon && <FileText size={22} className="my-auto mr-2" />}
         {name}

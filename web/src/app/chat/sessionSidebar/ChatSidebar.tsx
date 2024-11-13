@@ -3,10 +3,8 @@
 import {
   Search,
   MessageCircleMore,
-  Headset,
   FolderPlus,
   Plus,
-  PanelLeftClose,
   Command,
 } from "lucide-react";
 import { useContext, useEffect } from "react";
@@ -37,6 +35,7 @@ export const ChatSidebar = ({
   toggleSideBar,
   isAssistant,
   teamspaceId,
+  chatSessionIdRef,
 }: {
   existingChats: ChatSession[];
   currentChatSession: ChatSession | null | undefined;
@@ -45,6 +44,7 @@ export const ChatSidebar = ({
   toggleSideBar?: () => void;
   isAssistant?: boolean;
   teamspaceId?: string;
+  chatSessionIdRef?: React.MutableRefObject<number | null>;
 }) => {
   const router = useRouter();
   const { toast } = useToast();
@@ -191,6 +191,7 @@ export const ChatSidebar = ({
             openedFolders={openedFolders}
             toggleSideBar={toggleSideBar}
             teamspaceId={teamspaceId}
+            chatSessionIdRef={chatSessionIdRef}
           />
         </div>
 

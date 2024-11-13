@@ -23,6 +23,7 @@ interface CreateRateLimitModalProps {
   forSpecificTeamspace?: number;
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onClose: () => void;
 }
 
 export const CreateRateLimitModal = ({
@@ -31,6 +32,7 @@ export const CreateRateLimitModal = ({
   forSpecificTeamspace,
   isOpen,
   setIsOpen,
+  onClose,
 }: CreateRateLimitModalProps) => {
   const [modalTeamspaces, setModalTeamspaces] = useState([]);
   const [shouldFetchTeamspaces, setShouldFetchTeamspaces] = useState(
@@ -153,15 +155,17 @@ export const CreateRateLimitModal = ({
               type="number"
               placeholder=""
             />
-
-            <div className="pt-2" />
-
-            <div className="flex">
+            <div className="flex pt-4 justify-end gap-2">
               <Button
-                type="submit"
+                type="button"
                 disabled={isSubmitting}
-                className="mx-auto w-64"
+                onClick={() => onClose()}
+                variant="ghost"
               >
+                Cancel
+              </Button>
+
+              <Button type="submit" disabled={isSubmitting}>
                 Create
               </Button>
             </div>

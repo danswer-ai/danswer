@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useFormikContext } from "formik";
 import { FC, useState } from "react";
@@ -54,16 +53,26 @@ export const FileUpload: FC<FileUploadProps> = ({
       </Dropzone>
 
       {selectedFiles.length > 0 && (
-        <div className="mt-4">
-          <h2 className="text-sm font-bold">Selected Files</h2>
-          <ul>
-            {selectedFiles.map((file) => (
-              <div key={file.name} className="flex">
-                <p className="text-sm mr-2">{file.name}</p>
-              </div>
-            ))}
-          </ul>
-        </div>
+        <>
+          <div className="mt-4">
+            <h2 className="text-sm font-bold">Selected Files</h2>
+            <ul>
+              {selectedFiles.map((file) => (
+                <div key={file.name} className="flex">
+                  <p className="text-sm mr-2">{file.name}</p>
+                </div>
+              ))}
+            </ul>
+          </div>
+
+          <Button
+            className="mt-3"
+            variant="destructive"
+            onClick={() => setSelectedFiles([])}
+          >
+            Remove
+          </Button>
+        </>
       )}
     </div>
   );

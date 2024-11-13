@@ -20,7 +20,7 @@ interface ChatContextProps {
   shouldShowWelcomeModal?: boolean;
   shouldDisplaySourcesIncompleteModal?: boolean;
   defaultAssistantId?: number;
-  refreshChatSessions: () => Promise<void>;
+  refreshChatSessions: (teamspaceId?: string) => Promise<void>;
 }
 
 export const ChatContext = createContext<ChatContextProps | null>(null);
@@ -33,9 +33,13 @@ export const ChatProvider: React.FC<{
 }> = ({ value, children }) => {
   const [chatSessions, setChatSessions] = useState(value?.chatSessions || []);
 
-  const refreshChatSessions = async () => {
+  const refreshChatSessions = async (teamspaceId?: string) => {
     try {
-      const response = await fetch("/api/chat/get-user-chat-sessions");
+      const response = await fetch(
+        teamspaceId
+          ? `/api/chat/get-user-chat-sessions?teamspace_id=${teamspaceId}`
+          : "/api/chat/get-user-chat-sessions"
+      );
       if (!response.ok) throw new Error("Failed to fetch chat sessions");
       const { sessions } = await response.json();
       setChatSessions(sessions);

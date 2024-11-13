@@ -21,17 +21,23 @@ const normalizeToUTC = (date: Date) => {
   );
 };
 
-export function QueryPerformanceChart({ timeRange }: { timeRange: DateRange }) {
+export function QueryPerformanceChart({
+  timeRange,
+  teamspaceId,
+}: {
+  timeRange: DateRange;
+  teamspaceId?: string | string[];
+}) {
   const {
     data: queryAnalyticsData,
     isLoading: isQueryAnalyticsLoading,
     error: queryAnalyticsError,
-  } = useQueryAnalytics(timeRange);
+  } = useQueryAnalytics(timeRange, teamspaceId);
   const {
     data: userAnalyticsData,
     isLoading: isUserAnalyticsLoading,
     error: userAnalyticsError,
-  } = useUserAnalytics(timeRange);
+  } = useUserAnalytics(timeRange, teamspaceId);
 
   let chart;
   if (isQueryAnalyticsLoading || isUserAnalyticsLoading) {

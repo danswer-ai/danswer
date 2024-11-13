@@ -100,7 +100,7 @@ function GenerateReportInput() {
   lastYear.setFullYear(today.getFullYear() - 1);
 
   return (
-    <div className="flex gap-4 flex-col md:flex-row justify-between md:items-center">
+    <div className="flex gap-4 flex-col md:flex-row justify-between">
       <div>
         <div className="flex flex-col">
           <h3>Generate Usage Reports</h3>
@@ -132,9 +132,16 @@ function GenerateReportInput() {
   );
 }
 
-const USAGE_REPORT_URL = "/api/admin/usage-report";
+const USAGE_REPORT_URL = (teamspaceId?: string | string[]) =>
+  teamspaceId
+    ? `/api/admin/usage-report?teamspace_id=${teamspaceId}`
+    : "/api/admin/usage-report";
 
-function UsageReportsTable() {
+function UsageReportsTable({
+  teamspaceId,
+}: {
+  teamspaceId?: string | string[];
+}) {
   const [page, setPage] = useState(1);
   const NUM_IN_PAGE = 10;
 
@@ -142,7 +149,10 @@ function UsageReportsTable() {
     data: usageReportsMetadata,
     error: usageReportsError,
     isLoading: usageReportsIsLoading,
-  } = useSWR<UsageReport[]>(USAGE_REPORT_URL, errorHandlingFetcher);
+  } = useSWR<UsageReport[]>(
+    USAGE_REPORT_URL(teamspaceId),
+    errorHandlingFetcher
+  );
 
   const paginatedReports = usageReportsMetadata
     ? usageReportsMetadata
@@ -167,7 +177,7 @@ function UsageReportsTable() {
           errorTitle="Something went wrong."
           errorMsg={(usageReportsError as Error).toString()}
         />
-      ) : (
+      ) : paginatedReports.length > 0 ? (
         <Card>
           <CardContent className="p-0">
             <Table>
@@ -219,12 +229,18 @@ function UsageReportsTable() {
             </Table>
           </CardContent>
         </Card>
+      ) : (
+        <p>There are no reports.</p>
       )}
     </div>
   );
 }
 
-export default function UsageReports() {
+export default function UsageReports({
+  teamspaceId,
+}: {
+  teamspaceId?: string | string[];
+}) {
   const [page, setPage] = useState(1);
   const NUM_IN_PAGE = 10;
 
@@ -232,7 +248,10 @@ export default function UsageReports() {
     data: usageReportsMetadata,
     error: usageReportsError,
     isLoading: usageReportsIsLoading,
-  } = useSWR<UsageReport[]>(USAGE_REPORT_URL, errorHandlingFetcher);
+  } = useSWR<UsageReport[]>(
+    USAGE_REPORT_URL(teamspaceId),
+    errorHandlingFetcher
+  );
 
   const paginatedReports = usageReportsMetadata
     ? usageReportsMetadata
@@ -250,7 +269,7 @@ export default function UsageReports() {
       <div>
         <GenerateReportInput />
         <div className="p-0">
-          <UsageReportsTable />
+          <UsageReportsTable teamspaceId={teamspaceId} />
         </div>
       </div>
 

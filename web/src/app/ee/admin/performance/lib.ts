@@ -23,11 +23,19 @@ export const useTimeRange = () => {
   });
 };
 
-export const useQueryAnalytics = (timeRange: DateRange) => {
-  const url = buildApiPath("/api/analytics/admin/query", {
-    start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
-    end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
-  });
+export const useQueryAnalytics = (
+  timeRange: DateRange,
+  teamspaceId?: string | string[]
+) => {
+  const url = buildApiPath(
+    teamspaceId
+      ? `/api/analytics/admin/query?teamspace_id=${teamspaceId}`
+      : "/api/analytics/admin/query",
+    {
+      start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
+      end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
+    }
+  );
   const swrResponse = useSWR<QueryAnalytics[]>(url, errorHandlingFetcher);
 
   return {
@@ -36,11 +44,19 @@ export const useQueryAnalytics = (timeRange: DateRange) => {
   };
 };
 
-export const useUserAnalytics = (timeRange: DateRange) => {
-  const url = buildApiPath("/api/analytics/admin/user", {
-    start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
-    end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
-  });
+export const useUserAnalytics = (
+  timeRange: DateRange,
+  teamspaceId?: string | string[]
+) => {
+  const url = buildApiPath(
+    teamspaceId
+      ? `/api/analytics/admin/user?teamspace_id=${teamspaceId}`
+      : "/api/analytics/admin/user",
+    {
+      start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
+      end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
+    }
+  );
   const swrResponse = useSWR<UserAnalytics[]>(url, errorHandlingFetcher);
 
   return {

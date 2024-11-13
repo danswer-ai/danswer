@@ -47,9 +47,19 @@ const AddPromptModal = ({ onClose, onSubmit }: AddPromptModalProps) => {
               defaultHeight="h-40"
             />
 
-            <Button type="submit" className="w-full mt-6" disabled={isSubmitting}>
-              Add prompt
-            </Button>
+            <div className="w-full mt-4 flex justify-end gap-2">
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                variant="ghost"
+                onClick={onClose}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                Add prompt
+              </Button>
+            </div>
           </Form>
         )}
       </Formik>

@@ -300,7 +300,7 @@ export function HorizontalFilters({
             {availableDocumentSets.map((documentSet) => (
               <SelectItem key={documentSet.name} value={documentSet.name}>
                 <div className="flex items-center gap-2">
-                  <Bookmark /> {documentSet.name}
+                  <Bookmark size={16} /> {documentSet.name}
                 </div>
               </SelectItem>
             ))}
@@ -335,7 +335,7 @@ export function HorizontalFilters({
               >
                 <>
                   <div>
-                    <Bookmark />
+                    <Bookmark size={16} />
                   </div>
                   <span className="ml-2 text-sm">{documentSetName}</span>
                 </>

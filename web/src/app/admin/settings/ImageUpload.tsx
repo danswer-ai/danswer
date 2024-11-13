@@ -10,7 +10,7 @@ export function ImageUpload({
   setSelectedFile,
 }: {
   selectedFile: File | null;
-  setSelectedFile: (file: File) => void;
+  setSelectedFile: (file: File | null) => void;
 }) {
   const [tmpImageUrl, setTmpImageUrl] = useState<string>("");
 
@@ -59,16 +59,26 @@ export function ImageUpload({
           </div>
 
           {tmpImageUrl && (
-            <div className="mt-4 mb-8">
-              <SubLabel>Uploaded Image:</SubLabel>
-              <Image
-                src={tmpImageUrl}
-                alt="uploaded-image"
-                className="mt-4 max-w-xs max-h-64"
-                width={256}
-                height={256}
-              />
-            </div>
+            <>
+              <div className="mt-4 mb-8">
+                <SubLabel>Uploaded Image:</SubLabel>
+                <Image
+                  src={tmpImageUrl}
+                  alt="uploaded-image"
+                  className="mt-2 max-w-xs max-h-64"
+                  width={256}
+                  height={256}
+                />
+                <Button
+                  variant="destructive"
+                  type="button"
+                  onClick={() => setSelectedFile(null)}
+                  className="mt-3"
+                >
+                  Remove
+                </Button>
+              </div>
+            </>
           )}
         </section>
       )}

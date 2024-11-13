@@ -1,8 +1,5 @@
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+"use client";
+
 import {
   BookText,
   CircleHelp,
@@ -11,38 +8,26 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CustomModal } from "./CustomModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { useState } from "react";
 
 export function HelperFab() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
-    <Popover>
-      <PopoverTrigger
-        asChild
-        className="absolute bottom-5 right-5 md:bottom-3 md:right-3 lg:bottom-5 lg:right-5 z-modal hidden md:flex cursor-pointer"
-      >
-        <CircleHelp size={20} />
-      </PopoverTrigger>
-      <PopoverContent className="w-56 text-sm" side="top" align="end">
-        <Link
-          href="https://aitable.ai/share/shrTvVrDD0P7HqySRmlp8/fommkqn7v0WUqLGB43"
-          className="flex items-center gap-2 py-3 px-4 cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted"
-          target="_blank"
-        >
-          <MessageCircleReply size={16} /> Feedback Forms
-        </Link>
-        <Link
-          href=""
-          className="flex items-center gap-2 py-3 px-4 cursor-not-allowed rounded-regular hover:bg-brand-500 hover:text-inverted opacity-50 pointer-events-none"
-          target="_blank"
-        >
-          <BookText size={16} /> User Guide & FAQ
-        </Link>
+    <>
+      {isModalOpen && (
         <CustomModal
-          trigger={
-            <div className="flex items-center gap-2 py-3 px-4 rounded-regular hover:bg-brand-500 hover:text-inverted">
-              <Command size={16} /> Shortcut Keys
-            </div>
-          }
+          trigger={null}
           title="Shortcut Keys"
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
         >
           <div className="grid grid-cols-2 gap-y-6 gap-x-20 pb-4">
             <div className="flex justify-between items-center">
@@ -138,7 +123,37 @@ export function HelperFab() {
             </div>
           </div>
         </CustomModal>
-      </PopoverContent>
-    </Popover>
+      )}
+
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          asChild
+          className="absolute bottom-5 right-5 md:bottom-3 md:right-3 lg:bottom-5 lg:right-5 z-modal hidden md:flex cursor-pointer"
+        >
+          <CircleHelp size={20} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="end">
+          <DropdownMenuGroup>
+            <DropdownMenuItem>
+              <Link
+                href="https://aitable.ai/share/shrTvVrDD0P7HqySRmlp8/fommkqn7v0WUqLGB43"
+                target="_blank"
+                className="flex items-center gap-2"
+              >
+                <MessageCircleReply size={16} /> Feedback Forms
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled>
+              <Link href="" target="_blank" className="flex items-center gap-2">
+                <BookText size={16} /> User Guide & FAQ
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsModalOpen(true)}>
+              <Command size={16} /> Shortcut Keys
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   );
 }

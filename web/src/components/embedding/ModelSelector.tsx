@@ -1,7 +1,5 @@
 import { getCurrentModelCopy } from "@/app/admin/embeddings/interfaces";
 import {
-  AVAILABLE_CLOUD_PROVIDERS,
-  AVAILABLE_MODELS,
   EmbeddingModelDescriptor,
   getIconForRerankType,
   getTitleForRerankType,
@@ -21,7 +19,7 @@ export function ModelPreview({
   const currentModelCopy = getCurrentModelCopy(model.model_name);
 
   return (
-    <Card className="!mr-auto mt-8 !w-96">
+    <Card className="!mr-auto mt-3 !w-96">
       <CardHeader className="pb-0">
         <CardTitle>{model.model_name}</CardTitle>
       </CardHeader>
@@ -53,29 +51,31 @@ export function ModelOption({
           : "border-gray-200 hover:border-blue-300 hover:shadow-sm"
       }`}
     >
-      <div><div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-bold">{model.model_name}</h3>
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-bold">{model.model_name}</h3>
 
-        {model.link && (
-          <a
-            href={model.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="text-blue-500 transition-colors duration-200 hover:text-blue-700"
-          >
-            <FiExternalLink size={18} />
-          </a>
-        )}
+          {model.link && (
+            <a
+              href={model.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-blue-500 transition-colors duration-200 hover:text-blue-700"
+            >
+              <FiExternalLink size={18} />
+            </a>
+          )}
+        </div>
+        <p className="mb-2 text-sm text-left text-gray-600 k">
+          {model.description ||
+            currentModelCopy?.description ||
+            "Custom model—no description is available."}
+        </p>
+        <div className="text-xs text-gray-500">
+          {model.isDefault ? "Default" : "Self-hosted"}
+        </div>
       </div>
-      <p className="mb-2 text-sm text-left text-gray-600 k">
-        {model.description ||
-          currentModelCopy?.description ||
-          "Custom model—no description is available."}
-      </p>
-      <div className="text-xs text-gray-500">
-        {model.isDefault ? "Default" : "Self-hosted"}
-      </div></div>
       {onSelect && (
         <div className="mt-3">
           <Button
@@ -85,7 +85,7 @@ export function ModelOption({
               if (!selected) onSelect(model);
             }}
             disabled={selected}
-            variant='outline'
+            variant="outline"
           >
             {selected ? "Selected Model" : "Select Model"}
           </Button>

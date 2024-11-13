@@ -3,23 +3,21 @@
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { errorHandlingFetcher } from "@/lib/fetcher";
 import { Teamspace } from "@/lib/types";
 import { Cpu, EllipsisVertical, File, Shield, Users } from "lucide-react";
-import useSWR from "swr";
 import { deleteTeamspace } from "./lib";
 import { useToast } from "@/hooks/use-toast";
 import { CustomModal } from "@/components/CustomModal";
 import { useState } from "react";
-import Image from "next/image";
 import "../../../../components/loading.css";
 import { buildImgUrl } from "@/app/chat/files/images/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const DeleteArchiveModal = ({
   trigger,
@@ -28,7 +26,7 @@ const DeleteArchiveModal = ({
   type,
   onConfirm,
 }: {
-  trigger: JSX.Element;
+  trigger: JSX.Element | null;
   onClose: () => void;
   open: boolean;
   type: string;
@@ -43,7 +41,7 @@ const DeleteArchiveModal = ({
       description={`You are about to ${type} this Team Space. Members will no longer have
         access to it, and it will be removed from their sidebar`}
     >
-      <div className="flex justify-end w-full gap-2 pt-6 border-t">
+      <div className="flex justify-end w-full gap-2 pt-6">
         <Button onClick={onClose} variant="ghost">
           Cancel
         </Button>
@@ -71,78 +69,70 @@ export const TeamspacesCard = ({
   onClick,
 }: TeamspacesCardProps) => {
   const { toast } = useToast();
-  const { data, isLoading, error } = useSWR(
-    `/api/admin/token-rate-limits/teamspace/${teamspace.id}`,
-    errorHandlingFetcher
-  );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
-  const tokenRate = data && data.length > 0 ? data[0] : null;
-
   return (
     <div className="relative">
-      <Popover>
-        <PopoverTrigger
+      <DropdownMenu>
+        <DropdownMenuTrigger
           asChild
           className="absolute cursor-pointer top-3 right-3"
         >
           <EllipsisVertical stroke="#ffffff" />
-        </PopoverTrigger>
-        <PopoverContent side="top" align="start">
-          <div className="min-w-32">
-            <DeleteArchiveModal
-              trigger={
-                <button
-                  className="flex w-full px-4 py-2 text-sm cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted focus:outline-none"
-                  onClick={() => setIsArchiveModalOpen(true)}
-                >
-                  Archive
-                </button>
-              }
-              onClose={() => setIsArchiveModalOpen(false)}
-              open={isArchiveModalOpen}
-              type="Archive"
-              onConfirm={async () => {
-                setIsArchiveModalOpen(false);
-              }}
-            />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="start">
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => setIsArchiveModalOpen(true)}>
+              Archive
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsDeleteModalOpen(true)}>
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-            <DeleteArchiveModal
-              trigger={
-                <button
-                  className="flex w-full px-4 py-2 text-sm cursor-pointer rounded-regular hover:bg-brand-500 hover:text-inverted focus:outline-none"
-                  onClick={() => setIsDeleteModalOpen(true)}
-                >
-                  Delete
-                </button>
-              }
-              onClose={() => setIsDeleteModalOpen(false)}
-              open={isDeleteModalOpen}
-              type="Delete"
-              onConfirm={async (event) => {
-                event.stopPropagation();
-                const response = await deleteTeamspace(teamspace.id);
-                if (response.ok) {
-                  toast({
-                    title: "Teamspace Deleted!",
-                    description: `Successfully deleted the teamspace: "${teamspace.name}".`,
-                    variant: "success",
-                  });
-                } else {
-                  const errorMsg = (await response.json()).detail;
-                  toast({
-                    title: "Deletion Error",
-                    description: `Failed to delete the teamspace: ${errorMsg}. Please try again.`,
-                    variant: "destructive",
-                  });
-                }
-                refresh();
-              }}
-            />
-          </div>
-        </PopoverContent>
-      </Popover>
+      {isArchiveModalOpen && (
+        <DeleteArchiveModal
+          trigger={null}
+          onClose={() => setIsArchiveModalOpen(false)}
+          open={isArchiveModalOpen}
+          type="Archive"
+          onConfirm={async () => {
+            setIsArchiveModalOpen(false);
+          }}
+        />
+      )}
+
+      {isDeleteModalOpen && (
+        <DeleteArchiveModal
+          trigger={null}
+          onClose={() => setIsDeleteModalOpen(false)}
+          open={isDeleteModalOpen}
+          type="Delete"
+          onConfirm={async (event) => {
+            event.stopPropagation();
+            const response = await deleteTeamspace(teamspace.id);
+            if (response.ok) {
+              toast({
+                title: "Teamspace Deleted!",
+                description: `Successfully deleted the teamspace: "${teamspace.name}".`,
+                variant: "success",
+              });
+            } else {
+              const errorMsg = (await response.json()).detail;
+              toast({
+                title: "Deletion Error",
+                description: `Failed to delete the teamspace: ${errorMsg}. Please try again.`,
+                variant: "destructive",
+              });
+            }
+            refresh();
+          }}
+        />
+      )}
+
       <Card
         key={teamspace.id}
         className="overflow-hidden !rounded-xl cursor-pointer xl:min-w-[280px] md:max-w-[400px] justify-start items-start"
@@ -155,7 +145,7 @@ export const TeamspacesCard = ({
         <CardContent className="relative flex flex-col justify-between min-h-48 bg-muted/50">
           <div className="absolute top-0 w-12 h-12 -translate-y-1/2 right-4 flex items-center justify-center">
             {teamspace.logo ? (
-              <div className="rounded-md w-10 h-10 bg-background rounded-md overflow-hidden">
+              <div className="rounded-md w-10 h-10 bg-background overflow-hidden">
                 <img
                   src={buildImgUrl(teamspace.logo)}
                   alt="Teamspace Logo"

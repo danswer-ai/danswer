@@ -594,7 +594,8 @@ export function buildChatUrl(
   existingSearchParams: ReadonlyURLSearchParams,
   chatSessionId: number | null,
   assistantId: number | null,
-  search?: boolean
+  search?: boolean,
+  teamspaceId?: string | undefined
 ) {
   const finalSearchParams: string[] = [];
   if (chatSessionId) {
@@ -616,10 +617,14 @@ export function buildChatUrl(
   const finalSearchParamsString = finalSearchParams.join("&");
 
   if (finalSearchParamsString) {
-    return `/${search ? "search" : "chat"}?${finalSearchParamsString}`;
+    return teamspaceId
+      ? `/t/${teamspaceId}/${search ? "search" : "chat"}?${finalSearchParamsString}`
+      : `/${search ? "search" : "chat"}?${finalSearchParamsString}`;
   }
 
-  return `/${search ? "search" : "chat"}`;
+  return teamspaceId
+    ? `/t/${teamspaceId}/${search ? "search" : "chat"}`
+    : `/${search ? "search" : "chat"}`;
 }
 
 export async function uploadFilesForChat(

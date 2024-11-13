@@ -83,19 +83,25 @@ export const FeedbackModal = ({
         onChange={(e) => setMessage(e.target.value)}
         className="min-h-40"
       />
-      <RadioGroup className="pb-4">
-        {predefinedFeedbackOptions.map((feedback, index) => (
-          <div
-            key={index}
-            className="flex items-center space-x-2"
-            onClick={() => handlePredefinedFeedback(feedback)}
-          >
-            <RadioGroupItem value={feedback} id={feedback} />
-            <Label htmlFor={feedback}>{feedback}</Label>
-          </div>
-        ))}
-      </RadioGroup>
-      <div className="w-full flex items-center justify-center">
+      {predefinedFeedbackOptions && (
+        <RadioGroup>
+          {predefinedFeedbackOptions.map((feedback, index) => (
+            <div
+              key={index}
+              className="flex items-center space-x-2"
+              onClick={() => handlePredefinedFeedback(feedback)}
+            >
+              <RadioGroupItem value={feedback} id={feedback} />
+              <Label htmlFor={feedback}>{feedback}</Label>
+            </div>
+          ))}
+        </RadioGroup>
+      )}
+
+      <div className="w-full flex justify-end gap-2">
+        <Button onClick={onModalClose} variant="ghost">
+          Cancel
+        </Button>
         <Button onClick={handleSubmit}>Submit feedback</Button>
       </div>
     </div>

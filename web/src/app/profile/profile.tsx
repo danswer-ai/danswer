@@ -39,7 +39,7 @@ export default function Profile({
           <ProfileTab user={user} combinedSettings={combinedSettings} />
         </TabsContent>
         <TabsContent value="security">
-          <SecurityTab user={user} />
+          <SecurityTab />
         </TabsContent>
         <TabsContent value="billing">
           <BillingTab user={user} />

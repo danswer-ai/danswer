@@ -63,32 +63,29 @@ export function AssistantsTab({
     }
   }
 
-  console.log(assistant)
-
   return (
-    <div className="py-4 w-full overflow-y-auto">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={assistant.map((a) => a.id.toString())}
+        strategy={verticalListSortingStrategy}
       >
-        <SortableContext
-          items={assistant.map((a) => a.id.toString())}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="px-4 pb-2  max-h-[500px] my-3 grid grid-cols-1 gap-4">
-            {assistant.map((assistant) => (
-              <DraggableAssistantCard
-                key={assistant.id.toString()}
-                assistant={assistant}
-                isSelected={selectedAssistant.id === assistant.id}
-                onSelect={onSelect}
-                llmName={llmName}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-    </div>
+        <div className="px-4 pb-20  max-h-[500px] my-3 grid grid-cols-1 gap-4">
+          {assistant.map((singleAssistant, index) => (
+            <DraggableAssistantCard
+              key={singleAssistant.id.toString()}
+              assistant={singleAssistant}
+              isSelected={selectedAssistant.id === singleAssistant.id}
+              onSelect={onSelect}
+              llmName={llmName}
+              isLastAssistant={index === assistant.length - 1}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
   );
 }

@@ -272,7 +272,10 @@ export const TeamspaceDocumentSet = ({
           onSelect={handleSelectDocumentSet}
         />
       </div>
-      <div className="flex justify-end mt-10">
+      <div className="flex justify-end mt-10 gap-2">
+        <Button onClick={handleCloseModal} variant="ghost">
+          Cancel
+        </Button>
         <Button onClick={handleSaveChanges}>Save changes</Button>
       </div>
     </CustomModal>

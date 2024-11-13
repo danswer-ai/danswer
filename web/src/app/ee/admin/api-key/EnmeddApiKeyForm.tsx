@@ -99,9 +99,19 @@ export const EnmeddApiKeyForm = ({
               subtext="If set, this API key will have access to admin level server API's."
             />
 
-            <Button type="submit" disabled={isSubmitting}>
-              {isUpdate ? "Update" : "Create"}
-            </Button>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => onClose()}
+                variant="ghost"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isUpdate ? "Update" : "Create"}
+              </Button>
+            </div>
           </Form>
         )}
       </Formik>

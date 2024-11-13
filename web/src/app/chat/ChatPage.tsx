@@ -7,7 +7,6 @@ import {
   BackendMessage,
   BUFFER_COUNT,
   ChatFileType,
-  ChatSession,
   ChatSessionSharedStatus,
   DocumentsResponse,
   FileDescriptor,
@@ -432,7 +431,7 @@ export function ChatPage({
         // force re-name if the chat session doesn't have one
         if (!chatSession.description) {
           await nameChatSession(existingChatSessionId, seededMessage);
-          refreshChatSessions();
+          refreshChatSessions(teamspaceId);
         }
       }
     }
@@ -1405,7 +1404,7 @@ export function ChatPage({
       if (!searchParamBasedChatSessionName) {
         await new Promise((resolve) => setTimeout(resolve, 200));
         await nameChatSession(currChatSessionId, currMessage);
-        refreshChatSessions();
+        refreshChatSessions(teamspaceId);
       }
 
       // NOTE: don't switch pages if the user has navigated away from the chat
@@ -1413,7 +1412,7 @@ export function ChatPage({
         currChatSessionId === chatSessionIdRef.current ||
         chatSessionIdRef.current === null
       ) {
-        const newUrl = buildChatUrl(searchParams, currChatSessionId, null);
+        const newUrl = buildChatUrl(searchParams, currChatSessionId, null, false, teamspaceId);
         // newUrl is like /chat?chatId=10
         // current page is like /chat
         router.push(newUrl, { scroll: false });
@@ -1474,11 +1473,8 @@ export function ChatPage({
 
       textAreaRef.current?.focus();
       router.push(
-        teamspaceId
-          ? `/t/${teamspaceId}/${buildChatUrl(searchParams, null, assistant.id)}`
-          : buildChatUrl(searchParams, null, assistant.id)
+        buildChatUrl(searchParams, null, assistant.id, false, teamspaceId)
       );
-      // router.push(buildChatUrl(searchParams, null, assistant.id));
     }
   };
 
@@ -1815,6 +1811,7 @@ export function ChatPage({
             openedFolders={openedFolders}
             toggleSideBar={toggleLeftSideBar}
             teamspaceId={teamspaceId}
+            chatSessionIdRef={chatSessionIdRef}
           />
         </DynamicSidebar>
 

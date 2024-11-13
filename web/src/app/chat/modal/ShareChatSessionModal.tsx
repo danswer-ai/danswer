@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Text } from "@tremor/react";
 import { ChatSessionSharedStatus } from "../interfaces";
 import { CopyButton } from "@/components/CopyButton";
 import { Copy, Share } from "lucide-react";
@@ -92,29 +91,32 @@ export function ShareChatSessionModal({
       onClose={() => setIsShareModalOpen(false)}
       open={isShareModalOpen}
     >
-      <div className="flex">
-        {shareLink ? (
-          <div>
-            <p>
-              This chat session is currently shared. Anyone at your organization
-              can view the message history using the following link:
-            </p>
+      {shareLink ? (
+        <div>
+          <p>
+            This chat session is currently shared. Anyone at your organization
+            can view the message history using the following link:
+          </p>
 
-            <div className="flex py-2 items-center gap-2">
-              <CopyButton content={shareLink} />
-              <Link
-                href={shareLink}
-                target="_blank"
-                className="underline text-link text-sm"
-              >
-                {shareLink}
-              </Link>
-            </div>
+          <div className="flex py-2 items-center gap-2">
+            <CopyButton content={shareLink} />
+            <Link
+              href={shareLink}
+              target="_blank"
+              className="underline text-link text-sm"
+            >
+              {shareLink}
+            </Link>
+          </div>
 
-            <p className="mb-4">
-              Click the button below to make the chat private again.
-            </p>
+          <p className="mb-4">
+            Click the button below to make the chat private again.
+          </p>
 
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsShareModalOpen(false)}>
+              Cancel
+            </Button>
             <Button
               onClick={async () => {
                 setLinkGenerating(true);
@@ -144,18 +146,23 @@ export function ShareChatSessionModal({
               Delete Share Link
             </Button>
           </div>
-        ) : (
-          <div>
-            <div className="pb-6">
-              <span className="font-bold">Warning</span>
-              <p className="pt-2">
-                Ensure that all content in the chat is safe to share with the
-                whole organization. The content of the retrieved documents will
-                not be visible, but the names of cited documents as well as the
-                AI and human messages will be visible.
-              </p>
-            </div>
+        </div>
+      ) : (
+        <div>
+          <div className="pb-6">
+            <span className="font-bold">Warning</span>
+            <p className="pt-2">
+              Ensure that all content in the chat is safe to share with the
+              whole organization. The content of the retrieved documents will
+              not be visible, but the names of cited documents as well as the AI
+              and human messages will be visible.
+            </p>
+          </div>
 
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsShareModalOpen(false)}>
+              Cancel
+            </Button>
             <Button
               onClick={async () => {
                 setLinkGenerating(true);
@@ -198,8 +205,8 @@ export function ShareChatSessionModal({
               <Copy size={16} /> Generate and Copy Share Link
             </Button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </CustomModal>
   );
 }

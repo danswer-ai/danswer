@@ -365,6 +365,9 @@ export const AllUsers = ({
                               teamspaceData?.creator?.email && (
                               <Badge>Creator</Badge>
                             )}
+                            {user?.email === filteredUser.email && (
+                              <Badge>You</Badge>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

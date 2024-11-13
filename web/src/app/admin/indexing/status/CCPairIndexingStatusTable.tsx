@@ -214,11 +214,11 @@ function ConnectorRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell>
           {ccPairsIndexingStatus.access_type === "public" ? (
-            <Badge color={isEditable ? "green" : "gray"}>
+            <Badge>
               <Unlock size={14} /> Public
             </Badge>
           ) : (
-            <Badge color={isEditable ? "blue" : "gray"}>
+            <Badge variant="secondary">
               <Lock size={14} /> Private
             </Badge>
           )}

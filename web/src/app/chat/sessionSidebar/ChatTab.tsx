@@ -18,6 +18,7 @@ export function ChatTab({
   openedFolders,
   toggleSideBar,
   teamspaceId,
+  chatSessionIdRef,
 }: {
   existingChats: ChatSession[];
   currentChatId?: number;
@@ -25,6 +26,7 @@ export function ChatTab({
   openedFolders: { [key: number]: boolean };
   toggleSideBar?: () => void;
   teamspaceId?: string;
+  chatSessionIdRef?: React.MutableRefObject<number | null>;
 }) {
   const groupedChatSessions = groupSessionsByDateRange(existingChats);
   const router = useRouter();
@@ -44,7 +46,7 @@ export function ChatTab({
     if (folderId) {
       try {
         await removeChatFromFolder(parseInt(folderId, 10), chatSessionId);
-        refreshChatSessions();
+        refreshChatSessions(teamspaceId);
         router.refresh();
       } catch (error) {
         toast({
@@ -68,6 +70,8 @@ export function ChatTab({
             folders={folders}
             currentChatId={currentChatId}
             openedFolders={openedFolders}
+            chatSessionIdRef={chatSessionIdRef}
+            teamspaceId={teamspaceId}
           />
           <Separator className="mt-3" />
         </div>
@@ -104,6 +108,7 @@ export function ChatTab({
                             skipGradient={isDragOver}
                             toggleSideBar={toggleSideBar}
                             teamspaceId={teamspaceId}
+                            chatSessionIdRef={chatSessionIdRef}
                           />
                         </div>
                       );

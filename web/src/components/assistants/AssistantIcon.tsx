@@ -52,7 +52,7 @@ export function AssistantIcon({
       />
     ) : assistant.icon_shape && assistant.icon_color ? (
       <div
-        className={`flex-none my-auto mb-0 flex justify-center items-center
+        className={`flex-none my-auto flex justify-center items-center
             ${border ? "ring-[1px] ring-border-strong" : ""}
             ${size === "xxlarge" ? "w-auto h-12" : size === "xlarge" ? "w-10 h-10" : size === "large" ? "w-10 h-10" : "w-6 h-6"} `}
       >

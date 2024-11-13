@@ -3,24 +3,13 @@
 import { ThreeDotsLoader } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { Text, Title } from "@tremor/react";
 import useSWR from "swr";
 import { ModelPreview } from "../../../../components/embedding/ModelSelector";
 import {
   HostedEmbeddingModel,
   CloudEmbeddingModel,
 } from "@/components/embedding/interfaces";
-
 import { ErrorCallout } from "@/components/ErrorCallout";
-
-export interface EmbeddingDetails {
-  api_key: string;
-  custom_config: any;
-  default_model_id?: number;
-  name: string;
-}
-import { EmbeddingIcon } from "@/components/icons/icons";
-
 import Link from "next/link";
 import { SavedSearchSettings } from "../../embeddings/interfaces";
 import UpgradingPage from "./UpgradingPage";
@@ -29,6 +18,13 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileSearch } from "lucide-react";
+
+export interface EmbeddingDetails {
+  api_key: string;
+  custom_config: any;
+  default_model_id?: number;
+  name: string;
+}
 
 function Main() {
   const settings = useContext(SettingsContext);
@@ -85,67 +81,67 @@ function Main() {
               updating your search settings and re-indexing.
             </p>
           )}
-          <Title className="mb-6 mt-8 !text-2xl">Embedding Model</Title>
+          <h3 className="text-2xl">Embedding Model</h3>
 
           {currentEmeddingModel ? (
             <ModelPreview model={currentEmeddingModel} display />
           ) : (
-            <Title className="mt-8 mb-2">Choose your Embedding Model</Title>
+            <h3 className="mt-3 mb-2">Choose your Embedding Model</h3>
           )}
 
-          <Title className="mb-2 mt-8 !text-2xl">Post-processing</Title>
+          <h3 className="mb-2 mt-8 text-2xl">Post-processing</h3>
 
-          <Card className="!mr-auto mt-8 !w-96">
+          <Card className="!mr-auto mt-3 !w-96">
             <CardContent>
               {searchSettings && (
                 <>
                   <div className="w-full px-1 rounded-lg">
                     <div className="space-y-4">
                       <div>
-                        <Text className="font-semibold">Reranking Model</Text>
-                        <Text className="text-gray-700">
+                        <p className="font-semibold">Reranking Model</p>
+                        <p className="text-gray-700">
                           {searchSettings.rerank_model_name || "Not set"}
-                        </Text>
+                        </p>
                       </div>
 
                       <div>
-                        <Text className="font-semibold">Results to Rerank</Text>
-                        <Text className="text-gray-700">
+                        <p className="font-semibold">Results to Rerank</p>
+                        <p className="text-gray-700">
                           {searchSettings.num_rerank}
-                        </Text>
+                        </p>
                       </div>
 
                       <div>
-                        <Text className="font-semibold">
+                        <p className="font-semibold">
                           Multilingual Expansion
-                        </Text>
-                        <Text className="text-gray-700">
+                        </p>
+                        <p className="text-gray-700">
                           {searchSettings.multilingual_expansion.length > 0
                             ? searchSettings.multilingual_expansion.join(", ")
                             : "None"}
-                        </Text>
+                        </p>
                       </div>
 
                       <div>
-                        <Text className="font-semibold">
+                        <p className="font-semibold">
                           Multipass Indexing
-                        </Text>
-                        <Text className="text-gray-700">
+                        </p>
+                        <p className="text-gray-700">
                           {searchSettings.multipass_indexing
                             ? "Enabled"
                             : "Disabled"}
-                        </Text>
+                        </p>
                       </div>
 
                       <div>
-                        <Text className="font-semibold">
+                        <p className="font-semibold">
                           Disable Reranking for Streaming
-                        </Text>
-                        <Text className="text-gray-700">
+                        </p>
+                        <p className="text-gray-700">
                           {searchSettings.disable_rerank_for_streaming
                             ? "Yes"
                             : "No"}
-                        </Text>
+                        </p>
                       </div>
                     </div>
                   </div>

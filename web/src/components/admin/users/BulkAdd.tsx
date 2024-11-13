@@ -28,6 +28,7 @@ const addUsers = async (url: string, { arg }: { arg: Array<string> }) => {
 interface FormProps {
   onSuccess: () => void;
   onFailure: (res: Response) => void;
+  onClose: () => void;
 }
 
 interface FormValues {
@@ -38,7 +39,8 @@ const AddUserFormRenderer = ({
   touched,
   errors,
   isSubmitting,
-}: FormikProps<FormValues>) => (
+  onClose,
+}: FormikProps<FormValues> & { onClose: () => void }) => (
   <Form>
     <div className="flex flex-col gap-y-2">
       <Field name="emails">
@@ -55,9 +57,14 @@ const AddUserFormRenderer = ({
       {touched.emails && errors.emails && (
         <div className="text-error text-sm">{errors.emails}</div>
       )}
-      <Button className="mx-auto mt-4" type="submit" disabled={isSubmitting}>
-        Add
-      </Button>
+      <div className="flex justify-end gap-2 mt-4">
+        <Button variant="ghost" type="button" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          Add
+        </Button>
+      </div>
     </div>
   </Form>
 );
@@ -90,8 +97,14 @@ const AddUserForm = withFormik<FormProps, FormValues>({
   },
 })(AddUserFormRenderer);
 
-const BulkAdd = ({ onSuccess, onFailure }: FormProps) => {
-  return <AddUserForm onSuccess={onSuccess} onFailure={onFailure} />;
+const BulkAdd = ({ onSuccess, onFailure, onClose }: FormProps) => {
+  return (
+    <AddUserForm
+      onSuccess={onSuccess}
+      onFailure={onFailure}
+      onClose={onClose}
+    />
+  );
 };
 
 export default BulkAdd;

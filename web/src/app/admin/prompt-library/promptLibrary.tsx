@@ -229,7 +229,7 @@ export const PromptLibraryTable = ({
                                 size="icon"
                                 onClick={() => setConfirmDeletionId(item.id)}
                               >
-                                <TrashIcon size={20} />
+                                <TrashIcon size={16} />
                               </Button>
                             }
                             variant="destructive"

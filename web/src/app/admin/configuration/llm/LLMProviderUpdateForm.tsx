@@ -34,7 +34,7 @@ export function LLMProviderUpdateForm({
   hideAdvanced?: boolean;
   hideSuccess?: boolean;
 }) {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const { mutate } = useSWRConfig();
 
   const [isTesting, setIsTesting] = useState(false);
@@ -164,11 +164,11 @@ export function LLMProviderUpdateForm({
           const fullErrorMsg = existingLlmProvider
             ? `Failed to update provider: ${errorMsg}`
             : `Failed to enable provider: ${errorMsg}`;
-            toast({
-              title: "Error",
-              description: fullErrorMsg,
-              variant: "destructive",
-            });
+          toast({
+            title: "Error",
+            description: fullErrorMsg,
+            variant: "destructive",
+          });
           return;
         }
 
@@ -204,7 +204,7 @@ export function LLMProviderUpdateForm({
             description: successMsg,
             variant: "success",
           });
-        } 
+        }
 
         setSubmitting(false);
       }}
@@ -378,16 +378,7 @@ export function LLMProviderUpdateForm({
             {/* NOTE: this is above the test button to make sure it's visible */}
             {testError && <Text className="text-error mt-2">{testError}</Text>}
 
-            <div className="flex w-full mt-4">
-              <Button type="submit" >
-                {isTesting ? (
-                  <LoadingAnimation text="Testing" />
-                ) : existingLlmProvider ? (
-                  "Update"
-                ) : (
-                  "Enable"
-                )}
-              </Button>
+            <div className="flex w-full mt-4 justify-end gap-2">
               {existingLlmProvider && (
                 <Button
                   type="button"
@@ -431,9 +422,18 @@ export function LLMProviderUpdateForm({
                     onClose();
                   }}
                 >
-                <FiTrash /> Delete
+                  <FiTrash /> Delete
                 </Button>
               )}
+              <Button type="submit">
+                {isTesting ? (
+                  <LoadingAnimation text="Testing" />
+                ) : existingLlmProvider ? (
+                  "Update"
+                ) : (
+                  "Enable"
+                )}
+              </Button>
             </div>
           </div>
         </Form>

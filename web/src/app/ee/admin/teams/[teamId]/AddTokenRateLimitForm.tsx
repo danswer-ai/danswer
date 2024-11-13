@@ -74,6 +74,7 @@ export const AddTokenRateLimitForm: React.FC<AddMemberFormProps> = ({
         forSpecificTeamspace={teamspaceId}
         isOpen={modalIsOpen}
         setIsOpen={setModalIsOpen}
+        onClose={() => setModalIsOpen(false)}
       />
     </CustomModal>
   );

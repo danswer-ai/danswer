@@ -48,6 +48,7 @@ export function ChatSessionDisplay({
   skipGradient,
   toggleSideBar,
   teamspaceId,
+  chatSessionIdRef,
 }: {
   chatSession: ChatSession;
   isSelected: boolean;
@@ -57,6 +58,7 @@ export function ChatSessionDisplay({
   skipGradient?: boolean;
   toggleSideBar?: () => void;
   teamspaceId?: string;
+  chatSessionIdRef?: React.MutableRefObject<number | null>;
 }) {
   const router = useRouter();
   const combinedSettings = useContext(SettingsContext);
@@ -68,6 +70,12 @@ export function ChatSessionDisplay({
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   let { refreshChatSessions } = useChatContext();
+  const [deletingChatSession, setDeletingChatSession] =
+    useState<ChatSession | null>();
+
+  const showDeleteModal = (chatSession: ChatSession) => {
+    setDeletingChatSession(chatSession);
+  };
 
   useEffect(() => {
     if (skipGradient) {
@@ -236,12 +244,12 @@ export function ChatSessionDisplay({
 
                       <div
                         className="hover:bg-background-inverted/10 p-1 rounded"
-                        onClick={() => setOpenDeleteModal(true)}
+                        onClick={() => showDeleteModal(chatSession)}
                       >
                         <Trash size={16} />
                       </div>
 
-                      {openDeleteModal && (
+                      {deletingChatSession && (
                         <DeleteModal
                           title="Delete chat?"
                           description={
@@ -250,19 +258,26 @@ export function ChatSessionDisplay({
                               <b>&quot;{chatSession.name.slice(0, 30)}&quot;</b>
                             </>
                           }
-                          onClose={() => setOpenDeleteModal(false)}
-                          open={openDeleteModal}
+                          onClose={() => setDeletingChatSession(null)}
+                          open={!!deletingChatSession}
                           onSuccess={async () => {
                             const response = await deleteChatSession(
-                              chatSession.id
+                              deletingChatSession.id
                             );
                             if (response.ok) {
+                              setDeletingChatSession(null);
                               // go back to the main page
-                              router.push(
-                                teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"
-                              );
-                              refreshChatSessions();
-                              setOpenDeleteModal(false);
+                              if (
+                                deletingChatSession.id ===
+                                chatSessionIdRef?.current
+                              ) {
+                                router.push(
+                                  teamspaceId
+                                    ? `/t/${teamspaceId}/chat`
+                                    : "/chat"
+                                );
+                              }
+
                               toast({
                                 title: "Chat session deleted",
                                 description:
@@ -277,6 +292,7 @@ export function ChatSessionDisplay({
                                 variant: "destructive",
                               });
                             }
+                            refreshChatSessions(teamspaceId);
                           }}
                         />
                       )}

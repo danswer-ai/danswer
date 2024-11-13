@@ -82,6 +82,7 @@ export function DraggableAssistantCard(props: {
   isSelected: boolean;
   onSelect: (assistant: Assistant) => void;
   llmName: string;
+  isLastAssistant: boolean;
 }) {
   const {
     attributes,
@@ -104,7 +105,7 @@ export function DraggableAssistantCard(props: {
     <div
       ref={setNodeRef}
       style={style}
-      className="overlow-y-scroll inputscroll flex items-center"
+      className={`overlow-y-scroll inputscroll flex items-center ${props.isLastAssistant ? "pb-10" : ""}`}
     >
       <div {...attributes} {...listeners} className="mr-1 cursor-grab">
         <MdDragIndicator className="h-3 w-3 flex-none" />

@@ -8,7 +8,7 @@ import { usePasswordValidation } from "@/hooks/usePasswordValidation";
 import { useState } from "react";
 import { CircleCheck } from "lucide-react";
 
-export default function SecurityTab({ user }: { user: UserTypes | null }) {
+export default function SecurityTab() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -112,15 +112,15 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
           </div>
         </div>
 
-        <>
-          <div className="flex items-center gap-5">
-            <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">
-              <span className="font-semibold text-inverted-inverted">
-                New Password
-              </span>
-            </div>
+        <div className="flex gap-5">
+          <div className="w-44 sm:w-96 lg:w-[500px] shrink-0 pt-2">
+            <span className="font-semibold text-inverted-inverted">
+              New Password
+            </span>
+          </div>
+          <div className="md:w-[500px]">
             <div
-              className={`md:w-[500px] h-10 flex items-center justify-between ${isEditing ? "" : "truncate"}`}
+              className={`w-full h-10 flex items-center justify-between ${isEditing ? "" : "truncate"}`}
             >
               {isEditing ? (
                 <Input
@@ -139,39 +139,39 @@ export default function SecurityTab({ user }: { user: UserTypes | null }) {
                 </span>
               )}
             </div>
-          </div>
-          {isEditing && (
-            <div className="flex gap-5">
-              <div className="w-[500px]" />
-              <div className="text-sm text-subtle pt-2">
-                <div className="flex items-center gap-2">
-                  <CircleCheck
-                    size={16}
-                    color={newPassword.length >= 8 ? "#69c57d" : "gray"}
-                  />
-                  <p>At least 8 characters</p>
+
+            {isEditing && (
+              <div className="flex gap-5">
+                <div className="text-sm text-subtle pt-2">
+                  <div className="flex items-center gap-2">
+                    <CircleCheck
+                      size={16}
+                      color={newPassword.length >= 8 ? "#69c57d" : "gray"}
+                    />
+                    <p>At least 8 characters</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CircleCheck
+                      size={16}
+                      color={hasUppercase ? "#69c57d" : "gray"}
+                    />
+                    <p>At least 1 Capital letter</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CircleCheck
+                      size={16}
+                      color={hasNumberOrSpecialChar ? "#69c57d" : "gray"}
+                    />
+                    <p>At least 1 number or special character</p>
+                  </div>
+                  {passwordWarning && (
+                    <p className="text-red-500">{passwordWarning}</p>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <CircleCheck
-                    size={16}
-                    color={hasUppercase ? "#69c57d" : "gray"}
-                  />
-                  <p>At least 1 Capital letter</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CircleCheck
-                    size={16}
-                    color={hasNumberOrSpecialChar ? "#69c57d" : "gray"}
-                  />
-                  <p>At least 1 number or special character</p>
-                </div>
-                {passwordWarning && (
-                  <p className="text-red-500">{passwordWarning}</p>
-                )}
               </div>
-            </div>
-          )}
-        </>
+            )}
+          </div>
+        </div>
 
         <div className="flex items-center gap-5">
           <div className="w-44 sm:w-96 lg:w-[500px] shrink-0">

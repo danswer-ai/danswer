@@ -14,6 +14,8 @@ interface CustomModalProps {
   open?: boolean;
   title: string | React.ReactNode;
   description?: string | React.ReactNode;
+  className?: string;
+  headerClassName?: string;
 }
 
 export function CustomModal({
@@ -23,6 +25,8 @@ export function CustomModal({
   open,
   title,
   description,
+  className,
+  headerClassName,
 }: CustomModalProps) {
   const handleClose = () => {
     if (onClose) {
@@ -33,10 +37,14 @@ export function CustomModal({
   return (
     <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader className="pb-8">
+      <DialogContent className={className}>
+        <DialogHeader className={`pb-8 ${headerClassName}`}>
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription className="text-base">{description}</DialogDescription>}
+          {description && (
+            <DialogDescription className="text-base">
+              {description}
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         {children}

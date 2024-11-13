@@ -153,6 +153,7 @@ function Main() {
           forSpecificScope={
             isPaidEnterpriseFeaturesEnabled ? undefined : Scope.GLOBAL
           }
+          onClose={() => setModalIsOpen(false)}
         />
       </CustomModal>
 

@@ -22,9 +22,6 @@ import {
   X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Popover } from "@/components/popover/Popover";
-import { CustomModal } from "@/components/CustomModal";
-import { Button } from "@/components/ui/button";
 import { useChatContext } from "@/context/ChatContext";
 import { DeleteModal } from "@/components/DeleteModal";
 
@@ -32,10 +29,14 @@ const FolderItem = ({
   folder,
   currentChatId,
   isInitiallyExpanded,
+  chatSessionIdRef,
+  teamspaceId,
 }: {
   folder: Folder;
   currentChatId?: number;
   isInitiallyExpanded: boolean;
+  chatSessionIdRef?: React.MutableRefObject<number | null>;
+  teamspaceId?: string;
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(isInitiallyExpanded);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -111,7 +112,7 @@ const FolderItem = ({
   const confirmDelete = async () => {
     try {
       await deleteFolder(folder.folder_id);
-      await refreshChatSessions();
+      await refreshChatSessions(teamspaceId);
       setShowDeleteConfirm(false);
       router.refresh();
     } catch (error) {
@@ -132,7 +133,7 @@ const FolderItem = ({
     const chatSessionId = event.dataTransfer.getData(CHAT_SESSION_ID_KEY);
     try {
       await addChatToFolder(folder.folder_id, chatSessionId);
-      refreshChatSessions();
+      refreshChatSessions(teamspaceId);
       router.refresh();
     } catch (error) {
       toast({
@@ -251,6 +252,7 @@ const FolderItem = ({
               chatSession={chatSession}
               isSelected={chatSession.id === currentChatId}
               skipGradient={isDragOver}
+              chatSessionIdRef={chatSessionIdRef}
             />
           ))}
         </div>
@@ -263,10 +265,14 @@ export const FolderList = ({
   folders,
   currentChatId,
   openedFolders,
+  chatSessionIdRef,
+  teamspaceId,
 }: {
   folders: Folder[];
   currentChatId?: number;
   openedFolders?: { [key: number]: boolean };
+  chatSessionIdRef?: React.MutableRefObject<number | null>;
+  teamspaceId?: string;
 }) => {
   if (folders.length === 0) {
     return null;
@@ -282,6 +288,8 @@ export const FolderList = ({
           isInitiallyExpanded={
             openedFolders ? openedFolders[folder.folder_id] || false : false
           }
+          chatSessionIdRef={chatSessionIdRef}
+          teamspaceId={teamspaceId}
         />
       ))}
       {folders.length == 1 && folders[0].chat_sessions.length == 0 && (

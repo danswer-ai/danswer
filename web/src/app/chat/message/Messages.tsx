@@ -382,7 +382,7 @@ export const AIMessage = ({
             )}
         </div>
 
-        <div className="pl-1.5 md:pl-12 break-words w-full">
+        <div className="pl-1.5 md:pl-14 break-words w-full">
           {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
             <>
               {query !== undefined &&
@@ -752,7 +752,7 @@ export const HumanMessage = ({
               You
             </div>
           </div>
-          <div className="flex flex-wrap pt-4 pl-1.5 md:pl-12 w-full">
+          <div className="flex flex-wrap pt-4 pl-1.5 md:pl-14 w-full">
             <div className="break-words w-full">
               <FileDisplay files={files || []} />
               {isEditing ? (

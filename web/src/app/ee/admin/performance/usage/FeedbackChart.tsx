@@ -19,12 +19,18 @@ const normalizeToUTC = (date: Date) => {
   );
 };
 
-export function FeedbackChart({ timeRange }: { timeRange: DateRange }) {
+export function FeedbackChart({
+  timeRange,
+  teamspaceId,
+}: {
+  timeRange: DateRange;
+  teamspaceId?: string | string[];
+}) {
   const {
     data: queryAnalyticsData,
     isLoading: isQueryAnalyticsLoading,
     error: queryAnalyticsError,
-  } = useQueryAnalytics(timeRange);
+  } = useQueryAnalytics(timeRange, teamspaceId);
 
   let chart;
   if (isQueryAnalyticsLoading) {

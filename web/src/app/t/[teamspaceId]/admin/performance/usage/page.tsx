@@ -7,9 +7,11 @@ import { QueryPerformanceChart } from "@/app/ee/admin/performance/usage/QueryPer
 import UsageReports from "@/app/ee/admin/performance/usage/UsageReports";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Activity } from "lucide-react";
+import { useParams } from "next/navigation";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useTimeRange();
+  const { teamspaceId } = useParams();
 
   return (
     <div className="h-full w-full overflow-y-auto">
@@ -24,10 +26,13 @@ export default function AnalyticsPage() {
           <div>
             <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
           </div>
-          <QueryPerformanceChart timeRange={timeRange} />
-          <FeedbackChart timeRange={timeRange} />
+          <QueryPerformanceChart
+            timeRange={timeRange}
+            teamspaceId={teamspaceId}
+          />
+          <FeedbackChart timeRange={timeRange} teamspaceId={teamspaceId} />
         </div>
-        <UsageReports />
+        <UsageReports teamspaceId={teamspaceId} />
       </div>
     </div>
   );
