@@ -76,7 +76,6 @@ def _add_user_filters(
             .where(~UG__CCpair.user_group_id.in_(user_groups))
             .correlate(ConnectorCredentialPair)
         )
-        where_clause |= ConnectorCredentialPair.access_type == AccessType.SYNC
     else:
         where_clause |= ConnectorCredentialPair.access_type == AccessType.PUBLIC
         where_clause |= ConnectorCredentialPair.access_type == AccessType.SYNC
