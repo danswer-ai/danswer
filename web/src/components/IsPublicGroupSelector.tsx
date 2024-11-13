@@ -33,7 +33,7 @@ export const IsPublicGroupSelector = <T extends IsPublicGroupSelectorFormType>({
   const { isAdmin, user, isLoadingUser, isCurator } = useUser();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const [shouldHideContent, setShouldHideContent] = useState(false);
-
+  console.log(formikProps.values);
   useEffect(() => {
     if (user && userGroups && isPaidEnterpriseFeaturesEnabled) {
       const isUserAdmin = user.role === UserRole.ADMIN;

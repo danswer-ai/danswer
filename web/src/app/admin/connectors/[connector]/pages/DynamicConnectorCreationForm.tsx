@@ -164,7 +164,7 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
       )}
 
       <AccessTypeForm connector={connector} />
-      <AccessTypeGroupSelector />
+      <AccessTypeGroupSelector connector={connector} />
 
       {config.advanced_values.length > 0 && (
         <>

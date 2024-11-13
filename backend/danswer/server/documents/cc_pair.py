@@ -387,6 +387,7 @@ def associate_credential_to_connector(
         user=user,
         target_group_ids=metadata.groups,
         object_is_public=metadata.access_type == AccessType.PUBLIC,
+        object_is_perm_sync=metadata.access_type == AccessType.SYNC,
     )
 
     try:
