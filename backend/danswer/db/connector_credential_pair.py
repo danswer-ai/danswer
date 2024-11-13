@@ -387,6 +387,7 @@ def add_credential_to_connector(
         )
 
     association = ConnectorCredentialPair(
+        creator_id=user.id if user else None,
         connector_id=connector_id,
         credential_id=credential_id,
         name=cc_pair_name,

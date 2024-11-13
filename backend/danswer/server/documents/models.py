@@ -222,6 +222,7 @@ class CCPairFullInfo(BaseModel):
     is_editable_for_current_user: bool
     deletion_failure_message: str | None
     indexing: bool
+    creator: UUID | None
 
     @classmethod
     def from_models(
@@ -267,6 +268,7 @@ class CCPairFullInfo(BaseModel):
             is_editable_for_current_user=is_editable_for_current_user,
             deletion_failure_message=cc_pair_model.deletion_failure_message,
             indexing=indexing,
+            creator=cc_pair_model.creator_id,
         )
 
 
