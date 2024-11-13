@@ -30,7 +30,6 @@ from danswer.configs.danswerbot_configs import (
 from danswer.connectors.slack.utils import make_slack_api_rate_limited
 from danswer.connectors.slack.utils import SlackTextCleaner
 from danswer.danswerbot.slack.constants import FeedbackVisibility
-from danswer.danswerbot.slack.tokens import fetch_tokens
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.users import get_user_by_email
 from danswer.llm.exceptions import GenAIDisabledException
@@ -139,11 +138,6 @@ def update_emote_react(
 def remove_danswer_bot_tag(message_str: str, client: WebClient) -> str:
     bot_tag_id = get_danswer_bot_app_id(web_client=client)
     return re.sub(rf"<@{bot_tag_id}>\s", "", message_str)
-
-
-def get_web_client() -> WebClient:
-    slack_tokens = fetch_tokens()
-    return WebClient(token=slack_tokens.bot_token)
 
 
 @retry(

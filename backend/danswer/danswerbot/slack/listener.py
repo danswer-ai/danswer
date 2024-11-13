@@ -168,7 +168,7 @@ class SlackbotHandler:
                 logger.exception(f"Error in heartbeat loop: {e}")
             self._shutdown_event.wait(timeout=TENANT_HEARTBEAT_INTERVAL)
 
-    def _do_shit_for_tenant_and_app(
+    def _manage_clients_per_tenant(
         self, db_session: Session, tenant_id: str | None, app: SlackApp
     ) -> None:
         slack_bot_tokens = SlackBotTokens(
@@ -179,13 +179,9 @@ class SlackbotHandler:
         logger.debug(
             f"Setting tenant ID context variable for tenant {tenant_id}, app {app.id}"
         )
-        token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id or "public")
-        logger.debug(f"Fetched Slack bot tokens for tenant {tenant_id}, app {app.id}")
-        CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
-        logger.debug(
-            f"Reset tenant ID context variable for tenant {tenant_id}, app {app.id}"
-        )
 
+        # If the tokens are not set, we need to close the socket client and delete the tokens
+        # for the tenant and app
         if not slack_bot_tokens:
             logger.debug(
                 f"No Slack bot token found for tenant {tenant_id}, app {app.id}"
@@ -257,13 +253,13 @@ class SlackbotHandler:
             try:
                 with get_session_with_tenant(tenant_id) as db_session:
                     try:
-                      apps = fetch_slack_apps(db_session=db_session)
-                      for app in apps:
-                          self._do_shit_for_tenant_and_app(
-                              db_session=db_session,
-                              tenant_id=tenant_id,
-                              app=app,
-                          )
+                        apps = fetch_slack_apps(db_session=db_session)
+                        for app in apps:
+                            self._manage_clients_per_tenant(
+                                db_session=db_session,
+                                tenant_id=tenant_id,
+                                app=app,
+                            )
 
                     except KvKeyNotFoundError:
                         logger.debug(f"Missing Slack Bot tokens for tenant {tenant_id}")
