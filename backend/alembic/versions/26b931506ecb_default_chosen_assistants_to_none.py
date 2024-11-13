@@ -1,7 +1,7 @@
 """default chosen assistants to none
 
 Revision ID: 26b931506ecb
-Revises: c0fd6e4da83a
+Revises: 2daa494a0851
 Create Date: 2024-11-12 13:23:29.858995
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "26b931506ecb"
-down_revision = "c0fd6e4da83a"
+down_revision = "2daa494a0851"
 branch_labels = None
 depends_on = None
 
