@@ -67,7 +67,7 @@ def test_slack_permission_sync(
             "workspace": "onyx-test-workspace",
             "channels": [public_channel["name"], private_channel["name"]],
         },
-        is_public=True,
+        access_type=AccessType.SYNC,
         groups=[],
         user_performing_action=admin_user,
     )

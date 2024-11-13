@@ -72,7 +72,7 @@ class CCPairManager:
             source=source,
             input_type=input_type,
             connector_specific_config=connector_specific_config,
-            is_public=(access_type == AccessType.PUBLIC),
+            access_type=access_type,
             groups=groups,
             user_performing_action=user_performing_action,
         )

@@ -124,16 +124,21 @@ def _cleanup_document_set__user_group_relationships__no_commit(
 def validate_user_creation_permissions(
     db_session: Session,
     user: User | None,
-    target_group_ids: list[int] | None,
-    object_is_public: bool | None,
+    target_group_ids: list[int] | None = None,
+    object_is_public: bool | None = None,
+    object_is_perm_sync: bool | None = None,
 ) -> None:
     """
+    All users can create/edit permission synced objects if they don't specify a group
     All admin actions are allowed.
     Prevents non-admins from creating/editing:
     - public objects
     - objects with no groups
     - objects that belong to a group they don't curate
     """
+    if object_is_perm_sync and not target_group_ids:
+        return
+
     if not user or user.role == UserRole.ADMIN:
         return
 

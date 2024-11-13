@@ -1032,7 +1032,7 @@ export interface ConnectorBase<T> {
   refresh_freq: number | null;
   prune_freq: number | null;
   indexing_start: Date | null;
-  is_public?: boolean;
+  access_type: string;
   groups?: number[];
 }
 

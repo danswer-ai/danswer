@@ -64,7 +64,7 @@ def test_slack_prune(
             "workspace": "onyx-test-workspace",
             "channels": [public_channel["name"], private_channel["name"]],
         },
-        is_public=True,
+        access_type=AccessType.PUBLIC,
         groups=[],
         user_performing_action=admin_user,
     )

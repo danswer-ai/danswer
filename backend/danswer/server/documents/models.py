@@ -64,11 +64,11 @@ class ConnectorBase(BaseModel):
 
 
 class ConnectorUpdateRequest(ConnectorBase):
-    is_public: bool = True
+    access_type: AccessType
     groups: list[int] = Field(default_factory=list)
 
     def to_connector_base(self) -> ConnectorBase:
-        return ConnectorBase(**self.model_dump(exclude={"is_public", "groups"}))
+        return ConnectorBase(**self.model_dump(exclude={"access_type", "groups"}))
 
 
 class ConnectorSnapshot(ConnectorBase):
