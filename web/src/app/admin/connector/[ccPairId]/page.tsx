@@ -209,6 +209,10 @@ function Main({ ccPairId }: { ccPairId: number }) {
         isDeleting={isDeleting}
       />
       <div className="text-sm mt-1">
+        Creator:{" "}
+        <b className="text-emphasis">{ccPair.creator_email ?? "Unknown"}</b>
+      </div>
+      <div className="text-sm mt-1">
         Total Documents Indexed:{" "}
         <b className="text-emphasis">{ccPair.num_docs_indexed}</b>
       </div>

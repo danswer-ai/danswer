@@ -8,6 +8,7 @@ import requests
 from danswer.connectors.models import InputType
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
+from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import DocumentSource
@@ -146,7 +147,22 @@ class CCPairManager:
         result.raise_for_status()
 
     @staticmethod
-    def get_one(
+    def get_single(
+        cc_pair_id: int,
+        user_performing_action: DATestUser | None = None,
+    ) -> CCPairFullInfo | None:
+        response = requests.get(
+            f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair_id}",
+            headers=user_performing_action.headers
+            if user_performing_action
+            else GENERAL_HEADERS,
+        )
+        response.raise_for_status()
+        cc_pair_json = response.json()
+        return CCPairFullInfo(**cc_pair_json)
+
+    @staticmethod
+    def get_indexing_status_by_id(
         cc_pair_id: int,
         user_performing_action: DATestUser | None = None,
     ) -> ConnectorIndexingStatus | None:
@@ -165,7 +181,7 @@ class CCPairManager:
         return None
 
     @staticmethod
-    def get_all(
+    def get_indexing_statuses(
         user_performing_action: DATestUser | None = None,
     ) -> list[ConnectorIndexingStatus]:
         response = requests.get(
@@ -183,7 +199,7 @@ class CCPairManager:
         verify_deleted: bool = False,
         user_performing_action: DATestUser | None = None,
     ) -> None:
-        all_cc_pairs = CCPairManager.get_all(user_performing_action)
+        all_cc_pairs = CCPairManager.get_indexing_statuses(user_performing_action)
         for retrieved_cc_pair in all_cc_pairs:
             if retrieved_cc_pair.cc_pair_id == cc_pair.id:
                 if verify_deleted:
@@ -233,7 +249,9 @@ class CCPairManager:
         """after: Wait for an indexing success time after this time"""
         start = time.monotonic()
         while True:
-            fetched_cc_pairs = CCPairManager.get_all(user_performing_action)
+            fetched_cc_pairs = CCPairManager.get_indexing_statuses(
+                user_performing_action
+            )
             for fetched_cc_pair in fetched_cc_pairs:
                 if fetched_cc_pair.cc_pair_id != cc_pair.id:
                     continue
@@ -467,7 +485,7 @@ class CCPairManager:
         cc_pair_id is good to do."""
         start = time.monotonic()
         while True:
-            cc_pairs = CCPairManager.get_all(user_performing_action)
+            cc_pairs = CCPairManager.get_indexing_statuses(user_performing_action)
             if cc_pair_id:
                 found = False
                 for cc_pair in cc_pairs:

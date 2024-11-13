@@ -173,6 +173,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
     has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
+    cc_pairs: Mapped[list["ConnectorCredentialPair"]] = relationship(
+        "ConnectorCredentialPair",
+        back_populates="creator",
+        primaryjoin="User.id == foreign(ConnectorCredentialPair.creator_id)",
+    )
 
 
 class InputPrompt(Base):
@@ -453,6 +458,14 @@ class ConnectorCredentialPair(Base):
     )
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="connector_credential_pair"
+    )
+
+    # the user id of the user that created this cc pair
+    creator_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    creator: Mapped["User"] = relationship(
+        "User",
+        back_populates="cc_pairs",
+        primaryjoin="foreign(ConnectorCredentialPair.creator_id) == remote(User.id)",
     )
 
 

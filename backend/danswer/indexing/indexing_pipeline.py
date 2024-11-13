@@ -255,7 +255,7 @@ def index_doc_batch_prepare(
     )
 
 
-@log_function_time()
+@log_function_time(debug_only=True)
 def index_doc_batch(
     *,
     chunker: Chunker,
