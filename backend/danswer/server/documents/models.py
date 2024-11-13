@@ -14,11 +14,26 @@ from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import Credential
+from danswer.db.models import Document as DbDocument
 from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexAttemptError as DbIndexAttemptError
 from danswer.db.models import IndexingStatus
 from danswer.db.models import TaskStatus
 from danswer.server.utils import mask_credential_dict
+
+
+class DocumentSyncStatus(BaseModel):
+    doc_id: str
+    last_synced: datetime | None
+    last_modified: datetime | None
+
+    @classmethod
+    def from_model(cls, doc: DbDocument) -> "DocumentSyncStatus":
+        return DocumentSyncStatus(
+            doc_id=doc.id,
+            last_synced=doc.last_synced,
+            last_modified=doc.last_modified,
+        )
 
 
 class DocumentInfo(BaseModel):
