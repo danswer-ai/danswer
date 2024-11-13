@@ -494,7 +494,7 @@ def log_http_error(_: Request, exc: Exception) -> JSONResponse:
 
 def get_application() -> FastAPI:
     application = FastAPI(
-        title="enMedD AI Backend", version=__version__, lifespan=lifespan
+        title="Arnold AI Backend", version=__version__, lifespan=lifespan
     )
 
     # Add the custom exception handler
@@ -631,7 +631,7 @@ app = fetch_versioned_implementation(module="enmedd.main", attribute="get_applic
 
 if __name__ == "__main__":
     logger.notice(
-        f"Starting enMedD AI Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
+        f"Starting Arnold AI Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
     )
 
     if global_version.get_is_ee_version():

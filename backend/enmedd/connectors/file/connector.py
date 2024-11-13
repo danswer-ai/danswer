@@ -107,7 +107,7 @@ def _process_file(
     dt_str = all_metadata.get("doc_updated_at")
     final_time_updated = time_str_to_utc(dt_str) if dt_str else time_updated
 
-    # Metadata tags separate from the enMedD specific fields
+    # Metadata tags separate from the Arnold specific fields
     metadata_tags = {
         k: v
         for k, v in all_metadata.items()

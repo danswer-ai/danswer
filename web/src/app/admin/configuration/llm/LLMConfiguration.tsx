@@ -160,7 +160,7 @@ export function LLMConfiguration() {
           <CardContent className="p-3">
             <h3>No LLM providers configured yet</h3>
             <p className="text-subtle text-sm pt-2">
-              Please set one up below in order to start using enMedD AI
+              Please set one up below in order to start using Arnold AI
             </p>
           </CardContent>
         </Card>

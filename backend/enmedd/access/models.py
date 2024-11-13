@@ -12,13 +12,13 @@ class ExternalAccess:
     external_user_emails: set[str]
     # Names or external IDs of teamspaces with access to the doc
     external_teamspace_ids: set[str]
-    # Whether the document is public in the external system or enMedD AI
+    # Whether the document is public in the external system or Arnold AI
     is_public: bool
 
 
 @dataclass(frozen=True)
 class DocumentAccess(ExternalAccess):
-    # User emails for enMedD AI users, None indicates admin
+    # User emails for Arnold AI users, None indicates admin
     user_emails: set[str | None]
     # Names of user teamspaces associated with this document
     teamspaces: set[str]

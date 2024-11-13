@@ -34,13 +34,13 @@ class SimpleQueryRequest(BaseModel):
 
 
 class UpdateChatSessionThreadRequest(BaseModel):
-    # If not specified, use enMedD AI default assistant
+    # If not specified, use Arnold AI default assistant
     chat_session_id: int
     new_alternate_model: str
 
 
 class ChatSessionCreationRequest(BaseModel):
-    # If not specified, use enMedD AI default assistant
+    # If not specified, use Arnold AI default assistant
     assistant_id: int = 0
     description: str | None = None
 

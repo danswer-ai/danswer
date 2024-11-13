@@ -370,7 +370,7 @@ export const GmailOAuthSection = ({
     return (
       <div>
         <p className="mb-2 text-sm">
-          When using a Gmail Service Account, you can either have enMedD AI act
+          When using a Gmail Service Account, you can either have Arnold AI act
           as the service account itself OR you can specify an account for the
           service account to impersonate.
           <br />
@@ -429,7 +429,7 @@ export const GmailOAuthSection = ({
                 <TextFormField
                   name="gmail_delegated_user"
                   label="[Optional] User email to impersonate:"
-                  subtext="If left blank, enMedD AI will use the service account itself."
+                  subtext="If left blank, Arnold AI will use the service account itself."
                   optional
                 />
                 <div className="flex">

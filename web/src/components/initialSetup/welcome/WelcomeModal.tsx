@@ -112,9 +112,9 @@ export function _WelcomeModal({ user }: { user: User | null }) {
             <p className="mt-6 mb-2 font-bold">Step 2: Connect Data Sources</p>
             <div>
               <p>
-                Data sources are the way that enMedD AI gets data from your
+                Data sources are the way that Arnold AI gets data from your
                 organization&apos;s various data sources. Once setup, we&apos;ll
-                automatically sync data from your apps and docs into enMedD AI,
+                automatically sync data from your apps and docs into Arnold AI,
                 so you can search through all of them in one place.
               </p>
 
@@ -226,11 +226,11 @@ export function _WelcomeModal({ user }: { user: User | null }) {
       );
       break;
     default:
-      title = "🎉 Welcome to enMedD AI";
+      title = "🎉 Welcome to Arnold AI";
       body = (
         <>
           <div>
-            <p>How are you planning on using enMedD AI?</p>
+            <p>How are you planning on using Arnold AI?</p>
           </div>
           <Divider />
           <UsageTypeSection

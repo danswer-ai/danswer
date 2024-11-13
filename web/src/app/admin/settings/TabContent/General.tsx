@@ -155,8 +155,8 @@ export default function General() {
             <TextFormField
               label="Workspace Name"
               name="workspace_name"
-              subtext={`The custom name you are giving for your workspace. This will replace 'enMedD AI' everywhere in the UI.`}
-              placeholder="Custom name which will replace 'enMedD AI'"
+              subtext={`The custom name you are giving for your workspace. This will replace 'Arnold AI' everywhere in the UI.`}
+              placeholder="Custom name which will replace 'Arnold AI'"
               disabled={isSubmitting}
             />
 
@@ -167,7 +167,7 @@ export default function General() {
               label="Description"
               name="workspace_description"
               subtext={`The custom description metadata you are giving ${
-                values.workspace_name || "enMedD AI"
+                values.workspace_name || "Arnold AI"
               } for your workspace.\
                   This will be seen when sharing the link or searching through the browser.`}
               placeholder="Custom description for your Workspace"
@@ -211,7 +211,7 @@ export default function General() {
               </div>
             ) : (
               <p className="pb-3 text-sm text-subtle">
-                Specify your own logo to replace the standard enMedD AI logo.
+                Specify your own logo to replace the standard Arnold AI logo.
               </p>
             )}
 
@@ -267,7 +267,7 @@ export default function General() {
                     subtext={
                       values.enable_consent_screen
                         ? `The title for the consent screen that will be displayed for each user on their initial visit to the application. If left blank, title will default to "Terms of Use".`
-                        : `The title for the popup that will be displayed for each user on their initial visit to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${values.workspace_name || "enMedD AI"}!".`
+                        : `The title for the popup that will be displayed for each user on their initial visit to the application. If left blank AND Custom Popup Content is specified, will use "Welcome to ${values.workspace_name || "Arnold AI"}!".`
                     }
                     placeholder={
                       values.enable_consent_screen

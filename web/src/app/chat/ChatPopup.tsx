@@ -27,7 +27,7 @@ export function ChatPopup() {
   let popupTitle = settings.workspaces.custom_header_logo;
   if (!popupTitle) {
     popupTitle = `Welcome to ${
-      settings.workspaces.workspace_name || "enMedD AI"
+      settings.workspaces.workspace_name || "Arnold AI"
     }!`;
   }
 

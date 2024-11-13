@@ -26,6 +26,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { CustomTooltip } from "@/components/CustomTooltip";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { Logo } from "@/components/Logo";
+import ArnoldAi from "../../../../public/arnold_ai.png";
 
 export const ChatSidebar = ({
   existingChats,
@@ -111,13 +113,18 @@ export const ChatSidebar = ({
             `}
         id="chat-sidebar"
       >
-        <div className="flex items-center gap-2 w-full relative justify-center px-4 pb-4">
-          <div className="flex">
-            {workspaces && workspaces.workspace_name ? (
-              <Image src={EnmeddLogo} alt="LogoBrand" height={40} />
+        <div className="flex items-center w-full relative justify-center px-4 pb-4">
+          <div className="flex h-full items-center gap-1">
+            {workspaces && workspaces.use_custom_logo ? (
+              <Logo />
             ) : (
-              <Image src={EnmeddLogo} alt="enmedd-logo" height={40} />
+              <Image src={ArnoldAi} alt="arnoldai-logo" height={32} />
             )}
+            <span className="text-lg font-semibold">
+              {workspaces && workspaces.workspace_name
+                ? workspaces.workspace_name
+                : "Arnold AI"}
+            </span>
           </div>
 
           {/* <Button

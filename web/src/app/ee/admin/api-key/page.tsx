@@ -33,7 +33,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const API_KEY_TEXT = `
-API Keys allow you to access enMedD AI APIs programmatically. Click the button below to generate a new API Key.
+API Keys allow you to access Arnold AI APIs programmatically. Click the button below to generate a new API Key.
 `;
 
 function NewApiKeyModal({

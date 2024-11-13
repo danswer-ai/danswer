@@ -1,5 +1,5 @@
 # This file is used to demonstrate how to use the backend APIs directly
-# In this case, the equivalent of asking a question in enMedD Chat in a new chat session
+# In this case, the equivalent of asking a question in Arnold Chat in a new chat session
 import argparse
 import json
 import os
@@ -69,12 +69,12 @@ if __name__ == "__main__":
         "--enmedd-url",
         type=str,
         default="http://localhost:80",
-        help="enMedD AI URL, should point to enMedD AI nginx.",
+        help="Arnold AI URL, should point to Arnold AI nginx.",
     )
     parser.add_argument(
         "--test-question",
         type=str,
-        default="What is enMedD AI?",
+        default="What is Arnold AI?",
         help="Test question for new Chat Session.",
     )
 

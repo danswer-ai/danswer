@@ -191,7 +191,7 @@ class VespaIndex(DocumentIndex):
         response = requests.post(deploy_url, headers=headers, data=zip_file)
         if response.status_code != 200:
             raise RuntimeError(
-                f"Failed to prepare Vespa enMedD AI Index. Response: {response.text}"
+                f"Failed to prepare Vespa Arnold AI Index. Response: {response.text}"
             )
 
     def index(

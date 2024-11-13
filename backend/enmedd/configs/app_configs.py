@@ -35,7 +35,7 @@ DISABLE_GENERATIVE_AI = os.environ.get("DISABLE_GENERATIVE_AI", "").lower() == "
 # Web Configs
 #####
 # WEB_DOMAIN is used to set the redirect_uri after login flows
-# NOTE: if you are having problems accessing the enMedD AI web UI locally (especially
+# NOTE: if you are having problems accessing the Arnold AI web UI locally (especially
 # on Windows, try  setting this to `http://127.0.0.1:3000` instead and see if that
 # fixes it)
 WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
@@ -49,7 +49,7 @@ DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 
 # Encryption key secret is used to encrypt connector credentials, api keys, and other sensitive
 # information. This provides an extra layer of security on top of Postgres access controls
-# and is available in enMedD AI EE
+# and is available in Arnold AI EE
 ENCRYPTION_KEY_SECRET = os.environ.get("ENCRYPTION_KEY_SECRET") or ""
 
 # Turn off mask if admin users should see full credentials for data connectors.
@@ -63,8 +63,8 @@ SESSION_EXPIRE_TIME_SECONDS = int(
 )  # 7 days
 
 # set `VALID_EMAIL_DOMAINS` to a comma seperated list of domains in order to
-# restrict access to enMedD AI to only users with emails from those domains.
-# E.g. `VALID_EMAIL_DOMAINS=example.com,example.org` will restrict enMedD AI
+# restrict access to Arnold AI to only users with emails from those domains.
+# E.g. `VALID_EMAIL_DOMAINS=example.com,example.org` will restrict Arnold AI
 # signups to users with either an @example.com or an @example.org email.
 # NOTE: maintaining `VALID_EMAIL_DOMAIN` to keep backwards compatibility
 _VALID_EMAIL_DOMAIN = os.environ.get("VALID_EMAIL_DOMAIN", "")
@@ -97,7 +97,7 @@ SMTP_USER = os.environ.get("SMTP_USER", "your-email@gmail.com")
 SMTP_PASS = os.environ.get("SMTP_PASS", "your-gmail-password")
 EMAIL_FROM = os.environ.get("EMAIL_FROM") or SMTP_USER
 
-# If set, enMedD AI will listen to the `expires_at` returned by the identity
+# If set, Arnold AI will listen to the `expires_at` returned by the identity
 # provider (e.g. Okta, Google, etc.) and force the user to re-authenticate
 # after this time has elapsed. Disabled since by default many auth providers
 # have very short expiry times (e.g. 1 hour) which provide a poor user experience
@@ -252,7 +252,7 @@ CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES = (
     os.environ.get("CONFLUENCE_CONNECTOR_INDEX_ARCHIVED_PAGES", "").lower() == "true"
 )
 
-# Save pages labels as enMedD AI metadata tags
+# Save pages labels as Arnold AI metadata tags
 # The reason to skip this would be to reduce the number of calls to Confluence due to rate limit concerns
 CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING = (
     os.environ.get("CONFLUENCE_CONNECTOR_SKIP_LABEL_INDEXING", "").lower() == "true"
@@ -377,7 +377,7 @@ CURRENT_PROCESS_IS_AN_INDEXING_JOB = (
 LOG_ALL_MODEL_INTERACTIONS = (
     os.environ.get("LOG_ALL_MODEL_INTERACTIONS", "").lower() == "true"
 )
-# Logs enMedD AI only model interactions like prompts, responses, messages etc.
+# Logs Arnold AI only model interactions like prompts, responses, messages etc.
 LOG_DANSWER_MODEL_INTERACTIONS = (
     os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
 )

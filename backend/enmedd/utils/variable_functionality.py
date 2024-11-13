@@ -69,7 +69,7 @@ def fetch_versioned_implementation(module: str, attribute: str) -> Any:
 
         if is_ee:
             if "ee.enmedd" not in str(e):
-                # If it's a non enMedD AI related import failure, this is likely because
+                # If it's a non Arnold AI related import failure, this is likely because
                 # a dependent library has not been installed. Should raise this failure
                 # instead of letting the server start up
                 raise e

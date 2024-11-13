@@ -71,7 +71,7 @@ def _get_access_for_documents(
         )
 
         # If the document is determined to be "public" externally (through a SYNC connector)
-        # then it's given the same access level as if it were marked public within enMedD AI
+        # then it's given the same access level as if it were marked public within Arnold AI
         is_public_anywhere = document.is_public or non_ee_access.is_public
 
         # To avoid collisions of group namings between connectors, they need to be prefixed

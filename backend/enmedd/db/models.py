@@ -530,7 +530,7 @@ class Document(Base):
     # NOTE: if more sensitive data is added here for display, make sure to add user/group permission
 
     # this should correspond to the ID of the document
-    # (as is passed around in enMedD AI)
+    # (as is passed around in Arnold AI)
     id: Mapped[str] = mapped_column(String, primary_key=True)
     from_ingestion_api: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=True
@@ -563,7 +563,7 @@ class Document(Base):
         DateTime(timezone=True), nullable=True, index=True
     )
     # The following are not attached to User because the account/email may not be known
-    # within enMedD AI
+    # within Arnold AI
     # Something like the document creator
     primary_owners: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True
@@ -1562,11 +1562,11 @@ class PGFileStore(Base):
 Enterprise Edition Models
 ************************************************************************
 
-These models are only used in Enterprise Edition only features in enMedD AI.
+These models are only used in Enterprise Edition only features in Arnold AI.
 They are kept here to simplify the codebase and avoid having different assumptions
-on the shape of data being passed around between the MIT and EE versions of enMedD AI.
+on the shape of data being passed around between the MIT and EE versions of Arnold AI.
 
-In the MIT version of enMedD AI, assume these tables are always empty.
+In the MIT version of Arnold AI, assume these tables are always empty.
 """
 
 
@@ -1842,7 +1842,7 @@ class User__ExternalTeamspaceId(Base):
     """Maps user info both internal and external to the name of the external group
     This maps the user to all of their external groups so that the external group name can be
     attached to the ACL list matching during query time. User level permissions can be handled by
-    directly adding the enMedD AI user to the doc ACL list"""
+    directly adding the Arnold AI user to the doc ACL list"""
 
     __tablename__ = "user__external_teamspace_id"
 

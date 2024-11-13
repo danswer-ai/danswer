@@ -1,6 +1,6 @@
 # These prompts are to support tool calling. Currently not used in the main flow or via any configs
 # The current generation of LLM is too unreliable for this task.
-# enMedD AI retrieval call as a tool option
+# Arnold AI retrieval call as a tool option
 # TODO: rename all the variable names here
 TOOL_NAME = "Current Search"
 TOOL_DESCRIPTION = (

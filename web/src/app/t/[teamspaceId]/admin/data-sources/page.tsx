@@ -118,8 +118,8 @@ export default function Page() {
         <AdminPageTitle icon={<CloudUpload size={24} />} title="Data Sources" />
 
         <p>
-          Connect enMedD AI to your organization&apos;s knowledge sources.
-          We&apos;ll automatically sync your data into enMedD AI, so you can
+          Connect Arnold AI to your organization&apos;s knowledge sources.
+          We&apos;ll automatically sync your data into Arnold AI, so you can
           find exactly what you&apos;re looking for in one place.
         </p>
 

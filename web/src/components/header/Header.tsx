@@ -57,7 +57,7 @@ export function Header({ user }: HeaderProps) {
                   <HeaderTitle>{workspaces.workspace_name}</HeaderTitle>
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_ENMEDD_POWERED && (
                     <p className="text-xs text-subtle -mt-1.5">
-                      Powered by enMedD AI
+                      Powered by Arnold AI
                     </p>
                   )}
                 </div>
@@ -67,7 +67,7 @@ export function Header({ user }: HeaderProps) {
             </div>
           </div>
         </Link>
-        {/* <HeaderTitle>enMedD AI</HeaderTitle> */}
+        {/* <HeaderTitle>Arnold AI</HeaderTitle> */}
         {(!settings ||
           (settings.search_page_enabled && settings.chat_page_enabled)) && (
           <>

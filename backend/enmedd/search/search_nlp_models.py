@@ -39,7 +39,7 @@ logger = setup_logger()
 
 
 WARM_UP_STRINGS = [
-    "enMedD AI is amazing!",
+    "Arnold AI is amazing!",
     "Check out our easy deployment guide at",
     "https://docs.danswer.dev/quickstart",
 ]

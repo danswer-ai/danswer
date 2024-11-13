@@ -49,7 +49,7 @@ export function NoSourcesModal() {
           <p>
             Or, if you&apos;re looking for a pure ChatGPT-like experience
             without any organization specific knowledge, then you can head over
-            to the Chat page and start chatting with enMedD AI right away!
+            to the Chat page and start chatting with Arnold AI right away!
           </p>
           <Link href={teamspaceId ? `/t/${teamspaceId}/chat` : "/chat"}>
             <Button className="mt-3">

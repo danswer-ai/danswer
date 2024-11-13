@@ -20,7 +20,7 @@ def _build_weak_llm_quotes_prompt(
     history_str: str,
     prompt: PromptConfig,
 ) -> HumanMessage:
-    """Since enMedD AI supports a variety of LLMs, this less demanding prompt is provided
+    """Since Arnold AI supports a variety of LLMs, this less demanding prompt is provided
     as an option to use with weaker LLMs such as small version, low float precision, quantized,
     or distilled models. It only uses one context document and has very weak requirements of
     output format.

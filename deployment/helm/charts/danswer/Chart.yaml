@@ -3,7 +3,7 @@ name: enmedd-stack
 description: A Helm chart for Kubernetes
 home: https://platform.enmedd.com/
 sources:
-  - "https://github.com/enMedD/enmedd-ai"
+  - "https://github.com/Arnold/enmedd-ai"
 type: application
 version: 0.2.0
 appVersion: "latest"

@@ -184,4 +184,4 @@ You MUST respond in the following format:
 
 # User the following for easy viewing of prompts
 if __name__ == "__main__":
-    print(JSON_PROMPT)  # Default prompt used in the enMedD AI UI flow
+    print(JSON_PROMPT)  # Default prompt used in the Arnold AI UI flow

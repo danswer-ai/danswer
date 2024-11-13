@@ -52,7 +52,7 @@ def _does_document_exist(
     http_client: httpx.Client,
 ) -> bool:
     """Returns whether the document already exists and the users/group whitelists
-    Specifically in this case, document refers to a vespa document which is equivalent to a enMedD AI
+    Specifically in this case, document refers to a vespa document which is equivalent to a Arnold AI
     chunk. This checks for whether the chunk exists already in the index"""
     doc_url = f"{DOCUMENT_ID_ENDPOINT.format(index_name=index_name)}/{doc_chunk_id}"
     doc_fetch_response = http_client.get(doc_url)

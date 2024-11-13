@@ -126,7 +126,7 @@ export const HealthCheckBanner = () => {
         <p className="font-bold">The backend is currently unavailable.</p>
 
         <p className="ml-2">
-          If this is your initial setup or you just updated your enMedD AI
+          If this is your initial setup or you just updated your Arnold AI
           deployment, this is likely because the backend is still starting up.
           Give it a minute or two, and then refresh the page. If that does not
           work, make sure the backend is setup and/or contact an administrator.

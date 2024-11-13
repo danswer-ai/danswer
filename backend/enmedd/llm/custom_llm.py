@@ -18,7 +18,7 @@ logger = setup_logger()
 
 
 class CustomModelServer(LLM):
-    """This class is to provide an example for how to use enMedD AI
+    """This class is to provide an example for how to use Arnold AI
     with any LLM, even servers with custom API definitions.
     To use with your own model server, simply implement the functions
     below to fit your model server expectation
@@ -41,7 +41,7 @@ class CustomModelServer(LLM):
     ):
         if not endpoint:
             raise ValueError(
-                "Cannot point enMedD AI to a custom LLM server without providing the "
+                "Cannot point Arnold AI to a custom LLM server without providing the "
                 "endpoint for the model server."
             )
 

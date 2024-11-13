@@ -11,7 +11,7 @@ const BillingCard = ({ plan, price, features, isActive }: BillingData) => {
         <div>
           <div className="flex flex-col">
             <div className="flex gap-4 items-center font">
-              <span>enMedD {plan} Plan</span>
+              <span>Arnold {plan} Plan</span>
               {isActive && <Badge>Active</Badge>}
             </div>
             <p className="font-bold pt-4">

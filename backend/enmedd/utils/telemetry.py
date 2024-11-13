@@ -101,5 +101,5 @@ def optional_telemetry(
         thread = threading.Thread(target=telemetry_logic, daemon=True)
         thread.start()
     except Exception:
-        # Should never interfere with normal functions of enMedD AI
+        # Should never interfere with normal functions of Arnold AI
         pass

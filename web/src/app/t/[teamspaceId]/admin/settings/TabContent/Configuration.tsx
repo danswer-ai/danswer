@@ -294,7 +294,7 @@ export function Configuration() {
       <div className="mt-8">
         <h2 className="font-bold text:lg md:text-xl">Page and Chat Setup</h2>
         <p className="text-sm">
-          Manage general enMedD AI settings applicable to all users in the
+          Manage general Arnold AI settings applicable to all users in the
           workspace.
         </p>
       </div>
@@ -337,7 +337,7 @@ export function Configuration() {
           <h3 className="mb-4">Chat Settings</h3>
           <IntegerInput
             label="Chat Retention"
-            sublabel="Enter the maximum number of days you would like enMedD AI to retain chat messages. Leaving this field empty will cause enMedD AI to never delete chat messages."
+            sublabel="Enter the maximum number of days you would like Arnold AI to retain chat messages. Leaving this field empty will cause Arnold AI to never delete chat messages."
             value={chatRetention === null ? null : Number(chatRetention)}
             onChange={(e) => {
               const value = e.target.value;

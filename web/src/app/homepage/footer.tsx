@@ -96,7 +96,7 @@ export default function Footer() {
               © 2024{" "}
               <a className="hover:underline" href="/">
                 {" "}
-                enMedD
+                Arnold
               </a>
               . All Rights Reserved.
             </p>

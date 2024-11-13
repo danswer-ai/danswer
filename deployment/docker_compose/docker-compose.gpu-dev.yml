@@ -7,7 +7,7 @@ services:
     command: >
       /bin/sh -c "alembic upgrade 5d12a446f5c0 &&
       alembic upgrade a2d61fc58c5b &&
-      echo \"Starting enMedD AI Api Server\" &&
+      echo \"Starting Arnold AI Api Server\" &&
       uvicorn enmedd.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db
@@ -78,7 +78,7 @@ services:
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
       - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # LiteLLM Verbose Logging
-      # Log all of enMedD AI prompts and interactions with the LLM
+      # Log all of Arnold AI prompts and interactions with the LLM
       - LOG_DANSWER_MODEL_INTERACTIONS=${LOG_DANSWER_MODEL_INTERACTIONS:-}
       # If set to `true` will enable additional logs about Vespa query performance
       # (time spent on finding the right docs + time spent fetching summaries from disk)
@@ -114,7 +114,7 @@ services:
     restart: always
     environment:
       - ENCRYPTION_KEY_SECRET=${ENCRYPTION_KEY_SECRET:-}
-      # Gen AI Settings (Needed by enMedD AIBot)
+      # Gen AI Settings (Needed by Arnold AIBot)
       - GEN_AI_MAX_TOKENS=${GEN_AI_MAX_TOKENS:-}
       - QA_TIMEOUT=${QA_TIMEOUT:-}
       - MAX_CHUNKS_FED_TO_CHAT=${MAX_CHUNKS_FED_TO_CHAT:-}
@@ -145,7 +145,7 @@ services:
       - DOCUMENT_ENCODER_MODEL=${DOCUMENT_ENCODER_MODEL:-}
       - DOC_EMBEDDING_DIM=${DOC_EMBEDDING_DIM:-}
       - NORMALIZE_EMBEDDINGS=${NORMALIZE_EMBEDDINGS:-}
-      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}  # Needed by enMedD AIBot
+      - ASYM_QUERY_PREFIX=${ASYM_QUERY_PREFIX:-}  # Needed by Arnold AIBot
       - ASYM_PASSAGE_PREFIX=${ASYM_PASSAGE_PREFIX:-}
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
@@ -169,7 +169,7 @@ services:
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
       - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # LiteLLM Verbose Logging
-      # Log all of enMedD AI prompts and interactions with the LLM
+      # Log all of Arnold AI prompts and interactions with the LLM
       - LOG_DANSWER_MODEL_INTERACTIONS=${LOG_DANSWER_MODEL_INTERACTIONS:-}
       - LOG_VESPA_TIMING_INFORMATION=${LOG_VESPA_TIMING_INFORMATION:-}
       # Celery Configs (defaults are set in the supervisord.conf file, prefer doing that to have on source

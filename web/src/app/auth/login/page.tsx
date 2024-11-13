@@ -9,9 +9,7 @@ import {
 import { redirect } from "next/navigation";
 import { SignInButton } from "./SignInButton";
 import { LogInForms } from "./LoginForms";
-import { Card, Title, Text } from "@tremor/react";
 import Link from "next/link";
-import Logo from "../../../../public/logo-brand.png";
 import { LoginText } from "./LoginText";
 import Image from "next/image";
 import LoginImage from "../../../../public/login_image.webp";

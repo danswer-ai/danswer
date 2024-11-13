@@ -294,7 +294,7 @@ export function Configuration() {
           <h3 className="mb-4">Chat Settings</h3>
           <IntegerInput
             label="Chat Retention"
-            sublabel="Enter the maximum number of days you would like enMedD AI to retain chat messages. Leaving this field empty will cause enMedD AI to never delete chat messages."
+            sublabel="Enter the maximum number of days you would like Arnold AI to retain chat messages. Leaving this field empty will cause Arnold AI to never delete chat messages."
             value={chatRetention === "" ? null : Number(chatRetention)}
             onChange={(e) => {
               const numValue = parseInt(e.target.value, 10);

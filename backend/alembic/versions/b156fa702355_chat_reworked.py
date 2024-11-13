@@ -178,7 +178,7 @@ def upgrade() -> None:
     delete_statement = sa.text(
         """
         DELETE FROM assistant
-        WHERE name = 'enMedD AI' AND default_assistant = TRUE AND id != 0
+        WHERE name = 'Arnold AI' AND default_assistant = TRUE AND id != 0
         """
     )
 

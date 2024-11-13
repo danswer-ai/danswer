@@ -129,7 +129,7 @@ const GDriveMain = ({}: {}) => {
       {isAdmin && (
         <>
           <Title className="mb-2 mt-6 ml-auto mr-auto">
-            Step 2: Authenticate with enMedD AI
+            Step 2: Authenticate with Arnold AI
           </Title>
           <DriveOAuthSection
             refreshCredentials={refreshCredentials}

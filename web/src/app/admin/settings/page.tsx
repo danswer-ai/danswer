@@ -12,7 +12,7 @@ export default async function Page() {
         />
 
         <p className="mb-8">
-          Manage general enMedD AI settings applicable to all users in the
+          Manage general Arnold AI settings applicable to all users in the
           workspace.
         </p>
 

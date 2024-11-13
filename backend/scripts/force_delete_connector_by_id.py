@@ -15,7 +15,7 @@ sys.path.append(parent_dir)
 # pylint: disable=E402
 # flake8: noqa: E402
 
-# Now import enMedD AI modules
+# Now import Arnold AI modules
 from enmedd.db.models import (
     DocumentSet__ConnectorCredentialPair,
     Teamspace__ConnectorCredentialPair,
@@ -128,7 +128,7 @@ def _unsafe_deletion(
 def _delete_connector(cc_pair_id: int, db_session: Session) -> None:
     user_input = input(
         "DO NOT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. \
-        IT MAY CAUSE ISSUES with your enMedD AI instance! \
+        IT MAY CAUSE ISSUES with your Arnold AI instance! \
         Are you SURE you want to continue? (enter 'Y' to continue): "
     )
     if user_input != "Y":

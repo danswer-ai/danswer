@@ -366,13 +366,13 @@ class SelectionAnalysis:
             return False
 
     def do_request(self, query: str) -> dict:
-        """Request the enMedD AI API
+        """Request the Arnold AI API
 
         Args:
             query (str): A query
 
         Returns:
-            dict: The enMedD AI API response content
+            dict: The Arnold AI API response content
         """
         cookies = {"fastapiusersauth": self._auth_cookie} if self._auth_cookie else {}
 
@@ -391,7 +391,7 @@ class SelectionAnalysis:
             if response.status_code != 200:
                 color_output(
                     (
-                        "something goes wrong while requesting the enMedD AI API "
+                        "something goes wrong while requesting the Arnold AI API "
                         f"for the query '{query}': {response.text}"
                     ),
                     model="critical",
@@ -399,7 +399,7 @@ class SelectionAnalysis:
                 sys.exit(1)
         except Exception as e:
             color_output(
-                f"Unable to request the enMedD AI API for the query '{query}': {e}",
+                f"Unable to request the Arnold AI API for the query '{query}': {e}",
                 model="critical",
             )
             sys.exit(1)
@@ -427,7 +427,7 @@ class SelectionAnalysis:
             return json.load(f)
 
     def extract_content(self, contents: dict) -> dict:
-        """Extract the content returns by the enMedD AI API
+        """Extract the content returns by the Arnold AI API
 
         Args:
             contents (dict): The enmedd response content
@@ -650,7 +650,7 @@ if __name__ == "__main__":
         type=str,
         default=None,
         help=(
-            "Currently, to get this script working when the enMedD AI Auth is "
+            "Currently, to get this script working when the Arnold AI Auth is "
             "enabled, you must extract from the UI your cookie 'fastapiusersauth' "
             "and then set it using this argument"
         ),
@@ -685,8 +685,8 @@ if __name__ == "__main__":
         type=int,
         default=3000,
         help=(
-            "The enMedD AI Web (not the API) port. We use the UI to forward the requests to the API. "
-            "It should be '3000' for local dev and '80' if enMedD AI runs using docker compose."
+            "The Arnold AI Web (not the API) port. We use the UI to forward the requests to the API. "
+            "It should be '3000' for local dev and '80' if Arnold AI runs using docker compose."
         ),
     )
     parser.add_argument(

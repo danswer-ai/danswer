@@ -9,7 +9,7 @@ from enmedd.db.models import Workspace as WorkspaceModel
 
 
 class Workspaces(BaseModel):
-    """General settings that only apply to the Enterprise Edition of enMedD AI
+    """General settings that only apply to the Enterprise Edition of Arnold AI
 
     NOTE: don't put anything sensitive in here, as this is accessible without auth."""
 

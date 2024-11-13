@@ -62,11 +62,11 @@ def wipe_all_rows(database: str) -> None:
 
 
 if __name__ == "__main__":
-    print("Cleaning up all enMedD AI tables")
+    print("Cleaning up all Arnold AI tables")
     wipe_all_rows(POSTGRES_DB)
     with Session(get_sqlalchemy_engine(), expire_on_commit=False) as db_session:
         create_initial_public_credential(db_session)
     print("To keep data consistent, it's best to wipe the document index as well.")
     print(
-        "To be safe, it's best to restart the enMedD AI services (API Server and Background Tasks"
+        "To be safe, it's best to restart the Arnold AI services (API Server and Background Tasks"
     )

@@ -2,7 +2,7 @@
 
 - Chat UI with the ability to select documents to chat with.
 - Create custom AI Assistants with different prompts and backing knowledge sets.
-- Connect enMedD AI with LLM of your choice (self-host for a fully airgapped solution).
+- Connect Arnold AI with LLM of your choice (self-host for a fully airgapped solution).
 - Document Search + AI Answers for natural language queries.
 - Connectors to all common workplace tools like Google Drive, Confluence, etc.
 

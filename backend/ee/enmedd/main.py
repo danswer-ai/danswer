@@ -114,7 +114,7 @@ def get_application() -> FastAPI:
     # Ensure all routes have auth enabled or are explicitly marked as public
     check_ee_router_auth(application)
 
-    # seed the enMedD AI environment with LLMs, Assistants, etc. based on an optional
+    # seed the Arnold AI environment with LLMs, Assistants, etc. based on an optional
     # environment variable. Used to automate deployment for multiple environments.
     seed_db()
 

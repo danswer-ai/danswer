@@ -13,7 +13,7 @@ from enmedd.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 
 
 """
-This module contains tests for the citation extraction functionality in enMedD AI.
+This module contains tests for the citation extraction functionality in Arnold AI.
 
 The tests focus on the `extract_citations_from_stream` function, which processes
 a stream of tokens and extracts citations, replacing them with properly formatted

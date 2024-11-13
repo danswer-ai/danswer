@@ -8,7 +8,7 @@ export function InitializingLoader() {
       <div className="h-24 w-24 mx-auto mb-3">
         <Image src={Logo} alt="Logo" width="1419" height="1520" />
       </div>
-      <Bold>Initializing enMedD AI</Bold>
+      <Bold>Initializing Arnold AI</Bold>
     </div>
   );
 }

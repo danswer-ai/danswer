@@ -401,7 +401,7 @@ auth:
     redis_password: "password"
 
 configMap:
-  AUTH_TYPE: "disabled"  # Change this for production uses unless enMedD AI is only accessible behind VPN
+  AUTH_TYPE: "disabled"  # Change this for production uses unless Arnold AI is only accessible behind VPN
   SESSION_EXPIRE_TIME_SECONDS: "86400"  # 1 Day Default
   VALID_EMAIL_DOMAINS: ""  # Can be something like enmedd.ai, as an extra double-check
   SMTP_SERVER: ""  # For sending verification emails, if unspecified then defaults to 'smtp.gmail.com'

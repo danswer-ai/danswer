@@ -81,7 +81,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 def get_model_app() -> FastAPI:
     application = FastAPI(
-        title="enMedD AI Model Server", version=__version__, lifespan=lifespan
+        title="Arnold AI Model Server", version=__version__, lifespan=lifespan
     )
 
     application.include_router(management_router)
@@ -96,7 +96,7 @@ app = get_model_app()
 
 if __name__ == "__main__":
     logger.notice(
-        f"Starting enMedD AI Model Server on http://{MODEL_SERVER_ALLOWED_HOST}:{str(MODEL_SERVER_PORT)}/"
+        f"Starting Arnold AI Model Server on http://{MODEL_SERVER_ALLOWED_HOST}:{str(MODEL_SERVER_PORT)}/"
     )
     logger.notice(f"Model Server Version: {__version__}")
     uvicorn.run(app, host=MODEL_SERVER_ALLOWED_HOST, port=MODEL_SERVER_PORT)

@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile.cloud
     command: >
       /bin/sh -c "alembic -n schema_private upgrade head &&
-      echo \"Starting enMedD AI Api Server\" &&
+      echo \"Starting Arnold AI Api Server\" &&
       uvicorn enmedd.main:app --host 0.0.0.0 --port 8080"
     depends_on:
       - relational_db

@@ -137,7 +137,7 @@ def make_assistant_private(
     # May cause error if someone switches down to MIT from EE
     # TODO: modify this behavior
     if group_ids:
-        raise NotImplementedError("enMedD AI does not support private Assistants")
+        raise NotImplementedError("Arnold AI does not support private Assistants")
 
 
 def create_update_assistant(
@@ -627,7 +627,7 @@ def validate_assistant_tools(tools: list[Tool]) -> None:
     for tool in tools:
         if tool.name == "InternetSearchTool" and not BING_API_KEY:
             raise ValueError(
-                "Bing API key not found, please contact your enMedD AI admin to get it added!"
+                "Bing API key not found, please contact your Arnold AI admin to get it added!"
             )
 
 

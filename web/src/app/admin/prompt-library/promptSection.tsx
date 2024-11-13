@@ -130,7 +130,7 @@ export const PromptSection = ({
       <div className={centering ? "max-w-sm mx-auto" : ""}>
         <Text className="my-auto mb-2">
           Create prompts that can be accessed with the <i>`/`</i> shortcut in
-          enMedD AI Chat.{" "}
+          Arnold AI Chat.{" "}
           {isPublic
             ? "Prompts created here will be accessible to all users."
             : "Prompts created here will be available only to you."}

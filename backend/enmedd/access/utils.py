@@ -3,7 +3,7 @@ from enmedd.configs.constants import DocumentSource
 
 def prefix_user_email(user_email: str) -> str:
     """Prefixes a user email to eliminate collision with teamspace names.
-    This applies to both a enMedD AI user and an External user, this is to make the query time
+    This applies to both a Arnold AI user and an External user, this is to make the query time
     more efficient"""
     return f"user_email:{user_email}"
 
@@ -15,7 +15,7 @@ def prefix_teamspace(teamspace_name: str) -> str:
 
 
 def prefix_external_teamspace(ext_teamspace_name: str) -> str:
-    """Prefixes an external teamspace name to eliminate collision with user emails / enMedD AI teamspaces."""
+    """Prefixes an external teamspace name to eliminate collision with user emails / Arnold AI teamspaces."""
     return f"external_teamspace:{ext_teamspace_name}"
 
 

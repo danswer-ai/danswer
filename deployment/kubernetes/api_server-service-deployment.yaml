@@ -35,7 +35,7 @@ spec:
           - "-c"
           - |
             alembic upgrade head &&
-            echo "Starting enMedD AI Api Server" &&
+            echo "Starting Arnold AI Api Server" &&
             uvicorn enmedd.main:app --host 0.0.0.0 --port 8080
         ports:
         - containerPort: 8080

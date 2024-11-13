@@ -26,7 +26,7 @@ export function Logo({
     return (
       <div style={{ height, width }} className={className}>
         <Image
-          src="/logo.png"
+          src="/arnold_ai.png"
           alt="Logo"
           width={width}
           height={height}

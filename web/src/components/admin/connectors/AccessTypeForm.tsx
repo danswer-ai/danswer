@@ -42,7 +42,7 @@ export function AccessTypeForm({
       name: "Public",
       value: "public",
       description:
-        "Everyone with an account on enMedD AI can access the documents pulled in by this data source",
+        "Everyone with an account on Arnold AI can access the documents pulled in by this data source",
     });
   }
 
@@ -51,7 +51,7 @@ export function AccessTypeForm({
       name: "Auto Sync",
       value: "sync",
       description:
-        "We will automatically sync permissions from the source. A document will be searchable in enMedD AI if and only if the user performing the search has permission to access the document in the source.",
+        "We will automatically sync permissions from the source. A document will be searchable in Arnold AI if and only if the user performing the search has permission to access the document in the source.",
     });
   }
 
