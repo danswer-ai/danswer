@@ -4,6 +4,7 @@ import uuid
 
 import aiohttp  # Async HTTP client
 from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import exceptions
@@ -13,6 +14,8 @@ from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_cloud_embedding_provider
 from danswer.db.llm import upsert_llm_provider
+from danswer.db.models import IndexModelStatus
+from danswer.db.models import SearchSettings
 from danswer.db.models import UserTenantMapping
 from danswer.llm.llm_provider_options import ANTHROPIC_MODEL_NAMES
 from danswer.llm.llm_provider_options import ANTHROPIC_PROVIDER_NAME
@@ -104,8 +107,18 @@ async def provision_tenant(tenant_id: str, email: str) -> None:
         await asyncio.to_thread(run_alembic_migrations, tenant_id)
 
         with get_session_with_tenant(tenant_id) as db_session:
-            setup_danswer(db_session, tenant_id)
             configure_default_api_keys(db_session)
+
+            current_search_settings = (
+                db_session.query(SearchSettings)
+                .filter_by(status=IndexModelStatus.FUTURE)
+                .first()
+            )
+            cohere_enabled = (
+                current_search_settings is not None
+                and current_search_settings.provider_type == EmbeddingProvider.COHERE
+            )
+            setup_danswer(db_session, tenant_id, cohere_enabled=cohere_enabled)
 
         add_users_to_tenant([email], tenant_id)
 
@@ -206,11 +219,51 @@ def configure_default_api_keys(db_session: Session) -> None:
             provider_type=EmbeddingProvider.COHERE,
             api_key=COHERE_DEFAULT_API_KEY,
         )
+
         try:
+            logger.info("Attempting to upsert Cohere cloud embedding provider")
             upsert_cloud_embedding_provider(db_session, cloud_embedding_provider)
-        except Exception as e:
-            logger.error(f"Failed to configure Cohere embedding provider: {e}")
+            logger.info("Successfully upserted Cohere cloud embedding provider")
+
+            logger.info("Updating search settings with Cohere embedding model details")
+            query = (
+                select(SearchSettings)
+                .where(SearchSettings.status == IndexModelStatus.FUTURE)
+                .order_by(SearchSettings.id.desc())
+            )
+            result = db_session.execute(query)
+            current_search_settings = result.scalars().first()
+
+            if current_search_settings:
+                current_search_settings.model_name = (
+                    "embed-english-v3.0"  # Cohere's latest model as of now
+                )
+                current_search_settings.model_dim = (
+                    1024  # Cohere's embed-english-v3.0 dimension
+                )
+                current_search_settings.provider_type = EmbeddingProvider.COHERE
+                current_search_settings.index_name = (
+                    "danswer_chunk_cohere_embed_english_v3_0"
+                )
+                current_search_settings.query_prefix = ""
+                current_search_settings.passage_prefix = ""
+                db_session.commit()
+            else:
+                raise RuntimeError(
+                    "No search settings specified, DB is not in a valid state"
+                )
+            logger.info("Fetching updated search settings to verify changes")
+            updated_query = (
+                select(SearchSettings)
+                .where(SearchSettings.status == IndexModelStatus.PRESENT)
+                .order_by(SearchSettings.id.desc())
+            )
+            updated_result = db_session.execute(updated_query)
+            updated_result.scalars().first()
+
+        except Exception:
+            logger.exception("Failed to configure Cohere embedding provider")
     else:
-        logger.error(
+        logger.info(
             "COHERE_DEFAULT_API_KEY not set, skipping Cohere embedding provider configuration"
         )

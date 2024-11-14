@@ -503,3 +503,7 @@ _API_KEY_HASH_ROUNDS_RAW = os.environ.get("API_KEY_HASH_ROUNDS")
 API_KEY_HASH_ROUNDS = (
     int(_API_KEY_HASH_ROUNDS_RAW) if _API_KEY_HASH_ROUNDS_RAW else None
 )
+
+
+POD_NAME = os.environ.get("POD_NAME")
+POD_NAMESPACE = os.environ.get("POD_NAMESPACE")

@@ -17,6 +17,8 @@ from slack_sdk import WebClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
+from danswer.configs.app_configs import POD_NAME
+from danswer.configs.app_configs import POD_NAMESPACE
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
@@ -85,7 +87,9 @@ logger = setup_logger()
 
 # Prometheus metric for HPA
 active_tenants_gauge = Gauge(
-    "active_tenants", "Number of active tenants handled by this pod"
+    "active_tenants",
+    "Number of active tenants handled by this pod",
+    ["namespace", "pod"],
 )
 
 # In rare cases, some users have been experiencing a massive amount of trivial messages coming through
@@ -148,7 +152,9 @@ class SlackbotHandler:
         while not self._shutdown_event.is_set():
             try:
                 self.acquire_tenants()
-                active_tenants_gauge.set(len(self.tenant_ids))
+                active_tenants_gauge.labels(namespace=POD_NAMESPACE, pod=POD_NAME).set(
+                    len(self.tenant_ids)
+                )
                 logger.debug(f"Current active tenants: {len(self.tenant_ids)}")
             except Exception as e:
                 logger.exception(f"Error in Slack acquisition: {e}")
