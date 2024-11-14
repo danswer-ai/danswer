@@ -267,11 +267,8 @@ export function ChatPage({
 
   const noAssistants = liveAssistant == null || liveAssistant == undefined;
 
+  // always set the model override for the chat session, when an assistant, llm provider, or user preference exists
   useEffect(() => {
-    if (!loadedIdSessionRef.current && !currentPersonaId) {
-      return;
-    }
-
     const personaDefault = getLLMProviderOverrideForPersona(
       liveAssistant,
       llmProviders
