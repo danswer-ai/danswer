@@ -72,10 +72,11 @@ async def _fetch_all_docs(
                     f"Found {len(filtered_channels)} channels for the authenticated user"
                 )
 
+                sections: list[Section] = []
                 for channel in filtered_channels:
                     # process the messages not in any thread
-                    sections: list[Section] = []
                     max_ts = start
+                    sections = []
                     async for channel_message in channel.history(
                         limit=batch_size, after=start, before=end
                     ):  # TODO: pagination
@@ -104,7 +105,7 @@ async def _fetch_all_docs(
 
                     # process the messages in threads
                     for thread in channel.threads:
-                        sections: list[Section] = []
+                        sections = []
                         max_ts = start
                         async for thread_message in thread.history(
                             limit=batch_size,
