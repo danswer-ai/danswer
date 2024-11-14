@@ -175,7 +175,7 @@ export function AssistantsGallery() {
     <>
       {popup}
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <AssistantsPageTitle>Assistant Gallery</AssistantsPageTitle>
+        <AssistantsPageTitle>Manage Assistants</AssistantsPageTitle>
 
         <AssistantsNavigation />
         <div className="h-[52px] flex items-center justify-between mb-4">

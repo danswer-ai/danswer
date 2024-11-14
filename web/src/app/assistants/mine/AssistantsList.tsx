@@ -391,7 +391,7 @@ export function AssistantsList() {
       )}
 
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
-        <AssistantsPageTitle>Your Assistants</AssistantsPageTitle>
+        <AssistantsPageTitle>Manage Assistants</AssistantsPageTitle>
 
         <AssistantsNavigation />
 
