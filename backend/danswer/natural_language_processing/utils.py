@@ -102,12 +102,19 @@ def _check_tokenizer_cache(
             _TOKENIZER_CACHE[id_tuple] = TiktokenTokenizer(model_name)
             return _TOKENIZER_CACHE[id_tuple]
 
+        elif model_provider is None:
+            # Default to HuggingFaceTokenizer if no provider is specified
+            _TOKENIZER_CACHE[id_tuple] = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
+            return _TOKENIZER_CACHE[id_tuple]
+
         try:
+            # Default to DOCUMENT_ENCODER_MODEL if no model_name is specified
             if model_name is None:
                 model_name = DOCUMENT_ENCODER_MODEL
 
             logger.debug(f"Initializing HuggingFaceTokenizer for: {model_name}")
             _TOKENIZER_CACHE[id_tuple] = HuggingFaceTokenizer(model_name)
+
         except Exception as primary_error:
             logger.error(
                 f"Error initializing HuggingFaceTokenizer for {model_name}: {primary_error}"
