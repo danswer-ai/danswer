@@ -189,6 +189,13 @@ class SqlEngine:
             return ""
         return cls._app_name
 
+    @classmethod
+    def reset_engine(cls) -> None:
+        with cls._lock:
+            if cls._engine:
+                cls._engine.dispose()
+                cls._engine = None
+
 
 def get_all_tenant_ids() -> list[str] | list[None]:
     if not MULTI_TENANT:
@@ -312,7 +319,9 @@ async def get_async_session_with_tenant(
             await session.execute(text(f'SET search_path = "{tenant_id}"'))
             if POSTGRES_IDLE_SESSIONS_TIMEOUT:
                 await session.execute(
-                    f"SET SESSION idle_in_transaction_session_timeout = {POSTGRES_IDLE_SESSIONS_TIMEOUT}"
+                    text(
+                        f"SET SESSION idle_in_transaction_session_timeout = {POSTGRES_IDLE_SESSIONS_TIMEOUT}"
+                    )
                 )
         except Exception:
             logger.exception("Error setting search_path.")
@@ -373,7 +382,9 @@ def get_session_with_tenant(
                 cursor.execute(f'SET search_path = "{tenant_id}"')
                 if POSTGRES_IDLE_SESSIONS_TIMEOUT:
                     cursor.execute(
-                        f"SET SESSION idle_in_transaction_session_timeout = {POSTGRES_IDLE_SESSIONS_TIMEOUT}"
+                        text(
+                            f"SET SESSION idle_in_transaction_session_timeout = {POSTGRES_IDLE_SESSIONS_TIMEOUT}"
+                        )
                     )
             finally:
                 cursor.close()

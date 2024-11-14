@@ -63,6 +63,7 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
         stmt = construct_document_select_for_connector_credential_pair_by_needs_sync(
             cc_pair.connector_id, cc_pair.credential_id
         )
+
         for doc in db_session.scalars(stmt).yield_per(1):
             current_time = time.monotonic()
             if current_time - last_lock_time >= (
