@@ -18,6 +18,7 @@ interface ModalProps {
   hideDividerForTitle?: boolean;
   hideCloseButton?: boolean;
   noPadding?: boolean;
+  overflowContent?: boolean;
 }
 
 export function Modal({
@@ -31,6 +32,7 @@ export function Modal({
   noPadding,
   icon,
   hideCloseButton,
+  overflowContent = true,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -100,7 +102,11 @@ export function Modal({
               {!hideDividerForTitle && <Separator />}
             </>
           )}
-          <div className="max-h-[60vh] overflow-y-scroll">{children}</div>
+          <div
+            className={`max-h-[60vh] ${overflowContent && "overflow-y-scroll"}`}
+          >
+            {children}
+          </div>
         </div>
       </div>
     </div>

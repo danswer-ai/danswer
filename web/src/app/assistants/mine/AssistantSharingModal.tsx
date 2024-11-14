@@ -127,6 +127,7 @@ export function AssistantSharingModal({
     <>
       {popup}
       <Modal
+        overflowContent={false}
         width="max-w-3xl w-full"
         title={
           <div className="flex items-end space-x-3">

@@ -88,7 +88,10 @@ export function SearchMultiSelectDropdown({
   }, []);
 
   return (
-    <div className="relative inline-block text-left w-full" ref={dropdownRef}>
+    <div
+      className="relative z-50 inline-block text-left w-full"
+      ref={dropdownRef}
+    >
       <div>
         <input
           type="text"
@@ -135,11 +138,12 @@ export function SearchMultiSelectDropdown({
         <div
           className={`origin-top-right
             absolute
+            fixed
             left-0
             mt-3
             w-full
             rounded-md
-            z-50
+            z-[1000]
             shadow-lg
             bg-background
             border
