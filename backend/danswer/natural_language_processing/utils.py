@@ -94,18 +94,18 @@ def _check_tokenizer_cache(
 
     if id_tuple not in _TOKENIZER_CACHE:
         # If no provider specified, try to create HuggingFaceTokenizer with model_name
-        if model_provider is None and model_name is not None:
-            try:
-                _TOKENIZER_CACHE[id_tuple] = HuggingFaceTokenizer(model_name)
-                logger.info(f"Initialized HuggingFaceTokenizer for: {model_name}")
-                return _TOKENIZER_CACHE[id_tuple]
-            except Exception as hf_error:
-                logger.warning(
-                    f"Error initializing HuggingFaceTokenizer for {model_name}: {hf_error}"
-                )
-
-        # Try using TiktokenTokenizer if it supports the model_name
         if model_name is not None:
+            if model_provider is None:
+                try:
+                    _TOKENIZER_CACHE[id_tuple] = HuggingFaceTokenizer(model_name)
+                    logger.info(f"Initialized HuggingFaceTokenizer for: {model_name}")
+                    return _TOKENIZER_CACHE[id_tuple]
+                except Exception as hf_error:
+                    logger.warning(
+                        f"Error initializing HuggingFaceTokenizer for {model_name}: {hf_error}"
+                    )
+
+            # Try using TiktokenTokenizer if it supports the model_name
             try:
                 _TOKENIZER_CACHE[id_tuple] = TiktokenTokenizer(model_name)
                 logger.info(f"Initialized TiktokenTokenizer for: {model_name}")
