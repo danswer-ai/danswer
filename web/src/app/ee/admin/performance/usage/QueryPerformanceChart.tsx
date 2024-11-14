@@ -15,6 +15,9 @@ import {
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { SubLabel } from "@/components/admin/connectors/Field";
 
+import config from "../../../../../../tailwind-themes/tailwind.config";
+const colors = config.theme.extend.colors;
+
 const normalizeToUTC = (date: Date) => {
   return new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
@@ -86,11 +89,11 @@ export function QueryPerformanceChart({
     const chartConfig = {
       queries: {
         label: "Queries",
-        color: "#2039f3",
+        color: colors.brand[500], 
       },
       uniqueUsers: {
         label: "Unique Users",
-        color: "#60a5fa",
+        color: colors.brand[300],
       },
     } satisfies ChartConfig;
 

@@ -193,7 +193,7 @@ export const DocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className="text-sm border-b border-border px-4 py-8 break-words break-all relative"
+      className={`text-sm px-4 break-words break-all relative ${hide ? "" : "border-b border-border"}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
@@ -201,8 +201,8 @@ export const DocumentDisplay = ({
       }}
     >
       <div
-        className={`collapsible space-y-2.5 ${
-          hide ? "collapsible-closed overflow-y-auto border-transparent" : ""
+        className={`collapsible space-y-2.5 overflow-hidden ${
+          hide ? "collapsible-closed overflow-y-auto border-transparent max-h-0 min-h-0" : "max-h-max"
         }`}
       >
         <div className="flex relative">
@@ -298,7 +298,7 @@ export const AgenticDocumentDisplay = ({
   return (
     <div
       key={document.semantic_identifier}
-      className="text-sm border-b border-border px-4 py-8 break-words break-all relative"
+      className={`text-sm px-4 break-words break-all relative ${hide ? "" : "border-b border-border"}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
@@ -306,7 +306,9 @@ export const AgenticDocumentDisplay = ({
       }}
     >
       <div
-        className={`collapsible space-y-2.5 ${!hide && "collapsible-closed overflow-y-auto border-transparent"}`}
+        className={`collapsible space-y-2.5 overflow-hidden ${
+          hide ? "collapsible-closed overflow-y-auto border-transparent max-h-0 min-h-0" : "max-h-max"
+        }`}
       >
         <div className="flex relative">
           <a

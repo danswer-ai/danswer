@@ -10,16 +10,16 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-brand-500 text-inverted hover:bg-brand-300 focus-visible:ring-primary",
+          "bg-brand-500 text-inverted hover:bg-brand-300 focus-visible:ring-brand-400",
         destructive:
           "bg-destructive-500 text-inverted hover:bg-destructive-100 focus-visible:ring-destructive",
         outline:
-          "border border-brand-400 bg-background hover:bg-brand-200 hover:text-brand-600 focus-visible:ring-primary-400",
+          "border border-brand-400 bg-background hover:bg-brand-200 hover:text-brand-600 focus-visible:ring-brand-400",
         secondary:
           "bg-secondary-500 text-inverted hover:bg-secondary-100 focus-visible:ring-secondary",
         ghost:
           "hover:bg-light hover:text-accent-foreground focus-visible:ring-light",
-        link: "text-primary underline-offset-4 hover:underline focus-visible:ring-primary",
+        link: "text-brand-400 underline-offset-4 hover:underline focus-visible:ring-brand-400",
         success:
           "bg-success-500 text-inverted hover:bg-success-500-100 focus-visible:ring-success",
       },

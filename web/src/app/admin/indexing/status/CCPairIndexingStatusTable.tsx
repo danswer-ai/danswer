@@ -196,13 +196,14 @@ function ConnectorRow({
         );
       }}
     >
-      <TableCell>
+      <TableCell className="!w-[200px] xl:!w-[350px] !max-w-[480px] flex truncate">
         <CustomTooltip
           trigger={
-            <p className="w-full truncate ellipsis max-w-[480px]">
+            <p className=" truncate ellipsis w-full">
               {ccPairsIndexingStatus.name}
             </p>
           }
+          asChild
         >
           {ccPairsIndexingStatus.name}
         </CustomTooltip>
@@ -519,8 +520,8 @@ export function CCPairIndexingStatusTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[200px] xl:w-[350px]">
-                  <div className="w-full">Name</div>
+                <TableHead className="!w-[200px] xl:!w-[350px] flex items-center">
+                  Name
                 </TableHead>
                 {/* <TableHead>
                   Last Indexed
