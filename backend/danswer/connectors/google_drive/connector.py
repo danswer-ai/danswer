@@ -229,14 +229,21 @@ class GoogleDriveConnector(LoadConnector, PollConnector, SlimConnector):
         # We don't want to fail if we're using OAuth because you can
         # access your my drive as a non admin user in an org still
         ignore_fetch_failure = isinstance(self.creds, OAuthCredentials)
-        for drive in execute_paginated_retrieval(
-            retrieval_function=primary_drive_service.drives().list,
-            list_key="drives",
-            continue_on_404_or_403=ignore_fetch_failure,
-            useDomainAdminAccess=True,
-            fields="drives(id)",
-        ):
-            all_drive_ids.add(drive["id"])
+        try:
+            for drive in execute_paginated_retrieval(
+                retrieval_function=primary_drive_service.drives().list,
+                list_key="drives",
+                continue_on_404_or_403=ignore_fetch_failure,
+                useDomainAdminAccess=True,
+                fields="drives(id)",
+            ):
+                all_drive_ids.add(drive["id"])
+        except Exception:
+            logger.exception(
+                "If you are using Service Account Credentials,"
+                "please ensure that the primary email address of the "
+                "service account is an admin or owner of the organization."
+            )
 
         if not all_drive_ids:
             logger.warning(

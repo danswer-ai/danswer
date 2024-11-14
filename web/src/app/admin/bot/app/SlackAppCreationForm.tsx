@@ -10,6 +10,7 @@ import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
 import { createSlackApp, updateSlackApp } from "./new/lib";
+import { Button } from "@/components/ui/button";
 
 export const SlackAppCreationForm = ({
   existingSlackApp,
@@ -61,7 +62,9 @@ export const SlackAppCreationForm = ({
             if (refreshSlackApp) {
               refreshSlackApp();
             }
-            router.push(`/admin/bot?u=${Date.now()}`);
+            const responseJson = await response.json();
+            const appId = isUpdate ? existingSlackApp.id : responseJson.id;
+            router.push(`/admin/bot/app/${appId}?u=${Date.now()}`);
           } else {
             const responseJson = await response.json();
             const errorMsg = responseJson.detail || responseJson.message;
@@ -97,9 +100,14 @@ export const SlackAppCreationForm = ({
               subtext="While enabled, this Slack app will run in the background"
             />
             <div className="flex">
-              <button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                variant="submit"
+                size="default"
+              >
                 {isUpdate ? "Update!" : "Create!"}
-              </button>
+              </Button>
             </div>
           </Form>
         )}

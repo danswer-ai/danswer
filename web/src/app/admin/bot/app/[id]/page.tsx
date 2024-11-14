@@ -87,11 +87,6 @@ function SlackAppEditPage({ params }: { params: Promise<{ id: string }> }) {
 
       <div className="my-8" />
 
-      <p className="text-muted-foreground mb-8">
-        The below configurations will determine how DanswerBot behaves in the
-        specified channels.
-      </p>
-
       <h2 className="text-2xl font-semibold tracking-tight mb-4">
         Slack Bot Configurations
       </h2>

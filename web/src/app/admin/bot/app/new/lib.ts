@@ -1,4 +1,4 @@
-interface SlackAppCreationRequest {
+export interface SlackAppCreationRequest {
   name: string;
   description: string;
   enabled: boolean;
