@@ -73,6 +73,36 @@ async def _fetch_all_docs(
                 )
 
                 for channel in filtered_channels:
+                    # process the messages not in any thread
+                    sections: list[Section] = []
+                    max_ts = start
+                    async for channel_message in channel.history(
+                        limit=batch_size, after=start, before=end
+                    ):  # TODO: pagination
+                        if channel_message.thread is None:
+                            sections.append(
+                                Section(
+                                    text=channel_message.content,
+                                    link=channel_message.jump_url,
+                                )
+                            )
+                            if channel_message.edited_at:
+                                max_ts = max(channel_message.edited_at, max_ts)
+
+                    if len(sections) > 0:
+                        docs.append(
+                            Document(
+                                id=str(channel_message.id),
+                                source=DocumentSource.DISCORD,
+                                semantic_identifier=channel.name,
+                                doc_updated_at=max_ts,
+                                title=channel.name,
+                                sections=sections,
+                                metadata={"Channel": channel.name},
+                            )
+                        )
+
+                    # process the messages in threads
                     for thread in channel.threads:
                         sections: list[Section] = []
                         max_ts = start
@@ -80,7 +110,7 @@ async def _fetch_all_docs(
                             limit=batch_size,
                             after=start,
                             before=end,
-                        ):
+                        ):  # TODO: pagination
                             sections.append(
                                 Section(
                                     text=thread_message.content,
@@ -92,20 +122,21 @@ async def _fetch_all_docs(
                         # if len(docs) >= batch_size:
                         #     yield docs
                         #     docs = []
-                        docs.append(
-                            Document(
-                                id=str(thread_message.id),
-                                source=DocumentSource.DISCORD,
-                                semantic_identifier=f"{thread.name} in {channel.name}",
-                                doc_updated_at=max_ts,
-                                title=thread.name,
-                                sections=sections,
-                                metadata={
-                                    "Channel": channel.name,
-                                    "Thread": thread.name,
-                                },
+                        if len(sections) > 0:
+                            docs.append(
+                                Document(
+                                    id=str(thread_message.id),
+                                    source=DocumentSource.DISCORD,
+                                    semantic_identifier=f"{thread.name} in {channel.name}",
+                                    doc_updated_at=max_ts,
+                                    title=thread.name,
+                                    sections=sections,
+                                    metadata={
+                                        "Channel": channel.name,
+                                        "Thread": thread.name,
+                                    },
+                                )
                             )
-                        )
                     print(len(docs))
             finally:
                 await self.close()
