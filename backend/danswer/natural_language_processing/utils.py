@@ -93,49 +93,33 @@ def _check_tokenizer_cache(
     id_tuple = (model_provider, model_name)
 
     if id_tuple not in _TOKENIZER_CACHE:
-        if model_provider in [EmbeddingProvider.OPENAI, EmbeddingProvider.AZURE]:
-            if model_name is None:
-                raise ValueError(
-                    "model_name is required for OPENAI and AZURE embeddings"
-                )
-
-            _TOKENIZER_CACHE[id_tuple] = TiktokenTokenizer(model_name)
-            return _TOKENIZER_CACHE[id_tuple]
-
-        elif model_provider is None:
-            # Default to HuggingFaceTokenizer if no provider is specified
-            _TOKENIZER_CACHE[id_tuple] = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
-            return _TOKENIZER_CACHE[id_tuple]
-
-        try:
-            # Default to DOCUMENT_ENCODER_MODEL if no model_name is specified
-            if model_name is None:
-                model_name = DOCUMENT_ENCODER_MODEL
-
-            logger.debug(f"Initializing HuggingFaceTokenizer for: {model_name}")
-            _TOKENIZER_CACHE[id_tuple] = HuggingFaceTokenizer(model_name)
-
-        except Exception as primary_error:
-            logger.error(
-                f"Error initializing HuggingFaceTokenizer for {model_name}: {primary_error}"
-            )
-            logger.warning(
-                f"Falling back to default embedding model: {DOCUMENT_ENCODER_MODEL}"
-            )
-
+        # If no provider specified, try to create HuggingFaceTokenizer with model_name
+        if model_provider is None and model_name is not None:
             try:
-                # Cache this tokenizer name to the default so we don't have to try to load it again
-                # and fail again
-                _TOKENIZER_CACHE[id_tuple] = HuggingFaceTokenizer(
-                    DOCUMENT_ENCODER_MODEL
+                _TOKENIZER_CACHE[id_tuple] = HuggingFaceTokenizer(model_name)
+                logger.info(f"Initialized HuggingFaceTokenizer for: {model_name}")
+                return _TOKENIZER_CACHE[id_tuple]
+            except Exception as hf_error:
+                logger.warning(
+                    f"Error initializing HuggingFaceTokenizer for {model_name}: {hf_error}"
                 )
-            except Exception as fallback_error:
-                logger.error(
-                    f"Error initializing fallback HuggingFaceTokenizer: {fallback_error}"
+
+        # Try using TiktokenTokenizer if it supports the model_name
+        if model_name is not None:
+            try:
+                _TOKENIZER_CACHE[id_tuple] = TiktokenTokenizer(model_name)
+                logger.info(f"Initialized TiktokenTokenizer for: {model_name}")
+                return _TOKENIZER_CACHE[id_tuple]
+            except Exception as tiktoken_error:
+                logger.debug(
+                    f"TiktokenTokenizer not available for model {model_name}: {tiktoken_error}"
                 )
-                raise ValueError(
-                    f"Failed to initialize tokenizer for {model_name} and fallback model"
-                ) from fallback_error
+
+        # Fallback to default DOCUMENT_ENCODER_MODEL
+        logger.info(
+            f"Falling back to default embedding model for model {model_name}: {DOCUMENT_ENCODER_MODEL}"
+        )
+        _TOKENIZER_CACHE[id_tuple] = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
 
     return _TOKENIZER_CACHE[id_tuple]
 
