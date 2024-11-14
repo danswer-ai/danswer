@@ -130,17 +130,15 @@ _DEFAULT_TOKENIZER: BaseTokenizer = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
 def get_tokenizer(
     model_name: str | None, provider_type: EmbeddingProvider | str | None
 ) -> BaseTokenizer:
-    if provider_type is not None:
-        if isinstance(provider_type, str):
-            try:
-                provider_type = EmbeddingProvider(provider_type)
-            except ValueError:
-                logger.debug(
-                    f"Invalid provider_type '{provider_type}'. Falling back to default tokenizer."
-                )
-                return _DEFAULT_TOKENIZER
-        return _check_tokenizer_cache(provider_type, model_name)
-    return _DEFAULT_TOKENIZER
+    if isinstance(provider_type, str):
+        try:
+            provider_type = EmbeddingProvider(provider_type)
+        except ValueError:
+            logger.debug(
+                f"Invalid provider_type '{provider_type}'. Falling back to default tokenizer."
+            )
+            return _DEFAULT_TOKENIZER
+    return _check_tokenizer_cache(provider_type, model_name)
 
 
 def tokenizer_trim_content(
