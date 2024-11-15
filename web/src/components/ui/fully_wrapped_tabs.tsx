@@ -51,7 +51,7 @@ const TabsTrigger = React.forwardRef<
         "p-2",
         "data-[state=active]:bg-white",
         "data-[state=active]:rounded-t-lg",
-        "data-[state=active]:shadow-[3px_-3px_4px_0px_rgba(0,0,0,0.15)]",
+        "data-[state=active]:shadow-[3px_-3px_6px_-2px_rgba(0,0,0,0.15)]",
       ].join(" "),
       className
     )}
@@ -82,7 +82,7 @@ const TabsContent = React.forwardRef<
         "px-6 pt-6 pb-3",
         "-mt-px",
         "rounded-b-lg",
-        "shadow-[3px_-3px_6px_0px_rgba(0,0,0,0.15)]",
+        "shadow-[3px_-4px_6px_-2px_rgba(0,0,0,0.15)]",
       ].join(" "),
       className
     )}
