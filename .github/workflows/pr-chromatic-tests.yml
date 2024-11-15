@@ -34,6 +34,7 @@ jobs:
         run: npm ci
 
       - name: Install playwright browsers
+        working-directory: ./web
         run: npx playwright install --with-deps
         
       - name: Set up Docker Buildx
@@ -138,6 +139,7 @@ jobs:
           echo "Finished waiting for service."
 
       - name: Run Playwright tests
+        working-directory: ./web
         run: npx playwright test
 
       - uses: actions/upload-artifact@v4
