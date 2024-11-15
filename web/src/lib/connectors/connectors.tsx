@@ -366,7 +366,7 @@ export const connectorConfigs: Record<
       {
         type: "tab",
         name: "indexing_scope",
-        label: "Indexing Scope",
+        label: "How Should We Index Your Confluence?",
         optional: true,
         tabs: [
           {
