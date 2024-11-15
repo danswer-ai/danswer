@@ -199,4 +199,4 @@ jobs:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: ./web
         env: 
-          CHROMATIC_ARCHIVE_LOCATION: ./web/test-results
+          CHROMATIC_ARCHIVE_LOCATION: ./test-results
