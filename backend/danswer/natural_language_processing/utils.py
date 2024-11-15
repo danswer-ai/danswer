@@ -111,6 +111,8 @@ def _check_tokenizer_cache(
 def _try_initialize_tokenizer(
     model_name: str, model_provider: EmbeddingProvider | None
 ) -> BaseTokenizer | None:
+    tokenizer: BaseTokenizer | None = None
+
     if model_provider is not None:
         # Try using TiktokenTokenizer first if model_provider exists
         try:
