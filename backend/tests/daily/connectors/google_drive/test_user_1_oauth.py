@@ -103,7 +103,7 @@ def test_shared_with_me_only(
     for doc_batch in connector.poll_source(0, time.time()):
         retrieved_docs.extend(doc_batch)
 
-    expected_file_ids = list(range(0, 2))
+    expected_file_ids = ADMIN_FOLDER_3_FILE_IDS + list(range(0, 2))
     assert_retrieved_docs_match_expected(
         retrieved_docs=retrieved_docs,
         expected_file_ids=expected_file_ids,

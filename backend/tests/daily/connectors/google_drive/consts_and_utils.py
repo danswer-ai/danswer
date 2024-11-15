@@ -7,7 +7,7 @@ SHARED_DRIVE_FILES = list(range(20, 25))
 
 
 ADMIN_FILE_IDS = list(range(0, 5))
-ADMIN_FOLDER_3_FILE_IDS = list(range(65, 70))
+ADMIN_FOLDER_3_FILE_IDS = list(range(65, 70))  # This folder is shared with test_user_1
 TEST_USER_1_FILE_IDS = list(range(5, 10))
 TEST_USER_2_FILE_IDS = list(range(10, 15))
 TEST_USER_3_FILE_IDS = list(range(15, 20))
