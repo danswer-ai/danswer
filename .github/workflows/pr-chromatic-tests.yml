@@ -196,4 +196,3 @@ jobs:
           playwright: true
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: ./web
-        env: CHROMATIC_ARCHIVE_LOCATION=./test-results
