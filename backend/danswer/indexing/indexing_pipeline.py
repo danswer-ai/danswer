@@ -238,23 +238,27 @@ def index_doc_batch_prepare(
         else documents
     )
 
-    # Create a record in the DB for every updateable document.
+    # for all updatable docs, upsert into the DB
     # Does not include doc_updated_at which is also used to indicate a successful update
-    _upsert_documents_in_db(
-        documents=updatable_docs,
-        index_attempt_metadata=index_attempt_metadata,
-        db_session=db_session,
+    if updatable_docs:
+        _upsert_documents_in_db(
+            documents=updatable_docs,
+            index_attempt_metadata=index_attempt_metadata,
+            db_session=db_session,
+        )
+
+    logger.info(
+        f"Upserted {len(updatable_docs)} changed docs out of "
+        f"{len(documents)} total docs into the DB"
     )
 
-    # Upsert the document to cc pair relationship for all documents
+    # for all docs, upsert the document to cc pair relationship
     upsert_document_by_connector_credential_pair(
         db_session,
         index_attempt_metadata.connector_id,
         index_attempt_metadata.credential_id,
         document_ids,
     )
-
-    logger.info(f"Upserted {len(updatable_docs)} documents into the DB")
 
     # No docs to process because the batch is empty or every doc was already indexed
     if not updatable_docs:
