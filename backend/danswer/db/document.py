@@ -209,6 +209,7 @@ def get_document_connector_counts(
 def get_document_counts_for_cc_pairs(
     db_session: Session, cc_pair_identifiers: list[ConnectorCredentialPairIdentifier]
 ) -> Sequence[tuple[int, int, int]]:
+    """Returns a sequence of tuples of (connector_id, credential_id, document count)"""
     stmt = (
         select(
             DocumentByConnectorCredentialPair.connector_id,
@@ -446,6 +447,7 @@ def upsert_documents_complete(
     db_session: Session,
     document_metadata_batch: list[DocumentMetadata],
 ) -> None:
+    """Upserts entries into documents and document_by_connector_credential_pair"""
     _upsert_documents(db_session, document_metadata_batch)
     _upsert_document_by_connector_credential_pair(db_session, document_metadata_batch)
     logger.info(
@@ -561,7 +563,7 @@ def prepare_to_modify_documents(
     db_session.commit()  # ensure that we're not in a transaction
 
     lock_acquired = False
-    for _ in range(_NUM_LOCK_ATTEMPTS):
+    for i in range(_NUM_LOCK_ATTEMPTS):
         try:
             with db_session.begin() as transaction:
                 lock_acquired = acquire_document_locks(
@@ -572,7 +574,7 @@ def prepare_to_modify_documents(
                     break
         except OperationalError as e:
             logger.warning(
-                f"Failed to acquire locks for documents, retrying. Error: {e}"
+                f"Failed to acquire locks for documents on attempt {i}, retrying. Error: {e}"
             )
 
         time.sleep(retry_delay)

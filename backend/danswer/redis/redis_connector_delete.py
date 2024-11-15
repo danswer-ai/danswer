@@ -6,6 +6,7 @@ from uuid import uuid4
 import redis
 from celery import Celery
 from pydantic import BaseModel
+from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -83,7 +84,7 @@ class RedisConnectorDelete:
         self,
         celery_app: Celery,
         db_session: Session,
-        lock: redis.lock.Lock,
+        lock: RedisLock,
     ) -> int | None:
         """Returns None if the cc_pair doesn't exist.
         Otherwise, returns an int with the number of generated tasks."""
