@@ -148,7 +148,7 @@ jobs:
           # Chromatic automatically defaults to the test-results directory.
           # Replace with the path to your custom directory and adjust the CHROMATIC_ARCHIVE_LOCATION environment variable accordingly.
           name: test-results
-          path: ./test-results
+          path: ./web/test-results
           retention-days: 30
                     
       # save before stopping the containers so the logs can be captured
@@ -191,10 +191,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: test-results
-          path: ./test-results
+          path: ./web/test-results
       - name: Run Chromatic
         uses: chromaui/action@latest
         with:
           playwright: true
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: ./web
+        env: 
+          CHROMATIC_ARCHIVE_LOCATION: ./web/test-results
