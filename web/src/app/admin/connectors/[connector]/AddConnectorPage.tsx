@@ -347,6 +347,8 @@ export default function AddConnector({
       }}
     >
       {(formikProps) => {
+        console.log(formikProps.values);
+        console.log(formikProps.isValid);
         return (
           <div className="mx-auto mb-8 w-full">
             {popup}

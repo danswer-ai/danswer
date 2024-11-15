@@ -21,6 +21,16 @@ from tests.load_env_vars import load_env_vars
 load_env_vars()
 
 
+_USER_TO_OAUTH_CREDENTIALS_MAP = {
+    "admin@onyx-test.com": "GOOGLE_DRIVE_OAUTH_CREDENTIALS_JSON_STR",
+    "test_user_1@onyx-test.com": "GOOGLE_DRIVE_OAUTH_CREDENTIALS_JSON_STR_TEST_USER_1",
+}
+
+_USER_TO_SERVICE_ACCOUNT_CREDENTIALS_MAP = {
+    "admin@onyx-test.com": "GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON_STR",
+}
+
+
 def parse_credentials(env_str: str) -> dict:
     """
     Parse a double-escaped JSON string from environment variables into a Python dictionary.
@@ -49,22 +59,24 @@ def parse_credentials(env_str: str) -> dict:
 def google_drive_oauth_connector_factory() -> Callable[..., GoogleDriveConnector]:
     def _connector_factory(
         primary_admin_email: str = "admin@onyx-test.com",
-        include_shared_drives: bool = True,
+        include_shared_drives: bool = False,
         shared_drive_urls: str | None = None,
-        include_my_drives: bool = True,
+        include_my_drives: bool = False,
         my_drive_emails: str | None = None,
         shared_folder_urls: str | None = None,
+        include_files_shared_with_me: bool = False,
     ) -> GoogleDriveConnector:
         print("Creating GoogleDriveConnector with OAuth credentials")
         connector = GoogleDriveConnector(
             include_shared_drives=include_shared_drives,
             shared_drive_urls=shared_drive_urls,
             include_my_drives=include_my_drives,
+            include_files_shared_with_me=include_files_shared_with_me,
             my_drive_emails=my_drive_emails,
             shared_folder_urls=shared_folder_urls,
         )
 
-        json_string = os.environ["GOOGLE_DRIVE_OAUTH_CREDENTIALS_JSON_STR"]
+        json_string = os.environ[_USER_TO_OAUTH_CREDENTIALS_MAP[primary_admin_email]]
         refried_json_string = json.dumps(parse_credentials(json_string))
 
         credentials_json = {
@@ -98,7 +110,9 @@ def google_drive_service_acct_connector_factory() -> (
             shared_folder_urls=shared_folder_urls,
         )
 
-        json_string = os.environ["GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON_STR"]
+        json_string = os.environ[
+            _USER_TO_SERVICE_ACCOUNT_CREDENTIALS_MAP[primary_admin_email]
+        ]
         refried_json_string = json.dumps(parse_credentials(json_string))
 
         # Load Service Account Credentials
