@@ -143,18 +143,13 @@ export const AdminBooleanFormField = ({
   alignTop,
   onChange,
 }: BooleanFormFieldProps) => {
-  const [field, meta, helpers] = useField(name);
-
   return (
     <div>
       <label className={`flex text-sm`}>
-        <input
+        <Field
+          name={name}
+          checked={checked}
           type="checkbox"
-          {...field}
-          checked={Boolean(field.value)}
-          onChange={(e) => {
-            helpers.setValue(e.target.checked);
-          }}
           className={`mr-3 bg-white px-5 w-3.5 h-3.5 ${
             alignTop ? "mt-1" : "my-auto"
           }`}
