@@ -229,6 +229,7 @@ def get_all_files_for_oauth(
     corpora = "allDrives" if should_get_all else "user"
 
     file_query = f"mimeType != '{DRIVE_FOLDER_TYPE}'"
+    file_query += " and trashed = false"
     file_query += _generate_time_range_filter(start, end)
 
     if not should_get_all:
