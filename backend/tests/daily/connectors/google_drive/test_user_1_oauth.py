@@ -44,6 +44,7 @@ def test_all(
         + FOLDER_1_FILE_IDS
         + FOLDER_1_1_FILE_IDS
         + FOLDER_1_2_FILE_IDS
+        + ADMIN_FOLDER_3_FILE_IDS
         + list(range(0, 2))
     )
     assert_retrieved_docs_match_expected(
