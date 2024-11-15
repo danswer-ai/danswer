@@ -23,6 +23,7 @@ const TabsList = React.forwardRef<
         "text-text-500",
         "dark:bg-background-800",
         "dark:text-text-400",
+        "rounded-t-lg",
       ].join(" "),
       className
     )}
@@ -39,6 +40,7 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       [
+        "relative",
         "justify-center",
         "flex w-full",
         "border-b",
@@ -48,6 +50,8 @@ const TabsTrigger = React.forwardRef<
         "data-[state=active]:border-b-0",
         "p-2",
         "data-[state=active]:bg-white",
+        "data-[state=active]:rounded-t-lg",
+        "data-[state=active]:shadow-[3px_-3px_4px_0px_rgba(0,0,0,0.15)]",
       ].join(" "),
       className
     )}
@@ -77,6 +81,8 @@ const TabsContent = React.forwardRef<
         "border-b",
         "px-6 pt-6 pb-3",
         "-mt-px",
+        "rounded-b-lg",
+        "shadow-[3px_-3px_6px_0px_rgba(0,0,0,0.15)]",
       ].join(" "),
       className
     )}

@@ -216,7 +216,7 @@ const RenderField: FC<RenderFieldProps> = ({
       ) : field.type === "string_tab" ? (
         <div className="text-center">{description}</div>
       ) : (
-        <>"INVALID FIELD TYPE"</>
+        <>INVALID FIELD TYPE</>
       )}
     </>
   );

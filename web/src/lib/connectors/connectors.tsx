@@ -389,7 +389,7 @@ export const connectorConfigs: Record<
               {
                 type: "text",
                 query: "Enter the space:",
-                label: "Space",
+                label: "Space Key",
                 name: "space",
                 default: "",
                 description: "The Confluence space key to index (e.g. `KB`).",
