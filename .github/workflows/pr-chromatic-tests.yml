@@ -159,6 +159,10 @@ jobs:
           PYTEST_IGNORE_SKIP: true
         run: pytest -s tests/integration/tests/playwright/test_playwright.py
 
+      - name: Run Playwright tests
+        working-directory: ./web
+        run: npx playwright test
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
