@@ -263,6 +263,7 @@ class Answer:
             message_history=self.message_history,
             llm_config=self.llm.config,
             single_message_history=self.single_message_history,
+            raw_user_text=self.question,
         )
         prompt_builder.update_system_prompt(
             default_build_system_message(self.prompt_config)
