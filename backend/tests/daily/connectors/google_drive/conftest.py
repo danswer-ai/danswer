@@ -95,9 +95,9 @@ def google_drive_service_acct_connector_factory() -> (
 ):
     def _connector_factory(
         primary_admin_email: str = "admin@onyx-test.com",
-        include_shared_drives: bool = True,
+        include_shared_drives: bool = False,
         shared_drive_urls: str | None = None,
-        include_my_drives: bool = True,
+        include_my_drives: bool = False,
         my_drive_emails: str | None = None,
         shared_folder_urls: str | None = None,
     ) -> GoogleDriveConnector:

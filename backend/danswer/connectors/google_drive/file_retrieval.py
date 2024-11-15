@@ -203,6 +203,8 @@ def get_all_files_in_my_drive(
 
     # Then get the files
     file_query = f"mimeType != '{DRIVE_FOLDER_TYPE}'"
+    file_query += " and trashed = false"
+    file_query += " and 'me' in owners"
     file_query += _generate_time_range_filter(start, end)
     yield from execute_paginated_retrieval(
         retrieval_function=service.files().list,
