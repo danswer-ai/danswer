@@ -24,7 +24,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs2";
+} from "@/components/ui/fully_wrapped_tabs";
 
 interface TabsFieldProps {
   tabField: TabOption;
@@ -251,27 +251,8 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
 }) => {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
-  const renderFields = (fields: any[]) => {
-    return fields.map(
-      (field) =>
-        !field.hidden && (
-          <RenderField
-            key={field.name}
-            field={field}
-            values={values}
-            selectedFiles={selectedFiles}
-            setSelectedFiles={setSelectedFiles}
-            connector={connector}
-            currentCredential={currentCredential}
-          />
-        )
-    );
-  };
-
   return (
     <>
-      {/* <h2 className="text-2xl font-bold text-text-800">{config.description}</h2> */}
-
       {config.subtext && (
         <CredentialSubText>{config.subtext}</CredentialSubText>
       )}
@@ -283,7 +264,20 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
         name={"name"}
       />
 
-      {renderFields(config.values)}
+      {config.values.map(
+        (field) =>
+          !field.hidden && (
+            <RenderField
+              key={field.name}
+              field={field}
+              values={values}
+              selectedFiles={selectedFiles}
+              setSelectedFiles={setSelectedFiles}
+              connector={connector}
+              currentCredential={currentCredential}
+            />
+          )
+      )}
 
       <AccessTypeForm connector={connector} />
       <AccessTypeGroupSelector connector={connector} />
@@ -294,7 +288,21 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
             showAdvancedOptions={showAdvancedOptions}
             setShowAdvancedOptions={setShowAdvancedOptions}
           />
-          {showAdvancedOptions && renderFields(config.advanced_values)}
+          {showAdvancedOptions &&
+            config.advanced_values.map(
+              (field) =>
+                !field.hidden && (
+                  <RenderField
+                    key={field.name}
+                    field={field}
+                    values={values}
+                    selectedFiles={selectedFiles}
+                    setSelectedFiles={setSelectedFiles}
+                    connector={connector}
+                    currentCredential={currentCredential}
+                  />
+                )
+            )}
         </>
       )}
     </>
