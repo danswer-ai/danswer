@@ -1,6 +1,6 @@
-name: Run Integration Tests v2
+name: Run Chromatic Tests
 concurrency:
-  group: Run-Integration-Tests-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
+  group: Run-Chromatic-Tests-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: true
 
 on:
@@ -21,7 +21,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Setup node
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
+      - name: Install node dependencies
+        working-directory: ./web
+        run: npm ci
+                  
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -41,6 +52,7 @@ jobs:
       # https://github.com/moby/buildkit#s3-cache-experimental
       
       # images are built and run locally for testing purposes. Not pushed.
+
       - name: Build Web Docker image
         uses: ./.github/actions/custom-build-and-push
         with:
@@ -53,7 +65,6 @@ jobs:
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/web-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
           cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/web-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
-      # images are built and run locally for testing purposes. Not pushed.
       - name: Build Backend Docker image
         uses: ./.github/actions/custom-build-and-push
         with:
@@ -123,14 +134,20 @@ jobs:
           done
           echo "Finished waiting for service."
 
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Install playwright browsers
-        run: npx playwright install --with-deps
-        
-      - name: Run tests
-        run: npx playwright test
+        - name: Run Chromatic
+          uses: chromaui/action@latest
+          working-directory: ./web
+          with:
+            projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          
+#       - name: Install dependencies
+#         run: npm ci
+#         
+#       - name: Install playwright browsers
+#         run: npx playwright install --with-deps
+#         
+#       - name: Run tests
+#         run: npx playwright test
 
       # save before stopping the containers so the logs can be captured
       - name: Save Docker logs
