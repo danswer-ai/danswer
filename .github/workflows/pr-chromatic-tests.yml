@@ -136,9 +136,9 @@ jobs:
 
       - name: Run Chromatic
         uses: chromaui/action@latest
-        working-directory: ./web
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          workingDir: ./web
           
 #       - name: Install dependencies
 #         run: npm ci
