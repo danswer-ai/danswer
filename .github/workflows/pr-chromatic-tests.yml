@@ -15,7 +15,7 @@ env:
   SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
 jobs:
-  integration-tests:
+  playwright-tests:
     # See https://runs-on.com/runners/linux/
     runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
     steps:
@@ -27,12 +27,15 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install node dependencies
         working-directory: ./web
         run: npm ci
-                  
+
+      - name: Install playwright browsers
+        run: npx playwright install --with-deps
+        
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -134,21 +137,18 @@ jobs:
           done
           echo "Finished waiting for service."
 
-      - name: Run Chromatic
-        uses: chromaui/action@latest
-        with:
-          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-          workingDir: ./web
-          
-#       - name: Install dependencies
-#         run: npm ci
-#         
-#       - name: Install playwright browsers
-#         run: npx playwright install --with-deps
-#         
-#       - name: Run tests
-#         run: npx playwright test
+      - name: Run Playwright tests
+        run: npx playwright test
 
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          # Chromatic automatically defaults to the test-results directory.
+          # Replace with the path to your custom directory and adjust the CHROMATIC_ARCHIVE_LOCATION environment variable accordingly.
+          name: test-results
+          path: ./test-results
+          retention-days: 30
+                    
       # save before stopping the containers so the logs can be captured
       - name: Save Docker logs
         if: success() || failure()
@@ -168,3 +168,32 @@ jobs:
         run: |
           cd deployment/docker_compose
           docker compose -f docker-compose.dev.yml -p danswer-stack down -v
+
+  chromatic-tests:
+    name: Run Chromatic
+    needs: playwright-tests
+    runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install node dependencies
+        working-directory: ./web
+        run: npm ci
+      - name: Download Playwright test results
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: ./test-results
+      - name: Run Chromatic
+        uses: chromaui/action@latest
+        with:
+          playwright: true
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          workingDir: ./web
+        env: CHROMATIC_ARCHIVE_LOCATION=./test-results
