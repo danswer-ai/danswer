@@ -134,11 +134,11 @@ jobs:
           done
           echo "Finished waiting for service."
 
-        - name: Run Chromatic
-          uses: chromaui/action@latest
-          working-directory: ./web
-          with:
-            projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+      - name: Run Chromatic
+        uses: chromaui/action@latest
+        working-directory: ./web
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           
 #       - name: Install dependencies
 #         run: npm ci
