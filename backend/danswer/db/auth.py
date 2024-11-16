@@ -46,7 +46,7 @@ def get_total_users_count(db_session: Session) -> int:
         db_session.query(User)
         .filter(
             ~User.email.endswith(get_api_key_email_pattern()),  # type: ignore
-            User.role != UserRole.EXTERNAL_PERMISSIONED_USER,
+            User.role != UserRole.EXT_PERM_USER,
         )
         .count()
     )

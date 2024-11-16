@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from uuid import UUID
 
+from fastapi import HTTPException
 from fastapi_users.password import PasswordHelper
 from sqlalchemy import func
 from sqlalchemy import select
@@ -10,6 +11,57 @@ from danswer.auth.schemas import UserRole
 from danswer.db.models import User
 
 
+def validate_user_role_update(requested_role: UserRole, current_role: UserRole) -> None:
+    """
+    Validate that a user role update is valid.
+    Assumed only admins can hit this endpoint.
+    raise if:
+    - requested role is a curator
+    - requested role is a slack user
+    - requested role is an external permissioned user
+    - current role is a slack user
+    - current role is an external permissioned user
+    """
+
+    if current_role == UserRole.SLACK_USER:
+        raise HTTPException(
+            status_code=400,
+            detail="To change a Slack User's role, they must first login to Danswer via the web app.",
+        )
+
+    if current_role == UserRole.EXT_PERM_USER:
+        # This shouldn't happen, but just in case
+        raise HTTPException(
+            status_code=400,
+            detail="To change an External Permissioned User's role, they must first login to Danswer via the web app.",
+        )
+
+    if requested_role == UserRole.CURATOR:
+        raise HTTPException(
+            status_code=400,
+            detail="Curator role must be set via the User Group Menu",
+        )
+
+    if requested_role == UserRole.SLACK_USER:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A user cannot be set to a Slack User role. "
+                "This role is automatically assigned to users who only use Danswer via Slack."
+            ),
+        )
+
+    if requested_role == UserRole.EXT_PERM_USER:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A user cannot be set to an External Permissioned User role. "
+                "This role is automatically assigned to users who have been "
+                "pulled in to the system via an external permissions system."
+            ),
+        )
+
+
 def list_users(
     db_session: Session, email_filter_string: str = "", user: User | None = None
 ) -> Sequence[User]:
@@ -17,7 +69,7 @@ def list_users(
     is assumed to be relatively small (<< 1 million)"""
     stmt = select(User)
 
-    where_clause = [User.role != UserRole.EXTERNAL_PERMISSIONED_USER]
+    where_clause = [User.role != UserRole.EXT_PERM_USER]
 
     if email_filter_string:
         where_clause.append(User.email.ilike(f"%{email_filter_string}%"))  # type: ignore
@@ -81,7 +133,7 @@ def _generate_non_web_permissioned_user(email: str) -> User:
     return User(
         email=email,
         hashed_password=hashed_pass,
-        role=UserRole.EXTERNAL_PERMISSIONED_USER,
+        role=UserRole.EXT_PERM_USER,
     )
 
 

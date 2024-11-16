@@ -24,12 +24,12 @@ class UserRole(str, Enum):
     CURATOR = "curator"
     GLOBAL_CURATOR = "global_curator"
     SLACK_USER = "slack_user"
-    EXTERNAL_PERMISSIONED_USER = "external_permissioned_user"
+    EXT_PERM_USER = "ext_perm_user"
 
     def is_web_login(self) -> bool:
         return self not in [
             UserRole.SLACK_USER,
-            UserRole.EXTERNAL_PERMISSIONED_USER,
+            UserRole.EXT_PERM_USER,
         ]
 
 

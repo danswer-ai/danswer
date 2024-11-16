@@ -1,4 +1,10 @@
-import { type User, UserStatus, UserRole, USER_ROLE_LABELS } from "@/lib/types";
+import {
+  type User,
+  UserStatus,
+  UserRole,
+  USER_ROLE_LABELS,
+  INVALID_ROLE_HOVER_TEXT,
+} from "@/lib/types";
 import CenteredPageSelector from "./CenteredPageSelector";
 import { type PageSelectorProps } from "@/components/PageSelector";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
@@ -87,31 +93,36 @@ const UserRoleDropdown = ({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {Object.entries(USER_ROLE_LABELS).map(([role, label]) =>
-            !isPaidEnterpriseFeaturesEnabled &&
-            (role === UserRole.CURATOR ||
-              role === UserRole.GLOBAL_CURATOR) ? null : (
-              <SelectItem
-                key={role}
-                value={role}
-                className={
-                  role === UserRole.CURATOR ||
-                  role === UserRole.EXTERNAL_PERMISSIONED_USER ||
-                  role === UserRole.SLACK_USER
-                    ? "opacity-30 cursor-not-allowed"
-                    : ""
-                }
-                title={
-                  role === UserRole.CURATOR ||
-                  role === UserRole.EXTERNAL_PERMISSIONED_USER ||
-                  role === UserRole.SLACK_USER
-                    ? "Can't select"
-                    : ""
-                }
-              >
-                {label}
-              </SelectItem>
-            )
+          {(Object.entries(USER_ROLE_LABELS) as [UserRole, string][]).map(
+            ([role, label]) => {
+              // Dont want to ever show external permissioned users because it's scary
+              if (role === UserRole.EXT_PERM_USER) return null;
+
+              // Only want to show limited users if paid enterprise features are enabled
+              const isNotVisibleRole =
+                !isPaidEnterpriseFeaturesEnabled &&
+                (role === UserRole.CURATOR || role === UserRole.GLOBAL_CURATOR);
+
+              // These roles should be visible but not selectable
+              const isNotSelectableRole =
+                role === UserRole.CURATOR ||
+                role === UserRole.LIMITED ||
+                role === UserRole.SLACK_USER;
+
+              return isNotVisibleRole ? null : (
+                <SelectItem
+                  key={role}
+                  value={role}
+                  className={
+                    isNotSelectableRole ? "opacity-30 cursor-not-allowed" : ""
+                  }
+                  title={INVALID_ROLE_HOVER_TEXT[role] ?? ""}
+                  data-tooltip-delay="0"
+                >
+                  {label}
+                </SelectItem>
+              );
+            }
           )}
         </SelectContent>
       </Select>
