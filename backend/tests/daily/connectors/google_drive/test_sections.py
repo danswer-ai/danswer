@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.models import Document
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_EMAIL
 from tests.daily.connectors.google_drive.consts_and_utils import SECTIONS_FOLDER_URL
 
 
@@ -18,14 +19,22 @@ def test_google_drive_sections(
     google_drive_service_acct_connector_factory: Callable[..., GoogleDriveConnector],
 ) -> None:
     oauth_connector = google_drive_oauth_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
         include_shared_drives=False,
         include_my_drives=False,
+        include_files_shared_with_me=False,
         shared_folder_urls=SECTIONS_FOLDER_URL,
+        shared_drive_urls=None,
+        my_drive_emails=None,
     )
     service_acct_connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
         include_shared_drives=False,
         include_my_drives=False,
+        include_files_shared_with_me=False,
         shared_folder_urls=SECTIONS_FOLDER_URL,
+        shared_drive_urls=None,
+        my_drive_emails=None,
     )
     for connector in [oauth_connector, service_acct_connector]:
         retrieved_docs: list[Document] = []

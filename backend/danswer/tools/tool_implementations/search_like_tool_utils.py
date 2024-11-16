@@ -55,9 +55,12 @@ def build_next_prompt_for_search_like_tool(
             )
         )
     elif answer_style_config.quotes_config:
+        # For Quotes, the system prompt is included in the user prompt
+        prompt_builder.update_system_prompt(None)
+
         prompt_builder.update_user_prompt(
             build_quotes_user_message(
-                message=prompt_builder.user_message_and_token_cnt[0],
+                message=prompt_builder.raw_user_message,
                 context_docs=final_context_documents,
                 history_str=prompt_builder.single_message_history or "",
                 prompt=prompt_config,
