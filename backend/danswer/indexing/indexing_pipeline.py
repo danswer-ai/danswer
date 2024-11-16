@@ -20,7 +20,8 @@ from danswer.db.document import get_documents_by_ids
 from danswer.db.document import prepare_to_modify_documents
 from danswer.db.document import update_docs_last_modified__no_commit
 from danswer.db.document import update_docs_updated_at__no_commit
-from danswer.db.document import upsert_documents_complete
+from danswer.db.document import upsert_document_by_connector_credential_pair
+from danswer.db.document import upsert_documents
 from danswer.db.document_set import fetch_document_sets_for_documents
 from danswer.db.index_attempt import create_index_attempt_error
 from danswer.db.models import Document as DBDocument
@@ -62,7 +63,7 @@ def _upsert_documents_in_db(
     db_session: Session,
 ) -> None:
     # Metadata here refers to basic document info, not metadata about the actual content
-    doc_m_batch: list[DocumentMetadata] = []
+    document_metadata_list: list[DocumentMetadata] = []
     for doc in documents:
         first_link = next(
             (section.link for section in doc.sections if section.link), ""
@@ -77,12 +78,9 @@ def _upsert_documents_in_db(
             secondary_owners=get_experts_stores_representations(doc.secondary_owners),
             from_ingestion_api=doc.from_ingestion_api,
         )
-        doc_m_batch.append(db_doc_metadata)
+        document_metadata_list.append(db_doc_metadata)
 
-    upsert_documents_complete(
-        db_session=db_session,
-        document_metadata_batch=doc_m_batch,
-    )
+    upsert_documents(db_session, document_metadata_list)
 
     # Insert document content metadata
     for doc in documents:
@@ -109,7 +107,10 @@ def get_doc_ids_to_update(
     documents: list[Document], db_docs: list[DBDocument]
 ) -> list[Document]:
     """Figures out which documents actually need to be updated. If a document is already present
-    and the `updated_at` hasn't changed, we shouldn't need to do anything with it."""
+    and the `updated_at` hasn't changed, we shouldn't need to do anything with it.
+
+    NB: Still need to associate the document in the DB if multiple connectors are
+    indexing the same doc."""
     id_update_time_map = {
         doc.id: doc.doc_updated_at for doc in db_docs if doc.doc_updated_at
     }
@@ -197,7 +198,7 @@ def index_doc_batch_prepare(
 ) -> DocumentBatchPrepareContext | None:
     """This sets up the documents in the relational DB (source of truth) for permissions, metadata, etc.
     This preceeds indexing it into the actual document index."""
-    documents = []
+    documents: list[Document] = []
     for document in document_batch:
         empty_contents = not any(section.text.strip() for section in document.sections)
         if (
@@ -223,31 +224,45 @@ def index_doc_batch_prepare(
         else:
             documents.append(document)
 
-    document_ids = [document.id for document in documents]
+    # Create a trimmed list of docs that don't have a newer updated at
+    # Shortcuts the time-consuming flow on connector index retries
+    document_ids: list[str] = [document.id for document in documents]
     db_docs: list[DBDocument] = get_documents_by_ids(
         db_session=db_session,
         document_ids=document_ids,
     )
 
-    # Skip indexing docs that don't have a newer updated at
-    # Shortcuts the time-consuming flow on connector index retries
     updatable_docs = (
         get_doc_ids_to_update(documents=documents, db_docs=db_docs)
         if not ignore_time_skip
         else documents
     )
 
-    # No docs to update either because the batch is empty or every doc was already indexed
+    # for all updatable docs, upsert into the DB
+    # Does not include doc_updated_at which is also used to indicate a successful update
+    if updatable_docs:
+        _upsert_documents_in_db(
+            documents=updatable_docs,
+            index_attempt_metadata=index_attempt_metadata,
+            db_session=db_session,
+        )
+
+    logger.info(
+        f"Upserted {len(updatable_docs)} changed docs out of "
+        f"{len(documents)} total docs into the DB"
+    )
+
+    # for all docs, upsert the document to cc pair relationship
+    upsert_document_by_connector_credential_pair(
+        db_session,
+        index_attempt_metadata.connector_id,
+        index_attempt_metadata.credential_id,
+        document_ids,
+    )
+
+    # No docs to process because the batch is empty or every doc was already indexed
     if not updatable_docs:
         return None
-
-    # Create records in the source of truth about these documents,
-    # does not include doc_updated_at which is also used to indicate a successful update
-    _upsert_documents_in_db(
-        documents=documents,
-        index_attempt_metadata=index_attempt_metadata,
-        db_session=db_session,
-    )
 
     id_to_db_doc_map = {doc.id: doc for doc in db_docs}
     return DocumentBatchPrepareContext(
