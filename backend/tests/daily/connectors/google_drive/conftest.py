@@ -58,13 +58,13 @@ def parse_credentials(env_str: str) -> dict:
 @pytest.fixture
 def google_drive_oauth_connector_factory() -> Callable[..., GoogleDriveConnector]:
     def _connector_factory(
-        primary_admin_email: str = "admin@onyx-test.com",
-        include_shared_drives: bool = False,
-        shared_drive_urls: str | None = None,
-        include_my_drives: bool = False,
-        my_drive_emails: str | None = None,
-        shared_folder_urls: str | None = None,
-        include_files_shared_with_me: bool = False,
+        primary_admin_email: str,
+        include_shared_drives: bool,
+        shared_drive_urls: str | None,
+        include_my_drives: bool,
+        my_drive_emails: str | None,
+        shared_folder_urls: str | None,
+        include_files_shared_with_me: bool,
     ) -> GoogleDriveConnector:
         print("Creating GoogleDriveConnector with OAuth credentials")
         connector = GoogleDriveConnector(
@@ -94,12 +94,13 @@ def google_drive_service_acct_connector_factory() -> (
     Callable[..., GoogleDriveConnector]
 ):
     def _connector_factory(
-        primary_admin_email: str = "admin@onyx-test.com",
-        include_shared_drives: bool = False,
-        shared_drive_urls: str | None = None,
-        include_my_drives: bool = False,
-        my_drive_emails: str | None = None,
-        shared_folder_urls: str | None = None,
+        primary_admin_email: str,
+        include_shared_drives: bool,
+        shared_drive_urls: str | None,
+        include_my_drives: bool,
+        my_drive_emails: str | None,
+        shared_folder_urls: str | None,
+        include_files_shared_with_me: bool,
     ) -> GoogleDriveConnector:
         print("Creating GoogleDriveConnector with service account credentials")
         connector = GoogleDriveConnector(
@@ -108,6 +109,7 @@ def google_drive_service_acct_connector_factory() -> (
             include_my_drives=include_my_drives,
             my_drive_emails=my_drive_emails,
             shared_folder_urls=shared_folder_urls,
+            include_files_shared_with_me=include_files_shared_with_me,
         )
 
         json_string = os.environ[

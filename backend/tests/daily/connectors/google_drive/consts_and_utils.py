@@ -75,28 +75,29 @@ ACCESS_MAPPING: dict[str, list[int]] = {
         + FOLDER_2_2_FILE_IDS
         + SECTIONS_FILE_IDS
     ),
-    # This user has access to drive 1
-    # This user has redundant access to folder 1 because of group access
-    # This user has been given individual access to files in Admin's My Drive
-    # This user has been given individual access to folder 3 in Admin's My Drive
     TEST_USER_1_EMAIL: (
         TEST_USER_1_FILE_IDS
+        # This user has access to drive 1
         + SHARED_DRIVE_1_FILE_IDS
+        # This user has redundant access to folder 1 because of group access
         + FOLDER_1_FILE_IDS
         + FOLDER_1_1_FILE_IDS
         + FOLDER_1_2_FILE_IDS
+        # This user has been given shared access to folder 3 in Admin's My Drive
         + ADMIN_FOLDER_3_FILE_IDS
+        # This user has been given shared access to files 0 and 1 in Admin's My Drive
         + list(range(0, 2))
     ),
-    # Group 1 includes this user, giving access to folder 1
-    # This user has also been given access to folder 2-1
-    # This user has also been given individual access to files in folder 2
     TEST_USER_2_EMAIL: (
         TEST_USER_2_FILE_IDS
+        # Group 1 includes this user, giving access to folder 1
         + FOLDER_1_FILE_IDS
         + FOLDER_1_1_FILE_IDS
+        # This folder is public
         + FOLDER_1_2_FILE_IDS
+        # Folder 2-1 is shared with this user
         + FOLDER_2_1_FILE_IDS
+        # This user has been given shared access to files 45 and 46 in folder 2
         + list(range(45, 47))
     ),
     # This user can only see his own files and public files

@@ -82,7 +82,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             # if a cql_query is provided, we will use it to fetch the pages
             cql_page_query = cql_query
         elif page_id:
-            # if neither a space nor a cql_query is provided, we will use the page_id to fetch the page
+            # if a cql_query is not provided, we will use the page_id to fetch the page
             if index_recursively:
                 cql_page_query += f" and ancestor='{page_id}'"
             else:

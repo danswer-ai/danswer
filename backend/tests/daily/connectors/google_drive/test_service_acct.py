@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from danswer.connectors.google_drive.connector import GoogleDriveConnector
 from danswer.connectors.models import Document
+from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_EMAIL
 from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_FILE_IDS
 from tests.daily.connectors.google_drive.consts_and_utils import ADMIN_FOLDER_3_FILE_IDS
 from tests.daily.connectors.google_drive.consts_and_utils import (
@@ -43,8 +44,13 @@ def test_include_all(
 ) -> None:
     print("\n\nRunning test_include_all")
     connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
         include_shared_drives=True,
         include_my_drives=True,
+        include_files_shared_with_me=False,
+        shared_folder_urls=None,
+        shared_drive_urls=None,
+        my_drive_emails=None,
     )
     retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
@@ -83,7 +89,13 @@ def test_include_shared_drives_only(
 ) -> None:
     print("\n\nRunning test_include_shared_drives_only")
     connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
         include_shared_drives=True,
+        include_my_drives=False,
+        include_files_shared_with_me=False,
+        shared_folder_urls=None,
+        shared_drive_urls=None,
+        my_drive_emails=None,
     )
     retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
@@ -117,7 +129,13 @@ def test_include_my_drives_only(
 ) -> None:
     print("\n\nRunning test_include_my_drives_only")
     connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
+        include_shared_drives=False,
         include_my_drives=True,
+        include_files_shared_with_me=False,
+        shared_folder_urls=None,
+        shared_drive_urls=None,
+        my_drive_emails=None,
     )
     retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
@@ -148,7 +166,13 @@ def test_drive_one_only(
     print("\n\nRunning test_drive_one_only")
     urls = [SHARED_DRIVE_1_URL]
     connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
+        include_shared_drives=False,
+        include_my_drives=False,
+        include_files_shared_with_me=False,
+        shared_folder_urls=None,
         shared_drive_urls=",".join([str(url) for url in urls]),
+        my_drive_emails=None,
     )
     retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
@@ -179,8 +203,13 @@ def test_folder_and_shared_drive(
     drive_urls = [SHARED_DRIVE_1_URL]
     folder_urls = [FOLDER_2_URL]
     connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
+        include_shared_drives=False,
+        include_my_drives=False,
+        include_files_shared_with_me=False,
         shared_drive_urls=",".join([str(url) for url in drive_urls]),
         shared_folder_urls=",".join([str(url) for url in folder_urls]),
+        my_drive_emails=None,
     )
     retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
@@ -222,8 +251,13 @@ def test_folders_only(
         FOLDER_1_1_URL,
     ]
     connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
+        include_shared_drives=False,
+        include_my_drives=False,
+        include_files_shared_with_me=False,
         shared_drive_urls=",".join([str(url) for url in shared_drive_urls]),
         shared_folder_urls=",".join([str(url) for url in folder_urls]),
+        my_drive_emails=None,
     )
     retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):
@@ -256,6 +290,12 @@ def test_specific_emails(
         TEST_USER_3_EMAIL,
     ]
     connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
+        include_shared_drives=False,
+        include_my_drives=False,
+        include_files_shared_with_me=False,
+        shared_folder_urls=None,
+        shared_drive_urls=None,
         my_drive_emails=",".join([str(email) for email in my_drive_emails]),
     )
     retrieved_docs: list[Document] = []
@@ -282,7 +322,13 @@ def get_specific_folders_in_my_drive(
         FOLDER_3_URL,
     ]
     connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
+        include_shared_drives=False,
+        include_my_drives=False,
+        include_files_shared_with_me=False,
         shared_folder_urls=",".join([str(url) for url in folder_urls]),
+        shared_drive_urls=None,
+        my_drive_emails=None,
     )
     retrieved_docs: list[Document] = []
     for doc_batch in connector.poll_source(0, time.time()):

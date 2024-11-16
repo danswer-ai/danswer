@@ -7,7 +7,7 @@ import { AccessTypeForm } from "@/components/admin/connectors/AccessTypeForm";
 import { AccessTypeGroupSelector } from "@/components/admin/connectors/AccessTypeGroupSelector";
 import { ConfigurableSources } from "@/lib/types";
 import { Credential } from "@/lib/connectors/credentials";
-import { RenderField } from "./field_rendering";
+import { RenderField } from "./FieldRendering";
 
 export interface DynamicConnectionFormProps {
   config: ConnectionConfiguration;

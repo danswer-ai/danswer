@@ -126,8 +126,13 @@ def test_all_permissions(
     google_drive_service_acct_connector_factory: Callable[..., GoogleDriveConnector],
 ) -> None:
     google_drive_connector = google_drive_service_acct_connector_factory(
+        primary_admin_email=ADMIN_EMAIL,
         include_shared_drives=True,
         include_my_drives=True,
+        include_files_shared_with_me=False,
+        shared_folder_urls=None,
+        shared_drive_urls=None,
+        my_drive_emails=None,
     )
 
     access_map: dict[str, ExternalAccess] = {}
