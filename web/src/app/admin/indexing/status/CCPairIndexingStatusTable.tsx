@@ -194,7 +194,9 @@ function ConnectorRow({
   return (
     <TableRow
       className={`hover:bg-hover-light ${
-        invisible ? "invisible !h-0 !-mb-10" : "!border !border-border"
+        invisible
+          ? "invisible !h-0 !-mb-10 !border-none"
+          : "!border !border-border"
       }  w-full cursor-pointer relative `}
       onClick={() => {
         router.push(`/admin/connector/${ccPairsIndexingStatus.cc_pair_id}`);
@@ -392,6 +394,7 @@ export function CCPairIndexingStatusTable({
               indexing_start: new Date("2023-07-01T12:00:00Z"),
               id: 1,
               credential_ids: [],
+              access_type: "public",
               time_created: "2023-07-01T12:00:00Z",
               time_updated: "2023-07-01T12:00:00Z",
             },
@@ -434,7 +437,6 @@ export function CCPairIndexingStatusTable({
           {!shouldExpand ? "Collapse All" : "Expand All"}
         </Button>
       </div>
-
       <TableBody>
         {sortedSources
           .filter(
@@ -454,14 +456,12 @@ export function CCPairIndexingStatusTable({
               return (
                 <React.Fragment key={ind}>
                   <br className="mt-4" />
-
                   <SummaryRow
                     source={source}
                     summary={groupSummaries[source]}
                     isOpen={connectorsToggled[source] || false}
                     onToggle={() => toggleSource(source)}
                   />
-
                   {connectorsToggled[source] && (
                     <>
                       <TableRow className="border border-border">

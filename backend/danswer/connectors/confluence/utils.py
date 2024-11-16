@@ -100,6 +100,39 @@ def extract_text_from_confluence_html(
             continue
         # Include @ sign for tagging, more clear for LLM
         user.replaceWith("@" + _get_user(confluence_client, user_id))
+
+    for html_page_reference in soup.findAll("ri:page"):
+        # Wrap this in a try-except because there are some pages that might not exist
+        try:
+            page_title = html_page_reference.attrs["ri:content-title"]
+            if not page_title:
+                continue
+
+            page_query = f"type=page and title='{page_title}'"
+
+            page_contents: dict[str, Any] | None = None
+            # Confluence enforces title uniqueness, so we should only get one result here
+            for page_batch in confluence_client.paginated_cql_page_retrieval(
+                cql=page_query,
+                expand="body.storage.value",
+                limit=1,
+            ):
+                page_contents = page_batch[0]
+                break
+        except Exception:
+            logger.warning(
+                f"Error getting page contents for object {confluence_object}"
+            )
+            continue
+
+        if not page_contents:
+            continue
+        text_from_page = extract_text_from_confluence_html(
+            confluence_client, page_contents
+        )
+
+        html_page_reference.replaceWith(text_from_page)
+
     return format_document_soup(soup)
 
 
@@ -153,7 +186,9 @@ def attachment_to_content(
     return extracted_text
 
 
-def build_confluence_document_id(base_url: str, content_url: str) -> str:
+def build_confluence_document_id(
+    base_url: str, content_url: str, is_cloud: bool
+) -> str:
     """For confluence, the document id is the page url for a page based document
         or the attachment download url for an attachment based document
 
@@ -164,6 +199,8 @@ def build_confluence_document_id(base_url: str, content_url: str) -> str:
     Returns:
         str: The document id
     """
+    if is_cloud and not base_url.endswith("/wiki"):
+        base_url += "/wiki"
     return f"{base_url}{content_url}"
 
 

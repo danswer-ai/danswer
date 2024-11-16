@@ -15,6 +15,7 @@ class UserRole(str, Enum):
         for all groups they are a member of
     """
 
+    LIMITED = "limited"
     BASIC = "basic"
     ADMIN = "admin"
     CURATOR = "curator"

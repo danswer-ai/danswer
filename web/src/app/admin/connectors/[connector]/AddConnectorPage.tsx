@@ -54,8 +54,7 @@ const BASE_CONNECTOR_URL = "/api/manage/admin/connector";
 export async function submitConnector<T>(
   connector: ConnectorBase<T>,
   connectorId?: number,
-  fakeCredential?: boolean,
-  isPublicCcpair?: boolean // exclusively for mock credentials, when also need to specify ccpair details
+  fakeCredential?: boolean
 ): Promise<{ message: string; isSuccess: boolean; response?: Connector<T> }> {
   const isUpdate = connectorId !== undefined;
   if (!connector.connector_specific_config) {
@@ -71,7 +70,7 @@ export async function submitConnector<T>(
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ...connector, is_public: isPublicCcpair }),
+          body: JSON.stringify({ ...connector }),
         }
       );
       if (response.ok) {
@@ -268,7 +267,7 @@ export default function AddConnector({
             advancedConfiguration.refreshFreq,
             advancedConfiguration.pruneFreq,
             advancedConfiguration.indexingStart,
-            values.access_type == "public",
+            values.access_type,
             groups,
             name
           );
@@ -285,7 +284,7 @@ export default function AddConnector({
             setPopup,
             setSelectedFiles,
             name,
-            access_type == "public",
+            access_type,
             groups
           );
           if (response) {
@@ -300,15 +299,14 @@ export default function AddConnector({
             input_type: isLoadState(connector) ? "load_state" : "poll", // single case
             name: name,
             source: connector,
-            is_public: access_type == "public",
+            access_type: access_type,
             refresh_freq: advancedConfiguration.refreshFreq || null,
             prune_freq: advancedConfiguration.pruneFreq || null,
             indexing_start: advancedConfiguration.indexingStart || null,
             groups: groups,
           },
           undefined,
-          credentialActivated ? false : true,
-          access_type == "public"
+          credentialActivated ? false : true
         );
         // If no credential
         if (!credentialActivated) {

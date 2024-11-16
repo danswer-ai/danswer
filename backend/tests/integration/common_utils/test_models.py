@@ -55,7 +55,7 @@ class DATestConnector(BaseModel):
     input_type: InputType
     connector_specific_config: dict[str, Any]
     groups: list[int] | None = None
-    is_public: bool | None = None
+    access_type: AccessType | None = None
 
 
 class SimpleTestDocument(BaseModel):

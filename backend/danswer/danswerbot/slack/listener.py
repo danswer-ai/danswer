@@ -17,6 +17,8 @@ from slack_sdk import WebClient
 from slack_sdk.socket_mode.request import SocketModeRequest
 from slack_sdk.socket_mode.response import SocketModeResponse
 
+from danswer.configs.app_configs import POD_NAME
+from danswer.configs.app_configs import POD_NAMESPACE
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import MessageType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
@@ -75,6 +77,7 @@ from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable
+from shared_configs.configs import DISALLOWED_SLACK_BOT_TENANT_LIST
 from shared_configs.configs import MODEL_SERVER_HOST
 from shared_configs.configs import MODEL_SERVER_PORT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
@@ -84,7 +87,9 @@ logger = setup_logger()
 
 # Prometheus metric for HPA
 active_tenants_gauge = Gauge(
-    "active_tenants", "Number of active tenants handled by this pod"
+    "active_tenants",
+    "Number of active tenants handled by this pod",
+    ["namespace", "pod"],
 )
 
 # In rare cases, some users have been experiencing a massive amount of trivial messages coming through
@@ -147,7 +152,9 @@ class SlackbotHandler:
         while not self._shutdown_event.is_set():
             try:
                 self.acquire_tenants()
-                active_tenants_gauge.set(len(self.tenant_ids))
+                active_tenants_gauge.labels(namespace=POD_NAMESPACE, pod=POD_NAME).set(
+                    len(self.tenant_ids)
+                )
                 logger.debug(f"Current active tenants: {len(self.tenant_ids)}")
             except Exception as e:
                 logger.exception(f"Error in Slack acquisition: {e}")
@@ -164,9 +171,15 @@ class SlackbotHandler:
 
     def acquire_tenants(self) -> None:
         tenant_ids = get_all_tenant_ids()
-        logger.debug(f"Found {len(tenant_ids)} total tenants in Postgres")
 
         for tenant_id in tenant_ids:
+            if (
+                DISALLOWED_SLACK_BOT_TENANT_LIST is not None
+                and tenant_id in DISALLOWED_SLACK_BOT_TENANT_LIST
+            ):
+                logger.debug(f"Tenant {tenant_id} is in the disallowed list, skipping")
+                continue
+
             if tenant_id in self.tenant_ids:
                 logger.debug(f"Tenant {tenant_id} already in self.tenant_ids")
                 continue
@@ -190,6 +203,9 @@ class SlackbotHandler:
                 continue
 
             logger.debug(f"Acquired lock for tenant {tenant_id}")
+            self.tenant_ids.add(tenant_id)
+
+        for tenant_id in self.tenant_ids:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(
                 tenant_id or POSTGRES_DEFAULT_SCHEMA
             )
@@ -236,14 +252,14 @@ class SlackbotHandler:
 
                             self.slack_bot_tokens[tenant_id] = slack_bot_tokens
 
-                            if tenant_id in self.socket_clients:
+                            if self.socket_clients.get(tenant_id):
                                 asyncio.run(self.socket_clients[tenant_id].close())
 
                             self.start_socket_client(tenant_id, slack_bot_tokens)
 
                     except KvKeyNotFoundError:
                         logger.debug(f"Missing Slack Bot tokens for tenant {tenant_id}")
-                        if tenant_id in self.socket_clients:
+                        if self.socket_clients.get(tenant_id):
                             asyncio.run(self.socket_clients[tenant_id].close())
                             del self.socket_clients[tenant_id]
                             del self.slack_bot_tokens[tenant_id]
@@ -277,14 +293,14 @@ class SlackbotHandler:
         logger.info(f"Connecting socket client for tenant {tenant_id}")
         socket_client.connect()
         self.socket_clients[tenant_id] = socket_client
-        self.tenant_ids.add(tenant_id)
         logger.info(f"Started SocketModeClient for tenant {tenant_id}")
 
     def stop_socket_clients(self) -> None:
         logger.info(f"Stopping {len(self.socket_clients)} socket clients")
         for tenant_id, client in self.socket_clients.items():
-            asyncio.run(client.close())
-            logger.info(f"Stopped SocketModeClient for tenant {tenant_id}")
+            if client:
+                asyncio.run(client.close())
+                logger.info(f"Stopped SocketModeClient for tenant {tenant_id}")
 
     def shutdown(self, signum: int | None, frame: FrameType | None) -> None:
         if not self.running:
@@ -297,6 +313,16 @@ class SlackbotHandler:
         # Stop all socket clients
         logger.info(f"Stopping {len(self.socket_clients)} socket clients")
         self.stop_socket_clients()
+
+        # Release locks for all tenants
+        logger.info(f"Releasing locks for {len(self.tenant_ids)} tenants")
+        for tenant_id in self.tenant_ids:
+            try:
+                redis_client = get_redis_client(tenant_id=tenant_id)
+                redis_client.delete(DanswerRedisLocks.SLACK_BOT_LOCK)
+                logger.info(f"Released lock for tenant {tenant_id}")
+            except Exception as e:
+                logger.error(f"Error releasing lock for tenant {tenant_id}: {e}")
 
         # Wait for background threads to finish (with timeout)
         logger.info("Waiting for background threads to finish...")

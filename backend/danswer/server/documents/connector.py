@@ -81,7 +81,6 @@ from danswer.db.index_attempt import get_latest_index_attempts_by_status
 from danswer.db.models import IndexingStatus
 from danswer.db.models import SearchSettings
 from danswer.db.models import User
-from danswer.db.models import UserRole
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.file_store.file_store import get_default_file_store
@@ -665,7 +664,8 @@ def create_connector_from_model(
             db_session=db_session,
             user=user,
             target_group_ids=connector_data.groups,
-            object_is_public=connector_data.is_public,
+            object_is_public=connector_data.access_type == AccessType.PUBLIC,
+            object_is_perm_sync=connector_data.access_type == AccessType.SYNC,
         )
         connector_base = connector_data.to_connector_base()
         return create_connector(
@@ -683,32 +683,31 @@ def create_connector_with_mock_credential(
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> StatusResponse:
-    if user and user.role != UserRole.ADMIN:
-        if connector_data.is_public:
-            raise HTTPException(
-                status_code=401,
-                detail="User does not have permission to create public credentials",
-            )
-        if not connector_data.groups:
-            raise HTTPException(
-                status_code=401,
-                detail="Curators must specify 1+ groups",
-            )
+    fetch_ee_implementation_or_noop(
+        "danswer.db.user_group", "validate_user_creation_permissions", None
+    )(
+        db_session=db_session,
+        user=user,
+        target_group_ids=connector_data.groups,
+        object_is_public=connector_data.access_type == AccessType.PUBLIC,
+        object_is_perm_sync=connector_data.access_type == AccessType.SYNC,
+    )
     try:
         _validate_connector_allowed(connector_data.source)
         connector_response = create_connector(
-            db_session=db_session, connector_data=connector_data
+            db_session=db_session,
+            connector_data=connector_data,
         )
 
         mock_credential = CredentialBase(
-            credential_json={}, admin_public=True, source=connector_data.source
+            credential_json={},
+            admin_public=True,
+            source=connector_data.source,
         )
         credential = create_credential(
-            mock_credential, user=user, db_session=db_session
-        )
-
-        access_type = (
-            AccessType.PUBLIC if connector_data.is_public else AccessType.PRIVATE
+            credential_data=mock_credential,
+            user=user,
+            db_session=db_session,
         )
 
         response = add_credential_to_connector(
@@ -716,7 +715,7 @@ def create_connector_with_mock_credential(
             user=user,
             connector_id=cast(int, connector_response.id),  # will aways be an int
             credential_id=credential.id,
-            access_type=access_type,
+            access_type=connector_data.access_type,
             cc_pair_name=connector_data.name,
             groups=connector_data.groups,
         )
@@ -741,7 +740,8 @@ def update_connector_from_model(
             db_session=db_session,
             user=user,
             target_group_ids=connector_data.groups,
-            object_is_public=connector_data.is_public,
+            object_is_public=connector_data.access_type == AccessType.PUBLIC,
+            object_is_perm_sync=connector_data.access_type == AccessType.SYNC,
         )
         connector_base = connector_data.to_connector_base()
     except ValueError as e:

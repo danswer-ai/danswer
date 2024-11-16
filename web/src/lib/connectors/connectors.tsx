@@ -221,8 +221,11 @@ export const connectorConfigs: Record<
       },
       {
         type: "text",
-        description:
-          "Enter a comma separated list of the URLs of the shared drives to index. Leave blank to index all shared drives.",
+        description: (currentCredential) => {
+          return currentCredential?.credential_json?.google_tokens
+            ? "If you are a non-admin user authenticated using Google Oauth, you will need to specify the URLs for the shared drives you would like to index. Leaving this blank will NOT index any shared drives."
+            : "Enter a comma separated list of the URLs for the shared drive you would like to index. Leave this blank to index all shared drives.";
+        },
         label: "Shared Drive URLs",
         name: "shared_drive_urls",
         visibleCondition: (values) => values.include_shared_drives,
@@ -230,14 +233,16 @@ export const connectorConfigs: Record<
       },
       {
         type: "checkbox",
-        label: (currentCredential) =>
-          currentCredential?.credential_json?.google_drive_tokens
+        label: (currentCredential) => {
+          return currentCredential?.credential_json?.google_tokens
             ? "Include My Drive?"
-            : "Include Everyone's My Drive?",
-        description: (currentCredential) =>
-          currentCredential?.credential_json?.google_drive_tokens
+            : "Include Everyone's My Drive?";
+        },
+        description: (currentCredential) => {
+          return currentCredential?.credential_json?.google_tokens
             ? "This will allow Danswer to index everything in your My Drive."
-            : "This will allow Danswer to index everything in everyone's My Drives.",
+            : "This will allow Danswer to index everything in everyone's My Drives.";
+        },
         name: "include_my_drives",
         optional: true,
         default: true,
@@ -250,7 +255,7 @@ export const connectorConfigs: Record<
         name: "my_drive_emails",
         visibleCondition: (values, currentCredential) =>
           values.include_my_drives &&
-          !currentCredential?.credential_json?.google_drive_tokens,
+          !currentCredential?.credential_json?.google_tokens,
         optional: true,
       },
     ],
@@ -258,7 +263,7 @@ export const connectorConfigs: Record<
       {
         type: "text",
         description:
-          "Enter a comma separated list of the URLs of the folders located in Shared Drives to index. The files located in these folders (and all subfolders) will be indexed. Note: This will be in addition to the 'Include Shared Drives' and 'Shared Drive URLs' settings, so leave those blank if you only want to index the folders specified here.",
+          "Enter a comma separated list of the URLs of any folders you would like to index. The files located in these folders (and all subfolders) will be indexed. Note: This will be in addition to whatever settings you have selected above, so leave those blank if you only want to index the folders specified here.",
         label: "Folder URLs",
         name: "shared_folder_urls",
         optional: true,
@@ -1032,7 +1037,7 @@ export interface ConnectorBase<T> {
   refresh_freq: number | null;
   prune_freq: number | null;
   indexing_start: Date | null;
-  is_public?: boolean;
+  access_type: string;
   groups?: number[];
 }
 

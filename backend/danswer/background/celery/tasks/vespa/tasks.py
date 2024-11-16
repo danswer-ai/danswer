@@ -27,6 +27,7 @@ from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector import fetch_connector_by_id
+from danswer.db.connector import mark_cc_pair_as_permissions_synced
 from danswer.db.connector import mark_ccpair_as_pruned
 from danswer.db.connector_credential_pair import add_deletion_failure_message
 from danswer.db.connector_credential_pair import (
@@ -58,6 +59,10 @@ from danswer.document_index.interfaces import VespaDocumentFields
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_credential_pair import RedisConnectorCredentialPair
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
+from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorPermissionSync
+from danswer.redis.redis_connector_doc_perm_sync import (
+    RedisConnectorPermissionSyncData,
+)
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_document_set import RedisDocumentSet
@@ -546,6 +551,47 @@ def monitor_ccpair_pruning_taskset(
     redis_connector.prune.set_fence(False)
 
 
+def monitor_ccpair_permissions_taskset(
+    tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
+) -> None:
+    fence_key = key_bytes.decode("utf-8")
+    cc_pair_id_str = RedisConnector.get_id_from_fence_key(fence_key)
+    if cc_pair_id_str is None:
+        task_logger.warning(
+            f"monitor_ccpair_permissions_taskset: could not parse cc_pair_id from {fence_key}"
+        )
+        return
+
+    cc_pair_id = int(cc_pair_id_str)
+
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    if not redis_connector.permissions.fenced:
+        return
+
+    initial = redis_connector.permissions.generator_complete
+    if initial is None:
+        return
+
+    remaining = redis_connector.permissions.get_remaining()
+    task_logger.info(
+        f"Permissions sync progress: cc_pair={cc_pair_id} remaining={remaining} initial={initial}"
+    )
+    if remaining > 0:
+        return
+
+    payload: RedisConnectorPermissionSyncData | None = (
+        redis_connector.permissions.payload
+    )
+    start_time: datetime | None = payload.started if payload else None
+
+    mark_cc_pair_as_permissions_synced(db_session, int(cc_pair_id), start_time)
+    task_logger.info(f"Successfully synced permissions for cc_pair={cc_pair_id}")
+
+    redis_connector.permissions.taskset_clear()
+    redis_connector.permissions.generator_clear()
+    redis_connector.permissions.set_fence(None)
+
+
 def monitor_ccpair_indexing_taskset(
     tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
@@ -668,13 +714,17 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
         n_pruning = celery_get_queue_length(
             DanswerCeleryQueues.CONNECTOR_PRUNING, r_celery
         )
+        n_permissions_sync = celery_get_queue_length(
+            DanswerCeleryQueues.CONNECTOR_DOC_PERMISSIONS_SYNC, r_celery
+        )
 
         task_logger.info(
             f"Queue lengths: celery={n_celery} "
             f"indexing={n_indexing} "
             f"sync={n_sync} "
             f"deletion={n_deletion} "
-            f"pruning={n_pruning}"
+            f"pruning={n_pruning} "
+            f"permissions_sync={n_permissions_sync} "
         )
 
         # do some cleanup before clearing fences
@@ -688,20 +738,22 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
                 get_all_index_attempts_by_status(IndexingStatus.IN_PROGRESS, db_session)
             )
 
-            for a in attempts:
+            for attempt in attempts:
                 # if attempts exist in the db but we don't detect them in redis, mark them as failed
                 fence_key = RedisConnectorIndex.fence_key_with_ids(
-                    a.connector_credential_pair_id, a.search_settings_id
+                    attempt.connector_credential_pair_id, attempt.search_settings_id
                 )
                 if not r.exists(fence_key):
                     failure_reason = (
                         f"Unknown index attempt. Might be left over from a process restart: "
-                        f"index_attempt={a.id} "
-                        f"cc_pair={a.connector_credential_pair_id} "
-                        f"search_settings={a.search_settings_id}"
+                        f"index_attempt={attempt.id} "
+                        f"cc_pair={attempt.connector_credential_pair_id} "
+                        f"search_settings={attempt.search_settings_id}"
                     )
                     task_logger.warning(failure_reason)
-                    mark_attempt_failed(a.id, db_session, failure_reason=failure_reason)
+                    mark_attempt_failed(
+                        attempt.id, db_session, failure_reason=failure_reason
+                    )
 
         lock_beat.reacquire()
         if r.exists(RedisConnectorCredentialPair.get_fence_key()):
@@ -740,6 +792,12 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
             lock_beat.reacquire()
             with get_session_with_tenant(tenant_id) as db_session:
                 monitor_ccpair_indexing_taskset(tenant_id, key_bytes, r, db_session)
+
+        lock_beat.reacquire()
+        for key_bytes in r.scan_iter(RedisConnectorPermissionSync.FENCE_PREFIX + "*"):
+            lock_beat.reacquire()
+            with get_session_with_tenant(tenant_id) as db_session:
+                monitor_ccpair_permissions_taskset(tenant_id, key_bytes, r, db_session)
 
         # uncomment for debugging if needed
         # r_celery = celery_app.broker_connection().channel().client
@@ -811,7 +869,9 @@ def vespa_metadata_sync_task(
         )
     except Exception as ex:
         if isinstance(ex, RetryError):
-            task_logger.warning(f"Retry failed: {ex.last_attempt.attempt_number}")
+            task_logger.warning(
+                f"Tenacity retry failed: num_attempts={ex.last_attempt.attempt_number}"
+            )
 
             # only set the inner exception if it is of type Exception
             e_temp = ex.last_attempt.exception()

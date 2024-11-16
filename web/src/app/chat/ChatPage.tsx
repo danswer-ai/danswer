@@ -142,6 +142,16 @@ export function ChatPage({
     refreshChatSessions,
   } = useChatContext();
 
+  // handle redirect if chat page is disabled
+  // NOTE: this must be done here, in a client component since
+  // settings are passed in via Context and therefore aren't
+  // available in server-side components
+  const settings = useContext(SettingsContext);
+  const enterpriseSettings = settings?.enterpriseSettings;
+  if (settings?.settings?.chat_page_enabled === false) {
+    router.push("/search");
+  }
+
   const { assistants: availableAssistants, finalAssistants } = useAssistants();
 
   const [showApiKeyModal, setShowApiKeyModal] = useState(
@@ -257,11 +267,8 @@ export function ChatPage({
 
   const noAssistants = liveAssistant == null || liveAssistant == undefined;
 
+  // always set the model override for the chat session, when an assistant, llm provider, or user preference exists
   useEffect(() => {
-    if (!loadedIdSessionRef.current && !currentPersonaId) {
-      return;
-    }
-
     const personaDefault = getLLMProviderOverrideForPersona(
       liveAssistant,
       llmProviders
@@ -881,7 +888,6 @@ export function ChatPage({
     }, 1500);
   };
 
-  const distance = 500; // distance that should "engage" the scroll
   const debounceNumber = 100; // time for debouncing
 
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
@@ -1545,17 +1551,6 @@ export function ChatPage({
       }
     });
   };
-
-  // handle redirect if chat page is disabled
-  // NOTE: this must be done here, in a client component since
-  // settings are passed in via Context and therefore aren't
-  // available in server-side components
-  const settings = useContext(SettingsContext);
-  const enterpriseSettings = settings?.enterpriseSettings;
-  if (settings?.settings?.chat_page_enabled === false) {
-    router.push("/search");
-  }
-
   const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
 
   // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
@@ -1603,9 +1598,9 @@ export function ChatPage({
     scrollableDivRef,
     scrollDist,
     endDivRef,
-    distance,
     debounceNumber,
     waitForScrollRef,
+    mobile: settings?.isMobile,
   });
 
   // Virtualization + Scrolling related effects and functions

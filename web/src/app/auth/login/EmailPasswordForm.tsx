@@ -14,9 +14,11 @@ import { Spinner } from "@/components/Spinner";
 export function EmailPasswordForm({
   isSignup = false,
   shouldVerify,
+  referralSource,
 }: {
   isSignup?: boolean;
   shouldVerify?: boolean;
+  referralSource?: string;
 }) {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
@@ -39,7 +41,11 @@ export function EmailPasswordForm({
           if (isSignup) {
             // login is fast, no need to show a spinner
             setIsWorking(true);
-            const response = await basicSignup(values.email, values.password);
+            const response = await basicSignup(
+              values.email,
+              values.password,
+              referralSource
+            );
 
             if (!response.ok) {
               const errorDetail = (await response.json()).detail;

@@ -33,8 +33,8 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.indexing.embedder import DefaultIndexingEmbedder
 from danswer.indexing.indexing_heartbeat import IndexingHeartbeat
 from danswer.indexing.indexing_pipeline import build_indexing_pipeline
-from danswer.utils.logger import IndexAttemptSingleton
 from danswer.utils.logger import setup_logger
+from danswer.utils.logger import TaskAttemptSingleton
 from danswer.utils.variable_functionality import global_version
 
 logger = setup_logger()
@@ -427,17 +427,19 @@ def run_indexing_entrypoint(
 
         # set the indexing attempt ID so that all log messages from this process
         # will have it added as a prefix
-        IndexAttemptSingleton.set_cc_and_index_id(
+        TaskAttemptSingleton.set_cc_and_index_id(
             index_attempt_id, connector_credential_pair_id
         )
         with get_session_with_tenant(tenant_id) as db_session:
             attempt = transition_attempt_to_in_progress(index_attempt_id, db_session)
 
+            tenant_str = ""
+            if tenant_id is not None:
+                tenant_str = f" for tenant {tenant_id}"
+
             logger.info(
-                f"Indexing starting for tenant {tenant_id}: "
-                if tenant_id is not None
-                else ""
-                + f"connector='{attempt.connector_credential_pair.connector.name}' "
+                f"Indexing starting{tenant_str}: "
+                f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )
@@ -445,10 +447,8 @@ def run_indexing_entrypoint(
             _run_indexing(db_session, attempt, tenant_id, callback)
 
             logger.info(
-                f"Indexing finished for tenant {tenant_id}: "
-                if tenant_id is not None
-                else ""
-                + f"connector='{attempt.connector_credential_pair.connector.name}' "
+                f"Indexing finished{tenant_str}: "
+                f"connector='{attempt.connector_credential_pair.connector.name}' "
                 f"config='{attempt.connector_credential_pair.connector.connector_specific_config}' "
                 f"credentials='{attempt.connector_credential_pair.connector_id}'"
             )

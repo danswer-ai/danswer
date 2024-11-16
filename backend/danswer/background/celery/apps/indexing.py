@@ -6,6 +6,7 @@ from celery import signals
 from celery import Task
 from celery.signals import celeryd_init
 from celery.signals import worker_init
+from celery.signals import worker_process_init
 from celery.signals import worker_ready
 from celery.signals import worker_shutdown
 
@@ -59,7 +60,7 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     logger.info(f"Multiprocessing start method: {multiprocessing.get_start_method()}")
 
     SqlEngine.set_app_name(POSTGRES_CELERY_WORKER_INDEXING_APP_NAME)
-    SqlEngine.init_engine(pool_size=8, max_overflow=0)
+    SqlEngine.init_engine(pool_size=sender.concurrency, max_overflow=sender.concurrency)
 
     # Startup checks are not needed in multi-tenant case
     if MULTI_TENANT:
@@ -79,6 +80,11 @@ def on_worker_ready(sender: Any, **kwargs: Any) -> None:
 @worker_shutdown.connect
 def on_worker_shutdown(sender: Any, **kwargs: Any) -> None:
     app_base.on_worker_shutdown(sender, **kwargs)
+
+
+@worker_process_init.connect
+def init_worker(**kwargs: Any) -> None:
+    SqlEngine.reset_engine()
 
 
 @signals.setup_logging.connect
