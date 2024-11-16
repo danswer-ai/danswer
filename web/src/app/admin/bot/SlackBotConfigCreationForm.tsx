@@ -27,6 +27,12 @@ import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelec
 import CollapsibleSection from "../assistants/CollapsibleSection";
 import { StandardAnswerCategoryResponse } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 import { StandardAnswerCategoryDropdownField } from "@/components/standardAnswers/StandardAnswerCategoryDropdown";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/fully_wrapped_tabs";
 
 export const SlackBotConfigCreationForm = ({
   app_id,
@@ -180,41 +186,31 @@ export const SlackBotConfigCreationForm = ({
 
                 <div className="mt-6">
                   <Label>Knowledge Sources</Label>
-
                   <SubLabel>
                     Controls which information DanswerBot will pull from when
                     answering questions.
                   </SubLabel>
 
-                  <div className="flex mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setUsingPersonas(false)}
-                      className={`p-2 font-bold text-xs mr-3 ${
-                        !usingPersonas
-                          ? "rounded bg-background-900 text-text-100 underline"
-                          : "hover:underline bg-background-100"
-                      }`}
-                    >
-                      Document Sets
-                    </button>
+                  <Tabs
+                    defaultValue="document_sets"
+                    className="w-full mt-4"
+                    value={usingPersonas ? "assistants" : "document_sets"}
+                    onValueChange={(value) =>
+                      setUsingPersonas(value === "assistants")
+                    }
+                  >
+                    <TabsList>
+                      <TabsTrigger value="document_sets">
+                        Document Sets
+                      </TabsTrigger>
+                      <TabsTrigger value="assistants">Assistants</TabsTrigger>
+                    </TabsList>
 
-                    <button
-                      type="button"
-                      onClick={() => setUsingPersonas(true)}
-                      className={`p-2 font-bold text-xs  ${
-                        usingPersonas
-                          ? "rounded bg-background-900 text-text-100 underline"
-                          : "hover:underline bg-background-100"
-                      }`}
-                    >
-                      Assistants
-                    </button>
-                  </div>
-
-                  <div className="mt-4">
-                    {/* TODO: make this look nicer */}
-                    {usingPersonas ? (
+                    <TabsContent value="assistants">
+                      <SubLabel>
+                        Select the assistant DanswerBot will use while answering
+                        questions in Slack.
+                      </SubLabel>
                       <SelectorFormField
                         name="persona_id"
                         options={personas.map((persona) => {
@@ -224,7 +220,17 @@ export const SlackBotConfigCreationForm = ({
                           };
                         })}
                       />
-                    ) : (
+                    </TabsContent>
+
+                    <TabsContent value="document_sets">
+                      <SubLabel>
+                        Select the document sets DanswerBot will use while
+                        answering questions in Slack.
+                      </SubLabel>
+                      <SubLabel>
+                        Note: If No Document Sets are selected, DanswerBot will
+                        search through all connected documents.
+                      </SubLabel>
                       <FieldArray
                         name="document_sets"
                         render={(arrayHelpers: ArrayHelpers) => (
@@ -252,20 +258,13 @@ export const SlackBotConfigCreationForm = ({
                                 );
                               })}
                             </div>
-                            <div>
-                              <SubLabel>
-                                Note: If left blank, DanswerBot will search
-                                through all connected documents.
-                              </SubLabel>
-                            </div>
+                            <div></div>
                           </div>
                         )}
                       />
-                    )}
-                  </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
-
-                <Separator />
 
                 <AdvancedOptionsToggle
                   showAdvancedOptions={showAdvancedOptions}

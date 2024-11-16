@@ -101,10 +101,13 @@ def upgrade() -> None:
     finally:
         session.close()
 
-    # Delete the tokens in dynamic config
-    if bot_token and app_token:
-        logger.info(f"{revision}: Removing old bot and app tokens.")
-        get_kv_store().delete("slack_bot_tokens_config_key")
+    try:
+        # Delete the tokens in dynamic config
+        if bot_token and app_token:
+            logger.info(f"{revision}: Removing old bot and app tokens.")
+            get_kv_store().delete("slack_bot_tokens_config_key")
+    except Exception:
+        logger.warning("tried to delete tokens in dynamic config but failed")
 
     logger.info(f"{revision}: Applying foreign key constraint to Slack bot configs.")
     sa.ForeignKeyConstraint(

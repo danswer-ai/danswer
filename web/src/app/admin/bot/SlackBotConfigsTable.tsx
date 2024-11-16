@@ -126,6 +126,18 @@ export function SlackBotConfigsTable({
                   </TableRow>
                 );
               })}
+
+            {/* Empty row with message when table has no data */}
+            {slackBotConfigs.length === 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  className="text-center text-muted-foreground"
+                >
+                  Add a new Slack bot configuration and it will show up here
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
