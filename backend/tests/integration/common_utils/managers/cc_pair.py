@@ -395,13 +395,19 @@ class CCPairManager:
         response.raise_for_status()
         doc_sync_statuses: list[DocumentSyncStatus] = []
         for doc_sync_status in response.json():
+            last_synced = doc_sync_status.get("last_synced")
+            if last_synced:
+                last_synced = datetime.fromisoformat(last_synced)
+
+            last_modified = doc_sync_status.get("last_modified")
+            if last_modified:
+                last_modified = datetime.fromisoformat(last_modified)
+
             doc_sync_statuses.append(
                 DocumentSyncStatus(
                     doc_id=doc_sync_status["doc_id"],
-                    last_synced=datetime.fromisoformat(doc_sync_status["last_synced"]),
-                    last_modified=datetime.fromisoformat(
-                        doc_sync_status["last_modified"]
-                    ),
+                    last_synced=last_synced,
+                    last_modified=last_modified,
                 )
             )
 
