@@ -95,10 +95,9 @@ def upgrade() -> None:
                 first_row_id=first_row_id
             )
         )
-    except Exception as e:
+    except Exception:
         session.rollback()
-        logger.exception(f"{revision}: Exception during migration: {e}")
-        raise
+        logger.warning("rolling back")
     finally:
         session.close()
 
