@@ -49,7 +49,6 @@ from httpx_oauth.oauth2 import BaseOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
 from pydantic import BaseModel
 from sqlalchemy import text
-from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
 
 from danswer.auth.api_key import get_hashed_api_key_from_request
@@ -247,7 +246,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             verify_email_is_invited(user_create.email)
             verify_email_domain(user_create.email)
             if MULTI_TENANT:
-                tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
+                tenant_user_db = SQLAlchemyUserAdminDB[User, uuid.UUID](
+                    db_session, User, OAuthAccount
+                )
                 self.user_db = tenant_user_db
                 self.database = tenant_user_db
 
@@ -266,14 +267,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             except exceptions.UserAlreadyExists:
                 user = await self.get_by_email(user_create.email)
                 # Handle case where user has used product outside of web and is now creating an account through web
-                if (
-                    not user.has_web_login
-                    and hasattr(user_create, "has_web_login")
-                    and user_create.has_web_login
-                ):
+                if not user.role.is_web_login() and user_create.role.is_web_login():
                     user_update = UserUpdate(
                         password=user_create.password,
-                        has_web_login=True,
                         role=user_create.role,
                         is_verified=user_create.is_verified,
                     )
@@ -287,7 +283,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             return user
 
     async def oauth_callback(
-        self: "BaseUserManager[models.UOAP, models.ID]",
+        self: "BaseUserManager[User, uuid.UUID]",
         oauth_name: str,
         access_token: str,
         account_id: str,
@@ -324,9 +320,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             verify_email_domain(account_email)
 
             if MULTI_TENANT:
-                tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
+                tenant_user_db = SQLAlchemyUserAdminDB[User, uuid.UUID](
+                    db_session, User, OAuthAccount
+                )
                 self.user_db = tenant_user_db
-                self.database = tenant_user_db  # type: ignore
+                self.database = tenant_user_db
 
             oauth_account_dict = {
                 "oauth_name": oauth_name,
@@ -391,16 +389,15 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 )
 
             # Handle case where user has used product outside of web and is now creating an account through web
-            if not user.has_web_login:  # type: ignore
+            if not user.role.is_web_login():
                 await self.user_db.update(
                     user,
                     {
                         "is_verified": is_verified_by_default,
-                        "has_web_login": True,
+                        "role": UserRole.BASIC,
                     },
                 )
                 user.is_verified = is_verified_by_default
-                user.has_web_login = True  # type: ignore
 
             # this is needed if an organization goes from `TRACK_EXTERNAL_IDP_EXPIRY=true` to `false`
             # otherwise, the oidc expiry will always be old, and the user will never be able to login
@@ -475,9 +472,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 self.password_helper.hash(credentials.password)
                 return None
 
-            has_web_login = attributes.get_attribute(user, "has_web_login")
-
-            if not has_web_login:
+            if not user.role.is_web_login():
                 raise BasicAuthenticationError(
                     detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
                 )

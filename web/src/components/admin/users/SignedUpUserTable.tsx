@@ -95,13 +95,17 @@ const UserRoleDropdown = ({
                 key={role}
                 value={role}
                 className={
-                  role === UserRole.CURATOR
+                  role === UserRole.CURATOR ||
+                  role === UserRole.EXTERNAL_PERMISSIONED_USER ||
+                  role === UserRole.SLACK_USER
                     ? "opacity-30 cursor-not-allowed"
                     : ""
                 }
                 title={
-                  role === UserRole.CURATOR
-                    ? "Curator role must be assigned in the Groups tab"
+                  role === UserRole.CURATOR ||
+                  role === UserRole.EXTERNAL_PERMISSIONED_USER ||
+                  role === UserRole.SLACK_USER
+                    ? "Can't select"
                     : ""
                 }
               >

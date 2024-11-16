@@ -17,8 +17,12 @@ def list_users(
     is assumed to be relatively small (<< 1 million)"""
     stmt = select(User)
 
+    where_clause = [User.role != UserRole.EXTERNAL_PERMISSIONED_USER]
+
     if email_filter_string:
-        stmt = stmt.where(User.email.ilike(f"%{email_filter_string}%"))  # type: ignore
+        where_clause.append(User.email.ilike(f"%{email_filter_string}%"))  # type: ignore
+
+    stmt = stmt.where(*where_clause)
 
     return db_session.scalars(stmt).unique().all()
 
@@ -45,58 +49,40 @@ def get_user_by_email(email: str, db_session: Session) -> User | None:
 
 
 def fetch_user_by_id(db_session: Session, user_id: UUID) -> User | None:
-    user = db_session.query(User).filter(User.id == user_id).first()  # type: ignore
-
-    return user
+    return db_session.query(User).filter(User.id == user_id).first()  # type: ignore
 
 
-def _generate_non_web_user(email: str) -> User:
+def _generate_non_web_slack_user(email: str) -> User:
     fastapi_users_pw_helper = PasswordHelper()
     password = fastapi_users_pw_helper.generate()
     hashed_pass = fastapi_users_pw_helper.hash(password)
     return User(
         email=email,
         hashed_password=hashed_pass,
-        has_web_login=False,
-        role=UserRole.BASIC,
+        role=UserRole.SLACK_USER,
     )
 
 
-def add_non_web_user_if_not_exists(db_session: Session, email: str) -> User:
+def add_slack_user_if_not_exists(db_session: Session, email: str) -> User:
     user = get_user_by_email(email, db_session)
     if user is not None:
         return user
 
-    user = _generate_non_web_user(email=email)
+    user = _generate_non_web_slack_user(email=email)
     db_session.add(user)
     db_session.commit()
     return user
 
 
-def add_non_web_user_if_not_exists__no_commit(db_session: Session, email: str) -> User:
-    user = get_user_by_email(email, db_session)
-    if user is not None:
-        return user
-
-    user = _generate_non_web_user(email=email)
-    db_session.add(user)
-    db_session.flush()  # generate id
-    return user
-
-
-def batch_add_non_web_user_if_not_exists__no_commit(
-    db_session: Session, emails: list[str]
-) -> list[User]:
-    found_users, missing_user_emails = get_users_by_emails(db_session, emails)
-
-    new_users: list[User] = []
-    for email in missing_user_emails:
-        new_users.append(_generate_non_web_user(email=email))
-
-    db_session.add_all(new_users)
-    db_session.flush()  # generate ids
-
-    return found_users + new_users
+def _generate_non_web_permissioned_user(email: str) -> User:
+    fastapi_users_pw_helper = PasswordHelper()
+    password = fastapi_users_pw_helper.generate()
+    hashed_pass = fastapi_users_pw_helper.hash(password)
+    return User(
+        email=email,
+        hashed_password=hashed_pass,
+        role=UserRole.EXTERNAL_PERMISSIONED_USER,
+    )
 
 
 def batch_add_non_web_user_if_not_exists(
@@ -106,7 +92,7 @@ def batch_add_non_web_user_if_not_exists(
 
     new_users: list[User] = []
     for email in missing_user_emails:
-        new_users.append(_generate_non_web_user(email=email))
+        new_users.append(_generate_non_web_permissioned_user(email=email))
 
     db_session.add_all(new_users)
     db_session.commit()

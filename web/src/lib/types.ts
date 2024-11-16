@@ -23,6 +23,8 @@ export enum UserRole {
   ADMIN = "admin",
   CURATOR = "curator",
   GLOBAL_CURATOR = "global_curator",
+  EXTERNAL_PERMISSIONED_USER = "external_permissioned_user",
+  SLACK_USER = "slack_user",
 }
 
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
@@ -31,6 +33,8 @@ export const USER_ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.ADMIN]: "Admin",
   [UserRole.GLOBAL_CURATOR]: "Global Curator",
   [UserRole.CURATOR]: "Curator",
+  [UserRole.EXTERNAL_PERMISSIONED_USER]: "External Permissioned User",
+  [UserRole.SLACK_USER]: "Slack User",
 };
 
 export interface User {
