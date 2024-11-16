@@ -66,10 +66,6 @@ export const AssistantCard = ({
             </div>
           )}
           <div className="text-xs text-subtle">
-            <span className="font-semibold">Default model:</span>{" "}
-            {getDisplayNameForModel(
-              assistant.llm_model_version_override || llmName
-            )}
           </div>
           <AssistantTools hovered={hovering} assistant={assistant} />
         </div>

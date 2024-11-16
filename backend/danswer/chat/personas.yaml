@@ -7,7 +7,7 @@ personas:
   - id: 0
     name: "Knowledge"
     description: >
-      Assistant with access to documents from your Connected Sources.
+      Specialist with access to documents from your Connected Sources.
     # Default Prompt objects attached to the persona, see prompts.yaml
     prompts:
       - "Answer-Question"

@@ -157,7 +157,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               >
                 <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
                 <p className="my-auto flex items-center text-sm">
-                  Manage Assistants
+                  Manage Specialists
                 </p>
               </Link>
               <Link

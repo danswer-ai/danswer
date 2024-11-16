@@ -1494,7 +1494,7 @@ export function ChatPage({
       setPopup({
         type: "error",
         message:
-          "The current Assistant does not support image input. Please select an assistant with Vision support.",
+          "The current specialist does not support image input. Please select an specialist with Vision support.",
       });
       return;
     }

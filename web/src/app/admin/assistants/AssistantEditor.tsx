@@ -581,24 +581,24 @@ export function AssistantEditor({
 
               <TextFormField
                 name="name"
-                tooltip="Used to identify the Assistant in the UI."
+                tooltip="Used to identify the Specialist in the UI."
                 label="Name"
-                placeholder="e.g. 'Email Assistant'"
+                placeholder="e.g. 'Email Specialist'"
               />
 
               <TextFormField
-                tooltip="Used for identifying assistants and their use cases."
+                tooltip="Used for identifying specialist and their use cases."
                 name="description"
                 label="Description"
-                placeholder="e.g. 'Use this Assistant to help draft professional emails'"
+                placeholder="e.g. 'Use this Specialist to help draft professional emails'"
               />
 
               <TextFormField
-                tooltip="Gives your assistant a prime directive"
+                tooltip="Gives your specialist a prime directive"
                 name="system_prompt"
                 label="Instructions"
                 isTextArea={true}
-                placeholder="e.g. 'You are a professional email writing assistant that always uses a polite enthusiastic tone, emphasizes action items, and leaves blanks for the human to fill in when you have unknowns'"
+                placeholder="e.g. 'You are a professional email writing specialist that always uses a polite enthusiastic tone, emphasizes action items, and leaves blanks for the human to fill in when you have unknowns'"
                 onChange={(e) => {
                   setFieldValue("system_prompt", e.target.value);
                 }}
@@ -624,7 +624,7 @@ export function AssistantEditor({
                   </TooltipProvider>
                 </div>
                 <p className="my-1 font-description text-base text-text-400">
-                  Your assistant will use the user&apos;s set default unless
+                  Your specialist will use the user&apos;s set default unless
                   otherwise specified below.
                   {admin &&
                     user?.preferences.default_model &&
@@ -713,7 +713,7 @@ export function AssistantEditor({
                       </TooltipTrigger>
                       <TooltipContent side="top" align="center">
                         <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                          You can give your assistant advanced capabilities like
+                          You can give your specialist advanced capabilities like
                           image generation
                         </p>
                       </TooltipContent>
@@ -831,8 +831,8 @@ export function AssistantEditor({
                                       ) : (
                                         "Document Sets"
                                       )}{" "}
-                                      this Assistant should search through. If
-                                      none are specified, the Assistant will
+                                      this specialist should search through. If
+                                      none are specified, the specialist will
                                       search through all available documents in
                                       order to try and respond to queries.
                                     </>
@@ -934,7 +934,7 @@ export function AssistantEditor({
                                     subtext={`
                                       If set, the response will include bracket citations ([1], [2], etc.)
                                       for each document used by the LLM to help inform the response. This is
-                                      the same technique used by the default Assistants. In general, we recommend
+                                      the same technique used by the default specialists. In general, we recommend
                                       to leave this enabled in order to increase trust in the LLM answer.`}
                                   />
                                 </div>
