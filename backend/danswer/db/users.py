@@ -140,8 +140,10 @@ def _generate_non_web_slack_user(email: str) -> User:
 
 
 def add_slack_user_if_not_exists(db_session: Session, email: str) -> User:
+    email = email.lower()
     user = get_user_by_email(email, db_session)
     if user is not None:
+        # If the user is an external permissioned user, we update it to a slack user
         if user.role == UserRole.EXT_PERM_USER:
             user.role = UserRole.SLACK_USER
             db_session.commit()
@@ -164,9 +166,10 @@ def _generate_non_web_permissioned_user(email: str) -> User:
     )
 
 
-def batch_add_non_web_user_if_not_exists(
+def batch_add_ext_perm_user_if_not_exists(
     db_session: Session, emails: list[str]
 ) -> list[User]:
+    emails = [email.lower() for email in emails]
     found_users, missing_user_emails = get_users_by_emails(db_session, emails)
 
     new_users: list[User] = []

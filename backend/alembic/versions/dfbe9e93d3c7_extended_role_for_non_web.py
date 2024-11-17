@@ -19,7 +19,7 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE "user"
-        SET role = 'SLACK_USER'
+        SET role = 'EXT_PERM_USER'
         WHERE has_web_login = false
     """
     )

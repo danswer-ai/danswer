@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from danswer.access.utils import prefix_group_w_source
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import User__ExternalUserGroupId
-from danswer.db.users import batch_add_non_web_user_if_not_exists
+from danswer.db.users import batch_add_ext_perm_user_if_not_exists
 
 
 class ExternalUserGroup(BaseModel):
@@ -57,7 +57,7 @@ def replace_user__ext_group_for_cc_pair(
             all_group_member_emails.add(user_email)
 
     # batch add users if they don't exist and get their ids
-    all_group_members = batch_add_non_web_user_if_not_exists(
+    all_group_members = batch_add_ext_perm_user_if_not_exists(
         db_session=db_session, emails=list(all_group_member_emails)
     )
 
