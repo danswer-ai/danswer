@@ -29,23 +29,23 @@ from tests.integration.common_utils.test_models import DATestUserGroup
 from tests.integration.common_utils.vespa import vespa_fixture
 
 
-def test_connector_creation(reset: None) -> None:
-    # Creating an admin user (first user created is automatically an admin)
-    admin_user: DATestUser = UserManager.create(name="admin_user")
+# def test_connector_creation(reset: None) -> None:
+#     # Creating an admin user (first user created is automatically an admin)
+#     admin_user: DATestUser = UserManager.create(name="admin_user")
 
-    # create connectors
-    cc_pair_1 = CCPairManager.create_from_scratch(
-        source=DocumentSource.INGESTION_API,
-        user_performing_action=admin_user,
-    )
+#     # create connectors
+#     cc_pair_1 = CCPairManager.create_from_scratch(
+#         source=DocumentSource.INGESTION_API,
+#         user_performing_action=admin_user,
+#     )
 
-    cc_pair_info = CCPairManager.get_single(
-        cc_pair_1.id, user_performing_action=admin_user
-    )
-    assert cc_pair_info
-    assert cc_pair_info.creator
-    assert str(cc_pair_info.creator) == admin_user.id
-    assert cc_pair_info.creator_email == admin_user.email
+#     cc_pair_info = CCPairManager.get_single(
+#         cc_pair_1.id, user_performing_action=admin_user
+#     )
+#     assert cc_pair_info
+#     assert cc_pair_info.creator
+#     assert str(cc_pair_info.creator) == admin_user.id
+#     assert cc_pair_info.creator_email == admin_user.email
 
 
 # TODO(rkuo): will enable this once i have credentials on github

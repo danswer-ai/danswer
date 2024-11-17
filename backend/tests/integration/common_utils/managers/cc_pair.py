@@ -9,7 +9,6 @@ from danswer.connectors.models import InputType
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.enums import TaskStatus
-from danswer.server.documents.models import CCPairFullInfo
 from danswer.server.documents.models import CeleryTaskStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
@@ -146,21 +145,6 @@ class CCPairManager:
             else GENERAL_HEADERS,
         )
         result.raise_for_status()
-
-    @staticmethod
-    def get_single(
-        cc_pair_id: int,
-        user_performing_action: DATestUser | None = None,
-    ) -> CCPairFullInfo | None:
-        response = requests.get(
-            f"{API_SERVER_URL}/manage/admin/cc-pair/{cc_pair_id}",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
-        )
-        response.raise_for_status()
-        cc_pair_json = response.json()
-        return CCPairFullInfo(**cc_pair_json)
 
     @staticmethod
     def get_one(
