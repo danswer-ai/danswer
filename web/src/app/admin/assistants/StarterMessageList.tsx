@@ -115,50 +115,6 @@ export default function StarterMessagesList({
                             small
                             className="text-sm font-medium text-gray-700"
                           >
-                            Description
-                          </Label>
-                          <TooltipProvider delayDuration={50}>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <FiInfo size={12} />
-                              </TooltipTrigger>
-                              <TooltipContent side="top" align="center">
-                                <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                                  A description which tells the user what they
-                                  might want to use this Starter Message for.
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        <Field
-                          name={`starter_messages.${
-                            rowIndex * 2 + colIndex
-                          }.description`}
-                          className="text-sm mt-1 w-full px-4 py-2.5 bg-background border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                          autoComplete="off"
-                          as="textarea"
-                          placeholder="Enter a description..."
-                          onChange={(e: any) => {
-                            touchStarterMessages();
-                            handleChange(e);
-                          }}
-                        />
-                        <ErrorMessage
-                          name={`starter_messages.${
-                            rowIndex * 2 + colIndex
-                          }.description`}
-                          component="div"
-                          className="text-red-500 text-sm mt-1"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex w-full items-center gap-x-1">
-                          <Label
-                            small
-                            className="text-sm font-medium text-gray-700"
-                          >
                             Message
                           </Label>
                           <TooltipProvider delayDuration={50}>
@@ -223,12 +179,10 @@ export default function StarterMessagesList({
           onClick={() => {
             arrayHelpers.push({
               name: "",
-              description: "",
               message: "",
             });
             arrayHelpers.push({
               name: "",
-              description: "",
               message: "",
             });
           }}

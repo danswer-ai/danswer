@@ -89,15 +89,6 @@ function SubLabel({ children }: { children: string | JSX.Element }) {
   );
 }
 
-function FormikPromptRefresh({
-  usePromptRefresh,
-}: {
-  usePromptRefresh: () => void;
-}) {
-  usePromptRefresh();
-  return null;
-}
-
 export function AssistantEditor({
   existingPersona,
   ccPairs,
@@ -235,22 +226,18 @@ export function AssistantEditor({
     starter_messages: existingPersona?.starter_messages ?? [
       {
         name: "",
-        description: "",
         message: "",
       },
       {
         name: "",
-        description: "",
         message: "",
       },
       {
         name: "",
-        description: "",
         message: "",
       },
       {
         name: "",
-        description: "",
         message: "",
       },
     ],
@@ -266,7 +253,6 @@ export function AssistantEditor({
 
   interface AssistantPrompt {
     message: string;
-    description: string;
     name: string;
   }
 
@@ -302,29 +288,6 @@ export function AssistantEditor({
     },
     1000
   );
-  function usePromptRefresh() {
-    const { values, errors, setFieldValue } = useFormikContext<any>();
-    useEffect(() => {
-      // Only refresh if we have required fields and no errors
-      if (
-        !hasEditedStarterMessage &&
-        !existingPersona &&
-        values.name &&
-        values.description &&
-        (values.system_prompt || values.task_prompt) &&
-        Object.keys(errors).filter((key) => !key.startsWith("starter_messages"))
-          .length === 0
-      ) {
-        debouncedRefreshPrompts(values, setFieldValue);
-      }
-    }, [
-      values.name,
-      values.description,
-      values.document_set_ids,
-      errors,
-      setFieldValue,
-    ]);
-  }
 
   const [isRequestSuccessful, setIsRequestSuccessful] = useState(false);
 
@@ -546,7 +509,6 @@ export function AssistantEditor({
           return (
             <Form className="w-full text-text-950">
               {/* Refresh starter messages when name or description changes */}
-              <FormikPromptRefresh usePromptRefresh={usePromptRefresh} />
               <div className="w-full flex gap-x-2 justify-center">
                 <Popover
                   open={isIconDropdownOpen}
@@ -1138,7 +1100,9 @@ export function AssistantEditor({
                               ) : (
                                 <SwapIcon className="w-4 h-4 text-blue-600" />
                               )}
-                              {isRefreshing ? "Generating..." : "Regenerate"}
+                              {values.starter_messages.length > 0
+                                ? "Regenerate"
+                                : "Generate"}
                             </div>
                           </Button>
                         </div>
