@@ -109,7 +109,7 @@ def set_user_role(
             "remove_curator_status__no_commit",
         )(db_session, user_to_update)
 
-    user_to_update.role = user_role_update_request.new_role.value
+    user_to_update.role = user_role_update_request.new_role
 
     db_session.commit()
 

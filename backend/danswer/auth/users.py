@@ -221,6 +221,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = USER_AUTH_SECRET
     verification_token_secret = USER_AUTH_SECRET
 
+    user_db: SQLAlchemyUserDatabase[User, uuid.UUID]
+
     async def create(
         self,
         user_create: schemas.UC | UserCreate,
@@ -283,7 +285,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             return user
 
     async def oauth_callback(
-        self: "BaseUserManager[User, uuid.UUID]",
+        self,
         oauth_name: str,
         access_token: str,
         account_id: str,
@@ -294,7 +296,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         *,
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
-    ) -> models.UOAP:
+    ) -> User:
         referral_source = None
         if request:
             referral_source = getattr(request.state, "referral_source", None)
@@ -376,7 +378,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                         and existing_oauth_account.oauth_name == oauth_name
                     ):
                         user = await self.user_db.update_oauth_account(
-                            user, existing_oauth_account, oauth_account_dict
+                            user,
+                            # NOTE: OAuthAccount DOES implement the OAuthAccountProtocol
+                            # but the type checker doesn't know that :(
+                            existing_oauth_account,  # type: ignore
+                            oauth_account_dict,
                         )
 
             # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
