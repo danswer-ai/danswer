@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 from collections.abc import Iterator
 from typing import Any
 from typing import cast
@@ -22,7 +23,6 @@ from langchain_core.messages import SystemMessageChunk
 from langchain_core.messages.tool import ToolCallChunk
 from langchain_core.messages.tool import ToolMessage
 
-from danswer.configs.app_configs import LOG_ALL_MODEL_INTERACTIONS
 from danswer.configs.app_configs import LOG_DANSWER_MODEL_INTERACTIONS
 from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
@@ -30,7 +30,9 @@ from danswer.configs.model_configs import LITELLM_EXTRA_BODY
 from danswer.llm.interfaces import LLM
 from danswer.llm.interfaces import LLMConfig
 from danswer.llm.interfaces import ToolChoiceOptions
+from danswer.server.utils import mask_string
 from danswer.utils.logger import setup_logger
+from danswer.utils.long_term_log import LongTermLogger
 
 
 logger = setup_logger()
@@ -40,7 +42,7 @@ logger = setup_logger()
 litellm.drop_params = True
 litellm.telemetry = False
 
-litellm.set_verbose = LOG_ALL_MODEL_INTERACTIONS
+_LONG_TERM_LOG_CATEGORY = "llm_prompt"
 
 
 def _base_msg_to_role(msg: BaseMessage) -> str:
@@ -215,6 +217,7 @@ class DefaultMultiLLM(LLM):
         custom_config: dict[str, str] | None = None,
         extra_headers: dict[str, str] | None = None,
         extra_body: dict | None = LITELLM_EXTRA_BODY,
+        long_term_logger: LongTermLogger | None = None,
     ):
         self._timeout = timeout
         self._model_provider = model_provider
@@ -225,6 +228,7 @@ class DefaultMultiLLM(LLM):
         self._api_base = api_base
         self._api_version = api_version
         self._custom_llm_provider = custom_llm_provider
+        self._long_term_logger = long_term_logger
 
         # This can be used to store the maximum output tokens for this model.
         # self._max_output_tokens = (
@@ -255,6 +259,48 @@ class DefaultMultiLLM(LLM):
 
     def log_model_configs(self) -> None:
         logger.debug(f"Config: {self.config}")
+
+    def _api_keyless_config_dump(self) -> dict:
+        dump = self.config.model_dump()
+        dump["api_key"] = mask_string(dump.get("api_key", ""))
+        return dump
+
+    def _record_call(self, prompt: LanguageModelInput) -> None:
+        if self._long_term_logger:
+            self._long_term_logger.record(
+                {"prompt": prompt, "model": self._api_keyless_config_dump()},
+                category=_LONG_TERM_LOG_CATEGORY,
+            )
+
+    def _record_result(self, model_output: BaseMessage) -> None:
+        if self._long_term_logger:
+            self._long_term_logger.record(
+                {
+                    "content": model_output.content,
+                    "tool_calls": (
+                        model_output.tool_calls
+                        if hasattr(model_output, "tool_calls")
+                        else []
+                    ),
+                    "model": self._api_keyless_config_dump(),
+                },
+                category=_LONG_TERM_LOG_CATEGORY,
+            )
+
+    def _record_error(self, error: Exception) -> None:
+        if self._long_term_logger:
+            self._long_term_logger.record(
+                {
+                    "error": str(error),
+                    "traceback": "".join(
+                        traceback.format_exception(
+                            type(error), error, error.__traceback__
+                        )
+                    ),
+                    "model": self._api_keyless_config_dump(),
+                },
+                category=_LONG_TERM_LOG_CATEGORY,
+            )
 
     # def _calculate_max_output_tokens(self, prompt: LanguageModelInput) -> int:
     #     # NOTE: This method can be used for calculating the maximum tokens for the stream,
@@ -297,6 +343,8 @@ class DefaultMultiLLM(LLM):
         elif isinstance(prompt, str):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
+        self._record_call(prompt)
+
         try:
             return litellm.completion(
                 # model choice
@@ -328,6 +376,7 @@ class DefaultMultiLLM(LLM):
                 **self._model_kwargs,
             )
         except Exception as e:
+            self._record_call(prompt)
             # for break pointing
             raise e
 
@@ -409,6 +458,9 @@ class DefaultMultiLLM(LLM):
             raise RuntimeError(
                 "The AI model failed partway through generation, please try again."
             )
+
+        if output:
+            self._record_result(output)
 
         if LOG_DANSWER_MODEL_INTERACTIONS and output:
             content = output.content or ""
