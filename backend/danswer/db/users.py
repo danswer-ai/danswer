@@ -19,8 +19,10 @@ def validate_user_role_update(requested_role: UserRole, current_role: UserRole) 
     - requested role is a curator
     - requested role is a slack user
     - requested role is an external permissioned user
+    - requested role is a limited user
     - current role is a slack user
     - current role is an external permissioned user
+    - current role is a limited user
     """
 
     if current_role == UserRole.SLACK_USER:
@@ -36,13 +38,31 @@ def validate_user_role_update(requested_role: UserRole, current_role: UserRole) 
             detail="To change an External Permissioned User's role, they must first login to Danswer via the web app.",
         )
 
+    if current_role == UserRole.LIMITED:
+        raise HTTPException(
+            status_code=400,
+            detail="To change a Limited User's role, they must first login to Danswer via the web app.",
+        )
+
     if requested_role == UserRole.CURATOR:
+        # This shouldn't happen, but just in case
         raise HTTPException(
             status_code=400,
             detail="Curator role must be set via the User Group Menu",
         )
 
+    if requested_role == UserRole.LIMITED:
+        # This shouldn't happen, but just in case
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A user cannot be set to a Limited User role. "
+                "This role is automatically assigned to users through certain endpoints in the API."
+            ),
+        )
+
     if requested_role == UserRole.SLACK_USER:
+        # This shouldn't happen, but just in case
         raise HTTPException(
             status_code=400,
             detail=(
@@ -52,6 +72,7 @@ def validate_user_role_update(requested_role: UserRole, current_role: UserRole) 
         )
 
     if requested_role == UserRole.EXT_PERM_USER:
+        # This shouldn't happen, but just in case
         raise HTTPException(
             status_code=400,
             detail=(
