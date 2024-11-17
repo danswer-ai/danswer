@@ -84,13 +84,16 @@ def validate_user_role_update(requested_role: UserRole, current_role: UserRole) 
 
 
 def list_users(
-    db_session: Session, email_filter_string: str = "", user: User | None = None
+    db_session: Session, email_filter_string: str = "", include_external: bool = False
 ) -> Sequence[User]:
     """List all users. No pagination as of now, as the # of users
     is assumed to be relatively small (<< 1 million)"""
     stmt = select(User)
 
-    where_clause = [User.role != UserRole.EXT_PERM_USER]
+    where_clause = []
+
+    if not include_external:
+        where_clause.append(User.role != UserRole.EXT_PERM_USER)
 
     if email_filter_string:
         where_clause.append(User.email.ilike(f"%{email_filter_string}%"))  # type: ignore
@@ -139,6 +142,9 @@ def _generate_non_web_slack_user(email: str) -> User:
 def add_slack_user_if_not_exists(db_session: Session, email: str) -> User:
     user = get_user_by_email(email, db_session)
     if user is not None:
+        if user.role == UserRole.EXT_PERM_USER:
+            user.role = UserRole.SLACK_USER
+            db_session.commit()
         return user
 
     user = _generate_non_web_slack_user(email=email)
