@@ -116,7 +116,8 @@ def upgrade() -> None:
 
     # Copy data from old table to new tables
     op.execute(
-        """
+        sa.text(
+            """
         WITH inserted_bot AS (
             INSERT INTO slack_bot (name, enabled, bot_token, app_token)
             SELECT 'Default Bot', true, '', ''
@@ -153,25 +154,25 @@ def upgrade() -> None:
         )
         SELECT
             (SELECT bot_id FROM default_bot_id),
-            cn.persona_id,
+            channel_name.persona_id,
             jsonb_build_object(
-                'channel_name', cn.channel_name,
+                'channel_name', channel_name.channel_name,
                 'respond_tag_only',
-                COALESCE((cn.respond_tag_only)::boolean, false),
+                COALESCE((channel_name.respond_tag_only)::boolean, false),
                 'respond_to_bots',
-                COALESCE((cn.respond_to_bots)::boolean, false),
+                COALESCE((channel_name.respond_to_bots)::boolean, false),
                 'respond_member_group_list',
-                COALESCE(cn.respond_member_group_list, '[]'::jsonb),
+                COALESCE(channel_name.respond_member_group_list, '[]'::jsonb),
                 'answer_filters',
-                COALESCE(cn.answer_filters, '[]'::jsonb),
+                COALESCE(channel_name.answer_filters, '[]'::jsonb),
                 'follow_up_tags',
-                COALESCE(cn.follow_up_tags, '[]'::jsonb)
+                COALESCE(channel_name.follow_up_tags, '[]'::jsonb)
             ),
-            cn.response_type,
-            cn.enable_auto_filters
-        FROM channel_names cn;
-    """,
-        params={"first_row_id": first_row_id},
+            channel_name.response_type,
+            channel_name.enable_auto_filters
+        FROM channel_names channel_name;
+    """
+        ).bindparams(first_row_id=first_row_id)
     )
 
     # Clean up old tokens if they existed
@@ -182,8 +183,8 @@ def upgrade() -> None:
     except Exception:
         logger.warning("tried to delete tokens in dynamic config but failed")
 
-    # Drop old table
-    op.drop_table("slack_bot_config")
+    # Drop the table with CASCADE to handle dependent objects
+    op.execute("DROP TABLE slack_bot_config CASCADE")
 
     logger.info(f"{revision}: Migration complete.")
 
@@ -206,7 +207,8 @@ def downgrade() -> None:
 
     # Migrate data back to the old format
     op.execute(
-        """
+        sa.text(
+            """
         INSERT INTO slack_bot_config (
             persona_id,
             channel_config,
@@ -228,6 +230,7 @@ def downgrade() -> None:
         FROM slack_channel_config
         GROUP BY persona_id, response_type, enable_auto_filters;
     """
+        ).bindparams()
     )
 
     # Drop the new tables in reverse order
