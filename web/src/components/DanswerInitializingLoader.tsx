@@ -10,7 +10,7 @@ export function DanswerInitializingLoader() {
       <Logo height={96} width={96} className="mx-auto mb-3" />
       <p className="text-lg font-bold">
         Initializing{" "}
-        {settings?.enterpriseSettings?.application_name ?? "Danswer"}
+        {settings?.enterpriseSettings?.application_name ?? "Junie AI"}
       </p>
     </div>
   );

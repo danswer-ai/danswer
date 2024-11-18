@@ -42,7 +42,7 @@ export default function FixedLogo({
               </div>
             ) : (
               <HeaderTitle backgroundToggled={backgroundToggled}>
-                Danswer
+                Junie AI
               </HeaderTitle>
             )}
           </div>

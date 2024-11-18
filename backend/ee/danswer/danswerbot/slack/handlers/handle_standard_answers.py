@@ -217,7 +217,7 @@ def _handle_standard_answers(
                 client=client,
                 channel=message_info.channel_to_respond,
                 receiver_ids=receiver_ids,
-                text="Hello! Danswer has some results for you!",
+                text="Hello! JunieAI has some results for you!",
                 blocks=all_blocks,
                 thread_ts=message_info.msg_to_respond,
                 unfurl=False,

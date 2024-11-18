@@ -60,12 +60,12 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
                       </HeaderTitle>
                       {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
                         <p className="text-xs text-subtle">
-                          Powered by Danswer
+                          Powered by Junie AI
                         </p>
                       )}
                     </div>
                   ) : (
-                    <HeaderTitle backgroundToggled={true}>Danswer</HeaderTitle>
+                    <HeaderTitle backgroundToggled={true}>Junie AI</HeaderTitle>
                   )}
                 </div>
               </div>
@@ -79,7 +79,7 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
               <p className="ml-1 break-words line-clamp-2 ellipsis leading-none">
                 Back to{" "}
                 {combinedSettings.enterpriseSettings?.application_name ||
-                  "Danswer"}
+                  "Junie AI"}
               </p>
             </button>
           </Link>

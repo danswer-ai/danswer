@@ -58,7 +58,7 @@ def mask_credential_dict(credential_dict: dict[str, Any]) -> dict[str, str]:
 
 def send_user_email_invite(user_email: str, current_user: User) -> None:
     msg = MIMEMultipart()
-    msg["Subject"] = "Invitation to Join Danswer Workspace"
+    msg["Subject"] = "Invitation to Join JunieAI Workspace"
     msg["From"] = current_user.email
     msg["To"] = user_email
 
@@ -66,7 +66,7 @@ def send_user_email_invite(user_email: str, current_user: User) -> None:
         f"""\
         Hello,
 
-        You have been invited to join a workspace on Danswer.
+        You have been invited to join a workspace on JunieAI.
 
         To join the workspace, please visit the following link:
 

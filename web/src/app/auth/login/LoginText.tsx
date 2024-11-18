@@ -9,7 +9,7 @@ export const LoginText = () => {
     <>
       Log In to{" "}
       {(settings && settings?.enterpriseSettings?.application_name) ||
-        "Danswer"}
+        "Junie AI"}
     </>
   );
 };

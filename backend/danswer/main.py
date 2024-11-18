@@ -217,7 +217,7 @@ def log_http_error(_: Request, exc: Exception) -> JSONResponse:
 
 def get_application() -> FastAPI:
     application = FastAPI(
-        title="Danswer Backend", version=__version__, lifespan=lifespan
+        title="JunieAI Backend", version=__version__, lifespan=lifespan
     )
     if SENTRY_DSN:
         sentry_sdk.init(
@@ -370,7 +370,7 @@ app = fetch_versioned_implementation(module="danswer.main", attribute="get_appli
 
 if __name__ == "__main__":
     logger.notice(
-        f"Starting Danswer Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
+        f"Starting JunieAI Backend version {__version__} on http://{APP_HOST}:{str(APP_PORT)}/"
     )
 
     if global_version.is_ee_version():
