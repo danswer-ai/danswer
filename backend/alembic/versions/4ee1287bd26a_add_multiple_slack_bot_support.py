@@ -1,7 +1,7 @@
 """add_multiple_slack_bot_support
 
 Revision ID: 4ee1287bd26a
-Revises: 9cf5c00f72fe
+Revises: 47e5bef3a1d7
 Create Date: 2024-11-06 13:15:53.302644
 
 """
@@ -16,7 +16,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "4ee1287bd26a"
-down_revision = "9cf5c00f72fe"
+down_revision = "47e5bef3a1d7"
 branch_labels: None = None
 depends_on: None = None
 
