@@ -101,9 +101,9 @@ module.exports = {
         "background-strong": "var(--background-strong)",
         "background-search": "var(--white)",
 
-        "background-history-button-hover": "var(--background-200)",
-        "text-history-button": "var(--text-800)",
-        "divider-history-bar": "var(--border)",
+        "background-history-sidebar-button-hover": "var(--background-200)",
+        "text-history-sidebar-button": "var(--text-800)",
+        "divider-history-sidebar-bar": "var(--border)",
         "text-mobile-sidebar": "var(--text-800)",
         "background-search-filter": "var(--background-100)",
         "background-search-filter-dropdown": "var(--background-100)",
