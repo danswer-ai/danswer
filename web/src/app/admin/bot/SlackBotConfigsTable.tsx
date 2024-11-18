@@ -3,7 +3,7 @@
 import { PageSelector } from "@/components/PageSelector";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { EditIcon, TrashIcon } from "@/components/icons/icons";
-import { SlackBotConfig } from "@/lib/types";
+import { SlackChannelConfig } from "@/lib/types";
 import {
   Table,
   TableBody,
@@ -24,7 +24,7 @@ export function SlackBotConfigsTable({
   refresh,
   setPopup,
 }: {
-  slackBotConfigs: SlackBotConfig[];
+  slackBotConfigs: SlackChannelConfig[];
   refresh: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
 }) {

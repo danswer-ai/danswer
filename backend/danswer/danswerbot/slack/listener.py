@@ -67,9 +67,9 @@ from danswer.danswerbot.slack.utils import respond_in_thread
 from danswer.danswerbot.slack.utils import TenantSocketModeClient
 from danswer.db.engine import get_all_tenant_ids
 from danswer.db.engine import get_session_with_tenant
-from danswer.db.models import SlackApp
+from danswer.db.models import SlackBot
 from danswer.db.search_settings import get_current_search_settings
-from danswer.db.slack_app import fetch_slack_apps
+from danswer.db.slack_bot import fetch_slack_bots
 from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
@@ -176,7 +176,7 @@ class SlackbotHandler:
             self._shutdown_event.wait(timeout=TENANT_HEARTBEAT_INTERVAL)
 
     def _manage_clients_per_tenant(
-        self, db_session: Session, tenant_id: str | None, app: SlackApp
+        self, db_session: Session, tenant_id: str | None, app: SlackBot
     ) -> None:
         slack_bot_tokens = SlackBotTokens(
             bot_token=app.bot_token,
@@ -269,7 +269,7 @@ class SlackbotHandler:
             try:
                 with get_session_with_tenant(tenant_id) as db_session:
                     try:
-                        apps = fetch_slack_apps(db_session=db_session)
+                        apps = fetch_slack_bots(db_session=db_session)
                         for app in apps:
                             self._manage_clients_per_tenant(
                                 db_session=db_session,
@@ -432,15 +432,15 @@ def prefilter_requests(req: SocketModeRequest, client: TenantSocketModeClient) -
             )
 
             with get_session_with_tenant(client.tenant_id) as db_session:
-                slack_bot_config = get_slack_bot_config_for_app_and_channel(
+                slack_channel_config = get_slack_bot_config_for_app_and_channel(
                     db_session=db_session,
                     app_id=client.app_id,
                     channel_name=channel_name,
                 )
             # If DanswerBot is not specifically tagged and the channel is not set to respond to bots, ignore the message
             if (not bot_tag_id or bot_tag_id not in msg) and (
-                not slack_bot_config
-                or not slack_bot_config.channel_config.get("respond_to_bots")
+                not slack_channel_config
+                or not slack_channel_config.channel_config.get("respond_to_bots")
             ):
                 channel_specific_logger.info("Ignoring message from bot")
                 return False
@@ -645,7 +645,7 @@ def process_message(
         token = CURRENT_TENANT_ID_CONTEXTVAR.set(client.tenant_id)
     try:
         with get_session_with_tenant(client.tenant_id) as db_session:
-            slack_bot_config = get_slack_bot_config_for_app_and_channel(
+            slack_channel_config = get_slack_bot_config_for_app_and_channel(
                 db_session=db_session,
                 app_id=client.app_id,
                 channel_name=channel_name,
@@ -654,7 +654,7 @@ def process_message(
             # Be careful about this default, don't want to accidentally spam every channel
             # Users should be able to DM slack bot in their private channels though
             if (
-                slack_bot_config is None
+                slack_channel_config is None
                 and not respond_every_channel
                 # Can't have configs for DMs so don't toss them out
                 and not is_dm
@@ -665,9 +665,10 @@ def process_message(
                 return
 
             follow_up = bool(
-                slack_bot_config
-                and slack_bot_config.channel_config
-                and slack_bot_config.channel_config.get("follow_up_tags") is not None
+                slack_channel_config
+                and slack_channel_config.channel_config
+                and slack_channel_config.channel_config.get("follow_up_tags")
+                is not None
             )
             feedback_reminder_id = schedule_feedback_reminder(
                 details=details, client=client.web_client, include_followup=follow_up
@@ -675,7 +676,7 @@ def process_message(
 
             failed = handle_message(
                 message_info=details,
-                slack_bot_config=slack_bot_config,
+                slack_channel_config=slack_channel_config,
                 client=client.web_client,
                 feedback_reminder_id=feedback_reminder_id,
                 tenant_id=client.tenant_id,

@@ -3,7 +3,7 @@
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { DocumentSet, SlackBotConfig } from "@/lib/types";
+import { DocumentSet, SlackChannelConfig } from "@/lib/types";
 import {
   BooleanFormField,
   Label,
@@ -45,7 +45,7 @@ export const SlackBotConfigCreationForm = ({
   documentSets: DocumentSet[];
   personas: Persona[];
   standardAnswerCategoryResponse: StandardAnswerCategoryResponse;
-  existingSlackBotConfig?: SlackBotConfig;
+  existingSlackBotConfig?: SlackChannelConfig;
 }) => {
   const isUpdate = existingSlackBotConfig !== undefined;
   const { popup, setPopup } = usePopup();

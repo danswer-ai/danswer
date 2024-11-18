@@ -356,7 +356,7 @@ class SlackBotConfig__StandardAnswerCategory(Base):
     __tablename__ = "slack_bot_config__standard_answer_category"
 
     slack_bot_config_id: Mapped[int] = mapped_column(
-        ForeignKey("slack_bot_config.id"), primary_key=True
+        ForeignKey("slack_channel_config.id"), primary_key=True
     )
     standard_answer_category_id: Mapped[int] = mapped_column(
         ForeignKey("standard_answer_category.id"), primary_key=True
@@ -371,6 +371,17 @@ class ChatMessage__StandardAnswer(Base):
     )
     standard_answer_id: Mapped[int] = mapped_column(
         ForeignKey("standard_answer.id"), primary_key=True
+    )
+
+
+class SlackBot__SlackBotConfig(Base):
+    __tablename__ = "slack_bot__slack_channel_config"
+
+    slack_bot_id: Mapped[int] = mapped_column(
+        ForeignKey("slack_bot.id"), primary_key=True
+    )
+    slack_bot_config_id: Mapped[int] = mapped_column(
+        ForeignKey("slack_channel_config.id"), primary_key=True
     )
 
 
@@ -1457,7 +1468,7 @@ class ChannelConfig(TypedDict):
     """NOTE: is a `TypedDict` so it can be used as a type hint for a JSONB column
     in Postgres"""
 
-    channel_names: list[str]
+    channel_name: str
     respond_tag_only: NotRequired[bool]  # defaults to False
     respond_to_bots: NotRequired[bool]  # defaults to False
     respond_member_group_list: NotRequired[list[str]]
@@ -1472,11 +1483,11 @@ class SlackBotResponseType(str, PyEnum):
     CITATIONS = "citations"
 
 
-class SlackBotConfig(Base):
-    __tablename__ = "slack_bot_config"
+class SlackChannelConfig(Base):
+    __tablename__ = "slack_channel_config"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    app_id: Mapped[int] = mapped_column(ForeignKey("slack_app.id"), nullable=True)
+    app_id: Mapped[int] = mapped_column(ForeignKey("slack_bot.id"), nullable=True)
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True
     )
@@ -1500,18 +1511,21 @@ class SlackBotConfig(Base):
     )
 
 
-class SlackApp(Base):
-    __tablename__ = "slack_app"
+class SlackBot(Base):
+    __tablename__ = "slack_bot"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
-    description: Mapped[str] = mapped_column(String)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
     bot_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
     app_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
 
-    config: Mapped[SlackBotConfig | None] = relationship("SlackBotConfig")
+    slack_bot_configs: Mapped[list[SlackChannelConfig]] = relationship(
+        "SlackChannelConfig",
+        secondary=SlackBot__SlackBotConfig.__table__,
+        back_populates="slack_bot",
+    )
 
 
 class TaskQueueState(Base):
@@ -1749,8 +1763,8 @@ class StandardAnswerCategory(Base):
         secondary=StandardAnswer__StandardAnswerCategory.__table__,
         back_populates="categories",
     )
-    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
-        "SlackBotConfig",
+    slack_bot_configs: Mapped[list["SlackChannelConfig"]] = relationship(
+        "SlackChannelConfig",
         secondary=SlackBotConfig__StandardAnswerCategory.__table__,
         back_populates="standard_answer_categories",
     )

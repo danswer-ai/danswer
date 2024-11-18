@@ -1,8 +1,9 @@
-import { SlackApp } from "@/lib/types";
+import { SlackBot } from "@/lib/types";
 
-export async function updateSlackAppName(
-  slackApp: SlackApp,
-  newName: string
+export async function updateSlackAppField(
+  slackApp: SlackBot,
+  field: keyof SlackBot,
+  value: any
 ): Promise<Response> {
   return fetch(`/api/manage/admin/slack-bot/apps/${slackApp.id}`, {
     method: "PATCH",
@@ -11,7 +12,7 @@ export async function updateSlackAppName(
     },
     body: JSON.stringify({
       ...slackApp,
-      name: newName,
+      [field]: value,
     }),
   });
 }

@@ -9,8 +9,8 @@ from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Persona
 from danswer.db.models import Persona__DocumentSet
-from danswer.db.models import SlackBotConfig
 from danswer.db.models import SlackBotResponseType
+from danswer.db.models import SlackChannelConfig
 from danswer.db.models import User
 from danswer.db.persona import get_default_prompt
 from danswer.db.persona import mark_persona_as_deleted
@@ -86,7 +86,7 @@ def insert_slack_bot_config(
     standard_answer_category_ids: list[int],
     enable_auto_filters: bool,
     db_session: Session,
-) -> SlackBotConfig:
+) -> SlackChannelConfig:
     versioned_fetch_standard_answer_categories_by_ids = (
         fetch_versioned_implementation_with_fallback(
             "danswer.db.standard_answer",
@@ -111,7 +111,7 @@ def insert_slack_bot_config(
                 f"Some or all categories with ids {standard_answer_category_ids} do not exist"
             )
 
-    slack_bot_config = SlackBotConfig(
+    slack_channel_config = SlackChannelConfig(
         app_id=app_id,
         persona_id=persona_id,
         channel_config=channel_config,
@@ -119,10 +119,10 @@ def insert_slack_bot_config(
         standard_answer_categories=existing_standard_answer_categories,
         enable_auto_filters=enable_auto_filters,
     )
-    db_session.add(slack_bot_config)
+    db_session.add(slack_channel_config)
     db_session.commit()
 
-    return slack_bot_config
+    return slack_channel_config
 
 
 def update_slack_bot_config(
@@ -133,11 +133,11 @@ def update_slack_bot_config(
     standard_answer_category_ids: list[int],
     enable_auto_filters: bool,
     db_session: Session,
-) -> SlackBotConfig:
-    slack_bot_config = db_session.scalar(
-        select(SlackBotConfig).where(SlackBotConfig.id == slack_bot_config_id)
+) -> SlackChannelConfig:
+    slack_channel_config = db_session.scalar(
+        select(SlackChannelConfig).where(SlackChannelConfig.id == slack_bot_config_id)
     )
-    if slack_bot_config is None:
+    if slack_channel_config is None:
         raise ValueError(
             f"Unable to find slack bot config with ID {slack_bot_config_id}"
         )
@@ -161,18 +161,18 @@ def update_slack_bot_config(
         )
 
     # get the existing persona id before updating the object
-    existing_persona_id = slack_bot_config.persona_id
+    existing_persona_id = slack_channel_config.persona_id
 
     # update the config
     # NOTE: need to do this before cleaning up the old persona or else we
     # will encounter `violates foreign key constraint` errors
-    slack_bot_config.persona_id = persona_id
-    slack_bot_config.channel_config = channel_config
-    slack_bot_config.response_type = response_type
-    slack_bot_config.standard_answer_categories = list(
+    slack_channel_config.persona_id = persona_id
+    slack_channel_config.channel_config = channel_config
+    slack_channel_config.response_type = response_type
+    slack_channel_config.standard_answer_categories = list(
         existing_standard_answer_categories
     )
-    slack_bot_config.enable_auto_filters = enable_auto_filters
+    slack_channel_config.enable_auto_filters = enable_auto_filters
 
     # if the persona has changed, then clean up the old persona
     if persona_id != existing_persona_id and existing_persona_id:
@@ -190,7 +190,7 @@ def update_slack_bot_config(
 
     db_session.commit()
 
-    return slack_bot_config
+    return slack_channel_config
 
 
 def remove_slack_bot_config(
@@ -198,15 +198,15 @@ def remove_slack_bot_config(
     user: User | None,
     db_session: Session,
 ) -> None:
-    slack_bot_config = db_session.scalar(
-        select(SlackBotConfig).where(SlackBotConfig.id == slack_bot_config_id)
+    slack_channel_config = db_session.scalar(
+        select(SlackChannelConfig).where(SlackChannelConfig.id == slack_bot_config_id)
     )
-    if slack_bot_config is None:
+    if slack_channel_config is None:
         raise ValueError(
             f"Unable to find slack bot config with ID {slack_bot_config_id}"
         )
 
-    existing_persona_id = slack_bot_config.persona_id
+    existing_persona_id = slack_channel_config.persona_id
     if existing_persona_id:
         existing_persona = db_session.scalar(
             select(Persona).where(Persona.id == existing_persona_id)
@@ -223,24 +223,24 @@ def remove_slack_bot_config(
                 persona_id=existing_persona_id, user=user, db_session=db_session
             )
 
-    db_session.delete(slack_bot_config)
+    db_session.delete(slack_channel_config)
     db_session.commit()
 
 
 def fetch_slack_bot_configs(
     db_session: Session, slack_bot_app_id: int | None = None
-) -> Sequence[SlackBotConfig]:
+) -> Sequence[SlackChannelConfig]:
     if not slack_bot_app_id:
-        return db_session.scalars(select(SlackBotConfig)).all()
+        return db_session.scalars(select(SlackChannelConfig)).all()
 
     return db_session.scalars(
-        select(SlackBotConfig).where(SlackBotConfig.app_id == slack_bot_app_id)
+        select(SlackChannelConfig).where(SlackChannelConfig.app_id == slack_bot_app_id)
     ).all()
 
 
 def fetch_slack_bot_config(
     db_session: Session, slack_bot_config_id: int
-) -> SlackBotConfig | None:
+) -> SlackChannelConfig | None:
     return db_session.scalar(
-        select(SlackBotConfig).where(SlackBotConfig.id == slack_bot_config_id)
+        select(SlackChannelConfig).where(SlackChannelConfig.id == slack_bot_config_id)
     )

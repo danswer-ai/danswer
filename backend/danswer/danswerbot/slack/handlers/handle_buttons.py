@@ -117,7 +117,7 @@ def handle_generate_answer_button(
     )
 
     with get_session_with_tenant(client.tenant_id) as db_session:
-        slack_bot_config = get_slack_bot_config_for_app_and_channel(
+        slack_channel_config = get_slack_bot_config_for_app_and_channel(
             db_session=db_session,
             app_id=client.app_id,
             channel_name=channel_name,
@@ -135,7 +135,7 @@ def handle_generate_answer_button(
                 is_bot_msg=False,
                 is_bot_dm=False,
             ),
-            slack_bot_config=slack_bot_config,
+            slack_channel_config=slack_channel_config,
             receiver_ids=None,
             client=client.web_client,
             tenant_id=client.tenant_id,
@@ -258,13 +258,13 @@ def handle_followup_button(
         channel_name, is_dm = get_channel_name_from_id(
             client=client.web_client, channel_id=channel_id
         )
-        slack_bot_config = get_slack_bot_config_for_app_and_channel(
+        slack_channel_config = get_slack_bot_config_for_app_and_channel(
             db_session=db_session,
             app_id=client.app_id,
             channel_name=channel_name,
         )
-        if slack_bot_config:
-            tag_names = slack_bot_config.channel_config.get("follow_up_tags")
+        if slack_channel_config:
+            tag_names = slack_channel_config.channel_config.get("follow_up_tags")
             remaining = None
             if tag_names:
                 tag_ids, remaining = fetch_user_ids_from_emails(

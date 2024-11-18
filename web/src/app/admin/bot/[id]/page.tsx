@@ -3,7 +3,7 @@ import { CPUIcon } from "@/components/icons/icons";
 import { SlackBotConfigCreationForm } from "../SlackBotConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { DocumentSet, SlackBotConfig } from "@/lib/types";
+import { DocumentSet, SlackChannelConfig } from "@/lib/types";
 import Text from "@/components/ui/text";
 import { BackButton } from "@/components/BackButton";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
@@ -45,7 +45,7 @@ async function EditSlackBotConfigPage(props: {
     );
   }
   const allSlackBotConfigs =
-    (await slackBotsResponse.json()) as SlackBotConfig[];
+    (await slackBotsResponse.json()) as SlackChannelConfig[];
   console.log("allSlackBotConfigs", allSlackBotConfigs);
   console.log("params.id", params.id);
   const slackBotConfig = allSlackBotConfigs.find(

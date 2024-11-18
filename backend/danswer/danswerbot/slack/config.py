@@ -2,8 +2,8 @@ import os
 
 from sqlalchemy.orm import Session
 
-from danswer.db.models import SlackBotConfig
-from danswer.db.slack_bot_config import fetch_slack_bot_configs
+from danswer.db.models import SlackChannelConfig
+from danswer.db.slack_channel_config import fetch_slack_bot_configs
 
 
 VALID_SLACK_FILTERS = [
@@ -17,7 +17,7 @@ def get_slack_bot_config_for_app_and_channel(
     db_session: Session,
     app_id: int,
     channel_name: str | None,
-) -> SlackBotConfig | None:
+) -> SlackChannelConfig | None:
     if not channel_name:
         return None
 
@@ -45,12 +45,12 @@ def validate_channel_names(
     cleaned_channel_names = [
         channel_name.lstrip("#").lower() for channel_name in channel_names
     ]
-    for slack_bot_config in slack_bot_configs:
-        if slack_bot_config.id == current_slack_bot_config_id:
+    for slack_channel_config in slack_bot_configs:
+        if slack_channel_config.id == current_slack_bot_config_id:
             continue
 
         for channel_name in cleaned_channel_names:
-            if channel_name in slack_bot_config.channel_config["channel_names"]:
+            if channel_name in slack_channel_config.channel_config["channel_names"]:
                 raise ValueError(
                     f"Channel name '{channel_name}' already exists in "
                     "another slack bot config"

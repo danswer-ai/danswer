@@ -135,7 +135,7 @@ Looking to contribute? Please check out the [Contribution Guide](CONTRIBUTING.md
 
 ## ✨Contributors
 
-<a href="https://github.com/aryn-ai/sycamore/graphs/contributors">
+<a href="https://github.com/danswer-ai/danswer/graphs/contributors">
   <img alt="contributors" src="https://contrib.rocks/image?repo=danswer-ai/danswer"/>
 </a>
 

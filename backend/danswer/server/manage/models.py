@@ -13,9 +13,9 @@ from danswer.configs.constants import AuthType
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
-from danswer.db.models import SlackApp as SlackAppModel
-from danswer.db.models import SlackBotConfig as SlackBotConfigModel
+from danswer.db.models import SlackBot as SlackAppModel
 from danswer.db.models import SlackBotResponseType
+from danswer.db.models import SlackChannelConfig as SlackBotConfigModel
 from danswer.db.models import User
 from danswer.search.models import SavedSearchSettings
 from danswer.server.features.persona.models import PersonaSnapshot
@@ -184,7 +184,7 @@ class SlackBotConfigCreationRequest(BaseModel):
         return self
 
 
-class SlackBotConfig(BaseModel):
+class SlackChannelConfig(BaseModel):
     app_id: int
     id: int
     persona: PersonaSnapshot | None
@@ -197,7 +197,7 @@ class SlackBotConfig(BaseModel):
     @classmethod
     def from_model(
         cls, slack_bot_config_model: SlackBotConfigModel
-    ) -> "SlackBotConfig":
+    ) -> "SlackChannelConfig":
         return cls(
             id=slack_bot_config_model.id,
             app_id=slack_bot_config_model.app_id,
@@ -219,24 +219,25 @@ class SlackBotConfig(BaseModel):
         )
 
 
-class SlackApp(BaseModel):
+class SlackBot(BaseModel):
     id: int
     name: str
-    description: str
     enabled: bool
+    configs_count: int
 
     bot_token: str
     app_token: str
 
     @classmethod
-    def from_model(cls, slack_app_model: SlackAppModel) -> "SlackApp":
+    def from_model(cls, slack_bot_model: SlackAppModel) -> "SlackBot":
         return cls(
-            id=slack_app_model.id,
-            name=slack_app_model.name,
-            description=slack_app_model.description,
-            enabled=slack_app_model.enabled,
-            bot_token=slack_app_model.bot_token,
-            app_token=slack_app_model.app_token,
+            id=slack_bot_model.id,
+            name=slack_bot_model.name,
+            description=slack_bot_model.description,
+            enabled=slack_bot_model.enabled,
+            bot_token=slack_bot_model.bot_token,
+            app_token=slack_bot_model.app_token,
+            configs_count=len(slack_bot_model.slack_bot_configs),
         )
 
 

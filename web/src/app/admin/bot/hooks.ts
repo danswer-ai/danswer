@@ -1,10 +1,10 @@
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { SlackApp, SlackBotConfig } from "@/lib/types";
+import { SlackBot, SlackChannelConfig } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 
 export const useSlackBotConfigs = () => {
   const url = "/api/manage/admin/slack-bot/config";
-  const swrResponse = useSWR<SlackBotConfig[]>(url, errorHandlingFetcher);
+  const swrResponse = useSWR<SlackChannelConfig[]>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,
@@ -14,7 +14,7 @@ export const useSlackBotConfigs = () => {
 
 export const useSlackApps = () => {
   const url = "/api/manage/admin/slack-bot/apps";
-  const swrResponse = useSWR<SlackApp[]>(url, errorHandlingFetcher);
+  const swrResponse = useSWR<SlackBot[]>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,
@@ -24,7 +24,7 @@ export const useSlackApps = () => {
 
 export const useSlackApp = (appId: number) => {
   const url = `/api/manage/admin/slack-bot/apps/${appId}`;
-  const swrResponse = useSWR<SlackApp>(url, errorHandlingFetcher);
+  const swrResponse = useSWR<SlackBot>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,
@@ -34,7 +34,7 @@ export const useSlackApp = (appId: number) => {
 
 export const useSlackBotConfigsByApp = (appId: number) => {
   const url = `/api/manage/admin/slack-bot/apps/${appId}/config`;
-  const swrResponse = useSWR<SlackBotConfig[]>(url, errorHandlingFetcher);
+  const swrResponse = useSWR<SlackChannelConfig[]>(url, errorHandlingFetcher);
 
   return {
     ...swrResponse,

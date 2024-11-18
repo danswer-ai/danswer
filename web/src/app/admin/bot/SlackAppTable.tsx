@@ -1,7 +1,7 @@
 "use client";
 
 import { PageSelector } from "@/components/PageSelector";
-import { SlackApp } from "@/lib/types";
+import { SlackBot } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FiCheck, FiEdit, FiXCircle } from "react-icons/fi";
@@ -42,7 +42,7 @@ function ClickableTableRow({
   );
 }
 
-export function SlackAppTable({ slackApps }: { slackApps: SlackApp[] }) {
+export function SlackAppTable({ slackApps }: { slackApps: SlackBot[] }) {
   const [page, setPage] = useState(1);
 
   // sort by id for consistent ordering
@@ -67,7 +67,7 @@ export function SlackAppTable({ slackApps }: { slackApps: SlackApp[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
+            <TableHead>Channel Count</TableHead>
             <TableHead>Enabled</TableHead>
           </TableRow>
         </TableHeader>
@@ -85,7 +85,7 @@ export function SlackAppTable({ slackApps }: { slackApps: SlackApp[] }) {
                     {slackApp.name}
                   </div>
                 </TableCell>
-                <TableCell>{slackApp.description}</TableCell>
+                <TableCell>{slackApp.configs_count}</TableCell>
                 <TableCell>
                   {slackApp.enabled ? (
                     <FiCheck className="text-emerald-600" size="18" />

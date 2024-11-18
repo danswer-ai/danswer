@@ -200,7 +200,7 @@ export interface ChannelConfig {
 
 export type SlackBotResponseType = "quotes" | "citations";
 
-export interface SlackBotConfig {
+export interface SlackChannelConfig {
   id: number;
   app_id: number;
   persona: Persona | null;
@@ -210,11 +210,11 @@ export interface SlackBotConfig {
   enable_auto_filters: boolean;
 }
 
-export interface SlackApp {
+export interface SlackBot {
   id: number;
   name: string;
-  description: string;
   enabled: boolean;
+  configs_count: number;
 
   // tokens
   bot_token: string;
