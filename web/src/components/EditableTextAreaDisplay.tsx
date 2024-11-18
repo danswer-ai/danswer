@@ -1,11 +1,11 @@
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { CheckmarkIcon, EditIcon, XIcon } from "@/components/icons/icons";
+import { CheckmarkIcon, XIcon } from "@/components/icons/icons";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-interface EditableStringFieldDisplayProps {
+interface EditableTextAreaDisplayProps {
   value: string;
   isEditable: boolean;
   onUpdate: (newValue: string) => Promise<void>;
@@ -13,17 +13,16 @@ interface EditableStringFieldDisplayProps {
   scale?: number;
 }
 
-export function EditableStringFieldDisplay({
+export function EditableTextAreaDisplay({
   value,
   isEditable,
   onUpdate,
   textClassName,
   scale = 1,
-}: EditableStringFieldDisplayProps) {
+}: EditableTextAreaDisplayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editableValue, setEditableValue] = useState(value);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
-  const { popup, setPopup } = usePopup();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,58 +74,40 @@ export function EditableStringFieldDisplay({
 
   return (
     <div ref={containerRef} className={"flex items-center"}>
-      {popup}
-
-      <Input
-        ref={inputRef as React.RefObject<HTMLInputElement>}
-        type="text"
+      <Textarea
+        ref={inputRef as React.RefObject<HTMLTextAreaElement>}
         value={editableValue}
-        onChange={handleValueChange}
+        onChange={(e) => setEditableValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        className={cn(textClassName, isEditing ? "block" : "hidden")}
+        className={cn(
+          textClassName,
+          "bg-white",
+          isEditable && !isEditing && "cursor-pointer"
+        )}
         style={{ fontSize: `${scale}rem` }}
+        readOnly={!isEditing}
+        onClick={() => isEditable && !isEditing && setIsEditing(true)}
       />
-      {!isEditing && (
-        <span
-          onClick={() => isEditable && setIsEditing(true)}
-          className={cn(textClassName, "cursor-pointer")}
-          style={{ fontSize: `${scale}rem` }}
-        >
-          {value}
-        </span>
-      )}
       {isEditing && isEditable ? (
-        <>
-          <div className={cn("flex", "flex-row")}>
-            <Button
-              onClick={handleUpdate}
-              variant="ghost"
-              size="sm"
-              className="p-0 hover:bg-transparent ml-2"
-            >
-              <CheckmarkIcon className={`text-600`} size={12 * scale} />
-            </Button>
-            <Button
-              onClick={resetEditing}
-              variant="ghost"
-              size="sm"
-              className="p-0 hover:bg-transparent ml-2"
-            >
-              <XIcon className={`text-600`} size={12 * scale} />
-            </Button>
-          </div>
-        </>
-      ) : (
-        <h1
-          onClick={() => isEditable && setIsEditing(true)}
-          className={`group flex ${isEditable ? "cursor-pointer" : ""} ${""}`}
-          style={{ fontSize: `${scale}rem` }}
-        >
-          {isEditable && (
-            <EditIcon className={`visible ml-2`} size={8 * scale} />
-          )}
-        </h1>
-      )}
+        <div className={cn("flex", "flex-col gap-1")}>
+          <Button
+            onClick={handleUpdate}
+            variant="ghost"
+            size="sm"
+            className="p-0 hover:bg-transparent ml-2"
+          >
+            <CheckmarkIcon className={`text-600`} size={12 * scale} />
+          </Button>
+          <Button
+            onClick={resetEditing}
+            variant="ghost"
+            size="sm"
+            className="p-0 hover:bg-transparent ml-2"
+          >
+            <XIcon className={`text-600`} size={12 * scale} />
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

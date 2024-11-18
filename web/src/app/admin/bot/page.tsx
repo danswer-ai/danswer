@@ -1,12 +1,13 @@
 "use client";
 
 import { ErrorCallout } from "@/components/ErrorCallout";
+import { FiPlusSquare } from "react-icons/fi";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { FiSlack } from "react-icons/fi";
+import { SourceIcon } from "@/components/SourceIcon";
 import { SlackAppTable } from "./SlackAppTable";
 import { useSlackApps } from "./hooks";
 
@@ -71,10 +72,26 @@ const Main = () => {
         found in the Danswer documentation to get started!
       </p>
 
-      <Link className="flex mb-3" href="/admin/bot/app/new">
-        <Button variant="default" size="sm" className="my-auto">
-          Add Slack App
-        </Button>
+      <Link
+        className="
+            flex
+            py-2
+            px-4
+            mt-2
+            border
+            border-border
+            h-fit
+            cursor-pointer
+            hover:bg-hover
+            text-sm
+            w-40
+          "
+        href="/admin/bot/app/new"
+      >
+        <div className="mx-auto flex">
+          <FiPlusSquare className="my-auto mr-2" />
+          New Slack App
+        </div>
       </Link>
 
       <SlackAppTable slackApps={slackApps} />
@@ -85,7 +102,10 @@ const Main = () => {
 const Page = () => {
   return (
     <div className="container mx-auto">
-      <AdminPageTitle icon={<FiSlack size={32} />} title="Slack Apps" />
+      <AdminPageTitle
+        icon={<SourceIcon iconSize={36} sourceType={"slack"} />}
+        title="Slack Apps"
+      />
       <InstantSSRAutoRefresh />
 
       <Main />

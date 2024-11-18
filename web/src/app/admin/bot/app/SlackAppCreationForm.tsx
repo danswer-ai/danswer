@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  BooleanFormField,
-  TextFormField,
-} from "@/components/admin/connectors/Field";
+import { TextFormField } from "@/components/admin/connectors/Field";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { SlackApp } from "@/lib/types";
+import { SlackBot } from "@/lib/types";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
@@ -13,18 +10,19 @@ import { createSlackApp, updateSlackApp } from "./new/lib";
 import { Button } from "@/components/ui/button";
 import { SourceIcon } from "@/components/SourceIcon";
 import { EditableStringFieldDisplay } from "@/components/EditableStringFieldDisplay";
+import { EditableTextAreaDisplay } from "@/components/EditableTextAreaDisplay";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { updateSlackAppName } from "@/lib/updateSlackAppName";
+import { updateSlackAppField } from "@/lib/updateSlackAppField";
+import { Checkbox } from "@/app/admin/settings/SettingsForm";
 
-const SlackAppForm = ({
+const SlackTokensForm = ({
   isUpdate,
   initialValues,
   existingSlackAppId,
   refreshSlackApp,
   setPopup,
   router,
-  onValuesChange,
 }: {
   isUpdate: boolean;
   initialValues: any;
@@ -32,12 +30,10 @@ const SlackAppForm = ({
   refreshSlackApp?: () => void;
   setPopup: (popup: { message: string; type: "error" | "success" }) => void;
   router: any;
-  onValuesChange?: (values: any) => void;
 }) => (
   <Formik
     initialValues={initialValues}
     validationSchema={Yup.object().shape({
-      enabled: Yup.boolean().required(),
       bot_token: Yup.string().required(),
       app_token: Yup.string().required(),
     })}
@@ -89,77 +85,59 @@ const SlackAppForm = ({
           label="Slack App Token"
           type="password"
         />
-        <div className="flex items-center w-full">
-          <BooleanFormField
-            name="enabled"
-            label="Enabled"
-            subtext="While enabled, this Slack app will run in the background"
-          />
-          <div className="pl-4">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              variant="submit"
-              size="default"
-            >
-              {isUpdate ? "Update!" : "Create!"}
-            </Button>
-          </div>
+        <div className="flex justify-end w-full mt-4">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            variant="submit"
+            size="default"
+          >
+            {isUpdate ? "Update!" : "Create!"}
+          </Button>
         </div>
       </Form>
     )}
   </Formik>
 );
 
-export const SlackAppCreationForm = ({
+export const ExistingSlackAppForm = ({
   existingSlackApp,
   refreshSlackApp,
 }: {
-  existingSlackApp?: SlackApp;
+  existingSlackApp: SlackBot;
   refreshSlackApp?: () => void;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const isUpdate = existingSlackApp !== undefined;
-  const [formValues, setFormValues] = useState(
-    isUpdate
-      ? existingSlackApp
-      : {
-          name: "Default Slack App Name",
-          description: "This is a default Slack app description",
-          enabled: true,
-          bot_token: "",
-          app_token: "",
-        }
-  );
-
-  const handleUpdateName = async (newName: string) => {
-    if (isUpdate) {
-      try {
-        const response = await updateSlackAppName(existingSlackApp, newName);
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-        setPopup({
-          message: "Connector name updated successfully",
-          type: "success",
-        });
-      } catch (error) {
-        setPopup({
-          message: `Failed to update connector name`,
-          type: "error",
-        });
-      }
-    }
-    setFormValues((prev) => ({ ...prev, name: newName }));
-  };
-
-  const handleUpdateDescription = async (newDescription: string) => {
-    setFormValues((prev) => ({ ...prev, description: newDescription }));
-  };
-
+  const [formValues, setFormValues] = useState(existingSlackApp);
   const { popup, setPopup } = usePopup();
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleUpdateField = async (
+    field: keyof SlackBot,
+    value: string | boolean
+  ) => {
+    try {
+      const response = await updateSlackAppField(
+        existingSlackApp,
+        field,
+        value
+      );
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      setPopup({
+        message: `Connector ${field} updated successfully`,
+        type: "success",
+      });
+    } catch (error) {
+      setPopup({
+        message: `Failed to update connector ${field}`,
+        type: "error",
+      });
+    }
+    setFormValues((prev) => ({ ...prev, [field]: value }));
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -189,7 +167,7 @@ export const SlackAppCreationForm = ({
           <EditableStringFieldDisplay
             value={formValues.name}
             isEditable={true}
-            onUpdate={handleUpdateName}
+            onUpdate={(value) => handleUpdateField("name", value)}
             scale={2.5}
           />
         </div>
@@ -200,22 +178,22 @@ export const SlackAppCreationForm = ({
               className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2"
               onClick={() => setIsExpanded(!isExpanded)}
             >
-              {isExpanded || !isUpdate ? (
+              {isExpanded ? (
                 <ChevronDown size={20} />
               ) : (
                 <ChevronRight size={20} />
               )}
-              <span>Configuration</span>
+              <span>Tokens</span>
             </div>
           </div>
 
-          {(isExpanded || !isUpdate) && (
-            <div className="absolute mt-12 right-0 z-10 bg-white border rounded-lg border-gray-200 shadow-lg w-full md:w-3/4 lg:w-1/2">
+          {isExpanded && (
+            <div className="bg-white border rounded-lg border-gray-200 shadow-lg absolute mt-12 right-0 z-10 w-full md:w-3/4 lg:w-1/2">
               <div className="p-4">
-                <SlackAppForm
-                  isUpdate={isUpdate}
+                <SlackTokensForm
+                  isUpdate={true}
                   initialValues={formValues}
-                  existingSlackAppId={existingSlackApp?.id}
+                  existingSlackAppId={existingSlackApp.id}
                   refreshSlackApp={refreshSlackApp}
                   setPopup={setPopup}
                   router={router}
@@ -225,18 +203,53 @@ export const SlackAppCreationForm = ({
           )}
         </div>
       </div>
-
-      <div className="flex">
-        <div className="flex-1 max-w-[50%]">
-          <div className="text-sm mt-1">Description:</div>
-          <EditableStringFieldDisplay
-            value={formValues.description}
-            isEditable={true}
-            textClassName="text-sm mt-1"
-            onUpdate={handleUpdateDescription}
-            useTextArea={true}
+      <div className="mt-4">
+        <div className="inline-block border rounded-lg border-gray-200 px-2 py-2">
+          <Checkbox
+            label="Enabled"
+            checked={formValues.enabled}
+            onChange={(e) => handleUpdateField("enabled", e.target.checked)}
           />
         </div>
+      </div>
+    </div>
+  );
+};
+
+export const NewSlackAppForm = ({}: {}) => {
+  const [formValues] = useState({
+    name: "Default Slack App Name",
+    description: "This is a default Slack app description",
+    enabled: true,
+    bot_token: "",
+    app_token: "",
+  });
+  const { popup, setPopup } = usePopup();
+  const router = useRouter();
+
+  return (
+    <div>
+      {popup}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="my-auto">
+            <SourceIcon iconSize={36} sourceType={"slack"} />
+          </div>
+          <EditableStringFieldDisplay
+            value={formValues.name}
+            isEditable={true}
+            onUpdate={async () => {}}
+            scale={2.5}
+          />
+        </div>
+      </div>
+      <div className="p-4">
+        <SlackTokensForm
+          isUpdate={false}
+          initialValues={formValues}
+          setPopup={setPopup}
+          router={router}
+        />
       </div>
     </div>
   );

@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SlackBotConfigsTable } from "../../SlackBotConfigsTable";
 import { useSlackApp, useSlackBotConfigsByApp } from "../../hooks";
-import { SlackAppCreationForm } from "../SlackAppCreationForm";
+import { ExistingSlackAppForm } from "../SlackAppCreationForm";
+import { FiPlusSquare } from "react-icons/fi";
+import { Separator } from "@/components/ui/separator";
 
 function SlackAppEditPage({ params }: { params: Promise<{ id: string }> }) {
   // Unwrap the params promise
@@ -67,24 +69,41 @@ function SlackAppEditPage({ params }: { params: Promise<{ id: string }> }) {
 
       <BackButton routerOverride="/admin/bot" />
 
-      <SlackAppCreationForm
+      <ExistingSlackAppForm
         existingSlackApp={slackApp}
         refreshSlackApp={refreshSlackApp}
       />
+      <Separator />
 
       <div className="my-8" />
 
-      <div className="flex justify-between items-center mb-4">
+      {/* <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold tracking-tight">
           Slack Bot Configurations
         </h2>
+      </div> */}
 
-        <Link href={`/admin/bot/new?app_id=${unwrappedParams.id}`}>
-          <Button variant="success-reverse" size="sm">
-            New Slack Bot Configuration
-          </Button>
-        </Link>
-      </div>
+      <Link
+        className="
+          flex
+          py-2
+          px-4
+          mt-2
+          border
+          border-border
+          h-fit
+          cursor-pointer
+          hover:bg-hover
+          text-sm
+          w-80
+        "
+        href={`/admin/bot/new?app_id=${unwrappedParams.id}`}
+      >
+        <div className="mx-auto flex">
+          <FiPlusSquare className="my-auto mr-2" />
+          New Slack Bot Configuration
+        </div>
+      </Link>
 
       <div className="mt-8">
         <SlackBotConfigsTable
