@@ -203,14 +203,15 @@ def _convert_delta_to_message_chunk(
 def _prompt_to_dict(
     prompt: LanguageModelInput,
 ) -> Sequence[str | list[str] | dict[str, Any] | tuple[str, str]]:
+    # NOTE: this must go first, since it is also a Sequence
+    if isinstance(prompt, str):
+        return [_convert_message_to_dict(HumanMessage(content=prompt))]
+
     if isinstance(prompt, (list, Sequence)):
         return [
             _convert_message_to_dict(msg) if isinstance(msg, BaseMessage) else msg
             for msg in prompt
         ]
-
-    if isinstance(prompt, str):
-        return [_convert_message_to_dict(HumanMessage(content=prompt))]
 
     if isinstance(prompt, PromptValue):
         return [_convert_message_to_dict(message) for message in prompt.to_messages()]
