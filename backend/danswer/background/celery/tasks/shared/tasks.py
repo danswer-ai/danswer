@@ -177,7 +177,17 @@ def document_by_cc_pair_cleanup_task(
                 f"Max celery task retries reached. Marking doc as dirty for reconciliation: "
                 f"tenant={tenant_id} doc={document_id}"
             )
-            with get_session_with_tenant(tenant_id):
+            with get_session_with_tenant(tenant_id) as db_session:
+                # delete the cc pair relationship now and let reconciliation clean it up
+                # in vespa
+                delete_document_by_connector_credential_pair__no_commit(
+                    db_session=db_session,
+                    document_id=document_id,
+                    connector_credential_pair_identifier=ConnectorCredentialPairIdentifier(
+                        connector_id=connector_id,
+                        credential_id=credential_id,
+                    ),
+                )
                 mark_document_as_modified(document_id, db_session)
         return False
 
