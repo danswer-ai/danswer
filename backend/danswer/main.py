@@ -64,6 +64,9 @@ from danswer.server.features.prompt.api import basic_router as prompt_router
 from danswer.server.features.tool.api import admin_router as admin_tool_router
 from danswer.server.features.tool.api import router as tool_router
 from danswer.server.gpts.api import router as gpts_router
+from danswer.server.long_term_logs.long_term_logs_api import (
+    router as long_term_logs_router,
+)
 from danswer.server.manage.administrative import router as admin_router
 from danswer.server.manage.embedding.api import admin_router as embedding_admin_router
 from danswer.server.manage.embedding.api import basic_router as embedding_router
@@ -276,6 +279,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(
         application, get_full_openai_assistants_api_router()
     )
+    include_router_with_global_prefix_prepended(application, long_term_logs_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
