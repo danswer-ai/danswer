@@ -1,7 +1,7 @@
 """add persona categories
 
 Revision ID: 47e5bef3a1d7
-Revises: 9cf5c00f72fe
+Revises: dfbe9e93d3c7
 Create Date: 2024-11-05 18:55:02.221064
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "47e5bef3a1d7"
-down_revision = "9cf5c00f72fe"
+down_revision = "dfbe9e93d3c7"
 branch_labels = None
 depends_on = None
 
