@@ -317,6 +317,7 @@ def stream_chat_message_objects(
         retrieval_options = new_msg_req.retrieval_options
         alternate_assistant_id = new_msg_req.alternate_assistant_id
 
+        # permanent "log" store, used primarily for debugging
         long_term_logger = LongTermLogger(
             metadata={"user_id": str(user_id), "chat_session_id": str(chat_session_id)}
         )

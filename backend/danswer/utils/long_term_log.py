@@ -20,36 +20,57 @@ class LongTermLogger:
     def __init__(
         self,
         metadata: dict[str, str] | None = None,
-        log_file_path: str = "/tmp/log_term_log",
+        log_file_path: str = "/tmp/long_term_log",
+        max_files_per_category: int = 1000,
     ):
         self.metadata = metadata
         self.log_file_path = Path(log_file_path)
+        self.max_files_per_category = max_files_per_category
         try:
             # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
         except Exception as e:
             logger.error(f"Error creating directory for long-term logs: {e}")
 
+    def _cleanup_old_files(self, category_path: Path) -> None:
+        try:
+            files = sorted(
+                category_path.glob("*.json"),
+                key=lambda x: x.stat().st_mtime,  # Sort by modification time
+                reverse=True,
+            )
+            # Delete oldest files that exceed the limit
+            for file in files[self.max_files_per_category :]:
+                try:
+                    file.unlink()
+                except Exception as e:
+                    logger.error(f"Error deleting old log file {file}: {e}")
+        except Exception as e:
+            logger.error(f"Error during log rotation cleanup: {e}")
+
     def _record(self, message: Any, category: str) -> None:
         category_path = self.log_file_path / category
         try:
             # Create directory if it doesn't exist
             os.makedirs(category_path, exist_ok=True)
+
+            # Perform cleanup before writing new file
+            self._cleanup_old_files(category_path)
+
+            final_record = {
+                "metadata": self.metadata,
+                "record": message,
+            }
+
+            file_path = (
+                category_path
+                / f"{datetime.now().strftime(_LOG_FILE_NAME_TIMESTAMP_FORMAT)}.json"
+            )
+            with open(file_path, "w+") as f:
+                # default allows us to "ignore" unserializable objects
+                json.dump(final_record, f, default=lambda x: str(x))
         except Exception as e:
-            logger.error(f"Error creating category directory for long-term logs: {e}")
-            return
-
-        final_record = {
-            "metadata": self.metadata,
-            "record": message,
-        }
-
-        file_path = (
-            category_path
-            / f"{datetime.now().strftime(_LOG_FILE_NAME_TIMESTAMP_FORMAT)}.json"
-        )
-        with open(file_path, "w+") as f:
-            json.dump(final_record, f)
+            logger.error(f"Error recording log: {e}")
 
     def record(self, message: JSON_ro, category: str = "default") -> None:
         try:

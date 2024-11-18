@@ -4,12 +4,12 @@ import tempfile
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 
 from danswer.auth.users import current_admin_user
 from danswer.db.models import User
@@ -24,12 +24,12 @@ def get_long_term_logs(
     start_time: datetime | None = None,
     end_time: datetime | None = None,
     _: User | None = Depends(current_admin_user),
-) -> list[dict[str, Any]]:
+) -> list[dict | list | str]:
     """Fetch logs for a specific category within an optional time range.
     Only accessible by admin users."""
     try:
         logger = LongTermLogger()
-        return logger.fetch_category(
+        return logger.fetch_category(  # type: ignore
             category=category,
             start_time=start_time,
             end_time=end_time,
@@ -77,7 +77,9 @@ def download_long_term_logs_zip(
             path=zip_path,
             filename=f"{category}-logs.zip",
             media_type="application/zip",
-            background=lambda: shutil.rmtree(temp_dir, ignore_errors=True),
+            background=BackgroundTask(
+                lambda: shutil.rmtree(temp_dir, ignore_errors=True)
+            ),
         )
 
     except Exception as e:

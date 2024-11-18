@@ -2,6 +2,7 @@ import json
 import os
 import traceback
 from collections.abc import Iterator
+from collections.abc import Sequence
 from typing import Any
 from typing import cast
 
@@ -22,6 +23,7 @@ from langchain_core.messages import SystemMessage
 from langchain_core.messages import SystemMessageChunk
 from langchain_core.messages.tool import ToolCallChunk
 from langchain_core.messages.tool import ToolMessage
+from langchain_core.prompt_values import PromptValue
 
 from danswer.configs.app_configs import LOG_DANSWER_MODEL_INTERACTIONS
 from danswer.configs.model_configs import DISABLE_LITELLM_STREAMING
@@ -42,7 +44,7 @@ logger = setup_logger()
 litellm.drop_params = True
 litellm.telemetry = False
 
-_LONG_TERM_LOG_CATEGORY = "llm_prompt"
+_LLM_PROMPT_LONG_TERM_LOG_CATEGORY = "llm_prompt"
 
 
 def _base_msg_to_role(msg: BaseMessage) -> str:
@@ -198,6 +200,22 @@ def _convert_delta_to_message_chunk(
     raise ValueError(f"Unknown role: {role}")
 
 
+def _prompt_to_dict(
+    prompt: LanguageModelInput,
+) -> Sequence[str | list[str] | dict[str, Any] | tuple[str, str]]:
+    if isinstance(prompt, (list, Sequence)):
+        return [
+            _convert_message_to_dict(msg) if isinstance(msg, BaseMessage) else msg
+            for msg in prompt
+        ]
+
+    if isinstance(prompt, str):
+        return [_convert_message_to_dict(HumanMessage(content=prompt))]
+
+    if isinstance(prompt, PromptValue):
+        return [_convert_message_to_dict(message) for message in prompt.to_messages()]
+
+
 class DefaultMultiLLM(LLM):
     """Uses Litellm library to allow easy configuration to use a multitude of LLMs
     See https://python.langchain.com/docs/integrations/chat/litellm"""
@@ -260,7 +278,7 @@ class DefaultMultiLLM(LLM):
     def log_model_configs(self) -> None:
         logger.debug(f"Config: {self.config}")
 
-    def _api_keyless_config_dump(self) -> dict:
+    def _safe_model_config(self) -> dict:
         dump = self.config.model_dump()
         dump["api_key"] = mask_string(dump.get("api_key", ""))
         return dump
@@ -268,38 +286,42 @@ class DefaultMultiLLM(LLM):
     def _record_call(self, prompt: LanguageModelInput) -> None:
         if self._long_term_logger:
             self._long_term_logger.record(
-                {"prompt": prompt, "model": self._api_keyless_config_dump()},
-                category=_LONG_TERM_LOG_CATEGORY,
+                {"prompt": _prompt_to_dict(prompt), "model": self._safe_model_config()},
+                category=_LLM_PROMPT_LONG_TERM_LOG_CATEGORY,
             )
 
-    def _record_result(self, model_output: BaseMessage) -> None:
+    def _record_result(
+        self, prompt: LanguageModelInput, model_output: BaseMessage
+    ) -> None:
         if self._long_term_logger:
             self._long_term_logger.record(
                 {
+                    "prompt": _prompt_to_dict(prompt),
                     "content": model_output.content,
                     "tool_calls": (
                         model_output.tool_calls
                         if hasattr(model_output, "tool_calls")
                         else []
                     ),
-                    "model": self._api_keyless_config_dump(),
+                    "model": self._safe_model_config(),
                 },
-                category=_LONG_TERM_LOG_CATEGORY,
+                category=_LLM_PROMPT_LONG_TERM_LOG_CATEGORY,
             )
 
-    def _record_error(self, error: Exception) -> None:
+    def _record_error(self, prompt: LanguageModelInput, error: Exception) -> None:
         if self._long_term_logger:
             self._long_term_logger.record(
                 {
+                    "prompt": _prompt_to_dict(prompt),
                     "error": str(error),
                     "traceback": "".join(
                         traceback.format_exception(
                             type(error), error, error.__traceback__
                         )
                     ),
-                    "model": self._api_keyless_config_dump(),
+                    "model": self._safe_model_config(),
                 },
-                category=_LONG_TERM_LOG_CATEGORY,
+                category=_LLM_PROMPT_LONG_TERM_LOG_CATEGORY,
             )
 
     # def _calculate_max_output_tokens(self, prompt: LanguageModelInput) -> int:
@@ -334,16 +356,10 @@ class DefaultMultiLLM(LLM):
         stream: bool,
         structured_response_format: dict | None = None,
     ) -> litellm.ModelResponse | litellm.CustomStreamWrapper:
-        if isinstance(prompt, list):
-            prompt = [
-                _convert_message_to_dict(msg) if isinstance(msg, BaseMessage) else msg
-                for msg in prompt
-            ]
-
-        elif isinstance(prompt, str):
-            prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
-
-        self._record_call(prompt)
+        # litellm doesn't accept LangChain BaseMessage objects, so we need to convert them
+        # to a dict representation
+        processed_prompt = _prompt_to_dict(prompt)
+        self._record_call(processed_prompt)
 
         try:
             return litellm.completion(
@@ -356,7 +372,7 @@ class DefaultMultiLLM(LLM):
                 api_version=self._api_version or None,
                 custom_llm_provider=self._custom_llm_provider or None,
                 # actual input
-                messages=prompt,
+                messages=processed_prompt,
                 tools=tools,
                 tool_choice=tool_choice if tools else None,
                 # streaming choice
@@ -376,7 +392,7 @@ class DefaultMultiLLM(LLM):
                 **self._model_kwargs,
             )
         except Exception as e:
-            self._record_call(prompt)
+            self._record_error(processed_prompt, e)
             # for break pointing
             raise e
 
@@ -410,7 +426,10 @@ class DefaultMultiLLM(LLM):
         )
         choice = response.choices[0]
         if hasattr(choice, "message"):
-            return _convert_litellm_message_to_langchain_message(choice.message)
+            output = _convert_litellm_message_to_langchain_message(choice.message)
+            if output:
+                self._record_result(prompt, output)
+            return output
         else:
             raise ValueError("Unexpected response choice type")
 
@@ -460,7 +479,7 @@ class DefaultMultiLLM(LLM):
             )
 
         if output:
-            self._record_result(output)
+            self._record_result(prompt, output)
 
         if LOG_DANSWER_MODEL_INTERACTIONS and output:
             content = output.content or ""
