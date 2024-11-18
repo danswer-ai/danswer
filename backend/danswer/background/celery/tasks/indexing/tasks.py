@@ -368,7 +368,7 @@ def try_creating_indexing_task(
         payload.celery_task_id = result.id
         redis_connector_index.set_fence(payload)
     except Exception:
-        redis_connector_index.set_fence(payload)
+        redis_connector_index.set_fence(None)
         task_logger.exception(
             f"Unexpected exception: "
             f"tenant={tenant_id} "
