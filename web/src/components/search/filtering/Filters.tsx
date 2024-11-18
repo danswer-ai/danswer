@@ -475,7 +475,7 @@ export function HorizontalSourceSelector({
           icon={<FiBook size={16} />}
           defaultDisplay="Sets"
           resetValues={resetDocuments}
-          width="w-fit max-w-24 text-llipsis truncate"
+          width="w-fit max-w-24 text-ellipsis truncate"
           dropdownColor="bg-background-search-filter-dropdown"
           dropdownWidth="max-w-36 w-fit"
           optionClassName="truncate w-full break-all"
