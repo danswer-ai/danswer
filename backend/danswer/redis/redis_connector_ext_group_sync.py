@@ -2,6 +2,7 @@ from typing import cast
 
 import redis
 from celery import Celery
+from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
 
@@ -103,7 +104,7 @@ class RedisConnectorExternalGroupSync:
         self,
         celery_app: Celery,
         db_session: Session,
-        lock: redis.lock.Lock | None,
+        lock: RedisLock | None,
     ) -> int | None:
         pass
 
