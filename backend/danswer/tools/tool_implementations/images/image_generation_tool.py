@@ -348,14 +348,3 @@ class ImageGenerationTool(Tool):
         )
 
         return prompt_builder
-
-    # # This is the prompt builder that is used when the tool call AND LLM response has been updated
-    # # and we need to build the next prompt (for LLM calling tools)
-    # def build_prompt_after_tool_call(
-    #     self,
-    #     prompt_builder: AnswerPromptBuilder,
-    #     tool_call_summary: ToolCallSummary,
-    #     tool_responses: list[ToolResponse],
-    #     using_tool_calling_llm: bool,
-    # ) -> AnswerPromptBuilder:
-    #     return prompt_builder
