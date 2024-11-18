@@ -33,6 +33,7 @@ interface HistorySidebarProps {
   showDeleteModal?: (chatSession: ChatSession) => void;
   stopGenerating?: () => void;
   explicitlyUntoggle: () => void;
+  backgroundToggled?: boolean;
 }
 
 export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
@@ -51,6 +52,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
       stopGenerating = () => null,
       showShareModal,
       showDeleteModal,
+      backgroundToggled,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -103,13 +105,13 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
         >
           <LogoType
             showArrow={true}
-            toggled={toggled}
+            toggled={backgroundToggled}
             page={page}
             toggleSidebar={toggleSidebar}
             explicitlyUntoggle={explicitlyUntoggle}
           />
           {page == "chat" && (
-            <div className="mx-3 mt-4 gap-y-1 flex-col flex gap-x-1.5 items-center items-center">
+            <div className="mx-3 mt-4 gap-y-1 flex-col text-text-history-button flex gap-x-1.5 items-center items-center">
               <Link
                 className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
                 href={
@@ -128,7 +130,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                   }
                 }}
               >
-                <FiEdit className="flex-none " />
+                <FiEdit className="flex-none text-text-history-button" />
                 <p className="my-auto flex items-center text-sm">New Chat</p>
               </Link>
               <button
@@ -146,33 +148,33 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                       });
                     })
                 }
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border-border border rounded items-center  hover:bg-background-history-button-hover cursor-pointer transition-all duration-150 flex gap-x-2"
               >
-                <FiFolderPlus className="my-auto" />
+                <FiFolderPlus className="my-auto text-text-history-button" />
                 <p className="my-auto flex items-center text-sm">New Folder</p>
               </button>
 
               <Link
                 href="/assistants/mine"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-history-button-hover cursor-pointer transition-all duration-150 flex gap-x-2"
               >
-                <AssistantsIconSkeleton className="h-4 w-4 my-auto" />
+                <AssistantsIconSkeleton className="h-4 w-4 my-auto text-text-history-button" />
                 <p className="my-auto flex items-center text-sm">
                   Manage Assistants
                 </p>
               </Link>
               <Link
                 href="/prompts"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-history-button-hover cursor-pointer transition-all duration-150 flex gap-x-2"
               >
-                <ClosedBookIcon className="h-4 w-4 my-auto" />
-                <p className="my-auto flex items-center text-sm">
+                <ClosedBookIcon className="h-4 w-4 my-auto text-text-history-button" />
+                <p className="my-auto flex items-center text-sm ">
                   Manage Prompts
                 </p>
               </Link>
             </div>
           )}
-          <div className="border-b border-border pb-4 mx-3" />
+          <div className="border-b border-divider-history-bar pb-4 mx-3" />
           <PagesTab
             newFolderId={newFolderId}
             showDeleteModal={showDeleteModal}
