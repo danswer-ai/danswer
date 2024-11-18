@@ -112,6 +112,7 @@ from danswer.tools.tool_implementations.search.search_tool import (
 )
 from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.utils.logger import setup_logger
+from danswer.utils.long_term_log import LongTermLogger
 from danswer.utils.timing import log_generator_function_time
 
 logger = setup_logger()
@@ -316,6 +317,11 @@ def stream_chat_message_objects(
         retrieval_options = new_msg_req.retrieval_options
         alternate_assistant_id = new_msg_req.alternate_assistant_id
 
+        # permanent "log" store, used primarily for debugging
+        long_term_logger = LongTermLogger(
+            metadata={"user_id": str(user_id), "chat_session_id": str(chat_session_id)}
+        )
+
         # use alternate persona if alternative assistant id is passed in
         if alternate_assistant_id is not None:
             persona = get_persona_by_id(
@@ -341,6 +347,7 @@ def stream_chat_message_objects(
                 persona=persona,
                 llm_override=new_msg_req.llm_override or chat_session.llm_override,
                 additional_headers=litellm_additional_headers,
+                long_term_logger=long_term_logger,
             )
         except GenAIDisabledException:
             raise RuntimeError("LLM is disabled. Can't use chat flow without LLM.")

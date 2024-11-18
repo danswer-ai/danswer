@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import redis
 from celery import Celery
+from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -105,7 +106,7 @@ class RedisConnectorPrune:
         documents_to_prune: set[str],
         celery_app: Celery,
         db_session: Session,
-        lock: redis.lock.Lock | None,
+        lock: RedisLock | None,
     ) -> int | None:
         last_lock_time = time.monotonic()
 

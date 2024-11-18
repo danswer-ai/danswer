@@ -429,11 +429,13 @@ export function HorizontalSourceSelector({
           isHorizontal
           value={timeRange}
           onValueChange={setTimeRange}
+          className="bg-background-search-filter"
         />
       </div>
 
       {existingSources.length > 0 && (
         <FilterDropdown
+          backgroundColor="bg-background-search-filter"
           options={listSourceMetadata()
             .filter((source) => existingSources.includes(source.internalName))
             .map((source) => ({
@@ -453,6 +455,7 @@ export function HorizontalSourceSelector({
           }
           icon={<FiMap size={16} />}
           defaultDisplay="Sources"
+          dropdownColor="bg-background-search-filter-dropdown"
           width="w-fit ellipsis truncate"
           resetValues={resetSources}
           dropdownWidth="w-40"
@@ -462,6 +465,7 @@ export function HorizontalSourceSelector({
 
       {availableDocumentSets.length > 0 && (
         <FilterDropdown
+          backgroundColor="bg-background-search-filter"
           options={availableDocumentSets.map((documentSet) => ({
             key: documentSet.name,
             display: <>{documentSet.name}</>,
@@ -471,7 +475,8 @@ export function HorizontalSourceSelector({
           icon={<FiBook size={16} />}
           defaultDisplay="Sets"
           resetValues={resetDocuments}
-          width="w-fit max-w-24 etext-llipsis truncate"
+          width="w-fit max-w-24 text-ellipsis truncate"
+          dropdownColor="bg-background-search-filter-dropdown"
           dropdownWidth="max-w-36 w-fit"
           optionClassName="truncate w-full break-all"
         />
@@ -479,6 +484,7 @@ export function HorizontalSourceSelector({
 
       {availableTags.length > 0 && (
         <FilterDropdown
+          backgroundColor="bg-background-search-filter"
           options={availableTags.map((tag) => ({
             key: `${tag.tag_key}=${tag.tag_value}`,
             display: (
@@ -504,6 +510,7 @@ export function HorizontalSourceSelector({
           icon={<FiTag size={16} />}
           defaultDisplay="Tags"
           resetValues={resetTags}
+          dropdownColor="bg-background-search-filter-dropdown"
           width="w-fit max-w-24 ellipsis truncate"
           dropdownWidth="max-w-80 w-fit"
           optionClassName="truncate w-full break-all ellipsis"

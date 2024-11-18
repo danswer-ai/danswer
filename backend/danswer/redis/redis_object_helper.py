@@ -1,9 +1,9 @@
 from abc import ABC
 from abc import abstractmethod
 
-import redis
 from celery import Celery
 from redis import Redis
+from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
 from danswer.redis.redis_pool import get_redis_client
@@ -85,7 +85,13 @@ class RedisObjectHelper(ABC):
         celery_app: Celery,
         db_session: Session,
         redis_client: Redis,
-        lock: redis.lock.Lock,
+        lock: RedisLock,
         tenant_id: str | None,
-    ) -> int | None:
-        pass
+    ) -> tuple[int, int] | None:
+        """First element should be the number of actual tasks generated, second should
+        be the number of docs that were candidates to be synced for the cc pair.
+
+        The need for this is when we are syncing stale docs referenced by multiple
+        connectors. In a single pass across multiple cc pairs, we only want a task
+        for be created for a particular document id the first time we see it.
+        The rest can be skipped."""

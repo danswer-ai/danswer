@@ -53,7 +53,7 @@ from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
 from danswer.db.enums import TaskStatus
 from danswer.db.pydantic_type import PydanticType
-from danswer.key_value_store.interface import JSON_ro
+from danswer.utils.special_types import JSON_ro
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
@@ -171,8 +171,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", back_populates="user"
     )
-    # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
-    has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
     cc_pairs: Mapped[list["ConnectorCredentialPair"]] = relationship(
         "ConnectorCredentialPair",
         back_populates="creator",
@@ -1376,6 +1374,9 @@ class Persona(Base):
     recency_bias: Mapped[RecencyBiasSetting] = mapped_column(
         Enum(RecencyBiasSetting, native_enum=False)
     )
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("persona_category.id"), nullable=True
+    )
     # Allows the Persona to specify a different LLM version than is controlled
     # globablly via env variables. For flexibility, validity is not currently enforced
     # NOTE: only is applied on the actual response generation - is not used for things like
@@ -1447,6 +1448,9 @@ class Persona(Base):
         secondary="persona__user_group",
         viewonly=True,
     )
+    category: Mapped["PersonaCategory"] = relationship(
+        "PersonaCategory", back_populates="personas"
+    )
 
     # Default personas loaded via yaml cannot have the same name
     __table_args__ = (
@@ -1456,6 +1460,17 @@ class Persona(Base):
             unique=True,
             postgresql_where=(builtin_persona == True),  # noqa: E712
         ),
+    )
+
+
+class PersonaCategory(Base):
+    __tablename__ = "persona_category"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    personas: Mapped[list["Persona"]] = relationship(
+        "Persona", back_populates="category"
     )
 
 

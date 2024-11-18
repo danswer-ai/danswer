@@ -6,6 +6,7 @@ from uuid import uuid4
 import redis
 from celery import Celery
 from pydantic import BaseModel
+from redis.lock import Lock as RedisLock
 
 from danswer.access.models import DocExternalAccess
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -127,7 +128,7 @@ class RedisConnectorPermissionSync:
     def generate_tasks(
         self,
         celery_app: Celery,
-        lock: redis.lock.Lock | None,
+        lock: RedisLock | None,
         new_permissions: list[DocExternalAccess],
         source_string: str,
     ) -> int | None:

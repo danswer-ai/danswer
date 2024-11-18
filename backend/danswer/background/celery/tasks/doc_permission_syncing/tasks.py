@@ -24,7 +24,7 @@ from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.users import batch_add_non_web_user_if_not_exists
+from danswer.db.users import batch_add_ext_perm_user_if_not_exists
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_doc_perm_sync import (
     RedisConnectorPermissionSyncData,
@@ -301,7 +301,7 @@ def update_external_document_permissions_task(
     try:
         with get_session_with_tenant(tenant_id) as db_session:
             # Then we build the update requests to update vespa
-            batch_add_non_web_user_if_not_exists(
+            batch_add_ext_perm_user_if_not_exists(
                 db_session=db_session,
                 emails=list(external_access.external_user_emails),
             )

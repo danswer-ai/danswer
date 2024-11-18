@@ -6,7 +6,7 @@ import redis
 from pydantic import BaseModel
 
 
-class RedisConnectorIndexingFenceData(BaseModel):
+class RedisConnectorIndexPayload(BaseModel):
     index_attempt_id: int | None
     started: datetime | None
     submitted: datetime
@@ -71,22 +71,20 @@ class RedisConnectorIndex:
         return False
 
     @property
-    def payload(self) -> RedisConnectorIndexingFenceData | None:
+    def payload(self) -> RedisConnectorIndexPayload | None:
         # read related data and evaluate/print task progress
         fence_bytes = cast(bytes, self.redis.get(self.fence_key))
         if fence_bytes is None:
             return None
 
         fence_str = fence_bytes.decode("utf-8")
-        payload = RedisConnectorIndexingFenceData.model_validate_json(
-            cast(str, fence_str)
-        )
+        payload = RedisConnectorIndexPayload.model_validate_json(cast(str, fence_str))
 
         return payload
 
     def set_fence(
         self,
-        payload: RedisConnectorIndexingFenceData | None,
+        payload: RedisConnectorIndexPayload | None,
     ) -> None:
         if not payload:
             self.redis.delete(self.fence_key)

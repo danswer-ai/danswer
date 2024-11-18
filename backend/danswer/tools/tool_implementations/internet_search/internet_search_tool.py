@@ -10,7 +10,6 @@ from danswer.chat.chat_utils import combine_message_chain
 from danswer.chat.models import LlmDoc
 from danswer.configs.constants import DocumentSource
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
-from danswer.key_value_store.interface import JSON_ro
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.models import PromptConfig
@@ -37,6 +36,7 @@ from danswer.tools.tool_implementations.search_like_tool_utils import (
     FINAL_CONTEXT_DOCUMENTS_ID,
 )
 from danswer.utils.logger import setup_logger
+from danswer.utils.special_types import JSON_ro
 
 logger = setup_logger()
 
