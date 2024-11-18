@@ -26,6 +26,7 @@ from danswer.db.models import DocumentSet
 from danswer.db.models import Persona
 from danswer.db.models import Persona__User
 from danswer.db.models import Persona__UserGroup
+from danswer.db.models import PersonaCategory
 from danswer.db.models import Prompt
 from danswer.db.models import StarterMessage
 from danswer.db.models import Tool
@@ -417,6 +418,7 @@ def upsert_persona(
     search_start_date: datetime | None = None,
     builtin_persona: bool = False,
     is_default_persona: bool = False,
+    category_id: int | None = None,
     chunks_above: int = CONTEXT_CHUNKS_ABOVE,
     chunks_below: int = CONTEXT_CHUNKS_BELOW,
 ) -> Persona:
@@ -487,7 +489,7 @@ def upsert_persona(
         persona.is_visible = is_visible
         persona.search_start_date = search_start_date
         persona.is_default_persona = is_default_persona
-
+        persona.category_id = category_id
         # Do not delete any associations manually added unless
         # a new updated list is provided
         if document_sets is not None:
@@ -528,6 +530,7 @@ def upsert_persona(
             is_visible=is_visible,
             search_start_date=search_start_date,
             is_default_persona=is_default_persona,
+            category_id=category_id,
         )
         db_session.add(persona)
 
@@ -743,4 +746,40 @@ def delete_persona_by_name(
     )
 
     db_session.execute(stmt)
+    db_session.commit()
+
+
+def get_assistant_categories(db_session: Session) -> list[PersonaCategory]:
+    return db_session.query(PersonaCategory).all()
+
+
+def create_assistant_category(
+    db_session: Session, name: str, description: str
+) -> PersonaCategory:
+    category = PersonaCategory(name=name, description=description)
+    db_session.add(category)
+    db_session.commit()
+    return category
+
+
+def update_persona_category(
+    category_id: int,
+    category_description: str,
+    category_name: str,
+    db_session: Session,
+) -> None:
+    persona_category = (
+        db_session.query(PersonaCategory)
+        .filter(PersonaCategory.id == category_id)
+        .one_or_none()
+    )
+    if persona_category is None:
+        raise ValueError(f"Persona category with ID {category_id} does not exist")
+    persona_category.description = category_description
+    persona_category.name = category_name
+    db_session.commit()
+
+
+def delete_persona_category(category_id: int, db_session: Session) -> None:
+    db_session.query(PersonaCategory).filter(PersonaCategory.id == category_id).delete()
     db_session.commit()

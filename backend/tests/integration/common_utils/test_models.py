@@ -38,6 +38,12 @@ class DATestUser(BaseModel):
     headers: dict
 
 
+class DATestPersonaCategory(BaseModel):
+    id: int | None = None
+    name: str
+    description: str | None
+
+
 class DATestCredential(BaseModel):
     id: int
     name: str
@@ -119,6 +125,7 @@ class DATestPersona(BaseModel):
     llm_model_version_override: str | None
     users: list[str]
     groups: list[int]
+    category_id: int | None = None
 
 
 #
