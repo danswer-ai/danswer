@@ -293,7 +293,6 @@ class DefaultMultiLLM(LLM):
         elif isinstance(prompt, str):
             prompt = [_convert_message_to_dict(HumanMessage(content=prompt))]
 
-        print("\n\n\n\n----\n\nprompt\n", prompt)
         try:
             return litellm.completion(
                 # model choice

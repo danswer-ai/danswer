@@ -42,6 +42,8 @@ export function SharedChatDisplay({
   persona: Persona;
 }) {
   const [isReady, setIsReady] = useState(false);
+  const { popup, setPopup } = usePopup();
+
   useEffect(() => {
     Prism.highlightAll();
     setIsReady(true);
@@ -58,7 +60,6 @@ export function SharedChatDisplay({
       </div>
     );
   }
-  const { popup, setPopup } = usePopup();
 
   const messages = buildLatestMessageChain(
     processRawChatHistory(chatSession.messages)

@@ -689,7 +689,7 @@ def stream_chat_message_objects(
         tools: list[Tool] = []
         for tool_list in tool_dict.values():
             tools.extend(tool_list)
-        tool_name_to_tool_id: dict[str, int] = {}
+        tool_name_to_tool_id = {}
         for tool_id, tool_list in tool_dict.items():
             for tool in tool_list:
                 tool_name_to_tool_id[tool.name] = tool_id

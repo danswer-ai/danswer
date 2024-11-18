@@ -287,14 +287,6 @@ class Answer:
                 tool_call_name = packet.tool_name
                 tool_call_made = True
 
-        print(
-            "check_for_tool_call",
-            check_for_tool_call,
-            "tool_call_made",
-            tool_call_made,
-            "previously_used_tool",
-            previously_used_tool is not None,
-        )
         if check_for_tool_call and not tool_call_made:
             for remaining_packet in buffered_packets:
                 yield remaining_packet
