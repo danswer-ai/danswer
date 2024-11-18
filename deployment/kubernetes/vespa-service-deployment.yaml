@@ -14,7 +14,7 @@ spec:
       protocol: TCP
       port: 8081
       targetPort: 8081
-  type: LoadBalancer
+  type: ClusterIP
 ---
 apiVersion: apps/v1
 kind: StatefulSet
