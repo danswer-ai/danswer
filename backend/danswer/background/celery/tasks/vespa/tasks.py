@@ -454,8 +454,7 @@ def monitor_connector_deletion_taskset(
 
                 # We don't want to waive off why we get into this state, but resetting
                 # our attempt and letting the deletion restart is a good way to recover
-                redis_connector.delete.taskset_clear()
-                redis_connector.delete.set_fence(None)
+                redis_connector.delete.reset()
                 raise RuntimeError(
                     "Connector deletion - documents still found after taskset completion"
                 )
@@ -521,8 +520,7 @@ def monitor_connector_deletion_taskset(
         f"docs_deleted={fence_data.num_tasks}"
     )
 
-    redis_connector.delete.taskset_clear()
-    redis_connector.delete.set_fence(None)
+    redis_connector.delete.reset()
 
 
 def monitor_ccpair_pruning_taskset(
