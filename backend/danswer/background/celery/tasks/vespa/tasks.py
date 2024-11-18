@@ -626,8 +626,8 @@ def monitor_ccpair_indexing_taskset(
     progress = redis_connector_index.get_progress()
     if progress is not None:
         task_logger.info(
-            f"Connector indexing progress: cc_pair_id={cc_pair_id} "
-            f"search_settings_id={search_settings_id} "
+            f"Connector indexing progress: cc_pair={cc_pair_id} "
+            f"search_settings={search_settings_id} "
             f"progress={progress} "
             f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
         )
@@ -648,8 +648,10 @@ def monitor_ccpair_indexing_taskset(
             # if it isn't, then the worker crashed
             task_logger.info(
                 f"Connector indexing aborted: "
-                f"cc_pair_id={cc_pair_id} "
-                f"search_settings_id={search_settings_id} "
+                f"attempt={payload.index_attempt_id} "
+                f"result_state={result_state} "
+                f"cc_pair={cc_pair_id} "
+                f"search_settings={search_settings_id} "
                 f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
             )
 
@@ -667,8 +669,8 @@ def monitor_ccpair_indexing_taskset(
     status_enum = HTTPStatus(status_int)
 
     task_logger.info(
-        f"Connector indexing finished: cc_pair_id={cc_pair_id} "
-        f"search_settings_id={search_settings_id} "
+        f"Connector indexing finished: cc_pair={cc_pair_id} "
+        f"search_settings={search_settings_id} "
         f"status={status_enum.name} "
         f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
     )

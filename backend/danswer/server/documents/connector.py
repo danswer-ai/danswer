@@ -865,11 +865,13 @@ def connector_run_once(
             )
             if attempt_id:
                 logger.info(
-                    f"try_creating_indexing_task succeeded: cc_pair={cc_pair.id} attempt_id={attempt_id}"
+                    f"connector_run_once - try_creating_indexing_task succeeded: attempt={attempt_id} cc_pair={cc_pair.id}"
                 )
                 index_attempt_ids.append(attempt_id)
             else:
-                logger.info(f"try_creating_indexing_task failed: cc_pair={cc_pair.id}")
+                logger.info(
+                    f"connector_run_once - try_creating_indexing_task failed: cc_pair={cc_pair.id}"
+                )
 
     if not index_attempt_ids:
         raise HTTPException(
