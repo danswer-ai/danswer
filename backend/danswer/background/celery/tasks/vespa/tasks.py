@@ -441,11 +441,23 @@ def monitor_connector_deletion_taskset(
                 db_session, cc_pair.connector_id, cc_pair.credential_id
             )
             if len(doc_ids) > 0:
-                # if this happens, documents somehow got added while deletion was in progress. Likely a bug
-                # gating off pruning and indexing work before deletion starts
+                # NOTE(rkuo): if this happens, documents somehow got added while
+                # deletion was in progress. Likely a bug gating off pruning and indexing
+                # work before deletion starts.
                 task_logger.warning(
-                    f"Connector deletion - documents still found after taskset completion: "
-                    f"cc_pair={cc_pair_id} num={len(doc_ids)}"
+                    "Connector deletion - documents still found after taskset completion. "
+                    "Clearing the current deletion attempt and allowing deletion to restart: "
+                    f"cc_pair={cc_pair_id} "
+                    f"docs_deleted={fence_data.num_tasks} "
+                    f"docs_remaining={len(doc_ids)}"
+                )
+
+                # We don't want to waive off why we get into this state, but resetting
+                # our attempt and letting the deletion restart is a good way to recover
+                redis_connector.delete.taskset_clear()
+                redis_connector.delete.set_fence(None)
+                raise RuntimeError(
+                    "Connector deletion - documents still found after taskset completion"
                 )
 
             # clean up the rest of the related Postgres entities
