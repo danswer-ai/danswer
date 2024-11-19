@@ -14,6 +14,7 @@ from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.document import construct_document_select_for_connector_credential_pair
+from danswer.db.models import Document as DbDocument
 
 
 class RedisConnectorDeletionFenceData(BaseModel):
@@ -98,7 +99,8 @@ class RedisConnectorDelete:
         stmt = construct_document_select_for_connector_credential_pair(
             cc_pair.connector_id, cc_pair.credential_id
         )
-        for doc in db_session.scalars(stmt).yield_per(1):
+        for doc_temp in db_session.scalars(stmt).yield_per(1):
+            doc: DbDocument = doc_temp
             current_time = time.monotonic()
             if current_time - last_lock_time >= (
                 CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT / 4
@@ -129,6 +131,10 @@ class RedisConnectorDelete:
             async_results.append(result)
 
         return len(async_results)
+
+    def reset(self) -> None:
+        self.redis.delete(self.taskset_key)
+        self.redis.delete(self.fence_key)
 
     @staticmethod
     def remove_from_taskset(id: int, task_id: str, r: redis.Redis) -> None:

@@ -192,7 +192,8 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     )
                     if attempt_id:
                         task_logger.info(
-                            f"Indexing queued: index_attempt={attempt_id} "
+                            f"Connector indexing queued: "
+                            f"index_attempt={attempt_id} "
                             f"cc_pair={cc_pair.id} "
                             f"search_settings={search_settings_instance.id} "
                         )
@@ -383,7 +384,6 @@ def try_creating_indexing_task(
         payload.index_attempt_id = index_attempt_id
         payload.celery_task_id = result.id
         redis_connector_index.set_fence(payload)
-
     except Exception:
         redis_connector_index.set_fence(None)
         task_logger.exception(
@@ -516,7 +516,8 @@ def connector_indexing_task(
         logger.debug("Sentry DSN not provided, skipping Sentry initialization")
 
     logger.info(
-        f"Indexing spawned task starting: attempt={index_attempt_id} "
+        f"Indexing spawned task starting: "
+        f"attempt={index_attempt_id} "
         f"tenant={tenant_id} "
         f"cc_pair={cc_pair_id} "
         f"search_settings={search_settings_id}"

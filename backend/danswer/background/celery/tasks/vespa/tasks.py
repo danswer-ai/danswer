@@ -444,11 +444,22 @@ def monitor_connector_deletion_taskset(
                 db_session, cc_pair.connector_id, cc_pair.credential_id
             )
             if len(doc_ids) > 0:
-                # if this happens, documents somehow got added while deletion was in progress. Likely a bug
-                # gating off pruning and indexing work before deletion starts
+                # NOTE(rkuo): if this happens, documents somehow got added while
+                # deletion was in progress. Likely a bug gating off pruning and indexing
+                # work before deletion starts.
                 task_logger.warning(
-                    f"Connector deletion - documents still found after taskset completion: "
-                    f"cc_pair={cc_pair_id} num={len(doc_ids)}"
+                    "Connector deletion - documents still found after taskset completion. "
+                    "Clearing the current deletion attempt and allowing deletion to restart: "
+                    f"cc_pair={cc_pair_id} "
+                    f"docs_deleted={fence_data.num_tasks} "
+                    f"docs_remaining={len(doc_ids)}"
+                )
+
+                # We don't want to waive off why we get into this state, but resetting
+                # our attempt and letting the deletion restart is a good way to recover
+                redis_connector.delete.reset()
+                raise RuntimeError(
+                    "Connector deletion - documents still found after taskset completion"
                 )
 
             # clean up the rest of the related Postgres entities
@@ -512,8 +523,7 @@ def monitor_connector_deletion_taskset(
         f"docs_deleted={fence_data.num_tasks}"
     )
 
-    redis_connector.delete.taskset_clear()
-    redis_connector.delete.set_fence(None)
+    redis_connector.delete.reset()
 
 
 def monitor_ccpair_pruning_taskset(
@@ -645,26 +655,34 @@ def monitor_ccpair_indexing_taskset(
     result_state = result.state
 
     status_int = redis_connector_index.get_completion()
-    if status_int is None:
+    if status_int is None:  # completion signal not set ... check for errors
+        # If we get here, and then the task both sets the completion signal and finishes,
+        # we will incorrectly abort the task. We must check result state, then check
+        # get_completion again to avoid the race condition.
         if result_state in READY_STATES:
-            # IF the task state is READY, THEN generator_complete should be set
-            # if it isn't, then the worker crashed
-            task_logger.info(
-                f"Connector indexing aborted: "
-                f"cc_pair={cc_pair_id} "
-                f"search_settings={search_settings_id} "
-                f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
-            )
-
-            index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
-            if index_attempt:
-                mark_attempt_failed(
-                    index_attempt_id=payload.index_attempt_id,
-                    db_session=db_session,
-                    failure_reason="Connector indexing aborted or exceptioned.",
+            if redis_connector_index.get_completion() is None:
+                # IF the task state is READY, THEN generator_complete should be set
+                # if it isn't, then the worker crashed
+                msg = (
+                    f"Connector indexing aborted or exceptioned: "
+                    f"attempt={payload.index_attempt_id} "
+                    f"celery_task={payload.celery_task_id} "
+                    f"result_state={result_state} "
+                    f"cc_pair={cc_pair_id} "
+                    f"search_settings={search_settings_id} "
+                    f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
                 )
+                task_logger.warning(msg)
 
-            redis_connector_index.reset()
+                index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
+                if index_attempt:
+                    mark_attempt_failed(
+                        index_attempt_id=payload.index_attempt_id,
+                        db_session=db_session,
+                        failure_reason=msg,
+                    )
+
+                redis_connector_index.reset()
         return
 
     status_enum = HTTPStatus(status_int)
