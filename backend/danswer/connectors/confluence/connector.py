@@ -162,7 +162,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 self.confluence_client, confluence_object
             )
 
-        if object_text is None:
+        if not object_text:
             return None
 
         # Get space name

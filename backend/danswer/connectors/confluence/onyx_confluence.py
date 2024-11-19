@@ -153,9 +153,10 @@ class OnyxConfluence(Confluence):
 
         while url_suffix:
             try:
+                logger.info(f"Making confluence call to {url_suffix}")
                 next_response = self.get(url_suffix)
             except Exception as e:
-                logger.exception("Error in danswer_cql: \n")
+                logger.exception(f"Error in confluence call to {url_suffix}")
                 raise e
             yield next_response.get("results", [])
             url_suffix = next_response.get("_links", {}).get("next")
