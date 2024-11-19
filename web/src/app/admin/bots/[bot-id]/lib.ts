@@ -3,7 +3,7 @@ import {
   SlackBotResponseType,
   SlackBotTokens,
 } from "@/lib/types";
-import { Persona } from "../assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 
 interface SlackChannelConfigCreationRequest {
   slack_bot_id: number;

@@ -7,13 +7,17 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import Link from "next/link";
-import { SlackChannelConfigsTable } from "../../SlackChannelConfigsTable";
-import { useSlackBot, useSlackChannelConfigsByBot } from "../../hooks";
+import { SlackChannelConfigsTable } from "./SlackChannelConfigsTable";
+import { useSlackBot, useSlackChannelConfigsByBot } from "./hooks";
 import { ExistingSlackBotForm } from "../SlackBotUpdateForm";
 import { FiPlusSquare } from "react-icons/fi";
 import { Separator } from "@/components/ui/separator";
 
-function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
+function SlackBotEditPage({
+  params,
+}: {
+  params: Promise<{ "bot-id": string }>;
+}) {
   // Unwrap the params promise
   const unwrappedParams = use(params);
   const { popup, setPopup } = usePopup();
@@ -24,14 +28,14 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
     isLoading: isSlackBotLoading,
     error: slackBotError,
     refreshSlackBot,
-  } = useSlackBot(Number(unwrappedParams.id));
+  } = useSlackBot(Number(unwrappedParams["bot-id"]));
 
   const {
     data: slackChannelConfigs,
     isLoading: isSlackChannelConfigsLoading,
     error: slackChannelConfigsError,
     refreshSlackChannelConfigs,
-  } = useSlackChannelConfigsByBot(Number(unwrappedParams.id));
+  } = useSlackChannelConfigsByBot(Number(unwrappedParams["bot-id"]));
 
   if (isSlackBotLoading || isSlackChannelConfigsLoading) {
     return <ThreeDotsLoader />;
@@ -45,7 +49,7 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch Slack Bot ${unwrappedParams.id}: ${errorMsg}`}
+        errorMsg={`Failed to fetch Slack Bot ${unwrappedParams["bot-id"]}: ${errorMsg}`}
       />
     );
   }
@@ -58,7 +62,7 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch Slack Bot ${unwrappedParams.id}: ${errorMsg}`}
+        errorMsg={`Failed to fetch Slack Bot ${unwrappedParams["bot-id"]}: ${errorMsg}`}
       />
     );
   }
@@ -91,7 +95,7 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
           text-sm
           w-80
         "
-        href={`/admin/bots/new?slack_bot_id=${unwrappedParams.id}`}
+        href={`/admin/bots/new?slack_bot_id=${unwrappedParams["bot-id"]}`}
       >
         <div className="mx-auto flex">
           <FiPlusSquare className="my-auto mr-2" />
@@ -101,6 +105,7 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
 
       <div className="mt-8">
         <SlackChannelConfigsTable
+          slackBotId={slackBot.id}
           slackChannelConfigs={slackChannelConfigs}
           refresh={refreshSlackChannelConfigs}
           setPopup={setPopup}

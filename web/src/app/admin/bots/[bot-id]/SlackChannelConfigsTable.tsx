@@ -20,10 +20,12 @@ import { deleteSlackChannelConfig, isPersonaASlackBotPersona } from "./lib";
 const numToDisplay = 50;
 
 export function SlackChannelConfigsTable({
+  slackBotId,
   slackChannelConfigs,
   refresh,
   setPopup,
 }: {
+  slackBotId: number;
   slackChannelConfigs: SlackChannelConfig[];
   refresh: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
@@ -63,7 +65,7 @@ export function SlackChannelConfigsTable({
                       <div className="flex gap-x-2">
                         <Link
                           className="cursor-pointer my-auto"
-                          href={`/admin/bots/${slackChannelConfig.id}`}
+                          href={`/admin/bots/${slackBotId}/channels/${slackChannelConfig.id}`}
                         >
                           <EditIcon />
                         </Link>

@@ -1,11 +1,9 @@
 import { AdminPageTitle } from "@/components/admin/Title";
-import { CPUIcon } from "@/components/icons/icons";
 import { SourceIcon } from "@/components/SourceIcon";
 import { SlackChannelConfigCreationForm } from "../SlackChannelConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet, SlackChannelConfig } from "@/lib/types";
-import Text from "@/components/ui/text";
 import { BackButton } from "@/components/BackButton";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import {

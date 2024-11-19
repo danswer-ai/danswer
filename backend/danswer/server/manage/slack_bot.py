@@ -31,9 +31,9 @@ router = APIRouter(prefix="/manage")
 
 
 def _form_channel_config(
+    db_session: Session,
     slack_channel_config_creation_request: SlackChannelConfigCreationRequest,
     current_slack_channel_config_id: int | None,
-    db_session: Session,
 ) -> ChannelConfig:
     raw_channel_name = slack_channel_config_creation_request.channel_name
     respond_tag_only = slack_channel_config_creation_request.respond_tag_only
@@ -93,7 +93,9 @@ def create_slack_channel_config(
     _: User | None = Depends(current_admin_user),
 ) -> SlackChannelConfig:
     channel_config = _form_channel_config(
-        slack_channel_config_creation_request, None, db_session
+        db_session=db_session,
+        slack_channel_config_creation_request=slack_channel_config_creation_request,
+        current_slack_channel_config_id=None,
     )
 
     persona_id = None
@@ -127,7 +129,9 @@ def patch_slack_channel_config(
     _: User | None = Depends(current_admin_user),
 ) -> SlackChannelConfig:
     channel_config = _form_channel_config(
-        slack_channel_config_creation_request, slack_channel_config_id, db_session
+        db_session=db_session,
+        slack_channel_config_creation_request=slack_channel_config_creation_request,
+        current_slack_channel_config_id=slack_channel_config_id,
     )
 
     persona_id = None

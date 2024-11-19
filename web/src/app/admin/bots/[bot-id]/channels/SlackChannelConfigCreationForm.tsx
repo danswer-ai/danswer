@@ -16,16 +16,15 @@ import {
   createSlackChannelConfig,
   isPersonaASlackBotPersona,
   updateSlackChannelConfig,
-} from "./lib";
-import { Separator } from "@/components/ui/separator";
+} from "../lib";
 import CardSection from "@/components/admin/CardSection";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Persona } from "../assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { useState } from "react";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
-import CollapsibleSection from "../assistants/CollapsibleSection";
+import CollapsibleSection from "@/app/admin/assistants/CollapsibleSection";
 import { StandardAnswerCategoryResponse } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 import { StandardAnswerCategoryDropdownField } from "@/components/standardAnswers/StandardAnswerCategoryDropdown";
 import {
@@ -159,7 +158,7 @@ export const SlackChannelConfigCreationForm = ({
             }
             formikHelpers.setSubmitting(false);
             if (response.ok) {
-              router.push(`/admin/bots/bot/${slack_bot_id}?u=${Date.now()}`);
+              router.push(`/admin/bots/${slack_bot_id}`);
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;

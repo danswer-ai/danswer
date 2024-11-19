@@ -51,7 +51,7 @@ export const SlackTokensForm = ({
             : "Successfully created Slack Bot!",
           type: "success",
         });
-        router.push(`/admin/bots/bot/${botId}?u=${Date.now()}`);
+        router.push(`/admin/bots/${botId}}`);
       } else {
         const responseJson = await response.json();
         const errorMsg = responseJson.detail || responseJson.message;

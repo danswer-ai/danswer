@@ -22,8 +22,8 @@ export const useSlackBots = () => {
   };
 };
 
-export const useSlackBot = (appId: number) => {
-  const url = `/api/manage/admin/slack-app/bots/${appId}`;
+export const useSlackBot = (botId: number) => {
+  const url = `/api/manage/admin/slack-app/bots/${botId}`;
   const swrResponse = useSWR<SlackBot>(url, errorHandlingFetcher);
 
   return {

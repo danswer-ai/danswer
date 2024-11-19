@@ -75,7 +75,7 @@ export function SlackBotTable({ slackBots }: { slackBots: SlackBot[] }) {
           {slackBotsForPage.map((slackBot) => {
             return (
               <ClickableTableRow
-                url={`/admin/bots/bot/${slackBot.id}`}
+                url={`/admin/bots/${slackBot.id}`}
                 key={slackBot.id}
                 className="hover:bg-muted cursor-pointer"
               >

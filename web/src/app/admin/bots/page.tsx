@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SourceIcon } from "@/components/SourceIcon";
 import { SlackBotTable } from "./SlackBotTable";
-import { useSlackBots } from "./hooks";
+import { useSlackBots } from "./[bot-id]/hooks";
 
 const Main = () => {
   const {
@@ -86,7 +86,7 @@ const Main = () => {
             text-sm
             w-40
           "
-        href="/admin/bots/bot/new"
+        href="/admin/bots/new"
       >
         <div className="mx-auto flex">
           <FiPlusSquare className="my-auto mr-2" />
