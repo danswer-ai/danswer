@@ -33,7 +33,7 @@ def get_slack_channel_config_for_bot_and_channel(
 
 def validate_channel_name(
     db_session: Session,
-    slack_bot_id: int,
+    current_slack_bot_id: int,
     channel_name: str,
     current_slack_channel_config_id: int | None,
 ) -> str:
@@ -41,7 +41,7 @@ def validate_channel_name(
     Returns a cleaned up channel name (e.g. '#' removed if present)"""
     slack_bot_configs = fetch_slack_channel_configs(
         db_session=db_session,
-        slack_bot_id=slack_bot_id,
+        slack_bot_id=current_slack_bot_id,
     )
     cleaned_channel_name = channel_name.lstrip("#").lower()
     for slack_channel_config in slack_bot_configs:
