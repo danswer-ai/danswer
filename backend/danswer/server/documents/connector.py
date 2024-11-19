@@ -865,21 +865,31 @@ def connector_run_once(
             )
             if attempt_id:
                 logger.info(
-                    f"try_creating_indexing_task succeeded: cc_pair={cc_pair.id} attempt_id={attempt_id}"
+                    f"connector_run_once - try_creating_indexing_task succeeded: "
+                    f"connector={run_info.connector_id} "
+                    f"cc_pair={cc_pair.id} "
+                    f"attempt={attempt_id} "
                 )
                 index_attempt_ids.append(attempt_id)
             else:
-                logger.info(f"try_creating_indexing_task failed: cc_pair={cc_pair.id}")
+                logger.info(
+                    f"connector_run_once - try_creating_indexing_task failed: "
+                    f"connector={run_info.connector_id} "
+                    f"cc_pair={cc_pair.id}"
+                )
 
     if not index_attempt_ids:
+        msg = "No new indexing attempts created, indexing jobs are queued or running."
+        logger.info(msg)
         raise HTTPException(
             status_code=400,
-            detail="No new indexing attempts created, indexing jobs are queued or running.",
+            detail=msg,
         )
 
+    msg = f"Successfully created {len(index_attempt_ids)} index attempts. {index_attempt_ids}"
     return StatusResponse(
         success=True,
-        message=f"Successfully created {len(index_attempt_ids)} index attempts",
+        message=msg,
         data=index_attempt_ids,
     )
 
