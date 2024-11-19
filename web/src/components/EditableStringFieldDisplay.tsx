@@ -68,8 +68,6 @@ export function EditableStringFieldDisplay({
   ) => {
     if (e.key === "Enter") {
       handleUpdate();
-    } else if (e.key === "Enter" && e.ctrlKey) {
-      handleUpdate();
     }
   };
 

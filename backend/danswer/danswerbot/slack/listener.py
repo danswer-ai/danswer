@@ -182,10 +182,7 @@ class SlackbotHandler:
             bot_token=bot.bot_token,
             app_token=bot.app_token,
         )
-
-        logger.debug(
-            f"Setting tenant ID context variable for tenant {tenant_id}, bot {bot.id}"
-        )
+        tenant_bot_pair = (tenant_id, bot.id)
 
         # If the tokens are not set, we need to close the socket client and delete the tokens
         # for the tenant and app
@@ -193,19 +190,16 @@ class SlackbotHandler:
             logger.debug(
                 f"No Slack bot token found for tenant {tenant_id}, bot {bot.id}"
             )
-            if (tenant_id, bot.id) in self.socket_clients:
-                asyncio.run(self.socket_clients[tenant_id, bot.id].close())
-                del self.socket_clients[tenant_id, bot.id]
-                del self.slack_bot_tokens[tenant_id, bot.id]
+            if tenant_bot_pair in self.socket_clients:
+                asyncio.run(self.socket_clients[tenant_bot_pair].close())
+                del self.socket_clients[tenant_bot_pair]
+                del self.slack_bot_tokens[tenant_bot_pair]
             return
 
-        if (
-            tenant_id,
-            bot.id,
-        ) not in self.slack_bot_tokens or slack_bot_tokens != self.slack_bot_tokens[
-            (tenant_id, bot.id)
-        ]:
-            if (tenant_id, bot.id) in self.slack_bot_tokens:
+        tokens_exist = tenant_bot_pair in self.slack_bot_tokens
+        tokens_changed = slack_bot_tokens != self.slack_bot_tokens[tenant_bot_pair]
+        if not tokens_exist or tokens_changed:
+            if tokens_exist:
                 logger.info(
                     f"Slack Bot tokens have changed for tenant {tenant_id}, bot {bot.id} - reconnecting"
                 )
@@ -218,10 +212,10 @@ class SlackbotHandler:
                 )
                 warm_up_bi_encoder(embedding_model=embedding_model)
 
-            self.slack_bot_tokens[(tenant_id, bot.id)] = slack_bot_tokens
+            self.slack_bot_tokens[tenant_bot_pair] = slack_bot_tokens
 
-            if (tenant_id, bot.id) in self.socket_clients:
-                asyncio.run(self.socket_clients[tenant_id, bot.id].close())
+            if tenant_bot_pair in self.socket_clients:
+                asyncio.run(self.socket_clients[tenant_bot_pair].close())
 
             self.start_socket_client(bot.id, tenant_id, slack_bot_tokens)
 

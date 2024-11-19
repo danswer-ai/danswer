@@ -221,6 +221,12 @@ class SlackChannelConfig(BaseModel):
 
 
 class SlackBot(BaseModel):
+    """
+    This model is identical to the SlackAppModel, but it contains
+    a `configs_count` field to make it easier to fetch the number
+    of SlackChannelConfigs associated with a SlackBot.
+    """
+
     id: int
     name: str
     enabled: bool
