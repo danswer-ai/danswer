@@ -56,14 +56,14 @@ async def _fetch_all_docs(
                 filtered_channels: list[TextChannel] = []
                 async for guild in client.fetch_guilds():
                     if (server_ids is None) or (server_ids and guild.id in server_ids):
-                        for channel in guild.channels:
+                        guild_channels = await guild.fetch_channels()
+                        for channel in guild_channels:
+                            print(channel.name)
                             if (
                                 (channels is None)
                                 or (channels and channel.name in channels)
                             ) and isinstance(channel, discord.TextChannel):
-                                permissions = channel.permissions_for(guild.me)
-                                if permissions.read_messages:
-                                    filtered_channels.append(channel)
+                                filtered_channels.append(channel)
 
                 logger.info(
                     f"Found {len(filtered_channels)} channels for the authenticated user"
@@ -138,15 +138,15 @@ async def _fetch_all_docs(
                                     },
                                 )
                             )
-                    print(len(docs))
+                    print("Total docs", len(docs))
             finally:
+                print("Closing the connection")
                 await self.close()
 
     intents = discord.Intents.default()
     intents.message_content = True
     client = DanswerDiscordClient(start, end, intents=intents)
     await client.start(token, reconnect=True)
-    print("docs", docs)
     return docs
 
 
@@ -202,25 +202,11 @@ if __name__ == "__main__":
     current = time.time()
     one_day_ago = current - 24 * 60 * 60 * 3  # 1 day
 
-    # print(
-    #     asyncio.get_event_loop().run_until_complete(
-    #         _fetch_all_docs(
-    #             os.environ["discord_bot_token"],
-    #             one_day_ago,
-    #             current,
-    #             None,
-    #             None,
-    #             10,
-    #         )
-    #     )
-    # )
-
     connector = DiscordConnector(
-        server_ids=None,
-        channels=None,
+        server_ids=["your-test-server-id"],
+        channels=["your-test-channel-name"],
     )
     connector.load_credentials({"discord_bot_token": os.environ["discord_bot_token"]})
 
-    document_batches = connector.poll_source(one_day_ago, current)
-
-    print(next(document_batches))
+    for doc in connector.poll_source(one_day_ago, current):
+        print(doc)
