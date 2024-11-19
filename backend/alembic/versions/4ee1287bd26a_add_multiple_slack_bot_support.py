@@ -33,14 +33,14 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("enabled", sa.Boolean(), nullable=False, server_default="true"),
-        sa.Column("bot_token", sa.String(), nullable=False),
-        sa.Column("app_token", sa.String(), nullable=False),
+        sa.Column("bot_token", sa.LargeBinary(), nullable=False),
+        sa.Column("app_token", sa.LargeBinary(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("bot_token"),
         sa.UniqueConstraint("app_token"),
     )
 
-    # Create new slack_channel_config table
+    # # Create new slack_channel_config table
     op.create_table(
         "slack_channel_config",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -68,35 +68,23 @@ def upgrade() -> None:
     app_token = None
     first_row_id = None
 
-    try:
-        tokens = cast(dict, get_kv_store().load("slack_bot_tokens_config_key"))
-        bot_token = tokens.get("bot_token")
-        app_token = tokens.get("app_token")
+    tokens = cast(dict, get_kv_store().load("slack_bot_tokens_config_key"))
+    bot_token = tokens.get("bot_token")
+    app_token = tokens.get("app_token")
 
-        if bot_token and app_token:
-            logger.info(f"{revision}: Found bot and app tokens.")
+    if bot_token and app_token:
+        logger.info(f"{revision}: Found bot and app tokens.")
 
-            session = Session(bind=op.get_bind())
-            try:
-                new_slack_bot = SlackBot(
-                    name="Slack App (Migrated)",
-                    enabled=True,
-                    bot_token=bot_token,
-                    app_token=app_token,
-                )
-                session.add(new_slack_bot)
-                session.commit()
-                first_row_id = new_slack_bot.id
-            except Exception as e:
-                logger.info(f"{revision}: Exception while handling tokens: {e}")
-                logger.warning("rolling back slack bot creation")
-                session.rollback()
-                raise
-            finally:
-                session.close()
-    except Exception as ex:
-        logger.debug(f"{revision}: Exception while handling tokens: {ex}")
-        logger.info(f"{revision}: This is OK if there was not an existing Slack bot.")
+        session = Session(bind=op.get_bind())
+        new_slack_bot = SlackBot(
+            name="Slack App (Migrated)",
+            enabled=True,
+            bot_token=bot_token,
+            app_token=app_token,
+        )
+        session.add(new_slack_bot)
+        session.commit()
+        first_row_id = new_slack_bot.id
 
     # Create a default bot if none exists
     # This is in case there are no slack tokens but there are channels configured
