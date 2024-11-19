@@ -11,8 +11,9 @@ import { SlackTokensForm } from "./SlackTokensForm";
 import { SourceIcon } from "@/components/SourceIcon";
 import { EditableStringFieldDisplay } from "@/components/EditableStringFieldDisplay";
 import { deleteSlackBot } from "./new/lib";
-import { DeleteButton } from "@/components/DeleteButton";
 import { GenericConfirmModal } from "@/components/modals/GenericConfirmModal";
+import { FiTrash } from "react-icons/fi";
+import { Button } from "@/components/ui/button";
 
 export const ExistingSlackBotForm = ({
   existingSlackBot,
@@ -88,18 +89,28 @@ export const ExistingSlackBotForm = ({
         </div>
 
         <div className="flex flex-col" ref={dropdownRef}>
-          <div className="border rounded-lg border-gray-200">
-            <div
-              className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? (
-                <ChevronDown size={20} />
-              ) : (
-                <ChevronRight size={20} />
-              )}
-              <span>Tokens</span>
+          <div className="flex items-center gap-4">
+            <div className="border rounded-lg border-gray-200">
+              <div
+                className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 p-2"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? (
+                  <ChevronDown size={20} />
+                ) : (
+                  <ChevronRight size={20} />
+                )}
+                <span>Update Tokens</span>
+              </div>
             </div>
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteModal(true)}
+              icon={FiTrash}
+              tooltip="Click to delete"
+            >
+              Delete
+            </Button>
           </div>
 
           {isExpanded && (
@@ -125,9 +136,6 @@ export const ExistingSlackBotForm = ({
             checked={formValues.enabled}
             onChange={(e) => handleUpdateField("enabled", e.target.checked)}
           />
-        </div>
-        <div className="mt-2">
-          <DeleteButton onClick={() => setShowDeleteModal(true)} />
         </div>
         {showDeleteModal && (
           <GenericConfirmModal
