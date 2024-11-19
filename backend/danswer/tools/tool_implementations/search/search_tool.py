@@ -16,7 +16,6 @@ from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
 from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
 from danswer.db.models import Persona
 from danswer.db.models import User
-from danswer.key_value_store.interface import JSON_ro
 from danswer.llm.answering.llm_response_handler import LLMCall
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import ContextualPruningConfig
@@ -49,6 +48,7 @@ from danswer.tools.tool_implementations.search_like_tool_utils import (
     FINAL_CONTEXT_DOCUMENTS_ID,
 )
 from danswer.utils.logger import setup_logger
+from danswer.utils.special_types import JSON_ro
 
 logger = setup_logger()
 

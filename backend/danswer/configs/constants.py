@@ -74,7 +74,7 @@ CELERY_PRIMARY_WORKER_LOCK_TIMEOUT = 120
 
 # needs to be long enough to cover the maximum time it takes to download an object
 # if we can get callbacks as object bytes download, we could lower this a lot.
-CELERY_INDEXING_LOCK_TIMEOUT = 60 * 60  # 60 min
+CELERY_INDEXING_LOCK_TIMEOUT = 3 * 60 * 60  # 60 min
 
 # needs to be long enough to cover the maximum time it takes to download an object
 # if we can get callbacks as object bytes download, we could lower this a lot.

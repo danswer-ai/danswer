@@ -64,6 +64,7 @@ from danswer.tools.tool_implementations.search.search_tool import (
 )
 from danswer.tools.tool_runner import ToolCallKickoff
 from danswer.utils.logger import setup_logger
+from danswer.utils.long_term_log import LongTermLogger
 from danswer.utils.timing import log_generator_function_time
 from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 
@@ -124,6 +125,11 @@ def stream_answer_objects(
         danswerbot_flow=danswerbot_flow,
     )
 
+    # permanent "log" store, used primarily for debugging
+    long_term_logger = LongTermLogger(
+        metadata={"user_id": str(user_id), "chat_session_id": str(chat_session.id)}
+    )
+
     temporary_persona: Persona | None = None
 
     if query_req.persona_config is not None:
@@ -134,7 +140,9 @@ def stream_answer_objects(
     persona = temporary_persona if temporary_persona else chat_session.persona
 
     try:
-        llm, fast_llm = get_llms_for_persona(persona=persona)
+        llm, fast_llm = get_llms_for_persona(
+            persona=persona, long_term_logger=long_term_logger
+        )
     except ValueError as e:
         logger.error(
             f"Failed to initialize LLMs for persona '{persona.name}': {str(e)}"
@@ -237,7 +245,9 @@ def stream_answer_objects(
         question=query_msg.message,
         answer_style_config=answer_config,
         prompt_config=PromptConfig.from_model(prompt),
-        llm=get_main_llm_from_tuple(get_llms_for_persona(persona=persona)),
+        llm=get_main_llm_from_tuple(
+            get_llms_for_persona(persona=persona, long_term_logger=long_term_logger)
+        ),
         single_message_history=history_str,
         tools=[search_tool] if search_tool else [],
         force_use_tool=(

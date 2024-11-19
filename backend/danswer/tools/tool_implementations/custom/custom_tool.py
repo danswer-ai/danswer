@@ -20,7 +20,6 @@ from danswer.db.engine import get_session_with_default_tenant
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import InMemoryChatFile
-from danswer.key_value_store.interface import JSON_ro
 from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.llm.interfaces import LLM
@@ -58,6 +57,7 @@ from danswer.tools.tool_implementations.custom.prompt import (
 from danswer.utils.headers import header_list_to_header_dict
 from danswer.utils.headers import HeaderItemDict
 from danswer.utils.logger import setup_logger
+from danswer.utils.special_types import JSON_ro
 
 logger = setup_logger()
 

@@ -1,9 +1,10 @@
 import time
+from typing import cast
 from uuid import uuid4
 
-import redis
 from celery import Celery
 from redis import Redis
+from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -13,6 +14,7 @@ from danswer.db.connector_credential_pair import get_connector_credential_pair_f
 from danswer.db.document import (
     construct_document_select_for_connector_credential_pair_by_needs_sync,
 )
+from danswer.db.models import Document
 from danswer.redis.redis_object_helper import RedisObjectHelper
 
 
@@ -30,6 +32,9 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
     def __init__(self, tenant_id: str | None, id: int) -> None:
         super().__init__(tenant_id, str(id))
 
+        # documents that should be skipped
+        self.skip_docs: set[str] = set()
+
     @classmethod
     def get_fence_key(cls) -> str:
         return RedisConnectorCredentialPair.FENCE_PREFIX
@@ -45,14 +50,19 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
         # example: connector_taskset
         return f"{self.TASKSET_PREFIX}"
 
+    def set_skip_docs(self, skip_docs: set[str]) -> None:
+        # documents that should be skipped. Note that this classes updates
+        # the list on the fly
+        self.skip_docs = skip_docs
+
     def generate_tasks(
         self,
         celery_app: Celery,
         db_session: Session,
         redis_client: Redis,
-        lock: redis.lock.Lock,
+        lock: RedisLock,
         tenant_id: str | None,
-    ) -> int | None:
+    ) -> tuple[int, int] | None:
         last_lock_time = time.monotonic()
 
         async_results = []
@@ -64,13 +74,22 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
             cc_pair.connector_id, cc_pair.credential_id
         )
 
+        num_docs = 0
+
         for doc in db_session.scalars(stmt).yield_per(1):
+            doc = cast(Document, doc)
             current_time = time.monotonic()
             if current_time - last_lock_time >= (
                 CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT / 4
             ):
                 lock.reacquire()
                 last_lock_time = current_time
+
+            num_docs += 1
+
+            # check if we should skip the document (typically because it's already syncing)
+            if doc.id in self.skip_docs:
+                continue
 
             # celery's default task id format is "dd32ded3-00aa-4884-8b21-42f8332e7fac"
             # the key for the result is "celery-task-meta-dd32ded3-00aa-4884-8b21-42f8332e7fac"
@@ -94,5 +113,6 @@ class RedisConnectorCredentialPair(RedisObjectHelper):
             )
 
             async_results.append(result)
+            self.skip_docs.add(doc.id)
 
-        return len(async_results)
+        return len(async_results), num_docs
