@@ -652,28 +652,34 @@ def monitor_ccpair_indexing_taskset(
     result_state = result.state
 
     status_int = redis_connector_index.get_completion()
-    if status_int is None:
+    if status_int is None:  # completion signal not set ... check for errors
+        # If we get here, and then the task both sets the completion signal and finishes,
+        # we will incorrectly abort the task. We must check result state, then check
+        # get_completion again to avoid the race condition.
         if result_state in READY_STATES:
-            # IF the task state is READY, THEN generator_complete should be set
-            # if it isn't, then the worker crashed
-            task_logger.info(
-                f"Connector indexing aborted: "
-                f"attempt={payload.index_attempt_id} "
-                f"result_state={result_state} "
-                f"cc_pair={cc_pair_id} "
-                f"search_settings={search_settings_id} "
-                f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
-            )
-
-            index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
-            if index_attempt:
-                mark_attempt_failed(
-                    index_attempt_id=payload.index_attempt_id,
-                    db_session=db_session,
-                    failure_reason="Connector indexing aborted or exceptioned.",
+            if redis_connector_index.get_completion() is None:
+                # IF the task state is READY, THEN generator_complete should be set
+                # if it isn't, then the worker crashed
+                msg = (
+                    f"Connector indexing aborted or exceptioned: "
+                    f"attempt={payload.index_attempt_id} "
+                    f"celery_task={payload.celery_task_id} "
+                    f"result_state={result_state} "
+                    f"cc_pair={cc_pair_id} "
+                    f"search_settings={search_settings_id} "
+                    f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
                 )
+                task_logger.warning(msg)
 
-            redis_connector_index.reset()
+                index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
+                if index_attempt:
+                    mark_attempt_failed(
+                        index_attempt_id=payload.index_attempt_id,
+                        db_session=db_session,
+                        failure_reason=msg,
+                    )
+
+                redis_connector_index.reset()
         return
 
     status_enum = HTTPStatus(status_int)
