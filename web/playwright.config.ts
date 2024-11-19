@@ -1,4 +1,4 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   // Other Playwright config options
@@ -11,4 +11,26 @@ export default defineConfig({
   // },
   // reporter: [["html", { outputFolder: "test-results/output/report" }]], // HTML report location
   // outputDir: "test-results/output/screenshots", // Set output folder for test artifacts
+  projects: [
+    // Setup project
+    {
+      name: "admin_setup",
+      testMatch: /.*\admin_auth.setup\.ts/,
+    },
+    {
+      name: "chromium-admin",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Use prepared auth state.
+        storageState: "admin_auth.json",
+      },
+      dependencies: ["admin_setup"],
+    },
+    {
+      name: "chromium-logged-out",
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+    },
+  ],
 });

@@ -3,6 +3,10 @@ import { test, expect, takeSnapshot } from "@chromatic-com/playwright";
 
 // Then use as normal 👇
 test("Homepage", async ({ page }, testInfo) => {
+  test.skip(
+    testInfo.project.name !== "chromium-logged-out",
+    "Only chromium-logged-out"
+  );
   // Test redirect to login, and redirect to search after login
 
   // move these into a constants file or test fixture soon
