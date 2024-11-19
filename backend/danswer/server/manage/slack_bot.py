@@ -87,7 +87,7 @@ def _form_channel_config(
     return channel_config
 
 
-@router.post("/admin/slack-bot/config")
+@router.post("/admin/slack-app/channel")
 def create_slack_channel_config(
     slack_channel_config_creation_request: SlackChannelConfigCreationRequest,
     db_session: Session = Depends(get_session),
@@ -113,7 +113,6 @@ def create_slack_channel_config(
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=slack_channel_config_creation_request.response_type,
-        # XXX this is going away soon
         standard_answer_category_ids=slack_channel_config_creation_request.standard_answer_categories,
         db_session=db_session,
         enable_auto_filters=slack_channel_config_creation_request.enable_auto_filters,
@@ -121,7 +120,7 @@ def create_slack_channel_config(
     return SlackChannelConfig.from_model(slack_channel_config_model)
 
 
-@router.patch("/admin/slack-bot/config/{slack_channel_config_id}")
+@router.patch("/admin/slack-app/channel/{slack_channel_config_id}")
 def patch_slack_channel_config(
     slack_channel_config_id: int,
     slack_channel_config_creation_request: SlackChannelConfigCreationRequest,
@@ -171,31 +170,31 @@ def patch_slack_channel_config(
         ).id
 
     slack_channel_config_model = update_slack_channel_config(
+        db_session=db_session,
         slack_channel_config_id=slack_channel_config_id,
         persona_id=persona_id,
         channel_config=channel_config,
         response_type=slack_channel_config_creation_request.response_type,
         standard_answer_category_ids=slack_channel_config_creation_request.standard_answer_categories,
-        db_session=db_session,
         enable_auto_filters=slack_channel_config_creation_request.enable_auto_filters,
     )
     return SlackChannelConfig.from_model(slack_channel_config_model)
 
 
-@router.delete("/admin/slack-bot/config/{slack_channel_config_id}")
+@router.delete("/admin/slack-app/channel/{slack_channel_config_id}")
 def delete_slack_channel_config(
     slack_channel_config_id: int,
     db_session: Session = Depends(get_session),
     user: User | None = Depends(current_admin_user),
 ) -> None:
     remove_slack_channel_config(
+        db_session=db_session,
         slack_channel_config_id=slack_channel_config_id,
         user=user,
-        db_session=db_session,
     )
 
 
-@router.get("/admin/slack-bot/config")
+@router.get("/admin/slack-app/channel")
 def list_slack_channel_configs(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
@@ -207,61 +206,64 @@ def list_slack_channel_configs(
     ]
 
 
-@router.post("/admin/slack-bot/apps")
-def create_app(
+@router.post("/admin/slack-app/bots")
+def create_bot(
     slack_bot_creation_request: SlackBotCreationRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> SlackBot:
     slack_bot_model = insert_slack_bot(
+        db_session=db_session,
         name=slack_bot_creation_request.name,
         enabled=slack_bot_creation_request.enabled,
         bot_token=slack_bot_creation_request.bot_token,
         app_token=slack_bot_creation_request.app_token,
-        db_session=db_session,
     )
     return SlackBot.from_model(slack_bot_model)
 
 
-@router.patch("/admin/slack-bot/bots/{slack_bot_id}")
-def patch_app(
+@router.patch("/admin/slack-app/bots/{slack_bot_id}")
+def patch_bot(
     slack_bot_id: int,
     slack_bot_creation_request: SlackBotCreationRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> SlackBot:
     slack_bot_model = update_slack_bot(
+        db_session=db_session,
         slack_bot_id=slack_bot_id,
         name=slack_bot_creation_request.name,
         enabled=slack_bot_creation_request.enabled,
         bot_token=slack_bot_creation_request.bot_token,
         app_token=slack_bot_creation_request.app_token,
-        db_session=db_session,
     )
     return SlackBot.from_model(slack_bot_model)
 
 
-@router.delete("/admin/slack-bot/bots/{slack_bot_id}")
-def delete_app(
+@router.delete("/admin/slack-app/bots/{slack_bot_id}")
+def delete_bot(
     slack_bot_id: int,
     db_session: Session = Depends(get_session),
     user: User | None = Depends(current_admin_user),
 ) -> None:
-    remove_slack_bot(slack_bot_id=slack_bot_id, user=user, db_session=db_session)
+    remove_slack_bot(
+        db_session=db_session,
+        slack_bot_id=slack_bot_id,
+    )
 
 
-@router.get("/admin/slack-bot/bots/{app_id}")
-def get_app_by_id(
-    app_id: int,
+@router.get("/admin/slack-app/bots/{bot_id}")
+def get_bot_by_id(
+    bot_id: int,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> SlackBot:
-    slack_bot_model = fetch_slack_bot(db_session=db_session, slack_bot_id=app_id)
+    slack_bot_model = fetch_slack_bot(db_session=db_session, slack_bot_id=bot_id)
     return SlackBot.from_model(slack_bot_model)
 
 
-@router.get("/admin/slack-bot/apps")
-def list_apps(
+@router.get("/admin/slack-app/bots")
+def list_bots(
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> list[SlackBot]:
@@ -271,14 +273,14 @@ def list_apps(
     ]
 
 
-@router.get("/admin/slack-bot/bots/{slack_bot_id}/config")
-def list_app_configs(
-    slack_bot_id: int,
+@router.get("/admin/slack-app/bots/{bot_id}/config")
+def list_bot_configs(
+    bot_id: int,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> list[SlackChannelConfig]:
     slack_bot_config_models = fetch_slack_channel_configs(
-        db_session=db_session, slack_bot_id=slack_bot_id
+        db_session=db_session, slack_bot_id=bot_id
     )
     return [
         SlackChannelConfig.from_model(slack_bot_config_model)

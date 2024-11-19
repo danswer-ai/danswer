@@ -4,15 +4,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.db.models import SlackBot
-from danswer.db.models import User
 
 
 def insert_slack_bot(
+    db_session: Session,
     name: str,
     enabled: bool,
     bot_token: str,
     app_token: str,
-    db_session: Session,
 ) -> SlackBot:
     slack_bot = SlackBot(
         name=name,
@@ -27,12 +26,12 @@ def insert_slack_bot(
 
 
 def update_slack_bot(
+    db_session: Session,
     slack_bot_id: int,
     name: str,
     enabled: bool,
     bot_token: str,
     app_token: str,
-    db_session: Session,
 ) -> SlackBot:
     slack_bot = db_session.scalar(select(SlackBot).where(SlackBot.id == slack_bot_id))
     if slack_bot is None:
@@ -50,9 +49,8 @@ def update_slack_bot(
 
 
 def remove_slack_bot(
-    slack_bot_id: int,
-    user: User | None,
     db_session: Session,
+    slack_bot_id: int,
 ) -> None:
     slack_bot = db_session.scalar(select(SlackBot).where(SlackBot.id == slack_bot_id))
     if slack_bot is None:

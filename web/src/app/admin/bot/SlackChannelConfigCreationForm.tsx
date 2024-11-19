@@ -10,6 +10,7 @@ import {
   SelectorFormField,
   SubLabel,
   TextArrayField,
+  TextFormField,
 } from "@/components/admin/connectors/Field";
 import {
   createSlackChannelConfig,
@@ -130,12 +131,10 @@ export const SlackChannelConfigCreationForm = ({
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
 
-            // remove empty channel names
             const cleanedValues = {
               ...values,
               slack_bot_id: slack_bot_id,
-              channel_name:
-                existingSlackChannelConfig?.channel_config.channel_name!,
+              channel_name: values.channel_name!,
               respond_member_group_list: values.respond_member_group_list,
               usePersona: usingPersonas,
               standard_answer_categories: values.standard_answer_categories.map(
@@ -176,10 +175,10 @@ export const SlackChannelConfigCreationForm = ({
           {({ isSubmitting, values, setFieldValue }) => (
             <Form>
               <div className="px-6 pb-6 pt-4 w-full">
-                <div className="mb-4">
-                  <Label>Channel Name</Label>
-                  {values.channel_name}
-                </div>
+                <TextFormField
+                  name="channel_name"
+                  label="Slack Channel Name:"
+                />
 
                 <div className="mt-6">
                   <Label>Knowledge Sources</Label>

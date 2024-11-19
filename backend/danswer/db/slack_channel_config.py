@@ -79,13 +79,13 @@ def _no_ee_standard_answer_categories(*args: Any, **kwargs: Any) -> list:
 
 
 def insert_slack_channel_config(
+    db_session: Session,
     slack_bot_id: int,
     persona_id: int | None,
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
     standard_answer_category_ids: list[int],
     enable_auto_filters: bool,
-    db_session: Session,
 ) -> SlackChannelConfig:
     versioned_fetch_standard_answer_categories_by_ids = (
         fetch_versioned_implementation_with_fallback(
@@ -126,13 +126,13 @@ def insert_slack_channel_config(
 
 
 def update_slack_channel_config(
+    db_session: Session,
     slack_channel_config_id: int,
     persona_id: int | None,
     channel_config: ChannelConfig,
     response_type: SlackBotResponseType,
     standard_answer_category_ids: list[int],
     enable_auto_filters: bool,
-    db_session: Session,
 ) -> SlackChannelConfig:
     slack_channel_config = db_session.scalar(
         select(SlackChannelConfig).where(
@@ -196,9 +196,9 @@ def update_slack_channel_config(
 
 
 def remove_slack_channel_config(
+    db_session: Session,
     slack_channel_config_id: int,
     user: User | None,
-    db_session: Session,
 ) -> None:
     slack_channel_config = db_session.scalar(
         select(SlackChannelConfig).where(

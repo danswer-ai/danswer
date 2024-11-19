@@ -10,7 +10,6 @@ import { createSlackApp, updateSlackApp } from "./new/lib";
 import { Button } from "@/components/ui/button";
 import { SourceIcon } from "@/components/SourceIcon";
 import { EditableStringFieldDisplay } from "@/components/EditableStringFieldDisplay";
-import { EditableTextAreaDisplay } from "@/components/EditableTextAreaDisplay";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { updateSlackBotField } from "@/lib/updateSlackBotField";
@@ -53,6 +52,12 @@ const SlackTokensForm = ({
         }
         const responseJson = await response.json();
         const appId = isUpdate ? existingSlackBotId : responseJson.id;
+        setPopup({
+          message: isUpdate
+            ? "Successfully updated Slack App!"
+            : "Successfully created Slack App!",
+          type: "success",
+        });
         router.push(`/admin/bot/app/${appId}?u=${Date.now()}`);
       } else {
         const responseJson = await response.json();

@@ -22,7 +22,7 @@ const buildRequestBodyFromCreationRequest = (
 export const createSlackApp = async (
   creationRequest: SlackAppCreationRequest
 ) => {
-  return fetch("/api/manage/admin/slack-bot/apps", {
+  return fetch("/api/manage/admin/slack-app/apps", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -35,7 +35,7 @@ export const updateSlackApp = async (
   id: number,
   creationRequest: SlackAppCreationRequest
 ) => {
-  return fetch(`/api/manage/admin/slack-bot/bots/${id}`, {
+  return fetch(`/api/manage/admin/slack-app/bots/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -45,7 +45,7 @@ export const updateSlackApp = async (
 };
 
 export const deleteSlackApp = async (id: number) => {
-  return fetch(`/api/manage/admin/slack-bot/config/${id}`, {
+  return fetch(`/api/manage/admin/slack-app/channel/${id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
