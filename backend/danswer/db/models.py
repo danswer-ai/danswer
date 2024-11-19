@@ -350,10 +350,10 @@ class StandardAnswer__StandardAnswerCategory(Base):
     )
 
 
-class SlackBotConfig__StandardAnswerCategory(Base):
-    __tablename__ = "slack_bot_config__standard_answer_category"
+class SlackChannelConfig__StandardAnswerCategory(Base):
+    __tablename__ = "slack_channel_config__standard_answer_category"
 
-    slack_bot_config_id: Mapped[int] = mapped_column(
+    slack_channel_config_id: Mapped[int] = mapped_column(
         ForeignKey("slack_channel_config.id"), primary_key=True
     )
     standard_answer_category_id: Mapped[int] = mapped_column(
@@ -369,17 +369,6 @@ class ChatMessage__StandardAnswer(Base):
     )
     standard_answer_id: Mapped[int] = mapped_column(
         ForeignKey("standard_answer.id"), primary_key=True
-    )
-
-
-class SlackBot__SlackBotConfig(Base):
-    __tablename__ = "slack_bot__slack_channel_config"
-
-    slack_bot_id: Mapped[int] = mapped_column(
-        ForeignKey("slack_bot.id"), primary_key=True
-    )
-    slack_bot_config_id: Mapped[int] = mapped_column(
-        ForeignKey("slack_channel_config.id"), primary_key=True
     )
 
 
@@ -1502,7 +1491,7 @@ class SlackChannelConfig(Base):
     __tablename__ = "slack_channel_config"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    app_id: Mapped[int] = mapped_column(ForeignKey("slack_bot.id"), nullable=True)
+    slack_bot_id: Mapped[int] = mapped_column(ForeignKey("slack_bot.id"), nullable=True)
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True
     )
@@ -1519,10 +1508,14 @@ class SlackChannelConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
+    slack_bot: Mapped["SlackBot"] = relationship(
+        "SlackBot",
+        back_populates="slack_channel_configs",
+    )
     standard_answer_categories: Mapped[list["StandardAnswerCategory"]] = relationship(
         "StandardAnswerCategory",
-        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
-        back_populates="slack_bot_configs",
+        secondary=SlackChannelConfig__StandardAnswerCategory.__table__,
+        back_populates="slack_channel_configs",
     )
 
 
@@ -1536,9 +1529,8 @@ class SlackBot(Base):
     bot_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
     app_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
 
-    slack_bot_configs: Mapped[list[SlackChannelConfig]] = relationship(
+    slack_channel_configs: Mapped[list[SlackChannelConfig]] = relationship(
         "SlackChannelConfig",
-        secondary=SlackBot__SlackBotConfig.__table__,
         back_populates="slack_bot",
     )
 
@@ -1778,9 +1770,9 @@ class StandardAnswerCategory(Base):
         secondary=StandardAnswer__StandardAnswerCategory.__table__,
         back_populates="categories",
     )
-    slack_bot_configs: Mapped[list["SlackChannelConfig"]] = relationship(
+    slack_channel_configs: Mapped[list["SlackChannelConfig"]] = relationship(
         "SlackChannelConfig",
-        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+        secondary=SlackChannelConfig__StandardAnswerCategory.__table__,
         back_populates="standard_answer_categories",
     )
 

@@ -33,8 +33,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("enabled", sa.Boolean(), nullable=False, server_default="true"),
-        sa.Column("bot_token", sa.LargeBinary(), nullable=False),
-        sa.Column("app_token", sa.LargeBinary(), nullable=False),
+        sa.Column("bot_token", sa.String(), nullable=False),
+        sa.Column("app_token", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("bot_token"),
         sa.UniqueConstraint("app_token"),
@@ -44,7 +44,7 @@ def upgrade() -> None:
     op.create_table(
         "slack_channel_config",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("app_id", sa.Integer(), nullable=True),
+        sa.Column("slack_bot_id", sa.Integer(), nullable=True),
         sa.Column("persona_id", sa.Integer(), nullable=True),
         sa.Column("channel_config", postgresql.JSONB(), nullable=False),
         sa.Column("response_type", sa.String(), nullable=False),
@@ -52,7 +52,7 @@ def upgrade() -> None:
             "enable_auto_filters", sa.Boolean(), nullable=False, server_default="false"
         ),
         sa.ForeignKeyConstraint(
-            ["app_id"],
+            ["slack_bot_id"],
             ["slack_bot.id"],
         ),
         sa.ForeignKeyConstraint(
@@ -60,22 +60,6 @@ def upgrade() -> None:
             ["persona.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
-    )
-
-    # Create association table
-    op.create_table(
-        "slack_bot__slack_channel_config",
-        sa.Column("slack_bot_id", sa.Integer(), nullable=False),
-        sa.Column("slack_bot_config_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["slack_bot_id"],
-            ["slack_bot.id"],
-        ),
-        sa.ForeignKeyConstraint(
-            ["slack_bot_config_id"],
-            ["slack_channel_config.id"],
-        ),
-        sa.PrimaryKeyConstraint("slack_bot_id", "slack_bot_config_id"),
     )
 
     # Handle existing Slack bot tokens first
@@ -96,7 +80,6 @@ def upgrade() -> None:
             try:
                 new_slack_bot = SlackBot(
                     name="Slack App (Migrated)",
-                    description="Migrated app",
                     enabled=True,
                     bot_token=bot_token,
                     app_token=app_token,
@@ -104,9 +87,10 @@ def upgrade() -> None:
                 session.add(new_slack_bot)
                 session.commit()
                 first_row_id = new_slack_bot.id
-            except Exception:
-                session.rollback()
+            except Exception as e:
+                logger.info(f"{revision}: Exception while handling tokens: {e}")
                 logger.warning("rolling back slack bot creation")
+                session.rollback()
                 raise
             finally:
                 session.close()
@@ -114,24 +98,35 @@ def upgrade() -> None:
         logger.debug(f"{revision}: Exception while handling tokens: {ex}")
         logger.info(f"{revision}: This is OK if there was not an existing Slack bot.")
 
-    # Copy data from old table to new tables
+    # Create a default bot if none exists
+    # This is in case there are no slack tokens but there are channels configured
     op.execute(
         sa.text(
             """
-        WITH inserted_bot AS (
             INSERT INTO slack_bot (name, enabled, bot_token, app_token)
             SELECT 'Default Bot', true, '', ''
             WHERE NOT EXISTS (SELECT 1 FROM slack_bot)
-            RETURNING id
-        ),
-        default_bot_id AS (
-            SELECT COALESCE(
-                :first_row_id,
-                (SELECT id FROM inserted_bot),
-                (SELECT id FROM slack_bot LIMIT 1)
-            ) as bot_id
-        ),
-        channel_names AS (
+            RETURNING id;
+            """
+        )
+    )
+
+    # Get the bot ID to use (either from existing migration or newly created)
+    bot_id_query = sa.text(
+        """
+        SELECT COALESCE(
+            :first_row_id,
+            (SELECT id FROM slack_bot ORDER BY id ASC LIMIT 1)
+        ) as bot_id;
+        """
+    )
+    result = op.get_bind().execute(bot_id_query, {"first_row_id": first_row_id})
+    bot_id = result.scalar()
+
+    # CTE (Common Table Expression) that transforms the old slack_bot_config table data
+    # This splits up the channel_names into their own rows
+    channel_names_cte = """
+        WITH channel_names AS (
             SELECT
                 sbc.id as config_id,
                 sbc.persona_id,
@@ -145,15 +140,19 @@ def upgrade() -> None:
                 sbc.channel_config->'follow_up_tags' as follow_up_tags
             FROM slack_bot_config sbc
         )
+    """
+
+    # Insert the channel names into the new slack_channel_config table
+    insert_statement = """
         INSERT INTO slack_channel_config (
-            app_id,
+            slack_bot_id,
             persona_id,
             channel_config,
             response_type,
             enable_auto_filters
         )
         SELECT
-            (SELECT bot_id FROM default_bot_id),
+            :bot_id,
             channel_name.persona_id,
             jsonb_build_object(
                 'channel_name', channel_name.channel_name,
@@ -172,8 +171,8 @@ def upgrade() -> None:
             channel_name.enable_auto_filters
         FROM channel_names channel_name;
     """
-        ).bindparams(first_row_id=first_row_id)
-    )
+
+    op.execute(sa.text(channel_names_cte + insert_statement).bindparams(bot_id=bot_id))
 
     # Clean up old tokens if they existed
     try:
@@ -182,6 +181,18 @@ def upgrade() -> None:
             get_kv_store().delete("slack_bot_tokens_config_key")
     except Exception:
         logger.warning("tried to delete tokens in dynamic config but failed")
+    # Rename the table
+    op.rename_table(
+        "slack_bot_config__standard_answer_category",
+        "slack_channel_config__standard_answer_category",
+    )
+
+    # Rename the column
+    op.alter_column(
+        "slack_channel_config__standard_answer_category",
+        "slack_bot_config_id",
+        new_column_name="slack_channel_config_id",
+    )
 
     # Drop the table with CASCADE to handle dependent objects
     op.execute("DROP TABLE slack_bot_config CASCADE")
@@ -231,6 +242,18 @@ def downgrade() -> None:
         GROUP BY persona_id, response_type, enable_auto_filters;
     """
         ).bindparams()
+    )
+    # Rename the column back
+    op.alter_column(
+        "slack_channel_config__standard_answer_category",
+        "slack_channel_config_id",
+        new_column_name="slack_bot_config_id",
+    )
+
+    # Rename the table back
+    op.rename_table(
+        "slack_channel_config__standard_answer_category",
+        "slack_bot_config__standard_answer_category",
     )
 
     # Drop the new tables in reverse order
