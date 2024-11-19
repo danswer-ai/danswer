@@ -9,7 +9,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import Link from "next/link";
 import { SlackChannelConfigsTable } from "../../SlackChannelConfigsTable";
 import { useSlackBot, useSlackChannelConfigsByBot } from "../../hooks";
-import { ExistingSlackBotForm } from "../SlackBotCreationForm";
+import { ExistingSlackBotForm } from "../SlackBotUpdateForm";
 import { FiPlusSquare } from "react-icons/fi";
 import { Separator } from "@/components/ui/separator";
 
@@ -18,6 +18,7 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
   const { popup, setPopup } = usePopup();
 
+  console.log("unwrappedParams", unwrappedParams);
   const {
     data: slackBot,
     isLoading: isSlackBotLoading,
@@ -44,7 +45,7 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch slack app ${unwrappedParams.id}: ${errorMsg}`}
+        errorMsg={`Failed to fetch Slack Bot ${unwrappedParams.id}: ${errorMsg}`}
       />
     );
   }
@@ -57,7 +58,7 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch slack app ${unwrappedParams.id}: ${errorMsg}`}
+        errorMsg={`Failed to fetch Slack Bot ${unwrappedParams.id}: ${errorMsg}`}
       />
     );
   }
@@ -66,7 +67,7 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
     <div className="container mx-auto">
       <InstantSSRAutoRefresh />
 
-      <BackButton routerOverride="/admin/bot" />
+      <BackButton routerOverride="/admin/bots" />
 
       <ExistingSlackBotForm
         existingSlackBot={slackBot}
@@ -90,7 +91,7 @@ function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
           text-sm
           w-80
         "
-        href={`/admin/bot/new?slack_bot_id=${unwrappedParams.id}`}
+        href={`/admin/bots/new?slack_bot_id=${unwrappedParams.id}`}
       >
         <div className="mx-auto flex">
           <FiPlusSquare className="my-auto mr-2" />

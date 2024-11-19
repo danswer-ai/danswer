@@ -4,7 +4,7 @@ import { NewSlackBotForm } from "../SlackBotCreationForm";
 async function NewSlackBotPage() {
   return (
     <div className="container mx-auto">
-      <BackButton routerOverride="/admin/bot" />
+      <BackButton routerOverride="/admin/bots" />
 
       <NewSlackBotForm />
     </div>

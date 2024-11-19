@@ -52,7 +52,6 @@ def _form_channel_config(
     try:
         cleaned_channel_name = validate_channel_name(
             db_session=db_session,
-            slack_bot_id=slack_channel_config_creation_request.slack_bot_id,
             channel_name=raw_channel_name,
             current_slack_channel_config_id=current_slack_channel_config_id,
         )
@@ -244,7 +243,7 @@ def patch_bot(
 def delete_bot(
     slack_bot_id: int,
     db_session: Session = Depends(get_session),
-    user: User | None = Depends(current_admin_user),
+    _: User | None = Depends(current_admin_user),
 ) -> None:
     remove_slack_bot(
         db_session=db_session,
@@ -252,13 +251,16 @@ def delete_bot(
     )
 
 
-@router.get("/admin/slack-app/bots/{bot_id}")
+@router.get("/admin/slack-app/bots/{slack_bot_id}")
 def get_bot_by_id(
-    bot_id: int,
+    slack_bot_id: int,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
 ) -> SlackBot:
-    slack_bot_model = fetch_slack_bot(db_session=db_session, slack_bot_id=bot_id)
+    slack_bot_model = fetch_slack_bot(
+        db_session=db_session,
+        slack_bot_id=slack_bot_id,
+    )
     return SlackBot.from_model(slack_bot_model)
 
 

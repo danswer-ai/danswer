@@ -1,6 +1,5 @@
-export interface SlackAppCreationRequest {
+export interface SlackBotCreationRequest {
   name: string;
-  description: string;
   enabled: boolean;
 
   bot_token: string;
@@ -8,21 +7,20 @@ export interface SlackAppCreationRequest {
 }
 
 const buildRequestBodyFromCreationRequest = (
-  creationRequest: SlackAppCreationRequest
+  creationRequest: SlackBotCreationRequest
 ) => {
   return JSON.stringify({
     name: creationRequest.name,
-    description: creationRequest.description,
     enabled: creationRequest.enabled,
     bot_token: creationRequest.bot_token,
     app_token: creationRequest.app_token,
   });
 };
 
-export const createSlackApp = async (
-  creationRequest: SlackAppCreationRequest
+export const createSlackBot = async (
+  creationRequest: SlackBotCreationRequest
 ) => {
-  return fetch("/api/manage/admin/slack-app/apps", {
+  return fetch("/api/manage/admin/slack-app/bots", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -31,9 +29,9 @@ export const createSlackApp = async (
   });
 };
 
-export const updateSlackApp = async (
+export const updateSlackBot = async (
   id: number,
-  creationRequest: SlackAppCreationRequest
+  creationRequest: SlackBotCreationRequest
 ) => {
   return fetch(`/api/manage/admin/slack-app/bots/${id}`, {
     method: "PATCH",
@@ -44,8 +42,8 @@ export const updateSlackApp = async (
   });
 };
 
-export const deleteSlackApp = async (id: number) => {
-  return fetch(`/api/manage/admin/slack-app/channel/${id}`, {
+export const deleteSlackBot = async (id: number) => {
+  return fetch(`/api/manage/admin/slack-app/bots/${id}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

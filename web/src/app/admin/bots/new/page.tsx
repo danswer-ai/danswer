@@ -1,5 +1,4 @@
 import { AdminPageTitle } from "@/components/admin/Title";
-import { CPUIcon } from "@/components/icons/icons";
 import { SlackChannelConfigCreationForm } from "../SlackChannelConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -12,6 +11,7 @@ import {
 } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 import { redirect } from "next/navigation";
 import { Persona } from "../../assistants/interfaces";
+import { SourceIcon } from "@/components/SourceIcon";
 
 async function NewSlackBotConfigPage({
   searchParams,
@@ -23,7 +23,7 @@ async function NewSlackBotConfigPage({
     ? parseInt(slack_bot_id_raw as string, 10)
     : null;
   if (!slack_bot_id || isNaN(slack_bot_id)) {
-    redirect("/admin/bot");
+    redirect("/admin/bots");
     return null;
   }
 
@@ -60,8 +60,8 @@ async function NewSlackBotConfigPage({
     <div className="container mx-auto">
       <BackButton />
       <AdminPageTitle
-        icon={<CPUIcon size={32} />}
-        title="New Slack Channel Config"
+        icon={<SourceIcon iconSize={32} sourceType={"slack"} />}
+        title="Configure DanswerBot for Slack Channel"
       />
 
       <SlackChannelConfigCreationForm

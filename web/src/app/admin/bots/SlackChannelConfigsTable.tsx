@@ -63,7 +63,7 @@ export function SlackChannelConfigsTable({
                       <div className="flex gap-x-2">
                         <Link
                           className="cursor-pointer my-auto"
-                          href={`/admin/bot/${slackChannelConfig.id}`}
+                          href={`/admin/bots/${slackChannelConfig.id}`}
                         >
                           <EditIcon />
                         </Link>
@@ -132,7 +132,8 @@ export function SlackChannelConfigsTable({
                   colSpan={4}
                   className="text-center text-muted-foreground"
                 >
-                  Add a new Slack bot configuration and it will show up here
+                  Please add a New Slack Bot Configuration to begin chatting
+                  with Danswer!
                 </TableCell>
               </TableRow>
             )}

@@ -159,7 +159,7 @@ export const SlackChannelConfigCreationForm = ({
             }
             formikHelpers.setSubmitting(false);
             if (response.ok) {
-              router.push(`/admin/bot/app/${slack_bot_id}?u=${Date.now()}`);
+              router.push(`/admin/bots/bot/${slack_bot_id}?u=${Date.now()}`);
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;

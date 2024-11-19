@@ -5,7 +5,8 @@ import { SlackBot } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import CardSection from "@/components/admin/CardSection";
 import { Button } from "@/components/ui/button";
-import { updateSlackApp, SlackAppCreationRequest } from "./app/new/lib";
+import { updateSlackBot, SlackBotCreationRequest } from "./bot/new/lib";
+
 interface SlackBotTokensFormProps {
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
@@ -42,9 +43,9 @@ export const SlackBotTokensForm = ({
           }
 
           formikHelpers.setSubmitting(true);
-          const response = await updateSlackApp(
+          const response = await updateSlackBot(
             existingSlackApp?.id || 0,
-            values as SlackAppCreationRequest
+            values as SlackBotCreationRequest
           );
           formikHelpers.setSubmitting(false);
           if (response.ok) {

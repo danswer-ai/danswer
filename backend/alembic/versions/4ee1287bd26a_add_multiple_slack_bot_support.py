@@ -77,7 +77,7 @@ def upgrade() -> None:
 
         session = Session(bind=op.get_bind())
         new_slack_bot = SlackBot(
-            name="Slack App (Migrated)",
+            name="Slack Bot (Migrated)",
             enabled=True,
             bot_token=bot_token,
             app_token=app_token,

@@ -35,7 +35,7 @@ def update_slack_bot(
 ) -> SlackBot:
     slack_bot = db_session.scalar(select(SlackBot).where(SlackBot.id == slack_bot_id))
     if slack_bot is None:
-        raise ValueError(f"Unable to find slack app with ID {slack_bot_id}")
+        raise ValueError(f"Unable to find Slack Bot with ID {slack_bot_id}")
 
     # update the app
     slack_bot.name = name
@@ -48,25 +48,28 @@ def update_slack_bot(
     return slack_bot
 
 
+def fetch_slack_bot(
+    db_session: Session,
+    slack_bot_id: int,
+) -> SlackBot:
+    slack_bot = db_session.scalar(select(SlackBot).where(SlackBot.id == slack_bot_id))
+    if slack_bot is None:
+        raise ValueError(f"Unable to find Slack Bot with ID {slack_bot_id}")
+
+    return slack_bot
+
+
 def remove_slack_bot(
     db_session: Session,
     slack_bot_id: int,
 ) -> None:
-    slack_bot = db_session.scalar(select(SlackBot).where(SlackBot.id == slack_bot_id))
-    if slack_bot is None:
-        raise ValueError(f"Unable to find slack app with ID {slack_bot_id}")
+    slack_bot = fetch_slack_bot(
+        db_session=db_session,
+        slack_bot_id=slack_bot_id,
+    )
 
     db_session.delete(slack_bot)
     db_session.commit()
-
-
-def fetch_slack_bot(db_session: Session, slack_bot_id: int) -> SlackBot:
-    slack_bot = db_session.scalar(select(SlackBot).where(SlackBot.id == slack_bot_id))
-
-    if slack_bot is None:
-        raise ValueError(f"Unable to find slack app with ID {slack_bot_id}")
-
-    return slack_bot
 
 
 def fetch_slack_bots(db_session: Session) -> Sequence[SlackBot]:

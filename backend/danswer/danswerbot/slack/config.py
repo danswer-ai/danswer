@@ -33,24 +33,24 @@ def get_slack_channel_config_for_bot_and_channel(
 
 def validate_channel_name(
     db_session: Session,
-    slack_bot_id: int,
     channel_name: str,
     current_slack_channel_config_id: int | None,
 ) -> str:
     """Make sure that this channel_name does not exist in other Slack channel configs.
     Returns a cleaned up channel name (e.g. '#' removed if present)"""
     slack_bot_configs = fetch_slack_channel_configs(
-        db_session=db_session, slack_bot_id=slack_bot_id
+        db_session=db_session,
     )
     cleaned_channel_name = channel_name.lstrip("#").lower()
     for slack_channel_config in slack_bot_configs:
         if slack_channel_config.id == current_slack_channel_config_id:
             continue
 
-        if cleaned_channel_name in slack_channel_config.channel_config["channel_name"]:
+        if cleaned_channel_name == slack_channel_config.channel_config["channel_name"]:
             raise ValueError(
                 f"Channel name '{channel_name}' already exists in "
-                "another Slack channel config"
+                "another Slack channel config with in Slack Bot with name: "
+                f"{slack_channel_config.slack_bot.name}"
             )
 
     return cleaned_channel_name

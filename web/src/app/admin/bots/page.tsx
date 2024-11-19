@@ -86,11 +86,11 @@ const Main = () => {
             text-sm
             w-40
           "
-        href="/admin/bot/app/new"
+        href="/admin/bots/bot/new"
       >
         <div className="mx-auto flex">
           <FiPlusSquare className="my-auto mr-2" />
-          New Slack App
+          New Slack Bot
         </div>
       </Link>
 
@@ -104,7 +104,7 @@ const Page = () => {
     <div className="container mx-auto">
       <AdminPageTitle
         icon={<SourceIcon iconSize={36} sourceType={"slack"} />}
-        title="Slack Apps"
+        title="Slack Bots"
       />
       <InstantSSRAutoRefresh />
 
