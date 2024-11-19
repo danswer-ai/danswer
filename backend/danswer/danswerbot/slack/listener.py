@@ -27,7 +27,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
 from danswer.connectors.slack.utils import expert_info_from_slack_id
-from danswer.danswerbot.slack.config import get_slack_channel_config_for_app_and_channel
+from danswer.danswerbot.slack.config import get_slack_channel_config_for_bot_and_channel
 from danswer.danswerbot.slack.config import MAX_TENANTS_PER_POD
 from danswer.danswerbot.slack.config import TENANT_ACQUISITION_INTERVAL
 from danswer.danswerbot.slack.config import TENANT_HEARTBEAT_EXPIRATION
@@ -59,7 +59,7 @@ from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import check_message_limit
 from danswer.danswerbot.slack.utils import decompose_action_id
 from danswer.danswerbot.slack.utils import get_channel_name_from_id
-from danswer.danswerbot.slack.utils import get_danswer_bot_app_id
+from danswer.danswerbot.slack.utils import get_danswer_bot_slack_bot_id
 from danswer.danswerbot.slack.utils import read_slack_thread
 from danswer.danswerbot.slack.utils import remove_danswer_bot_tag
 from danswer.danswerbot.slack.utils import rephrase_slack_message
@@ -117,7 +117,7 @@ class SlackbotHandler:
     def __init__(self) -> None:
         logger.info("Initializing SlackbotHandler")
         self.tenant_ids: Set[str | None] = set()
-        # The keys for these dictionaries are tuples of (tenant_id, app_id)
+        # The keys for these dictionaries are tuples of (tenant_id, slack_bot_id)
         self.socket_clients: Dict[tuple[str | None, int], TenantSocketModeClient] = {}
         self.slack_bot_tokens: Dict[tuple[str | None, int], SlackBotTokens] = {}
 
@@ -176,38 +176,38 @@ class SlackbotHandler:
             self._shutdown_event.wait(timeout=TENANT_HEARTBEAT_INTERVAL)
 
     def _manage_clients_per_tenant(
-        self, db_session: Session, tenant_id: str | None, app: SlackBot
+        self, db_session: Session, tenant_id: str | None, bot: SlackBot
     ) -> None:
         slack_bot_tokens = SlackBotTokens(
-            bot_token=app.bot_token,
-            app_token=app.app_token,
+            bot_token=bot.bot_token,
+            app_token=bot.app_token,
         )
 
         logger.debug(
-            f"Setting tenant ID context variable for tenant {tenant_id}, app {app.id}"
+            f"Setting tenant ID context variable for tenant {tenant_id}, bot {bot.id}"
         )
 
         # If the tokens are not set, we need to close the socket client and delete the tokens
         # for the tenant and app
         if not slack_bot_tokens:
             logger.debug(
-                f"No Slack bot token found for tenant {tenant_id}, app {app.id}"
+                f"No Slack bot token found for tenant {tenant_id}, bot {bot.id}"
             )
-            if (tenant_id, app.id) in self.socket_clients:
-                asyncio.run(self.socket_clients[tenant_id, app.id].close())
-                del self.socket_clients[tenant_id, app.id]
-                del self.slack_bot_tokens[tenant_id, app.id]
+            if (tenant_id, bot.id) in self.socket_clients:
+                asyncio.run(self.socket_clients[tenant_id, bot.id].close())
+                del self.socket_clients[tenant_id, bot.id]
+                del self.slack_bot_tokens[tenant_id, bot.id]
             return
 
         if (
             tenant_id,
-            app.id,
+            bot.id,
         ) not in self.slack_bot_tokens or slack_bot_tokens != self.slack_bot_tokens[
-            (tenant_id, app.id)
+            (tenant_id, bot.id)
         ]:
-            if (tenant_id, app.id) in self.slack_bot_tokens:
+            if (tenant_id, bot.id) in self.slack_bot_tokens:
                 logger.info(
-                    f"Slack Bot tokens have changed for tenant {tenant_id}, app {app.id} - reconnecting"
+                    f"Slack Bot tokens have changed for tenant {tenant_id}, bot {bot.id} - reconnecting"
                 )
             else:
                 search_settings = get_current_search_settings(db_session)
@@ -218,12 +218,12 @@ class SlackbotHandler:
                 )
                 warm_up_bi_encoder(embedding_model=embedding_model)
 
-            self.slack_bot_tokens[(tenant_id, app.id)] = slack_bot_tokens
+            self.slack_bot_tokens[(tenant_id, bot.id)] = slack_bot_tokens
 
-            if (tenant_id, app.id) in self.socket_clients:
-                asyncio.run(self.socket_clients[tenant_id, app.id].close())
+            if (tenant_id, bot.id) in self.socket_clients:
+                asyncio.run(self.socket_clients[tenant_id, bot.id].close())
 
-            self.start_socket_client(app.id, tenant_id, slack_bot_tokens)
+            self.start_socket_client(bot.id, tenant_id, slack_bot_tokens)
 
     def acquire_tenants(self) -> None:
         tenant_ids = get_all_tenant_ids()
@@ -269,20 +269,20 @@ class SlackbotHandler:
             try:
                 with get_session_with_tenant(tenant_id) as db_session:
                     try:
-                        apps = fetch_slack_bots(db_session=db_session)
-                        for app in apps:
+                        bots = fetch_slack_bots(db_session=db_session)
+                        for bot in bots:
                             self._manage_clients_per_tenant(
                                 db_session=db_session,
                                 tenant_id=tenant_id,
-                                app=app,
+                                bot=bot,
                             )
 
                     except KvKeyNotFoundError:
                         logger.debug(f"Missing Slack Bot tokens for tenant {tenant_id}")
-                        if (tenant_id, app.id) in self.socket_clients:
-                            asyncio.run(self.socket_clients[tenant_id, app.id].close())
-                            del self.socket_clients[tenant_id, app.id]
-                            del self.slack_bot_tokens[tenant_id, app.id]
+                        if (tenant_id, bot.id) in self.socket_clients:
+                            asyncio.run(self.socket_clients[tenant_id, bot.id].close())
+                            del self.socket_clients[tenant_id, bot.id]
+                            del self.slack_bot_tokens[tenant_id, bot.id]
                     except Exception as e:
                         logger.exception(f"Error handling tenant {tenant_id}: {e}")
             finally:
@@ -301,11 +301,13 @@ class SlackbotHandler:
             )
 
     def start_socket_client(
-        self, app_id: int, tenant_id: str | None, slack_bot_tokens: SlackBotTokens
+        self, slack_bot_id: int, tenant_id: str | None, slack_bot_tokens: SlackBotTokens
     ) -> None:
-        logger.info(f"Starting socket client for tenant: {tenant_id}, app: {app_id}")
+        logger.info(
+            f"Starting socket client for tenant: {tenant_id}, app: {slack_bot_id}"
+        )
         socket_client: TenantSocketModeClient = _get_socket_client(
-            slack_bot_tokens, tenant_id, app_id
+            slack_bot_tokens, tenant_id, slack_bot_id
         )
 
         # Append the event handler
@@ -313,18 +315,22 @@ class SlackbotHandler:
         socket_client.socket_mode_request_listeners.append(process_slack_event)  # type: ignore
 
         # Establish a WebSocket connection to the Socket Mode servers
-        logger.info(f"Connecting socket client for tenant: {tenant_id}, app: {app_id}")
+        logger.info(
+            f"Connecting socket client for tenant: {tenant_id}, app: {slack_bot_id}"
+        )
         socket_client.connect()
-        self.socket_clients[tenant_id, app_id] = socket_client
+        self.socket_clients[tenant_id, slack_bot_id] = socket_client
         self.tenant_ids.add(tenant_id)
-        logger.info(f"Started SocketModeClient for tenant: {tenant_id}, app: {app_id}")
+        logger.info(
+            f"Started SocketModeClient for tenant: {tenant_id}, app: {slack_bot_id}"
+        )
 
     def stop_socket_clients(self) -> None:
         logger.info(f"Stopping {len(self.socket_clients)} socket clients")
-        for (tenant_id, app_id), client in self.socket_clients.items():
+        for (tenant_id, slack_bot_id), client in self.socket_clients.items():
             asyncio.run(client.close())
             logger.info(
-                f"Stopped SocketModeClient for tenant: {tenant_id}, app: {app_id}"
+                f"Stopped SocketModeClient for tenant: {tenant_id}, app: {slack_bot_id}"
             )
 
     def shutdown(self, signum: int | None, frame: FrameType | None) -> None:
@@ -409,7 +415,7 @@ def prefilter_requests(req: SocketModeRequest, client: TenantSocketModeClient) -
             )
             return False
 
-        bot_tag_id = get_danswer_bot_app_id(client.web_client)
+        bot_tag_id = get_danswer_bot_slack_bot_id(client.web_client)
         if event_type == "message":
             is_dm = event.get("channel_type") == "im"
             is_tagged = bot_tag_id and bot_tag_id in msg
@@ -432,9 +438,9 @@ def prefilter_requests(req: SocketModeRequest, client: TenantSocketModeClient) -
             )
 
             with get_session_with_tenant(client.tenant_id) as db_session:
-                slack_channel_config = get_slack_channel_config_for_app_and_channel(
+                slack_channel_config = get_slack_channel_config_for_bot_and_channel(
                     db_session=db_session,
-                    slack_bot_id=client.app_id,
+                    slack_bot_id=client.slack_bot_id,
                     channel_name=channel_name,
                 )
             # If DanswerBot is not specifically tagged and the channel is not set to respond to bots, ignore the message
@@ -645,9 +651,9 @@ def process_message(
         token = CURRENT_TENANT_ID_CONTEXTVAR.set(client.tenant_id)
     try:
         with get_session_with_tenant(client.tenant_id) as db_session:
-            slack_channel_config = get_slack_channel_config_for_app_and_channel(
+            slack_channel_config = get_slack_channel_config_for_bot_and_channel(
                 db_session=db_session,
-                slack_bot_id=client.app_id,
+                slack_bot_id=client.slack_bot_id,
                 channel_name=channel_name,
             )
 
@@ -753,7 +759,7 @@ def create_process_slack_event() -> (
 
 
 def _get_socket_client(
-    slack_bot_tokens: SlackBotTokens, tenant_id: str | None, app_id: int
+    slack_bot_tokens: SlackBotTokens, tenant_id: str | None, slack_bot_id: int
 ) -> TenantSocketModeClient:
     # For more info on how to set this up, checkout the docs:
     # https://docs.danswer.dev/slack_bot_setup
@@ -762,7 +768,7 @@ def _get_socket_client(
         app_token=slack_bot_tokens.app_token,
         web_client=WebClient(token=slack_bot_tokens.bot_token),
         tenant_id=tenant_id,
-        app_id=app_id,
+        slack_bot_id=slack_bot_id,
     )
 
 

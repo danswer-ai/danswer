@@ -13,7 +13,7 @@ VALID_SLACK_FILTERS = [
 ]
 
 
-def get_slack_channel_config_for_app_and_channel(
+def get_slack_channel_config_for_bot_and_channel(
     db_session: Session,
     slack_bot_id: int,
     channel_name: str | None,

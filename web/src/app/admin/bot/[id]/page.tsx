@@ -1,5 +1,6 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import { CPUIcon } from "@/components/icons/icons";
+import { SourceIcon } from "@/components/SourceIcon";
 import { SlackChannelConfigCreationForm } from "../SlackChannelConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
@@ -86,14 +87,9 @@ async function EditslackChannelConfigPage(props: {
 
       <BackButton />
       <AdminPageTitle
-        icon={<CPUIcon size={32} />}
+        icon={<SourceIcon sourceType={"slack"} iconSize={32} />}
         title="Edit Slack Channel Config"
       />
-
-      <Text className="mb-8">
-        Edit the existing configuration below! This config will determine how
-        DanswerBot behaves in the specified channels.
-      </Text>
 
       <SlackChannelConfigCreationForm
         slack_bot_id={slackChannelConfig.slack_bot_id}

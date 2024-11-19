@@ -13,7 +13,7 @@ export const useSlackChannelConfigs = () => {
 };
 
 export const useSlackBots = () => {
-  const url = "/api/manage/admin/slack-app/apps";
+  const url = "/api/manage/admin/slack-app/bots";
   const swrResponse = useSWR<SlackBot[]>(url, errorHandlingFetcher);
 
   return {
