@@ -3,12 +3,7 @@ concurrency:
   group: Run-Chromatic-Tests-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: true
 
-on:
-  merge_group:
-  pull_request:
-    branches:
-      - main
-      - 'release/**'
+on: push
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
