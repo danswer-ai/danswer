@@ -45,12 +45,11 @@ async function EditslackChannelConfigPage(props: {
   }
   const allslackChannelConfigs =
     (await slackChannelsResponse.json()) as SlackChannelConfig[];
-  console.log("allslackChannelConfigs", allslackChannelConfigs);
-  console.log("params.id", params.id);
+
   const slackChannelConfig = allslackChannelConfigs.find(
     (config) => config.id === Number(params.id)
   );
-  console.log("slackChannelConfig", slackChannelConfig);
+
   if (!slackChannelConfig) {
     return (
       <ErrorCallout

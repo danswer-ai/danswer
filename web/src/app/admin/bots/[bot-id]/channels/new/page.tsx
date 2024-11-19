@@ -13,12 +13,11 @@ import { redirect } from "next/navigation";
 import { Persona } from "../../../../assistants/interfaces";
 import { SourceIcon } from "@/components/SourceIcon";
 
-async function NewChannelConfigPage({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+async function NewChannelConfigPage(props: {
+  params: Promise<{ "bot-id": string }>;
 }) {
-  const slack_bot_id_raw = searchParams?.slack_bot_id || null;
+  const unwrappedParams = await props.params;
+  const slack_bot_id_raw = unwrappedParams?.["bot-id"] || null;
   const slack_bot_id = slack_bot_id_raw
     ? parseInt(slack_bot_id_raw as string, 10)
     : null;

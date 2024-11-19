@@ -5,7 +5,7 @@ import { SlackBot } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
 import CardSection from "@/components/admin/CardSection";
 import { Button } from "@/components/ui/button";
-import { updateSlackBot, SlackBotCreationRequest } from "./bot/new/lib";
+import { updateSlackBot, SlackBotCreationRequest } from "./new/lib";
 
 interface SlackBotTokensFormProps {
   onClose: () => void;
