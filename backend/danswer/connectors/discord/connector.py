@@ -153,7 +153,7 @@ async def _fetch_all_docs(
 class DiscordConnector(PollConnector):
     def __init__(
         self,
-        server_ids: list[int] | None = None,
+        server_ids: list[str] | None = None,
         channels: list[str] | None = None,
         batch_size: int = INDEX_BATCH_SIZE,
     ):
