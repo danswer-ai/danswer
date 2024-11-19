@@ -1,12 +1,12 @@
 from datetime import datetime
 from datetime import timezone
 
-import redis
 from celery import Celery
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
+from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
@@ -87,7 +87,7 @@ def try_generate_document_cc_pair_cleanup_tasks(
     cc_pair_id: int,
     db_session: Session,
     r: Redis,
-    lock_beat: redis.lock.Lock,
+    lock_beat: RedisLock,
     tenant_id: str | None,
 ) -> int | None:
     """Returns an int if syncing is needed. The int represents the number of sync tasks generated.
