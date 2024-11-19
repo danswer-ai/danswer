@@ -24,6 +24,11 @@ import { FilterDropdown } from "./FilterDropdown";
 import { listSourceMetadata } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
 import { TagFilter } from "./TagFilter";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverTrigger } from "@/components/ui/popover";
+import { PopoverContent } from "@radix-ui/react-popover";
+import { CalendarIcon } from "lucide-react";
+import { buildDateString, getTimeAgoString } from "@/lib/dateUtils";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="font-bold text-xs mt-2 flex">{children}</div>
@@ -106,10 +111,39 @@ export function SourceSelector({
         <FiFilter className="my-auto ml-2" size="16" />
       </div>
 
-      <SectionTitle>Time Range</SectionTitle>
-      <div className="mt-2">
-        <DateRangeSelector value={timeRange} onValueChange={setTimeRange} />
-      </div>
+      <Popover>
+        <PopoverTrigger asChild>
+          <div className="cursor-pointer">
+            <SectionTitle>Time Range</SectionTitle>
+            <p className="text-sm text-default mt-2">
+              {getTimeAgoString(timeRange?.from!) || "Select a time range"}
+            </p>
+          </div>
+        </PopoverTrigger>
+        <PopoverContent
+          className="bg-background border-border border rounded-md z-[200] p-0"
+          align="start"
+        >
+          <Calendar
+            mode="range"
+            selected={
+              timeRange
+                ? { from: new Date(timeRange.from), to: new Date(timeRange.to) }
+                : undefined
+            }
+            onSelect={(daterange) => {
+              const initialDate = daterange?.from || new Date();
+              const endDate = daterange?.to || new Date();
+              setTimeRange({
+                from: initialDate,
+                to: endDate,
+                selectValue: timeRange?.selectValue || "",
+              });
+            }}
+            className="rounded-md "
+          />
+        </PopoverContent>
+      </Popover>
 
       {availableTags.length > 0 && (
         <>
@@ -424,14 +458,57 @@ export function HorizontalSourceSelector({
 
   return (
     <div className="flex flex-nowrap  space-x-2">
-      <div className="max-w-24">
-        <DateRangeSelector
-          isHorizontal
-          value={timeRange}
-          onValueChange={setTimeRange}
-          className="bg-background-search-filter"
-        />
-      </div>
+      <Popover>
+        <PopoverTrigger asChild>
+          <div
+            className={`
+              border 
+              max-w-36
+              border-border 
+              rounded-lg 
+              bg-background
+              max-h-96 
+              overflow-y-scroll
+              overscroll-contain
+              px-3
+              text-sm
+              py-1.5
+              select-none
+              cursor-pointer
+              w-fit
+              gap-x-1
+              hover:bg-hover
+              bg-hover-light
+              flex
+              items-center
+              bg-background-search-filter
+              `}
+          >
+            <CalendarIcon className="h-4 w-4" />
+
+            {timeRange?.from ? getTimeAgoString(timeRange.from) : "Since"}
+          </div>
+        </PopoverTrigger>
+        <PopoverContent
+          className="bg-background border-border border rounded-md z-[200] p-0"
+          align="start"
+        >
+          <Calendar
+            mode="single"
+            selected={timeRange ? new Date(timeRange.from) : undefined}
+            onSelect={(date) => {
+              const selectedDate = date || new Date();
+              const today = new Date();
+              setTimeRange({
+                from: selectedDate > today ? today : selectedDate,
+                to: today,
+                selectValue: timeRange?.selectValue || "",
+              });
+            }}
+            className="rounded-md "
+          />
+        </PopoverContent>
+      </Popover>
 
       {existingSources.length > 0 && (
         <FilterDropdown
