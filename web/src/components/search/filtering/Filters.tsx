@@ -125,14 +125,18 @@ export function SourceSelector({
           align="start"
         >
           <Calendar
-            mode="single"
-            selected={timeRange ? new Date(timeRange.from) : undefined}
-            onSelect={(date) => {
-              const selectedDate = date || new Date();
-              const today = new Date();
+            mode="range"
+            selected={
+              timeRange
+                ? { from: new Date(timeRange.from), to: new Date(timeRange.to) }
+                : undefined
+            }
+            onSelect={(daterange) => {
+              const initialDate = daterange?.from || new Date();
+              const endDate = daterange?.to || new Date();
               setTimeRange({
-                from: selectedDate > today ? today : selectedDate,
-                to: today,
+                from: initialDate,
+                to: endDate,
                 selectValue: timeRange?.selectValue || "",
               });
             }}
