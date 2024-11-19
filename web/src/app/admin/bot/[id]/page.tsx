@@ -1,6 +1,6 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import { CPUIcon } from "@/components/icons/icons";
-import { SlackBotConfigCreationForm } from "../SlackBotConfigCreationForm";
+import { SlackChannelConfigCreationForm } from "../SlackChannelConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet, SlackChannelConfig } from "@/lib/types";
@@ -13,7 +13,7 @@ import {
 } from "@/lib/assistants/fetchAssistantsSS";
 import { getStandardAnswerCategoriesIfEE } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 
-async function EditSlackBotConfigPage(props: {
+async function EditslackChannelConfigPage(props: {
   params: Promise<{ id: number }>;
 }) {
   const params = await props.params;
@@ -24,7 +24,7 @@ async function EditSlackBotConfigPage(props: {
   ];
 
   const [
-    slackBotsResponse,
+    slackChannelsResponse,
     documentSetsResponse,
     [assistants, assistantsFetchError],
   ] = (await Promise.all(tasks)) as [
@@ -36,27 +36,27 @@ async function EditSlackBotConfigPage(props: {
   const eeStandardAnswerCategoryResponse =
     await getStandardAnswerCategoriesIfEE();
 
-  if (!slackBotsResponse.ok) {
+  if (!slackChannelsResponse.ok) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Failed to fetch slack bots - ${await slackBotsResponse.text()}`}
+        errorMsg={`Failed to fetch Slack Channels - ${await slackChannelsResponse.text()}`}
       />
     );
   }
-  const allSlackBotConfigs =
-    (await slackBotsResponse.json()) as SlackChannelConfig[];
-  console.log("allSlackBotConfigs", allSlackBotConfigs);
+  const allslackChannelConfigs =
+    (await slackChannelsResponse.json()) as SlackChannelConfig[];
+  console.log("allslackChannelConfigs", allslackChannelConfigs);
   console.log("params.id", params.id);
-  const slackBotConfig = allSlackBotConfigs.find(
+  const slackChannelConfig = allslackChannelConfigs.find(
     (config) => config.id === Number(params.id)
   );
-  console.log("slackBotConfig", slackBotConfig);
-  if (!slackBotConfig) {
+  console.log("slackChannelConfig", slackChannelConfig);
+  if (!slackChannelConfig) {
     return (
       <ErrorCallout
         errorTitle="Something went wrong :("
-        errorMsg={`Did not find Slack Bot config with ID: ${params.id}`}
+        errorMsg={`Did not find Slack Channel config with ID: ${params.id}`}
       />
     );
   }
@@ -87,7 +87,7 @@ async function EditSlackBotConfigPage(props: {
       <BackButton />
       <AdminPageTitle
         icon={<CPUIcon size={32} />}
-        title="Edit Slack Bot Config"
+        title="Edit Slack Channel Config"
       />
 
       <Text className="mb-8">
@@ -95,15 +95,15 @@ async function EditSlackBotConfigPage(props: {
         DanswerBot behaves in the specified channels.
       </Text>
 
-      <SlackBotConfigCreationForm
-        app_id={slackBotConfig.app_id}
+      <SlackChannelConfigCreationForm
+        slack_bot_id={slackChannelConfig.slack_bot_id}
         documentSets={documentSets}
         personas={assistants}
         standardAnswerCategoryResponse={eeStandardAnswerCategoryResponse}
-        existingSlackBotConfig={slackBotConfig}
+        existingSlackChannelConfig={slackChannelConfig}
       />
     </div>
   );
 }
 
-export default EditSlackBotConfigPage;
+export default EditslackChannelConfigPage;

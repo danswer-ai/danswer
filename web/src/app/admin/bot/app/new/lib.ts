@@ -35,7 +35,7 @@ export const updateSlackApp = async (
   id: number,
   creationRequest: SlackAppCreationRequest
 ) => {
-  return fetch(`/api/manage/admin/slack-bot/apps/${id}`, {
+  return fetch(`/api/manage/admin/slack-bot/bots/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

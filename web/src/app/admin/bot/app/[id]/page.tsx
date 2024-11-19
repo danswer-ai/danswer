@@ -6,41 +6,40 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { InstantSSRAutoRefresh } from "@/components/SSRAutoRefresh";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { SlackBotConfigsTable } from "../../SlackBotConfigsTable";
-import { useSlackApp, useSlackBotConfigsByApp } from "../../hooks";
-import { ExistingSlackAppForm } from "../SlackAppCreationForm";
+import { SlackChannelConfigsTable } from "../../SlackChannelConfigsTable";
+import { useSlackBot, useSlackChannelConfigsByBot } from "../../hooks";
+import { ExistingSlackBotForm } from "../SlackBotCreationForm";
 import { FiPlusSquare } from "react-icons/fi";
 import { Separator } from "@/components/ui/separator";
 
-function SlackAppEditPage({ params }: { params: Promise<{ id: string }> }) {
+function SlackBotEditPage({ params }: { params: Promise<{ id: string }> }) {
   // Unwrap the params promise
   const unwrappedParams = use(params);
   const { popup, setPopup } = usePopup();
 
   const {
-    data: slackApp,
-    isLoading: isSlackAppLoading,
-    error: slackAppError,
-    refreshSlackApp,
-  } = useSlackApp(Number(unwrappedParams.id));
+    data: slackBot,
+    isLoading: isSlackBotLoading,
+    error: slackBotError,
+    refreshSlackBot,
+  } = useSlackBot(Number(unwrappedParams.id));
 
   const {
-    data: slackAppConfigs,
-    isLoading: isSlackAppConfigsLoading,
-    error: slackAppConfigsError,
-    refreshSlackAppConfigs,
-  } = useSlackBotConfigsByApp(Number(unwrappedParams.id));
+    data: slackChannelConfigs,
+    isLoading: isSlackChannelConfigsLoading,
+    error: slackChannelConfigsError,
+    refreshSlackChannelConfigs,
+  } = useSlackChannelConfigsByBot(Number(unwrappedParams.id));
 
-  if (isSlackAppLoading || isSlackAppConfigsLoading) {
+  if (isSlackBotLoading || isSlackChannelConfigsLoading) {
     return <ThreeDotsLoader />;
   }
 
-  if (slackAppError || !slackApp) {
+  if (slackBotError || !slackBot) {
     const errorMsg =
-      slackAppError?.info?.message ||
-      slackAppError?.info?.detail ||
+      slackBotError?.info?.message ||
+      slackBotError?.info?.detail ||
       "An unknown error occurred";
     return (
       <ErrorCallout
@@ -50,10 +49,10 @@ function SlackAppEditPage({ params }: { params: Promise<{ id: string }> }) {
     );
   }
 
-  if (slackAppConfigsError || !slackAppConfigs) {
+  if (slackChannelConfigsError || !slackChannelConfigs) {
     const errorMsg =
-      slackAppConfigsError?.info?.message ||
-      slackAppConfigsError?.info?.detail ||
+      slackChannelConfigsError?.info?.message ||
+      slackChannelConfigsError?.info?.detail ||
       "An unknown error occurred";
     return (
       <ErrorCallout
@@ -69,19 +68,13 @@ function SlackAppEditPage({ params }: { params: Promise<{ id: string }> }) {
 
       <BackButton routerOverride="/admin/bot" />
 
-      <ExistingSlackAppForm
-        existingSlackApp={slackApp}
-        refreshSlackApp={refreshSlackApp}
+      <ExistingSlackBotForm
+        existingSlackBot={slackBot}
+        refreshSlackBot={refreshSlackBot}
       />
       <Separator />
 
       <div className="my-8" />
-
-      {/* <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold tracking-tight">
-          Slack Bot Configurations
-        </h2>
-      </div> */}
 
       <Link
         className="
@@ -97,18 +90,18 @@ function SlackAppEditPage({ params }: { params: Promise<{ id: string }> }) {
           text-sm
           w-80
         "
-        href={`/admin/bot/new?app_id=${unwrappedParams.id}`}
+        href={`/admin/bot/new?slack_bot_id=${unwrappedParams.id}`}
       >
         <div className="mx-auto flex">
           <FiPlusSquare className="my-auto mr-2" />
-          New Slack Bot Configuration
+          New Slack Channel Configuration
         </div>
       </Link>
 
       <div className="mt-8">
-        <SlackBotConfigsTable
-          slackBotConfigs={slackAppConfigs}
-          refresh={refreshSlackAppConfigs}
+        <SlackChannelConfigsTable
+          slackChannelConfigs={slackChannelConfigs}
+          refresh={refreshSlackChannelConfigs}
           setPopup={setPopup}
         />
       </div>
@@ -116,4 +109,4 @@ function SlackAppEditPage({ params }: { params: Promise<{ id: string }> }) {
   );
 }
 
-export default SlackAppEditPage;
+export default SlackBotEditPage;

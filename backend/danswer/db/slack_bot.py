@@ -9,7 +9,6 @@ from danswer.db.models import User
 
 def insert_slack_bot(
     name: str,
-    description: str,
     enabled: bool,
     bot_token: str,
     app_token: str,
@@ -17,7 +16,6 @@ def insert_slack_bot(
 ) -> SlackBot:
     slack_bot = SlackBot(
         name=name,
-        description=description,
         enabled=enabled,
         bot_token=bot_token,
         app_token=app_token,
@@ -31,7 +29,6 @@ def insert_slack_bot(
 def update_slack_bot(
     slack_bot_id: int,
     name: str,
-    description: str,
     enabled: bool,
     bot_token: str,
     app_token: str,
@@ -43,7 +40,6 @@ def update_slack_bot(
 
     # update the app
     slack_bot.name = name
-    slack_bot.description = description
     slack_bot.enabled = enabled
     slack_bot.bot_token = bot_token
     slack_bot.app_token = app_token

@@ -27,7 +27,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
 from danswer.connectors.slack.utils import expert_info_from_slack_id
-from danswer.danswerbot.slack.config import get_slack_bot_config_for_app_and_channel
+from danswer.danswerbot.slack.config import get_slack_channel_config_for_app_and_channel
 from danswer.danswerbot.slack.config import MAX_TENANTS_PER_POD
 from danswer.danswerbot.slack.config import TENANT_ACQUISITION_INTERVAL
 from danswer.danswerbot.slack.config import TENANT_HEARTBEAT_EXPIRATION
@@ -432,9 +432,9 @@ def prefilter_requests(req: SocketModeRequest, client: TenantSocketModeClient) -
             )
 
             with get_session_with_tenant(client.tenant_id) as db_session:
-                slack_channel_config = get_slack_bot_config_for_app_and_channel(
+                slack_channel_config = get_slack_channel_config_for_app_and_channel(
                     db_session=db_session,
-                    app_id=client.app_id,
+                    slack_bot_id=client.app_id,
                     channel_name=channel_name,
                 )
             # If DanswerBot is not specifically tagged and the channel is not set to respond to bots, ignore the message
@@ -645,9 +645,9 @@ def process_message(
         token = CURRENT_TENANT_ID_CONTEXTVAR.set(client.tenant_id)
     try:
         with get_session_with_tenant(client.tenant_id) as db_session:
-            slack_channel_config = get_slack_bot_config_for_app_and_channel(
+            slack_channel_config = get_slack_channel_config_for_app_and_channel(
                 db_session=db_session,
-                app_id=client.app_id,
+                slack_bot_id=client.app_id,
                 channel_name=channel_name,
             )
 

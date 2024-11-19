@@ -42,11 +42,11 @@ function ClickableTableRow({
   );
 }
 
-export function SlackAppTable({ slackApps }: { slackApps: SlackBot[] }) {
+export function SlackBotTable({ slackBots }: { slackBots: SlackBot[] }) {
   const [page, setPage] = useState(1);
 
   // sort by id for consistent ordering
-  slackApps.sort((a, b) => {
+  slackBots.sort((a, b) => {
     if (a.id < b.id) {
       return -1;
     } else if (a.id > b.id) {
@@ -56,7 +56,7 @@ export function SlackAppTable({ slackApps }: { slackApps: SlackBot[] }) {
     }
   });
 
-  const slackAppsForPage = slackApps.slice(
+  const slackBotsForPage = slackBots.slice(
     NUM_IN_PAGE * (page - 1),
     NUM_IN_PAGE * page
   );
@@ -72,22 +72,22 @@ export function SlackAppTable({ slackApps }: { slackApps: SlackBot[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {slackAppsForPage.map((slackApp) => {
+          {slackBotsForPage.map((slackBot) => {
             return (
               <ClickableTableRow
-                url={`/admin/bot/app/${slackApp.id}`}
-                key={slackApp.id}
+                url={`/admin/bot/app/${slackBot.id}`}
+                key={slackBot.id}
                 className="hover:bg-muted cursor-pointer"
               >
                 <TableCell>
                   <div className="flex items-center">
                     <FiEdit className="mr-4" />
-                    {slackApp.name}
+                    {slackBot.name}
                   </div>
                 </TableCell>
-                <TableCell>{slackApp.configs_count}</TableCell>
+                <TableCell>{slackBot.configs_count}</TableCell>
                 <TableCell>
-                  {slackApp.enabled ? (
+                  {slackBot.enabled ? (
                     <FiCheck className="text-emerald-600" size="18" />
                   ) : (
                     <FiXCircle className="text-red-600" size="18" />
@@ -98,11 +98,11 @@ export function SlackAppTable({ slackApps }: { slackApps: SlackBot[] }) {
           })}
         </TableBody>
       </Table>
-      {slackApps.length > NUM_IN_PAGE && (
+      {slackBots.length > NUM_IN_PAGE && (
         <div className="mt-3 flex">
           <div className="mx-auto">
             <PageSelector
-              totalPages={Math.ceil(slackApps.length / NUM_IN_PAGE)}
+              totalPages={Math.ceil(slackBots.length / NUM_IN_PAGE)}
               currentPage={page}
               onPageChange={(newPage) => {
                 setPage(newPage);

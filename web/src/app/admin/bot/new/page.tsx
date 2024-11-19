@@ -1,6 +1,6 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import { CPUIcon } from "@/components/icons/icons";
-import { SlackBotConfigCreationForm } from "../SlackBotConfigCreationForm";
+import { SlackChannelConfigCreationForm } from "../SlackChannelConfigCreationForm";
 import { fetchSS } from "@/lib/utilsSS";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { DocumentSet } from "@/lib/types";
@@ -18,9 +18,11 @@ async function NewSlackBotConfigPage({
 }: {
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
-  const app_id_raw = searchParams?.app_id || null;
-  const app_id = app_id_raw ? parseInt(app_id_raw as string, 10) : null;
-  if (!app_id || isNaN(app_id)) {
+  const slack_bot_id_raw = searchParams?.slack_bot_id || null;
+  const slack_bot_id = slack_bot_id_raw
+    ? parseInt(slack_bot_id_raw as string, 10)
+    : null;
+  if (!slack_bot_id || isNaN(slack_bot_id)) {
     redirect("/admin/bot");
     return null;
   }
@@ -59,11 +61,11 @@ async function NewSlackBotConfigPage({
       <BackButton />
       <AdminPageTitle
         icon={<CPUIcon size={32} />}
-        title="New Slack Bot Config"
+        title="New Slack Channel Config"
       />
 
-      <SlackBotConfigCreationForm
-        app_id={app_id}
+      <SlackChannelConfigCreationForm
+        slack_bot_id={slack_bot_id}
         documentSets={documentSets}
         personas={assistantsResponse[0]}
         standardAnswerCategoryResponse={standardAnswerCategoryResponse}

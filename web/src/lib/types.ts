@@ -204,7 +204,7 @@ export type AnswerFilterOption =
   | "questionmark_prefilter";
 
 export interface ChannelConfig {
-  channel_names: string[];
+  channel_name: string;
   respond_tag_only?: boolean;
   respond_to_bots?: boolean;
   respond_member_group_list?: string[];
@@ -216,7 +216,7 @@ export type SlackBotResponseType = "quotes" | "citations";
 
 export interface SlackChannelConfig {
   id: number;
-  app_id: number;
+  slack_bot_id: number;
   persona: Persona | null;
   channel_config: ChannelConfig;
   response_type: SlackBotResponseType;

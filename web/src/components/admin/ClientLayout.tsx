@@ -152,7 +152,7 @@ export function ClientLayout({
                           name: (
                             <div className="flex">
                               <SlackIconSkeleton className="text-icon-settings-sidebar" />
-                              <div className="ml-1">Slack Bots</div>
+                              <div className="ml-1">Slack Channels</div>
                             </div>
                           ),
                           link: "/admin/bot",

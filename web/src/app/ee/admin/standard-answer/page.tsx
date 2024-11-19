@@ -325,7 +325,7 @@ const StandardAnswersTable = ({
               <Text>
                 Ensure that you have added the category to the relevant{" "}
                 <a className="text-link" href="/admin/bot">
-                  Slack bot
+                  Slack Channel
                 </a>
                 .
               </Text>

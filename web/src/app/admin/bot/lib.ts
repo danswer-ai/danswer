@@ -5,12 +5,12 @@ import {
 } from "@/lib/types";
 import { Persona } from "../assistants/interfaces";
 
-interface SlackBotConfigCreationRequest {
-  app_id: number;
+interface SlackChannelConfigCreationRequest {
+  slack_bot_id: number;
   document_sets: number[];
   persona_id: number | null;
   enable_auto_filters: boolean;
-  channel_names: string[];
+  channel_name: string;
   answer_validity_check_enabled: boolean;
   questionmark_prefilter_enabled: boolean;
   respond_tag_only: boolean;
@@ -23,7 +23,7 @@ interface SlackBotConfigCreationRequest {
 }
 
 const buildFiltersFromCreationRequest = (
-  creationRequest: SlackBotConfigCreationRequest
+  creationRequest: SlackChannelConfigCreationRequest
 ): string[] => {
   const answerFilters = [] as string[];
   if (creationRequest.answer_validity_check_enabled) {
@@ -36,11 +36,11 @@ const buildFiltersFromCreationRequest = (
 };
 
 const buildRequestBodyFromCreationRequest = (
-  creationRequest: SlackBotConfigCreationRequest
+  creationRequest: SlackChannelConfigCreationRequest
 ) => {
   return JSON.stringify({
-    app_id: creationRequest.app_id,
-    channel_names: creationRequest.channel_names,
+    slack_bot_id: creationRequest.slack_bot_id,
+    channel_name: creationRequest.channel_name,
     respond_tag_only: creationRequest.respond_tag_only,
     respond_to_bots: creationRequest.respond_to_bots,
     enable_auto_filters: creationRequest.enable_auto_filters,
@@ -55,8 +55,8 @@ const buildRequestBodyFromCreationRequest = (
   });
 };
 
-export const createSlackBotConfig = async (
-  creationRequest: SlackBotConfigCreationRequest
+export const createSlackChannelConfig = async (
+  creationRequest: SlackChannelConfigCreationRequest
 ) => {
   return fetch("/api/manage/admin/slack-bot/config", {
     method: "POST",
@@ -67,9 +67,9 @@ export const createSlackBotConfig = async (
   });
 };
 
-export const updateSlackBotConfig = async (
+export const updateSlackChannelConfig = async (
   id: number,
-  creationRequest: SlackBotConfigCreationRequest
+  creationRequest: SlackChannelConfigCreationRequest
 ) => {
   return fetch(`/api/manage/admin/slack-bot/config/${id}`, {
     method: "PATCH",
@@ -80,7 +80,7 @@ export const updateSlackBotConfig = async (
   });
 };
 
-export const deleteSlackBotConfig = async (id: number) => {
+export const deleteSlackChannelConfig = async (id: number) => {
   return fetch(`/api/manage/admin/slack-bot/config/${id}`, {
     method: "DELETE",
     headers: {

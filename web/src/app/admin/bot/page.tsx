@@ -8,24 +8,24 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SourceIcon } from "@/components/SourceIcon";
-import { SlackAppTable } from "./SlackAppTable";
-import { useSlackApps } from "./hooks";
+import { SlackBotTable } from "./SlackBotTable";
+import { useSlackBots } from "./hooks";
 
 const Main = () => {
   const {
-    data: slackApps,
-    isLoading: isSlackAppsLoading,
-    error: slackAppsError,
-  } = useSlackApps();
+    data: slackBots,
+    isLoading: isSlackBotsLoading,
+    error: slackBotsError,
+  } = useSlackBots();
 
-  if (isSlackAppsLoading) {
+  if (isSlackBotsLoading) {
     return <ThreeDotsLoader />;
   }
 
-  if (slackAppsError || !slackApps) {
+  if (slackBotsError || !slackBots) {
     const errorMsg =
-      slackAppsError?.info?.message ||
-      slackAppsError?.info?.detail ||
+      slackBotsError?.info?.message ||
+      slackBotsError?.info?.detail ||
       "An unknown error occurred";
 
     return (
@@ -94,7 +94,7 @@ const Main = () => {
         </div>
       </Link>
 
-      <SlackAppTable slackApps={slackApps} />
+      <SlackBotTable slackBots={slackBots} />
     </div>
   );
 };

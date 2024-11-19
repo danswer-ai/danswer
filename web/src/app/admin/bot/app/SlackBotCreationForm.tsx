@@ -13,21 +13,21 @@ import { EditableStringFieldDisplay } from "@/components/EditableStringFieldDisp
 import { EditableTextAreaDisplay } from "@/components/EditableTextAreaDisplay";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { updateSlackAppField } from "@/lib/updateSlackAppField";
+import { updateSlackBotField } from "@/lib/updateSlackBotField";
 import { Checkbox } from "@/app/admin/settings/SettingsForm";
 
 const SlackTokensForm = ({
   isUpdate,
   initialValues,
-  existingSlackAppId,
-  refreshSlackApp,
+  existingSlackBotId,
+  refreshSlackBot,
   setPopup,
   router,
 }: {
   isUpdate: boolean;
   initialValues: any;
-  existingSlackAppId?: number;
-  refreshSlackApp?: () => void;
+  existingSlackBotId?: number;
+  refreshSlackBot?: () => void;
   setPopup: (popup: { message: string; type: "error" | "success" }) => void;
   router: any;
 }) => (
@@ -42,17 +42,17 @@ const SlackTokensForm = ({
 
       let response;
       if (isUpdate) {
-        response = await updateSlackApp(existingSlackAppId!, values);
+        response = await updateSlackApp(existingSlackBotId!, values);
       } else {
         response = await createSlackApp(values);
       }
       formikHelpers.setSubmitting(false);
       if (response.ok) {
-        if (refreshSlackApp) {
-          refreshSlackApp();
+        if (refreshSlackBot) {
+          refreshSlackBot();
         }
         const responseJson = await response.json();
-        const appId = isUpdate ? existingSlackAppId : responseJson.id;
+        const appId = isUpdate ? existingSlackBotId : responseJson.id;
         router.push(`/admin/bot/app/${appId}?u=${Date.now()}`);
       } else {
         const responseJson = await response.json();
@@ -100,15 +100,15 @@ const SlackTokensForm = ({
   </Formik>
 );
 
-export const ExistingSlackAppForm = ({
-  existingSlackApp,
-  refreshSlackApp,
+export const ExistingSlackBotForm = ({
+  existingSlackBot,
+  refreshSlackBot,
 }: {
-  existingSlackApp: SlackBot;
-  refreshSlackApp?: () => void;
+  existingSlackBot: SlackBot;
+  refreshSlackBot?: () => void;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [formValues, setFormValues] = useState(existingSlackApp);
+  const [formValues, setFormValues] = useState(existingSlackBot);
   const { popup, setPopup } = usePopup();
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -118,8 +118,8 @@ export const ExistingSlackAppForm = ({
     value: string | boolean
   ) => {
     try {
-      const response = await updateSlackAppField(
-        existingSlackApp,
+      const response = await updateSlackBotField(
+        existingSlackBot,
         field,
         value
       );
@@ -193,8 +193,8 @@ export const ExistingSlackAppForm = ({
                 <SlackTokensForm
                   isUpdate={true}
                   initialValues={formValues}
-                  existingSlackAppId={existingSlackApp.id}
-                  refreshSlackApp={refreshSlackApp}
+                  existingSlackBotId={existingSlackBot.id}
+                  refreshSlackBot={refreshSlackBot}
                   setPopup={setPopup}
                   router={router}
                 />
@@ -216,7 +216,7 @@ export const ExistingSlackAppForm = ({
   );
 };
 
-export const NewSlackAppForm = ({}: {}) => {
+export const NewSlackBotForm = ({}: {}) => {
   const [formValues] = useState({
     name: "Default Slack App Name",
     description: "This is a default Slack app description",

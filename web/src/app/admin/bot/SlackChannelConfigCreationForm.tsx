@@ -12,9 +12,9 @@ import {
   TextArrayField,
 } from "@/components/admin/connectors/Field";
 import {
-  createSlackBotConfig,
+  createSlackChannelConfig,
   isPersonaASlackBotPersona,
-  updateSlackBotConfig,
+  updateSlackChannelConfig,
 } from "./lib";
 import { Separator } from "@/components/ui/separator";
 import CardSection from "@/components/admin/CardSection";
@@ -34,24 +34,24 @@ import {
   TabsContent,
 } from "@/components/ui/fully_wrapped_tabs";
 
-export const SlackBotConfigCreationForm = ({
-  app_id,
+export const SlackChannelConfigCreationForm = ({
+  slack_bot_id,
   documentSets,
   personas,
   standardAnswerCategoryResponse,
-  existingSlackBotConfig,
+  existingSlackChannelConfig,
 }: {
-  app_id: number;
+  slack_bot_id: number;
   documentSets: DocumentSet[];
   personas: Persona[];
   standardAnswerCategoryResponse: StandardAnswerCategoryResponse;
-  existingSlackBotConfig?: SlackChannelConfig;
+  existingSlackChannelConfig?: SlackChannelConfig;
 }) => {
-  const isUpdate = existingSlackBotConfig !== undefined;
+  const isUpdate = existingSlackChannelConfig !== undefined;
   const { popup, setPopup } = usePopup();
   const router = useRouter();
-  const existingSlackBotUsesPersona = existingSlackBotConfig?.persona
-    ? !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
+  const existingSlackBotUsesPersona = existingSlackChannelConfig?.persona
+    ? !isPersonaASlackBotPersona(existingSlackChannelConfig.persona)
     : false;
   const [usingPersonas, setUsingPersonas] = useState(
     existingSlackBotUsesPersona
@@ -66,50 +66,52 @@ export const SlackBotConfigCreationForm = ({
         {popup}
         <Formik
           initialValues={{
-            app_id: app_id,
-            channel_names: existingSlackBotConfig
-              ? existingSlackBotConfig.channel_config.channel_names
-              : ([""] as string[]),
+            slack_bot_id: slack_bot_id,
+            channel_name:
+              existingSlackChannelConfig?.channel_config.channel_name,
             answer_validity_check_enabled: (
-              existingSlackBotConfig?.channel_config?.answer_filters || []
+              existingSlackChannelConfig?.channel_config?.answer_filters || []
             ).includes("well_answered_postfilter"),
             questionmark_prefilter_enabled: (
-              existingSlackBotConfig?.channel_config?.answer_filters || []
+              existingSlackChannelConfig?.channel_config?.answer_filters || []
             ).includes("questionmark_prefilter"),
             respond_tag_only:
-              existingSlackBotConfig?.channel_config?.respond_tag_only || false,
+              existingSlackChannelConfig?.channel_config?.respond_tag_only ||
+              false,
             respond_to_bots:
-              existingSlackBotConfig?.channel_config?.respond_to_bots || false,
+              existingSlackChannelConfig?.channel_config?.respond_to_bots ||
+              false,
             enable_auto_filters:
-              existingSlackBotConfig?.enable_auto_filters || false,
+              existingSlackChannelConfig?.enable_auto_filters || false,
             respond_member_group_list:
-              existingSlackBotConfig?.channel_config
+              existingSlackChannelConfig?.channel_config
                 ?.respond_member_group_list ?? [],
             still_need_help_enabled:
-              existingSlackBotConfig?.channel_config?.follow_up_tags !==
+              existingSlackChannelConfig?.channel_config?.follow_up_tags !==
               undefined,
             follow_up_tags:
-              existingSlackBotConfig?.channel_config?.follow_up_tags,
+              existingSlackChannelConfig?.channel_config?.follow_up_tags,
             document_sets:
-              existingSlackBotConfig && existingSlackBotConfig.persona
-                ? existingSlackBotConfig.persona.document_sets.map(
+              existingSlackChannelConfig && existingSlackChannelConfig.persona
+                ? existingSlackChannelConfig.persona.document_sets.map(
                     (documentSet) => documentSet.id
                   )
                 : ([] as number[]),
             // prettier-ignore
             persona_id:
-              existingSlackBotConfig?.persona &&
-              !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
-                ? existingSlackBotConfig.persona.id
+              existingSlackChannelConfig?.persona &&
+              !isPersonaASlackBotPersona(existingSlackChannelConfig.persona)
+                ? existingSlackChannelConfig.persona.id
                 : knowledgePersona?.id ?? null,
-            response_type: existingSlackBotConfig?.response_type || "citations",
-            standard_answer_categories: existingSlackBotConfig
-              ? existingSlackBotConfig.standard_answer_categories
+            response_type:
+              existingSlackChannelConfig?.response_type || "citations",
+            standard_answer_categories: existingSlackChannelConfig
+              ? existingSlackChannelConfig.standard_answer_categories
               : [],
           }}
           validationSchema={Yup.object().shape({
-            app_id: Yup.number().required(),
-            channel_names: Yup.array().of(Yup.string()),
+            slack_bot_id: Yup.number().required(),
+            channel_name: Yup.string(),
             response_type: Yup.string()
               .oneOf(["quotes", "citations"])
               .required(),
@@ -131,9 +133,9 @@ export const SlackBotConfigCreationForm = ({
             // remove empty channel names
             const cleanedValues = {
               ...values,
-              channel_names: values.channel_names.filter(
-                (channelName) => channelName !== ""
-              ),
+              slack_bot_id: slack_bot_id,
+              channel_name:
+                existingSlackChannelConfig?.channel_config.channel_name!,
               respond_member_group_list: values.respond_member_group_list,
               usePersona: usingPersonas,
               standard_answer_categories: values.standard_answer_categories.map(
@@ -149,16 +151,16 @@ export const SlackBotConfigCreationForm = ({
             }
             let response;
             if (isUpdate) {
-              response = await updateSlackBotConfig(
-                existingSlackBotConfig.id,
+              response = await updateSlackChannelConfig(
+                existingSlackChannelConfig.id,
                 cleanedValues
               );
             } else {
-              response = await createSlackBotConfig(cleanedValues);
+              response = await createSlackChannelConfig(cleanedValues);
             }
             formikHelpers.setSubmitting(false);
             if (response.ok) {
-              router.push(`/admin/bot/app/${app_id}?u=${Date.now()}`);
+              router.push(`/admin/bot/app/${slack_bot_id}?u=${Date.now()}`);
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;
@@ -174,15 +176,10 @@ export const SlackBotConfigCreationForm = ({
           {({ isSubmitting, values, setFieldValue }) => (
             <Form>
               <div className="px-6 pb-6 pt-4 w-full">
-                <TextArrayField
-                  name="channel_names"
-                  label="Channel Names"
-                  values={values}
-                  subtext="The names of the Slack channels you want this configuration to apply to. 
-                  For example, #ask-danswer."
-                  minFields={1}
-                  placeholder="Enter channel name..."
-                />
+                <div className="mb-4">
+                  <Label>Channel Name</Label>
+                  {values.channel_name}
+                </div>
 
                 <div className="mt-6">
                   <Label>Knowledge Sources</Label>
