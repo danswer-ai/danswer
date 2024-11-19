@@ -12,13 +12,15 @@ export default defineConfig({
   // reporter: [["html", { outputFolder: "test-results/output/report" }]], // HTML report location
   // outputDir: "test-results/output/screenshots", // Set output folder for test artifacts
   projects: [
-    // Setup project
     {
+      // dependency for admin workflows
       name: "admin_setup",
       testMatch: /.*\admin_auth.setup\.ts/,
     },
     {
+      // tests admin workflows
       name: "chromium-admin",
+      grep: /@admin/,
       use: {
         ...devices["Desktop Chrome"],
         // Use prepared auth state.
@@ -27,7 +29,9 @@ export default defineConfig({
       dependencies: ["admin_setup"],
     },
     {
-      name: "chromium-logged-out",
+      // tests logged out / guest workflows
+      name: "chromium-guest",
+      grep: /@guest/,
       use: {
         ...devices["Desktop Chrome"],
       },
