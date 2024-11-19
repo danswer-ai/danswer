@@ -54,6 +54,7 @@ def _form_channel_config(
             db_session=db_session,
             channel_name=raw_channel_name,
             current_slack_channel_config_id=current_slack_channel_config_id,
+            current_slack_bot_id=slack_channel_config_creation_request.slack_bot_id,
         )
     except ValueError as e:
         raise HTTPException(
