@@ -282,7 +282,7 @@
   scrollbar-color: #888 transparent;
 }
 
-.inputscroll::-webkit-scrollbar-track {
+.input-scroll::-webkit-scrollbar-track {
   background: #e5e7eb;
   scrollbar-width: none;
 }

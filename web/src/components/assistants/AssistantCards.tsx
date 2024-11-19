@@ -103,7 +103,7 @@ export function DraggableAssistantCard(props: {
     <div
       ref={setNodeRef}
       style={style}
-      className="overlow-y-scroll inputscroll flex items-center"
+      className="overlow-y-scroll input-scroll flex items-center"
     >
       <div {...attributes} {...listeners} className="mr-1 cursor-grab">
         <MdDragIndicator className="h-3 w-3 flex-none" />
