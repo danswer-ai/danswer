@@ -11,6 +11,8 @@ env:
 
 jobs:
   playwright-tests:
+    name: Playwright Tests
+
     # See https://runs-on.com/runners/linux/
     runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
     steps:
@@ -188,7 +190,8 @@ jobs:
           docker compose -f docker-compose.dev.yml -p danswer-stack down -v
 
   chromatic-tests:
-    name: Run Chromatic
+    name: Chromatic Tests
+    
     needs: playwright-tests
     runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
     steps:

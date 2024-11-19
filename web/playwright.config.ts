@@ -1,8 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  // Other Playwright config options
   testDir: "./tests/e2e", // Folder for test files
+  reporter: "list",
   // Configure paths for screenshots
   // expect: {
   //   toMatchSnapshot: {
