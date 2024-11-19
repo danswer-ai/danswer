@@ -1,7 +1,9 @@
 import traceback
 from functools import partial
+from http import HTTPStatus
 from typing import Protocol
 
+import httpx
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from sqlalchemy.orm import Session
@@ -154,6 +156,14 @@ def index_doc_batch_with_handler(
             tenant_id=tenant_id,
         )
     except Exception as e:
+        if isinstance(e, httpx.HTTPStatusError):
+            if e.response.status_code == HTTPStatus.INSUFFICIENT_STORAGE:
+                logger.error(
+                    "NOTE: HTTP Status 507 Insufficient Storage indicates "
+                    "you need to allocate more memory or disk space to the "
+                    "Vespa/index container."
+                )
+
         if INDEXING_EXCEPTION_LIMIT == 0:
             raise
 
