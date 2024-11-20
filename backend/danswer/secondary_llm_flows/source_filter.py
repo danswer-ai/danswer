@@ -167,7 +167,6 @@ def extract_source_filter(
         model_out: str,
     ) -> list[DocumentSource] | None:
         try:
-            print("EXTRACTING")
             sources_dict = extract_embedded_json(model_out)
             sources_list = sources_dict.get(SOURCES_KEY)
             if not sources_list:
