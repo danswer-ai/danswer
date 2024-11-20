@@ -29,13 +29,14 @@ def test_connector_creation(reset: None) -> None:
 
 def test_overlapping_connector_creation(reset: None) -> None:
     """Tests that connectors indexing the same documents don't interfere with each other.
-    Previous errors included document by cc pair entries not being added for new connectors
+    A previous bug involved document by cc pair entries not being added for new connectors
     when the docs existed already via another connector and were up to date relative to the source.
     """
     admin_user: DATestUser = UserManager.create(name="admin_user")
 
     config = {
         "wiki_base": os.environ["CONFLUENCE_TEST_SPACE_URL"],
+        "space": "DailyConne",
         "is_cloud": True,
         "page_id": "",
     }
@@ -58,7 +59,7 @@ def test_overlapping_connector_creation(reset: None) -> None:
     )
 
     CCPairManager.wait_for_indexing(
-        cc_pair_1, now, timeout=180, user_performing_action=admin_user
+        cc_pair_1, now, timeout=120, user_performing_action=admin_user
     )
 
     now = datetime.now(timezone.utc)
@@ -71,7 +72,7 @@ def test_overlapping_connector_creation(reset: None) -> None:
     )
 
     CCPairManager.wait_for_indexing(
-        cc_pair_2, now, timeout=180, user_performing_action=admin_user
+        cc_pair_2, now, timeout=120, user_performing_action=admin_user
     )
 
     info_1 = CCPairManager.get_single(cc_pair_1.id, user_performing_action=admin_user)
