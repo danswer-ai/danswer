@@ -87,6 +87,20 @@ export async function runConnector(
   return null;
 }
 
+export async function stopIndexing(ccPairId: number): Promise<string | null> {
+  const response = await fetch("/api/manage/admin/connector/indexing/stop", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cc_pair_id: ccPairId,
+    }),
+  });
+  if (!response.ok) {
+    return (await response.json()).detail;
+  }
+  return null;
+}
+
 export async function deleteConnectorIfExistsAndIsUnlinked({
   source,
   name,

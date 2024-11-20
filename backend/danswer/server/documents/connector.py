@@ -894,6 +894,40 @@ def connector_run_once(
     )
 
 
+@router.post("/admin/connector/indexing/stop")
+def connector_indexing_stop(
+    cc_pair_id: int,
+    _: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+    tenant_id: str = Depends(get_current_tenant_id),
+) -> StatusResponse:
+    """Used to stop indexing on a cc pair."""
+
+    # Get the primary search settings
+    primary_search_settings = get_current_search_settings(db_session)
+    search_settings_list = [primary_search_settings]
+
+    # Check for secondary search settings
+    secondary_search_settings = get_secondary_search_settings(db_session)
+    if secondary_search_settings is not None:
+        # If secondary settings exist, add them to the list
+        search_settings_list.append(secondary_search_settings)
+
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+
+    for search_settings in search_settings_list:
+        redis_connector_index = redis_connector.new_index(search_settings.id)
+        if not redis_connector_index.fenced:
+            continue
+
+        redis_connector.stop.set_fence(True)
+
+        redis_connector_index.payload
+        # app.control.revoke(payload.celery_task_id)
+
+    return StatusResponse(success=True, message="Stopped indexing")
+
+
 """Endpoints for basic users"""
 
 
