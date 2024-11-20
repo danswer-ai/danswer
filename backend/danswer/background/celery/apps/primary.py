@@ -1,5 +1,6 @@
 import multiprocessing
 from typing import Any
+from typing import cast
 
 from celery import bootsteps  # type: ignore
 from celery import Celery
@@ -96,8 +97,8 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     r = get_redis_client(tenant_id=None)
 
     # Log the role and slave count - being connected to a slave or slave count > 0 could be problematic
-    info: dict[str, Any] = r.info("replication")
-    role: str = info.get("role")
+    info: dict[str, Any] = cast(dict, r.info("replication"))
+    role: str = cast(str, info.get("role"))
     connected_slaves: int = info.get("connected_slaves", 0)
 
     logger.info(
