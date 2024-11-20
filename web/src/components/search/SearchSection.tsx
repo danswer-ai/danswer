@@ -698,7 +698,7 @@ export const SearchSection = ({
           </div>
         </div>
 
-        <div className="absolute include-scrollbar h-screen overflow-y-auto left-0 w-full top-0">
+        <div className="absolute left-0 w-full top-0">
           <FunctionalHeader
             sidebarToggled={toggledSidebar}
             reset={() => setQuery("")}
