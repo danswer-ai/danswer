@@ -1,34 +1,52 @@
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { SlackBotTokens } from "@/lib/types";
+import { SlackBot } from "@/lib/types";
 import { TextFormField } from "@/components/admin/connectors/Field";
-import { setSlackBotTokens } from "./lib";
 import CardSection from "@/components/admin/CardSection";
 import { Button } from "@/components/ui/button";
+import { updateSlackBot, SlackBotCreationRequest } from "./new/lib";
 
 interface SlackBotTokensFormProps {
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
-  existingTokens?: SlackBotTokens;
+  existingSlackApp?: SlackBot;
+  onTokensSet?: (tokens: { bot_token: string; app_token: string }) => void;
+  embedded?: boolean;
+  noForm?: boolean;
 }
 
 export const SlackBotTokensForm = ({
   onClose,
   setPopup,
-  existingTokens,
+  existingSlackApp,
+  onTokensSet,
+  embedded = true,
+  noForm = true,
 }: SlackBotTokensFormProps) => {
+  const Wrapper = embedded ? "div" : CardSection;
+
+  const FormWrapper = noForm ? "div" : Form;
+
   return (
-    <CardSection>
+    <Wrapper className="w-full">
       <Formik
-        initialValues={existingTokens || { app_token: "", bot_token: "" }}
+        initialValues={existingSlackApp || { app_token: "", bot_token: "" }}
         validationSchema={Yup.object().shape({
-          channel_names: Yup.array().of(Yup.string().required()),
-          document_sets: Yup.array().of(Yup.number()),
+          bot_token: Yup.string().required(),
+          app_token: Yup.string().required(),
         })}
         onSubmit={async (values, formikHelpers) => {
+          if (embedded && onTokensSet) {
+            onTokensSet(values);
+            return;
+          }
+
           formikHelpers.setSubmitting(true);
-          const response = await setSlackBotTokens(values);
+          const response = await updateSlackBot(
+            existingSlackApp?.id || 0,
+            values as SlackBotCreationRequest
+          );
           formikHelpers.setSubmitting(false);
           if (response.ok) {
             setPopup({
@@ -46,25 +64,29 @@ export const SlackBotTokensForm = ({
         }}
       >
         {({ isSubmitting }) => (
-          <Form>
+          <FormWrapper className="w-full">
             <TextFormField
+              width="w-full"
               name="bot_token"
               label="Slack Bot Token"
               type="password"
             />
             <TextFormField
+              width="w-full"
               name="app_token"
               label="Slack App Token"
               type="password"
             />
-            <div className="flex">
-              <Button type="submit" disabled={isSubmitting} variant="submit">
-                Set Tokens
-              </Button>
-            </div>
-          </Form>
+            {!embedded && (
+              <div className="flex w-full">
+                <Button type="submit" disabled={isSubmitting} variant="submit">
+                  Set Tokens
+                </Button>
+              </div>
+            )}
+          </FormWrapper>
         )}
       </Formik>
-    </CardSection>
+    </Wrapper>
   );
 };

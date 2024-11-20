@@ -3,47 +3,55 @@
 import { ArrayHelpers, FieldArray, Form, Formik } from "formik";
 import * as Yup from "yup";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { DocumentSet, SlackBotConfig } from "@/lib/types";
+import { DocumentSet, SlackChannelConfig } from "@/lib/types";
 import {
   BooleanFormField,
   Label,
   SelectorFormField,
   SubLabel,
   TextArrayField,
+  TextFormField,
 } from "@/components/admin/connectors/Field";
 import {
-  createSlackBotConfig,
+  createSlackChannelConfig,
   isPersonaASlackBotPersona,
-  updateSlackBotConfig,
-} from "./lib";
-import { Separator } from "@/components/ui/separator";
+  updateSlackChannelConfig,
+} from "../lib";
 import CardSection from "@/components/admin/CardSection";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { Persona } from "../assistants/interfaces";
+import { Persona } from "@/app/admin/assistants/interfaces";
 import { useState } from "react";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
-import CollapsibleSection from "../assistants/CollapsibleSection";
+import CollapsibleSection from "@/app/admin/assistants/CollapsibleSection";
 import { StandardAnswerCategoryResponse } from "@/components/standardAnswers/getStandardAnswerCategoriesIfEE";
 import { StandardAnswerCategoryDropdownField } from "@/components/standardAnswers/StandardAnswerCategoryDropdown";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/fully_wrapped_tabs";
 
-export const SlackBotCreationForm = ({
+export const SlackChannelConfigCreationForm = ({
+  slack_bot_id,
   documentSets,
   personas,
   standardAnswerCategoryResponse,
-  existingSlackBotConfig,
+  existingSlackChannelConfig,
 }: {
+  slack_bot_id: number;
   documentSets: DocumentSet[];
   personas: Persona[];
   standardAnswerCategoryResponse: StandardAnswerCategoryResponse;
-  existingSlackBotConfig?: SlackBotConfig;
+  existingSlackChannelConfig?: SlackChannelConfig;
 }) => {
-  const isUpdate = existingSlackBotConfig !== undefined;
+  const isUpdate = existingSlackChannelConfig !== undefined;
   const { popup, setPopup } = usePopup();
   const router = useRouter();
-  const existingSlackBotUsesPersona = existingSlackBotConfig?.persona
-    ? !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
+  const existingSlackBotUsesPersona = existingSlackChannelConfig?.persona
+    ? !isPersonaASlackBotPersona(existingSlackChannelConfig.persona)
     : false;
   const [usingPersonas, setUsingPersonas] = useState(
     existingSlackBotUsesPersona
@@ -58,48 +66,52 @@ export const SlackBotCreationForm = ({
         {popup}
         <Formik
           initialValues={{
-            channel_names: existingSlackBotConfig
-              ? existingSlackBotConfig.channel_config.channel_names
-              : ([""] as string[]),
+            slack_bot_id: slack_bot_id,
+            channel_name:
+              existingSlackChannelConfig?.channel_config.channel_name,
             answer_validity_check_enabled: (
-              existingSlackBotConfig?.channel_config?.answer_filters || []
+              existingSlackChannelConfig?.channel_config?.answer_filters || []
             ).includes("well_answered_postfilter"),
             questionmark_prefilter_enabled: (
-              existingSlackBotConfig?.channel_config?.answer_filters || []
+              existingSlackChannelConfig?.channel_config?.answer_filters || []
             ).includes("questionmark_prefilter"),
             respond_tag_only:
-              existingSlackBotConfig?.channel_config?.respond_tag_only || false,
+              existingSlackChannelConfig?.channel_config?.respond_tag_only ||
+              false,
             respond_to_bots:
-              existingSlackBotConfig?.channel_config?.respond_to_bots || false,
+              existingSlackChannelConfig?.channel_config?.respond_to_bots ||
+              false,
             enable_auto_filters:
-              existingSlackBotConfig?.enable_auto_filters || false,
+              existingSlackChannelConfig?.enable_auto_filters || false,
             respond_member_group_list:
-              existingSlackBotConfig?.channel_config
+              existingSlackChannelConfig?.channel_config
                 ?.respond_member_group_list ?? [],
             still_need_help_enabled:
-              existingSlackBotConfig?.channel_config?.follow_up_tags !==
+              existingSlackChannelConfig?.channel_config?.follow_up_tags !==
               undefined,
             follow_up_tags:
-              existingSlackBotConfig?.channel_config?.follow_up_tags,
+              existingSlackChannelConfig?.channel_config?.follow_up_tags,
             document_sets:
-              existingSlackBotConfig && existingSlackBotConfig.persona
-                ? existingSlackBotConfig.persona.document_sets.map(
+              existingSlackChannelConfig && existingSlackChannelConfig.persona
+                ? existingSlackChannelConfig.persona.document_sets.map(
                     (documentSet) => documentSet.id
                   )
                 : ([] as number[]),
             // prettier-ignore
             persona_id:
-              existingSlackBotConfig?.persona &&
-              !isPersonaASlackBotPersona(existingSlackBotConfig.persona)
-                ? existingSlackBotConfig.persona.id
+              existingSlackChannelConfig?.persona &&
+              !isPersonaASlackBotPersona(existingSlackChannelConfig.persona)
+                ? existingSlackChannelConfig.persona.id
                 : knowledgePersona?.id ?? null,
-            response_type: existingSlackBotConfig?.response_type || "citations",
-            standard_answer_categories: existingSlackBotConfig
-              ? existingSlackBotConfig.standard_answer_categories
+            response_type:
+              existingSlackChannelConfig?.response_type || "citations",
+            standard_answer_categories: existingSlackChannelConfig
+              ? existingSlackChannelConfig.standard_answer_categories
               : [],
           }}
           validationSchema={Yup.object().shape({
-            channel_names: Yup.array().of(Yup.string()),
+            slack_bot_id: Yup.number().required(),
+            channel_name: Yup.string(),
             response_type: Yup.string()
               .oneOf(["quotes", "citations"])
               .required(),
@@ -118,12 +130,10 @@ export const SlackBotCreationForm = ({
           onSubmit={async (values, formikHelpers) => {
             formikHelpers.setSubmitting(true);
 
-            // remove empty channel names
             const cleanedValues = {
               ...values,
-              channel_names: values.channel_names.filter(
-                (channelName) => channelName !== ""
-              ),
+              slack_bot_id: slack_bot_id,
+              channel_name: values.channel_name!,
               respond_member_group_list: values.respond_member_group_list,
               usePersona: usingPersonas,
               standard_answer_categories: values.standard_answer_categories.map(
@@ -139,16 +149,16 @@ export const SlackBotCreationForm = ({
             }
             let response;
             if (isUpdate) {
-              response = await updateSlackBotConfig(
-                existingSlackBotConfig.id,
+              response = await updateSlackChannelConfig(
+                existingSlackChannelConfig.id,
                 cleanedValues
               );
             } else {
-              response = await createSlackBotConfig(cleanedValues);
+              response = await createSlackChannelConfig(cleanedValues);
             }
             formikHelpers.setSubmitting(false);
             if (response.ok) {
-              router.push(`/admin/bot?u=${Date.now()}`);
+              router.push(`/admin/bots/${slack_bot_id}`);
             } else {
               const responseJson = await response.json();
               const errorMsg = responseJson.detail || responseJson.message;
@@ -164,53 +174,38 @@ export const SlackBotCreationForm = ({
           {({ isSubmitting, values, setFieldValue }) => (
             <Form>
               <div className="px-6 pb-6 pt-4 w-full">
-                <TextArrayField
-                  name="channel_names"
-                  label="Channel Names"
-                  values={values}
-                  subtext="The names of the Slack channels you want this configuration to apply to. 
-                  For example, #ask-danswer."
-                  minFields={1}
-                  placeholder="Enter channel name..."
+                <TextFormField
+                  name="channel_name"
+                  label="Slack Channel Name:"
                 />
 
                 <div className="mt-6">
                   <Label>Knowledge Sources</Label>
-
                   <SubLabel>
                     Controls which information DanswerBot will pull from when
                     answering questions.
                   </SubLabel>
 
-                  <div className="flex mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setUsingPersonas(false)}
-                      className={`p-2 font-bold text-xs mr-3 ${
-                        !usingPersonas
-                          ? "rounded bg-background-900 text-text-100 underline"
-                          : "hover:underline bg-background-100"
-                      }`}
-                    >
-                      Document Sets
-                    </button>
+                  <Tabs
+                    defaultValue="document_sets"
+                    className="w-full mt-4"
+                    value={usingPersonas ? "assistants" : "document_sets"}
+                    onValueChange={(value) =>
+                      setUsingPersonas(value === "assistants")
+                    }
+                  >
+                    <TabsList>
+                      <TabsTrigger value="document_sets">
+                        Document Sets
+                      </TabsTrigger>
+                      <TabsTrigger value="assistants">Assistants</TabsTrigger>
+                    </TabsList>
 
-                    <button
-                      type="button"
-                      onClick={() => setUsingPersonas(true)}
-                      className={`p-2 font-bold text-xs  ${
-                        usingPersonas
-                          ? "rounded bg-background-900 text-text-100 underline"
-                          : "hover:underline bg-background-100"
-                      }`}
-                    >
-                      Assistants
-                    </button>
-                  </div>
-
-                  <div className="mt-4">
-                    {/* TODO: make this look nicer */}
-                    {usingPersonas ? (
+                    <TabsContent value="assistants">
+                      <SubLabel>
+                        Select the assistant DanswerBot will use while answering
+                        questions in Slack.
+                      </SubLabel>
                       <SelectorFormField
                         name="persona_id"
                         options={personas.map((persona) => {
@@ -220,7 +215,17 @@ export const SlackBotCreationForm = ({
                           };
                         })}
                       />
-                    ) : (
+                    </TabsContent>
+
+                    <TabsContent value="document_sets">
+                      <SubLabel>
+                        Select the document sets DanswerBot will use while
+                        answering questions in Slack.
+                      </SubLabel>
+                      <SubLabel>
+                        Note: If No Document Sets are selected, DanswerBot will
+                        search through all connected documents.
+                      </SubLabel>
                       <FieldArray
                         name="document_sets"
                         render={(arrayHelpers: ArrayHelpers) => (
@@ -248,20 +253,13 @@ export const SlackBotCreationForm = ({
                                 );
                               })}
                             </div>
-                            <div>
-                              <SubLabel>
-                                Note: If left blank, DanswerBot will search
-                                through all connected documents.
-                              </SubLabel>
-                            </div>
+                            <div></div>
                           </div>
                         )}
                       />
-                    )}
-                  </div>
+                    </TabsContent>
+                  </Tabs>
                 </div>
-
-                <Separator />
 
                 <AdvancedOptionsToggle
                   showAdvancedOptions={showAdvancedOptions}

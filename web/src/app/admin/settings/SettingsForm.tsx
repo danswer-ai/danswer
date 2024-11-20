@@ -11,19 +11,19 @@ import React, { useContext, useState, useEffect } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 
-function Checkbox({
+export function Checkbox({
   label,
   sublabel,
   checked,
   onChange,
 }: {
   label: string;
-  sublabel: string;
+  sublabel?: string;
   checked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <label className="flex text-sm mb-4">
+    <label className="flex text-sm">
       <input
         checked={checked}
         onChange={onChange}
@@ -32,7 +32,7 @@ function Checkbox({
       />
       <div>
         <Label>{label}</Label>
-        <SubLabel>{sublabel}</SubLabel>
+        {sublabel && <SubLabel>{sublabel}</SubLabel>}
       </div>
     </label>
   );
