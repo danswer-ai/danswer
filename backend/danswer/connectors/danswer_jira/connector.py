@@ -47,6 +47,10 @@ def _paginate_jql_search(
 ) -> Iterable[Issue]:
     start = 0
     while True:
+        logger.debug(
+            f"Fetching Jira issues with JQL: {jql}, "
+            f"starting at {start}, max results: {max_results}"
+        )
         issues = jira_client.search_issues(
             jql_str=jql,
             startAt=start,
@@ -160,9 +164,7 @@ class JiraConnector(LoadConnector, PollConnector, SlimConnector):
         labels_to_skip: list[str] = JIRA_CONNECTOR_LABELS_TO_SKIP,
     ) -> None:
         self.batch_size = batch_size
-        self.jira_base, jira_project = extract_jira_project(jira_project_url)
-        # Quote the project name to handle reserved words
-        self.quoted_jira_project = f'"{jira_project}"'
+        self.jira_base, self._jira_project = extract_jira_project(jira_project_url)
         self._jira_client: JIRA | None = None
         self._comment_email_blacklist = comment_email_blacklist or []
 
@@ -177,6 +179,11 @@ class JiraConnector(LoadConnector, PollConnector, SlimConnector):
         if self._jira_client is None:
             raise ConnectorMissingCredentialError("Jira")
         return self._jira_client
+
+    @property
+    def quoted_jira_project(self) -> str:
+        # Quote the project name to handle reserved words
+        return f'"{self._jira_project}"'
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self._jira_client = build_jira_client(
