@@ -20,6 +20,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 RATE_LIMIT_MESSAGE_LOWERCASE = "Rate limit exceeded".lower()
 
+# https://jira.atlassian.com/browse/CONFCLOUD-76433
 _PROBLEMATIC_EXPANSIONS = "body.storage.value"
 _REPLACEMENT_EXPANSIONS = "body.view.value"
 
