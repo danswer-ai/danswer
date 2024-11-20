@@ -108,15 +108,12 @@ jobs:
       - name: Start Docker containers
         run: |
           cd deployment/docker_compose
-          cp env.prod.template .env
-          cp env.nginx.template .env.nginx
-          sed -i 's/^DOMAIN=$/DOMAIN=localhost/' .env.nginx
           ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true \
           AUTH_TYPE=basic \
           REQUIRE_EMAIL_VERIFICATION=false \
           DISABLE_TELEMETRY=true \
           IMAGE_TAG=test \
-          docker compose -f docker-compose.prod.yml -p danswer-stack up -d
+          docker compose -f docker-compose.dev.yml -p danswer-stack up -d
         id: start_docker
 
       - name: Wait for service to be ready
