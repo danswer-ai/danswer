@@ -116,6 +116,14 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             is_cloud=self.is_cloud,
             wiki_base=self.wiki_base,
         )
+
+        spaces = self.confluence_client.get_all_spaces(limit=1)
+        if not spaces:
+            raise RuntimeError(
+                f"No spaces found at {self.wiki_base}! "
+                "Check your credentials and wiki_base and make sure "
+                "is_cloud is set correctly."
+            )
         return None
 
     def _get_comment_string_for_page_id(self, page_id: str) -> str:
