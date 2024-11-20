@@ -48,11 +48,10 @@ from httpx_oauth.integrations.fastapi import OAuth2AuthorizeCallback
 from httpx_oauth.oauth2 import BaseOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
 from pydantic import BaseModel
-from sqlalchemy import select
 from sqlalchemy import text
-from sqlalchemy.orm import attributes
 from sqlalchemy.orm import Session
 
+from danswer.auth.api_key import get_hashed_api_key_from_request
 from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
@@ -75,6 +74,7 @@ from danswer.configs.constants import AuthType
 from danswer.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
 from danswer.configs.constants import DANSWER_API_KEY_PREFIX
 from danswer.configs.constants import UNNAMED_KEY_PLACEHOLDER
+from danswer.db.api_key import fetch_user_for_api_key
 from danswer.db.auth import get_access_token_db
 from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
@@ -83,22 +83,25 @@ from danswer.db.auth import SQLAlchemyUserAdminDB
 from danswer.db.engine import get_async_session_with_tenant
 from danswer.db.engine import get_session
 from danswer.db.engine import get_session_with_tenant
-from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
 from danswer.db.models import User
-from danswer.db.models import UserTenantMapping
 from danswer.db.users import get_user_by_email
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 from danswer.utils.variable_functionality import fetch_versioned_implementation
-from shared_configs.configs import CURRENT_TENANT_ID_CONTEXTVAR
+from shared_configs.configs import async_return_default_schema
 from shared_configs.configs import MULTI_TENANT
-from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
-
+from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
+
+
+class BasicAuthenticationError(HTTPException):
+    def __init__(self, detail: str):
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
 
 def is_user_admin(user: User | None) -> bool:
@@ -190,20 +193,6 @@ def verify_email_domain(email: str) -> None:
             )
 
 
-def get_tenant_id_for_email(email: str) -> str:
-    if not MULTI_TENANT:
-        return POSTGRES_DEFAULT_SCHEMA
-    # Implement logic to get tenant_id from the mapping table
-    with Session(get_sqlalchemy_engine()) as db_session:
-        result = db_session.execute(
-            select(UserTenantMapping.tenant_id).where(UserTenantMapping.email == email)
-        )
-        tenant_id = result.scalar_one_or_none()
-    if tenant_id is None:
-        raise exceptions.UserNotExists()
-    return tenant_id
-
-
 def send_user_verification_email(
     user_email: str,
     token: str,
@@ -232,25 +221,26 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = USER_AUTH_SECRET
     verification_token_secret = USER_AUTH_SECRET
 
+    user_db: SQLAlchemyUserDatabase[User, uuid.UUID]
+
     async def create(
         self,
         user_create: schemas.UC | UserCreate,
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        try:
-            tenant_id = (
-                get_tenant_id_for_email(user_create.email)
-                if MULTI_TENANT
-                else POSTGRES_DEFAULT_SCHEMA
-            )
-        except exceptions.UserNotExists:
-            raise HTTPException(status_code=401, detail="User not found")
+        referral_source = None
+        if request is not None:
+            referral_source = request.cookies.get("referral_source", None)
 
-        if not tenant_id:
-            raise HTTPException(
-                status_code=401, detail="User does not belong to an organization"
-            )
+        tenant_id = await fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.provisioning",
+            "get_or_create_tenant_id",
+            async_return_default_schema,
+        )(
+            email=user_create.email,
+            referral_source=referral_source,
+        )
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
@@ -258,7 +248,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             verify_email_is_invited(user_create.email)
             verify_email_domain(user_create.email)
             if MULTI_TENANT:
-                tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
+                tenant_user_db = SQLAlchemyUserAdminDB[User, uuid.UUID](
+                    db_session, User, OAuthAccount
+                )
                 self.user_db = tenant_user_db
                 self.database = tenant_user_db
 
@@ -271,20 +263,15 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     user_create.role = UserRole.ADMIN
                 else:
                     user_create.role = UserRole.BASIC
-            user = None
+
             try:
                 user = await super().create(user_create, safe=safe, request=request)  # type: ignore
             except exceptions.UserAlreadyExists:
                 user = await self.get_by_email(user_create.email)
                 # Handle case where user has used product outside of web and is now creating an account through web
-                if (
-                    not user.has_web_login
-                    and hasattr(user_create, "has_web_login")
-                    and user_create.has_web_login
-                ):
+                if not user.role.is_web_login() and user_create.role.is_web_login():
                     user_update = UserUpdate(
                         password=user_create.password,
-                        has_web_login=True,
                         role=user_create.role,
                         is_verified=user_create.is_verified,
                     )
@@ -292,11 +279,13 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 else:
                     raise exceptions.UserAlreadyExists()
 
-            CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
+            finally:
+                CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
+
             return user
 
     async def oauth_callback(
-        self: "BaseUserManager[models.UOAP, models.ID]",
+        self,
         oauth_name: str,
         access_token: str,
         account_id: str,
@@ -307,20 +296,24 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         *,
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
-    ) -> models.UOAP:
-        # Get tenant_id from mapping table
-        try:
-            tenant_id = (
-                get_tenant_id_for_email(account_email)
-                if MULTI_TENANT
-                else POSTGRES_DEFAULT_SCHEMA
-            )
-        except exceptions.UserNotExists:
-            raise HTTPException(status_code=401, detail="User not found")
+    ) -> User:
+        referral_source = None
+        if request:
+            referral_source = getattr(request.state, "referral_source", None)
+
+        tenant_id = await fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.provisioning",
+            "get_or_create_tenant_id",
+            async_return_default_schema,
+        )(
+            email=account_email,
+            referral_source=referral_source,
+        )
 
         if not tenant_id:
             raise HTTPException(status_code=401, detail="User not found")
 
+        # Proceed with the tenant context
         token = None
         async with get_async_session_with_tenant(tenant_id) as db_session:
             token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
@@ -329,9 +322,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             verify_email_domain(account_email)
 
             if MULTI_TENANT:
-                tenant_user_db = SQLAlchemyUserAdminDB(db_session, User, OAuthAccount)
+                tenant_user_db = SQLAlchemyUserAdminDB[User, uuid.UUID](
+                    db_session, User, OAuthAccount
+                )
                 self.user_db = tenant_user_db
-                self.database = tenant_user_db  # type: ignore
+                self.database = tenant_user_db
 
             oauth_account_dict = {
                 "oauth_name": oauth_name,
@@ -371,9 +366,9 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                     # Explicitly set the Postgres schema for this session to ensure
                     # OAuth account creation happens in the correct tenant schema
                     await db_session.execute(text(f'SET search_path = "{tenant_id}"'))
-                    user = await self.user_db.add_oauth_account(
-                        user, oauth_account_dict
-                    )
+
+                    # Add OAuth account
+                    await self.user_db.add_oauth_account(user, oauth_account_dict)
                     await self.on_after_register(user, request)
 
             else:
@@ -383,7 +378,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                         and existing_oauth_account.oauth_name == oauth_name
                     ):
                         user = await self.user_db.update_oauth_account(
-                            user, existing_oauth_account, oauth_account_dict
+                            user,
+                            # NOTE: OAuthAccount DOES implement the OAuthAccountProtocol
+                            # but the type checker doesn't know that :(
+                            existing_oauth_account,  # type: ignore
+                            oauth_account_dict,
                         )
 
             # NOTE: Most IdPs have very short expiry times, and we don't want to force the user to
@@ -396,16 +395,15 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 )
 
             # Handle case where user has used product outside of web and is now creating an account through web
-            if not user.has_web_login:  # type: ignore
+            if not user.role.is_web_login():
                 await self.user_db.update(
                     user,
                     {
                         "is_verified": is_verified_by_default,
-                        "has_web_login": True,
+                        "role": UserRole.BASIC,
                     },
                 )
                 user.is_verified = is_verified_by_default
-                user.has_web_login = True  # type: ignore
 
             # this is needed if an organization goes from `TRACK_EXTERNAL_IDP_EXPIRY=true` to `false`
             # otherwise, the oidc expiry will always be old, and the user will never be able to login
@@ -453,7 +451,13 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         email = credentials.username
 
         # Get tenant_id from mapping table
-        tenant_id = get_tenant_id_for_email(email)
+        tenant_id = await fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.provisioning",
+            "get_or_create_tenant_id",
+            async_return_default_schema,
+        )(
+            email=email,
+        )
         if not tenant_id:
             # User not found in mapping
             self.password_helper.hash(credentials.password)
@@ -474,11 +478,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
                 self.password_helper.hash(credentials.password)
                 return None
 
-            has_web_login = attributes.get_attribute(user, "has_web_login")
-
-            if not has_web_login:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
+            if not user.role.is_web_login():
+                raise BasicAuthenticationError(
                     detail="NO_WEB_LOGIN_AND_HAS_NO_PASSWORD",
                 )
 
@@ -510,19 +511,30 @@ cookie_transport = CookieTransport(
 
 # This strategy is used to add tenant_id to the JWT token
 class TenantAwareJWTStrategy(JWTStrategy):
-    async def write_token(self, user: User) -> str:
-        tenant_id = get_tenant_id_for_email(user.email)
+    async def _create_token_data(self, user: User, impersonate: bool = False) -> dict:
+        tenant_id = await fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.provisioning",
+            "get_or_create_tenant_id",
+            async_return_default_schema,
+        )(
+            email=user.email,
+        )
+
         data = {
             "sub": str(user.id),
             "aud": self.token_audience,
             "tenant_id": tenant_id,
         }
+        return data
+
+    async def write_token(self, user: User) -> str:
+        data = await self._create_token_data(user)
         return generate_jwt(
             data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm
         )
 
 
-def get_jwt_strategy() -> JWTStrategy:
+def get_jwt_strategy() -> TenantAwareJWTStrategy:
     return TenantAwareJWTStrategy(
         secret=USER_AUTH_SECRET,
         lifetime_seconds=SESSION_EXPIRE_TIME_SECONDS,
@@ -624,14 +636,12 @@ async def double_check_user(
         return None
 
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User is not authenticated.",
         )
 
     if user_needs_to_be_verified() and not user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User is not verified.",
         )
 
@@ -640,8 +650,7 @@ async def double_check_user(
         and user.oidc_expiry < datetime.now(timezone.utc)
         and not include_expired
     ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User's OIDC token has expired.",
         )
 
@@ -654,10 +663,24 @@ async def current_user_with_expired_token(
     return await double_check_user(user, include_expired=True)
 
 
-async def current_user(
+async def current_limited_user(
     user: User | None = Depends(optional_user),
 ) -> User | None:
     return await double_check_user(user)
+
+
+async def current_user(
+    user: User | None = Depends(optional_user),
+) -> User | None:
+    user = await double_check_user(user)
+    if not user:
+        return None
+
+    if user.role == UserRole.LIMITED:
+        raise BasicAuthenticationError(
+            detail="Access denied. User role is LIMITED. BASIC or higher permissions are required.",
+        )
+    return user
 
 
 async def current_curator_or_admin_user(
@@ -667,15 +690,13 @@ async def current_curator_or_admin_user(
         return None
 
     if not user or not hasattr(user, "role"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User is not authenticated or lacks role information.",
         )
 
     allowed_roles = {UserRole.GLOBAL_CURATOR, UserRole.CURATOR, UserRole.ADMIN}
     if user.role not in allowed_roles:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User is not a curator or admin.",
         )
 
@@ -687,8 +708,7 @@ async def current_admin_user(user: User | None = Depends(current_user)) -> User 
         return None
 
     if not user or not hasattr(user, "role") or user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User must be an admin to perform this action.",
         )
 
@@ -716,8 +736,6 @@ def generate_state_token(
 
 
 # refer to https://github.com/fastapi-users/fastapi-users/blob/42ddc241b965475390e2bce887b084152ae1a2cd/fastapi_users/fastapi_users.py#L91
-
-
 def create_danswer_oauth_router(
     oauth_client: BaseOAuth2,
     backend: AuthenticationBackend,
@@ -767,15 +785,22 @@ def get_oauth_router(
         response_model=OAuth2AuthorizeResponse,
     )
     async def authorize(
-        request: Request, scopes: List[str] = Query(None)
+        request: Request,
+        scopes: List[str] = Query(None),
     ) -> OAuth2AuthorizeResponse:
+        referral_source = request.cookies.get("referral_source", None)
+
         if redirect_url is not None:
             authorize_redirect_url = redirect_url
         else:
             authorize_redirect_url = str(request.url_for(callback_route_name))
 
         next_url = request.query_params.get("next", "/")
-        state_data: Dict[str, str] = {"next_url": next_url}
+
+        state_data: Dict[str, str] = {
+            "next_url": next_url,
+            "referral_source": referral_source or "default_referral",
+        }
         state = generate_state_token(state_data, state_secret)
         authorization_url = await oauth_client.get_authorization_url(
             authorize_redirect_url,
@@ -834,8 +859,11 @@ def get_oauth_router(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
         next_url = state_data.get("next_url", "/")
+        referral_source = state_data.get("referral_source", None)
 
-        # Authenticate user
+        request.state.referral_source = referral_source
+
+        # Proceed to authenticate or create the user
         try:
             user = await user_manager.oauth_callback(
                 oauth_client.name,
@@ -877,7 +905,25 @@ def get_oauth_router(
             redirect_response.status_code = response.status_code
         if hasattr(response, "media_type"):
             redirect_response.media_type = response.media_type
-
         return redirect_response
 
     return router
+
+
+def api_key_dep(
+    request: Request, db_session: Session = Depends(get_session)
+) -> User | None:
+    if AUTH_TYPE == AuthType.DISABLED:
+        return None
+
+    hashed_api_key = get_hashed_api_key_from_request(request)
+    if not hashed_api_key:
+        raise HTTPException(status_code=401, detail="Missing API key")
+
+    if hashed_api_key:
+        user = fetch_user_for_api_key(hashed_api_key, db_session)
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    return user

@@ -17,6 +17,7 @@ from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.interfaces import SlimConnector
 from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
@@ -80,15 +81,15 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         if cql_query:
             # if a cql_query is provided, we will use it to fetch the pages
             cql_page_query = cql_query
-        elif space:
-            # if no cql_query is provided, we will use the space to fetch the pages
-            cql_page_query += f" and space='{quote(space)}'"
         elif page_id:
+            # if a cql_query is not provided, we will use the page_id to fetch the page
             if index_recursively:
                 cql_page_query += f" and ancestor='{page_id}'"
             else:
-                # if neither a space nor a cql_query is provided, we will use the page_id to fetch the page
                 cql_page_query += f" and id='{page_id}'"
+        elif space:
+            # if no cql_query or page_id is provided, we will use the space to fetch the pages
+            cql_page_query += f" and space='{quote(space)}'"
 
         self.cql_page_query = cql_page_query
         self.cql_time_filter = ""
@@ -145,7 +146,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         # The url and the id are the same
         object_url = build_confluence_document_id(
-            self.wiki_base, confluence_object["_links"]["webui"]
+            self.wiki_base, confluence_object["_links"]["webui"], self.is_cloud
         )
 
         object_text = None
@@ -249,7 +250,11 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         self.cql_time_filter += f" and lastmodified <= '{formatted_end_time}'"
         return self._fetch_document_batches()
 
-    def retrieve_all_slim_documents(self) -> GenerateSlimDocumentOutput:
+    def retrieve_all_slim_documents(
+        self,
+        start: SecondsSinceUnixEpoch | None = None,
+        end: SecondsSinceUnixEpoch | None = None,
+    ) -> GenerateSlimDocumentOutput:
         if self.confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
 
@@ -273,7 +278,9 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 doc_metadata_list.append(
                     SlimDocument(
                         id=build_confluence_document_id(
-                            self.wiki_base, page["_links"]["webui"]
+                            self.wiki_base,
+                            page["_links"]["webui"],
+                            self.is_cloud,
                         ),
                         perm_sync_data=perm_sync_data,
                     )
@@ -288,7 +295,9 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                         doc_metadata_list.append(
                             SlimDocument(
                                 id=build_confluence_document_id(
-                                    self.wiki_base, attachment["_links"]["webui"]
+                                    self.wiki_base,
+                                    attachment["_links"]["webui"],
+                                    self.is_cloud,
                                 ),
                                 perm_sync_data=perm_sync_data,
                             )

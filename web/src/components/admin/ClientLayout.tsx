@@ -155,7 +155,7 @@ export function ClientLayout({
                               <div className="ml-1">Slack Bots</div>
                             </div>
                           ),
-                          link: "/admin/bot",
+                          link: "/admin/bots",
                         },
                         {
                           name: (
@@ -289,20 +289,20 @@ export function ClientLayout({
                                 ),
                                 link: "/admin/groups",
                               },
-                              {
-                                name: (
-                                  <div className="flex">
-                                    <KeyIconSkeleton
-                                      className="text-icon-settings-sidebar"
-                                      size={18}
-                                    />
-                                    <div className="ml-1">API Keys</div>
-                                  </div>
-                                ),
-                                link: "/admin/api-key",
-                              },
                             ]
                           : []),
+                        {
+                          name: (
+                            <div className="flex">
+                              <KeyIconSkeleton
+                                className="text-icon-settings-sidebar"
+                                size={18}
+                              />
+                              <div className="ml-1">API Keys</div>
+                            </div>
+                          ),
+                          link: "/admin/api-key",
+                        },
                         {
                           name: (
                             <div className="flex">
@@ -420,7 +420,7 @@ export function ClientLayout({
           <div className="fixed bg-background left-0 gap-x-4 mb-8 px-4 py-2 w-full items-center flex justify-end">
             <UserDropdown />
           </div>
-          <div className="pt-20 flex overflow-y-auto h-full px-4 md:px-12">
+          <div className="pt-20 flex overflow-y-auto overflow-x-hidden h-full px-4 md:px-12">
             {children}
           </div>
         </div>

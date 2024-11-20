@@ -163,6 +163,17 @@ try:
 except ValueError:
     POSTGRES_POOL_RECYCLE = POSTGRES_POOL_RECYCLE_DEFAULT
 
+# Experimental setting to control idle transactions
+POSTGRES_IDLE_SESSIONS_TIMEOUT_DEFAULT = 0  # milliseconds
+try:
+    POSTGRES_IDLE_SESSIONS_TIMEOUT = int(
+        os.environ.get(
+            "POSTGRES_IDLE_SESSIONS_TIMEOUT", POSTGRES_IDLE_SESSIONS_TIMEOUT_DEFAULT
+        )
+    )
+except ValueError:
+    POSTGRES_IDLE_SESSIONS_TIMEOUT = POSTGRES_IDLE_SESSIONS_TIMEOUT_DEFAULT
+
 REDIS_SSL = os.getenv("REDIS_SSL", "").lower() == "true"
 REDIS_HOST = os.environ.get("REDIS_HOST") or "localhost"
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
@@ -251,9 +262,6 @@ ENABLED_CONNECTOR_TYPES = os.environ.get("ENABLED_CONNECTOR_TYPES") or ""
 # for some connectors
 ENABLE_EXPENSIVE_EXPERT_CALLS = False
 
-GOOGLE_DRIVE_INCLUDE_SHARED = False
-GOOGLE_DRIVE_FOLLOW_SHORTCUTS = False
-GOOGLE_DRIVE_ONLY_ORG_PUBLIC = False
 
 # TODO these should be available for frontend configuration, via advanced options expandable
 WEB_CONNECTOR_IGNORED_CLASSES = os.environ.get(
@@ -481,3 +489,21 @@ CONTROL_PLANE_API_BASE_URL = os.environ.get(
 
 # JWT configuration
 JWT_ALGORITHM = "HS256"
+
+# Super Users
+SUPER_USERS = json.loads(os.environ.get("SUPER_USERS", '["pablo@danswer.ai"]'))
+SUPER_CLOUD_API_KEY = os.environ.get("SUPER_CLOUD_API_KEY", "api_key")
+
+
+#####
+# API Key Configs
+#####
+# refers to the rounds described here: https://passlib.readthedocs.io/en/stable/lib/passlib.hash.sha256_crypt.html
+_API_KEY_HASH_ROUNDS_RAW = os.environ.get("API_KEY_HASH_ROUNDS")
+API_KEY_HASH_ROUNDS = (
+    int(_API_KEY_HASH_ROUNDS_RAW) if _API_KEY_HASH_ROUNDS_RAW else None
+)
+
+
+POD_NAME = os.environ.get("POD_NAME")
+POD_NAMESPACE = os.environ.get("POD_NAMESPACE")

@@ -9,11 +9,11 @@ import {
 } from "@/lib/hooks";
 import { ThreeDotsLoader } from "@/components/Loading";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { Card } from "@tremor/react";
 import { BackButton } from "@/components/BackButton";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { useRouter } from "next/navigation";
 import { refreshDocumentSets } from "../hooks";
+import CardSection from "@/components/admin/CardSection";
 
 function Main() {
   const { popup, setPopup } = usePopup();
@@ -45,7 +45,7 @@ function Main() {
     <>
       {popup}
 
-      <Card>
+      <CardSection>
         <DocumentSetCreationForm
           ccPairs={ccPairs}
           userGroups={userGroups}
@@ -55,7 +55,7 @@ function Main() {
           }}
           setPopup={setPopup}
         />
-      </Card>
+      </CardSection>
     </>
   );
 }

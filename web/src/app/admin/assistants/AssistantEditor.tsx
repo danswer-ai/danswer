@@ -3,7 +3,9 @@
 import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
 import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
-import { Button, Divider, Italic } from "@tremor/react";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
   ArrayHelpers,
@@ -21,8 +23,16 @@ import {
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
+
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { getDisplayNameForModel } from "@/lib/hooks";
+import { getDisplayNameForModel, useCategories } from "@/lib/hooks";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
@@ -35,17 +45,23 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@radix-ui/react-tooltip";
+} from "@/components/ui/tooltip";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiInfo, FiPlus, FiX } from "react-icons/fi";
+import { FiInfo, FiX } from "react-icons/fi";
 import * as Yup from "yup";
 import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
-import { Persona, StarterMessage } from "./interfaces";
-import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
+import { Persona, PersonaCategory, StarterMessage } from "./interfaces";
+import {
+  createPersonaCategory,
+  createPersona,
+  deletePersonaCategory,
+  updatePersonaCategory,
+  updatePersona,
+} from "./lib";
 import { Popover } from "@/components/popover/Popover";
 import {
   CameraIcon,
@@ -57,6 +73,8 @@ import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
 import { buildImgUrl } from "@/app/chat/files/images/utils";
 import { LlmList } from "@/components/llm/LLMList";
 import { useAssistants } from "@/components/context/AssistantsContext";
+import { Input } from "@/components/ui/input";
+import { CategoryCard } from "./CategoryCard";
 
 function findSearchTool(tools: ToolSnapshot[]) {
   return tools.find((tool) => tool.in_code_tool_id === "SearchTool");
@@ -105,6 +123,7 @@ export function AssistantEditor({
   const router = useRouter();
 
   const { popup, setPopup } = usePopup();
+  const { data: categories, refreshCategories } = useCategories();
 
   const colorOptions = [
     "#FF6FBF",
@@ -117,6 +136,7 @@ export function AssistantEditor({
   ];
 
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [showPersonaCategory, setShowPersonaCategory] = useState(!admin);
 
   // state to persist across formik reformatting
   const [defautIconColor, _setDeafultIconColor] = useState(
@@ -209,6 +229,7 @@ export function AssistantEditor({
     icon_color: existingPersona?.icon_color ?? defautIconColor,
     icon_shape: existingPersona?.icon_shape ?? defaultIconShape,
     uploaded_image: null,
+    category_id: existingPersona?.category_id ?? null,
 
     // EE Only
     groups: existingPersona?.groups ?? [],
@@ -244,9 +265,6 @@ export function AssistantEditor({
                 name: Yup.string().required(
                   "Each starter message must have a name"
                 ),
-                description: Yup.string().required(
-                  "Each starter message must have a description"
-                ),
                 message: Yup.string().required(
                   "Each starter message must have a message"
                 ),
@@ -256,6 +274,7 @@ export function AssistantEditor({
             icon_color: Yup.string(),
             icon_shape: Yup.number(),
             uploaded_image: Yup.mixed().nullable(),
+            category_id: Yup.number().nullable(),
             // EE Only
             groups: Yup.array().of(Yup.number()),
           })
@@ -564,15 +583,13 @@ export function AssistantEditor({
                   align="start"
                   side="bottom"
                 />
-                <TooltipProvider delayDuration={50}>
+                <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
                       <FiInfo size={12} />
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center">
-                      <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                        This icon will visually represent your Assistant
-                      </p>
+                      This icon will visually represent your Assistant
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -608,16 +625,14 @@ export function AssistantEditor({
                   <div className="block  font-medium text-base">
                     Default AI Model{" "}
                   </div>
-                  <TooltipProvider delayDuration={50}>
+                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
                         <FiInfo size={12} />
                       </TooltipTrigger>
                       <TooltipContent side="top" align="center">
-                        <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                          Select a Large Language Model (Generative AI model) to
-                          power this Assistant
-                        </p>
+                        Select a Large Language Model (Generative AI model) to
+                        power this Assistant
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -627,7 +642,10 @@ export function AssistantEditor({
                   otherwise specified below.
                   {admin &&
                     user?.preferences.default_model &&
-                    `  Your current (user-specific) default model is ${getDisplayNameForModel(destructureValue(user?.preferences?.default_model!).modelName)}`}
+                    `  Your current (user-specific) default model is ${getDisplayNameForModel(
+                      destructureValue(user?.preferences?.default_model!)
+                        .modelName
+                    )}`}
                 </p>
                 {admin ? (
                   <div className="mb-2 flex items-starts">
@@ -702,16 +720,14 @@ export function AssistantEditor({
                   <div className="block font-medium text-base">
                     Capabilities{" "}
                   </div>
-                  <TooltipProvider delayDuration={50}>
+                  <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
                         <FiInfo size={12} />
                       </TooltipTrigger>
                       <TooltipContent side="top" align="center">
-                        <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                          You can give your assistant advanced capabilities like
-                          image generation
-                        </p>
+                        You can give your assistant advanced capabilities like
+                        image generation
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -722,7 +738,7 @@ export function AssistantEditor({
 
                 <div className="mt-4 flex flex-col gap-y-4  ml-1">
                   {imageGenerationTool && (
-                    <TooltipProvider delayDuration={50}>
+                    <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div
@@ -770,7 +786,7 @@ export function AssistantEditor({
                   )}
 
                   {searchTool && (
-                    <TooltipProvider delayDuration={50}>
+                    <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div
@@ -869,7 +885,7 @@ export function AssistantEditor({
                                     )}
                                   />
                                 ) : (
-                                  <Italic className="text-sm">
+                                  <p className="text-sm italic">
                                     No Document Sets available.{" "}
                                     {user?.role !== "admin" && (
                                       <>
@@ -878,7 +894,7 @@ export function AssistantEditor({
                                         Danswer for assistance.
                                       </>
                                     )}
-                                  </Italic>
+                                  </p>
                                 )}
 
                                 <div className="mt-4  flex flex-col gap-y-4">
@@ -972,7 +988,190 @@ export function AssistantEditor({
                   )}
                 </div>
               </div>
-              <Divider />
+
+              {admin && (
+                <AdvancedOptionsToggle
+                  title="Categories"
+                  showAdvancedOptions={showPersonaCategory}
+                  setShowAdvancedOptions={setShowPersonaCategory}
+                />
+              )}
+
+              {showPersonaCategory && (
+                <>
+                  {categories && categories.length > 0 && (
+                    <div className="my-2">
+                      <div className="flex gap-x-2 items-center">
+                        <div className="block font-medium text-base">
+                          Category
+                        </div>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <FiInfo size={12} />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" align="center">
+                              Group similar assistants together by category
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <SelectorFormField
+                        includeReset
+                        name="category_id"
+                        options={categories.map((category) => ({
+                          name: category.name,
+                          value: category.id,
+                        }))}
+                      />
+                    </div>
+                  )}
+
+                  {admin && (
+                    <>
+                      <div className="my-2">
+                        <div className="flex gap-x-2 items-center mb-2">
+                          <div className="block font-medium text-base">
+                            Create New Category
+                          </div>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <FiInfo size={12} />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" align="center">
+                                Create a new category to group similar
+                                assistants together
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+
+                        <div className="grid grid-cols-[1fr,3fr,auto] gap-4">
+                          <TextFormField
+                            fontSize="sm"
+                            name="newCategoryName"
+                            label="Category Name"
+                            placeholder="e.g. Development"
+                          />
+                          <TextFormField
+                            fontSize="sm"
+                            name="newCategoryDescription"
+                            label="Category Description"
+                            placeholder="e.g. Assistants for software development"
+                          />
+                          <div className="flex items-end">
+                            <Button
+                              type="button"
+                              onClick={async () => {
+                                const name = values.newCategoryName;
+                                const description =
+                                  values.newCategoryDescription;
+                                if (!name || !description) return;
+
+                                try {
+                                  const response = await createPersonaCategory(
+                                    name,
+                                    description
+                                  );
+                                  if (response.ok) {
+                                    setPopup({
+                                      message: `Category "${name}" created successfully`,
+                                      type: "success",
+                                    });
+                                  } else {
+                                    throw new Error(await response.text());
+                                  }
+                                } catch (error) {
+                                  setPopup({
+                                    message: `Failed to create category - ${error}`,
+                                    type: "error",
+                                  });
+                                }
+
+                                await refreshCategories();
+
+                                setFieldValue("newCategoryName", "");
+                                setFieldValue("newCategoryDescription", "");
+                              }}
+                            >
+                              Create
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {categories && categories.length > 0 && (
+                        <div className="my-2 w-full">
+                          <div className="flex gap-x-2 items-center mb-2">
+                            <div className="block font-medium text-base">
+                              Manage categories
+                            </div>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <FiInfo size={12} />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" align="center">
+                                  Manage existing categories or create new ones
+                                  to group similar assistants
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          <div className="gap-4 w-full flex-wrap flex">
+                            {categories &&
+                              categories.map((category: PersonaCategory) => (
+                                <CategoryCard
+                                  setPopup={setPopup}
+                                  key={category.id}
+                                  category={category}
+                                  onUpdate={async (id, name, description) => {
+                                    const response =
+                                      await updatePersonaCategory(
+                                        id,
+                                        name,
+                                        description
+                                      );
+                                    if (response?.ok) {
+                                      setPopup({
+                                        message: `Category "${name}" updated successfully`,
+                                        type: "success",
+                                      });
+                                    } else {
+                                      setPopup({
+                                        message: `Failed to update category - ${await response.text()}`,
+                                        type: "error",
+                                      });
+                                    }
+                                  }}
+                                  onDelete={async (id) => {
+                                    const response =
+                                      await deletePersonaCategory(id);
+                                    if (response?.ok) {
+                                      setPopup({
+                                        message: `Category deleted successfully`,
+                                        type: "success",
+                                      });
+                                    } else {
+                                      setPopup({
+                                        message: `Failed to delete category - ${await response.text()}`,
+                                        type: "error",
+                                      });
+                                    }
+                                  }}
+                                  refreshCategories={refreshCategories}
+                                />
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+
+              <Separator />
               <AdvancedOptionsToggle
                 showAdvancedOptions={showAdvancedOptions}
                 setShowAdvancedOptions={setShowAdvancedOptions}
@@ -1055,36 +1254,6 @@ export function AssistantEditor({
                                         </div>
 
                                         <div className="mt-3">
-                                          <Label small>Description</Label>
-                                          <SubLabel>
-                                            A description which tells the user
-                                            what they might want to use this
-                                            Starter Message for. For example
-                                            &quot;to a client about a new
-                                            feature&quot;
-                                          </SubLabel>
-                                          <Field
-                                            name={`starter_messages.${index}.description`}
-                                            className={`
-                                            border 
-                                            border-border 
-                                            bg-background 
-                                            rounded 
-                                            w-full 
-                                            py-2 
-                                            px-3 
-                                            mr-4
-                                          `}
-                                            autoComplete="off"
-                                          />
-                                          <ErrorMessage
-                                            name={`starter_messages[${index}].description`}
-                                            component="div"
-                                            className="text-error text-sm mt-1"
-                                          />
-                                        </div>
-
-                                        <div className="mt-3">
                                           <Label small>Message</Label>
                                           <SubLabel>
                                             The actual message to be sent as the
@@ -1104,7 +1273,9 @@ export function AssistantEditor({
                                               w-full 
                                               py-2 
                                               px-3 
+                                              min-h-12
                                               mr-4
+                                              line-clamp-
                                           `}
                                             as="textarea"
                                             autoComplete="off"
@@ -1138,11 +1309,9 @@ export function AssistantEditor({
                                 message: "",
                               });
                             }}
-                            className="text-white mt-3"
-                            size="xs"
-                            type="button"
-                            icon={FiPlus}
-                            color="green"
+                            className="mt-3"
+                            size="sm"
+                            variant="next"
                           >
                             Add New
                           </Button>
@@ -1166,9 +1335,7 @@ export function AssistantEditor({
 
               <div className="flex">
                 <Button
-                  className="mx-auto"
-                  color="green"
-                  size="md"
+                  variant="submit"
                   type="submit"
                   disabled={isSubmitting || isRequestSuccessful}
                 >

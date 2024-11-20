@@ -1,4 +1,5 @@
 <!-- DANSWER_METADATA={"link": "https://github.com/danswer-ai/danswer/blob/main/README.md"} -->
+<a name="readme-top"></a>
 
 <h2 align="center">
 <a href="https://www.danswer.ai/"> <img width="50%" src="https://github.com/danswer-owners/danswer/blob/1fabd9372d66cd54238847197c33f091a724803b/DanswerWithName.png?raw=true)" /></a>
@@ -11,7 +12,7 @@
 <a href="https://docs.danswer.dev/" target="_blank">
     <img src="https://img.shields.io/badge/docs-view-blue" alt="Documentation">
 </a>
-<a href="https://join.slack.com/t/danswer/shared_invite/zt-2lcmqw703-071hBuZBfNEOGUsLa5PXvQ" target="_blank">
+<a href="https://join.slack.com/t/danswer/shared_invite/zt-2twesxdr6-5iQitKZQpgq~hYIZ~dv3KA" target="_blank">
     <img src="https://img.shields.io/badge/slack-join-blue.svg?logo=slack" alt="Slack">
 </a>
 <a href="https://discord.gg/TDJ59cGV2X" target="_blank">
@@ -127,3 +128,19 @@ To try the Danswer Enterprise Edition:
 
 ## 💡 Contributing
 Looking to contribute? Please check out the [Contribution Guide](CONTRIBUTING.md) for more details.
+
+## ⭐Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=danswer-ai/danswer&type=Date)](https://star-history.com/#danswer-ai/danswer&Date)
+
+## ✨Contributors
+
+<a href="https://github.com/danswer-ai/danswer/graphs/contributors">
+  <img alt="contributors" src="https://contrib.rocks/image?repo=danswer-ai/danswer"/>
+</a>
+
+<p align="right" style="font-size: 14px; color: #555; margin-top: 20px;">
+    <a href="#readme-top" style="text-decoration: none; color: #007bff; font-weight: bold;">
+        ↑ Back to Top ↑
+    </a>
+</p>

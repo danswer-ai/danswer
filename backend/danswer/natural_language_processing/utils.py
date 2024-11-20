@@ -35,23 +35,31 @@ class BaseTokenizer(ABC):
 class TiktokenTokenizer(BaseTokenizer):
     _instances: dict[str, "TiktokenTokenizer"] = {}
 
-    def __new__(cls, encoding_name: str = "cl100k_base") -> "TiktokenTokenizer":
-        if encoding_name not in cls._instances:
-            cls._instances[encoding_name] = super(TiktokenTokenizer, cls).__new__(cls)
-        return cls._instances[encoding_name]
+    def __new__(cls, model_name: str) -> "TiktokenTokenizer":
+        if model_name not in cls._instances:
+            cls._instances[model_name] = super(TiktokenTokenizer, cls).__new__(cls)
+        return cls._instances[model_name]
 
-    def __init__(self, encoding_name: str = "cl100k_base"):
+    def __init__(self, model_name: str):
         if not hasattr(self, "encoder"):
             import tiktoken
 
-            self.encoder = tiktoken.get_encoding(encoding_name)
+            self.encoder = tiktoken.encoding_for_model(model_name)
 
     def encode(self, string: str) -> list[int]:
-        # this returns no special tokens
+        # this ignores special tokens that the model is trained on, see encode_ordinary for details
         return self.encoder.encode_ordinary(string)
 
     def tokenize(self, string: str) -> list[str]:
-        return [self.encoder.decode([token]) for token in self.encode(string)]
+        encoded = self.encode(string)
+        decoded = [self.encoder.decode([token]) for token in encoded]
+
+        if len(decoded) != len(encoded):
+            logger.warning(
+                f"OpenAI tokenized length {len(decoded)} does not match encoded length {len(encoded)} for string: {string}"
+            )
+
+        return decoded
 
     def decode(self, tokens: list[int]) -> str:
         return self.encoder.decode(tokens)
@@ -74,42 +82,60 @@ class HuggingFaceTokenizer(BaseTokenizer):
         return self.encoder.decode(tokens)
 
 
-_TOKENIZER_CACHE: dict[str, BaseTokenizer] = {}
+_TOKENIZER_CACHE: dict[tuple[EmbeddingProvider | None, str | None], BaseTokenizer] = {}
 
 
-def _check_tokenizer_cache(tokenizer_name: str) -> BaseTokenizer:
+def _check_tokenizer_cache(
+    model_provider: EmbeddingProvider | None, model_name: str | None
+) -> BaseTokenizer:
     global _TOKENIZER_CACHE
+    id_tuple = (model_provider, model_name)
 
-    if tokenizer_name not in _TOKENIZER_CACHE:
-        if tokenizer_name == "openai":
-            _TOKENIZER_CACHE[tokenizer_name] = TiktokenTokenizer("cl100k_base")
-            return _TOKENIZER_CACHE[tokenizer_name]
-        try:
-            logger.debug(f"Initializing HuggingFaceTokenizer for: {tokenizer_name}")
-            _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(tokenizer_name)
-        except Exception as primary_error:
-            logger.error(
-                f"Error initializing HuggingFaceTokenizer for {tokenizer_name}: {primary_error}"
-            )
-            logger.warning(
+    if id_tuple not in _TOKENIZER_CACHE:
+        tokenizer = None
+
+        if model_name:
+            tokenizer = _try_initialize_tokenizer(model_name, model_provider)
+
+        if not tokenizer:
+            logger.info(
                 f"Falling back to default embedding model: {DOCUMENT_ENCODER_MODEL}"
             )
+            tokenizer = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
 
-            try:
-                # Cache this tokenizer name to the default so we don't have to try to load it again
-                # and fail again
-                _TOKENIZER_CACHE[tokenizer_name] = HuggingFaceTokenizer(
-                    DOCUMENT_ENCODER_MODEL
-                )
-            except Exception as fallback_error:
-                logger.error(
-                    f"Error initializing fallback HuggingFaceTokenizer: {fallback_error}"
-                )
-                raise ValueError(
-                    f"Failed to initialize tokenizer for {tokenizer_name} and fallback model"
-                ) from fallback_error
+        _TOKENIZER_CACHE[id_tuple] = tokenizer
 
-    return _TOKENIZER_CACHE[tokenizer_name]
+    return _TOKENIZER_CACHE[id_tuple]
+
+
+def _try_initialize_tokenizer(
+    model_name: str, model_provider: EmbeddingProvider | None
+) -> BaseTokenizer | None:
+    tokenizer: BaseTokenizer | None = None
+
+    if model_provider is not None:
+        # Try using TiktokenTokenizer first if model_provider exists
+        try:
+            tokenizer = TiktokenTokenizer(model_name)
+            logger.info(f"Initialized TiktokenTokenizer for: {model_name}")
+            return tokenizer
+        except Exception as tiktoken_error:
+            logger.debug(
+                f"TiktokenTokenizer not available for model {model_name}: {tiktoken_error}"
+            )
+    else:
+        # If no provider specified, try HuggingFaceTokenizer
+        try:
+            tokenizer = HuggingFaceTokenizer(model_name)
+            logger.info(f"Initialized HuggingFaceTokenizer for: {model_name}")
+            return tokenizer
+        except Exception as hf_error:
+            logger.warning(
+                f"Error initializing HuggingFaceTokenizer for {model_name}: {hf_error}"
+            )
+
+    # If both initializations fail, return None
+    return None
 
 
 _DEFAULT_TOKENIZER: BaseTokenizer = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
@@ -118,12 +144,15 @@ _DEFAULT_TOKENIZER: BaseTokenizer = HuggingFaceTokenizer(DOCUMENT_ENCODER_MODEL)
 def get_tokenizer(
     model_name: str | None, provider_type: EmbeddingProvider | str | None
 ) -> BaseTokenizer:
-    # Currently all of the viable models use the same sentencepiece tokenizer
-    # OpenAI uses a different one but currently it's not supported due to quality issues
-    # the inconsistent chunking makes using the sentencepiece tokenizer default better for now
-    # LLM tokenizers are specified by strings
-    global _DEFAULT_TOKENIZER
-    return _DEFAULT_TOKENIZER
+    if isinstance(provider_type, str):
+        try:
+            provider_type = EmbeddingProvider(provider_type)
+        except ValueError:
+            logger.debug(
+                f"Invalid provider_type '{provider_type}'. Falling back to default tokenizer."
+            )
+            return _DEFAULT_TOKENIZER
+    return _check_tokenizer_cache(provider_type, model_name)
 
 
 def tokenizer_trim_content(

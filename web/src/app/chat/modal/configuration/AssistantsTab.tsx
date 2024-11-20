@@ -61,8 +61,6 @@ export function AssistantsTab({
 
       setAssistants(updatedAssistants);
       await updateUserAssistantList(updatedAssistants.map((a) => a.id));
-      await refreshUser();
-      await refreshAssistants();
     }
   }
 

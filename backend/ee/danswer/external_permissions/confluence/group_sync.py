@@ -1,15 +1,11 @@
 from typing import Any
 
-from sqlalchemy.orm import Session
-
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
 from danswer.connectors.confluence.utils import build_confluence_client
 from danswer.connectors.confluence.utils import get_user_email_from_username__server
 from danswer.db.models import ConnectorCredentialPair
-from danswer.db.users import batch_add_non_web_user_if_not_exists__no_commit
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.external_perm import ExternalUserGroup
-from ee.danswer.db.external_perm import replace_user__ext_group_for_cc_pair__no_commit
 
 
 logger = setup_logger()
@@ -40,9 +36,8 @@ def _get_group_members_email_paginated(
 
 
 def confluence_group_sync(
-    db_session: Session,
     cc_pair: ConnectorCredentialPair,
-) -> None:
+) -> list[ExternalUserGroup]:
     is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
     confluence_client = build_confluence_client(
         credentials_json=cc_pair.credential.credential_json,
@@ -63,20 +58,13 @@ def confluence_group_sync(
         group_member_emails = _get_group_members_email_paginated(
             confluence_client, group_name
         )
-        group_members = batch_add_non_web_user_if_not_exists__no_commit(
-            db_session=db_session, emails=list(group_member_emails)
-        )
-        if group_members:
-            danswer_groups.append(
-                ExternalUserGroup(
-                    id=group_name,
-                    user_ids=[user.id for user in group_members],
-                )
+        if not group_member_emails:
+            continue
+        danswer_groups.append(
+            ExternalUserGroup(
+                id=group_name,
+                user_emails=list(group_member_emails),
             )
+        )
 
-    replace_user__ext_group_for_cc_pair__no_commit(
-        db_session=db_session,
-        cc_pair_id=cc_pair.id,
-        group_defs=danswer_groups,
-        source=cc_pair.connector.source,
-    )
+    return danswer_groups

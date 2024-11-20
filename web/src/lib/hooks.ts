@@ -8,13 +8,14 @@ import {
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
 import { useContext, useEffect, useState } from "react";
-import { DateRangePickerValue } from "@tremor/react";
+import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
 import { SourceMetadata } from "./search/interfaces";
 import { destructureValue } from "./llm/utils";
 import { ChatSession } from "@/app/chat/interfaces";
 import { UsersResponse } from "./users/interfaces";
 import { Credential } from "./connectors/credentials";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { PersonaCategory } from "@/app/admin/assistants/interfaces";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -80,6 +81,19 @@ export const useConnectorCredentialIndexingStatus = (
   return {
     ...swrResponse,
     refreshIndexingStatus: () => mutate(url),
+  };
+};
+
+export const useCategories = () => {
+  const { mutate } = useSWRConfig();
+  const swrResponse = useSWR<PersonaCategory[]>(
+    "/api/persona/categories",
+    errorHandlingFetcher
+  );
+
+  return {
+    ...swrResponse,
+    refreshCategories: () => mutate("/api/persona/categories"),
   };
 };
 

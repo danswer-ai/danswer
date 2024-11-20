@@ -53,7 +53,7 @@ from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
 from danswer.db.enums import TaskStatus
 from danswer.db.pydantic_type import PydanticType
-from danswer.key_value_store.interface import JSON_ro
+from danswer.utils.special_types import JSON_ro
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
@@ -126,14 +126,17 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     # if specified, controls the assistants that are shown to the user + their order
     # if not specified, all assistants are shown
-    chosen_assistants: Mapped[list[int]] = mapped_column(
-        postgresql.JSONB(), nullable=False, default=[-2, -1, 0]
+    chosen_assistants: Mapped[list[int] | None] = mapped_column(
+        postgresql.JSONB(), nullable=True, default=None
     )
     visible_assistants: Mapped[list[int]] = mapped_column(
         postgresql.JSONB(), nullable=False, default=[]
     )
     hidden_assistants: Mapped[list[int]] = mapped_column(
         postgresql.JSONB(), nullable=False, default=[]
+    )
+    recent_assistants: Mapped[list[dict]] = mapped_column(
+        postgresql.JSONB(), nullable=False, default=list, server_default="[]"
     )
 
     oidc_expiry: Mapped[datetime.datetime] = mapped_column(
@@ -168,8 +171,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", back_populates="user"
     )
-    # Whether the user has logged in via web. False if user has only used Danswer through Slack bot
-    has_web_login: Mapped[bool] = mapped_column(Boolean, default=True)
+    cc_pairs: Mapped[list["ConnectorCredentialPair"]] = relationship(
+        "ConnectorCredentialPair",
+        back_populates="creator",
+        primaryjoin="User.id == foreign(ConnectorCredentialPair.creator_id)",
+    )
 
 
 class InputPrompt(Base):
@@ -344,11 +350,11 @@ class StandardAnswer__StandardAnswerCategory(Base):
     )
 
 
-class SlackBotConfig__StandardAnswerCategory(Base):
-    __tablename__ = "slack_bot_config__standard_answer_category"
+class SlackChannelConfig__StandardAnswerCategory(Base):
+    __tablename__ = "slack_channel_config__standard_answer_category"
 
-    slack_bot_config_id: Mapped[int] = mapped_column(
-        ForeignKey("slack_bot_config.id"), primary_key=True
+    slack_channel_config_id: Mapped[int] = mapped_column(
+        ForeignKey("slack_channel_config.id"), primary_key=True
     )
     standard_answer_category_id: Mapped[int] = mapped_column(
         ForeignKey("standard_answer_category.id"), primary_key=True
@@ -417,6 +423,9 @@ class ConnectorCredentialPair(Base):
     last_time_perm_sync: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    last_time_external_group_sync: Mapped[datetime.datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # Time finished, not used for calculating backend jobs which uses time started (created)
     last_successful_index_time: Mapped[datetime.datetime | None] = mapped_column(
         DateTime(timezone=True), default=None
@@ -447,6 +456,14 @@ class ConnectorCredentialPair(Base):
     )
     index_attempts: Mapped[list["IndexAttempt"]] = relationship(
         "IndexAttempt", back_populates="connector_credential_pair"
+    )
+
+    # the user id of the user that created this cc pair
+    creator_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    creator: Mapped["User"] = relationship(
+        "User",
+        back_populates="cc_pairs",
+        primaryjoin="foreign(ConnectorCredentialPair.creator_id) == remote(User.id)",
     )
 
 
@@ -734,9 +751,10 @@ class IndexAttempt(Base):
     full_exception_trace: Mapped[str | None] = mapped_column(Text, default=None)
     # Nullable because in the past, we didn't allow swapping out embedding models live
     search_settings_id: Mapped[int] = mapped_column(
-        ForeignKey("search_settings.id"),
-        nullable=False,
+        ForeignKey("search_settings.id", ondelete="SET NULL"),
+        nullable=True,
     )
+
     time_created: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -756,7 +774,7 @@ class IndexAttempt(Base):
         "ConnectorCredentialPair", back_populates="index_attempts"
     )
 
-    search_settings: Mapped[SearchSettings] = relationship(
+    search_settings: Mapped[SearchSettings | None] = relationship(
         "SearchSettings", back_populates="index_attempts"
     )
 
@@ -917,10 +935,15 @@ class ToolCall(Base):
     tool_arguments: Mapped[dict[str, JSON_ro]] = mapped_column(postgresql.JSONB())
     tool_result: Mapped[JSON_ro] = mapped_column(postgresql.JSONB())
 
-    message_id: Mapped[int] = mapped_column(ForeignKey("chat_message.id"))
+    message_id: Mapped[int | None] = mapped_column(
+        ForeignKey("chat_message.id"), nullable=False
+    )
 
+    # Update the relationship
     message: Mapped["ChatMessage"] = relationship(
-        "ChatMessage", back_populates="tool_calls"
+        "ChatMessage",
+        back_populates="tool_call",
+        uselist=False,
     )
 
 
@@ -1051,12 +1074,13 @@ class ChatMessage(Base):
         secondary=ChatMessage__SearchDoc.__table__,
         back_populates="chat_messages",
     )
-    # NOTE: Should always be attached to the `assistant` message.
-    # represents the tool calls used to generate this message
-    tool_calls: Mapped[list["ToolCall"]] = relationship(
+
+    tool_call: Mapped["ToolCall"] = relationship(
         "ToolCall",
         back_populates="message",
+        uselist=False,
     )
+
     standard_answers: Mapped[list["StandardAnswer"]] = relationship(
         "StandardAnswer",
         secondary=ChatMessage__StandardAnswer.__table__,
@@ -1314,7 +1338,6 @@ class StarterMessage(TypedDict):
     in Postgres"""
 
     name: str
-    description: str
     message: str
 
 
@@ -1339,6 +1362,9 @@ class Persona(Base):
     llm_filter_extraction: Mapped[bool] = mapped_column(Boolean)
     recency_bias: Mapped[RecencyBiasSetting] = mapped_column(
         Enum(RecencyBiasSetting, native_enum=False)
+    )
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("persona_category.id"), nullable=True
     )
     # Allows the Persona to specify a different LLM version than is controlled
     # globablly via env variables. For flexibility, validity is not currently enforced
@@ -1411,6 +1437,9 @@ class Persona(Base):
         secondary="persona__user_group",
         viewonly=True,
     )
+    category: Mapped["PersonaCategory"] = relationship(
+        "PersonaCategory", back_populates="personas"
+    )
 
     # Default personas loaded via yaml cannot have the same name
     __table_args__ = (
@@ -1423,6 +1452,17 @@ class Persona(Base):
     )
 
 
+class PersonaCategory(Base):
+    __tablename__ = "persona_category"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    personas: Mapped[list["Persona"]] = relationship(
+        "Persona", back_populates="category"
+    )
+
+
 AllowedAnswerFilters = (
     Literal["well_answered_postfilter"] | Literal["questionmark_prefilter"]
 )
@@ -1432,7 +1472,7 @@ class ChannelConfig(TypedDict):
     """NOTE: is a `TypedDict` so it can be used as a type hint for a JSONB column
     in Postgres"""
 
-    channel_names: list[str]
+    channel_name: str
     respond_tag_only: NotRequired[bool]  # defaults to False
     respond_to_bots: NotRequired[bool]  # defaults to False
     respond_member_group_list: NotRequired[list[str]]
@@ -1447,10 +1487,11 @@ class SlackBotResponseType(str, PyEnum):
     CITATIONS = "citations"
 
 
-class SlackBotConfig(Base):
-    __tablename__ = "slack_bot_config"
+class SlackChannelConfig(Base):
+    __tablename__ = "slack_channel_config"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    slack_bot_id: Mapped[int] = mapped_column(ForeignKey("slack_bot.id"), nullable=True)
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True
     )
@@ -1467,10 +1508,30 @@ class SlackBotConfig(Base):
     )
 
     persona: Mapped[Persona | None] = relationship("Persona")
+    slack_bot: Mapped["SlackBot"] = relationship(
+        "SlackBot",
+        back_populates="slack_channel_configs",
+    )
     standard_answer_categories: Mapped[list["StandardAnswerCategory"]] = relationship(
         "StandardAnswerCategory",
-        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
-        back_populates="slack_bot_configs",
+        secondary=SlackChannelConfig__StandardAnswerCategory.__table__,
+        back_populates="slack_channel_configs",
+    )
+
+
+class SlackBot(Base):
+    __tablename__ = "slack_bot"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    bot_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
+    app_token: Mapped[str] = mapped_column(EncryptedString(), unique=True)
+
+    slack_channel_configs: Mapped[list[SlackChannelConfig]] = relationship(
+        "SlackChannelConfig",
+        back_populates="slack_bot",
     )
 
 
@@ -1709,9 +1770,9 @@ class StandardAnswerCategory(Base):
         secondary=StandardAnswer__StandardAnswerCategory.__table__,
         back_populates="categories",
     )
-    slack_bot_configs: Mapped[list["SlackBotConfig"]] = relationship(
-        "SlackBotConfig",
-        secondary=SlackBotConfig__StandardAnswerCategory.__table__,
+    slack_channel_configs: Mapped[list["SlackChannelConfig"]] = relationship(
+        "SlackChannelConfig",
+        secondary=SlackChannelConfig__StandardAnswerCategory.__table__,
         back_populates="standard_answer_categories",
     )
 

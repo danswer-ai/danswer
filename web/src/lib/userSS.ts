@@ -63,7 +63,11 @@ const getOIDCAuthUrlSS = async (nextUrl: string | null): Promise<string> => {
 };
 
 const getGoogleOAuthUrlSS = async (): Promise<string> => {
-  const res = await fetch(buildUrl(`/auth/oauth/authorize`));
+  const res = await fetch(buildUrl(`/auth/oauth/authorize`), {
+    headers: {
+      cookie: processCookies(await cookies()),
+    },
+  });
   if (!res.ok) {
     throw new Error("Failed to fetch data");
   }
@@ -143,7 +147,7 @@ export const getCurrentUserSS = async (): Promise<User | null> => {
       credentials: "include",
       next: { revalidate: 0 },
       headers: {
-        cookie: cookies()
+        cookie: (await cookies())
           .getAll()
           .map((cookie) => `${cookie.name}=${cookie.value}`)
           .join("; "),

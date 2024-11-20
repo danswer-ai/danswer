@@ -11,7 +11,6 @@ from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
-from fastapi import status
 from psycopg2.errors import UniqueViolation
 from pydantic import BaseModel
 from sqlalchemy import Column
@@ -27,17 +26,19 @@ from danswer.auth.noauth_user import fetch_no_auth_user
 from danswer.auth.noauth_user import set_no_auth_user_preferences
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserStatus
+from danswer.auth.users import BasicAuthenticationError
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
-from danswer.auth.users import get_tenant_id_for_email
 from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import ENABLE_EMAIL_INVITES
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
+from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
-from danswer.db.auth import get_total_users
+from danswer.db.api_key import is_api_key_email_address
+from danswer.db.auth import get_total_users_count
 from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_session
 from danswer.db.models import AccessToken
@@ -48,6 +49,7 @@ from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
+from danswer.db.users import validate_user_role_update
 from danswer.key_value_store.factory import get_kv_store
 from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
@@ -60,12 +62,7 @@ from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
 from danswer.server.utils import send_user_email_invite
 from danswer.utils.logger import setup_logger
-from ee.danswer.db.api_key import is_api_key_email_address
-from ee.danswer.db.external_perm import delete_user__ext_group_for_user__no_commit
-from ee.danswer.db.user_group import remove_curator_status__no_commit
-from ee.danswer.server.tenants.billing import register_tenant_users
-from ee.danswer.server.tenants.provisioning import add_users_to_tenant
-from ee.danswer.server.tenants.provisioning import remove_users_from_tenant
+from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
@@ -88,25 +85,31 @@ def set_user_role(
     if not user_to_update:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user_role_update_request.new_role == UserRole.CURATOR:
-        raise HTTPException(
-            status_code=400,
-            detail="Curator role must be set via the User Group Menu",
-        )
-
-    if user_to_update.role == user_role_update_request.new_role:
+    current_role = user_to_update.role
+    requested_role = user_role_update_request.new_role
+    if requested_role == current_role:
         return
 
-    if current_user.id == user_to_update.id:
+    # This will raise an exception if the role update is invalid
+    validate_user_role_update(
+        requested_role=requested_role,
+        current_role=current_role,
+    )
+
+    if user_to_update.id == current_user.id:
         raise HTTPException(
             status_code=400,
             detail="An admin cannot demote themselves from admin role!",
         )
 
-    if user_to_update.role == UserRole.CURATOR:
-        remove_curator_status__no_commit(db_session, user_to_update)
+    if requested_role == UserRole.CURATOR:
+        # Remove all curator db relationships before changing role
+        fetch_ee_implementation_or_noop(
+            "danswer.db.user_group",
+            "remove_curator_status__no_commit",
+        )(db_session, user_to_update)
 
-    user_to_update.role = user_role_update_request.new_role.value
+    user_to_update.role = user_role_update_request.new_role
 
     db_session.commit()
 
@@ -124,7 +127,7 @@ def list_all_users(
 
     users = [
         user
-        for user in list_users(db_session, email_filter_string=q, user=user)
+        for user in list_users(db_session, email_filter_string=q)
         if not is_api_key_email_address(user.email)
     ]
     accepted_emails = {user.email for user in users}
@@ -190,22 +193,24 @@ def bulk_invite_users(
         )
 
     tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-
     normalized_emails = []
     try:
         for email in emails:
             email_info = validate_email(email)
             normalized_emails.append(email_info.normalized)  # type: ignore
 
-    except (EmailUndeliverableError, EmailNotValidError):
+    except (EmailUndeliverableError, EmailNotValidError) as e:
         raise HTTPException(
             status_code=400,
-            detail="One or more emails in the list are invalid",
+            detail=f"Invalid email address: {email} - {str(e)}",
         )
 
     if MULTI_TENANT:
         try:
-            add_users_to_tenant(normalized_emails, tenant_id)
+            fetch_ee_implementation_or_noop(
+                "danswer.server.tenants.provisioning", "add_users_to_tenant", None
+            )(normalized_emails, tenant_id)
+
         except IntegrityError as e:
             if isinstance(e.orig, UniqueViolation):
                 raise HTTPException(
@@ -213,6 +218,8 @@ def bulk_invite_users(
                     detail="User has already been invited to a Danswer organization",
                 )
             raise
+        except Exception as e:
+            logger.error(f"Failed to add users to tenant {tenant_id}: {str(e)}")
 
     initial_invited_users = get_invited_users()
 
@@ -223,9 +230,9 @@ def bulk_invite_users(
         return number_of_invited_users
     try:
         logger.info("Registering tenant users")
-        register_tenant_users(
-            CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users(db_session)
-        )
+        fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.billing", "register_tenant_users", None
+        )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session))
         if ENABLE_EMAIL_INVITES:
             try:
                 for email in all_emails:
@@ -240,7 +247,9 @@ def bulk_invite_users(
             "Reverting changes: removing users from tenant and resetting invited users"
         )
         write_invited_users(initial_invited_users)  # Reset to original state
-        remove_users_from_tenant(normalized_emails, tenant_id)
+        fetch_ee_implementation_or_noop(
+            "danswer.server.tenants.user_mapping", "remove_users_from_tenant", None
+        )(normalized_emails, tenant_id)
         raise e
 
 
@@ -254,14 +263,16 @@ def remove_invited_user(
     remaining_users = [user for user in user_emails if user != user_email.user_email]
 
     tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-    remove_users_from_tenant([user_email.user_email], tenant_id)
+    fetch_ee_implementation_or_noop(
+        "danswer.server.tenants.user_mapping", "remove_users_from_tenant", None
+    )([user_email.user_email], tenant_id)
     number_of_invited_users = write_invited_users(remaining_users)
 
     try:
         if MULTI_TENANT:
-            register_tenant_users(
-                CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users(db_session)
-            )
+            fetch_ee_implementation_or_noop(
+                "danswer.server.tenants.billing", "register_tenant_users", None
+            )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session))
     except Exception:
         logger.error(
             "Request to update number of seats taken in control plane failed. "
@@ -328,7 +339,10 @@ async def delete_user(
         for oauth_account in user_to_delete.oauth_accounts:
             db_session.delete(oauth_account)
 
-        delete_user__ext_group_for_user__no_commit(
+        fetch_ee_implementation_or_noop(
+            "danswer.db.external_perm",
+            "delete_user__ext_group_for_user__no_commit",
+        )(
             db_session=db_session,
             user_id=user_to_delete.id,
         )
@@ -474,6 +488,7 @@ def verify_user_logged_in(
     # NOTE: this does not use `current_user` / `current_admin_user` because we don't want
     # to enforce user verification here - the frontend always wants to get the info about
     # the current user regardless of if they are currently verified
+
     if user is None:
         # if auth type is disabled, return a dummy user with preferences from
         # the key-value store
@@ -481,25 +496,25 @@ def verify_user_logged_in(
             store = get_kv_store()
             return fetch_no_auth_user(store)
 
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="User Not Authenticated"
-        )
+        raise BasicAuthenticationError(detail="User Not Authenticated")
 
     if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise BasicAuthenticationError(
             detail="Access denied. User's OIDC token has expired.",
         )
 
     token_created_at = (
         None if MULTI_TENANT else get_current_token_creation(user, db_session)
     )
-    organization_name = get_tenant_id_for_email(user.email)
+    organization_name = fetch_ee_implementation_or_noop(
+        "danswer.server.tenants.user_mapping", "get_tenant_id_for_email", None
+    )(user.email)
 
     user_info = UserInfo.from_model(
         user,
         current_token_created_at=token_created_at,
         expiry_length=SESSION_EXPIRE_TIME_SECONDS,
+        is_cloud_superuser=user.email in SUPER_USERS,
         organization_name=organization_name,
     )
 
@@ -511,6 +526,59 @@ def verify_user_logged_in(
 
 class ChosenDefaultModelRequest(BaseModel):
     default_model: str | None = None
+
+
+class RecentAssistantsRequest(BaseModel):
+    current_assistant: int
+
+
+def update_recent_assistants(
+    recent_assistants: list[int] | None, current_assistant: int
+) -> list[int]:
+    if recent_assistants is None:
+        recent_assistants = []
+    else:
+        recent_assistants = [x for x in recent_assistants if x != current_assistant]
+
+    # Add current assistant to start of list
+    recent_assistants.insert(0, current_assistant)
+
+    # Keep only the 5 most recent assistants
+    recent_assistants = recent_assistants[:5]
+    return recent_assistants
+
+
+@router.patch("/user/recent-assistants")
+def update_user_recent_assistants(
+    request: RecentAssistantsRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    if user is None:
+        if AUTH_TYPE == AuthType.DISABLED:
+            store = get_kv_store()
+            no_auth_user = fetch_no_auth_user(store)
+            preferences = no_auth_user.preferences
+            recent_assistants = preferences.recent_assistants
+            updated_preferences = update_recent_assistants(
+                recent_assistants, request.current_assistant
+            )
+            preferences.recent_assistants = updated_preferences
+            set_no_auth_user_preferences(store, preferences)
+            return
+        else:
+            raise RuntimeError("This should never happen")
+
+    recent_assistants = UserInfo.from_model(user).preferences.recent_assistants
+    updated_recent_assistants = update_recent_assistants(
+        recent_assistants, request.current_assistant
+    )
+    db_session.execute(
+        update(User)
+        .where(User.id == user.id)  # type: ignore
+        .values(recent_assistants=updated_recent_assistants)
+    )
+    db_session.commit()
 
 
 @router.patch("/user/default-model")
@@ -566,31 +634,25 @@ def update_user_assistant_list(
     db_session.commit()
 
 
-def update_assistant_list(
+def update_assistant_visibility(
     preferences: UserPreferences, assistant_id: int, show: bool
 ) -> UserPreferences:
     visible_assistants = preferences.visible_assistants or []
     hidden_assistants = preferences.hidden_assistants or []
-    chosen_assistants = preferences.chosen_assistants or []
 
     if show:
         if assistant_id not in visible_assistants:
             visible_assistants.append(assistant_id)
         if assistant_id in hidden_assistants:
             hidden_assistants.remove(assistant_id)
-        if assistant_id not in chosen_assistants:
-            chosen_assistants.append(assistant_id)
     else:
         if assistant_id in visible_assistants:
             visible_assistants.remove(assistant_id)
         if assistant_id not in hidden_assistants:
             hidden_assistants.append(assistant_id)
-        if assistant_id in chosen_assistants:
-            chosen_assistants.remove(assistant_id)
 
     preferences.visible_assistants = visible_assistants
     preferences.hidden_assistants = hidden_assistants
-    preferences.chosen_assistants = chosen_assistants
     return preferences
 
 
@@ -606,15 +668,23 @@ def update_user_assistant_visibility(
             store = get_kv_store()
             no_auth_user = fetch_no_auth_user(store)
             preferences = no_auth_user.preferences
-            updated_preferences = update_assistant_list(preferences, assistant_id, show)
+            updated_preferences = update_assistant_visibility(
+                preferences, assistant_id, show
+            )
+            if updated_preferences.chosen_assistants is not None:
+                updated_preferences.chosen_assistants.append(assistant_id)
+
             set_no_auth_user_preferences(store, updated_preferences)
             return
         else:
             raise RuntimeError("This should never happen")
 
     user_preferences = UserInfo.from_model(user).preferences
-    updated_preferences = update_assistant_list(user_preferences, assistant_id, show)
-
+    updated_preferences = update_assistant_visibility(
+        user_preferences, assistant_id, show
+    )
+    if updated_preferences.chosen_assistants is not None:
+        updated_preferences.chosen_assistants.append(assistant_id)
     db_session.execute(
         update(User)
         .where(User.id == user.id)  # type: ignore

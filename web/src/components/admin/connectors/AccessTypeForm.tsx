@@ -9,6 +9,7 @@ import { useUser } from "@/components/user/UserProvider";
 import { useField } from "formik";
 import { AutoSyncOptions } from "./AutoSyncOptions";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
+import { useEffect } from "react";
 
 function isValidAutoSyncSource(
   value: ConfigurableSources
@@ -28,6 +29,21 @@ export function AccessTypeForm({
   const isAutoSyncSupported = isValidAutoSyncSource(connector);
   const { isLoadingUser, isAdmin } = useUser();
 
+  useEffect(() => {
+    if (!isPaidEnterpriseEnabled) {
+      access_type_helpers.setValue("public");
+    } else if (isAutoSyncSupported) {
+      access_type_helpers.setValue("sync");
+    } else {
+      access_type_helpers.setValue("private");
+    }
+  }, [
+    isAutoSyncSupported,
+    isAdmin,
+    isPaidEnterpriseEnabled,
+    access_type_helpers,
+  ]);
+
   const options = [
     {
       name: "Private",
@@ -46,9 +62,9 @@ export function AccessTypeForm({
     });
   }
 
-  if (isAutoSyncSupported && isAdmin) {
+  if (isAutoSyncSupported && isPaidEnterpriseEnabled) {
     options.push({
-      name: "Auto Sync",
+      name: "Auto Sync Permissions",
       value: "sync",
       description:
         "We will automatically sync permissions from the source. A document will be searchable in Danswer if and only if the user performing the search has permission to access the document in the source.",
@@ -57,14 +73,15 @@ export function AccessTypeForm({
 
   return (
     <>
-      {isPaidEnterpriseEnabled && isAdmin && (
+      {isPaidEnterpriseEnabled && (isAdmin || isAutoSyncSupported) && (
         <>
-          <div className="flex gap-x-2 items-center">
+          <div>
             <label className="text-text-950 font-medium">Document Access</label>
+            <p className="text-sm text-text-500">
+              Control who has access to the documents indexed by this connector.
+            </p>
           </div>
-          <p className="text-sm text-text-500 mb-2">
-            Control who has access to the documents indexed by this connector.
-          </p>
+
           <DefaultDropdown
             options={options}
             selected={access_type.value}
@@ -75,11 +92,9 @@ export function AccessTypeForm({
           />
 
           {access_type.value === "sync" && isAutoSyncSupported && (
-            <div>
-              <AutoSyncOptions
-                connectorType={connector as ValidAutoSyncSources}
-              />
-            </div>
+            <AutoSyncOptions
+              connectorType={connector as ValidAutoSyncSources}
+            />
           )}
         </>
       )}

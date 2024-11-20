@@ -25,6 +25,7 @@ from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
+from danswer.auth.users import BasicAuthenticationError
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
@@ -63,6 +64,9 @@ from danswer.server.features.prompt.api import basic_router as prompt_router
 from danswer.server.features.tool.api import admin_router as admin_tool_router
 from danswer.server.features.tool.api import router as tool_router
 from danswer.server.gpts.api import router as gpts_router
+from danswer.server.long_term_logs.long_term_logs_api import (
+    router as long_term_logs_router,
+)
 from danswer.server.manage.administrative import router as admin_router
 from danswer.server.manage.embedding.api import admin_router as embedding_admin_router
 from danswer.server.manage.embedding.api import basic_router as embedding_router
@@ -73,6 +77,9 @@ from danswer.server.manage.search_settings import router as search_settings_rout
 from danswer.server.manage.slack_bot import router as slack_bot_management_router
 from danswer.server.manage.users import router as user_router
 from danswer.server.middleware.latency_logging import add_latency_logging_middleware
+from danswer.server.openai_assistants_api.full_openai_assistants_api import (
+    get_full_openai_assistants_api_router,
+)
 from danswer.server.query_and_chat.chat_backend import router as chat_router
 from danswer.server.query_and_chat.query_backend import (
     admin_router as admin_query_router,
@@ -194,7 +201,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 def log_http_error(_: Request, exc: Exception) -> JSONResponse:
     status_code = getattr(exc, "status_code", 500)
-    if status_code >= 400:
+
+    if isinstance(exc, BasicAuthenticationError):
+        # For BasicAuthenticationError, just log a brief message without stack trace (almost always spam)
+        logger.error(f"Authentication failed: {str(exc)}")
+
+    elif status_code >= 400:
         error_msg = f"{str(exc)}\n"
         error_msg += "".join(traceback.format_tb(exc.__traceback__))
         logger.error(error_msg)
@@ -220,7 +232,6 @@ def get_application() -> FastAPI:
     else:
         logger.debug("Sentry DSN not provided, skipping Sentry initialization")
 
-    # Add the custom exception handler
     application.add_exception_handler(status.HTTP_400_BAD_REQUEST, log_http_error)
     application.add_exception_handler(status.HTTP_401_UNAUTHORIZED, log_http_error)
     application.add_exception_handler(status.HTTP_403_FORBIDDEN, log_http_error)
@@ -265,6 +276,10 @@ def get_application() -> FastAPI:
         application, token_rate_limit_settings_router
     )
     include_router_with_global_prefix_prepended(application, indexing_router)
+    include_router_with_global_prefix_prepended(
+        application, get_full_openai_assistants_api_router()
+    )
+    include_router_with_global_prefix_prepended(application, long_term_logs_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
@@ -277,12 +292,14 @@ def get_application() -> FastAPI:
             prefix="/auth",
             tags=["auth"],
         )
+
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_register_router(UserRead, UserCreate),
             prefix="/auth",
             tags=["auth"],
         )
+
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_reset_password_router(),
@@ -302,7 +319,7 @@ def get_application() -> FastAPI:
             tags=["users"],
         )
 
-    if AUTH_TYPE == AuthType.GOOGLE_OAUTH or AUTH_TYPE == AuthType.CLOUD:
+    if AUTH_TYPE == AuthType.GOOGLE_OAUTH:
         oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
         include_router_with_global_prefix_prepended(
             application,
