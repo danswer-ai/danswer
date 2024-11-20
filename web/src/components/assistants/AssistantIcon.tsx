@@ -1,5 +1,5 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
-import React from "react";
+import React, { useEffect } from "react";
 import { Tooltip } from "../tooltip/Tooltip";
 import { createSVG } from "@/lib/assistantIconUtils";
 import { buildImgUrl } from "@/app/chat/files/images/utils";
@@ -30,7 +30,34 @@ export function AssistantIcon({
   border?: boolean;
   disableToolip?: boolean;
 }) {
-  const color = darkerGenerateColorFromId(assistant.id.toString());
+
+  // Ugly hack but it works for now
+  useEffect(() => {
+    if (!assistant) {
+      // Force a reload of the page
+      window.location.reload();
+    }
+  }, [assistant]);
+
+  // Placeholder to prevent crash
+  if (!assistant) {
+    return (
+      <div
+        className={`flex-none rounded-sm overflow-hidden
+          ${border ? "border border-.5 border-border-strong" : ""}
+          ${size === "large" ? "w-10 h-10" : ""}
+          ${size === "header" ? "w-14 h-14" : ""}
+          ${size === "medium" ? "w-8 h-8" : ""}
+          ${!size || size === "small" ? "w-6 h-6" : ""} `}
+        style={{ backgroundColor: "gray" }} // default color when no assistant
+      />
+    );
+  }
+
+  // CRASH HERE
+  // const color = darkerGenerateColorFromId(assistant.id.toString());
+  const id = assistant?.id?.toString();
+  const color = id ? darkerGenerateColorFromId(id) : "defaultColor";
 
   return (
     <CustomTooltip

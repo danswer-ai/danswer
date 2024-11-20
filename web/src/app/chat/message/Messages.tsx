@@ -405,7 +405,7 @@ export const AIMessage = ({
                               filteredDocs.slice(0, 2).map((doc, ind) => (
                                 <div
                                   key={doc.document_id}
-                                  className={`w-[200px] bg-background-100 rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
+                                  className={`w-[200px] bg-background-125 rounded-lg flex-none transition-all duration-500 hover:bg-background-200 px-4 pb-2 pt-1
                               `}
                                 >
                                   <a
