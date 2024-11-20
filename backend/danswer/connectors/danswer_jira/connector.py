@@ -12,16 +12,19 @@ from danswer.configs.app_configs import JIRA_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import JIRA_CONNECTOR_MAX_TICKET_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.cross_connector_utils.miscellaneous_utils import time_str_to_utc
+from danswer.connectors.danswer_jira.utils import best_effort_basic_expert_info
+from danswer.connectors.danswer_jira.utils import best_effort_get_field_from_issue
 from danswer.connectors.danswer_jira.utils import build_jira_client
 from danswer.connectors.danswer_jira.utils import build_jira_url
 from danswer.connectors.danswer_jira.utils import extract_jira_project
+from danswer.connectors.danswer_jira.utils import extract_text_from_adf
+from danswer.connectors.danswer_jira.utils import get_comment_strs
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.interfaces import SlimConnector
-from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
@@ -34,59 +37,6 @@ logger = setup_logger()
 JIRA_API_VERSION = os.environ.get("JIRA_API_VERSION") or "2"
 _JIRA_SLIM_PAGE_SIZE = 500
 _JIRA_FULL_PAGE_SIZE = 50
-
-
-def extract_text_from_adf(adf: dict | None) -> str:
-    """Extracts plain text from Atlassian Document Format:
-    https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/
-
-    WARNING: This function is incomplete and will e.g. skip lists!
-    """
-    texts = []
-    if adf is not None and "content" in adf:
-        for block in adf["content"]:
-            if "content" in block:
-                for item in block["content"]:
-                    if item["type"] == "text":
-                        texts.append(item["text"])
-    return " ".join(texts)
-
-
-def best_effort_get_field_from_issue(jira_issue: Issue, field: str) -> Any:
-    if hasattr(jira_issue.fields, field):
-        return getattr(jira_issue.fields, field)
-
-    try:
-        return jira_issue.raw["fields"][field]
-    except Exception:
-        return None
-
-
-def _get_comment_strs(
-    jira: Issue, comment_email_blacklist: tuple[str, ...] = ()
-) -> list[str]:
-    comment_strs = []
-    for comment in jira.fields.comment.comments:
-        try:
-            body_text = (
-                comment.body
-                if JIRA_API_VERSION == "2"
-                else extract_text_from_adf(comment.raw["body"])
-            )
-
-            if (
-                hasattr(comment, "author")
-                and hasattr(comment.author, "emailAddress")
-                and comment.author.emailAddress in comment_email_blacklist
-            ):
-                continue  # Skip adding comment if author's email is in blacklist
-
-            comment_strs.append(body_text)
-        except Exception as e:
-            logger.error(f"Failed to process comment due to an error: {e}")
-            continue
-
-    return comment_strs
 
 
 def _paginate_jql_search(
@@ -141,7 +91,10 @@ def fetch_jira_issues_batch(
             if JIRA_API_VERSION == "2"
             else extract_text_from_adf(issue.raw["fields"]["description"])
         )
-        comments = _get_comment_strs(issue, comment_email_blacklist)
+        comments = get_comment_strs(
+            issue=issue,
+            comment_email_blacklist=comment_email_blacklist,
+        )
         ticket_content = f"{description}\n" + "\n".join(
             [f"Comment: {comment}" for comment in comments if comment]
         )
@@ -158,23 +111,17 @@ def fetch_jira_issues_batch(
 
         people = set()
         try:
-            people.add(
-                BasicExpertInfo(
-                    display_name=issue.fields.creator.displayName,
-                    email=issue.fields.creator.emailAddress,
-                )
-            )
+            creator = best_effort_get_field_from_issue(issue, "creator")
+            if basic_expert_info := best_effort_basic_expert_info(creator):
+                people.add(basic_expert_info)
         except Exception:
             # Author should exist but if not, doesn't matter
             pass
 
         try:
-            people.add(
-                BasicExpertInfo(
-                    display_name=issue.fields.assignee.displayName,  # type: ignore
-                    email=issue.fields.assignee.emailAddress,  # type: ignore
-                )
-            )
+            assignee = best_effort_get_field_from_issue(issue, "assignee")
+            if basic_expert_info := best_effort_basic_expert_info(assignee):
+                people.add(basic_expert_info)
         except Exception:
             # Author should exist but if not, doesn't matter
             pass
@@ -301,7 +248,8 @@ class JiraConnector(LoadConnector, PollConnector, SlimConnector):
             max_results=_JIRA_SLIM_PAGE_SIZE,
             fields="key",
         ):
-            id = build_jira_url(self.jira_client, issue.get("key"))
+            issue_key = best_effort_get_field_from_issue(issue, "key")
+            id = build_jira_url(self.jira_client, issue_key)
             slim_doc_batch.append(
                 SlimDocument(
                     id=id,
