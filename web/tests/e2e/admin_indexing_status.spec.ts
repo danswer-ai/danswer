@@ -1,7 +1,7 @@
 import { test, expect } from "@chromatic-com/playwright";
 
 test(
-  "Admin Home",
+  "Admin - Connectors - Existing Connectors",
   {
     tag: "@admin",
   },
