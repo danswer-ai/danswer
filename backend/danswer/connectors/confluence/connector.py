@@ -1,6 +1,7 @@
 from datetime import datetime
 from datetime import timezone
 from typing import Any
+from urllib.parse import quote
 
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
@@ -11,7 +12,6 @@ from danswer.connectors.confluence.utils import attachment_to_content
 from danswer.connectors.confluence.utils import build_confluence_client
 from danswer.connectors.confluence.utils import build_confluence_document_id
 from danswer.connectors.confluence.utils import datetime_from_string
-from danswer.connectors.confluence.utils import escape_cql_string
 from danswer.connectors.confluence.utils import extract_text_from_confluence_html
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
@@ -84,12 +84,12 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         elif page_id:
             # if a cql_query is not provided, we will use the page_id to fetch the page
             if index_recursively:
-                cql_page_query += f" and ancestor='{escape_cql_string(page_id)}'"
+                cql_page_query += f" and ancestor='{page_id}'"
             else:
-                cql_page_query += f" and id='{escape_cql_string(page_id)}'"
+                cql_page_query += f" and id='{page_id}'"
         elif space:
             # if no cql_query or page_id is provided, we will use the space to fetch the pages
-            cql_page_query += f" and space='{escape_cql_string(space)}'"
+            cql_page_query += f" and space='{quote(space)}'"
 
         self.cql_page_query = cql_page_query
         self.cql_time_filter = ""
@@ -98,7 +98,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         if labels_to_skip:
             labels_to_skip = list(set(labels_to_skip))
             comma_separated_labels = ",".join(
-                f"'{escape_cql_string(label)}'" for label in labels_to_skip
+                f"'{quote(label)}'" for label in labels_to_skip
             )
             self.cql_label_filter = f" and label not in ({comma_separated_labels})"
 
@@ -155,7 +155,9 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         # Extract text from page
         if confluence_object["type"] == "page":
             object_text = extract_text_from_confluence_html(
-                self.confluence_client, confluence_object
+                confluence_client=self.confluence_client,
+                confluence_object=confluence_object,
+                fetched_titles={confluence_object.get("title", "")},
             )
             # Add comments to text
             object_text += self._get_comment_string_for_page_id(confluence_object["id"])
@@ -219,7 +221,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         # Fetch attachments as Documents
         for confluence_page_id in confluence_page_ids:
-            attachment_cql = f"type=attachment and container='{escape_cql_string(confluence_page_id)}'"
+            attachment_cql = f"type=attachment and container='{confluence_page_id}'"
             attachment_cql += self.cql_label_filter
             # TODO: maybe should add time filter as well?
             for attachments in self.confluence_client.paginated_cql_page_retrieval(

@@ -2,6 +2,7 @@ import io
 from datetime import datetime
 from datetime import timezone
 from typing import Any
+from urllib.parse import quote
 
 import bs4
 
@@ -20,27 +21,6 @@ logger = setup_logger()
 
 
 _USER_EMAIL_CACHE: dict[str, str | None] = {}
-
-
-def escape_cql_string(value: str) -> str:
-    """Escape special characters in strings used in CQL queries.
-    Handles escaping of special characters that could cause CQL syntax issues.
-    """
-    # First escape backslashes
-    value = value.replace("\\", "\\\\")
-    # Then handle other special characters
-    escapes = {
-        "'": "''",  # Single quotes need to be doubled
-        '"': '\\"',  # Double quotes need escaping
-        "[": "\\[",  # Square brackets need escaping
-        "]": "\\]",
-        "%": "\\%",  # For LIKE operators
-        "_": "\\_",  # For LIKE operators
-        "&": "\\&",  # Ampersand needs escaping
-    }
-    for char, escape_seq in escapes.items():
-        value = value.replace(char, escape_seq)
-    return value
 
 
 def get_user_email_from_username__server(
@@ -92,7 +72,9 @@ def _get_user(confluence_client: OnyxConfluence, user_id: str) -> str:
 
 
 def extract_text_from_confluence_html(
-    confluence_client: OnyxConfluence, confluence_object: dict[str, Any]
+    confluence_client: OnyxConfluence,
+    confluence_object: dict[str, Any],
+    fetched_titles: set[str] | None = None,
 ) -> str:
     """Parse a Confluence html page and replace the 'user Id' by the real
         User Display Name
@@ -126,12 +108,9 @@ def extract_text_from_confluence_html(
         # Wrap this in a try-except because there are some pages that might not exist
         try:
             page_title = html_page_reference.attrs["ri:content-title"]
-            if not page_title:
+            if not page_title or page_title in fetched_titles:
                 continue
-
-            # Escape single quotes in the title to prevent CQL syntax errors
-            escaped_page_title = escape_cql_string(page_title)
-            page_query = f"type=page and title='{escaped_page_title}'"
+            page_query = f"type=page and title='{quote(page_title)}'"
 
             page_contents: dict[str, Any] | None = None
             # Confluence enforces title uniqueness, so we should only get one result here
