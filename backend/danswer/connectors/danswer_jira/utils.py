@@ -1,6 +1,8 @@
 """Module with custom fields processing functions"""
+import os
 from typing import Any
 from typing import List
+from urllib.parse import urlparse
 
 from jira import JIRA
 from jira.resources import CustomFieldOption
@@ -10,6 +12,50 @@ from jira.resources import User
 from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+PROJECT_URL_PAT = "projects"
+JIRA_API_VERSION = os.environ.get("JIRA_API_VERSION") or "2"
+
+
+def build_jira_url(jira_client: JIRA, issue_key: str) -> str:
+    return f"{jira_client.client_info()}/browse/{issue_key}"
+
+
+def build_jira_client(credentials: dict[str, Any], jira_base: str) -> JIRA:
+    api_token = credentials["jira_api_token"]
+    # if user provide an email we assume it's cloud
+    if "jira_user_email" in credentials:
+        email = credentials["jira_user_email"]
+        return JIRA(
+            basic_auth=(email, api_token),
+            server=jira_base,
+            options={"rest_api_version": JIRA_API_VERSION},
+        )
+    else:
+        return JIRA(
+            token_auth=api_token,
+            server=jira_base,
+            options={"rest_api_version": JIRA_API_VERSION},
+        )
+
+
+def extract_jira_project(url: str) -> tuple[str, str]:
+    parsed_url = urlparse(url)
+    jira_base = parsed_url.scheme + "://" + parsed_url.netloc
+
+    # Split the path by '/' and find the position of 'projects' to get the project name
+    split_path = parsed_url.path.split("/")
+    if PROJECT_URL_PAT in split_path:
+        project_pos = split_path.index(PROJECT_URL_PAT)
+        if len(split_path) > project_pos + 1:
+            jira_project = split_path[project_pos + 1]
+        else:
+            raise ValueError("No project name found in the URL")
+    else:
+        raise ValueError("'projects' not found in the URL")
+
+    return jira_base, jira_project
 
 
 class CustomFieldExtractor:

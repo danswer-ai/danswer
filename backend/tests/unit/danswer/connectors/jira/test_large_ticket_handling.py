@@ -83,9 +83,8 @@ def test_fetch_jira_issues_batch_small_ticket(
 ) -> None:
     mock_jira_client.search_issues.return_value = [mock_issue_small]
 
-    docs, count = fetch_jira_issues_batch("project = TEST", 0, mock_jira_client)
+    docs = list(fetch_jira_issues_batch(mock_jira_client, "project = TEST", 50))
 
-    assert count == 1
     assert len(docs) == 1
     assert docs[0].id.endswith("/SMALL-1")
     assert "Small description" in docs[0].sections[0].text
@@ -100,9 +99,8 @@ def test_fetch_jira_issues_batch_large_ticket(
 ) -> None:
     mock_jira_client.search_issues.return_value = [mock_issue_large]
 
-    docs, count = fetch_jira_issues_batch("project = TEST", 0, mock_jira_client)
+    docs = list(fetch_jira_issues_batch(mock_jira_client, "project = TEST", 50))
 
-    assert count == 1
     assert len(docs) == 0  # The large ticket should be skipped
 
 
@@ -114,9 +112,8 @@ def test_fetch_jira_issues_batch_mixed_tickets(
 ) -> None:
     mock_jira_client.search_issues.return_value = [mock_issue_small, mock_issue_large]
 
-    docs, count = fetch_jira_issues_batch("project = TEST", 0, mock_jira_client)
+    docs = list(fetch_jira_issues_batch(mock_jira_client, "project = TEST", 50))
 
-    assert count == 2
     assert len(docs) == 1  # Only the small ticket should be included
     assert docs[0].id.endswith("/SMALL-1")
 
@@ -130,7 +127,6 @@ def test_fetch_jira_issues_batch_custom_size_limit(
 ) -> None:
     mock_jira_client.search_issues.return_value = [mock_issue_small, mock_issue_large]
 
-    docs, count = fetch_jira_issues_batch("project = TEST", 0, mock_jira_client)
+    docs = list(fetch_jira_issues_batch(mock_jira_client, "project = TEST", 50))
 
-    assert count == 2
     assert len(docs) == 0  # Both tickets should be skipped due to the low size limit
