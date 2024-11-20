@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: api-server
-          image: public.ecr.aws/s0d3n4f3/buddy-danswer/backend
+          image: public.ecr.aws/s0d3n4f3/buddy-danswer/backend:latest
           imagePullPolicy: Always
           command:
             - "/bin/sh"

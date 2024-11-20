@@ -1,6 +1,7 @@
 import io
 import ipaddress
 import socket
+import time
 from datetime import datetime
 from datetime import timezone
 from enum import Enum
@@ -83,32 +84,61 @@ def protected_url_check(url: str) -> None:
 
 
 def check_internet_connection(url: str) -> None:
-    try:
-        response = requests.get(url, timeout=3)
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        # Extract status code from the response, defaulting to -1 if response is None
-        status_code = e.response.status_code if e.response is not None else -1
-        error_msg = {
-            400: "Bad Request",
-            401: "Unauthorized",
-            403: "Forbidden",
-            404: "Not Found",
-            500: "Internal Server Error",
-            502: "Bad Gateway",
-            503: "Service Unavailable",
-            504: "Gateway Timeout",
-        }.get(status_code, "HTTP Error")
-        raise Exception(f"{error_msg} ({status_code}) for {url} - {e}")
-    except requests.exceptions.SSLError as e:
-        cause = (
-            e.args[0].reason
-            if isinstance(e.args, tuple) and isinstance(e.args[0], MaxRetryError)
-            else e.args
-        )
-        raise Exception(f"SSL error {str(cause)}")
-    except (requests.RequestException, ValueError) as e:
-        raise Exception(f"Unable to reach {url} - check your internet connection: {e}")
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0',
+    }
+    
+    max_retries = 3
+    retry_delay = 2  # seconds
+    
+    session = requests.Session()  # Use a session to maintain cookies
+    
+    for attempt in range(max_retries):
+        try:
+            # First make a HEAD request to get cookies
+            session.head(url, headers=headers, timeout=10)
+            # Then make the actual GET request
+            response = session.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            return
+        except requests.exceptions.HTTPError as e:
+            status_code = e.response.status_code if e.response is not None else -1
+            if attempt == max_retries - 1 or status_code in [401, 403, 404]:
+                error_msg = {
+                    400: "Bad Request",
+                    401: "Unauthorized",
+                    403: "Forbidden",
+                    404: "Not Found",
+                    500: "Internal Server Error",
+                    502: "Bad Gateway",
+                    503: "Service Unavailable",
+                    504: "Gateway Timeout",
+                }.get(status_code, "HTTP Error")
+                raise Exception(f"{error_msg} ({status_code}) for {url} - {e}")
+            time.sleep(retry_delay)
+            continue
+        except requests.exceptions.SSLError as e:
+            cause = (
+                e.args[0].reason
+                if isinstance(e.args, tuple) and isinstance(e.args[0], MaxRetryError)
+                else e.args
+            )
+            raise Exception(f"SSL error {str(cause)}")
+        except (requests.RequestException, ValueError) as e:
+            if attempt == max_retries - 1:
+                raise Exception(f"Unable to reach {url} - check your internet connection: {e}")
+            time.sleep(retry_delay)
+            continue
 
 
 def is_valid_url(url: str) -> bool:
@@ -145,9 +175,28 @@ def get_internal_links(
 
 def start_playwright() -> Tuple[Playwright, BrowserContext]:
     playwright = sync_playwright().start()
-    browser = playwright.chromium.launch(headless=True)
+    browser = playwright.chromium.launch(
+        headless=True,
+        args=['--no-sandbox', '--disable-setuid-sandbox']
+    )
 
-    context = browser.new_context()
+    context = browser.new_context(
+        user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        viewport={'width': 1920, 'height': 1080},
+        java_script_enabled=True,
+    )
+
+    # Add additional headers
+    context.set_extra_http_headers({
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+    })
 
     if (
         WEB_CONNECTOR_OAUTH_CLIENT_ID
@@ -161,9 +210,9 @@ def start_playwright() -> Tuple[Playwright, BrowserContext]:
             client_id=WEB_CONNECTOR_OAUTH_CLIENT_ID,
             client_secret=WEB_CONNECTOR_OAUTH_CLIENT_SECRET,
         )
-        context.set_extra_http_headers(
-            {"Authorization": "Bearer {}".format(token["access_token"])}
-        )
+        context.set_extra_http_headers({
+            "Authorization": "Bearer {}".format(token["access_token"])
+        })
 
     return playwright, context
 

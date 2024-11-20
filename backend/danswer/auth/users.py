@@ -209,7 +209,7 @@ def send_user_verification_email(
     token: str,
     mail_from: str = EMAIL_FROM,
 ) -> None:
-    msg = MIMEMultipart()
+    msg = MIMEMultipart('alternative')
     msg["Subject"] = "Buddy Email Verification"
     msg["To"] = user_email
     if mail_from:
@@ -217,13 +217,36 @@ def send_user_verification_email(
 
     link = f"{WEB_DOMAIN}/auth/verify-email?token={token}"
 
-    body = MIMEText(f"Click the following link to verify your email address: {link}")
-    msg.attach(body)
+    # Plain text version
+    text_content = f"""
+Welcome to Buddy!
+
+Please verify your email address by clicking this link: {link}
+
+For any issues or support, please email us at buddy@enigmas.io
+
+Best regards,
+The Buddy Team
+    """.strip()
+
+    # HTML version with hyperlink
+    html_content = f"""
+<p>Welcome to Buddy!</p>
+
+<p>Please <a href="{link}">click here</a> to verify your email address.</p>
+
+<p>For any issues or support, please email us at <a href="mailto:buddy@enigmas.io">buddy@enigmas.io</a></p>
+
+<p>Kinds regards,<br>
+The Buddy Team</p>
+    """.strip()
+
+    # Attach both versions
+    msg.attach(MIMEText(text_content, 'plain'))
+    msg.attach(MIMEText(html_content, 'html'))
 
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as s:
         s.starttls()
-        # If credentials fails with gmail, check (You need an app password, not just the basic email password)
-        # https://support.google.com/accounts/answer/185833?sjid=8512343437447396151-NA
         s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
 
