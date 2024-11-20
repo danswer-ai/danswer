@@ -5,6 +5,7 @@ from uuid import uuid4
 import redis
 from celery import Celery
 from redis import Redis
+from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -50,9 +51,9 @@ class RedisDocumentSet(RedisObjectHelper):
         celery_app: Celery,
         db_session: Session,
         redis_client: Redis,
-        lock: redis.lock.Lock,
+        lock: RedisLock,
         tenant_id: str | None,
-    ) -> int | None:
+    ) -> tuple[int, int] | None:
         last_lock_time = time.monotonic()
 
         async_results = []
@@ -84,7 +85,7 @@ class RedisDocumentSet(RedisObjectHelper):
 
             async_results.append(result)
 
-        return len(async_results)
+        return len(async_results), len(async_results)
 
     def reset(self) -> None:
         self.redis.delete(self.taskset_key)

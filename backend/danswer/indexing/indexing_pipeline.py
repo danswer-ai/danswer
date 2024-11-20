@@ -1,7 +1,9 @@
 import traceback
 from functools import partial
+from http import HTTPStatus
 from typing import Protocol
 
+import httpx
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from sqlalchemy.orm import Session
@@ -93,14 +95,15 @@ def _upsert_documents_in_db(
                     document_id=doc.id,
                     db_session=db_session,
                 )
-            else:
-                create_or_add_document_tag(
-                    tag_key=k,
-                    tag_value=v,
-                    source=doc.source,
-                    document_id=doc.id,
-                    db_session=db_session,
-                )
+                continue
+
+            create_or_add_document_tag(
+                tag_key=k,
+                tag_value=v,
+                source=doc.source,
+                document_id=doc.id,
+                db_session=db_session,
+            )
 
 
 def get_doc_ids_to_update(
@@ -153,6 +156,14 @@ def index_doc_batch_with_handler(
             tenant_id=tenant_id,
         )
     except Exception as e:
+        if isinstance(e, httpx.HTTPStatusError):
+            if e.response.status_code == HTTPStatus.INSUFFICIENT_STORAGE:
+                logger.error(
+                    "NOTE: HTTP Status 507 Insufficient Storage indicates "
+                    "you need to allocate more memory or disk space to the "
+                    "Vespa/index container."
+                )
+
         if INDEXING_EXCEPTION_LIMIT == 0:
             raise
 
@@ -196,7 +207,7 @@ def index_doc_batch_prepare(
     db_session: Session,
     ignore_time_skip: bool = False,
 ) -> DocumentBatchPrepareContext | None:
-    """This sets up the documents in the relational DB (source of truth) for permissions, metadata, etc.
+    """Sets up the documents in the relational DB (source of truth) for permissions, metadata, etc.
     This preceeds indexing it into the actual document index."""
     documents: list[Document] = []
     for document in document_batch:
@@ -213,16 +224,17 @@ def index_doc_batch_prepare(
             logger.warning(
                 f"Skipping document with ID {document.id} as it has neither title nor content."
             )
-        elif (
-            document.title is not None and not document.title.strip() and empty_contents
-        ):
+            continue
+
+        if document.title is not None and not document.title.strip() and empty_contents:
             # The title is explicitly empty ("" and not None) and the document is empty
             # so when building the chunk text representation, it will be empty and unuseable
             logger.warning(
                 f"Skipping document with ID {document.id} as the chunks will be empty."
             )
-        else:
-            documents.append(document)
+            continue
+
+        documents.append(document)
 
     # Create a trimmed list of docs that don't have a newer updated at
     # Shortcuts the time-consuming flow on connector index retries
@@ -284,7 +296,10 @@ def index_doc_batch(
 ) -> tuple[int, int]:
     """Takes different pieces of the indexing pipeline and applies it to a batch of documents
     Note that the documents should already be batched at this point so that it does not inflate the
-    memory requirements"""
+    memory requirements
+
+    Returns a tuple where the first element is the number of new docs and the
+    second element is the number of chunks."""
 
     no_access = DocumentAccess.build(
         user_emails=[],
@@ -327,9 +342,9 @@ def index_doc_batch(
 
         # we're concerned about race conditions where multiple simultaneous indexings might result
         # in one set of metadata overwriting another one in vespa.
-        # we still write data here for immediate and most likely correct sync, but
+        # we still write data here for the immediate and most likely correct sync, but
         # to resolve this, an update of the last modified field at the end of this loop
-        # always triggers a final metadata sync
+        # always triggers a final metadata sync via the celery queue
         access_aware_chunks = [
             DocMetadataAwareIndexChunk.from_index_chunk(
                 index_chunk=chunk,
@@ -366,7 +381,8 @@ def index_doc_batch(
         ids_to_new_updated_at = {}
         for doc in successful_docs:
             last_modified_ids.append(doc.id)
-            # doc_updated_at is the connector source's idea of when the doc was last modified
+            # doc_updated_at is the source's idea (on the other end of the connector)
+            # of when the doc was last modified
             if doc.doc_updated_at is None:
                 continue
             ids_to_new_updated_at[doc.id] = doc.doc_updated_at
@@ -381,9 +397,12 @@ def index_doc_batch(
 
         db_session.commit()
 
-    return len([r for r in insertion_records if r.already_existed is False]), len(
-        access_aware_chunks
+    result = (
+        len([r for r in insertion_records if r.already_existed is False]),
+        len(access_aware_chunks),
     )
+
+    return result
 
 
 def build_indexing_pipeline(

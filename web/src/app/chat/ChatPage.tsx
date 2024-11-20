@@ -1942,6 +1942,7 @@ export function ChatPage({
                   ref={innerSidebarElementRef}
                   toggleSidebar={toggleSidebar}
                   toggled={toggledSidebar && !settings?.isMobile}
+                  backgroundToggled={toggledSidebar || showDocSidebar}
                   existingChats={chatSessions}
                   currentChatSession={selectedChatSession}
                   folders={folders}

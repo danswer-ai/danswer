@@ -3,13 +3,14 @@ from datetime import timezone
 from http import HTTPStatus
 from time import sleep
 
-import redis
 import sentry_sdk
 from celery import Celery
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
+from redis.exceptions import LockError
+from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
@@ -44,7 +45,7 @@ from danswer.db.swap_index import check_index_swap
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.redis.redis_connector import RedisConnector
-from danswer.redis.redis_connector_index import RedisConnectorIndexingFenceData
+from danswer.redis.redis_connector_index import RedisConnectorIndexPayload
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import global_version
@@ -61,14 +62,18 @@ class RunIndexingCallback(RunIndexingCallbackInterface):
         self,
         stop_key: str,
         generator_progress_key: str,
-        redis_lock: redis.lock.Lock,
+        redis_lock: RedisLock,
         redis_client: Redis,
     ):
         super().__init__()
-        self.redis_lock: redis.lock.Lock = redis_lock
+        self.redis_lock: RedisLock = redis_lock
         self.stop_key: str = stop_key
         self.generator_progress_key: str = generator_progress_key
         self.redis_client = redis_client
+        self.started: datetime = datetime.now(timezone.utc)
+        self.redis_lock.reacquire()
+
+        self.last_lock_reacquire: datetime = datetime.now(timezone.utc)
 
     def should_stop(self) -> bool:
         if self.redis_client.exists(self.stop_key):
@@ -76,7 +81,19 @@ class RunIndexingCallback(RunIndexingCallbackInterface):
         return False
 
     def progress(self, amount: int) -> None:
-        self.redis_lock.reacquire()
+        try:
+            self.redis_lock.reacquire()
+            self.last_lock_reacquire = datetime.now(timezone.utc)
+        except LockError:
+            logger.exception(
+                f"RunIndexingCallback - lock.reacquire exceptioned. "
+                f"lock_timeout={self.redis_lock.timeout} "
+                f"start={self.started} "
+                f"last_reacquired={self.last_lock_reacquire} "
+                f"now={datetime.now(timezone.utc)}"
+            )
+            raise
+
         self.redis_client.incrby(self.generator_progress_key, amount)
 
 
@@ -175,7 +192,8 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     )
                     if attempt_id:
                         task_logger.info(
-                            f"Indexing queued: index_attempt={attempt_id} "
+                            f"Connector indexing queued: "
+                            f"index_attempt={attempt_id} "
                             f"cc_pair={cc_pair.id} "
                             f"search_settings={search_settings_instance.id} "
                         )
@@ -325,7 +343,7 @@ def try_creating_indexing_task(
         redis_connector_index.generator_clear()
 
         # set a basic fence to start
-        payload = RedisConnectorIndexingFenceData(
+        payload = RedisConnectorIndexPayload(
             index_attempt_id=None,
             started=None,
             submitted=datetime.now(timezone.utc),
@@ -366,9 +384,8 @@ def try_creating_indexing_task(
         payload.index_attempt_id = index_attempt_id
         payload.celery_task_id = result.id
         redis_connector_index.set_fence(payload)
-
     except Exception:
-        redis_connector_index.set_fence(payload)
+        redis_connector_index.set_fence(None)
         task_logger.exception(
             f"Unexpected exception: "
             f"tenant={tenant_id} "
@@ -499,7 +516,8 @@ def connector_indexing_task(
         logger.debug("Sentry DSN not provided, skipping Sentry initialization")
 
     logger.info(
-        f"Indexing spawned task starting: attempt={index_attempt_id} "
+        f"Indexing spawned task starting: "
+        f"attempt={index_attempt_id} "
         f"tenant={tenant_id} "
         f"cc_pair={cc_pair_id} "
         f"search_settings={search_settings_id}"
