@@ -74,7 +74,7 @@ def _get_user(confluence_client: OnyxConfluence, user_id: str) -> str:
 def extract_text_from_confluence_html(
     confluence_client: OnyxConfluence,
     confluence_object: dict[str, Any],
-    fetched_titles: set[str] | None = None,
+    fetched_titles: set[str],
 ) -> str:
     """Parse a Confluence html page and replace the 'user Id' by the real
         User Display Name
@@ -82,7 +82,7 @@ def extract_text_from_confluence_html(
     Args:
         confluence_object (dict): The confluence object as a dict
         confluence_client (Confluence): Confluence client
-
+        fetched_titles (set[str]): The titles of the pages that have already been fetched
     Returns:
         str: loaded and formated Confluence page
     """
@@ -108,18 +108,30 @@ def extract_text_from_confluence_html(
         # Wrap this in a try-except because there are some pages that might not exist
         try:
             page_title = html_page_reference.attrs["ri:content-title"]
-            if not page_title or page_title in fetched_titles:
+
+            if not page_title:
+                # only fetch pages that have a title
                 continue
+
+            if page_title not in fetched_titles:
+                # prevent recursive fetching of pages
+                logger.info(
+                    f"Skipping {page_title} because it has already been fetched"
+                )
+                continue
+
+            fetched_titles.add(page_title)
+
             page_query = f"type=page and title='{quote(page_title)}'"
 
             page_contents: dict[str, Any] | None = None
             # Confluence enforces title uniqueness, so we should only get one result here
-            for page_batch in confluence_client.paginated_cql_page_retrieval(
+            for page in confluence_client.paginated_cql_retrieval(
                 cql=page_query,
                 expand="body.storage.value",
                 limit=1,
             ):
-                page_contents = page_batch[0]
+                page_contents = page
                 break
         except Exception:
             logger.warning(
@@ -129,8 +141,11 @@ def extract_text_from_confluence_html(
 
         if not page_contents:
             continue
+
         text_from_page = extract_text_from_confluence_html(
-            confluence_client, page_contents
+            confluence_client=confluence_client,
+            confluence_object=page_contents,
+            fetched_titles=fetched_titles,
         )
 
         html_page_reference.replaceWith(text_from_page)
