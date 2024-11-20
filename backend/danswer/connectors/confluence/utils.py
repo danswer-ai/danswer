@@ -22,6 +22,26 @@ logger = setup_logger()
 _USER_EMAIL_CACHE: dict[str, str | None] = {}
 
 
+def escape_cql_string(value: str) -> str:
+    """Escape special characters in strings used in CQL queries.
+    Handles escaping of special characters that could cause CQL syntax issues.
+    """
+    # First escape backslashes
+    value = value.replace("\\", "\\\\")
+    # Then handle other special characters
+    escapes = {
+        "'": "''",  # Single quotes need to be doubled
+        '"': '\\"',  # Double quotes need escaping
+        "[": "\\[",  # Square brackets need escaping
+        "]": "\\]",
+        "%": "\\%",  # For LIKE operators
+        "_": "\\_",  # For LIKE operators
+    }
+    for char, escape_seq in escapes.items():
+        value = value.replace(char, escape_seq)
+    return value
+
+
 def get_user_email_from_username__server(
     confluence_client: OnyxConfluence, user_name: str
 ) -> str | None:
@@ -108,7 +128,9 @@ def extract_text_from_confluence_html(
             if not page_title:
                 continue
 
-            page_query = f"type=page and title='{page_title}'"
+            # Escape single quotes in the title to prevent CQL syntax errors
+            escaped_page_title = escape_cql_string(page_title)
+            page_query = f"type=page and title='{escaped_page_title}'"
 
             page_contents: dict[str, Any] | None = None
             # Confluence enforces title uniqueness, so we should only get one result here
