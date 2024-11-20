@@ -88,4 +88,5 @@ class QuotesResponseHandler(AnswerResponseHandler):
             response_item.content if isinstance(response_item.content, str) else ""
         )
 
-        yield from self.quotes_processor.process_token(content)
+        for part in self.quotes_processor.process_token(content):
+            yield part

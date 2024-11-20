@@ -239,6 +239,7 @@ class QuotesProcessor:
 
                 # Prevent heavy cases of hallucinations
                 if self.is_json_prompt and len(self.model_output) > 70:
+                    # and "{" in self.model_output
                     logger.warning("LLM did not produce json as prompted")
                     self.found_answer_end = True
                     return
