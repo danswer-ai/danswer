@@ -104,24 +104,35 @@ def extract_text_from_confluence_html(
         # Include @ sign for tagging, more clear for LLM
         user.replaceWith("@" + _get_user(confluence_client, user_id))
 
-    for html_page_reference in soup.findAll("ri:page"):
+    for html_page_reference in soup.findAll("ac:structured-macro"):
+        # Here, we only want to process page within page macros
+        if html_page_reference.attrs.get("ac:name") != "include":
+            continue
+
+        page_data = html_page_reference.find("ri:page")
+        if not page_data:
+            logger.warning(
+                f"Skipping retrieval of {html_page_reference} because because page data is missing"
+            )
+            continue
+
+        page_title = page_data.attrs.get("ri:content-title")
+        if not page_title:
+            # only fetch pages that have a title
+            logger.warning(
+                f"Skipping retrieval of {html_page_reference} because it has no title"
+            )
+            continue
+
+        if page_title in fetched_titles:
+            # prevent recursive fetching of pages
+            logger.debug(f"Skipping {page_title} because it has already been fetched")
+            continue
+
+        fetched_titles.add(page_title)
+
         # Wrap this in a try-except because there are some pages that might not exist
         try:
-            page_title = html_page_reference.attrs["ri:content-title"]
-
-            if not page_title:
-                # only fetch pages that have a title
-                continue
-
-            if page_title not in fetched_titles:
-                # prevent recursive fetching of pages
-                logger.info(
-                    f"Skipping {page_title} because it has already been fetched"
-                )
-                continue
-
-            fetched_titles.add(page_title)
-
             page_query = f"type=page and title='{quote(page_title)}'"
 
             page_contents: dict[str, Any] | None = None
@@ -133,9 +144,9 @@ def extract_text_from_confluence_html(
             ):
                 page_contents = page
                 break
-        except Exception:
+        except Exception as e:
             logger.warning(
-                f"Error getting page contents for object {confluence_object}"
+                f"Error getting page contents for object {confluence_object}: {e}"
             )
             continue
 
@@ -149,6 +160,15 @@ def extract_text_from_confluence_html(
         )
 
         html_page_reference.replaceWith(text_from_page)
+
+    for html_link_body in soup.findAll("ac:link-body"):
+        # This extracts the text from inline links in the page so they can be
+        # represented in the document text as plain text
+        try:
+            text_from_link = html_link_body.text
+            html_link_body.replaceWith(f"(LINK TEXT: {text_from_link})")
+        except Exception as e:
+            logger.warning(f"Error processing ac:link-body: {e}")
 
     return format_document_soup(soup)
 
