@@ -81,7 +81,7 @@ def extract_embedded_json(s: str) -> dict:
     last_brace_index = s.rfind("}")
 
     if first_brace_index == -1 or last_brace_index == -1:
-        logger.warning("No valid json found, defaulting to empty dict")
+        logger.warning("No valid json found, assuming answer is entire string")
         return {"answer": s, "quotes": []}
 
     json_str = s[first_brace_index : last_brace_index + 1]
