@@ -764,16 +764,10 @@ export const SearchSection = ({
                     </div>
                   )}
                   <div
-                    className={`mobile:fixed mobile:left-1/2 mobile:transform mobile:-translate-x-1/2 mobile:max-w-search-bar-max mobile:w-[90%] mobile:z-100 mobile:bottom-12`}
+                    className={`mobile:max-w-search-bar-max mobile:w-[90%] mobile:z-100`}
                   >
                     <div
-                      className={`transition-all duration-500 ease-in-out overflow-hidden 
-                      ${
-                        firstSearch
-                          ? "opacity-100 max-h-[500px]"
-                          : "opacity-0 max-h-0"
-                      }`}
-                      onTransitionEnd={handleTransitionEnd}
+                      className={`transition-all duration-500 ease-in-out overflow-hidden opacity-100 max-h-[500px]`}
                     >
                       <div className="mt-48 mb-8 flex justify-center items-center">
                         <div className="w-message-xs 2xl:w-message-sm 3xl:w-message">
@@ -812,40 +806,42 @@ export const SearchSection = ({
                       tags={[]}
                     />
                   </div>
-                  {!firstSearch && (
-                    <SearchAnswer
-                      isFetching={isFetching}
-                      dedupedQuotes={dedupedQuotes}
-                      searchResponse={searchResponse}
-                      setSearchAnswerExpanded={setSearchAnswerExpanded}
-                      searchAnswerExpanded={searchAnswerExpanded}
-                      setCurrentFeedback={setCurrentFeedback}
-                      searchState={searchState}
-                    />
-                  )}
+                  <div className="mt-6">
+                    {!firstSearch && (
+                      <SearchAnswer
+                        isFetching={isFetching}
+                        dedupedQuotes={dedupedQuotes}
+                        searchResponse={searchResponse}
+                        setSearchAnswerExpanded={setSearchAnswerExpanded}
+                        searchAnswerExpanded={searchAnswerExpanded}
+                        setCurrentFeedback={setCurrentFeedback}
+                        searchState={searchState}
+                      />
+                    )}
 
-                  {!settings?.isMobile && (
-                    <div className="mt-6">
-                      {!(agenticResults && isFetching) || disabledAgentic ? (
-                        <SearchResultsDisplay
-                          searchState={searchState}
-                          disabledAgentic={disabledAgentic}
-                          contentEnriched={contentEnriched}
-                          comments={comments}
-                          sweep={sweep}
-                          agenticResults={
-                            shouldUseAgenticDisplay && !disabledAgentic
-                          }
-                          performSweep={performSweep}
-                          searchResponse={searchResponse}
-                          isFetching={isFetching}
-                          defaultOverrides={defaultOverrides}
-                        />
-                      ) : (
-                        <></>
-                      )}
-                    </div>
-                  )}
+                    {!settings?.isMobile && (
+                      <div className="mt-6">
+                        {!(agenticResults && isFetching) || disabledAgentic ? (
+                          <SearchResultsDisplay
+                            searchState={searchState}
+                            disabledAgentic={disabledAgentic}
+                            contentEnriched={contentEnriched}
+                            comments={comments}
+                            sweep={sweep}
+                            agenticResults={
+                              shouldUseAgenticDisplay && !disabledAgentic
+                            }
+                            performSweep={performSweep}
+                            searchResponse={searchResponse}
+                            isFetching={isFetching}
+                            defaultOverrides={defaultOverrides}
+                          />
+                        ) : (
+                          <></>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             }
