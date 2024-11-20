@@ -66,6 +66,6 @@ TENANT_HEARTBEAT_INTERVAL = (
 TENANT_HEARTBEAT_EXPIRATION = (
     30  # How long before a tenant's heartbeat expires, allowing other pods to take over
 )
-TENANT_ACQUISITION_INTERVAL = 60  # How often pods attempt to acquire unprocessed tenants and checks for new tokens
+TENANT_ACQUISITION_INTERVAL = 15  # How often pods attempt to acquire unprocessed tenants and checks for new tokens
 
 MAX_TENANTS_PER_POD = int(os.getenv("MAX_TENANTS_PER_POD", 50))
