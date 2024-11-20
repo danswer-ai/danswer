@@ -128,10 +128,6 @@ def fetch_jira_issues_batch(
         jql=jql,
         max_results=batch_size,
     ):
-        if type(issue) != Issue:
-            logger.warning(f"Found Jira object not of type Issue {issue}")
-            continue
-
         if labels_to_skip:
             if any(label in issue.fields.labels for label in labels_to_skip):
                 logger.info(
