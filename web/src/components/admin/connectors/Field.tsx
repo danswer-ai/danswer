@@ -662,7 +662,10 @@ export function SelectorFormField({
           {container && (
             <SelectContent
               side={side}
-              className={maxHeight ? `max-h-[${maxHeight}]` : undefined}
+              className={`
+               ${maxHeight ? `${maxHeight}` : "max-h-72"}
+               overflow-y-scroll
+              `}
               container={container}
             >
               {options.length === 0 ? (
