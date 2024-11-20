@@ -211,12 +211,7 @@ export function TextFormField({
     <div className={`w-full ${width}`}>
       <div className="flex gap-x-2 items-center">
         {!removeLabel && (
-          <Label
-            className={`${
-              small ? "text-text-950" : "text-text-700 font-normal"
-            } ${sizeClass.label}`}
-            small={small}
-          >
+          <Label className={sizeClass.label} small={small}>
             {label}
           </Label>
         )}
