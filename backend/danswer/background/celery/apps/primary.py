@@ -95,6 +95,15 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     # by the primary worker. This is unnecessary in the multi tenant scenario
     r = get_redis_client(tenant_id=None)
 
+    # Log the role and slave count - being connected to a slave or slave count > 0 could be problematic
+    info: dict[str, Any] = r.info("replication")
+    role: str = info.get("role")
+    connected_slaves: int = info.get("connected_slaves", 0)
+
+    logger.info(
+        f"Redis INFO REPLICATION: role={role} connected_slaves={connected_slaves}"
+    )
+
     # For the moment, we're assuming that we are the only primary worker
     # that should be running.
     # TODO: maybe check for or clean up another zombie primary worker if we detect it
