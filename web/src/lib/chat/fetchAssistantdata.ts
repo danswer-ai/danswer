@@ -22,7 +22,8 @@ export async function fetchAssistantData(): Promise<AssistantData> {
     // Fetch core assistants data first
     const [assistants, assistantsFetchError] = await fetchAssistantsSS();
     if (assistantsFetchError) {
-      console.error(`Failed to fetch assistants - ${assistantsFetchError}`);
+      // This is not a critical error and occurs when the user is not logged in
+      console.warn(`Failed to fetch assistants - ${assistantsFetchError}`);
       return defaultState;
     }
 

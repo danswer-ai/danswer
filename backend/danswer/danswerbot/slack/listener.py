@@ -197,7 +197,9 @@ class SlackbotHandler:
             return
 
         tokens_exist = tenant_bot_pair in self.slack_bot_tokens
-        tokens_changed = slack_bot_tokens != self.slack_bot_tokens[tenant_bot_pair]
+        tokens_changed = (
+            tokens_exist and slack_bot_tokens != self.slack_bot_tokens[tenant_bot_pair]
+        )
         if not tokens_exist or tokens_changed:
             if tokens_exist:
                 logger.info(
