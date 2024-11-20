@@ -36,6 +36,7 @@ def escape_cql_string(value: str) -> str:
         "]": "\\]",
         "%": "\\%",  # For LIKE operators
         "_": "\\_",  # For LIKE operators
+        "&": "\\&",  # Ampersand needs escaping
     }
     for char, escape_seq in escapes.items():
         value = value.replace(char, escape_seq)
