@@ -68,7 +68,12 @@ def upgrade() -> None:
     app_token = None
     first_row_id = None
 
-    tokens = cast(dict, get_kv_store().load("slack_bot_tokens_config_key"))
+    try:
+        tokens = cast(dict, get_kv_store().load("slack_bot_tokens_config_key"))
+    except Exception:
+        logger.warning("No existing Slack bot tokens found.")
+        tokens = {}
+
     bot_token = tokens.get("bot_token")
     app_token = tokens.get("app_token")
 
