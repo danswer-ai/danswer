@@ -1,5 +1,3 @@
-from typing import Any
-
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
 from danswer.connectors.confluence.utils import build_confluence_client
 from danswer.connectors.confluence.utils import get_user_email_from_username__server
@@ -15,12 +13,8 @@ def _get_group_members_email_paginated(
     confluence_client: OnyxConfluence,
     group_name: str,
 ) -> set[str]:
-    members: list[dict[str, Any]] = []
-    for member_batch in confluence_client.paginated_group_members_retrieval(group_name):
-        members.extend(member_batch)
-
     group_member_emails: set[str] = set()
-    for member in members:
+    for member in confluence_client.paginated_group_members_retrieval(group_name):
         email = member.get("email")
         if not email:
             user_name = member.get("username")
@@ -47,10 +41,9 @@ def confluence_group_sync(
 
     # Get all group names
     group_names: list[str] = []
-    for group_batch in confluence_client.paginated_groups_retrieval():
-        for group in group_batch:
-            if group_name := group.get("name"):
-                group_names.append(group_name)
+    for group in confluence_client.paginated_groups_retrieval():
+        if group_name := group.get("name"):
+            group_names.append(group_name)
 
     # For each group name, get all members and create a danswer group
     danswer_groups: list[ExternalUserGroup] = []

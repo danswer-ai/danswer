@@ -1,7 +1,7 @@
 """add creator to cc pair
 
 Revision ID: 9cf5c00f72fe
-Revises: c0fd6e4da83a
+Revises: 26b931506ecb
 Create Date: 2024-11-12 15:16:42.682902
 
 """
