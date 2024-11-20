@@ -210,37 +210,36 @@ def downgrade() -> None:
     )
 
     # Migrate data back to the old format
+    # Group by persona_id to combine channel names back into arrays
     op.execute(
         sa.text(
             """
-        INSERT INTO slack_bot_config (
-            persona_id,
-            channel_config,
-            response_type,
-            enable_auto_filters
+            INSERT INTO slack_bot_config (
+                persona_id,
+                channel_config,
+                response_type,
+                enable_auto_filters
+            )
+            SELECT DISTINCT ON (persona_id)
+                persona_id,
+                jsonb_build_object(
+                    'channel_names', (
+                        SELECT jsonb_agg(c.channel_config->>'channel_name')
+                        FROM slack_channel_config c
+                        WHERE c.persona_id = scc.persona_id
+                    ),
+                    'respond_tag_only', (channel_config->>'respond_tag_only')::boolean,
+                    'respond_to_bots', (channel_config->>'respond_to_bots')::boolean,
+                    'respond_member_group_list', channel_config->'respond_member_group_list',
+                    'answer_filters', channel_config->'answer_filters',
+                    'follow_up_tags', channel_config->'follow_up_tags'
+                ),
+                response_type,
+                enable_auto_filters
+            FROM slack_channel_config scc
+            WHERE persona_id IS NOT NULL;
+            """
         )
-        SELECT DISTINCT
-            persona_id,
-            jsonb_build_object(
-                'channel_names', jsonb_agg(channel_config->>'channel_name'),
-                'respond_tag_only', bool_or((channel_config->>'respond_tag_only')::boolean),
-                'respond_to_bots', bool_or((channel_config->>'respond_to_bots')::boolean),
-                'respond_member_group_list', channel_config->'respond_member_group_list',
-                'answer_filters', channel_config->'answer_filters',
-                'follow_up_tags', channel_config->'follow_up_tags'
-            ),
-            response_type,
-            enable_auto_filters
-        FROM slack_channel_config
-        GROUP BY persona_id, response_type, enable_auto_filters;
-    """
-        ).bindparams()
-    )
-    # Rename the column back
-    op.alter_column(
-        "slack_channel_config__standard_answer_category",
-        "slack_channel_config_id",
-        new_column_name="slack_bot_config_id",
     )
 
     # Rename the table back
@@ -249,7 +248,33 @@ def downgrade() -> None:
         "slack_bot_config__standard_answer_category",
     )
 
+    # Rename the column back
+    op.alter_column(
+        "slack_bot_config__standard_answer_category",
+        "slack_channel_config_id",
+        new_column_name="slack_bot_config_id",
+    )
+
+    # Try to save the first bot's tokens back to KV store
+    try:
+        first_bot = (
+            op.get_bind()
+            .execute(
+                sa.text(
+                    "SELECT bot_token, app_token FROM slack_bot ORDER BY id LIMIT 1"
+                )
+            )
+            .first()
+        )
+        if first_bot and first_bot.bot_token and first_bot.app_token:
+            tokens = {
+                "bot_token": first_bot.bot_token,
+                "app_token": first_bot.app_token,
+            }
+            get_kv_store().save("slack_bot_tokens_config_key", tokens)
+    except Exception:
+        logger.warning("Failed to save tokens back to KV store")
+
     # Drop the new tables in reverse order
-    op.drop_table("slack_bot__slack_channel_config")
     op.drop_table("slack_channel_config")
     op.drop_table("slack_bot")
