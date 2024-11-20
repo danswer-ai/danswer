@@ -231,16 +231,16 @@ class QuotesProcessor:
 
         model_previous = self.model_output
         self.model_output += token
-
         if not self.found_answer_start:
             m = answer_pattern.search(self.model_output)
             if m:
                 self.found_answer_start = True
 
                 # Prevent heavy cases of hallucinations
-                if self.is_json_prompt and len(self.model_output) > 70:
-                    logger.warning("LLM did not produce json as prompted")
+                if self.is_json_prompt and len(self.model_output) > 400:
                     self.found_answer_end = True
+                    logger.warning("LLM did not produce json as prompted")
+                    logger.debug("Model output thus far:", self.model_output)
                     return
 
                 remaining = self.model_output[m.end() :]

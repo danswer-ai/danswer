@@ -4,6 +4,10 @@ import re
 import string
 from urllib.parse import quote
 
+from danswer.utils.logger import setup_logger
+
+
+logger = setup_logger(__name__)
 
 ESCAPE_SEQUENCE_RE = re.compile(
     r"""
@@ -77,7 +81,8 @@ def extract_embedded_json(s: str) -> dict:
     last_brace_index = s.rfind("}")
 
     if first_brace_index == -1 or last_brace_index == -1:
-        raise ValueError("No valid json found")
+        logger.warning("No valid json found, assuming answer is entire string")
+        return {"answer": s, "quotes": []}
 
     json_str = s[first_brace_index : last_brace_index + 1]
     try:
