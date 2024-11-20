@@ -271,7 +271,7 @@ def downgrade() -> None:
                 "bot_token": first_bot.bot_token,
                 "app_token": first_bot.app_token,
             }
-            get_kv_store().save("slack_bot_tokens_config_key", tokens)
+            get_kv_store().store("slack_bot_tokens_config_key", tokens)
     except Exception:
         logger.warning("Failed to save tokens back to KV store")
 
