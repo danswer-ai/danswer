@@ -26,7 +26,7 @@ export function DeletePersonaButton({
               : `/chat`
           );
         } else {
-          alert(`Failed to delete persona - ${await response.text()}`);
+          alert(`Failed to delete assistant - ${await response.text()}`);
         }
       }}
     >

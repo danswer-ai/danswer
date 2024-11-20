@@ -107,9 +107,9 @@ export function PersonasTable() {
       {popup}
 
       <Text className="my-2">
-        Assistants will be displayed as options on the Chat / Search interfaces
-        in the order they are displayed below. Assistants marked as hidden will
-        not be displayed. Editable assistants are shown at the top.
+        Specialists will be displayed as options on the Chat / Search interfaces
+        in the order they are displayed below. Specialists marked as hidden will
+        not be displayed. Editable Specialists are shown at the top.
       </Text>
 
       <DraggableTable
@@ -155,7 +155,7 @@ export function PersonasTable() {
                     } else {
                       setPopup({
                         type: "error",
-                        message: `Failed to update persona - ${await response.text()}`,
+                        message: `Failed to update specialist - ${await response.text()}`,
                       });
                     }
                   }
@@ -186,7 +186,7 @@ export function PersonasTable() {
                           router.refresh();
                         } else {
                           alert(
-                            `Failed to delete persona - ${await response.text()}`
+                            `Failed to delete specialist - ${await response.text()}`
                           );
                         }
                       }}

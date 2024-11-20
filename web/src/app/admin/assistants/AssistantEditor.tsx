@@ -226,10 +226,10 @@ export function AssistantEditor({
         validationSchema={Yup.object()
           .shape({
             name: Yup.string().required(
-              "Must provide a name for the Assistant"
+              "Must provide a name for the Specialist"
             ),
             description: Yup.string().required(
-              "Must provide a description for the Assistant"
+              "Must provide a description for the Specialist"
             ),
             system_prompt: Yup.string(),
             task_prompt: Yup.string(),
@@ -362,7 +362,7 @@ export function AssistantEditor({
             error = await promptResponse.text();
           }
           if (!personaResponse) {
-            error = "Failed to create Assistant - no response received";
+            error = "Failed to create Specialist - no response received";
           } else if (!personaResponse.ok) {
             error = await personaResponse.text();
           }
@@ -370,7 +370,7 @@ export function AssistantEditor({
           if (error || !personaResponse) {
             setPopup({
               type: "error",
-              message: `Failed to create Assistant - ${error}`,
+              message: `Failed to create Specialist - ${error}`,
             });
             formikHelpers.setSubmitting(false);
           } else {
@@ -572,7 +572,7 @@ export function AssistantEditor({
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center">
                       <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                        This icon will visually represent your Assistant
+                        This icon will visually represent your Specialist
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -616,8 +616,8 @@ export function AssistantEditor({
                       </TooltipTrigger>
                       <TooltipContent side="top" align="center">
                         <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
-                          Select a Large Language Model (Generative AI model) to
-                          power this Assistant
+                          Select a Buddy to
+                          power this Specialist
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -756,7 +756,7 @@ export function AssistantEditor({
                             <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                               To use Image Generation, select GPT-4o or another
                               image compatible model as the default model for
-                              this Assistant.
+                              this Specialist.
                             </p>
                           </TooltipContent>
                         ) : (
