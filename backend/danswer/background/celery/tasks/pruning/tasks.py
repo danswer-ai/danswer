@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_utils import extract_ids_from_runnable_connector
-from danswer.background.celery.tasks.indexing.tasks import RunIndexingCallback
+from danswer.background.celery.tasks.indexing.tasks import IndexingCallback
 from danswer.configs.app_configs import ALLOW_SIMULTANEOUS_PRUNING
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_PRUNING_LOCK_TIMEOUT
@@ -277,7 +277,7 @@ def connector_pruning_generator_task(
                 cc_pair.credential,
             )
 
-            callback = RunIndexingCallback(
+            callback = IndexingCallback(
                 redis_connector.stop.fence_key,
                 redis_connector.prune.generator_progress_key,
                 lock,

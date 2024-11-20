@@ -34,7 +34,7 @@ from danswer.document_index.interfaces import DocumentIndex
 from danswer.document_index.interfaces import DocumentMetadata
 from danswer.indexing.chunker import Chunker
 from danswer.indexing.embedder import IndexingEmbedder
-from danswer.indexing.indexing_heartbeat import IndexingHeartbeat
+from danswer.indexing.indexing_heartbeat import IndexingHeartbeatInterface
 from danswer.indexing.models import DocAwareChunk
 from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.utils.logger import setup_logger
@@ -414,6 +414,7 @@ def build_indexing_pipeline(
     ignore_time_skip: bool = False,
     attempt_id: int | None = None,
     tenant_id: str | None = None,
+    callback: IndexingHeartbeatInterface | None = None,
 ) -> IndexingPipelineProtocol:
     """Builds a pipeline which takes in a list (batch) of docs and indexes them."""
     search_settings = get_current_search_settings(db_session)
@@ -440,13 +441,8 @@ def build_indexing_pipeline(
         tokenizer=embedder.embedding_model.tokenizer,
         enable_multipass=multipass,
         enable_large_chunks=enable_large_chunks,
-        # after every doc, update status in case there are a bunch of
-        # really long docs
-        heartbeat=IndexingHeartbeat(
-            index_attempt_id=attempt_id, db_session=db_session, freq=1
-        )
-        if attempt_id
-        else None,
+        # after every doc, update status in case there are a bunch of really long docs
+        callback=callback,
     )
 
     return partial(

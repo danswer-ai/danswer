@@ -10,7 +10,7 @@ from danswer.connectors.cross_connector_utils.miscellaneous_utils import (
     get_metadata_keys_to_ignore,
 )
 from danswer.connectors.models import Document
-from danswer.indexing.indexing_heartbeat import Heartbeat
+from danswer.indexing.indexing_heartbeat import IndexingHeartbeatInterface
 from danswer.indexing.models import DocAwareChunk
 from danswer.natural_language_processing.utils import BaseTokenizer
 from danswer.utils.logger import setup_logger
@@ -125,7 +125,7 @@ class Chunker:
         chunk_token_limit: int = DOC_EMBEDDING_CONTEXT_SIZE,
         chunk_overlap: int = CHUNK_OVERLAP,
         mini_chunk_size: int = MINI_CHUNK_SIZE,
-        heartbeat: Heartbeat | None = None,
+        callback: IndexingHeartbeatInterface | None = None,
     ) -> None:
         from llama_index.text_splitter import SentenceSplitter
 
@@ -134,7 +134,7 @@ class Chunker:
         self.enable_multipass = enable_multipass
         self.enable_large_chunks = enable_large_chunks
         self.tokenizer = tokenizer
-        self.heartbeat = heartbeat
+        self.callback = callback
 
         self.blurb_splitter = SentenceSplitter(
             tokenizer=tokenizer.tokenize,
@@ -356,9 +356,14 @@ class Chunker:
     def chunk(self, documents: list[Document]) -> list[DocAwareChunk]:
         final_chunks: list[DocAwareChunk] = []
         for document in documents:
-            final_chunks.extend(self._handle_single_document(document))
+            if self.callback:
+                if self.callback.should_stop():
+                    raise RuntimeError("Chunker.chunk: Stop signal detected")
 
-            if self.heartbeat:
-                self.heartbeat.heartbeat()
+            chunks = self._handle_single_document(document)
+            final_chunks.extend(chunks)
+
+            if self.callback:
+                self.callback.progress("Chunker.chunk", len(chunks))
 
         return final_chunks
