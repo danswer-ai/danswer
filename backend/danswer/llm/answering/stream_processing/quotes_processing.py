@@ -231,7 +231,6 @@ class QuotesProcessor:
 
         model_previous = self.model_output
         self.model_output += token
-        print("***", self.model_output)
         if not self.found_answer_start:
             m = answer_pattern.search(self.model_output)
             if m:
