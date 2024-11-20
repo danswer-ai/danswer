@@ -216,9 +216,7 @@ const FolderItem = ({
                 </div>
               )}
 
-              {/* Icons Section */}
               <div className="flex ml-auto my-auto">
-                {/* Edit Icon */}
                 <div
                   onClick={handleEditFolderName}
                   className={`hover:bg-black/10 p-1 -m-1 rounded ${
@@ -230,7 +228,6 @@ const FolderItem = ({
                   <FiEdit2 size={16} />
                 </div>
 
-                {/* Delete Icon and Confirm Popover */}
                 <div className="relative">
                   <Popover
                     open={showDeleteConfirm}
