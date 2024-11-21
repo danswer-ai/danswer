@@ -280,6 +280,8 @@
 .include-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #888 transparent;
+  overflow: overlay;
+  overflow-y: scroll;
 }
 
 .inputscroll::-webkit-scrollbar-track {
