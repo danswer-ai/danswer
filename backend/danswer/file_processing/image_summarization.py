@@ -38,9 +38,9 @@ def summarize_image_pipeline(
 
 def summarize_image(
     encoded_image: str,
+    llm: LLM,
     query: str | None = None,
     system_prompt: str | None = None,
-    llm: LLM | None = None,
 ) -> str | None:
     """Use default LLM (if it is multimodal) to generate a summary of an image."""
 
@@ -69,8 +69,9 @@ def summarize_image(
             # prevents and infinity retry-loop of the indexing if single summaries fail
             # for example because content filters got triggert...
             logger.warning(f"Summarization failed with error: {e}.")
+            return None
         else:
-            raise RuntimeError(f"Summarization failed with error: {e}.")
+            raise ValueError(f"Summarization failed with error: {e}.")
 
 
 def _encode_image(image_data: bytes) -> str:
