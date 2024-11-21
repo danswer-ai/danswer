@@ -441,8 +441,10 @@ def update_user_curator_relationship(
 
     if user.role == UserRole.ADMIN:
         raise ValueError(
-            f"User with id '{set_curator_request.user_id}' is an admin"
-            " so they cannot be set as a curator."
+            f"User '{user.email}' is an admin and therefore has all permissions "
+            "of a curator. If you'd like this user to only have curator permissions, "
+            "you must update their role to BASIC then assign them to be CURATOR in the "
+            "appropriate groups."
         )
 
     requested_user_groups = fetch_user_groups_for_user(
