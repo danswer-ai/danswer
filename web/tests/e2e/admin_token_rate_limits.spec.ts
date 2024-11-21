@@ -15,5 +15,8 @@ test(
     await expect(
       page.getByRole("button", { name: "Create a Token Rate Limit" })
     ).toHaveCount(1);
+    await expect(page.locator("h1.text-lg")).toHaveText(
+      "Global Token Rate Limits"
+    );
   }
 );
