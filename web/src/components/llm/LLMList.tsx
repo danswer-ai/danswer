@@ -64,9 +64,9 @@ export const LlmList: React.FC<LlmListProps> = ({
     <div
       className={`${
         scrollable
-          ? "max-h-[200px] include-horizontal-scrollbar"
+          ? "max-h-[200px] default-scrollbar overflow-x-hidden"
           : "max-h-[300px]"
-      } bg-background-175  flex flex-col gap-y-1 overflow-y-scroll`}
+      } bg-background-175 flex flex-col gap-y-1 overflow-y-scroll`}
     >
       {userDefault && (
         <button
