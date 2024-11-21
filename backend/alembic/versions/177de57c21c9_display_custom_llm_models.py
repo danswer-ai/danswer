@@ -10,7 +10,6 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 from sqlalchemy import and_
 
-# revision identifiers, used by Alembic.
 revision = "177de57c21c9"
 down_revision = "4ee1287bd26a"
 branch_labels = None
@@ -28,10 +27,8 @@ def upgrade() -> None:
         sa.column("display_model_names", postgresql.ARRAY(sa.String)),
     )
 
-    # List of providers to exclude
     excluded_providers = ["openai", "bedrock", "anthropic", "azure"]
 
-    # Query to select all relevant providers
     providers_to_update = sa.select(
         llm_provider.c.id,
         llm_provider.c.model_names,
@@ -46,13 +43,10 @@ def upgrade() -> None:
     results = conn.execute(providers_to_update).fetchall()
 
     for provider_id, model_names, display_model_names in results:
-        # Initialize display_model_names if None
         if display_model_names is None:
             display_model_names = []
 
-        # Combine and deduplicate model names
         combined_model_names = list(set(display_model_names + model_names))
-
         update_stmt = (
             llm_provider.update()
             .where(llm_provider.c.id == provider_id)
