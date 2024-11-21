@@ -11,7 +11,6 @@ interface AssistantData {
   hasImageCompatibleModel: boolean;
 }
 export async function fetchAssistantData(): Promise<AssistantData> {
-  console.log("FETCH ASSISTANT DATA");
   // Default state if anything fails
   const defaultState: AssistantData = {
     assistants: [],
@@ -40,8 +39,6 @@ export async function fetchAssistantData(): Promise<AssistantData> {
       }),
     ]);
 
-    console.log("ASSISTANTS");
-    console.log(assistants);
     // Process visible assistants
     let filteredAssistants = assistants.filter(
       (assistant) => assistant.is_visible
@@ -78,12 +75,6 @@ export async function fetchAssistantData(): Promise<AssistantData> {
           )
       );
     }
-    console.log("FILTERED ASSISTANTS");
-    console.log(filteredAssistants);
-    // console.log("HAS ANY CONNECTORS")
-    // console.log(hasAnyConnectors)
-    // console.log("HAS IMAGE COMPATIBLE MODEL")
-    // console.log(hasImageCompatibleModel)
 
     return {
       assistants: filteredAssistants,
