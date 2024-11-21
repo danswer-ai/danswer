@@ -1181,7 +1181,7 @@ class LLMProvider(Base):
     default_model_name: Mapped[str] = mapped_column(String)
     fast_default_model_name: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    # Models to actually disp;aly to users
+    # Models to actually display to users
     # If nulled out, we assume in the application logic we should present all
     display_model_names: Mapped[list[str] | None] = mapped_column(
         postgresql.ARRAY(String), nullable=True

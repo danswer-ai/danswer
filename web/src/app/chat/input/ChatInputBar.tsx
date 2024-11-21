@@ -131,7 +131,6 @@ export function ChatInputBar({
 
   const interactionsRef = useRef<HTMLDivElement | null>(null);
 
-  console.log(llmProviders);
   const hideSuggestions = () => {
     setShowSuggestions(false);
     setTabbingIconIndex(0);
