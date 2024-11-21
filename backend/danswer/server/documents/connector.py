@@ -922,8 +922,8 @@ def connector_indexing_stop(
 
         redis_connector.stop.set_fence(True)
 
-        redis_connector_index.payload
-        # app.control.revoke(payload.celery_task_id)
+        payload = redis_connector_index.payload
+        primary_app.control.revoke(payload.celery_task_id, terminate=True)
 
     return StatusResponse(success=True, message="Stopped indexing")
 
