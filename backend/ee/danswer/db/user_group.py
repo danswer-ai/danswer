@@ -411,6 +411,8 @@ def _validate_curator_status__no_commit(
             .all()
         )
 
+        # if the user is a curator in any of their groups, set their role to CURATOR
+        # otherwise, set their role to BASIC
         if curator_relationships:
             user.role = UserRole.CURATOR
         elif user.role == UserRole.CURATOR:
@@ -436,6 +438,13 @@ def update_user_curator_relationship(
     user = fetch_user_by_id(db_session, set_curator_request.user_id)
     if not user:
         raise ValueError(f"User with id '{set_curator_request.user_id}' not found")
+
+    if user.role == UserRole.ADMIN:
+        raise ValueError(
+            f"User with id '{set_curator_request.user_id}' is an admin"
+            " so they cannot be set as a curator."
+        )
+
     requested_user_groups = fetch_user_groups_for_user(
         db_session=db_session,
         user_id=set_curator_request.user_id,
