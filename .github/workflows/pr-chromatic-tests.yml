@@ -3,12 +3,7 @@ concurrency:
   group: Run-Chromatic-Tests-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: true
 
-on:
-  merge_group:
-  pull_request:
-    branches:
-      - main
-      - 'release/**'
+on: push
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -16,6 +11,8 @@ env:
 
 jobs:
   playwright-tests:
+    name: Playwright Tests
+
     # See https://runs-on.com/runners/linux/
     runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
     steps:
@@ -108,7 +105,7 @@ jobs:
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
           cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
-      - name: Start Docker containers 
+      - name: Start Docker containers
         run: |
           cd deployment/docker_compose
           ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true \
@@ -193,7 +190,8 @@ jobs:
           docker compose -f docker-compose.dev.yml -p danswer-stack down -v
 
   chromatic-tests:
-    name: Run Chromatic
+    name: Chromatic Tests
+    
     needs: playwright-tests
     runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
     steps:

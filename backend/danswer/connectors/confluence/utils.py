@@ -2,6 +2,7 @@ import io
 from datetime import datetime
 from datetime import timezone
 from typing import Any
+from urllib.parse import quote
 
 import bs4
 
@@ -71,7 +72,9 @@ def _get_user(confluence_client: OnyxConfluence, user_id: str) -> str:
 
 
 def extract_text_from_confluence_html(
-    confluence_client: OnyxConfluence, confluence_object: dict[str, Any]
+    confluence_client: OnyxConfluence,
+    confluence_object: dict[str, Any],
+    fetched_titles: set[str],
 ) -> str:
     """Parse a Confluence html page and replace the 'user Id' by the real
         User Display Name
@@ -79,7 +82,7 @@ def extract_text_from_confluence_html(
     Args:
         confluence_object (dict): The confluence object as a dict
         confluence_client (Confluence): Confluence client
-
+        fetched_titles (set[str]): The titles of the pages that have already been fetched
     Returns:
         str: loaded and formated Confluence page
     """
@@ -101,37 +104,71 @@ def extract_text_from_confluence_html(
         # Include @ sign for tagging, more clear for LLM
         user.replaceWith("@" + _get_user(confluence_client, user_id))
 
-    for html_page_reference in soup.findAll("ri:page"):
+    for html_page_reference in soup.findAll("ac:structured-macro"):
+        # Here, we only want to process page within page macros
+        if html_page_reference.attrs.get("ac:name") != "include":
+            continue
+
+        page_data = html_page_reference.find("ri:page")
+        if not page_data:
+            logger.warning(
+                f"Skipping retrieval of {html_page_reference} because because page data is missing"
+            )
+            continue
+
+        page_title = page_data.attrs.get("ri:content-title")
+        if not page_title:
+            # only fetch pages that have a title
+            logger.warning(
+                f"Skipping retrieval of {html_page_reference} because it has no title"
+            )
+            continue
+
+        if page_title in fetched_titles:
+            # prevent recursive fetching of pages
+            logger.debug(f"Skipping {page_title} because it has already been fetched")
+            continue
+
+        fetched_titles.add(page_title)
+
         # Wrap this in a try-except because there are some pages that might not exist
         try:
-            page_title = html_page_reference.attrs["ri:content-title"]
-            if not page_title:
-                continue
-
-            page_query = f"type=page and title='{page_title}'"
+            page_query = f"type=page and title='{quote(page_title)}'"
 
             page_contents: dict[str, Any] | None = None
             # Confluence enforces title uniqueness, so we should only get one result here
-            for page_batch in confluence_client.paginated_cql_page_retrieval(
+            for page in confluence_client.paginated_cql_retrieval(
                 cql=page_query,
                 expand="body.storage.value",
                 limit=1,
             ):
-                page_contents = page_batch[0]
+                page_contents = page
                 break
-        except Exception:
+        except Exception as e:
             logger.warning(
-                f"Error getting page contents for object {confluence_object}"
+                f"Error getting page contents for object {confluence_object}: {e}"
             )
             continue
 
         if not page_contents:
             continue
+
         text_from_page = extract_text_from_confluence_html(
-            confluence_client, page_contents
+            confluence_client=confluence_client,
+            confluence_object=page_contents,
+            fetched_titles=fetched_titles,
         )
 
         html_page_reference.replaceWith(text_from_page)
+
+    for html_link_body in soup.findAll("ac:link-body"):
+        # This extracts the text from inline links in the page so they can be
+        # represented in the document text as plain text
+        try:
+            text_from_link = html_link_body.text
+            html_link_body.replaceWith(f"(LINK TEXT: {text_from_link})")
+        except Exception as e:
+            logger.warning(f"Error processing ac:link-body: {e}")
 
     return format_document_soup(soup)
 
@@ -246,6 +283,6 @@ def build_confluence_client(
         password=credentials_json["confluence_access_token"] if is_cloud else None,
         token=credentials_json["confluence_access_token"] if not is_cloud else None,
         backoff_and_retry=True,
-        max_backoff_retries=60,
+        max_backoff_retries=10,
         max_backoff_seconds=60,
     )

@@ -211,12 +211,7 @@ export function TextFormField({
     <div className={`w-full ${width}`}>
       <div className="flex gap-x-2 items-center">
         {!removeLabel && (
-          <Label
-            className={`${
-              small ? "text-text-950" : "text-text-700 font-normal"
-            } ${sizeClass.label}`}
-            small={small}
-          >
+          <Label className={sizeClass.label} small={small}>
             {label}
           </Label>
         )}
@@ -662,7 +657,10 @@ export function SelectorFormField({
           {container && (
             <SelectContent
               side={side}
-              className={maxHeight ? `max-h-[${maxHeight}]` : undefined}
+              className={`
+               ${maxHeight ? `${maxHeight}` : "max-h-72"}
+               overflow-y-scroll
+              `}
               container={container}
             >
               {options.length === 0 ? (
