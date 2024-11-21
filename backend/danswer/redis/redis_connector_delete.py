@@ -17,7 +17,7 @@ from danswer.db.document import construct_document_select_for_connector_credenti
 from danswer.db.models import Document as DbDocument
 
 
-class RedisConnectorDeletionFenceData(BaseModel):
+class RedisConnectorDeletePayload(BaseModel):
     num_tasks: int | None
     submitted: datetime
 
@@ -54,20 +54,18 @@ class RedisConnectorDelete:
         return False
 
     @property
-    def payload(self) -> RedisConnectorDeletionFenceData | None:
+    def payload(self) -> RedisConnectorDeletePayload | None:
         # read related data and evaluate/print task progress
         fence_bytes = cast(bytes, self.redis.get(self.fence_key))
         if fence_bytes is None:
             return None
 
         fence_str = fence_bytes.decode("utf-8")
-        payload = RedisConnectorDeletionFenceData.model_validate_json(
-            cast(str, fence_str)
-        )
+        payload = RedisConnectorDeletePayload.model_validate_json(cast(str, fence_str))
 
         return payload
 
-    def set_fence(self, payload: RedisConnectorDeletionFenceData | None) -> None:
+    def set_fence(self, payload: RedisConnectorDeletePayload | None) -> None:
         if not payload:
             self.redis.delete(self.fence_key)
             return

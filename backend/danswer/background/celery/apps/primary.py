@@ -1,5 +1,6 @@
 import multiprocessing
 from typing import Any
+from typing import cast
 
 from celery import bootsteps  # type: ignore
 from celery import Celery
@@ -94,6 +95,15 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     # This is singleton work that should be done on startup exactly once
     # by the primary worker. This is unnecessary in the multi tenant scenario
     r = get_redis_client(tenant_id=None)
+
+    # Log the role and slave count - being connected to a slave or slave count > 0 could be problematic
+    info: dict[str, Any] = cast(dict, r.info("replication"))
+    role: str = cast(str, info.get("role"))
+    connected_slaves: int = info.get("connected_slaves", 0)
+
+    logger.info(
+        f"Redis INFO REPLICATION: role={role} connected_slaves={connected_slaves}"
+    )
 
     # For the moment, we're assuming that we are the only primary worker
     # that should be running.
