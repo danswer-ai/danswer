@@ -44,17 +44,13 @@ def _extract_sections_basic(
 ) -> list[Section]:
     mime_type = file["mimeType"]
     link = file["webViewLink"]
-    print(file)
 
-    print(mime_type)
     if mime_type not in set(item.value for item in GDriveMimeType):
-        print("here2")
         # Unsupported file types can still have a title, finding this way is still useful
         return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
     try:
         if mime_type == GDriveMimeType.SPREADSHEET.value and GOOGLE_SHEET_API_ENABLED:
-            print(service)
             # Access credentials from the service object's HTTP object
             sheets_service = build(
                 "sheets", "v4", credentials=service._http.credentials
@@ -62,7 +58,6 @@ def _extract_sections_basic(
             spreadsheet = (
                 sheets_service.spreadsheets().get(spreadsheetId=file["id"]).execute()
             )
-            print(spreadsheet)
 
             sections = []
             for sheet in spreadsheet["sheets"]:
@@ -88,12 +83,11 @@ def _extract_sections_basic(
                     )
 
             return sections
-        if mime_type in [
+        elif mime_type in [
             GDriveMimeType.DOC.value,
             GDriveMimeType.PPT.value,
             GDriveMimeType.SPREADSHEET.value,
         ]:
-            print("here")
             export_mime_type = (
                 "text/plain"
                 if mime_type != GDriveMimeType.SPREADSHEET.value
@@ -151,8 +145,7 @@ def _extract_sections_basic(
 
         return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
-    except Exception as e:
-        print(e)
+    except Exception:
         return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
 
