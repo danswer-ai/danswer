@@ -9,5 +9,8 @@ test(
     // Test simple loading
     await page.goto("http://localhost:3000/admin/documents/sets");
     await expect(page.locator("h1.text-3xl")).toHaveText("Document Sets");
+    await expect(page.locator("p.text-sm")).toHaveText(
+      /^Document Sets allow you to group logically connected documents into a single bundle./
+    );
   }
 );

@@ -9,5 +9,6 @@ test(
     // Test simple loading
     await page.goto("http://localhost:3000/admin/add-connector");
     await expect(page.locator("h1.text-3xl")).toHaveText("Add Connector");
+    await expect(page.locator("h1.text-lg").nth(0)).toHaveText(/^Storage/);
   }
 );
