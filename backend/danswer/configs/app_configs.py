@@ -468,11 +468,6 @@ AZURE_DALLE_API_KEY = os.environ.get("AZURE_DALLE_API_KEY")
 AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE")
 AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
 
-# Drive Configs
-# Note: Google Sheet API must be enabled for this feature to work
-GOOGLE_SHEET_API_ENABLED = (
-    os.environ.get("GOOGLE_SHEET_API_ENABLED", "").lower() == "true"
-)
 
 # Use managed Vespa (Vespa Cloud). If set, must also set VESPA_CLOUD_URL, VESPA_CLOUD_CERT_PATH and VESPA_CLOUD_KEY_PATH
 MANAGED_VESPA = os.environ.get("MANAGED_VESPA", "").lower() == "true"

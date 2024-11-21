@@ -2,11 +2,10 @@ import io
 from datetime import datetime
 from datetime import timezone
 
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
 
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
-from danswer.configs.app_configs import GOOGLE_SHEET_API_ENABLED
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import IGNORE_FOR_QA
 from danswer.connectors.google_drive.constants import DRIVE_FOLDER_TYPE
@@ -50,58 +49,68 @@ def _extract_sections_basic(
         return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
     try:
-        if mime_type == GDriveMimeType.SPREADSHEET.value and GOOGLE_SHEET_API_ENABLED:
-            sheets_service = build(
-                "sheets", "v4", credentials=service._http.credentials
-            )
-            spreadsheet = (
-                sheets_service.spreadsheets().get(spreadsheetId=file["id"]).execute()
-            )
+        if mime_type == GDriveMimeType.SPREADSHEET.value:
+            try:
+                sheets_service = build(
+                    "sheets", "v4", credentials=service._http.credentials
+                )
+                spreadsheet = (
+                    sheets_service.spreadsheets()
+                    .get(spreadsheetId=file["id"])
+                    .execute()
+                )
 
-            sections = []
-            for sheet in spreadsheet["sheets"]:
-                sheet_name = sheet["properties"]["title"]
-                sheet_id = sheet["properties"]["sheetId"]
+                sections = []
+                for sheet in spreadsheet["sheets"]:
+                    sheet_name = sheet["properties"]["title"]
+                    sheet_id = sheet["properties"]["sheetId"]
 
-                # Get sheet dimensions
-                grid_properties = sheet["properties"].get("gridProperties", {})
-                row_count = grid_properties.get("rowCount", 1000)
-                column_count = grid_properties.get("columnCount", 26)
+                    # Get sheet dimensions
+                    grid_properties = sheet["properties"].get("gridProperties", {})
+                    row_count = grid_properties.get("rowCount", 1000)
+                    column_count = grid_properties.get("columnCount", 26)
 
-                # Convert column count to letter (e.g., 26 -> Z, 27 -> AA)
-                end_column = ""
-                while column_count:
-                    column_count, remainder = divmod(column_count - 1, 26)
-                    end_column = chr(65 + remainder) + end_column
+                    # Convert column count to letter (e.g., 26 -> Z, 27 -> AA)
+                    end_column = ""
+                    while column_count:
+                        column_count, remainder = divmod(column_count - 1, 26)
+                        end_column = chr(65 + remainder) + end_column
 
-                range_name = f"'{sheet_name}'!A1:{end_column}{row_count}"
+                    range_name = f"'{sheet_name}'!A1:{end_column}{row_count}"
 
-                try:
-                    result = (
-                        sheets_service.spreadsheets()
-                        .values()
-                        .get(spreadsheetId=file["id"], range=range_name)
-                        .execute()
-                    )
-                    values = result.get("values", [])
-
-                    if values:
-                        text = f"Sheet: {sheet_name}\n"
-                        for row in values:
-                            text += "\t".join(str(cell) for cell in row) + "\n"
-                        sections.append(
-                            Section(
-                                link=f"{link}#gid={sheet_id}",
-                                text=text,
-                            )
+                    try:
+                        result = (
+                            sheets_service.spreadsheets()
+                            .values()
+                            .get(spreadsheetId=file["id"], range=range_name)
+                            .execute()
                         )
-                except HttpError as e:
-                    logger.warning(f"Error fetching data for sheet '{sheet_name}': {e}")
-                    continue
+                        values = result.get("values", [])
 
-            return sections
+                        if values:
+                            text = f"Sheet: {sheet_name}\n"
+                            for row in values:
+                                text += "\t".join(str(cell) for cell in row) + "\n"
+                            sections.append(
+                                Section(
+                                    link=f"{link}#gid={sheet_id}",
+                                    text=text,
+                                )
+                            )
+                    except HttpError as e:
+                        logger.warning(
+                            f"Error fetching data for sheet '{sheet_name}': {e}"
+                        )
+                        continue
+                return sections
 
-        elif mime_type in [
+            except Exception as e:
+                logger.warning(
+                    f"Ran into exception '{e}' when pulling data from Google Sheet '{file['name']}'."
+                    " Falling back to basic extraction."
+                )
+
+        if mime_type in [
             GDriveMimeType.DOC.value,
             GDriveMimeType.PPT.value,
             GDriveMimeType.SPREADSHEET.value,
