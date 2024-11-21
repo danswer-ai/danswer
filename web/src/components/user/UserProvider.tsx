@@ -67,7 +67,9 @@ export function UserProvider({
         isLoadingUser,
         refreshUser,
         isAdmin: upToDateUser?.role === UserRole.ADMIN,
-        isCurator: upToDateUser?.role === UserRole.CURATOR,
+        isCurator:
+          upToDateUser?.role === UserRole.CURATOR ||
+          upToDateUser?.role === UserRole.GLOBAL_CURATOR,
         isCloudSuperuser: upToDateUser?.is_cloud_superuser ?? false,
       }}
     >

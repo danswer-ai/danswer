@@ -47,7 +47,7 @@ export const AssistantsProvider: React.FC<{
   const [assistants, setAssistants] = useState<Persona[]>(
     initialAssistants || []
   );
-  const { user, isLoadingUser, isAdmin } = useUser();
+  const { user, isLoadingUser, isAdmin, isCurator } = useUser();
   const [editablePersonas, setEditablePersonas] = useState<Persona[]>([]);
   const [allAssistants, setAllAssistants] = useState<Persona[]>([]);
 
@@ -83,7 +83,7 @@ export const AssistantsProvider: React.FC<{
 
   useEffect(() => {
     const fetchPersonas = async () => {
-      if (!isAdmin) {
+      if (!isAdmin && !isCurator) {
         return;
       }
 
@@ -101,6 +101,8 @@ export const AssistantsProvider: React.FC<{
         if (allResponse.ok) {
           const allPersonas = await allResponse.json();
           setAllAssistants(allPersonas);
+        } else {
+          console.error("Error fetching personas:", allResponse);
         }
       } catch (error) {
         console.error("Error fetching personas:", error);
@@ -108,7 +110,7 @@ export const AssistantsProvider: React.FC<{
     };
 
     fetchPersonas();
-  }, [isAdmin]);
+  }, [isAdmin, isCurator]);
 
   const refreshRecentAssistants = async (currentAssistant: number) => {
     const response = await fetch("/api/user/recent-assistants", {
