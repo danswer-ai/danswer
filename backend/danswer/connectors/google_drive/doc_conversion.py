@@ -51,7 +51,6 @@ def _extract_sections_basic(
 
     try:
         if mime_type == GDriveMimeType.SPREADSHEET.value and GOOGLE_SHEET_API_ENABLED:
-            # Access credentials from the service object's HTTP object
             sheets_service = build(
                 "sheets", "v4", credentials=service._http.credentials
             )
@@ -98,13 +97,8 @@ def _extract_sections_basic(
                         )
                 except HttpError as e:
                     logger.warning(f"Error fetching data for sheet '{sheet_name}': {e}")
-                    # Optionally, add a section indicating the error
-                    sections.append(
-                        Section(
-                            link=f"{link}#gid={sheet_id}",
-                            text=f"Error fetching data for sheet '{sheet_name}': {e}",
-                        )
-                    )
+                    continue
+
             return sections
 
         elif mime_type in [
