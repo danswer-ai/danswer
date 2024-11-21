@@ -171,6 +171,8 @@ export const SearchResultsDisplay = ({
         <div className="mt-4">
           <div className="font-bold flex h-12 justify-between text-emphasis border-b mb-3 pb-1 border-border text-lg">
             <p>Results</p>
+            <div className="h-8 w-0 invisible">invisibel text</div>
+
             {!DISABLE_LLM_DOC_RELEVANCE &&
               (contentEnriched || searchResponse.additional_relevance) && (
                 <TooltipProvider delayDuration={1000}>
