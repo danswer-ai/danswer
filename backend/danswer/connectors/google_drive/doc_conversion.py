@@ -62,27 +62,51 @@ def _extract_sections_basic(
             sections = []
             for sheet in spreadsheet["sheets"]:
                 sheet_name = sheet["properties"]["title"]
-                range_name = f"'{sheet_name}'!A1:Z1000"  # Adjust range as needed
-                result = (
-                    sheets_service.spreadsheets()
-                    .values()
-                    .get(spreadsheetId=file["id"], range=range_name)
-                    .execute()
-                )
-                values = result.get("values", [])
+                sheet_id = sheet["properties"]["sheetId"]
 
-                if values:
-                    text = f"Sheet: {sheet_name}\n"
-                    for row in values:
-                        text += "\t".join(str(cell) for cell in row) + "\n"
+                # Get sheet dimensions
+                grid_properties = sheet["properties"].get("gridProperties", {})
+                row_count = grid_properties.get("rowCount", 1000)
+                column_count = grid_properties.get("columnCount", 26)
+
+                # Convert column count to letter (e.g., 26 -> Z, 27 -> AA)
+                end_column = ""
+                while column_count:
+                    column_count, remainder = divmod(column_count - 1, 26)
+                    end_column = chr(65 + remainder) + end_column
+
+                range_name = f"'{sheet_name}'!A1:{end_column}{row_count}"
+
+                try:
+                    result = (
+                        sheets_service.spreadsheets()
+                        .values()
+                        .get(spreadsheetId=file["id"], range=range_name)
+                        .execute()
+                    )
+                    values = result.get("values", [])
+
+                    if values:
+                        text = f"Sheet: {sheet_name}\n"
+                        for row in values:
+                            text += "\t".join(str(cell) for cell in row) + "\n"
+                        sections.append(
+                            Section(
+                                link=f"{link}#gid={sheet_id}",
+                                text=text,
+                            )
+                        )
+                except HttpError as e:
+                    logger.warning(f"Error fetching data for sheet '{sheet_name}': {e}")
+                    # Optionally, add a section indicating the error
                     sections.append(
                         Section(
-                            link=f"{link}#gid={sheet['properties']['sheetId']}",
-                            text=text,
+                            link=f"{link}#gid={sheet_id}",
+                            text=f"Error fetching data for sheet '{sheet_name}': {e}",
                         )
                     )
-
             return sections
+
         elif mime_type in [
             GDriveMimeType.DOC.value,
             GDriveMimeType.PPT.value,

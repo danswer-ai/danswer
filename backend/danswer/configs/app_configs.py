@@ -469,6 +469,7 @@ AZURE_DALLE_API_BASE = os.environ.get("AZURE_DALLE_API_BASE")
 AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get("AZURE_DALLE_DEPLOYMENT_NAME")
 
 # Drive Configs
+# Note: Google Sheet API must be enabled for this feature to work
 GOOGLE_SHEET_API_ENABLED = (
     os.environ.get("GOOGLE_SHEET_API_ENABLED", "").lower() == "true"
 )
