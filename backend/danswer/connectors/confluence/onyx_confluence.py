@@ -265,5 +265,6 @@ class OnyxConfluence(Confluence):
         This is not an SQL like query.
         It's a confluence specific endpoint that can be used to fetch the members of a group.
         """
-        group_name = quote(group_name)
-        yield from self._paginate_url(f"rest/api/group/{group_name}/member", limit)
+        # we use this instead of /group/{group_name}/member as it was depricated
+        url = f"rest/api/group/member?name={quote(group_name)}"
+        yield from self._paginate_url(url, limit)
