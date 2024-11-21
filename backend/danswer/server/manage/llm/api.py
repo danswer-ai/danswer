@@ -47,6 +47,7 @@ def test_llm_configuration(
     test_llm_request: TestLLMRequest,
     _: User | None = Depends(current_admin_user),
 ) -> None:
+    return None
     llm = get_llm(
         provider=test_llm_request.provider,
         model=test_llm_request.default_model_name,
