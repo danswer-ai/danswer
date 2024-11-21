@@ -42,6 +42,7 @@ def _extract_sections_basic(
 ) -> list[Section]:
     mime_type = file["mimeType"]
     link = file["webViewLink"]
+    print(file)
 
     if mime_type not in set(item.value for item in GDriveMimeType):
         # Unsupported file types can still have a title, finding this way is still useful
