@@ -84,7 +84,7 @@ def handle_confluence_rate_limit(confluence_call: F) -> F:
     def wrapped_call(*args: list[Any], **kwargs: Any) -> Any:
         MAX_RETRIES = 5
 
-        TIMEOUT = 3600
+        TIMEOUT = 600
         timeout_at = time.monotonic() + TIMEOUT
 
         for attempt in range(MAX_RETRIES):
@@ -99,6 +99,10 @@ def handle_confluence_rate_limit(confluence_call: F) -> F:
                 return confluence_call(*args, **kwargs)
             except HTTPError as e:
                 delay_until = _handle_http_error(e, attempt)
+                logger.warning(
+                    f"HTTPError in confluence call. "
+                    f"Retrying in {delay_until} seconds..."
+                )
                 while time.monotonic() < delay_until:
                     # in the future, check a signal here to exit
                     time.sleep(1)
