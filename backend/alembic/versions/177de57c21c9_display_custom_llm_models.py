@@ -31,24 +31,32 @@ def upgrade() -> None:
     # List of providers to exclude
     excluded_providers = ["openai", "bedrock", "anthropic", "azure"]
 
-    # Query to select providers that need updating
+    # Query to select all relevant providers
     providers_to_update = sa.select(
-        llm_provider.c.id, llm_provider.c.model_names
+        llm_provider.c.id,
+        llm_provider.c.model_names,
+        llm_provider.c.display_model_names,
     ).where(
         and_(
             ~llm_provider.c.provider.in_(excluded_providers),
-            llm_provider.c.display_model_names.is_(None),
             llm_provider.c.model_names.isnot(None),
         )
     )
 
     results = conn.execute(providers_to_update).fetchall()
 
-    for provider_id, model_names in results:
+    for provider_id, model_names, display_model_names in results:
+        # Initialize display_model_names if None
+        if display_model_names is None:
+            display_model_names = []
+
+        # Combine and deduplicate model names
+        combined_model_names = list(set(display_model_names + model_names))
+
         update_stmt = (
             llm_provider.update()
             .where(llm_provider.c.id == provider_id)
-            .values(display_model_names=model_names)
+            .values(display_model_names=combined_model_names)
         )
         conn.execute(update_stmt)
 
