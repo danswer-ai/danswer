@@ -1,3 +1,5 @@
+from atlassian import Confluence  # type: ignore
+
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
 from danswer.connectors.confluence.utils import build_confluence_client
 from danswer.connectors.confluence.utils import get_user_email_from_username__server
@@ -32,11 +34,26 @@ def _get_group_members_email_paginated(
 def confluence_group_sync(
     cc_pair: ConnectorCredentialPair,
 ) -> list[ExternalUserGroup]:
+    credentials = cc_pair.credential.credential_json
     is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
+    wiki_base = cc_pair.connector.connector_specific_config["wiki_base"]
+
+    # test connection with direct client, no retries
+    confluence_client = Confluence(
+        api_version="cloud" if is_cloud else "latest",
+        url=wiki_base.rstrip("/"),
+        username=credentials["confluence_username"] if is_cloud else None,
+        password=credentials["confluence_access_token"] if is_cloud else None,
+        token=credentials["confluence_access_token"] if not is_cloud else None,
+    )
+    spaces = confluence_client.get_all_spaces(limit=1)
+    if not spaces:
+        raise RuntimeError(f"No spaces found at {wiki_base}!")
+
     confluence_client = build_confluence_client(
-        credentials_json=cc_pair.credential.credential_json,
+        credentials_json=credentials,
         is_cloud=is_cloud,
-        wiki_base=cc_pair.connector.connector_specific_config["wiki_base"],
+        wiki_base=wiki_base,
     )
 
     # Get all group names
