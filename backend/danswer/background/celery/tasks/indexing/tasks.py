@@ -82,8 +82,6 @@ class IndexingCallback(IndexingHeartbeatInterface):
         return False
 
     def progress(self, tag: str, amount: int) -> None:
-        # logger.debug(f"IndexingCallback: tag={tag} amount={amount}")
-
         try:
             self.redis_lock.reacquire()
             self.last_tag = tag
