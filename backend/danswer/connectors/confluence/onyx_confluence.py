@@ -241,7 +241,7 @@ class OnyxConfluence(Confluence):
         It's a seperate endpoint from the content/search endpoint used only for users.
         Otherwise it's very similar to the content/search endpoint.
         """
-        cql = quote("type=user")
+        cql = "type=user"
         url = "rest/api/search/user" if is_cloud else "rest/api/search"
         expand_string = f"&expand={expand}" if expand else ""
         url += f"?cql={cql}{expand_string}"

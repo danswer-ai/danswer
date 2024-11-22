@@ -1,4 +1,5 @@
 from typing import Any
+from urllib.parse import quote
 
 from danswer.connectors.confluence.onyx_confluence import build_confluence_client
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
@@ -19,7 +20,7 @@ def _get_group_ids_for_user(
     user_field = "accountId" if is_cloud else "key"
     user_value = user["accountId"] if is_cloud else user["userKey"]
     # Server uses userKey (but calls it key during the API call), Cloud uses accountId
-    user_query = f"{user_field}={user_value}"
+    user_query = f"{user_field}={quote(user_value)}"
 
     group_ids_for_user: set[str] = set()
     for group in confluence_client.paginated_groups_by_user_retrieval(user_query):
