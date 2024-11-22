@@ -275,8 +275,7 @@ def get_personas(
             joinedload(Persona.users),
         )
 
-    result = db_session.execute(stmt).unique().scalars().all()
-    return result
+    return db_session.execute(stmt).unique().scalars().all()
 
 
 def mark_persona_as_deleted(
