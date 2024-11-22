@@ -221,10 +221,14 @@ class Chunker:
                 mini_chunk_texts=self._get_mini_chunk_texts(text),
             )
 
-        for section in document.sections:
+        for section_idx, section in enumerate(document.sections):
             section_text = clean_text(section.text)
             section_link_text = section.link or ""
-            if not section_text:
+            # If there is no useful content, not even the title, just drop it
+            if not section_text and (not document.title or section_idx > 0):
+                # If a section is empty and the document has no title, we can just drop it. We return a list of
+                # DocAwareChunks where each one contains the necessary information needed down the line for indexing.
+                # There is no concern about dropping whole documents from this list, it should not cause any indexing failures.
                 logger.warning(
                     f"Skipping section {section.text} from document "
                     f"{document.semantic_identifier} due to empty text after cleaning "
