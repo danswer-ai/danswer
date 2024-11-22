@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
 import LogoType from "../header/LogoType";
 import { useUser } from "../user/UserProvider";
+import AssistantSelector from "./AssistantSelector";
+import { Persona } from "@/app/admin/assistants/interfaces";
 
 export default function FunctionalHeader({
   page,
@@ -20,6 +22,8 @@ export default function FunctionalHeader({
   toggleSidebar = () => null,
   reset = () => null,
   sidebarToggled,
+  liveAssistant,
+  onAssistantChange,
 }: {
   reset?: () => void;
   page: pageType;
@@ -27,6 +31,8 @@ export default function FunctionalHeader({
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
   toggleSidebar?: () => void;
+  liveAssistant: Persona;
+  onAssistantChange: (assistant: Persona) => void;
 }) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -85,6 +91,12 @@ export default function FunctionalHeader({
             ${sidebarToggled ? "w-[250px]" : "w-[0px]"}
             `}
         />
+        <div className="flex-none my-auto">
+          <AssistantSelector
+            liveAssistant={liveAssistant}
+            onAssistantChange={onAssistantChange}
+          />
+        </div>
         <div className="w-full mobile:-mx-20 desktop:px-4">
           <ChatBanner />
         </div>

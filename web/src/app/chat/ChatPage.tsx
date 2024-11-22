@@ -113,6 +113,7 @@ import {
 } from "@/components/ui/card";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import AssistantBanner from "../../components/assistants/AssistantBanner";
+import AssistantSelector from "@/components/chat_search/AssistantSelector";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1163,6 +1164,7 @@ export function ChatPage({
         getLastSuccessfulMessageId(currMessageHistory) || systemMessage;
 
       const stack = new CurrentMessageFIFO();
+      console.log(filterManager.selectedSources);
       updateCurrentMessageFIFO(stack, {
         signal: controller.signal, // Add this line
         message: currMessage,
@@ -2046,6 +2048,8 @@ export function ChatPage({
             <div className="flex h-full flex-col w-full">
               {liveAssistant && (
                 <FunctionalHeader
+                  liveAssistant={liveAssistant}
+                  onAssistantChange={onAssistantChange}
                   sidebarToggled={toggledSidebar}
                   reset={() => setMessage("")}
                   page="chat"

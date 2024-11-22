@@ -149,7 +149,7 @@ export async function* sendMessage({
 }): AsyncGenerator<PacketType, void, unknown> {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
-
+  console.log("FILTERS", filters);
   const body = JSON.stringify({
     alternate_assistant_id: alternateAssistantId,
     chat_session_id: chatSessionId,
@@ -188,6 +188,7 @@ export async function* sendMessage({
         : null,
     use_existing_user_message: useExistingUserMessage,
   });
+  console.log("BODY", body);
 
   const response = await fetch(`/api/chat/send-message`, {
     method: "POST",
