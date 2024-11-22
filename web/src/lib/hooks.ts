@@ -292,6 +292,8 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   "claude-instant-1.2": "Claude Instant 1.2",
   "claude-3-5-sonnet-20240620": "Claude 3.5 Sonnet",
   "claude-3-5-sonnet-20241022": "Claude 3.5 Sonnet (New)",
+  "claude-3-5-sonnet-v2@20241022": "Claude 3.5 Sonnet (New)",
+  "claude-3.5-sonnet-v2@20241022": "Claude 3.5 Sonnet (New)",
 
   // Google Models
   "gemini-1.5-pro": "Gemini 1.5 Pro",
