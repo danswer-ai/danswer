@@ -36,8 +36,10 @@ export const SIDEBAR_WIDTH = `w-[350px]`;
 export const LOGOUT_DISABLED =
   process.env.NEXT_PUBLIC_DISABLE_LOGOUT?.toLowerCase() === "true";
 
+// Default sidebar open is true if the environment variable is not set
 export const NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN =
-  process.env.NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN?.toLowerCase() === "true";
+  process.env.NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN?.toLowerCase() === "true" ??
+  true;
 
 export const TOGGLED_CONNECTORS_COOKIE_NAME = "toggled_connectors";
 

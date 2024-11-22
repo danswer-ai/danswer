@@ -1,4 +1,3 @@
-import re
 import threading
 import time
 from collections.abc import Callable
@@ -48,28 +47,6 @@ WARM_UP_STRINGS = [
 
 def clean_model_name(model_str: str) -> str:
     return model_str.replace("/", "_").replace("-", "_").replace(".", "_")
-
-
-_INITIAL_FILTER = re.compile(
-    "["
-    "\U0000FFF0-\U0000FFFF"  # Specials
-    "\U0001F000-\U0001F9FF"  # Emoticons
-    "\U00002000-\U0000206F"  # General Punctuation
-    "\U00002190-\U000021FF"  # Arrows
-    "\U00002700-\U000027BF"  # Dingbats
-    "]+",
-    flags=re.UNICODE,
-)
-
-
-def clean_openai_text(text: str) -> str:
-    # Remove specific Unicode ranges that might cause issues
-    cleaned = _INITIAL_FILTER.sub("", text)
-
-    # Remove any control characters except for newline and tab
-    cleaned = "".join(ch for ch in cleaned if ch >= " " or ch in "\n\t")
-
-    return cleaned
 
 
 def build_model_server_url(
@@ -214,11 +191,6 @@ class EmbeddingModel:
                 )
                 for text in texts
             ]
-
-        if self.provider_type == EmbeddingProvider.OPENAI:
-            # If the provider is openai, we need to clean the text
-            # as a temporary workaround for the openai API
-            texts = [clean_openai_text(text) for text in texts]
 
         batch_size = (
             api_embedding_batch_size

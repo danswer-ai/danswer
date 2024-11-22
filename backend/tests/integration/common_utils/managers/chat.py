@@ -142,7 +142,7 @@ class ChatSessionManager:
         user_performing_action: DATestUser | None = None,
     ) -> list[DATestChatMessage]:
         response = requests.get(
-            f"{API_SERVER_URL}/chat/history/{chat_session.id}",
+            f"{API_SERVER_URL}/chat/get-chat-session/{chat_session.id}",
             headers=user_performing_action.headers
             if user_performing_action
             else GENERAL_HEADERS,
@@ -151,11 +151,10 @@ class ChatSessionManager:
 
         return [
             DATestChatMessage(
-                id=msg["id"],
+                id=msg["message_id"],
                 chat_session_id=chat_session.id,
-                parent_message_id=msg.get("parent_message_id"),
+                parent_message_id=msg.get("parent_message"),
                 message=msg["message"],
-                response=msg.get("response", ""),
             )
-            for msg in response.json()
+            for msg in response.json()["messages"]
         ]
