@@ -83,7 +83,7 @@ module.exports = {
         "non-selectable": "var(--non-selectable)",
 
         // background
-        background: "var(--background)",
+        background: "#EDEDF1",
         "background-100": "var(--background-100)",
         "background-125": "var(--background-125)",
         "background-150": "var(--background-150)",
@@ -95,63 +95,57 @@ module.exports = {
         "background-700": "var(--background-700)",
         "background-800": "var(--background-800)",
         "background-900": "var(--background-900)",
+        "background-toggle": "var(--background-100)",
 
+        "toggled-background": "var(--background-500)",
+        "untoggled-background": "var(--background-300)",
         "background-inverted": "var(--background-inverted)",
         "background-emphasis": "var(--background-emphasis)",
-        "background-strong": "var(--background-strong)",
+        "background-strong": "var(--background-800)",
         "background-search": "var(--white)",
 
-        "background-history-sidebar-button-hover": "var(--background-200)",
-        "text-history-sidebar-button": "var(--text-800)",
-        "divider-history-sidebar-bar": "var(--border)",
-        "text-mobile-sidebar": "var(--text-800)",
+        "text-history-sidebar-button": "var(--text-900)",
+        "userdropdown-background": "var(--background-300)",
+        "text-sidebar-toggled-header": "var(--text-200)",
+        "text-sidebar-header": "var(--text-900)",
+        "text-sidebar-dark": "var(--text-200)",
+
+        "search-answer-border": "var(--background-300)",
+
         "background-search-filter": "var(--background-100)",
         "background-search-filter-dropdown": "var(--background-100)",
 
-        "user-bubble": "var(--user-bubble)",
+        "text-editing-message": "var(--text-800)",
 
+        "background-chat-hover": "#1D4ED8",
+        "background-chat-selected": "#1D4ED8",
         // colors for sidebar in chat, search, and manage settings
-        "background-sidebar": "var(--background-100)",
-        "background-chatbar": "var(--background-100)",
-        "text-sidebar": "var(--text-500)",
-
-        "toggled-background": "var(--background-400)",
-        "untoggled-background": "var(--background-200)",
-        "background-starter-message": "var(--background)",
-        "background-starter-message-hover": "var(--background-100)",
-
-        "text-sidebar-toggled-header": "var(--text-800)",
-        "text-sidebar-header": "var(--text-800)",
-
-        "background-back-button": "var(--background-200)",
-        "text-back-button": "var(--text-800)",
+        "background-sidebar": "#0021A5",
+        "background-settings-sidebar": "var(--background-100)",
+        "background-chatbar": "#FFFFFF",
+        "text-sidebar": "#FFFFFF",
 
         // Settings
-        "text-sidebar-subtle": "var(--text-500)",
-        "icon-settings-sidebar": "var(--text-600)",
-        "text-settings-sidebar": "var(--text-600)",
-        "text-settings-sidebar-strong": "var(--text-900)",
-        "background-settings-hover": "var(--background-200)",
+        "text-sidebar-subtle": "#A9D4FF",
+        "icon-settings-sidebar": "var(--text-300)",
+        "text-settings-sidebar": "var(--text-300)",
+        "text-settings-sidebar-strong": "var(--text-200)",
+        "background-settings-hover": "#0026CC",
+        "background-back-button": "#A9D4FF",
+        "text-back-button": "var(--text-800)",
 
-        "text-application-toggled": "var(--text-800)",
-        "text-application-untoggled": "var(--text-500)",
-        "text-application-untoggled-hover": "var(--text-700)",
+        "background-search-answer": "var(--background-100)",
+        "text-search-answer": "var(--text-100)",
+        "text-recent-assistants": "var(--text-800)",
+        "border-recent-assistants": "var(--background-300)",
+        "text-mobile-sidebar-toggled": "var(--text-200)",
+        "text-mobile-sidebar-untoggled": "var(--text-900)",
 
-        "background-chat-hover": "var(--background-200)",
-        "background-chat-selected": "var(--background-200)",
+        "background-starter-message": "var(--background-100)",
+        "background-starter-message-hover": "var(--background-150)",
 
         // Background for chat messages (user bubbles)
-        user: "var(--user-bubble)",
-
-        "userdropdown-background": "var(--background-100)",
-        "text-mobile-sidebar-toggled": "var(--text-800)",
-        "text-mobile-sidebar-untoggled": "var(--text-500)",
-        "text-editing-message": "var(--text-800)",
-        "background-sidebar": "var(--background-100)",
-        "background-search-filter": "var(--background-100)",
-        "background-search-filter-dropdown": "var(--background-hover)",
-
-        "background-toggle": "var(--background-100)",
+        user: "#0021A5",
 
         // Colors for the search toggle buttons
         "background-agentic-toggled": "var(--light-success)",
@@ -165,8 +159,12 @@ module.exports = {
         "star-indicator": "var(--background-100)",
 
         // Backgrounds for submit buttons on search and chat
-        "submit-background": "var(--background-800)",
+        "submit-background": "#0021A5",
         "disabled-submit-background": "var(--background-400)",
+
+        "background-recent-assistants-hover": "var(--background-100)",
+
+        "sidebar-toggle": "var(--text-200)",
 
         input: "var(--white)",
 
@@ -182,7 +180,7 @@ module.exports = {
         "text-900": "var(--text-900)",
         "text-950": "var(--text-950)",
 
-        "user-text": "var(--text-800)",
+        "user-text": "#FFFFFF",
 
         description: "var(--text-400)",
         subtle: "var(--text-500)",
@@ -213,7 +211,7 @@ module.exports = {
         "hover-lightish": "var(--background-125)",
 
         hover: "var(--background-200)",
-        "hover-emphasis": "var(--background-300)",
+        "hover-emphasis": "var(--background-700)",
         "accent-hover": "var(--accent-hover)",
 
         // keyword highlighting
@@ -296,6 +294,39 @@ module.exports = {
             inverted: "var(--dark-tremor-content-inverted)",
           },
         },
+        calendar: {
+          // Light mode
+          "bg-selected": "#3B82F6",
+          "bg-outside-selected": "rgba(59, 130, 246, 0.2)",
+          "text-muted": "#6B7280",
+          "text-selected": "#FFFFFF",
+          "range-start": "#000000",
+          "range-middle": "#EFF6FF",
+          "range-end": "#000000",
+          "text-in-range": "#1E40AF",
+
+          // Dark mode
+          "bg-selected-dark": "#2563EB",
+          "bg-outside-selected-dark": "rgba(37, 99, 235, 0.2)",
+          "text-muted-dark": "#9CA3AF",
+          "text-selected-dark": "#F3F4F6",
+          "range-start-dark": "#1E40AF",
+          "range-middle-dark": "#1E3A8A",
+          "range-end-dark": "#1E40AF",
+          "text-in-range-dark": "#BFDBFE",
+
+          // Hover effects
+          "hover-bg": "#60A5FA",
+          "hover-bg-dark": "#3B82F6",
+          "hover-text": "#1E3A8A",
+          "hover-text-dark": "#DBEAFE",
+
+          // Today's date
+          "today-bg": "#FDE68A",
+          "today-bg-dark": "#92400E",
+          "today-text": "#92400E",
+          "today-text-dark": "#FDE68A",
+        },
       },
       boxShadow: {
         // light
@@ -329,39 +360,6 @@ module.exports = {
       },
       fontStyle: {
         "token-italic": "italic",
-      },
-      calendar: {
-        // Light mode
-        "bg-selected": "#4B5563",
-        "bg-outside-selected": "rgba(75, 85, 99, 0.2)",
-        "text-muted": "#6B7280",
-        "text-selected": "#FFFFFF",
-        "range-start": "#000000",
-        "range-middle": "#F3F4F6",
-        "range-end": "#000000",
-        "text-in-range": "#1F2937",
-
-        // Dark mode
-        "bg-selected-dark": "#6B7280",
-        "bg-outside-selected-dark": "rgba(107, 114, 128, 0.2)",
-        "text-muted-dark": "#9CA3AF",
-        "text-selected-dark": "#F3F4F6",
-        "range-start-dark": "#374151",
-        "range-middle-dark": "#4B5563",
-        "range-end-dark": "#374151",
-        "text-in-range-dark": "#E5E7EB",
-
-        // Hover effects
-        "hover-bg": "#9CA3AF",
-        "hover-bg-dark": "#6B7280",
-        "hover-text": "#374151",
-        "hover-text-dark": "#E5E7EB",
-
-        // Today's date
-        "today-bg": "#D1D5DB",
-        "today-bg-dark": "#4B5563",
-        "today-text": "#374151",
-        "today-text-dark": "#D1D5DB",
       },
     },
   },
