@@ -144,3 +144,7 @@ export interface StreamingError {
   error: string;
   stack_trace: string;
 }
+
+export interface FinalContextDocs {
+  final_context_docs: DanswerDocument[];
+}

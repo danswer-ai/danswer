@@ -23,6 +23,9 @@ export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
   blurb: string
 ) => {
+  console.log("matchHighlights");
+  console.log(matchHighlights);
+  console.log(blurb);
   if (matchHighlights.length === 0) {
     return blurb;
   }
@@ -251,7 +254,11 @@ export const DocumentDisplay = ({
                   >
                     <CustomTooltip showTick line content="Toggle content">
                       <LightBulbIcon
-                        className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"} my-auto ml-2 h-4 w-4 cursor-pointer`}
+                        className={`${
+                          settings?.isMobile && alternativeToggled
+                            ? "text-green-600"
+                            : "text-blue-600"
+                        } my-auto ml-2 h-4 w-4 cursor-pointer`}
                       />
                     </CustomTooltip>
                   </button>
@@ -308,7 +315,9 @@ export const AgenticDocumentDisplay = ({
       }}
     >
       <div
-        className={`collapsible ${!hide && "collapsible-closed overflow-y-auto border-transparent"}`}
+        className={`collapsible ${
+          !hide && "collapsible-closed overflow-y-auto border-transparent"
+        }`}
       >
         <div className="flex relative">
           <a

@@ -115,7 +115,7 @@ export function ChatDocumentDisplay({
         </div>
       </div>
       <p className="line-clamp-3 pl-1 pt-2 mb-1 text-start break-words">
-        {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)}
+        {/* {buildDocumentSummaryDisplay(document.match_highlights, document.blurb)} */}
         test
       </p>
       <div className="mb-2">

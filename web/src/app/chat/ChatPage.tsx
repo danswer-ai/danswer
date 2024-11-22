@@ -16,6 +16,7 @@ import {
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
+  FinalContextDocs,
 } from "./interfaces";
 
 import Prism from "prismjs";
@@ -962,6 +963,7 @@ export function ChatPage({
   ) {
     try {
       for await (const packet of sendMessage(params)) {
+        console.log("packet", packet);
         if (params.signal?.aborted) {
           throw new Error("AbortError");
         }
@@ -1275,6 +1277,15 @@ export function ChatPage({
 
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
+            } else if (Object.hasOwn(packet, "final_context_docs")) {
+              documents = (packet as FinalContextDocs).final_context_docs;
+              console.log(documents);
+              retrievalType = RetrievalType.Search;
+              if (documents && documents.length > 0) {
+                // point to the latest message (we don't know the messageId yet, which is why
+                // we have to use -1)
+                setSelectedMessageForDocDisplay(user_message_id);
+              }
             } else if (Object.hasOwn(packet, "top_documents")) {
               documents = (packet as DocumentsResponse).top_documents;
               retrievalType = RetrievalType.Search;

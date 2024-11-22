@@ -276,9 +276,9 @@ export const AIMessage = ({
           doc.document_id !== "" &&
           index === self.findIndex((d) => d.document_id === doc.document_id)
       )
-      .filter((doc) => {
-        return citedDocumentIds.includes(doc.document_id);
-      })
+      // .filter((doc) => {
+      //   return citedDocumentIds.includes(doc.document_id);
+      // })
       .map((doc: DanswerDocument, ind: number) => {
         return {
           ...doc,
@@ -422,25 +422,11 @@ export const AIMessage = ({
                           isRunning={!toolCall.tool_result}
                         />
                       )}
-
-                    {content || files ? (
-                      <>
-                        <FileDisplay files={files || []} />
-
-                        {typeof content === "string" ? (
-                          <div className="overflow-x-visible max-w-content-max">
-                            {renderedMarkdown}
-                          </div>
-                        ) : (
-                          content
-                        )}
-                      </>
-                    ) : isComplete ? null : (
-                      <></>
-                    )}
-                    {isComplete && docs && docs.length > 0 && (
+                    {docs && docs.length > 0 && (
                       <div className="mt-2 -mx-8 w-full mb-4 flex relative">
                         <div className="w-full">
+                          {filteredDocs.length}
+                          {docs.length}
                           <div className="px-8 flex gap-x-2">
                             {!settings?.isMobile &&
                               filteredDocs.length > 0 &&
@@ -511,6 +497,21 @@ export const AIMessage = ({
                           </div>
                         </div>
                       </div>
+                    )}
+                    {content || files ? (
+                      <>
+                        <FileDisplay files={files || []} />
+
+                        {typeof content === "string" ? (
+                          <div className="overflow-x-visible max-w-content-max">
+                            {renderedMarkdown}
+                          </div>
+                        ) : (
+                          content
+                        )}
+                      </>
+                    ) : isComplete ? null : (
+                      <></>
                     )}
                   </div>
 

@@ -18,6 +18,7 @@ import {
   RetrievalType,
   StreamingError,
   ToolCallMetadata,
+  FinalContextDocs,
 } from "./interfaces";
 import { Persona } from "../admin/assistants/interfaces";
 import { ReadonlyURLSearchParams } from "next/navigation";
@@ -102,6 +103,7 @@ export type PacketType =
   | ToolCallMetadata
   | BackendMessage
   | AnswerPiecePacket
+  | FinalContextDocs
   | DocumentsResponse
   | FileChatDisplay
   | StreamingError

@@ -98,7 +98,7 @@ export function SearchSummary({
         !text-sm !line-clamp-1 !break-all px-0.5`}
         ref={searchingForRef}
       >
-        {finished ? "Searched" : "Searching"} for: <i> {finalQuery}</i>
+        {finished ? "Ran search" : "Searching"}
       </div>
     </div>
   );
@@ -186,7 +186,7 @@ export function SearchSummary({
                     <FiEdit2 />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Edit Search</TooltipContent>
+                <TooltipContent>Specify Search Term</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           )}
