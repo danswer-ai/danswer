@@ -8,6 +8,7 @@ from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
+from redis.lock import Lock as RedisLock
 
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.configs.app_configs import JOB_TIMEOUT
@@ -203,7 +204,7 @@ def connector_external_group_sync_generator_task(
 
     r = get_redis_client(tenant_id=tenant_id)
 
-    lock = r.lock(
+    lock: RedisLock = r.lock(
         DanswerRedisLocks.CONNECTOR_EXTERNAL_GROUP_SYNC_LOCK_PREFIX
         + f"_{redis_connector.id}",
         timeout=CELERY_EXTERNAL_GROUP_SYNC_LOCK_TIMEOUT,
@@ -249,7 +250,6 @@ def connector_external_group_sync_generator_task(
             )
 
             mark_cc_pair_as_external_group_synced(db_session, cc_pair.id)
-
     except Exception as e:
         task_logger.exception(
             f"Failed to run external group sync: cc_pair={cc_pair_id}"

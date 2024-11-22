@@ -39,8 +39,8 @@ from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexAttempt
 from danswer.db.models import SearchSettings
+from danswer.db.search_settings import get_active_search_settings
 from danswer.db.search_settings import get_current_search_settings
-from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
@@ -144,17 +144,10 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
         for cc_pair_id in cc_pair_ids:
             redis_connector = RedisConnector(tenant_id, cc_pair_id)
             with get_session_with_tenant(tenant_id) as db_session:
-                # Get the primary search settings
-                primary_search_settings = get_current_search_settings(db_session)
-                search_settings = [primary_search_settings]
-
-                # Check for secondary search settings
-                secondary_search_settings = get_secondary_search_settings(db_session)
-                if secondary_search_settings is not None:
-                    # If secondary settings exist, add them to the list
-                    search_settings.append(secondary_search_settings)
-
-                for search_settings_instance in search_settings:
+                search_settings_list: list[SearchSettings] = get_active_search_settings(
+                    db_session
+                )
+                for search_settings_instance in search_settings_list:
                     redis_connector_index = redis_connector.new_index(
                         search_settings_instance.id
                     )
@@ -174,7 +167,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                         cc_pair=cc_pair,
                         last_index=last_attempt,
                         search_settings_instance=search_settings_instance,
-                        secondary_index_building=len(search_settings) > 1,
+                        secondary_index_building=len(search_settings_list) > 1,
                         db_session=db_session,
                     ):
                         continue

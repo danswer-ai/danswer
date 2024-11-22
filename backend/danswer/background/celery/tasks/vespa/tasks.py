@@ -62,7 +62,7 @@ from danswer.redis.redis_connector_credential_pair import RedisConnectorCredenti
 from danswer.redis.redis_connector_delete import RedisConnectorDelete
 from danswer.redis.redis_connector_doc_perm_sync import RedisConnectorPermissionSync
 from danswer.redis.redis_connector_doc_perm_sync import (
-    RedisConnectorPermissionSyncData,
+    RedisConnectorPermissionSyncPayload,
 )
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
@@ -592,7 +592,7 @@ def monitor_ccpair_permissions_taskset(
     if remaining > 0:
         return
 
-    payload: RedisConnectorPermissionSyncData | None = (
+    payload: RedisConnectorPermissionSyncPayload | None = (
         redis_connector.permissions.payload
     )
     start_time: datetime | None = payload.started if payload else None

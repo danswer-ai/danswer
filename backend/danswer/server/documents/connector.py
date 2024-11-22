@@ -81,6 +81,7 @@ from danswer.db.index_attempt import get_latest_index_attempts_by_status
 from danswer.db.models import IndexingStatus
 from danswer.db.models import SearchSettings
 from danswer.db.models import User
+from danswer.db.search_settings import get_active_search_settings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.file_store.file_store import get_default_file_store
@@ -903,18 +904,9 @@ def connector_indexing_stop(
 ) -> StatusResponse:
     """Used to stop indexing on a cc pair."""
 
-    # Get the primary search settings
-    primary_search_settings = get_current_search_settings(db_session)
-    search_settings_list = [primary_search_settings]
-
-    # Check for secondary search settings
-    secondary_search_settings = get_secondary_search_settings(db_session)
-    if secondary_search_settings is not None:
-        # If secondary settings exist, add them to the list
-        search_settings_list.append(secondary_search_settings)
-
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
 
+    search_settings_list: list[SearchSettings] = get_active_search_settings(db_session)
     for search_settings in search_settings_list:
         redis_connector_index = redis_connector.new_index(search_settings.id)
         if not redis_connector_index.fenced:

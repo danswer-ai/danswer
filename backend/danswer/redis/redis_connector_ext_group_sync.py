@@ -1,9 +1,16 @@
+from datetime import datetime
 from typing import cast
 
 import redis
 from celery import Celery
+from pydantic import BaseModel
 from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
+
+
+class RedisConnectorExternalGroupSyncPayload(BaseModel):
+    started: datetime | None
+    celery_task_id: str | None
 
 
 class RedisConnectorExternalGroupSync:
