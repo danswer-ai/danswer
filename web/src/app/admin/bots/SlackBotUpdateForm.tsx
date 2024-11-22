@@ -78,14 +78,16 @@ export const ExistingSlackBotForm = ({
       <div className="flex items-center justify-between h-14">
         <div className="flex items-center gap-2">
           <div className="my-auto">
-            <SourceIcon iconSize={36} sourceType={"slack"} />
+            <SourceIcon iconSize={32} sourceType={"slack"} />
           </div>
-          <EditableStringFieldDisplay
-            value={formValues.name}
-            isEditable={true}
-            onUpdate={(value) => handleUpdateField("name", value)}
-            scale={2.5}
-          />
+          <div className="ml-1">
+            <EditableStringFieldDisplay
+              value={formValues.name}
+              isEditable={true}
+              onUpdate={(value) => handleUpdateField("name", value)}
+              scale={2.1}
+            />
+          </div>
         </div>
 
         <div className="flex flex-col" ref={dropdownRef}>
@@ -124,6 +126,7 @@ export const ExistingSlackBotForm = ({
                   refreshSlackBot={refreshSlackBot}
                   setPopup={setPopup}
                   router={router}
+                  onValuesChange={(values) => setFormValues(values)}
                 />
               </div>
             </div>

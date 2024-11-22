@@ -261,10 +261,12 @@ export const SlackChannelConfigCreationForm = ({
                   </Tabs>
                 </div>
 
-                <AdvancedOptionsToggle
-                  showAdvancedOptions={showAdvancedOptions}
-                  setShowAdvancedOptions={setShowAdvancedOptions}
-                />
+                <div className="mt-6">
+                  <AdvancedOptionsToggle
+                    showAdvancedOptions={showAdvancedOptions}
+                    setShowAdvancedOptions={setShowAdvancedOptions}
+                  />
+                </div>
 
                 {showAdvancedOptions && (
                   <div className="mt-4">

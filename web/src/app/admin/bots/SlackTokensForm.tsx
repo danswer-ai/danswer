@@ -5,7 +5,8 @@ import { Form, Formik } from "formik";
 import * as Yup from "yup";
 import { createSlackBot, updateSlackBot } from "./new/lib";
 import { Button } from "@/components/ui/button";
-import { SourceIcon } from "@/components/SourceIcon";
+import { Separator } from "@/components/ui/separator";
+import { useEffect } from "react";
 
 export const SlackTokensForm = ({
   isUpdate,
@@ -14,6 +15,7 @@ export const SlackTokensForm = ({
   refreshSlackBot,
   setPopup,
   router,
+  onValuesChange,
 }: {
   isUpdate: boolean;
   initialValues: any;
@@ -21,6 +23,7 @@ export const SlackTokensForm = ({
   refreshSlackBot?: () => void;
   setPopup: (popup: { message: string; type: "error" | "success" }) => void;
   router: any;
+  onValuesChange?: (values: any) => void;
 }) => (
   <Formik
     initialValues={initialValues}
@@ -65,49 +68,65 @@ export const SlackTokensForm = ({
     }}
     enableReinitialize={true}
   >
-    {({ isSubmitting, setFieldValue, values }) => (
-      <Form className="w-full">
-        {!isUpdate && (
-          <div className="flex items-center gap-2 mb-4">
-            <div className="my-auto">
-              <SourceIcon iconSize={36} sourceType={"slack"} />
-            </div>
-            <TextFormField name="name" label="Slack Bot Name" type="text" />
-          </div>
-        )}
+    {({ isSubmitting, setFieldValue, values }) => {
+      useEffect(() => {
+        onValuesChange?.(values);
+      }, [values, onValuesChange]);
 
-        {!isUpdate && (
-          <div className="mb-4">
-            Please enter your Slack Bot Token and Slack App Token to give
-            Danswerbot access to your Slack!
+      return (
+        <Form className="w-full">
+          {!isUpdate && (
+            <div className="">
+              <TextFormField
+                name="name"
+                label="Name This Slack Bot:"
+                type="text"
+              />
+            </div>
+          )}
+
+          {!isUpdate && (
+            <div className="mt-4">
+              <Separator />
+              Please refer to our{" "}
+              <a
+                className="text-blue-500 hover:underline"
+                href="https://docs.danswer.dev/slack_bot_setup"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                guide
+              </a>{" "}
+              if you are not sure how to get these tokens!
+            </div>
+          )}
+          <TextFormField
+            name="bot_token"
+            label="Slack Bot Token"
+            type="password"
+          />
+          <TextFormField
+            name="app_token"
+            label="Slack App Token"
+            type="password"
+          />
+          <div className="flex justify-end w-full mt-4">
+            <Button
+              type="submit"
+              disabled={
+                isSubmitting ||
+                !values.bot_token ||
+                !values.app_token ||
+                !values.name
+              }
+              variant="submit"
+              size="default"
+            >
+              {isUpdate ? "Update!" : "Create!"}
+            </Button>
           </div>
-        )}
-        <TextFormField
-          name="bot_token"
-          label="Slack Bot Token"
-          type="password"
-        />
-        <TextFormField
-          name="app_token"
-          label="Slack App Token"
-          type="password"
-        />
-        <div className="flex justify-end w-full mt-4">
-          <Button
-            type="submit"
-            disabled={
-              isSubmitting ||
-              !values.bot_token ||
-              !values.app_token ||
-              !values.name
-            }
-            variant="submit"
-            size="default"
-          >
-            {isUpdate ? "Update!" : "Create!"}
-          </Button>
-        </div>
-      </Form>
-    )}
+        </Form>
+      );
+    }}
   </Formik>
 );

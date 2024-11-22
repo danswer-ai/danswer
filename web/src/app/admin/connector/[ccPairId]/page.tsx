@@ -119,16 +119,19 @@ function Main({ ccPairId }: { ccPairId: number }) {
       <BackButton
         behaviorOverride={() => router.push("/admin/indexing/status")}
       />
-      <div className="pb-1 flex mt-1">
-        <div className="mr-2 my-auto">
-          <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
+      <div className="flex items-center justify-between h-14">
+        <div className="my-auto">
+          <SourceIcon iconSize={32} sourceType={ccPair.connector.source} />
         </div>
 
-        <EditableStringFieldDisplay
-          value={ccPair.name}
-          isEditable={ccPair.is_editable_for_current_user}
-          onUpdate={handleUpdateName}
-        />
+        <div className="ml-1">
+          <EditableStringFieldDisplay
+            value={ccPair.name}
+            isEditable={ccPair.is_editable_for_current_user}
+            onUpdate={handleUpdateName}
+            scale={2.1}
+          />
+        </div>
 
         {ccPair.is_editable_for_current_user && (
           <div className="ml-auto flex gap-x-2">

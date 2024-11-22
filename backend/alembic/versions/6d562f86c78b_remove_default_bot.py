@@ -23,6 +23,10 @@ def upgrade() -> None:
             WHERE name = 'Default Bot'
             AND bot_token = ''
             AND app_token = ''
+            AND NOT EXISTS (
+                SELECT 1 FROM slack_channel_config
+                WHERE slack_channel_config.slack_bot_id = slack_bot.id
+            )
             """
         )
     )
