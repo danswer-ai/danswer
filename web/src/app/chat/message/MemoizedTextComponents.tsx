@@ -1,8 +1,9 @@
 import { Citation } from "@/components/search/results/Citation";
+import { LoadedDanswerDocument } from "@/lib/search/interfaces";
 import React, { memo } from "react";
 
 export const MemoizedLink = memo((props: any) => {
-  const { node, ...rest } = props;
+  const { node, document, ...rest } = props;
   const value = rest.children;
 
   if (value?.toString().startsWith("*")) {
@@ -10,7 +11,11 @@ export const MemoizedLink = memo((props: any) => {
       <div className="flex-none bg-background-800 inline-block rounded-full h-3 w-3 ml-2" />
     );
   } else if (value?.toString().startsWith("[")) {
-    return <Citation link={rest?.href}>{rest.children}</Citation>;
+    return (
+      <Citation link={rest?.href} document={document as LoadedDanswerDocument}>
+        {rest.children}
+      </Citation>
+    );
   } else {
     return (
       <a

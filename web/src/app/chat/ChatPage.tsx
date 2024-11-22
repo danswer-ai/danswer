@@ -132,8 +132,9 @@ export function ChatPage({
 
   const {
     chatSessions,
-    availableSources,
-    availableDocumentSets,
+    ccPairs,
+    tags,
+    documentSets,
     llmProviders,
     folders,
     openedFolders,
@@ -152,6 +153,12 @@ export function ChatPage({
   if (settings?.settings?.chat_page_enabled === false) {
     router.push("/search");
   }
+
+  const [documentSidebarToggled, setDocumentSidebarToggled] = useState(false);
+
+  const toggleDocumentSidebar = () => {
+    setDocumentSidebarToggled((prev) => !prev);
+  };
 
   const { assistants: availableAssistants, finalAssistants } = useAssistants();
 
@@ -267,6 +274,16 @@ export function ChatPage({
     availableAssistants[0];
 
   const noAssistants = liveAssistant == null || liveAssistant == undefined;
+
+  const availableSources = ccPairs.map((ccPair) => ccPair.source);
+  const [finalAvailableSources, finalAvailableDocumentSets] =
+    computeAvailableFilters({
+      selectedPersona: availableAssistants.find(
+        (assistant) => assistant.id === liveAssistant?.id
+      ),
+      availableSources: availableSources,
+      availableDocumentSets: documentSets,
+    });
 
   // always set the model override for the chat session, when an assistant, llm provider, or user preference exists
   useEffect(() => {
@@ -1804,6 +1821,11 @@ export function ChatPage({
     setDocumentSelection((documentSelection) => !documentSelection);
     setShowDocSidebar(false);
   };
+  const [filtersToggled, setFiltersToggled] = useState(false);
+  const toggleFilters = () => {
+    setFiltersToggled((filtersToggled) => !filtersToggled);
+    setDocumentSidebarToggled(true);
+  };
 
   interface RegenerationRequest {
     messageId: number;
@@ -1965,6 +1987,53 @@ export function ChatPage({
               </div>
             </div>
           </div>
+          {!settings?.isMobile && (
+            <div
+              style={{ transition: "width 0.30s ease-out" }}
+              className={`
+
+                    flex-none
+                fixed
+                right-0
+                z-40
+                bg-background-100
+                h-screen
+                transition-all
+                bg-opacity-80
+                duration-300
+                ease-in-out
+
+
+              overflow-y-hidden
+              bg-background-100
+              transition-all
+              bg-opacity-80
+              duration-300
+              ease-in-out
+              h-full
+              ${documentSidebarToggled ? "w-[300px]" : "w-[0px]"}
+            `}
+            >
+              <DocumentSidebar
+                filterManager={filterManager}
+                ccPairs={ccPairs}
+                tags={tags}
+                documentSets={documentSets}
+                ref={innerSidebarElementRef}
+                filtersToggled={filtersToggled}
+                closeSidebar={() => setDocumentSidebarToggled(false)}
+                selectedMessage={aiMessage}
+                selectedDocuments={selectedDocuments}
+                toggleDocumentSelection={toggleDocumentSelection}
+                clearSelectedDocuments={clearSelectedDocuments}
+                selectedDocumentTokens={selectedDocumentTokens}
+                maxTokens={maxTokens}
+                isLoading={isFetchingChatMessages}
+                initialWidth={300}
+                isOpen={documentSidebarToggled}
+              />
+            </div>
+          )}
 
           <BlurBackground
             visible={!untoggled && (showDocSidebar || toggledSidebar)}
@@ -2191,6 +2260,9 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      documentSelectionToggled={
+                                        documentSidebarToggled
+                                      }
                                       continueGenerating={
                                         i == messageHistory.length - 1 &&
                                         currentCanContinue()
@@ -2227,9 +2299,12 @@ export function ChatPage({
                                       }}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
-                                      toggleDocumentSelection={
-                                        toggleDocumentSelectionAspects
-                                      }
+                                      toggleDocumentSelection={() => {
+                                        toggleDocumentSelectionAspects();
+                                        setDocumentSidebarToggled(
+                                          !documentSidebarToggled
+                                        );
+                                      }}
                                       docs={message.documents}
                                       currentPersona={liveAssistant}
                                       alternativeAssistant={
@@ -2446,6 +2521,7 @@ export function ChatPage({
                               </div>
                             )}
                             <ChatInputBar
+                              toggleFilters={toggleFilters}
                               showConfigureAPIKey={() =>
                                 setShowApiKeyModal(true)
                               }
@@ -2500,6 +2576,20 @@ export function ChatPage({
                           </div>
                         </div>
                       </div>
+                      {!settings?.isMobile && (
+                        <div
+                          style={{ transition: "width 0.30s ease-out" }}
+                          className={`
+                          flex-none 
+                          overflow-y-hidden 
+                          transition-all 
+                          duration-300 
+                          ease-in-out
+                          h-full
+                          ${documentSidebarToggled ? "w-[300px]" : "w-[0px]"}
+                      `}
+                        ></div>
+                      )}
                     </div>
                   )}
                 </Dropzone>
@@ -2519,8 +2609,9 @@ export function ChatPage({
           </div>
           <FixedLogo backgroundToggled={toggledSidebar || showDocSidebar} />
         </div>
+        {/* Right Sidebar - DocumentSidebar */}
       </div>
-      <DocumentSidebar
+      {/* <DocumentSidebar
         initialWidth={350}
         ref={innerSidebarElementRef}
         closeSidebar={() => setDocumentSelection(false)}
@@ -2532,7 +2623,7 @@ export function ChatPage({
         maxTokens={maxTokens}
         isLoading={isFetchingChatMessages}
         isOpen={documentSelection}
-      />
+      /> */}
     </>
   );
 }
