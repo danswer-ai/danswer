@@ -280,9 +280,8 @@ export function ChatPage({
       llmOverrideManager.setLlmOverride(
         destructureValue(user?.preferences.default_model)
       );
-    } else {
-      console.log("No override set");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveAssistant, user?.preferences.default_model]);
 
   const stopGenerating = () => {
