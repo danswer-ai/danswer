@@ -174,23 +174,18 @@ export function useLlmOverride(
           modelName: "",
         }
   );
-
   const [llmOverride, setLlmOverride] = useState<LlmOverride>(
     currentChatSession && currentChatSession.current_alternate_model
       ? destructureValue(currentChatSession.current_alternate_model)
-      : {
-          name: "",
-          provider: "",
-          modelName: "",
-        }
+      : globalDefault
   );
 
   const updateModelOverrideForChatSession = (chatSession?: ChatSession) => {
-    const newOverride =
+    setLlmOverride(
       chatSession && chatSession.current_alternate_model
         ? destructureValue(chatSession.current_alternate_model)
-        : globalDefault;
-    setLlmOverride(newOverride);
+        : globalDefault
+    );
   };
 
   const [temperature, setTemperature] = useState<number | null>(
@@ -198,21 +193,19 @@ export function useLlmOverride(
   );
 
   useEffect(() => {
-    const newGlobalDefault =
+    setGlobalDefault(
       globalModel != null
         ? destructureValue(globalModel)
         : {
             name: "",
             provider: "",
             modelName: "",
-          };
-    setGlobalDefault(newGlobalDefault);
+          }
+    );
   }, [globalModel]);
 
   useEffect(() => {
-    const newTemperature =
-      defaultTemperature !== undefined ? defaultTemperature : 0;
-    setTemperature(newTemperature);
+    setTemperature(defaultTemperature !== undefined ? defaultTemperature : 0);
   }, [defaultTemperature]);
 
   return {
