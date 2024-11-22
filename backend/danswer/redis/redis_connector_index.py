@@ -29,6 +29,8 @@ class RedisConnectorIndex:
 
     GENERATOR_LOCK_PREFIX = "da_lock:indexing"
 
+    TERMINATE_PREFIX = PREFIX + "_terminate"  # connectorindexing_terminate
+
     def __init__(
         self,
         tenant_id: str | None,
@@ -51,6 +53,7 @@ class RedisConnectorIndex:
         self.generator_lock_key = (
             f"{self.GENERATOR_LOCK_PREFIX}_{id}/{search_settings_id}"
         )
+        self.terminate_key = f"{self.TERMINATE_PREFIX}_{id}/{search_settings_id}"
 
     @classmethod
     def fence_key_with_ids(cls, cc_pair_id: int, search_settings_id: int) -> str:
@@ -127,6 +130,11 @@ class RedisConnectorIndex:
         self.redis.delete(self.generator_progress_key)
         self.redis.delete(self.generator_complete_key)
         self.redis.delete(self.fence_key)
+
+    def set_terminate(self, celery_task_id: str):
+        """This sets a signal. It does not block!"""
+        # We shouldn't need very long to terminate the process. 10 minute TTL is good.
+        self.redis.set(f"{self.terminate_key}_{celery_task_id}", 0, ex=600)
 
     @staticmethod
     def reset_all(r: redis.Redis) -> None:

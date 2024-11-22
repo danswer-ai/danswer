@@ -77,7 +77,7 @@ def test_slack_permission_sync(
         access_type=AccessType.SYNC,
         user_performing_action=admin_user,
     )
-    CCPairManager.wait_for_indexing(
+    CCPairManager.wait_for_indexing_completion(
         cc_pair=cc_pair,
         after=before,
         user_performing_action=admin_user,
@@ -112,7 +112,7 @@ def test_slack_permission_sync(
     # Run indexing
     before = datetime.now(timezone.utc)
     CCPairManager.run_once(cc_pair, admin_user)
-    CCPairManager.wait_for_indexing(
+    CCPairManager.wait_for_indexing_completion(
         cc_pair=cc_pair,
         after=before,
         user_performing_action=admin_user,
