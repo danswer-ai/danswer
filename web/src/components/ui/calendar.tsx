@@ -57,9 +57,9 @@ function Calendar({
           "focus:bg-calendar-selected focus:text-calendar-text-selected"
         ),
         day_range_start: cn(
-          "bg-calendar-range-start text-calendar-text-selected rounded-l-full",
-          "hover:bg-calendar-range-start hover:text-calendar-text-selected",
-          "focus:bg-calendar-range-start focus:text-calendar-text-selected"
+          "bg-calendar-range-start text-calendar-text-end rounded-l-full",
+          "hover:bg-calendar-range-start hover:text-calendar-text-end",
+          "focus:bg-calendar-range-start focus:text-calendar-text-end"
         ),
         day_range_end: cn(
           "bg-calendar-range-end text-calendar-text-selected rounded-r-full",

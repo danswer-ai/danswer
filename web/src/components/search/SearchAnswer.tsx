@@ -76,7 +76,6 @@ export default function SearchAnswer({
         !searchAnswerExpanded && searchAnswerOverflowing && "overflow-y-hidden"
       } p-4 border-2 border-search-answer-border text-text-search-answer   bg-background-search-answer  rounded-lg relative`}
     >
-      asdfasdf
       <div>
         <div className="flex gap-x-2">
           <h2 className="text-emphasis font-bold my-auto mb-1">AI Answer</h2>
