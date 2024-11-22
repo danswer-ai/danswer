@@ -5,7 +5,6 @@ from celery import Celery
 from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
-from redis import Redis
 from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
@@ -37,7 +36,7 @@ class TaskDependencyError(RuntimeError):
 def check_for_connector_deletion_task(self: Task, *, tenant_id: str | None) -> None:
     r = get_redis_client(tenant_id=tenant_id)
 
-    lock_beat = r.lock(
+    lock_beat: RedisLock = r.lock(
         DanswerRedisLocks.CHECK_CONNECTOR_DELETION_BEAT_LOCK,
         timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
     )
@@ -60,7 +59,7 @@ def check_for_connector_deletion_task(self: Task, *, tenant_id: str | None) -> N
                 redis_connector = RedisConnector(tenant_id, cc_pair_id)
                 try:
                     try_generate_document_cc_pair_cleanup_tasks(
-                        self.app, cc_pair_id, db_session, r, lock_beat, tenant_id
+                        self.app, cc_pair_id, db_session, lock_beat, tenant_id
                     )
                 except TaskDependencyError as e:
                     # this means we wanted to start deleting but dependent tasks were running
@@ -86,7 +85,6 @@ def try_generate_document_cc_pair_cleanup_tasks(
     app: Celery,
     cc_pair_id: int,
     db_session: Session,
-    r: Redis,
     lock_beat: RedisLock,
     tenant_id: str | None,
 ) -> int | None:

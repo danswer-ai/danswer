@@ -248,7 +248,7 @@ class CCPairManager:
         """wait for the number of docs to be indexed on the connector.
         This is used to test pausing a connector in the middle of indexing and
         terminating that indexing."""
-        print("Indexing wait for inactive starting: cc_pair={cc_pair.id}")
+        print(f"Indexing wait for inactive starting: cc_pair={cc_pair.id}")
         start = time.monotonic()
         while True:
             fetched_cc_pairs = CCPairManager.get_indexing_statuses(
@@ -261,7 +261,7 @@ class CCPairManager:
                 if fetched_cc_pair.in_progress:
                     continue
 
-                print("Indexing is inactive: cc_pair={cc_pair.id}")
+                print(f"Indexing is inactive: cc_pair={cc_pair.id}")
                 return
 
             elapsed = time.monotonic() - start
@@ -299,8 +299,8 @@ class CCPairManager:
 
                 if fetched_cc_pair.docs_indexed >= num_docs:
                     print(
-                        "Indexed the requested number of docs: "
-                        f"cc_pair={cc_pair.id}"
+                        "Indexed at least the requested number of docs: "
+                        f"cc_pair={cc_pair.id} "
                         f"docs_indexed={fetched_cc_pair.docs_indexed} "
                         f"num_docs={num_docs}"
                     )

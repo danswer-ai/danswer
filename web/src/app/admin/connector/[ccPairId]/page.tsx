@@ -151,7 +151,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
                 isDeleting={isDeleting}
               />
             )}
-            {!ccPair.indexing && (
+            {/* {!ccPair.indexing && (
               <Button
                 variant="destructive"
                 onClick={() => stopIndexing(ccPair.id)}
@@ -159,7 +159,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
               >
                 Stop Indexing
               </Button>
-            )}
+            )} */}
             {!isDeleting && <ModifyStatusButtonCluster ccPair={ccPair} />}
           </div>
         )}

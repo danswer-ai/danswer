@@ -55,7 +55,12 @@ DOC_PERMISSION_SYNC_PERIODS: dict[DocumentSource, int] = {
     DocumentSource.SLACK: 5 * 60,
 }
 
-EXTERNAL_GROUP_SYNC_PERIOD: int = 30  # 30 seconds
+# If nothing is specified here, we run the doc_sync every time the celery beat runs
+EXTERNAL_GROUP_SYNC_PERIODS: dict[DocumentSource, int] = {
+    # Polling is not supported so we fetch all group permissions every 60 seconds
+    DocumentSource.GOOGLE_DRIVE: 60,
+    DocumentSource.CONFLUENCE: 60,
+}
 
 
 def check_if_valid_sync_source(source_type: DocumentSource) -> bool:

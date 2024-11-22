@@ -16,7 +16,6 @@ from sqlalchemy.orm import Session
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.indexing.job_client import SimpleJobClient
 from danswer.background.indexing.run_indexing import run_indexing_entrypoint
-from danswer.background.indexing.run_indexing import RunIndexingCallbackInterface
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.constants import CELERY_INDEXING_LOCK_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
@@ -42,6 +41,7 @@ from danswer.db.models import SearchSettings
 from danswer.db.search_settings import get_active_search_settings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.swap_index import check_index_swap
+from danswer.indexing.indexing_heartbeat import IndexingHeartbeatInterface
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.redis.redis_connector import RedisConnector
@@ -57,7 +57,7 @@ from shared_configs.configs import SENTRY_DSN
 logger = setup_logger()
 
 
-class RunIndexingCallback(RunIndexingCallbackInterface):
+class IndexingCallback(IndexingHeartbeatInterface):
     def __init__(
         self,
         stop_key: str,
@@ -73,6 +73,7 @@ class RunIndexingCallback(RunIndexingCallbackInterface):
         self.started: datetime = datetime.now(timezone.utc)
         self.redis_lock.reacquire()
 
+        self.last_tag: str = ""
         self.last_lock_reacquire: datetime = datetime.now(timezone.utc)
 
     def should_stop(self) -> bool:
@@ -80,15 +81,17 @@ class RunIndexingCallback(RunIndexingCallbackInterface):
             return True
         return False
 
-    def progress(self, amount: int) -> None:
+    def progress(self, tag: str, amount: int) -> None:
         try:
             self.redis_lock.reacquire()
+            self.last_tag = tag
             self.last_lock_reacquire = datetime.now(timezone.utc)
         except LockError:
             logger.exception(
-                f"RunIndexingCallback - lock.reacquire exceptioned. "
+                f"IndexingCallback - lock.reacquire exceptioned. "
                 f"lock_timeout={self.redis_lock.timeout} "
                 f"start={self.started} "
+                f"last_tag={self.last_tag} "
                 f"last_reacquired={self.last_lock_reacquire} "
                 f"now={datetime.now(timezone.utc)}"
             )
@@ -393,8 +396,11 @@ def try_creating_indexing_task(
     return index_attempt_id
 
 
-@shared_task(name="connector_indexing_proxy_task", acks_late=False, track_started=True)
+@shared_task(
+    name="connector_indexing_proxy_task", bind=True, acks_late=False, track_started=True
+)
 def connector_indexing_proxy_task(
+    self: Task,
     index_attempt_id: int,
     cc_pair_id: int,
     search_settings_id: int,
@@ -407,6 +413,10 @@ def connector_indexing_proxy_task(
         f"cc_pair={cc_pair_id} "
         f"search_settings={search_settings_id}"
     )
+
+    if not self.request.id:
+        task_logger.error("self.request.id is None!")
+
     client = SimpleJobClient()
 
     job = client.submit(
@@ -435,8 +445,22 @@ def connector_indexing_proxy_task(
         f"search_settings={search_settings_id}"
     )
 
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    redis_connector_index = redis_connector.new_index(search_settings_id)
+
     while True:
         sleep(10)
+
+        if self.request.id and redis_connector_index.terminating(self.request.id):
+            task_logger.warning(
+                "Indexing proxy - termination signal detected: "
+                f"attempt={index_attempt_id} "
+                f"tenant={tenant_id} "
+                f"cc_pair={cc_pair_id} "
+                f"search_settings={search_settings_id} "
+            )
+            job.cancel()
+            break
 
         # do nothing for ongoing jobs that haven't been stopped
         if not job.done():
@@ -612,7 +636,7 @@ def connector_indexing_task(
                 )
 
         # define a callback class
-        callback = RunIndexingCallback(
+        callback = IndexingCallback(
             redis_connector.stop.fence_key,
             redis_connector_index.generator_progress_key,
             lock,

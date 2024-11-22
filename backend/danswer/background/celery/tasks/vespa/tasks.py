@@ -688,6 +688,7 @@ def monitor_ccpair_indexing_taskset(
     task_logger.info(
         f"Connector indexing finished: cc_pair={cc_pair_id} "
         f"search_settings={search_settings_id} "
+        f"progress={progress} "
         f"status={status_enum.name} "
         f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
     )
@@ -751,7 +752,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 
         # print current queue lengths
         r_celery = self.app.broker_connection().channel().client  # type: ignore
-        n_celery = celery_get_queue_length("celery", r)
+        n_celery = celery_get_queue_length("celery", r_celery)
         n_indexing = celery_get_queue_length(
             DanswerCeleryQueues.CONNECTOR_INDEXING, r_celery
         )
