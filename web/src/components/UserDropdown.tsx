@@ -95,7 +95,9 @@ export function UserDropdown({ page }: { page?: pageType }) {
       }
 
       // Construct the current URL
-      const currentUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+      const currentUrl = `${pathname}${
+        searchParams.toString() ? `?${searchParams.toString()}` : ""
+      }`;
 
       // Encode the current URL to use as a redirect parameter
       const encodedRedirect = encodeURIComponent(currentUrl);
@@ -130,7 +132,7 @@ export function UserDropdown({ page }: { page?: pageType }) {
             <div
               className="
                 my-auto
-                bg-background-strong
+                bg-userdropdown-background
                 ring-2
                 ring-transparent
                 group-hover:ring-background-300/50
@@ -244,7 +246,11 @@ export function UserDropdown({ page }: { page?: pageType }) {
                     setShowNotifications(true);
                   }}
                   icon={<BellIcon className="h-5 w-5 my-auto mr-2" />}
-                  label={`Notifications ${notifications && notifications.length > 0 ? `(${notifications.length})` : ""}`}
+                  label={`Notifications ${
+                    notifications && notifications.length > 0
+                      ? `(${notifications.length})`
+                      : ""
+                  }`}
                 />
 
                 {showLogout &&

@@ -62,11 +62,11 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="flex flex-none w-[250px] bg-background text-default">
+    <div className="flex flex-none w-[250px] text-default">
       <div
         className={`
                   fixed
-                  bg-background-100
+                  bg-background-sidebar
                   h-screen
                   transition-all
                   bg-opacity-80

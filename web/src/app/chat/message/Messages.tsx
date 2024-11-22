@@ -819,6 +819,7 @@ export const HumanMessage = ({
                         outline-none 
                         placeholder-gray-400 
                         resize-none
+                        text-text-editing-message
                         pl-4
                         overflow-y-auto
                         pr-12 
@@ -877,7 +878,6 @@ export const HumanMessage = ({
                           py-2 
                           px-3 
                           w-fit 
-                          bg-hover
                           bg-background-strong 
                           text-sm
                           rounded-lg
@@ -903,15 +903,13 @@ export const HumanMessage = ({
                         <TooltipProvider delayDuration={1000}>
                           <Tooltip>
                             <TooltipTrigger>
-                              <button
-                                className="hover:bg-hover p-1.5 rounded"
+                              <HoverableIcon
+                                icon={<FiEdit2 className="text-gray-600" />}
                                 onClick={() => {
                                   setIsEditing(true);
                                   setIsHovered(false);
                                 }}
-                              >
-                                <FiEdit2 className="!h-4 !w-4" />
-                              </button>
+                              />
                             </TooltipTrigger>
                             <TooltipContent>Edit</TooltipContent>
                           </Tooltip>
