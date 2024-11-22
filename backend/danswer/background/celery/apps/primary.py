@@ -15,7 +15,9 @@ from celery.signals import worker_shutdown
 import danswer.background.celery.apps.app_base as app_base
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.background.celery.celery_utils import celery_is_worker_primary
-from danswer.background.celery.tasks.vespa.tasks import get_unfenced_index_attempt_ids
+from danswer.background.celery.tasks.indexing.tasks import (
+    get_unfenced_index_attempt_ids,
+)
 from danswer.configs.constants import CELERY_PRIMARY_WORKER_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import POSTGRES_CELERY_WORKER_PRIMARY_APP_NAME
