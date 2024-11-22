@@ -49,7 +49,7 @@ export const LlmList: React.FC<LlmListProps> = ({
               llmProvider.provider,
               modelName
             ),
-            icon: getProviderIcon(llmProvider.provider),
+            icon: getProviderIcon(llmProvider.provider, modelName),
           });
         }
       }
