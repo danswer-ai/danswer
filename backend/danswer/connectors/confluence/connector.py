@@ -3,15 +3,13 @@ from datetime import timezone
 from typing import Any
 from urllib.parse import quote
 
-from atlassian import Confluence  # type: ignore
-
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.confluence.onyx_confluence import build_confluence_client
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
 from danswer.connectors.confluence.utils import attachment_to_content
-from danswer.connectors.confluence.utils import build_confluence_client
 from danswer.connectors.confluence.utils import build_confluence_document_id
 from danswer.connectors.confluence.utils import datetime_from_string
 from danswer.connectors.confluence.utils import extract_text_from_confluence_html
@@ -114,25 +112,10 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
         # for a list of other hidden constructor args
         self._confluence_client = build_confluence_client(
-            credentials_json=credentials,
+            credentials=credentials,
             is_cloud=self.is_cloud,
             wiki_base=self.wiki_base,
         )
-
-        client_without_retries = Confluence(
-            api_version="cloud" if self.is_cloud else "latest",
-            url=self.wiki_base.rstrip("/"),
-            username=credentials["confluence_username"] if self.is_cloud else None,
-            password=credentials["confluence_access_token"] if self.is_cloud else None,
-            token=credentials["confluence_access_token"] if not self.is_cloud else None,
-        )
-        spaces = client_without_retries.get_all_spaces(limit=1)
-        if not spaces:
-            raise RuntimeError(
-                f"No spaces found at {self.wiki_base}! "
-                "Check your credentials and wiki_base and make sure "
-                "is_cloud is set correctly."
-            )
         return None
 
     def _get_comment_string_for_page_id(self, page_id: str) -> str:

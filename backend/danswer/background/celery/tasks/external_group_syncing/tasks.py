@@ -29,7 +29,7 @@ from danswer.utils.logger import setup_logger
 from ee.danswer.db.connector_credential_pair import get_all_auto_sync_cc_pairs
 from ee.danswer.db.external_perm import ExternalUserGroup
 from ee.danswer.db.external_perm import replace_user__ext_group_for_cc_pair
-from ee.danswer.external_permissions.sync_params import EXTERNAL_GROUP_SYNC_PERIOD
+from ee.danswer.external_permissions.sync_params import EXTERNAL_GROUP_SYNC_PERIODS
 from ee.danswer.external_permissions.sync_params import GROUP_PERMISSIONS_FUNC_MAP
 
 logger = setup_logger()
@@ -66,9 +66,9 @@ def _is_external_group_sync_due(cc_pair: ConnectorCredentialPair) -> bool:
     if last_ext_group_sync is None:
         return True
 
-    source_sync_period = EXTERNAL_GROUP_SYNC_PERIOD
+    source_sync_period = EXTERNAL_GROUP_SYNC_PERIODS.get(cc_pair.connector.source)
 
-    # If EXTERNAL_GROUP_SYNC_PERIOD is None, we always run the sync.
+    # If EXTERNAL_GROUP_SYNC_PERIODS is None, we always run the sync.
     if not source_sync_period:
         return True
 
