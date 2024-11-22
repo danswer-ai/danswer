@@ -427,12 +427,14 @@ def get_chat_session_admin(
 @router.get("/admin/query-history-csv")
 def get_query_history_as_csv(
     _: User | None = Depends(current_admin_user),
+    start: datetime | None = None,
+    end: datetime | None = None,
     db_session: Session = Depends(get_session),
 ) -> StreamingResponse:
     complete_chat_session_history = fetch_and_process_chat_session_history(
         db_session=db_session,
-        start=datetime.fromtimestamp(0, tz=timezone.utc),
-        end=datetime.now(tz=timezone.utc),
+        start=start or datetime.fromtimestamp(0, tz=timezone.utc),
+        end=end or datetime.now(tz=timezone.utc),
         feedback_type=None,
         limit=None,
     )
