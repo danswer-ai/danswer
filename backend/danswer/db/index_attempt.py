@@ -67,6 +67,13 @@ def create_index_attempt(
     return new_attempt.id
 
 
+def delete_index_attempt(db_session: Session, index_attempt_id: int) -> None:
+    index_attempt = get_index_attempt(db_session, index_attempt_id)
+    if index_attempt:
+        db_session.delete(index_attempt)
+        db_session.commit()
+
+
 def mock_successful_index_attempt(
     connector_credential_pair_id: int,
     search_settings_id: int,
