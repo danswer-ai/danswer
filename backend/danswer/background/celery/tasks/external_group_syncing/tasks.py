@@ -111,7 +111,7 @@ def check_for_external_group_sync(self: Task, *, tenant_id: str | None) -> None:
                     cc_pair_ids_to_sync.append(cc_pair.id)
 
         for cc_pair_id in cc_pair_ids_to_sync:
-            tasks_created = try_creating_permissions_sync_task(
+            tasks_created = try_creating_external_group_sync_task(
                 self.app, cc_pair_id, r, tenant_id
             )
             if not tasks_created:
@@ -129,7 +129,7 @@ def check_for_external_group_sync(self: Task, *, tenant_id: str | None) -> None:
             lock_beat.release()
 
 
-def try_creating_permissions_sync_task(
+def try_creating_external_group_sync_task(
     app: Celery,
     cc_pair_id: int,
     r: Redis,
