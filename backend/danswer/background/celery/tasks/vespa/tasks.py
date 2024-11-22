@@ -5,7 +5,6 @@ from http import HTTPStatus
 from typing import cast
 
 import httpx
-import redis
 from celery import Celery
 from celery import shared_task
 from celery import Task
@@ -47,13 +46,10 @@ from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
 from danswer.db.engine import get_session_with_tenant
-from danswer.db.enums import IndexingStatus
 from danswer.db.index_attempt import delete_index_attempts
-from danswer.db.index_attempt import get_all_index_attempts_by_status
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import DocumentSet
-from danswer.db.models import IndexAttempt
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.interfaces import VespaDocumentFields
@@ -649,20 +645,26 @@ def monitor_ccpair_indexing_taskset(
         # the task is still setting up
         return
 
-    # Read result state BEFORE generator_complete_key to avoid a race condition
     # never use any blocking methods on the result from inside a task!
     result: AsyncResult = AsyncResult(payload.celery_task_id)
-    result_state = result.state
 
+    # inner/outer/inner double check pattern to avoid race conditions when checking for
+    # bad state
+
+    # inner = get_completion / generator_complete not signaled
+    # outer = result.state in READY state
     status_int = redis_connector_index.get_completion()
-    if status_int is None:  # completion signal not set ... check for errors
-        # If we get here, and then the task both sets the completion signal and finishes,
-        # we will incorrectly abort the task. We must check result state, then check
-        # get_completion again to avoid the race condition.
-        if result_state in READY_STATES:
+    if status_int is None:  # inner signal not set ... possible error
+        result_state = result.state
+        if (
+            result_state in READY_STATES
+        ):  # outer signal in terminal state ... possible error
+            # Now double check!
             if redis_connector_index.get_completion() is None:
-                # IF the task state is READY, THEN generator_complete should be set
-                # if it isn't, then the worker crashed
+                # inner signal still not set (and cannot change when outer result_state is READY)
+                # Task is finished but generator complete isn't set.
+                # We have a problem! Worker may have crashed.
+
                 msg = (
                     f"Connector indexing aborted or exceptioned: "
                     f"attempt={payload.index_attempt_id} "
@@ -695,37 +697,6 @@ def monitor_ccpair_indexing_taskset(
     )
 
     redis_connector_index.reset()
-
-
-def get_unfenced_index_attempt_ids(db_session: Session, r: redis.Redis) -> list[int]:
-    """Gets a list of unfenced index attempts. Should not be possible, so we'd typically
-    want to clean them up.
-
-    Unfenced = attempt not in terminal state and fence does not exist.
-    """
-    unfenced_attempts: list[int] = []
-
-    # do some cleanup before clearing fences
-    # check the db for any outstanding index attempts
-    attempts: list[IndexAttempt] = []
-    attempts.extend(
-        get_all_index_attempts_by_status(IndexingStatus.NOT_STARTED, db_session)
-    )
-    attempts.extend(
-        get_all_index_attempts_by_status(IndexingStatus.IN_PROGRESS, db_session)
-    )
-
-    for attempt in attempts:
-        # if attempts exist in the db but we don't detect them in redis, mark them as failed
-        fence_key = RedisConnectorIndex.fence_key_with_ids(
-            attempt.connector_credential_pair_id, attempt.search_settings_id
-        )
-        if r.exists(fence_key):
-            continue
-
-        unfenced_attempts.append(attempt.id)
-
-    return unfenced_attempts
 
 
 @shared_task(name="monitor_vespa_sync", soft_time_limit=300, bind=True)
@@ -778,25 +749,6 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
             f"pruning={n_pruning} "
             f"permissions_sync={n_permissions_sync} "
         )
-
-        # Fail any index attempts in the DB that don't have fences
-        with get_session_with_tenant(tenant_id) as db_session:
-            unfenced_attempt_ids = get_unfenced_index_attempt_ids(db_session, r)
-            for attempt_id in unfenced_attempt_ids:
-                attempt = get_index_attempt(db_session, attempt_id)
-                if not attempt:
-                    continue
-
-                failure_reason = (
-                    f"Unfenced index attempt found in DB: "
-                    f"index_attempt={attempt.id} "
-                    f"cc_pair={attempt.connector_credential_pair_id} "
-                    f"search_settings={attempt.search_settings_id}"
-                )
-                task_logger.warning(failure_reason)
-                mark_attempt_failed(
-                    attempt.id, db_session, failure_reason=failure_reason
-                )
 
         lock_beat.reacquire()
         if r.exists(RedisConnectorCredentialPair.get_fence_key()):
