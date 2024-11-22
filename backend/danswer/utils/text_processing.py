@@ -126,6 +126,28 @@ def shared_precompare_cleanup(text: str) -> str:
     return text
 
 
+_INITIAL_FILTER = re.compile(
+    "["
+    "\U0000FFF0-\U0000FFFF"  # Specials
+    "\U0001F000-\U0001F9FF"  # Emoticons
+    "\U00002000-\U0000206F"  # General Punctuation
+    "\U00002190-\U000021FF"  # Arrows
+    "\U00002700-\U000027BF"  # Dingbats
+    "]+",
+    flags=re.UNICODE,
+)
+
+
+def clean_text(text: str) -> str:
+    # Remove specific Unicode ranges that might cause issues
+    cleaned = _INITIAL_FILTER.sub("", text)
+
+    # Remove any control characters except for newline and tab
+    cleaned = "".join(ch for ch in cleaned if ch >= " " or ch in "\n\t")
+
+    return cleaned
+
+
 def is_valid_email(text: str) -> bool:
     """Can use a library instead if more detailed checks are needed"""
     regex = r"^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
