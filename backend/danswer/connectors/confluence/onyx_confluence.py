@@ -232,7 +232,6 @@ class OnyxConfluence(Confluence):
 
     def paginated_cql_user_retrieval(
         self,
-        is_cloud: bool,
         expand: str | None = None,
         limit: int | None = None,
     ) -> Iterator[dict[str, Any]]:
@@ -242,20 +241,25 @@ class OnyxConfluence(Confluence):
         Otherwise it's very similar to the content/search endpoint.
         """
         cql = "type=user"
-        url = "rest/api/search/user" if is_cloud else "rest/api/search"
+        url = "rest/api/search/user" if self.cloud else "rest/api/search"
         expand_string = f"&expand={expand}" if expand else ""
         url += f"?cql={cql}{expand_string}"
         yield from self._paginate_url(url, limit)
 
     def paginated_groups_by_user_retrieval(
         self,
-        user_query: str,
+        user: dict[str, Any],
         limit: int | None = None,
     ) -> Iterator[dict[str, Any]]:
         """
         This is not an SQL like query.
         It's a confluence specific endpoint that can be used to fetch groups.
         """
+        user_field = "accountId" if self.cloud else "key"
+        user_value = user["accountId"] if self.cloud else user["userKey"]
+        # Server uses userKey (but calls it key during the API call), Cloud uses accountId
+        user_query = f"{user_field}={quote(user_value)}"
+
         url = f"rest/api/user/memberof?{user_query}"
         yield from self._paginate_url(url, limit)
 
