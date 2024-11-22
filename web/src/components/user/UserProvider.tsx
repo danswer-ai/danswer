@@ -67,6 +67,7 @@ export function UserProvider({
         isLoadingUser,
         refreshUser,
         isAdmin: upToDateUser?.role === UserRole.ADMIN,
+        // Curator status applies for either global or basic curator
         isCurator:
           upToDateUser?.role === UserRole.CURATOR ||
           upToDateUser?.role === UserRole.GLOBAL_CURATOR,
