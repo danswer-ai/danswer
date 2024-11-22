@@ -2198,10 +2198,6 @@ export function ChatPage({
                                         const newCompleteMessageMap = new Map(
                                           messageMap
                                         );
-                                        console.log(
-                                          "newCompleteMessageMap",
-                                          newCompleteMessageMap
-                                        );
                                         newCompleteMessageMap.get(
                                           message.parentMessageId!
                                         )!.latestChildMessageId = messageId;
