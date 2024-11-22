@@ -112,7 +112,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
         # for a list of other hidden constructor args
         self._confluence_client = build_confluence_client(
-            credentials_json=credentials,
+            credentials=credentials,
             is_cloud=self.is_cloud,
             wiki_base=self.wiki_base,
         )

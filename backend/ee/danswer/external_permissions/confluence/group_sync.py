@@ -41,7 +41,7 @@ def confluence_group_sync(
     cc_pair: ConnectorCredentialPair,
 ) -> list[ExternalUserGroup]:
     confluence_client = build_confluence_client(
-        credentials_json=cc_pair.credential.credential_json,
+        credentials=cc_pair.credential.credential_json,
         is_cloud=cc_pair.connector.connector_specific_config.get("is_cloud", False),
         wiki_base=cc_pair.connector.connector_specific_config["wiki_base"],
     )
