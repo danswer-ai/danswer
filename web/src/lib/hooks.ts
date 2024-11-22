@@ -177,7 +177,11 @@ export function useLlmOverride(
   const [llmOverride, setLlmOverride] = useState<LlmOverride>(
     currentChatSession && currentChatSession.current_alternate_model
       ? destructureValue(currentChatSession.current_alternate_model)
-      : globalDefault
+      : {
+          name: "",
+          provider: "",
+          modelName: "",
+        }
   );
 
   const updateModelOverrideForChatSession = (chatSession?: ChatSession) => {
