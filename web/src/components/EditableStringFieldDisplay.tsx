@@ -81,13 +81,17 @@ export function EditableStringFieldDisplay({
         value={editableValue}
         onChange={handleValueChange}
         onKeyDown={handleKeyDown}
-        className={cn(textClassName, isEditing ? "block" : "hidden")}
+        className={cn(
+          textClassName,
+          "user-text",
+          isEditing ? "block" : "hidden"
+        )}
         style={{ fontSize: `${scale}rem` }}
       />
       {!isEditing && (
         <span
           onClick={() => isEditable && setIsEditing(true)}
-          className={cn(textClassName, "cursor-pointer")}
+          className={cn(textClassName, "cursor-pointer user-text")}
           style={{ fontSize: `${scale}rem` }}
         >
           {value}

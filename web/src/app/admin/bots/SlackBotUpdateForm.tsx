@@ -75,7 +75,7 @@ export const ExistingSlackBotForm = ({
   return (
     <div>
       {popup}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between h-14">
         <div className="flex items-center gap-2">
           <div className="my-auto">
             <SourceIcon iconSize={36} sourceType={"slack"} />
@@ -108,6 +108,7 @@ export const ExistingSlackBotForm = ({
               onClick={() => setShowDeleteModal(true)}
               icon={FiTrash}
               tooltip="Click to delete"
+              className="border h-[42px]"
             >
               Delete
             </Button>
@@ -129,8 +130,8 @@ export const ExistingSlackBotForm = ({
           )}
         </div>
       </div>
-      <div className="mt-4">
-        <div className="inline-block border rounded-lg border-gray-200 px-2 py-2">
+      <div className="mt-2">
+        <div className="inline-block border rounded-lg border-gray-200 p-2">
           <Checkbox
             label="Enabled"
             checked={formValues.enabled}

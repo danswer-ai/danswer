@@ -23,12 +23,12 @@ export function Checkbox({
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <label className="flex text-sm">
+    <label className="flex text-sm cursor-pointer">
       <input
         checked={checked}
         onChange={onChange}
         type="checkbox"
-        className="mx-3 px-5 w-3.5 h-3.5 my-auto"
+        className="mr-2 w-3.5 h-3.5 my-auto"
       />
       <div>
         <Label>{label}</Label>
