@@ -186,11 +186,12 @@ export function useLlmOverride(
   );
 
   const updateModelOverrideForChatSession = (chatSession?: ChatSession) => {
-    setLlmOverride(
+    const newOverride =
       chatSession && chatSession.current_alternate_model
         ? destructureValue(chatSession.current_alternate_model)
-        : globalDefault
-    );
+        : globalDefault;
+    setLlmOverride(newOverride);
+    console.log("LLM override updated:", newOverride);
   };
 
   const [temperature, setTemperature] = useState<number | null>(
@@ -198,29 +199,42 @@ export function useLlmOverride(
   );
 
   useEffect(() => {
-    setGlobalDefault(
+    const newGlobalDefault =
       globalModel != null
         ? destructureValue(globalModel)
         : {
             name: "",
             provider: "",
             modelName: "",
-          }
-    );
+          };
+    setGlobalDefault(newGlobalDefault);
+    console.log("Global default LLM updated:", newGlobalDefault);
   }, [globalModel]);
 
   useEffect(() => {
-    setTemperature(defaultTemperature !== undefined ? defaultTemperature : 0);
+    const newTemperature =
+      defaultTemperature !== undefined ? defaultTemperature : 0;
+    setTemperature(newTemperature);
+    console.log("Temperature updated:", newTemperature);
   }, [defaultTemperature]);
 
   return {
     updateModelOverrideForChatSession,
     llmOverride,
-    setLlmOverride,
+    setLlmOverride: (newOverride: React.SetStateAction<LlmOverride>) => {
+      setLlmOverride(newOverride);
+      console.log("LLM override set:", newOverride);
+    },
     globalDefault,
-    setGlobalDefault,
+    setGlobalDefault: (newGlobalDefault: React.SetStateAction<LlmOverride>) => {
+      setGlobalDefault(newGlobalDefault);
+      console.log("Global default LLM set:", newGlobalDefault);
+    },
     temperature,
-    setTemperature,
+    setTemperature: (newTemperature: React.SetStateAction<number | null>) => {
+      setTemperature(newTemperature);
+      console.log("Temperature set:", newTemperature);
+    },
   };
 }
 /* 
