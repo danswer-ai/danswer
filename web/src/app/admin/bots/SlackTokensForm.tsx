@@ -24,56 +24,58 @@ export const SlackTokensForm = ({
   setPopup: (popup: { message: string; type: "error" | "success" }) => void;
   router: any;
   onValuesChange?: (values: any) => void;
-}) => (
-  <Formik
-    initialValues={initialValues}
-    validationSchema={Yup.object().shape({
-      bot_token: Yup.string().required(),
-      app_token: Yup.string().required(),
-      name: Yup.string().required(),
-    })}
-    onSubmit={async (values, formikHelpers) => {
-      formikHelpers.setSubmitting(true);
+}) => {
+  useEffect(() => {
+    if (onValuesChange) {
+      onValuesChange(initialValues);
+    }
+  }, [initialValues]);
 
-      let response;
-      if (isUpdate) {
-        response = await updateSlackBot(existingSlackBotId!, values);
-      } else {
-        response = await createSlackBot(values);
-      }
-      formikHelpers.setSubmitting(false);
-      if (response.ok) {
-        if (refreshSlackBot) {
-          refreshSlackBot();
+  return (
+    <Formik
+      initialValues={initialValues}
+      validationSchema={Yup.object().shape({
+        bot_token: Yup.string().required(),
+        app_token: Yup.string().required(),
+        name: Yup.string().required(),
+      })}
+      onSubmit={async (values, formikHelpers) => {
+        formikHelpers.setSubmitting(true);
+
+        let response;
+        if (isUpdate) {
+          response = await updateSlackBot(existingSlackBotId!, values);
+        } else {
+          response = await createSlackBot(values);
         }
-        const responseJson = await response.json();
-        const botId = isUpdate ? existingSlackBotId : responseJson.id;
-        setPopup({
-          message: isUpdate
-            ? "Successfully updated Slack Bot!"
-            : "Successfully created Slack Bot!",
-          type: "success",
-        });
-        router.push(`/admin/bots/${encodeURIComponent(botId)}`);
-      } else {
-        const responseJson = await response.json();
-        const errorMsg = responseJson.detail || responseJson.message;
-        setPopup({
-          message: isUpdate
-            ? `Error updating Slack Bot - ${errorMsg}`
-            : `Error creating Slack Bot - ${errorMsg}`,
-          type: "error",
-        });
-      }
-    }}
-    enableReinitialize={true}
-  >
-    {({ isSubmitting, setFieldValue, values }) => {
-      useEffect(() => {
-        onValuesChange?.(values);
-      }, [values, onValuesChange]);
-
-      return (
+        formikHelpers.setSubmitting(false);
+        if (response.ok) {
+          if (refreshSlackBot) {
+            refreshSlackBot();
+          }
+          const responseJson = await response.json();
+          const botId = isUpdate ? existingSlackBotId : responseJson.id;
+          setPopup({
+            message: isUpdate
+              ? "Successfully updated Slack Bot!"
+              : "Successfully created Slack Bot!",
+            type: "success",
+          });
+          router.push(`/admin/bots/${encodeURIComponent(botId)}`);
+        } else {
+          const responseJson = await response.json();
+          const errorMsg = responseJson.detail || responseJson.message;
+          setPopup({
+            message: isUpdate
+              ? `Error updating Slack Bot - ${errorMsg}`
+              : `Error creating Slack Bot - ${errorMsg}`,
+            type: "error",
+          });
+        }
+      }}
+      enableReinitialize={true}
+    >
+      {({ isSubmitting, setFieldValue, values }) => (
         <Form className="w-full">
           {!isUpdate && (
             <div className="">
@@ -126,7 +128,7 @@ export const SlackTokensForm = ({
             </Button>
           </div>
         </Form>
-      );
-    }}
-  </Formik>
-);
+      )}
+    </Formik>
+  );
+};
