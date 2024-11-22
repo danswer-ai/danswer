@@ -136,11 +136,10 @@ class DATestChatSession(BaseModel):
 
 
 class DATestChatMessage(BaseModel):
-    id: str | None = None
+    id: int
     chat_session_id: UUID
-    parent_message_id: str | None
+    parent_message_id: int | None
     message: str
-    response: str
 
 
 class StreamedResponse(BaseModel):
