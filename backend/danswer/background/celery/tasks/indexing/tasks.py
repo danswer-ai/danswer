@@ -109,11 +109,12 @@ def get_unfenced_index_attempt_ids(db_session: Session, r: redis.Redis) -> list[
     """
     unfenced_attempts: list[int] = []
 
-    # inner double check pattern to avoid race conditions without locking
+    # inner/outer/inner double check pattern to avoid race conditions when checking for
+    # bad state
     # inner = index_attempt in non terminal state
-    # outer = r.fence_key
+    # outer = r.fence_key down
 
-    # check the db for any non terminal state index attempts
+    # check the db for index attempts in a non terminal state
     attempts: list[IndexAttempt] = []
     attempts.extend(
         get_all_index_attempts_by_status(IndexingStatus.NOT_STARTED, db_session)
@@ -131,9 +132,11 @@ def get_unfenced_index_attempt_ids(db_session: Session, r: redis.Redis) -> list[
         if r.exists(fence_key):
             continue
 
-        # NOTE: Now double check!
-        # The attempt can complete and take down the fence before we start checking the fence.
-        # We need to double check that the index attempt didn't change if the fence is down
+        # Between the time the attempts are first looked up and the time we see the fence down,
+        # the attempt may have completed and taken down the fence normally.
+
+        # We need to double check that the index attempt is still in a non terminal state
+        # and matches the original state, which confirms we are really in a bad state.
         attempt_2 = get_index_attempt(db_session, attempt.id)
         if not attempt_2:
             continue

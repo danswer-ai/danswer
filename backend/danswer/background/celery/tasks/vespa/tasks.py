@@ -648,9 +648,11 @@ def monitor_ccpair_indexing_taskset(
     # never use any blocking methods on the result from inside a task!
     result: AsyncResult = AsyncResult(payload.celery_task_id)
 
-    # inner double check pattern to avoid race conditions without locking
-    # inner = get_completion / generator_complete signal
-    # outer = result.state (signaled if in READY state)
+    # inner/outer/inner double check pattern to avoid race conditions when checking for
+    # bad state
+
+    # inner = get_completion / generator_complete not signaled
+    # outer = result.state in READY state
     status_int = redis_connector_index.get_completion()
     if status_int is None:  # inner signal not set ... possible error
         result_state = result.state
