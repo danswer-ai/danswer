@@ -600,9 +600,7 @@ def monitor_ccpair_permissions_taskset(
     mark_cc_pair_as_permissions_synced(db_session, int(cc_pair_id), start_time)
     task_logger.info(f"Successfully synced permissions for cc_pair={cc_pair_id}")
 
-    redis_connector.permissions.taskset_clear()
-    redis_connector.permissions.generator_clear()
-    redis_connector.permissions.set_fence(None)
+    redis_connector.permissions.reset()
 
 
 def monitor_ccpair_indexing_taskset(

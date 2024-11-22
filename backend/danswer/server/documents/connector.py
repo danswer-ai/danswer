@@ -905,6 +905,7 @@ def connector_indexing_stop(
     """Used to stop indexing on a cc pair."""
 
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    redis_connector.stop.set_fence(True)
 
     search_settings_list: list[SearchSettings] = get_active_search_settings(db_session)
     for search_settings in search_settings_list:
@@ -912,10 +913,9 @@ def connector_indexing_stop(
         if not redis_connector_index.fenced:
             continue
 
-        redis_connector.stop.set_fence(True)
-
         payload = redis_connector_index.payload
-        primary_app.control.revoke(payload.celery_task_id, terminate=True)
+        if payload and payload.celery_task_id:
+            primary_app.control.revoke(payload.celery_task_id, terminate=True)
 
     return StatusResponse(success=True, message="Stopped indexing")
 

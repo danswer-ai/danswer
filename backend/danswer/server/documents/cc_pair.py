@@ -158,6 +158,7 @@ def update_cc_pair_status(
     status_update_request: CCStatusUpdateRequest,
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> None:
     cc_pair = get_connector_credential_pair_from_id(
         cc_pair_id=cc_pair_id,
@@ -174,8 +175,43 @@ def update_cc_pair_status(
 
     if status_update_request.status == ConnectorCredentialPairStatus.PAUSED:
         cancel_indexing_attempts_for_ccpair(cc_pair_id, db_session)
-
         cancel_indexing_attempts_past_model(db_session)
+
+        # redis_connector = RedisConnector(tenant_id, cc_pair_id)
+        # try:
+        #     redis_connector.stop.set_fence(True)
+
+        #     search_settings_list: list[SearchSettings] = get_active_search_settings(db_session)
+        #     for search_settings in search_settings_list:
+        #         redis_connector_index = redis_connector.new_index(search_settings.id)
+        #         if not redis_connector_index.fenced:
+        #             continue
+
+        #         index_payload = redis_connector_index.payload
+        #         if index_payload:
+        #             primary_app.control.revoke(index_payload.celery_task_id, terminate=True)
+
+        #     payload = redis_connector.permissions.payload
+        # finally:
+        #     redis_connector.stop.set_fence(None)
+
+        # index_payload = redis_connector_index
+        # permissions_payload = redis_connector.permissions.payload
+        # groups_payload = redis_connector.external_group_sync
+
+        # primary_app.control.revoke(payload.celery_task_id, terminate=True)
+        # primary_app.control.revoke(payload.celery_task_id, terminate=True)
+        # primary_app.control.revoke(payload.celery_task_id, terminate=True)
+
+        # redis_connector.delete.fenced
+
+        # for search_settings in search_settings_list:
+        #     redis_connector_index = redis_connector.new_index(search_settings.id)
+        #     if not redis_connector_index.fenced:
+        #         continue
+
+        #     payload = redis_connector_index.payload
+        #     primary_app.control.revoke(payload.celery_task_id, terminate=True)
 
     update_connector_credential_pair_from_id(
         db_session=db_session,
