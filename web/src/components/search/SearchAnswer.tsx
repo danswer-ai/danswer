@@ -74,7 +74,7 @@ export default function SearchAnswer({
         searchAnswerExpanded ? "min-h-[16rem]" : "h-[16rem]"
       } ${
         !searchAnswerExpanded && searchAnswerOverflowing && "overflow-y-hidden"
-      } p-4 border-2 border-search-answer-border rounded-lg relative`}
+      } p-4 border-2 border-search-answer-border text-text-search-answer   bg-background-search-answer  rounded-lg relative`}
     >
       <div>
         <div className="flex gap-x-2">
@@ -152,7 +152,6 @@ export default function SearchAnswer({
       {!searchAnswerExpanded && searchAnswerOverflowing && (
         <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-b from-background/5 via-background/60 to-background/90"></div>
       )}
-
       {!searchAnswerExpanded && searchAnswerOverflowing && (
         <div className="w-full h-12 absolute items-center content-center flex left-0 px-4 bottom-0">
           <button
