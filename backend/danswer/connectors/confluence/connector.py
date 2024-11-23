@@ -51,6 +51,8 @@ _RESTRICTIONS_EXPANSION_FIELDS = [
     "restrictions.read.restrictions.group",
 ]
 
+_SLIM_DOC_BATCH_SIZE = 1000
+
 
 class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
     def __init__(
@@ -263,6 +265,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         for page in self.confluence_client.cql_paginate_all_expansions(
             cql=page_query,
             expand=restrictions_expand,
+            limit=_SLIM_DOC_BATCH_SIZE,
         ):
             # If the page has restrictions, add them to the perm_sync_data
             # These will be used by doc_sync.py to sync permissions
@@ -286,6 +289,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             for attachment in self.confluence_client.cql_paginate_all_expansions(
                 cql=attachment_cql,
                 expand=restrictions_expand,
+                limit=_SLIM_DOC_BATCH_SIZE,
             ):
                 doc_metadata_list.append(
                     SlimDocument(
