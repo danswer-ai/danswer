@@ -10,17 +10,17 @@ import { AdminPageTitle } from "@/components/admin/Title";
 export default async function Page() {
   return (
     <div className="mx-auto container">
-      <AdminPageTitle icon={<AssistantsIcon size={32} />} title="Assistants" />
+      <AdminPageTitle icon={<AssistantsIcon size={32} />} title="Specialists" />
 
       <Text className="mb-2">
-        Assistants are a way to build custom search/question-answering
+        Specialists are a way to build custom search/question-answering
         experiences for different use cases.
       </Text>
       <Text className="mt-2">They allow you to customize:</Text>
       <div className="text-sm">
         <ul className="list-disc mt-2 ml-4">
           <li>
-            The prompt used by your LLM of choice to respond to the user query
+            The prompt used by Buddy to respond to the user query
           </li>
           <li>The documents that are used as context</li>
         </ul>
@@ -29,20 +29,20 @@ export default async function Page() {
       <div>
         <Separator />
 
-        <Title>Create an Assistant</Title>
+        <Title>Create an Specialist</Title>
         <Link
           href="/admin/assistants/new"
           className="flex py-2 px-4 mt-2 border border-border h-fit cursor-pointer hover:bg-hover text-sm w-40"
         >
           <div className="mx-auto flex">
             <FiPlusSquare className="my-auto mr-2" />
-            New Assistant
+            New Specialist
           </div>
         </Link>
 
         <Separator />
 
-        <Title>Existing Assistants</Title>
+        <Title>Existing Specialists</Title>
         <PersonasTable />
       </div>
     </div>

@@ -72,7 +72,7 @@ function createPrompt({
     },
     body: JSON.stringify({
       name: promptNameFromPersonaName(personaName),
-      description: `Default prompt for persona ${personaName}`,
+      description: `Default prompt for specialist ${personaName}`,
       system_prompt: systemPrompt,
       task_prompt: taskPrompt,
       include_citations: includeCitations,
@@ -100,7 +100,7 @@ function updatePrompt({
     },
     body: JSON.stringify({
       name: promptNameFromPersonaName(personaName),
-      description: `Default prompt for persona ${personaName}`,
+      description: `Default prompt for specialist ${personaName}`,
       system_prompt: systemPrompt,
       task_prompt: taskPrompt,
       include_citations: includeCitations,
@@ -382,8 +382,8 @@ export function providersContainImageGeneratingSupport(
 // but assistant has access to none
 export const defaultPersona: Persona = {
   id: 0,
-  name: "Default Assistant",
-  description: "A default assistant",
+  name: "Default Specialist",
+  description: "A default Specialist",
   is_visible: true,
   is_public: true,
   builtin_persona: false,

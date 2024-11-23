@@ -32,7 +32,7 @@ export default async function Page() {
     <div className="w-full">
       <BackButton />
       <AdminPageTitle
-        title="Create a New Assistant"
+        title="Create a New Specialist"
         icon={<RobotIcon size={32} />}
       />
       {body}

@@ -165,7 +165,7 @@ export function DisplayAssistantCard({
         </div>
       ) : (
         <p className="text-sm text-text-600 italic">
-          No specific capabilities listed for this assistant.
+          No specific capabilities listed for this specialist.
         </p>
       )}
     </div>

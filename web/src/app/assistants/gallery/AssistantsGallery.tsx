@@ -71,7 +71,7 @@ export function AssistantGalleryCard({
                     user.preferences?.chosen_assistants.length === 1
                   ) {
                     setPopup({
-                      message: `Cannot remove "${assistant.name}" - you must have at least one assistant.`,
+                      message: `Cannot remove "${assistant.name}" - you must have at least one specialist.`,
                       type: "error",
                     });
                     return;
@@ -198,7 +198,7 @@ export function AssistantsGallery() {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search assistants..."
+              placeholder="Search specialists..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="
@@ -240,7 +240,7 @@ export function AssistantsGallery() {
           nonDefaultAssistants.length == 0 &&
           assistants.length != 0 && (
             <div className="text-text-500">
-              No assistants found for this search
+              No specialists found for this search
             </div>
           )}
 
@@ -252,7 +252,7 @@ export function AssistantsGallery() {
               </h2>
 
               <h3 className="text-lg text-text-500">
-                These are assistant created by your admins are and preferred.
+                These are specialists created by your admins and are preferred.
               </h3>
             </section>
             <div
@@ -281,10 +281,10 @@ export function AssistantsGallery() {
           <section className="mt-12 mb-8 flex flex-col gap-y-2">
             <div className="flex flex-col">
               <h2 className="text-2xl font-semibold text-text-900">
-                Other Assistants
+                Other Specialists
               </h2>
               <h3 className="text-lg text-text-500">
-                These are community-contributed assistants.
+                These are community-contributed Specialists.
               </h3>
             </div>
 
