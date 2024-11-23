@@ -3,7 +3,7 @@ import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 import Text from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
-import { ValidSources } from "@/lib/types";
+import { ConfigurableSources, ValidSources } from "@/lib/types";
 import {
   EditIcon,
   NewChatIcon,
@@ -160,7 +160,7 @@ export default function ModifyCredential({
   defaultedCredential?: Credential<any>;
   credentials: Credential<any>[];
   editableCredentials: Credential<any>[];
-  source: ValidSources;
+  source: ConfigurableSources;
 
   onSwitch?: (newCredential: Credential<any>) => void;
   onSwap?: (newCredential: Credential<any>, connectorId: number) => void;

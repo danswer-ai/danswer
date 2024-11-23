@@ -40,12 +40,9 @@ import {
   FirefliesIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
-import {
-  DanswerDocument,
-  SourceCategory,
-  SourceMetadata,
-} from "./search/interfaces";
+import { SourceCategory, SourceMetadata } from "./search/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { FaHammer } from "react-icons/fa";
 
 interface PartialSourceMetadata {
   icon: React.FC<{ size?: number; className?: string }>;
@@ -59,6 +56,12 @@ type SourceMap = {
 };
 
 const SOURCE_METADATA_MAP: SourceMap = {
+  custom_tool: {
+    icon: FaHammer,
+    displayName: "Custom Tool",
+    category: SourceCategory.Other,
+    docs: "https://docs.danswer.dev/connectors/custom_tool",
+  },
   web: {
     icon: GlobeIcon,
     displayName: "Web",

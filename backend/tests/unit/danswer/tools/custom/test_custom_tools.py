@@ -14,6 +14,7 @@ from danswer.tools.tool_implementations.custom.custom_tool import (
     CUSTOM_TOOL_RESPONSE_ID,
 )
 from danswer.tools.tool_implementations.custom.custom_tool import CustomToolCallSummary
+from danswer.tools.tool_implementations.custom.custom_tool import CustomToolResponseType
 from danswer.tools.tool_implementations.custom.custom_tool import (
     validate_openapi_schema,
 )
@@ -215,7 +216,7 @@ class TestCustomTool(unittest.TestCase):
         mock_response = ToolResponse(
             id=CUSTOM_TOOL_RESPONSE_ID,
             response=CustomToolCallSummary(
-                response_type="json",
+                response_type=CustomToolResponseType.JSON,
                 tool_name="getAssistant",
                 tool_result={"id": "789", "name": "Final Assistant"},
             ),

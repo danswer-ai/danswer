@@ -88,6 +88,7 @@ DANSWER_REDIS_FUNCTION_LOCK_PREFIX = "da_function_lock:"
 
 class DocumentSource(str, Enum):
     # Special case, document passed in via Danswer APIs without specifying a source type
+    CUSTOM_TOOL = "custom_tool"
     INGESTION_API = "ingestion_api"
     SLACK = "slack"
     WEB = "web"

@@ -1129,7 +1129,7 @@ export const defaultRefreshFreqMinutes = 30; // 30 minutes
 // CONNECTORS
 export interface ConnectorBase<T> {
   name: string;
-  source: ValidSources;
+  source: ConfigurableSources;
   input_type: ValidInputTypes;
   connector_specific_config: T;
   refresh_freq: number | null;
