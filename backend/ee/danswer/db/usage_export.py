@@ -2,6 +2,7 @@ import uuid
 from collections.abc import Generator
 from datetime import datetime
 from typing import IO
+from typing import Optional
 
 from fastapi_users_db_sqlalchemy import UUID_ID
 from sqlalchemy.orm import Session
@@ -21,7 +22,7 @@ def get_empty_chat_messages_entries__paginated(
     period: tuple[datetime, datetime],
     limit: int | None = 500,
     initial_time: datetime | None = None,
-) -> tuple[int, list[ChatMessageSkeleton]]:
+) -> tuple[Optional[datetime], list[ChatMessageSkeleton]]:
     chat_sessions = fetch_chat_sessions_eagerly_by_time(
         start=period[0],
         end=period[1],
@@ -63,7 +64,7 @@ def get_all_empty_chat_message_entries(
     db_session: Session,
     period: tuple[datetime, datetime],
 ) -> Generator[list[ChatMessageSkeleton], None, None]:
-    initial_time = period[0]
+    initial_time: Optional[datetime] = period[0]
     ind = 0
     while True:
         ind += 1

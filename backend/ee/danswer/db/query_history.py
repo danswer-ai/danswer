@@ -8,6 +8,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import contains_eager
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import UnaryExpression
 
 from danswer.db.models import ChatMessage
 from danswer.db.models import ChatSession
@@ -22,8 +23,8 @@ def fetch_chat_sessions_eagerly_by_time(
     limit: int | None = 500,
     initial_time: datetime.datetime | None = None,
 ) -> list[ChatSession]:
-    time_order = desc(ChatSession.time_created)
-    message_order = asc(ChatMessage.id)
+    time_order: UnaryExpression = desc(ChatSession.time_created)
+    message_order: UnaryExpression = asc(ChatMessage.id)
 
     filters: list[ColumnElement | BinaryExpression] = [
         ChatSession.time_created.between(start, end)
