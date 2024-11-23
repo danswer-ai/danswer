@@ -2,7 +2,6 @@ import time
 
 from sqlalchemy.orm import Session
 
-from danswer.chat.load_yamls import load_chat_yamls
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import MANAGED_VESPA
 from danswer.configs.constants import KV_REINDEX_KEY
@@ -40,6 +39,7 @@ from danswer.natural_language_processing.search_nlp_models import warm_up_cross_
 from danswer.search.models import SavedSearchSettings
 from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.seeding.load_docs import seed_initial_documents
+from danswer.seeding.load_yamls import load_chat_yamls
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings
