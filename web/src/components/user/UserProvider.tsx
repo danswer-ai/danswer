@@ -12,7 +12,7 @@ interface UserContextType {
   isCurator: boolean;
   refreshUser: () => Promise<void>;
   isCloudSuperuser: boolean;
-  updateUserAutoScroll: (autoScroll: boolean) => Promise<void>;
+  updateUserAutoScroll: (autoScroll: boolean | null) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -56,7 +56,7 @@ export function UserProvider({
       setIsLoadingUser(false);
     }
   };
-  const updateUserAutoScroll = async (autoScroll: boolean) => {
+  const updateUserAutoScroll = async (autoScroll: boolean | null) => {
     try {
       const response = await fetch("/api/auto-scroll", {
         method: "PATCH",

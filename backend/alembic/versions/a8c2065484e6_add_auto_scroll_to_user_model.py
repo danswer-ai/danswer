@@ -20,7 +20,7 @@ def upgrade() -> None:
     # Add the auto_scroll column with a default value of True
     op.add_column(
         "user",
-        sa.Column("auto_scroll", sa.Boolean(), nullable=False, server_default="true"),
+        sa.Column("auto_scroll", sa.Boolean(), nullable=True, server_default=None),
     )
 
 

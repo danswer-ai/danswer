@@ -61,7 +61,7 @@ export interface User {
   oidc_expiry?: Date;
   is_cloud_superuser?: boolean;
   organization_name: string | null;
-  auto_scroll: boolean;
+  auto_scroll: boolean | null;
 }
 
 export interface MinimalUserSnapshot {

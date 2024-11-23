@@ -125,6 +125,7 @@ export function SetDefaultModelModal({
     (llmProvider) => llmProvider.is_default_provider
   );
 
+  console.log(user?.auto_scroll);
   return (
     <Modal onOutsideClick={onClose} width="rounded-lg  bg-white max-w-xl">
       <>
@@ -134,14 +135,27 @@ export function SetDefaultModelModal({
           </h2>
         </div>
 
-        <div className="flex items-center gap-x-2">
-          <Switch
-            checked={user?.auto_scroll}
-            onCheckedChange={(checked) => {
-              updateUserAutoScroll(checked);
-            }}
-          />
-          <Label className="text-sm">Enable auto-scroll</Label>
+        <div className="flex flex-col gap-y-2">
+          <div className="flex items-center gap-x-2">
+            <Switch
+              checked={user?.auto_scroll === true}
+              onCheckedChange={(checked) => {
+                updateUserAutoScroll(checked);
+              }}
+            />
+            <Label className="text-sm">Enable auto-scroll</Label>
+          </div>
+          <div className="flex items-center gap-x-2">
+            <Switch
+              checked={user?.auto_scroll === null}
+              onCheckedChange={(checked) => {
+                updateUserAutoScroll(checked ? null : false);
+              }}
+            />
+            <Label className="text-sm">
+              Use system default for auto-scroll
+            </Label>
+          </div>
         </div>
 
         <Separator />

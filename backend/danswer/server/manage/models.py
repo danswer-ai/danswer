@@ -45,7 +45,7 @@ class UserPreferences(BaseModel):
     visible_assistants: list[int] = []
     recent_assistants: list[int] | None = None
     default_model: str | None = None
-    auto_scroll: bool = True
+    auto_scroll: bool | None = None
 
 
 class UserInfo(BaseModel):
@@ -131,7 +131,7 @@ class HiddenUpdateRequest(BaseModel):
 
 
 class AutoScrollRequest(BaseModel):
-    auto_scroll: bool
+    auto_scroll: bool | None
 
 
 class SlackBotCreationRequest(BaseModel):

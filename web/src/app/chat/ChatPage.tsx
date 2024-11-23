@@ -1618,7 +1618,9 @@ export function ChatPage({
     mobile: settings?.isMobile,
   });
   const autoScrollEnabled =
-    settings?.enterpriseSettings?.auto_scroll || user?.auto_scroll;
+    user?.auto_scroll == null
+      ? settings?.enterpriseSettings?.auto_scroll
+      : user?.auto_scroll;
 
   useScrollonStream({
     chatState: currentSessionChatState,
