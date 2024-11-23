@@ -300,6 +300,9 @@ def _validate_connector_configuration(
         username=credentials["confluence_username"] if is_cloud else None,
         password=credentials["confluence_access_token"] if is_cloud else None,
         token=credentials["confluence_access_token"] if not is_cloud else None,
+        backoff_and_retry=True,
+        max_backoff_retries=6,
+        max_backoff_seconds=10,
     )
     spaces = confluence_client_without_retries.get_all_spaces(limit=1)
 
