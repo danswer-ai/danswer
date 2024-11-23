@@ -10,6 +10,7 @@ from pydantic import model_validator
 from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
 from danswer.configs.constants import AuthType
+from danswer.context.search.models import SavedSearchSettings
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
@@ -17,7 +18,6 @@ from danswer.db.models import SlackBot as SlackAppModel
 from danswer.db.models import SlackBotResponseType
 from danswer.db.models import SlackChannelConfig as SlackChannelConfigModel
 from danswer.db.models import User
-from danswer.search.models import SavedSearchSettings
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot

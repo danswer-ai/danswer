@@ -27,6 +27,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_REPHRASE_MESSAGE
 from danswer.configs.danswerbot_configs import DANSWER_BOT_RESPOND_EVERY_CHANNEL
 from danswer.configs.danswerbot_configs import NOTIFY_SLACKBOT_NO_ANSWER
 from danswer.connectors.slack.utils import expert_info_from_slack_id
+from danswer.context.search.retrieval.search_runner import download_nltk_data
 from danswer.danswerbot.slack.config import get_slack_channel_config_for_bot_and_channel
 from danswer.danswerbot.slack.config import MAX_TENANTS_PER_POD
 from danswer.danswerbot.slack.config import TENANT_ACQUISITION_INTERVAL
@@ -75,7 +76,6 @@ from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.one_shot_answer.models import ThreadMessage
 from danswer.redis.redis_pool import get_redis_client
-from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.server.manage.models import SlackBotTokens
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import set_is_ee_based_on_env_variable

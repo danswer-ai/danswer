@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import requests
 
-from danswer.search.enums import RecencyBiasSetting
+from danswer.context.search.enums import RecencyBiasSetting
 from danswer.server.features.persona.models import PersonaSnapshot
 from tests.integration.common_utils.constants import API_SERVER_URL
 from tests.integration.common_utils.constants import GENERAL_HEADERS

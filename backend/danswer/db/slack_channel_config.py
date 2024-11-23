@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
+from danswer.context.search.enums import RecencyBiasSetting
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.models import ChannelConfig
 from danswer.db.models import Persona
@@ -15,7 +16,6 @@ from danswer.db.models import User
 from danswer.db.persona import get_default_prompt
 from danswer.db.persona import mark_persona_as_deleted
 from danswer.db.persona import upsert_persona
-from danswer.search.enums import RecencyBiasSetting
 from danswer.utils.errors import EERequiredError
 from danswer.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,

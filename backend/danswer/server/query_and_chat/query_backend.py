@@ -13,6 +13,12 @@ from danswer.auth.users import current_limited_user
 from danswer.auth.users import current_user
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
+from danswer.context.search.models import IndexFilters
+from danswer.context.search.models import SearchDoc
+from danswer.context.search.preprocessing.access_filters import (
+    build_access_filters_for_user,
+)
+from danswer.context.search.utils import chunks_or_sections_to_search_docs
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.chat import get_chat_sessions_by_user
@@ -28,10 +34,6 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.document_index.vespa.index import VespaIndex
 from danswer.one_shot_answer.answer_question import stream_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
-from danswer.search.models import IndexFilters
-from danswer.search.models import SearchDoc
-from danswer.search.preprocessing.access_filters import build_access_filters_for_user
-from danswer.search.utils import chunks_or_sections_to_search_docs
 from danswer.secondary_llm_flows.query_validation import get_query_answerability
 from danswer.secondary_llm_flows.query_validation import stream_query_answerability
 from danswer.server.query_and_chat.models import AdminSearchRequest

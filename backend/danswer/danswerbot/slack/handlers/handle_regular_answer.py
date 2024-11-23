@@ -21,6 +21,10 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
+from danswer.context.search.enums import OptionalSearchSetting
+from danswer.context.search.models import BaseFilters
+from danswer.context.search.models import RerankingDetails
+from danswer.context.search.models import RetrievalDetails
 from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
@@ -48,10 +52,6 @@ from danswer.llm.utils import get_max_input_tokens
 from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
-from danswer.search.enums import OptionalSearchSetting
-from danswer.search.models import BaseFilters
-from danswer.search.models import RerankingDetails
-from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import DanswerLoggingAdapter
 
 
