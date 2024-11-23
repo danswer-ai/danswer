@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { memo, useMemo, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -25,7 +25,7 @@ export type DateRange =
     }
   | undefined;
 
-export const DateRangeSelector = React.memo(function DateRangeSelector({
+export const DateRangeSelector = memo(function DateRangeSelector({
   value,
   onValueChange,
 }: {
