@@ -91,6 +91,7 @@ from danswer.server.settings.api import basic_router as settings_router
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
+from danswer.server.api_key.api import router as api_key_router
 from danswer.setup import setup_danswer
 from danswer.setup import setup_multitenant_danswer
 from danswer.utils.logger import setup_logger
@@ -281,6 +282,7 @@ def get_application() -> FastAPI:
         application, get_full_openai_assistants_api_router()
     )
     include_router_with_global_prefix_prepended(application, long_term_logs_router)
+    include_router_with_global_prefix_prepended(application, api_key_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
