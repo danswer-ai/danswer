@@ -414,7 +414,6 @@ export function AssistantEditor({
             }
 
             await refreshAssistants();
-            console.log("redirectType", redirectType);
             router.push(
               redirectType === SuccessfulPersonaUpdateRedirectType.ADMIN
                 ? `/admin/assistants?u=${Date.now()}`
