@@ -12,7 +12,6 @@ from typing import List
 import requests
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
-from pydantic import BaseModel
 from requests import JSONDecodeError
 
 from danswer.chat.chat_utils import llm_doc_from_inference_section
@@ -86,7 +85,7 @@ from danswer.tools.tool_implementations.search_like_tool_utils import (
 from danswer.utils.headers import header_list_to_header_dict
 from danswer.utils.headers import HeaderItemDict
 from danswer.utils.logger import setup_logger
-from danswer.utils.special_types import JSON_ro
+
 
 logger = setup_logger()
 
@@ -363,7 +362,7 @@ class CustomTool(BaseTool):
         content_type = response.headers.get("Content-Type", "")
 
         tool_result: Any
-        response_type: str
+        response_type: CustomToolResponseType
         if "text/csv" in content_type:
             file_ids = self._save_and_get_file_references(
                 response.content, content_type
