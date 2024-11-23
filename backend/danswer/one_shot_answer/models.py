@@ -36,10 +36,6 @@ class PromptConfig(BaseModel):
     datetime_aware: bool = True
 
 
-class DocumentSetConfig(BaseModel):
-    id: int
-
-
 class ToolConfig(BaseModel):
     id: int
 

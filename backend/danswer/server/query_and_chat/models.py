@@ -29,10 +29,6 @@ class TagResponse(BaseModel):
     tags: list[SourceTag]
 
 
-class SimpleQueryRequest(BaseModel):
-    query: str
-
-
 class UpdateChatSessionThreadRequest(BaseModel):
     # If not specified, use Danswer default persona
     chat_session_id: UUID
@@ -217,6 +213,7 @@ class ChatSessionDetailResponse(BaseModel):
     current_alternate_model: str | None
 
 
+# This one is not used anymore
 class QueryValidationResponse(BaseModel):
     reasoning: str
     answerable: bool
