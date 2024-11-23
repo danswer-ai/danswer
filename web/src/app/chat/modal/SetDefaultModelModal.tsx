@@ -9,6 +9,9 @@ import { setUserDefaultModel } from "@/lib/users/UserSettings";
 import { useRouter } from "next/navigation";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { useUser } from "@/components/user/UserProvider";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/admin/connectors/Field";
 
 export function SetDefaultModelModal({
   setPopup,
@@ -23,7 +26,7 @@ export function SetDefaultModelModal({
   onClose: () => void;
   defaultModel: string | null;
 }) {
-  const { refreshUser } = useUser();
+  const { refreshUser, user, updateUserAutoScroll } = useUser();
   const containerRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
 
@@ -127,9 +130,25 @@ export function SetDefaultModelModal({
       <>
         <div className="flex mb-4">
           <h2 className="text-2xl text-emphasis font-bold flex my-auto">
-            Set Default Model
+            User settings
           </h2>
         </div>
+
+        <div className="flex items-center gap-x-2">
+          <Switch
+            checked={user?.auto_scroll}
+            onCheckedChange={(checked) => {
+              updateUserAutoScroll(checked);
+            }}
+          />
+          <Label className="text-sm">Enable auto-scroll</Label>
+        </div>
+
+        <Separator />
+
+        <h3 className="text-lg text-emphasis font-bold">
+          Default model for assistants
+        </h3>
 
         <Text className="mb-4">
           Choose a Large Language Model (LLM) to serve as the default for

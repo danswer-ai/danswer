@@ -13,6 +13,7 @@ export interface Settings {
   needs_reindexing: boolean;
   gpu_enabled: boolean;
   product_gating: GatingType;
+  auto_scroll: boolean;
 }
 
 export enum NotificationType {
@@ -54,6 +55,7 @@ export interface EnterpriseSettings {
   custom_popup_header: string | null;
   custom_popup_content: string | null;
   enable_consent_screen: boolean | null;
+  auto_scroll: boolean;
 }
 
 export interface CombinedSettings {

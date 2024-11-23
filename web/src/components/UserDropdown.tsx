@@ -18,6 +18,7 @@ import { usePaidEnterpriseFeaturesEnabled } from "./settings/usePaidEnterpriseFe
 import { Notifications } from "./chat_search/Notifications";
 import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
+import { UserIcon } from "lucide-react";
 
 interface DropdownOptionProps {
   href?: string;
@@ -56,7 +57,13 @@ const DropdownOption: React.FC<DropdownOptionProps> = ({
   }
 };
 
-export function UserDropdown({ page }: { page?: pageType }) {
+export function UserDropdown({
+  page,
+  toggleUserSettings,
+}: {
+  page?: pageType;
+  toggleUserSettings?: () => void;
+}) {
   const { user } = useUser();
   const [userInfoVisible, setUserInfoVisible] = useState(false);
   const userInfoRef = useRef<HTMLDivElement>(null);
@@ -240,6 +247,13 @@ export function UserDropdown({ page }: { page?: pageType }) {
                   )
                 )}
 
+                {toggleUserSettings && (
+                  <DropdownOption
+                    onClick={toggleUserSettings}
+                    icon={<UserIcon className="h-5 w-5 my-auto mr-2" />}
+                    label="User Settings"
+                  />
+                )}
                 <DropdownOption
                   onClick={() => {
                     setUserInfoVisible(true);

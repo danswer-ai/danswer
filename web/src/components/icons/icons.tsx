@@ -81,6 +81,7 @@ import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 import xenforoIcon from "../../../public/Xenforo.svg";
 import { FaRobot } from "react-icons/fa";
+import { isConstructSignatureDeclaration } from "typescript";
 
 export interface IconProps {
   size?: number;
@@ -2688,6 +2689,27 @@ export const DownloadCSVIcon = ({
         stroke-linecap="round"
         stroke-linejoin="round"
         d="M.5 10.5v1a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1M4 6l3 3.5L10 6M7 9.5v-9"
+      />
+    </svg>
+  );
+};
+
+export const UserIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <svg
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="200"
+      height="200"
+      viewBox="0 0 24 24"
+    >
+      <path
+        fill="currentColor"
+        d="M20.37 21.25a.75.75 0 0 1-.75.75H4.38a.75.75 0 0 1-.75-.75c0-4.1 4.5-7.28 8.37-7.28c3.87 0 8.37 3.18 8.37 7.28M17.1 7.11A5.1 5.1 0 1 1 12 2a5.11 5.11 0 0 1 5.1 5.11"
       />
     </svg>
   );

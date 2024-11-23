@@ -27,6 +27,7 @@ export default function FunctionalHeader({
   onAssistantChange,
   llmOverrideManager,
   documentSidebarToggled,
+  toggleUserSettings,
 }: {
   reset?: () => void;
   page: pageType;
@@ -38,6 +39,7 @@ export default function FunctionalHeader({
   liveAssistant?: Persona;
   onAssistantChange?: (assistant: Persona) => void;
   llmOverrideManager?: LlmOverrideManager;
+  toggleUserSettings?: () => void;
 }) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -129,7 +131,7 @@ export default function FunctionalHeader({
           )}
 
           <div className="mobile:hidden flex my-auto">
-            <UserDropdown />
+            <UserDropdown page={page} toggleUserSettings={toggleUserSettings} />
           </div>
           <Link
             className="desktop:hidden my-auto"

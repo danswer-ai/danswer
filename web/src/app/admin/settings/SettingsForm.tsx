@@ -237,6 +237,14 @@ export function SettingsForm() {
           handleToggleSettingsField("chat_page_enabled", e.target.checked)
         }
       />
+      <Checkbox
+        label="Auto-scroll"
+        sublabel="If set, then the chat will auto-scroll to the bottom when a new message is sent."
+        checked={settings.auto_scroll}
+        onChange={(e) =>
+          handleToggleSettingsField("auto_scroll", e.target.checked)
+        }
+      />
 
       <Selector
         label="Default Page"

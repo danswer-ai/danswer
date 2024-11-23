@@ -157,6 +157,8 @@ export function ChatPage({
 
   const [documentSidebarToggled, setDocumentSidebarToggled] = useState(false);
 
+  const [userSettingsToggled, setUserSettingsToggled] = useState(false);
+
   const toggleDocumentSidebar = () => {
     setDocumentSidebarToggled((prev) => !prev);
   };
@@ -465,9 +467,9 @@ export function ChatPage({
       }
 
       if (shouldScrollToBottom) {
-        if (!hasPerformedInitialScroll) {
+        if (!hasPerformedInitialScroll && autoScrollEnabled) {
           clientScrollToBottom();
-        } else if (isChatSessionSwitch) {
+        } else if (isChatSessionSwitch && autoScrollEnabled) {
           clientScrollToBottom(true);
         }
       }
@@ -981,7 +983,6 @@ export function ChatPage({
   ) {
     try {
       for await (const packet of sendMessage(params)) {
-        console.log("packet", packet);
         if (params.signal?.aborted) {
           throw new Error("AbortError");
         }
@@ -1049,7 +1050,10 @@ export function ChatPage({
     }
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
-    clientScrollToBottom();
+
+    if (autoScrollEnabled) {
+      clientScrollToBottom();
+    }
     let currChatSessionId: string;
     const isNewSession = chatSessionIdRef.current === null;
     const searchParamBasedChatSessionName =
@@ -1164,7 +1168,6 @@ export function ChatPage({
         getLastSuccessfulMessageId(currMessageHistory) || systemMessage;
 
       const stack = new CurrentMessageFIFO();
-      console.log(filterManager.selectedSources);
       updateCurrentMessageFIFO(stack, {
         signal: controller.signal, // Add this line
         message: currMessage,
@@ -1298,21 +1301,12 @@ export function ChatPage({
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "final_context_docs")) {
               documents = (packet as FinalContextDocs).final_context_docs;
-              console.log(documents);
               retrievalType = RetrievalType.Search;
               if (documents && documents.length > 0) {
                 // point to the latest message (we don't know the messageId yet, which is why
                 // we have to use -1)
                 setSelectedMessageForDocDisplay(user_message_id);
               }
-            } else if (Object.hasOwn(packet, "top_documents")) {
-              // documents = (packet as DocumentsResponse).top_documents;
-              // retrievalType = RetrievalType.Search;
-              // if (documents && documents.length > 0) {
-              //   // point to the latest message (we don't know the messageId yet, which is why
-              //   // we have to use -1)
-              //   setSelectedMessageForDocDisplay(user_message_id);
-              // }
             } else if (Object.hasOwn(packet, "tool_name")) {
               // Will only ever be one tool call per message
               toolCall = {
@@ -1623,6 +1617,8 @@ export function ChatPage({
     setToggled: removeToggle,
     mobile: settings?.isMobile,
   });
+  const autoScrollEnabled =
+    settings?.enterpriseSettings?.auto_scroll || user?.auto_scroll;
 
   useScrollonStream({
     chatState: currentSessionChatState,
@@ -1632,6 +1628,7 @@ export function ChatPage({
     debounceNumber,
     waitForScrollRef,
     mobile: settings?.isMobile,
+    enableAutoScroll: autoScrollEnabled,
   });
 
   // Virtualization + Scrolling related effects and functions
@@ -1881,13 +1878,16 @@ export function ChatPage({
         />
       )}
 
-      {settingsToggled && (
+      {(settingsToggled || userSettingsToggled) && (
         <SetDefaultModelModal
           setPopup={setPopup}
           setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
           llmProviders={llmProviders}
-          onClose={() => setSettingsToggled(false)}
+          onClose={() => {
+            setUserSettingsToggled(false);
+            setSettingsToggled(false);
+          }}
         />
       )}
 
@@ -2051,6 +2051,7 @@ export function ChatPage({
             <div className="flex h-full flex-col w-full">
               {liveAssistant && (
                 <FunctionalHeader
+                  toggleUserSettings={() => setUserSettingsToggled(true)}
                   liveAssistant={liveAssistant}
                   onAssistantChange={onAssistantChange}
                   sidebarToggled={toggledSidebar}
@@ -2269,6 +2270,7 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      index={i}
                                       documentSelectionToggled={
                                         documentSidebarToggled
                                       }

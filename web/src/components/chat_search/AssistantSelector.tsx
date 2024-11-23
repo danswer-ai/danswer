@@ -182,15 +182,6 @@ const AssistantSelector = ({
                   <label className="block text-lg font-semibold mb-2">
                     Choose Model
                   </label>
-                  <button
-                    onClick={() => {
-                      // Close the dropdown and open model settings
-                      setIsOpen(false);
-                      openModelSettings();
-                    }}
-                  >
-                    <GearIcon />
-                  </button>
                 </div>
                 <LlmList
                   requiresImageGeneration={requiresImageGeneration}

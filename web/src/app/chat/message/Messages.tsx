@@ -181,7 +181,9 @@ export const AIMessage = ({
   currentPersona,
   otherMessagesCanSwitchTo,
   onMessageSelection,
+  index,
 }: {
+  index?: number;
   shared?: boolean;
   isActive?: boolean;
   continueGenerating?: () => void;
@@ -390,6 +392,7 @@ export const AIMessage = ({
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
+                                index={index}
                                 query={query}
                                 finished={toolCall?.tool_result != undefined}
                                 hasDocs={hasDocs || false}

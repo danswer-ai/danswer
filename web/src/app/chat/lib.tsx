@@ -149,7 +149,6 @@ export async function* sendMessage({
 }): AsyncGenerator<PacketType, void, unknown> {
   const documentsAreSelected =
     selectedDocumentIds && selectedDocumentIds.length > 0;
-  console.log("FILTERS", filters);
   const body = JSON.stringify({
     alternate_assistant_id: alternateAssistantId,
     chat_session_id: chatSessionId,
@@ -188,7 +187,6 @@ export async function* sendMessage({
         : null,
     use_existing_user_message: useExistingUserMessage,
   });
-  console.log("BODY", body);
 
   const response = await fetch(`/api/chat/send-message`, {
     method: "POST",
@@ -644,6 +642,7 @@ export async function useScrollonStream({
   endDivRef,
   debounceNumber,
   mobile,
+  enableAutoScroll,
 }: {
   chatState: ChatState;
   scrollableDivRef: RefObject<HTMLDivElement>;
@@ -652,6 +651,7 @@ export async function useScrollonStream({
   endDivRef: RefObject<HTMLDivElement>;
   debounceNumber: number;
   mobile?: boolean;
+  enableAutoScroll?: boolean;
 }) {
   const mobileDistance = 900; // distance that should "engage" the scroll
   const desktopDistance = 500; // distance that should "engage" the scroll
@@ -664,6 +664,10 @@ export async function useScrollonStream({
   const previousScroll = useRef<number>(0);
 
   useEffect(() => {
+    if (!enableAutoScroll) {
+      return;
+    }
+
     if (chatState != "input" && scrollableDivRef && scrollableDivRef.current) {
       const newHeight: number = scrollableDivRef.current?.scrollTop!;
       const heightDifference = newHeight - previousScroll.current;

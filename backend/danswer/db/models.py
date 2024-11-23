@@ -126,6 +126,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     # if specified, controls the assistants that are shown to the user + their order
     # if not specified, all assistants are shown
+    auto_scroll: Mapped[bool] = mapped_column(Boolean, default=True)
     chosen_assistants: Mapped[list[int] | None] = mapped_column(
         postgresql.JSONB(), nullable=True, default=None
     )
