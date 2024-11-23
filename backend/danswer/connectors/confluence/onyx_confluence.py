@@ -294,14 +294,17 @@ def _validate_connector_configuration(
     wiki_base: str,
 ) -> None:
     # test connection with direct client, no retries
-    confluence_client_without_retries = Confluence(
+    confluence_client_with_minimal_retries = Confluence(
         api_version="cloud" if is_cloud else "latest",
         url=wiki_base.rstrip("/"),
         username=credentials["confluence_username"] if is_cloud else None,
         password=credentials["confluence_access_token"] if is_cloud else None,
         token=credentials["confluence_access_token"] if not is_cloud else None,
+        backoff_and_retry=True,
+        max_backoff_retries=6,
+        max_backoff_seconds=10,
     )
-    spaces = confluence_client_without_retries.get_all_spaces(limit=1)
+    spaces = confluence_client_with_minimal_retries.get_all_spaces(limit=1)
 
     if not spaces:
         raise RuntimeError(
