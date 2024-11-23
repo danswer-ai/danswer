@@ -36,7 +36,7 @@ export const AssistantCard = ({
       case "ImageGenerationTool":
         return (
           <>
-            <SourceIcon sourceType="web" iconSize={16} />
+            <SourceIcon sourceType="web" iconSize={8} />
             <span>Image Gen</span>
           </>
         );
@@ -49,7 +49,7 @@ export const AssistantCard = ({
     <div
       onClick={() => onSelect(assistant)}
       className={`
-        flex flex-col overflow-hidden rounded-xl px-3 py-4
+        flex flex-col overflow-hidden  w-full rounded-xl px-3 py-4
         cursor-pointer
         ${isSelected ? "bg-background-125" : "hover:bg-background-100"}
       `}

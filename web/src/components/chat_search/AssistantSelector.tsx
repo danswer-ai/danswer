@@ -126,7 +126,9 @@ const AssistantSelector = ({
           <div className="flex items-center">
             <span className="mr-2 text-xs">{currentLlm}</span>
             <FiChevronDown
-              className="w-5 h-5 text-white transition-transform duration-300 transform group-hover:rotate-180"
+              className={`w-5 h-5 text-white transition-transform duration-300 transform ${
+                isOpen ? "rotate-180" : ""
+              }`}
               aria-hidden="true"
             />
           </div>
@@ -164,6 +166,14 @@ const AssistantSelector = ({
             </Tab.List>
             <Tab.Panels>
               <Tab.Panel className="p-3">
+                <div className="mb-4">
+                  <h3 className="text-center text-lg font-semibold text-gray-800">
+                    Choose an Assistant
+                  </h3>
+                  <p className="text-center text-sm text-gray-600">
+                    Select an AI assistant for your specific needs.
+                  </p>
+                </div>
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -195,6 +205,14 @@ const AssistantSelector = ({
                 </DndContext>
               </Tab.Panel>
               <Tab.Panel className="p-3">
+                <div className="mb-4">
+                  <h3 className="text-center text-lg font-semibold text-gray-800 ">
+                    Choose a Model
+                  </h3>
+                  <p className="text-center text-sm text-gray-600">
+                    Select an LLM for your specific needs.
+                  </p>
+                </div>
                 <LlmList
                   currentAssistant={liveAssistant}
                   requiresImageGeneration={requiresImageGeneration}

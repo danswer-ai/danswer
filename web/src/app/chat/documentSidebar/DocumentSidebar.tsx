@@ -22,7 +22,7 @@ interface DocumentSidebarProps {
   isLoading: boolean;
   initialWidth: number;
   isOpen: boolean;
-  toggleFilters: () => void;
+  toggleFilters?: () => void;
   filtersToggled: boolean;
   ccPairs: CCPairBasicInfo[];
   tags: Tag[];
@@ -105,20 +105,22 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             </div>
 
             <div className="overflow-y-auto default-scrollbar pt-4 flex-grow dark-scrollbar flex relative flex-col">
-              <div className="px-4">
-                {" "}
-                <SourceSelector
-                  tagsOnLeft={true}
-                  toggleFilters={toggleFilters}
-                  filtersUntoggled={!filtersToggled}
-                  {...filterManager}
-                  showDocSidebar={false}
-                  // TODO updatef
-                  availableDocumentSets={documentSets}
-                  existingSources={ccPairs.map((ccPair) => ccPair.source)}
-                  availableTags={tags}
-                />
-              </div>
+              {toggleFilters && (
+                <div className="px-4">
+                  {" "}
+                  <SourceSelector
+                    tagsOnLeft={true}
+                    toggleFilters={toggleFilters}
+                    filtersUntoggled={!filtersToggled}
+                    {...filterManager}
+                    showDocSidebar={false}
+                    // TODO updatef
+                    availableDocumentSets={documentSets}
+                    existingSources={ccPairs.map((ccPair) => ccPair.source)}
+                    availableTags={tags}
+                  />
+                </div>
+              )}
 
               <Separator />
               {dedupedDocuments.length > 0 ? (

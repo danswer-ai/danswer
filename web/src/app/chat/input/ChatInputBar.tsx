@@ -31,7 +31,6 @@ import { ChatState } from "../types";
 import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import AnimatedToggle from "@/components/search/SearchBar";
-import { Badge } from "@/components/ui/badge";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -369,25 +368,13 @@ export function ChatInputBar({
           </div> */}
 
           <UnconfiguredProviderText showConfigureAPIKey={showConfigureAPIKey} />
-          <div className="ml-auto w-fit flex gap-x-2">
-            <Badge className=" bg-background-800 text-white cursor-pointer">
-              <FiSearch size={16} />
-            </Badge>
-            {/* <ChatInputOption
-              flexPriority="stiff"
-              name="Filters"
-              Icon={FiSearch}
-              onClick={toggleFilters}
-            /> */}
 
-            <AnimatedToggle isOn={false} handleToggle={() => {}} />
-          </div>
           <div
             className="
               opacity-100
               w-full
               h-fit
-              bg-blg
+              bg-bl
               flex
               flex-col
               border
@@ -534,7 +521,7 @@ export function ChatInputBar({
               }}
               suppressContentEditableWarning={true}
             />
-            {/* <div className="flex items-center space-x-3 mr-12 px-4 pb-2">
+            <div className="flex items-center space-x-3 mr-12 px-4 pb-2">
               <ChatInputOption
                 flexPriority="stiff"
                 name="File"
@@ -554,7 +541,18 @@ export function ChatInputBar({
                   input.click();
                 }}
               />
-            </div> */}
+              {toggleFilters && (
+                <>
+                  <ChatInputOption
+                    flexPriority="stiff"
+                    name="Filters"
+                    Icon={FiSearch}
+                    onClick={toggleFilters}
+                  />
+                  <AnimatedToggle isOn={false} handleToggle={() => {}} />
+                </>
+              )}
+            </div>
 
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">
               {chatState == "streaming" ||

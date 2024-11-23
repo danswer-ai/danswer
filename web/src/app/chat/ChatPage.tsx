@@ -1780,6 +1780,13 @@ export function ChatPage({
       liveAssistant
     );
   });
+  console.log("retrievalEnabled", retrievalEnabled);
+  useEffect(() => {
+    if (!retrievalEnabled) {
+      setDocumentSidebarToggled(false);
+    }
+  }, [retrievalEnabled]);
+
   const [stackTraceModalContent, setStackTraceModalContent] = useState<
     string | null
   >(null);
@@ -2027,7 +2034,7 @@ export function ChatPage({
                 documentSets={documentSets}
                 ref={innerSidebarElementRef}
                 filtersToggled={filtersToggled}
-                toggleFilters={toggleFilters}
+                toggleFilters={retrievalEnabled ? toggleFilters : undefined}
                 closeSidebar={() => setDocumentSidebarToggled(false)}
                 selectedMessage={aiMessage}
                 selectedDocuments={selectedDocuments}
@@ -2552,7 +2559,9 @@ export function ChatPage({
                               </div>
                             )}
                             <ChatInputBar
-                              toggleFilters={toggleFilters}
+                              toggleFilters={
+                                retrievalEnabled ? toggleFilters : undefined
+                              }
                               showConfigureAPIKey={() =>
                                 setShowApiKeyModal(true)
                               }
