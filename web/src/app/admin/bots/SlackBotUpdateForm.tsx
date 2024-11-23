@@ -75,17 +75,19 @@ export const ExistingSlackBotForm = ({
   return (
     <div>
       {popup}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between h-14">
         <div className="flex items-center gap-2">
           <div className="my-auto">
-            <SourceIcon iconSize={36} sourceType={"slack"} />
+            <SourceIcon iconSize={32} sourceType={"slack"} />
           </div>
-          <EditableStringFieldDisplay
-            value={formValues.name}
-            isEditable={true}
-            onUpdate={(value) => handleUpdateField("name", value)}
-            scale={2.5}
-          />
+          <div className="ml-1">
+            <EditableStringFieldDisplay
+              value={formValues.name}
+              isEditable={true}
+              onUpdate={(value) => handleUpdateField("name", value)}
+              scale={2.1}
+            />
+          </div>
         </div>
 
         <div className="flex flex-col" ref={dropdownRef}>
@@ -108,6 +110,7 @@ export const ExistingSlackBotForm = ({
               onClick={() => setShowDeleteModal(true)}
               icon={FiTrash}
               tooltip="Click to delete"
+              className="border h-[42px]"
             >
               Delete
             </Button>
@@ -123,14 +126,15 @@ export const ExistingSlackBotForm = ({
                   refreshSlackBot={refreshSlackBot}
                   setPopup={setPopup}
                   router={router}
+                  onValuesChange={(values) => setFormValues(values)}
                 />
               </div>
             </div>
           )}
         </div>
       </div>
-      <div className="mt-4">
-        <div className="inline-block border rounded-lg border-gray-200 px-2 py-2">
+      <div className="mt-2">
+        <div className="inline-block border rounded-lg border-gray-200 p-2">
           <Checkbox
             label="Enabled"
             checked={formValues.enabled}

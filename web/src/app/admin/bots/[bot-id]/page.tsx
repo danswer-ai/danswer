@@ -95,7 +95,7 @@ function SlackBotEditPage({
           text-sm
           w-80
         "
-        href={`/admin/bots/new?slack_bot_id=${unwrappedParams["bot-id"]}`}
+        href={`/admin/bots/${unwrappedParams["bot-id"]}/channels/new`}
       >
         <div className="mx-auto flex">
           <FiPlusSquare className="my-auto mr-2" />

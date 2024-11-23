@@ -261,10 +261,12 @@ export const SlackChannelConfigCreationForm = ({
                   </Tabs>
                 </div>
 
-                <AdvancedOptionsToggle
-                  showAdvancedOptions={showAdvancedOptions}
-                  setShowAdvancedOptions={setShowAdvancedOptions}
-                />
+                <div className="mt-6">
+                  <AdvancedOptionsToggle
+                    showAdvancedOptions={showAdvancedOptions}
+                    setShowAdvancedOptions={setShowAdvancedOptions}
+                  />
+                </div>
 
                 {showAdvancedOptions && (
                   <div className="mt-4">
@@ -369,7 +371,7 @@ export const SlackChannelConfigCreationForm = ({
                   <Button
                     type="submit"
                     variant="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !values.channel_name}
                     className="mx-auto w-64"
                   >
                     {isUpdate ? "Update!" : "Create!"}
