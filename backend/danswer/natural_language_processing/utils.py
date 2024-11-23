@@ -7,7 +7,7 @@ from transformers import logging as transformer_logging  # type:ignore
 
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.search.models import InferenceChunk
+from danswer.context.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from shared_configs.enums import EmbeddingProvider
 

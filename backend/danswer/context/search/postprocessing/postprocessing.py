@@ -9,19 +9,19 @@ from danswer.configs.app_configs import BLURB_SIZE
 from danswer.configs.constants import RETURN_SEPARATOR
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MAX
 from danswer.configs.model_configs import CROSS_ENCODER_RANGE_MIN
+from danswer.context.search.enums import LLMEvaluationType
+from danswer.context.search.models import ChunkMetric
+from danswer.context.search.models import InferenceChunk
+from danswer.context.search.models import InferenceChunkUncleaned
+from danswer.context.search.models import InferenceSection
+from danswer.context.search.models import MAX_METRICS_CONTENT
+from danswer.context.search.models import RerankMetricsContainer
+from danswer.context.search.models import SearchQuery
 from danswer.document_index.document_index_utils import (
     translate_boost_count_to_multiplier,
 )
 from danswer.llm.interfaces import LLM
 from danswer.natural_language_processing.search_nlp_models import RerankingModel
-from danswer.search.enums import LLMEvaluationType
-from danswer.search.models import ChunkMetric
-from danswer.search.models import InferenceChunk
-from danswer.search.models import InferenceChunkUncleaned
-from danswer.search.models import InferenceSection
-from danswer.search.models import MAX_METRICS_CONTENT
-from danswer.search.models import RerankMetricsContainer
-from danswer.search.models import SearchQuery
 from danswer.secondary_llm_flows.chunk_usefulness import llm_batch_eval_sections
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
