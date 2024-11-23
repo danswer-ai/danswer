@@ -314,7 +314,6 @@ def handle_new_chat_message(
     _: None = Depends(check_token_rate_limits),
     is_connected_func: Callable[[], bool] = Depends(is_connected),
 ) -> StreamingResponse:
-    print(chat_message_req.retrieval_options.filters)
     """
     This endpoint is both used for all the following purposes:
     - Sending a new message in the session

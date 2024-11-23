@@ -67,7 +67,7 @@ export const AnimatedToggle = ({
                 `}
                 ></div>
               </div>
-              <p className="ml-2 text-sm">Agentic</p>
+              <p className="ml-2 text-sm">Pro</p>
             </div>
           </div>
         </TooltipTrigger>

@@ -2050,7 +2050,16 @@ export function ChatPage({
             ref={masterFlexboxRef}
             className="flex h-full w-full overflow-x-hidden"
           >
-            <div className="flex h-full flex-col w-full">
+            <div className="flex h-full relative   mx-2  flex-col w-full">
+              {/* {liveAssistant && onAssistantChange && (
+                <div className="flex justify-center mt-4 -mb-4 h w-full overflow-visible">
+                  <AssistantSelector
+                    liveAssistant={liveAssistant}
+                    onAssistantChange={onAssistantChange}
+                    llmOverrideManager={llmOverrideManager}
+                  />
+                </div>
+              )} */}
               {liveAssistant && (
                 <FunctionalHeader
                   toggleUserSettings={() => setUserSettingsToggled(true)}
@@ -2102,6 +2111,15 @@ export function ChatPage({
                           className={`w-full h-full flex flex-col default-scrollbar overflow-y-auto overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
+                          {liveAssistant && onAssistantChange && (
+                            <div className="z-[1000] flex justify-center w-full overflow-visible">
+                              <AssistantSelector
+                                liveAssistant={liveAssistant}
+                                onAssistantChange={onAssistantChange}
+                                llmOverrideManager={llmOverrideManager}
+                              />
+                            </div>
+                          )}
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 
                       the top of the chat page. Oly used in the EE version of the app. */}
 

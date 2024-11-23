@@ -55,7 +55,7 @@ export interface EnterpriseSettings {
   custom_popup_header: string | null;
   custom_popup_content: string | null;
   enable_consent_screen: boolean | null;
-  auto_scroll: boolean | null;
+  auto_scroll: boolean;
 }
 
 export interface CombinedSettings {

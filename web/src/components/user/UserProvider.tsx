@@ -28,6 +28,7 @@ export function UserProvider({
   const [isLoadingUser, setIsLoadingUser] = useState(false);
 
   const posthog = usePostHog();
+  console.log("upToDateUser", upToDateUser);
 
   useEffect(() => {
     if (!posthog) return;

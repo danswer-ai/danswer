@@ -11,8 +11,6 @@ import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
 import LogoType from "../header/LogoType";
-import { useUser } from "../user/UserProvider";
-import AssistantSelector from "./AssistantSelector";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { LlmOverrideManager } from "@/lib/hooks";
 
@@ -84,15 +82,7 @@ export default function FunctionalHeader({
           toggleSidebar={toggleSidebar}
           handleNewChat={handleNewChat}
         />
-        {liveAssistant && onAssistantChange && (
-          <div className="pb-2 mb-auto">
-            <AssistantSelector
-              liveAssistant={liveAssistant}
-              onAssistantChange={onAssistantChange}
-              llmOverrideManager={llmOverrideManager}
-            />
-          </div>
-        )}
+
         <div
           style={{ transition: "width 0.30s ease-out" }}
           className={`
@@ -163,10 +153,6 @@ export default function FunctionalHeader({
           />
         </div>
       </div>
-
-      {page != "assistants" && (
-        <div className="h-20 left-0 absolute top-0 z-10 w-full bg-gradient-to-b via-50% z-[-1] from-background via-background to-background/10 flex" />
-      )}
     </div>
   );
 }

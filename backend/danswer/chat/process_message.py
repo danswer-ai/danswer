@@ -608,7 +608,6 @@ def stream_chat_message_objects(
 
         tools: list[Tool] = []
         for tool_list in tool_dict.values():
-            print(tool_list[0].__dict__)
             tools.extend(tool_list)
 
         # LLM prompt building, response capturing, etc.

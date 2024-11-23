@@ -30,6 +30,8 @@ import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPrefere
 import Text from "@/components/ui/text";
 import { GearIcon } from "@/components/icons/icons";
 import { LlmOverrideManager } from "@/lib/hooks";
+import { Tab } from "@headlessui/react";
+import { AssistantIcon } from "../assistants/AssistantIcon";
 
 const AssistantSelector = ({
   liveAssistant,
@@ -45,33 +47,10 @@ const AssistantSelector = ({
   const { finalAssistants, refreshAssistants } = useAssistants();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   const { llmProviders } = useChatContext();
-  const { refreshUser } = useUser();
-
-  const [temperature, setTemperature] = useState<number>(0.7);
-  const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
-  const [localTemperature, setLocalTemperature] = useState<number>(temperature);
-
-  const debouncedSetTemperature = useCallback(
-    (value: number) => {
-      const debouncedFunction = debounce((value: number) => {
-        setTemperature(value);
-      }, 300);
-      return debouncedFunction(value);
-    },
-    [setTemperature]
-  );
-
-  const handleTemperatureChange = (value: number) => {
-    setLocalTemperature(value);
-    debouncedSetTemperature(value);
-  };
-
-  const requiresImageGeneration =
-    checkPersonaRequiresImageGeneration(liveAssistant);
-
+  const { refreshUser, user } = useUser();
   const [assistants, setAssistants] = useState<Persona[]>(finalAssistants);
+  const [selectedTab, setSelectedTab] = useState(0);
 
   useEffect(() => {
     setAssistants(finalAssistants);
@@ -84,14 +63,10 @@ const AssistantSelector = ({
         !dropdownRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
-        setIsTemperatureExpanded(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const sensors = useSensors(
@@ -103,7 +78,6 @@ const AssistantSelector = ({
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
       const oldIndex = assistants.findIndex(
         (item) => item.id.toString() === active.id
@@ -112,7 +86,6 @@ const AssistantSelector = ({
         (item) => item.id.toString() === over.id
       );
       const updatedAssistants = arrayMove(assistants, oldIndex, newIndex);
-
       setAssistants(updatedAssistants);
       await updateUserAssistantList(updatedAssistants.map((a) => a.id));
       await refreshUser();
@@ -120,34 +93,77 @@ const AssistantSelector = ({
     }
   };
 
-  const currentLlm = llmOverrideManager?.llmOverride?.modelName;
-  const openModelSettings = () => {
-    // Implement the function to open model settings if needed
-  };
+  // Get the user's default model
+  const userDefaultModel = user?.preferences.default_model;
+
+  // Get the assistant's default model if it exists
+  const assistantDefaultModel = liveAssistant.llm_model_version_override;
+
+  // Determine the current LLM model to use
+  const currentLlm =
+    llmOverrideManager?.llmOverride?.modelName ??
+    assistantDefaultModel ??
+    userDefaultModel ??
+    llmProviders[0].model_names[0];
+
+  const requiresImageGeneration =
+    checkPersonaRequiresImageGeneration(liveAssistant);
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Button to open the dropdown */}
-      <button
-        aria-label={`Assistant selector, current assistant is ${liveAssistant.name}`}
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="group flex cursor-pointer items-center gap-1 rounded-lg px-3 text-lg  font-semibold text-text-secondary overflow-hidden whitespace-nowrap"
-      >
-        <div className="leading-tight text-text-900">{liveAssistant.name}</div>
-        <FiChevronDown className="text-text-800" />
-      </button>
+      <div className="flex justify-center">
+        <div
+          onClick={() => {
+            setIsOpen(!isOpen);
+            setSelectedTab(0);
+          }}
+          className="flex items-center gap-x-2 justify-between px-6 py-3 text-sm font-medium text-white bg-black rounded-full shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+        >
+          <div className="flex gap-x-2 items-center">
+            <AssistantIcon assistant={liveAssistant} size="xs" />
+            <span className="font-bold">{liveAssistant.name}</span>
+          </div>
+          <div className="flex items-center">
+            <span className="mr-2 text-xs">{currentLlm}</span>
+            <FiChevronDown
+              className="w-5 h-5 text-white transition-transform duration-300 transform group-hover:rotate-180"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      </div>
 
       {isOpen && (
-        <div className="absolute z-10 mt-2 w-[600px] max-h-[500px] overflow-auto rounded-md bg-white shadow-lg p-4">
-          {/* Two Column Layout */}
-          <div className="flex">
-            {/* Left Column */}
-            {/* Right Column */}
-            <div className="w-1/2 pl-2">
-              {/* Assistants List with Drag and Drop */}
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Change Assistant</h3>
+        <div className="absolute z-10 w-96 mt-2 origin-top-center left-1/2 transform -translate-x-1/2 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
+            <Tab.List className="flex p-1 space-x-1 bg-gray-100 rounded-t-md">
+              <Tab
+                className={({ selected }) =>
+                  `w-full py-2.5 text-sm leading-5 font-medium rounded-md
+                   ${
+                     selected
+                       ? "bg-white text-gray-700 shadow"
+                       : "text-gray-500 hover:bg-white/[0.12] hover:text-gray-700"
+                   }`
+                }
+              >
+                Assistant
+              </Tab>
+              <Tab
+                className={({ selected }) =>
+                  `w-full py-2.5 text-sm leading-5 font-medium rounded-md
+                   ${
+                     selected
+                       ? "bg-white text-gray-700 shadow"
+                       : "text-gray-500 hover:bg-white/[0.12] hover:text-gray-700"
+                   }`
+                }
+              >
+                Model
+              </Tab>
+            </Tab.List>
+            <Tab.Panels>
+              <Tab.Panel className="p-3">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -157,7 +173,7 @@ const AssistantSelector = ({
                     items={assistants.map((a) => a.id.toString())}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="pb-2  pr-2 max-h-96 overflow-y-auto">
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
                       {assistants.map((assistant) => (
                         <DraggableAssistantCard
                           key={assistant.id.toString()}
@@ -167,97 +183,43 @@ const AssistantSelector = ({
                             onAssistantChange(assistant);
                             setIsOpen(false);
                           }}
-                          llmName={currentLlm ?? llmProviders[0].model_names[0]}
+                          llmName={
+                            assistant.llm_model_version_override ??
+                            userDefaultModel ??
+                            currentLlm
+                          }
                         />
                       ))}
                     </div>
                   </SortableContext>
                 </DndContext>
-              </div>
-            </div>
-            <div className="w-1/2 pr-2">
-              {/* LLM Selection */}
-              <div className="mb-4">
-                <div className="flex w-full justify-between content-center mb-2 gap-x-2">
-                  <label className="block text-lg font-semibold mb-2">
-                    Choose Model
-                  </label>
-                </div>
+              </Tab.Panel>
+              <Tab.Panel className="p-3">
                 <LlmList
+                  currentAssistant={liveAssistant}
                   requiresImageGeneration={requiresImageGeneration}
                   llmProviders={llmProviders}
-                  currentLlm={currentLlm ?? llmProviders[0].model_names[0]}
+                  currentLlm={currentLlm}
+                  userDefault={userDefaultModel}
+                  includeUserDefault={true}
                   onSelect={(value: string | null) => {
-                    if (value == null) {
-                      return;
-                    }
-
+                    if (value == null) return;
                     const { modelName, name, provider } =
                       destructureValue(value);
                     llmOverrideManager?.setLlmOverride({
-                      name: name,
-                      provider: provider,
-                      modelName: modelName,
+                      name,
+                      provider,
+                      modelName,
                     });
                     if (chatSessionId) {
                       updateModelOverrideForChatSession(chatSessionId, value);
                     }
-                    // You may need to update any LLM override manager or context
+                    setIsOpen(false);
                   }}
                 />
-              </div>
-
-              {/* Temperature Control */}
-              <div>
-                <button
-                  className="flex items-center text-sm font-medium transition-colors duration-200"
-                  onClick={() =>
-                    setIsTemperatureExpanded(!isTemperatureExpanded)
-                  }
-                >
-                  <span className="mr-2 text-xs text-primary">
-                    {isTemperatureExpanded ? "▼" : "►"}
-                  </span>
-                  <span>Temperature</span>
-                </button>
-
-                {isTemperatureExpanded && (
-                  <>
-                    <Text className="mt-2 mb-4">
-                      Adjust the temperature of the LLM. Higher temperatures
-                      will make the LLM generate more creative and diverse
-                      responses, while lower temperatures will make the LLM
-                      generate more conservative and focused responses.
-                    </Text>
-
-                    <div className="relative w-full">
-                      <input
-                        type="range"
-                        onChange={(e) =>
-                          handleTemperatureChange(parseFloat(e.target.value))
-                        }
-                        className="w-full p-2 border border-border rounded-md"
-                        min="0"
-                        max="2"
-                        step="0.01"
-                        value={localTemperature}
-                      />
-                      <div
-                        className="absolute text-sm"
-                        style={{
-                          left: `${(localTemperature / 2) * 100}%`,
-                          transform: `translateX(-50%)`,
-                          top: "-1.5rem",
-                        }}
-                      >
-                        {localTemperature}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+              </Tab.Panel>
+            </Tab.Panels>
+          </Tab.Group>
         </div>
       )}
     </div>
