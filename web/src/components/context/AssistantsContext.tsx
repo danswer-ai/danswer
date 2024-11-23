@@ -98,10 +98,8 @@ export const AssistantsProvider: React.FC<{
       }
 
       if (allResponse.ok) {
-        console.log("allResponse", allResponse);
         const allPersonas = await allResponse.json();
         setAllAssistants(allPersonas);
-        console.log("allAssistants", allAssistants);
       } else {
         console.error("Error fetching personas:", allResponse);
       }
