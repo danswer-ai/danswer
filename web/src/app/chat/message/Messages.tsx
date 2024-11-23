@@ -458,7 +458,7 @@ export const AIMessage = ({
                               filteredDocs
                                 .slice(0, 2)
                                 .map((doc, ind) => (
-                                  <FirstSourceCard doc={doc} />
+                                  <FirstSourceCard doc={doc} key={ind} />
                                 ))}
                             <SeeMoreBlock
                               documentSelectionToggled={

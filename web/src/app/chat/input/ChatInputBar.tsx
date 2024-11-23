@@ -363,9 +363,9 @@ export function ChatInputBar({
             </div>
           )}
 
-          <div>
+          {/* <div>
             <SelectedFilterDisplay filterManager={filterManager} />
-          </div>
+          </div> */}
 
           <UnconfiguredProviderText showConfigureAPIKey={showConfigureAPIKey} />
 

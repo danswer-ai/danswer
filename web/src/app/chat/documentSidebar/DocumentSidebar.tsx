@@ -6,12 +6,9 @@ import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { Message } from "../interfaces";
 import { ForwardedRef, forwardRef } from "react";
 import { Separator } from "@/components/ui/separator";
-import {
-  HorizontalSourceSelector,
-  SourceSelector,
-} from "@/components/search/filtering/Filters";
 import { FilterManager } from "@/lib/hooks";
 import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
+import { SourceSelector } from "@/app/chat/shared_chat_search/Filters";
 
 interface DocumentSidebarProps {
   filterManager: FilterManager;
@@ -25,6 +22,7 @@ interface DocumentSidebarProps {
   isLoading: boolean;
   initialWidth: number;
   isOpen: boolean;
+  toggleFilters: () => void;
   filtersToggled: boolean;
   ccPairs: CCPairBasicInfo[];
   tags: Tag[];
@@ -46,6 +44,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       initialWidth,
       isOpen,
       filtersToggled,
+      toggleFilters,
       ccPairs,
       tags,
       documentSets,
@@ -72,7 +71,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     return (
       <div
         id="danswer-chat-sidebar"
-        className="w-full"
+        className="w-full border-l border-border-strong"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeSidebar();
@@ -92,7 +91,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             {popup}
             <div className="p-4  border-b border-background-400 ">
               <h2 className="text-xl font-bold text-text-900 mb-2">Sources</h2>
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <span className="text-sm text-text-700 ">
                   Add to next search
                 </span>
@@ -102,69 +101,61 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                 >
                   Learn more
                 </a>
-              </div>
+              </div> */}
             </div>
 
-            {currentDocuments ? (
-              <div className="overflow-y-auto default-scrollbar pt-4 flex-grow dark-scrollbar flex relative flex-col">
-                {filtersToggled && (
-                  <div className=" px-4">
-                    {" "}
-                    <SourceSelector
-                      {...filterManager}
-                      showDocSidebar={false}
-                      // TODO updatef
-                      availableDocumentSets={documentSets}
-                      existingSources={ccPairs.map((ccPair) => ccPair.source)}
-                      availableTags={tags}
+            <div className="overflow-y-auto default-scrollbar pt-4 flex-grow dark-scrollbar flex relative flex-col">
+              <div className="px-4">
+                {" "}
+                <SourceSelector
+                  tagsOnLeft={true}
+                  toggleFilters={toggleFilters}
+                  filtersUntoggled={!filtersToggled}
+                  {...filterManager}
+                  showDocSidebar={false}
+                  // TODO updatef
+                  availableDocumentSets={documentSets}
+                  existingSources={ccPairs.map((ccPair) => ccPair.source)}
+                  availableTags={tags}
+                />
+              </div>
+
+              <Separator />
+              {dedupedDocuments.length > 0 ? (
+                dedupedDocuments.map((document, ind) => (
+                  <div
+                    key={document.document_id}
+                    className={`${
+                      ind === dedupedDocuments.length - 1
+                        ? "mb-5"
+                        : "border-b border-border-light mb-3"
+                    }`}
+                  >
+                    <ChatDocumentDisplay
+                      document={document}
+                      setPopup={setPopup}
+                      queryEventId={null}
+                      isAIPick={false}
+                      isSelected={selectedDocumentIds.includes(
+                        document.document_id
+                      )}
+                      handleSelect={(documentId) => {
+                        toggleDocumentSelection(
+                          dedupedDocuments.find(
+                            (doc) => doc.document_id === documentId
+                          )!
+                        );
+                      }}
+                      tokenLimitReached={tokenLimitReached}
                     />
                   </div>
-                )}
-                {dedupedDocuments.length > 0 ? (
-                  dedupedDocuments.map((document, ind) => (
-                    <div
-                      key={document.document_id}
-                      className={`${
-                        ind === dedupedDocuments.length - 1
-                          ? "mb-5"
-                          : "border-b border-border-light mb-3"
-                      }`}
-                    >
-                      <ChatDocumentDisplay
-                        document={document}
-                        setPopup={setPopup}
-                        queryEventId={null}
-                        isAIPick={false}
-                        isSelected={selectedDocumentIds.includes(
-                          document.document_id
-                        )}
-                        handleSelect={(documentId) => {
-                          toggleDocumentSelection(
-                            dedupedDocuments.find(
-                              (doc) => doc.document_id === documentId
-                            )!
-                          );
-                        }}
-                        tokenLimitReached={tokenLimitReached}
-                      />
-                    </div>
-                  ))
-                ) : (
-                  <div className="mx-3">
-                    <Text>No documents found for the query.</Text>
-                  </div>
-                )}
-              </div>
-            ) : (
-              !isLoading && (
-                <div className="ml-4 pt-4 mr-3">
-                  <Text>
-                    When you ask a question, the retrieved documents will show
-                    up here!
-                  </Text>
+                ))
+              ) : (
+                <div className="mx-3">
+                  <Text>No documents currently selected.</Text>
                 </div>
-              )
-            )}
+              )}
+            </div>
           </div>
 
           <div className="absolute left-0 bottom-0 w-full bg-gradient-to-b from-white/0 via-white/60 to-white dark:from-black/0 dark:via-black/60 dark:to-black h-[100px]" />

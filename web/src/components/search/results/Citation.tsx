@@ -23,28 +23,28 @@ export function Citation({
     ? children?.toString().split("[")[1].split("]")[0]
     : index;
 
+  // const CitationTrigger = () => {
+  //   return (
+
+  //   );
+  // };
+
   if (link) {
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <a
+            <div
               onMouseDown={() => window.open(link, "_blank")}
-              className="cursor-pointer inline ml-1 align-middle"
+              className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"
             >
-              <span className="group relative -top-1 text-sm text-gray-500 dark:text-gray-400 selection:bg-indigo-300 selection:text-black dark:selection:bg-indigo-900 dark:selection:text-white">
-                <span
-                  className="inline-flex bg-background-200 group-hover:bg-background-300 items-center justify-center h-3.5 min-w-3.5 px-1 text-center text-xs rounded-full border-1 border-gray-400 ring-1 ring-gray-400 divide-gray-300 dark:divide-gray-700 dark:ring-gray-700 dark:border-gray-700 transition duration-150"
-                  data-number="3"
-                >
-                  {innerText}
-                </span>
+              <span className="relative no-underline -top-0.5 px-1.5 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 hover:text-gray-900 shadow-sm no-underline">
+                {innerText}
               </span>
-            </a>
+            </div>
           </TooltipTrigger>
-          <TooltipContent className="bg-background">
-            {document && <CompactDocumentCard document={document} />}
-            {/* <p className="inline-block p-0 m-0 truncate">{link}</p> */}
+          <TooltipContent width="w-f" className="bg-background">
+            <CompactDocumentCard document={document} />
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -54,20 +54,17 @@ export function Citation({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="inline-block cursor-help leading-none inline ml-1 align-middle">
-              {document && <CompactDocumentCard document={document} />}
-              <span className="group relative -top-1 text-gray-500 dark:text-gray-400 selection:bg-indigo-300 selection:text-black dark:selection:bg-indigo-900 dark:selection:text-white">
-                <span
-                  className="inline-flex bg-background-200 group-hover:bg-background-300 items-center justify-center h-3.5 min-w-3.5 flex-none px-1 text-center text-xs rounded-full border-1 border-gray-400 ring-1 ring-gray-400 divide-gray-300 dark:divide-gray-700 dark:ring-gray-700 dark:border-gray-700 transition duration-150"
-                  data-number="3"
-                >
-                  {innerText}
-                </span>
+            <div
+              onMouseDown={() => window.open(link, "_blank")}
+              className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"
+            >
+              <span className="relative no-underline -top-0.5 px-1.5 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 hover:text-gray-900 shadow-sm no-underline">
+                {innerText}
               </span>
             </div>
           </TooltipTrigger>
-          <TooltipContent className="bg-background">
-            {document && <CompactDocumentCard document={document} />}
+          <TooltipContent width="max-w-lg" backgroundColor="bg-background-200">
+            <CompactDocumentCard document={document} />
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

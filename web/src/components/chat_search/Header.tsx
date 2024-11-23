@@ -14,6 +14,7 @@ import LogoType from "../header/LogoType";
 import { useUser } from "../user/UserProvider";
 import AssistantSelector from "./AssistantSelector";
 import { Persona } from "@/app/admin/assistants/interfaces";
+import { LlmOverrideManager } from "@/lib/hooks";
 
 export default function FunctionalHeader({
   page,
@@ -24,15 +25,19 @@ export default function FunctionalHeader({
   sidebarToggled,
   liveAssistant,
   onAssistantChange,
+  llmOverrideManager,
+  documentSidebarToggled,
 }: {
   reset?: () => void;
   page: pageType;
   sidebarToggled?: boolean;
+  documentSidebarToggled?: boolean;
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
   toggleSidebar?: () => void;
-  liveAssistant: Persona;
-  onAssistantChange: (assistant: Persona) => void;
+  liveAssistant?: Persona;
+  onAssistantChange?: (assistant: Persona) => void;
+  llmOverrideManager?: LlmOverrideManager;
 }) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -77,6 +82,15 @@ export default function FunctionalHeader({
           toggleSidebar={toggleSidebar}
           handleNewChat={handleNewChat}
         />
+        {liveAssistant && onAssistantChange && (
+          <div className="pb-2 mb-auto">
+            <AssistantSelector
+              liveAssistant={liveAssistant}
+              onAssistantChange={onAssistantChange}
+              llmOverrideManager={llmOverrideManager}
+            />
+          </div>
+        )}
         <div
           style={{ transition: "width 0.30s ease-out" }}
           className={`
@@ -91,12 +105,7 @@ export default function FunctionalHeader({
             ${sidebarToggled ? "w-[250px]" : "w-[0px]"}
             `}
         />
-        <div className="flex-none my-auto">
-          <AssistantSelector
-            liveAssistant={liveAssistant}
-            onAssistantChange={onAssistantChange}
-          />
-        </div>
+
         <div className="w-full mobile:-mx-20 desktop:px-4">
           <ChatBanner />
         </div>
@@ -136,6 +145,20 @@ export default function FunctionalHeader({
               <NewChatIcon size={20} />
             </div>
           </Link>
+          <div
+            style={{ transition: "width 0.30s ease-out" }}
+            className={`
+            mobile:hidden
+            flex-none 
+            mx-auto
+            overflow-y-hidden 
+            transition-all 
+            duration-300 
+            ease-in-out
+            h-full
+            ${documentSidebarToggled ? "w-[300px]" : "w-[0px]"}
+            `}
+          />
         </div>
       </div>
 

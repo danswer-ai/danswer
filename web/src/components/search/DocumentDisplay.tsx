@@ -13,7 +13,7 @@ import { PopupSpec } from "../admin/connectors/Popup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
-import { BookIcon, LightBulbIcon } from "../icons/icons";
+import { BookIcon, GlobeIcon, LightBulbIcon } from "../icons/icons";
 
 import { FaStar } from "react-icons/fa";
 import { FiTag } from "react-icons/fi";
@@ -394,28 +394,27 @@ export function CompactDocumentCard({
 }: {
   document: LoadedDanswerDocument;
 }) {
-  console.log("doc icon");
-  console.log(document.icon);
   return (
-    <a
-      href={document.link || undefined}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex flex-col  no-underline gap-0.5 rounded-sm px-3 py-2.5 hover:bg-background-125 bg-background-100 w-[200px]"
-    >
-      <div className="line-clamp-1 font-semibold text-ellipsis text-text-900 flex h-6 items-center gap-2 text-sm">
-        {document.icon ? document.icon : "NO"}
-        <p>
-          {(document.semantic_identifier || document.document_id)
-            .slice(0, 12)
-            .trim()}
-          {(document.semantic_identifier || document.document_id).length >
-            12 && <span className="text-text-500">...</span>}
-        </p>
+    <div className="max-w-[300px] pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
+      <h3 className="text-sm font-semibold flex items-center gap-x-1 text-text-900 pt-0 mt-0 truncate w-full">
+        <GlobeIcon className="w-4 h-4" />
+        {(document.semantic_identifier || document.document_id).slice(0, 40)}
+        {(document.semantic_identifier || document.document_id).length > 40 &&
+          "..."}
+      </h3>
+      {document.blurb && (
+        <p className="text-xs text-gray-600 line-clamp-2">{document.blurb}</p>
+      )}
+      <div className="flex items-center justify-between w-full ">
+        <span className="text-xs text-gray-500">
+          {new Date(document.updated_at || "").toLocaleDateString()}
+        </span>
+        {document.is_internet ? (
+          <InternetSearchIcon url={document.link} />
+        ) : (
+          <SourceIcon sourceType={document.source_type} iconSize={18} />
+        )}
       </div>
-      <div className="line-clamp-2  text-sm font-normal leading-snug text-text-700">
-        {document.blurb}
-      </div>
-    </a>
+    </div>
   );
 }

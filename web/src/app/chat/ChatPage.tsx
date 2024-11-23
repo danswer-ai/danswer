@@ -1306,13 +1306,13 @@ export function ChatPage({
                 setSelectedMessageForDocDisplay(user_message_id);
               }
             } else if (Object.hasOwn(packet, "top_documents")) {
-              documents = (packet as DocumentsResponse).top_documents;
-              retrievalType = RetrievalType.Search;
-              if (documents && documents.length > 0) {
-                // point to the latest message (we don't know the messageId yet, which is why
-                // we have to use -1)
-                setSelectedMessageForDocDisplay(user_message_id);
-              }
+              // documents = (packet as DocumentsResponse).top_documents;
+              // retrievalType = RetrievalType.Search;
+              // if (documents && documents.length > 0) {
+              //   // point to the latest message (we don't know the messageId yet, which is why
+              //   // we have to use -1)
+              //   setSelectedMessageForDocDisplay(user_message_id);
+              // }
             } else if (Object.hasOwn(packet, "tool_name")) {
               // Will only ever be one tool call per message
               toolCall = {
@@ -1404,7 +1404,8 @@ export function ChatPage({
                 retrievalType,
                 query: finalMessage?.rephrased_query || query,
                 documents:
-                  finalMessage?.context_docs?.top_documents || documents,
+                  // finalMessage?.context_docs?.top_documents ||
+                  documents,
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCall: finalMessage?.tool_call || toolCall,
@@ -1824,6 +1825,7 @@ export function ChatPage({
     setShowDocSidebar(false);
   };
   const [filtersToggled, setFiltersToggled] = useState(false);
+
   const toggleFilters = () => {
     setFiltersToggled((filtersToggled) => !filtersToggled);
     setDocumentSidebarToggled(true);
@@ -2023,6 +2025,7 @@ export function ChatPage({
                 documentSets={documentSets}
                 ref={innerSidebarElementRef}
                 filtersToggled={filtersToggled}
+                toggleFilters={toggleFilters}
                 closeSidebar={() => setDocumentSidebarToggled(false)}
                 selectedMessage={aiMessage}
                 selectedDocuments={selectedDocuments}
@@ -2060,6 +2063,8 @@ export function ChatPage({
                   }
                   toggleSidebar={toggleSidebar}
                   currentChatSession={selectedChatSession}
+                  documentSidebarToggled={documentSidebarToggled}
+                  llmOverrideManager={llmOverrideManager}
                 />
               )}
 
