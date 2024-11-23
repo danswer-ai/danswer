@@ -9,7 +9,7 @@ import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import { Popover } from "./popover/Popover";
 import { LOGOUT_DISABLED } from "@/lib/constants";
 import { SettingsContext } from "./settings/SettingsProvider";
-import { BellIcon, LightSettingsIcon } from "./icons/icons";
+import { BellIcon, LightSettingsIcon, UserIcon } from "./icons/icons";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { NavigationItem, Notification } from "@/app/admin/settings/interfaces";
 import DynamicFaIcon, { preloadIcons } from "./icons/DynamicFaIcon";
@@ -18,7 +18,6 @@ import { usePaidEnterpriseFeaturesEnabled } from "./settings/usePaidEnterpriseFe
 import { Notifications } from "./chat_search/Notifications";
 import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
-import { UserIcon } from "lucide-react";
 
 interface DropdownOptionProps {
   href?: string;
