@@ -81,7 +81,6 @@ from danswer.db.index_attempt import get_latest_index_attempts_by_status
 from danswer.db.models import IndexingStatus
 from danswer.db.models import SearchSettings
 from danswer.db.models import User
-from danswer.db.search_settings import get_active_search_settings
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
 from danswer.file_store.file_store import get_default_file_store
@@ -893,31 +892,6 @@ def connector_run_once(
         message=msg,
         data=index_attempt_ids,
     )
-
-
-@router.post("/admin/connector/indexing/stop")
-def connector_indexing_stop(
-    cc_pair_id: int,
-    _: User = Depends(current_curator_or_admin_user),
-    db_session: Session = Depends(get_session),
-    tenant_id: str = Depends(get_current_tenant_id),
-) -> StatusResponse:
-    """Used to stop indexing on a cc pair."""
-
-    redis_connector = RedisConnector(tenant_id, cc_pair_id)
-    redis_connector.stop.set_fence(True)
-
-    search_settings_list: list[SearchSettings] = get_active_search_settings(db_session)
-    for search_settings in search_settings_list:
-        redis_connector_index = redis_connector.new_index(search_settings.id)
-        if not redis_connector_index.fenced:
-            continue
-
-        payload = redis_connector_index.payload
-        if payload and payload.celery_task_id:
-            primary_app.control.revoke(payload.celery_task_id, terminate=True)
-
-    return StatusResponse(success=True, message="Stopped indexing")
 
 
 """Endpoints for basic users"""

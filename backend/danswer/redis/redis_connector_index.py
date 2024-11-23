@@ -103,7 +103,8 @@ class RedisConnectorIndex:
 
     def set_terminate(self, celery_task_id: str) -> None:
         """This sets a signal. It does not block!"""
-        # We shouldn't need very long to terminate the process. 10 minute TTL is good.
+        # We shouldn't need very long to terminate the spawned task.
+        # 10 minute TTL is good.
         self.redis.set(f"{self.terminate_key}_{celery_task_id}", 0, ex=600)
 
     def set_generator_complete(self, payload: int | None) -> None:

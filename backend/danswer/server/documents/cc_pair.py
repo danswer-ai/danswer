@@ -163,9 +163,13 @@ def update_cc_pair_status(
     db_session: Session = Depends(get_session),
     tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> JSONResponse:
-    """This method may wait up to 30 seconds if pausing the connector due to terminating
-    tasks in progress. Tasks are not guaranteed to terminated within the timeout.
+    """This method may wait up to 30 seconds if pausing the connector due to the need to
+    terminate tasks in progress. Tasks are not guaranteed to terminate within the
+    timeout.
 
+    Returns HTTPStatus.OK if everything finished.
+    Returns HTTPStatus.ACCEPTED if the connector is being paused, but background tasks
+    did not finish within the timeout.
     """
     WAIT_TIMEOUT = 15.0
     still_terminating = False

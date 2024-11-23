@@ -85,10 +85,11 @@ def test_overlapping_connector_creation(reset: None) -> None:
 
 
 def test_connector_pause_while_indexing(reset: None) -> None:
-    """Tests that we can pause a connector while indexing is in progress.
-    This does not specifically test soft or hard termination of background tasks.
+    """Tests that we can pause a connector while indexing is in progress and that
+    tasks end early or abort as a result.
 
-    TODO: design specific tests for those use cases.
+    TODO: This does not specifically test for soft or hard termination code paths.
+    Design specific tests for those use cases.
     """
     admin_user: DATestUser = UserManager.create(name="admin_user")
 

@@ -7,10 +7,7 @@ import { SourceIcon } from "@/components/SourceIcon";
 import { CCPairStatus } from "@/components/Status";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import CredentialSection from "@/components/credentials/CredentialSection";
-import {
-  stopIndexing,
-  updateConnectorCredentialPairName,
-} from "@/lib/connector";
+import { updateConnectorCredentialPairName } from "@/lib/connector";
 import { credentialTemplates } from "@/lib/connectors/credentials";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ValidSources } from "@/lib/types";
@@ -151,15 +148,6 @@ function Main({ ccPairId }: { ccPairId: number }) {
                 isDeleting={isDeleting}
               />
             )}
-            {/* {!ccPair.indexing && (
-              <Button
-                variant="destructive"
-                onClick={() => stopIndexing(ccPair.id)}
-                tooltip={"Stops the index attempt currently in progress."}
-              >
-                Stop Indexing
-              </Button>
-            )} */}
             {!isDeleting && <ModifyStatusButtonCluster ccPair={ccPair} />}
           </div>
         )}
