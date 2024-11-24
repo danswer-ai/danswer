@@ -390,6 +390,7 @@ def upsert_prompt(
     return prompt
 
 
+#
 def upsert_persona(
     user: User | None,
     name: str,
@@ -474,7 +475,6 @@ def upsert_persona(
         persona.llm_relevance_filter = llm_relevance_filter
         persona.llm_filter_extraction = llm_filter_extraction
         persona.recency_bias = recency_bias
-        persona.builtin_persona = builtin_persona
         persona.llm_model_provider_override = llm_model_provider_override
         persona.llm_model_version_override = llm_model_version_override
         persona.starter_messages = starter_messages
@@ -487,7 +487,6 @@ def upsert_persona(
         persona.display_priority = display_priority
         persona.is_visible = is_visible
         persona.search_start_date = search_start_date
-        persona.is_default_persona = is_default_persona
         persona.category_id = category_id
         # Do not delete any associations manually added unless
         # a new updated list is provided
