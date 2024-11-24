@@ -336,6 +336,28 @@ def get_chat_message(
     return chat_message
 
 
+def get_chat_session_by_message_id(
+    db_session: Session,
+    message_id: int,
+) -> ChatSession:
+    """
+    Should only be used for Slack
+    Get the chat session associated with a specific message ID
+    Note: this ignores permission checks.
+    """
+    stmt = select(ChatMessage).where(ChatMessage.id == message_id)
+
+    result = db_session.execute(stmt)
+    chat_message = result.scalar_one_or_none()
+
+    if chat_message is None:
+        raise ValueError(
+            f"Unable to find chat session associated with message ID: {message_id}"
+        )
+
+    return chat_message.chat_session
+
+
 def get_chat_messages_by_sessions(
     chat_session_ids: list[UUID],
     user_id: UUID | None,

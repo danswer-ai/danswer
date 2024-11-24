@@ -1480,6 +1480,7 @@ class ChannelConfig(TypedDict):
     # If None then no follow up
     # If empty list, follow up with no tags
     follow_up_tags: NotRequired[list[str]]
+    show_continue_in_web_ui: NotRequired[bool]  # defaults to False
 
 
 class SlackBotResponseType(str, PyEnum):

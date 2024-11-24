@@ -156,6 +156,7 @@ class SlackChannelConfigCreationRequest(BaseModel):
     channel_name: str
     respond_tag_only: bool = False
     respond_to_bots: bool = False
+    show_continue_in_web_ui: bool = False
     enable_auto_filters: bool = False
     # If no team members, assume respond in the channel to everyone
     respond_member_group_list: list[str] = Field(default_factory=list)

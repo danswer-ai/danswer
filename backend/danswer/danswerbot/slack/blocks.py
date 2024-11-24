@@ -18,9 +18,11 @@ from slack_sdk.models.blocks.block_elements import ImageElement
 
 from danswer.chat.models import DanswerQuote
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
+from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
+from danswer.danswerbot.slack.constants import CONTINUE_IN_WEB_UI_ACTION_ID
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
@@ -28,9 +30,12 @@ from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_I
 from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.icons import source_to_github_img_link
+from danswer.danswerbot.slack.utils import build_continue_in_web_ui_id
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
+from danswer.db.chat import get_chat_session_by_message_id
+from danswer.db.engine import get_session_with_tenant
 from danswer.search.models import SavedSearchDoc
 from danswer.utils.text_processing import decode_escapes
 from danswer.utils.text_processing import replace_whitespaces_w_space
@@ -101,12 +106,12 @@ def _split_text(text: str, limit: int = 3000) -> list[str]:
     return chunks
 
 
-def clean_markdown_link_text(text: str) -> str:
+def _clean_markdown_link_text(text: str) -> str:
     # Remove any newlines within the text
     return text.replace("\n", " ").strip()
 
 
-def build_qa_feedback_block(
+def _build_qa_feedback_block(
     message_id: int, feedback_reminder_id: str | None = None
 ) -> Block:
     return ActionsBlock(
@@ -115,7 +120,6 @@ def build_qa_feedback_block(
             ButtonElement(
                 action_id=LIKE_BLOCK_ACTION_ID,
                 text="👍 Helpful",
-                style="primary",
                 value=feedback_reminder_id,
             ),
             ButtonElement(
@@ -155,7 +159,7 @@ def get_document_feedback_blocks() -> Block:
     )
 
 
-def build_doc_feedback_block(
+def _build_doc_feedback_block(
     message_id: int,
     document_id: str,
     document_rank: int,
@@ -223,7 +227,7 @@ def build_documents_blocks(
 
         feedback: ButtonElement | dict = {}
         if message_id is not None:
-            feedback = build_doc_feedback_block(
+            feedback = _build_doc_feedback_block(
                 message_id=message_id,
                 document_id=d.document_id,
                 document_rank=rank,
@@ -286,7 +290,7 @@ def build_sources_blocks(
             + ([days_ago_str] if days_ago_str else [])
         )
 
-        document_title = clean_markdown_link_text(doc_sem_id)
+        document_title = _clean_markdown_link_text(doc_sem_id)
         img_link = source_to_github_img_link(d.source_type)
 
         section_blocks.append(
@@ -317,7 +321,7 @@ def build_sources_blocks(
     return section_blocks
 
 
-def build_quotes_block(
+def _build_quotes_block(
     quotes: list[DanswerQuote],
 ) -> list[Block]:
     quote_lines: list[str] = []
@@ -408,9 +412,9 @@ def build_qa_response_blocks(
             SectionBlock(text=text) for text in _split_text(answer_processed)
         ]
         if quotes:
-            quotes_blocks = build_quotes_block(quotes)
+            quotes_blocks = _build_quotes_block(quotes)
 
-        # if no quotes OR `build_quotes_block()` did not give back any blocks
+        # if no quotes OR `_build_quotes_block()` did not give back any blocks
         if not quotes_blocks:
             quotes_blocks = [
                 SectionBlock(
@@ -427,7 +431,7 @@ def build_qa_response_blocks(
 
     if message_id is not None and not skip_ai_feedback:
         response_blocks.append(
-            build_qa_feedback_block(
+            _build_qa_feedback_block(
                 message_id=message_id, feedback_reminder_id=feedback_reminder_id
             )
         )
@@ -436,6 +440,28 @@ def build_qa_response_blocks(
         response_blocks.extend(quotes_blocks)
 
     return response_blocks
+
+
+def build_continue_in_web_ui_block(
+    tenant_id: str | None,
+    message_id: int,
+) -> Block:
+    with get_session_with_tenant(tenant_id) as db_session:
+        chat_session = get_chat_session_by_message_id(
+            db_session=db_session,
+            message_id=message_id,
+        )
+        return ActionsBlock(
+            block_id=build_continue_in_web_ui_id(message_id),
+            elements=[
+                ButtonElement(
+                    action_id=CONTINUE_IN_WEB_UI_ACTION_ID,
+                    text="Continue in Web UI",
+                    style="primary",
+                    url=f"{WEB_DOMAIN}/chat?slackChatId={chat_session.id}",
+                ),
+            ],
+        )
 
 
 def build_follow_up_block(message_id: int | None) -> ActionsBlock:

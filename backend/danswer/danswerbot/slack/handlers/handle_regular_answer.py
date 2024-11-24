@@ -21,6 +21,7 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
+from danswer.danswerbot.slack.blocks import build_continue_in_web_ui_block
 from danswer.danswerbot.slack.blocks import build_documents_blocks
 from danswer.danswerbot.slack.blocks import build_follow_up_block
 from danswer.danswerbot.slack.blocks import build_qa_response_blocks
@@ -429,6 +430,19 @@ def handle_regular_answer(
         feedback_reminder_id=feedback_reminder_id,
     )
 
+    web_follow_up_block = []
+    if channel_conf and channel_conf.get("show_continue_in_web_ui") is True:
+        if answer.chat_message_id is None:
+            raise ValueError(
+                "Unable to find chat session associated with answer: " f"{answer}"
+            )
+        web_follow_up_block.append(
+            build_continue_in_web_ui_block(
+                tenant_id=tenant_id,
+                message_id=answer.chat_message_id,
+            )
+        )
+
     # Get the chunks fed to the LLM only, then fill with other docs
     llm_doc_inds = answer.llm_selected_doc_indices or []
     llm_docs = [top_docs[i] for i in llm_doc_inds]
@@ -461,7 +475,11 @@ def handle_regular_answer(
         document_blocks = [DividerBlock()] + document_blocks
 
     all_blocks = (
-        restate_question_block + answer_blocks + citations_block + document_blocks
+        restate_question_block
+        + answer_blocks
+        + citations_block
+        + document_blocks
+        + web_follow_up_block
     )
 
     if channel_conf and channel_conf.get("follow_up_tags") is not None:
