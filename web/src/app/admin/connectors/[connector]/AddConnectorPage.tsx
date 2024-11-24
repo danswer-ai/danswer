@@ -260,8 +260,17 @@ export default function AddConnector({
 
         // Google sites-specific handling
         if (connector == "google_sites") {
+          const selectedFile = values.zip_path; // Ensure this matches the `name` prop in FileInput
+          if (!selectedFile) {
+            setPopup({
+              message: "No file selected for upload",
+              type: "error",
+            });
+            return;
+          }
+
           const response = await submitGoogleSite(
-            selectedFiles,
+            [selectedFile], // Pass the file as an array
             values?.base_url,
             setPopup,
             advancedConfiguration.refreshFreq,
@@ -276,7 +285,6 @@ export default function AddConnector({
           }
           return;
         }
-
         // File-specific handling
         if (connector == "file" && selectedFiles.length > 0) {
           const response = await submitFiles(
