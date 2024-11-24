@@ -50,7 +50,6 @@ from httpx_oauth.oauth2 import OAuth2Token
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 from danswer.auth.api_key import get_hashed_api_key_from_request
 from danswer.auth.invited_users import get_invited_users
@@ -83,7 +82,6 @@ from danswer.db.auth import get_user_db
 from danswer.db.auth import SQLAlchemyUserAdminDB
 from danswer.db.engine import get_async_session
 from danswer.db.engine import get_async_session_with_tenant
-from danswer.db.engine import get_session
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
@@ -920,8 +918,8 @@ def get_oauth_router(
     return router
 
 
-def api_key_dep(
-    request: Request, db_session: Session = Depends(get_session)
+async def api_key_dep(
+    request: Request, async_db_session: AsyncSession = Depends(get_async_session)
 ) -> User | None:
     if AUTH_TYPE == AuthType.DISABLED:
         return None
@@ -931,7 +929,7 @@ def api_key_dep(
         raise HTTPException(status_code=401, detail="Missing API key")
 
     if hashed_api_key:
-        user = fetch_user_for_api_key(hashed_api_key, db_session)
+        user = await fetch_user_for_api_key(hashed_api_key, async_db_session)
 
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid API key")

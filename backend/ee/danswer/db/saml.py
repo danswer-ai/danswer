@@ -65,6 +65,8 @@ async def get_saml_account(
     return result.scalar_one_or_none()
 
 
-def expire_saml_account(saml_account: SamlAccount, db_session: Session) -> None:
+async def expire_saml_account(
+    saml_account: SamlAccount, async_db_session: AsyncSession
+) -> None:
     saml_account.expires_at = func.now()
-    db_session.commit()
+    await async_db_session.commit()
