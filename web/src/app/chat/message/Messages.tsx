@@ -392,7 +392,7 @@ export const AIMessage = ({
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
-                                index={index}
+                                index={index || 0}
                                 query={query}
                                 finished={toolCall?.tool_result != undefined}
                                 hasDocs={hasDocs || false}

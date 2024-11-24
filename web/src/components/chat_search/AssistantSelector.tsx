@@ -92,8 +92,8 @@ const AssistantSelector = ({
       const updatedAssistants = arrayMove(assistants, oldIndex, newIndex);
       setAssistants(updatedAssistants);
       await updateUserAssistantList(updatedAssistants.map((a) => a.id));
-      await refreshUser();
-      await refreshAssistants();
+      // await refreshUser();
+      // await refreshAssistants();
     }
   };
 
@@ -129,7 +129,7 @@ const AssistantSelector = ({
     checkPersonaRequiresImageGeneration(liveAssistant);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className=" relative" ref={dropdownRef}>
       <div className="flex justify-center">
         <div
           onClick={() => {
@@ -199,7 +199,7 @@ const AssistantSelector = ({
                     items={assistants.map((a) => a.id.toString())}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                    <div className="space-y-2 max-h-96  overflow-x-none overflow-y-auto">
                       {assistants.map((assistant) => (
                         <DraggableAssistantCard
                           key={assistant.id.toString()}
