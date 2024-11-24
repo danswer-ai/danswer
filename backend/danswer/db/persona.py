@@ -390,7 +390,9 @@ def upsert_prompt(
     return prompt
 
 
-#
+# NOTE: This endpoint cannot update persona configuration options that
+# are core to the persona, such as its display priority and
+# whether or not the assistant is a built-in / default assistant
 def upsert_persona(
     user: User | None,
     name: str,
