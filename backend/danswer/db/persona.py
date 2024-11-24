@@ -461,9 +461,6 @@ def upsert_persona(
         validate_persona_tools(tools)
 
     if persona:
-        if not builtin_persona and persona.builtin_persona:
-            raise ValueError("Cannot update builtin persona with non-builtin.")
-
         # this checks if the user has permission to edit the persona
         persona = fetch_persona_by_id(
             db_session=db_session, persona_id=persona.id, user=user, get_editable=True
@@ -486,7 +483,6 @@ def upsert_persona(
         persona.icon_shape = icon_shape
         if remove_image or uploaded_image_id:
             persona.uploaded_image_id = uploaded_image_id
-        persona.display_priority = display_priority
         persona.is_visible = is_visible
         persona.search_start_date = search_start_date
         persona.category_id = category_id
