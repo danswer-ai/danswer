@@ -7,7 +7,7 @@ interface FileInputProps {
   label: string;
   optional?: boolean;
   description?: string;
-  isZip?: boolean; // New prop to determine if it's a zip file
+  isZip?: boolean;
 }
 
 export default function FileInput({

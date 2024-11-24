@@ -266,16 +266,8 @@ export default function AddConnector({
 
         // Google sites-specific handling
         if (connector == "google_sites") {
-          if (!selectedFiles) {
-            setPopup({
-              message: "No file selected for upload",
-              type: "error",
-            });
-            return;
-          }
-
           const response = await submitGoogleSite(
-            selectedFiles, // Pass the file as an array
+            selectedFiles,
             values?.base_url,
             setPopup,
             advancedConfiguration.refreshFreq,
