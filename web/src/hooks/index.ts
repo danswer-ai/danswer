@@ -1,0 +1,1 @@
+export { usePaginatedData } from "./usePaginatedData";
