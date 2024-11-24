@@ -461,6 +461,9 @@ def upsert_persona(
         validate_persona_tools(tools)
 
     if persona:
+        if persona.builtin_persona and not builtin_persona:
+            raise ValueError("Cannot update builtin persona with non-builtin.")
+
         # this checks if the user has permission to edit the persona
         persona = fetch_persona_by_id(
             db_session=db_session, persona_id=persona.id, user=user, get_editable=True
