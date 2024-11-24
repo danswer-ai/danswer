@@ -422,6 +422,9 @@ LOG_ALL_MODEL_INTERACTIONS = (
 LOG_DANSWER_MODEL_INTERACTIONS = (
     os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
 )
+LOG_INDIVIDUAL_MODEL_TOKENS = (
+    os.environ.get("LOG_INDIVIDUAL_MODEL_TOKENS", "").lower() == "true"
+)
 # If set to `true` will enable additional logs about Vespa query performance
 # (time spent on finding the right docs + time spent fetching summaries from disk)
 LOG_VESPA_TIMING_INFORMATION = (
