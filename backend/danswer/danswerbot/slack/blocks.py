@@ -23,6 +23,7 @@ from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
 from danswer.danswerbot.slack.constants import CONTINUE_IN_WEB_UI_ACTION_ID
+from danswer.context.search.models import SavedSearchDoc
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
@@ -36,7 +37,6 @@ from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
 from danswer.db.chat import get_chat_session_by_message_id
 from danswer.db.engine import get_session_with_tenant
-from danswer.search.models import SavedSearchDoc
 from danswer.utils.text_processing import decode_escapes
 from danswer.utils.text_processing import replace_whitespaces_w_space
 

@@ -28,7 +28,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { PopoverContent } from "@radix-ui/react-popover";
 import { CalendarIcon } from "lucide-react";
-import { buildDateString, getTimeAgoString } from "@/lib/dateUtils";
+import {
+  buildDateString,
+  getDateRangeString,
+  getTimeAgoString,
+} from "@/lib/dateUtils";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="font-bold text-xs mt-2 flex">{children}</div>
@@ -116,7 +120,9 @@ export function SourceSelector({
           <div className="cursor-pointer">
             <SectionTitle>Time Range</SectionTitle>
             <p className="text-sm text-default mt-2">
-              {getTimeAgoString(timeRange?.from!) || "Select a time range"}
+              {timeRange?.from
+                ? getDateRangeString(timeRange.from, timeRange.to)
+                : "Since"}
             </p>
           </div>
         </PopoverTrigger>
@@ -463,7 +469,7 @@ export function HorizontalSourceSelector({
           <div
             className={`
               border 
-              max-w-36
+              max-w-64
               border-border 
               rounded-lg 
               bg-background
@@ -486,7 +492,9 @@ export function HorizontalSourceSelector({
           >
             <CalendarIcon className="h-4 w-4" />
 
-            {timeRange?.from ? getTimeAgoString(timeRange.from) : "Since"}
+            {timeRange?.from
+              ? getDateRangeString(timeRange.from, timeRange.to)
+              : "Since"}
           </div>
         </PopoverTrigger>
         <PopoverContent
@@ -494,14 +502,18 @@ export function HorizontalSourceSelector({
           align="start"
         >
           <Calendar
-            mode="single"
-            selected={timeRange ? new Date(timeRange.from) : undefined}
-            onSelect={(date) => {
-              const selectedDate = date || new Date();
-              const today = new Date();
+            mode="range"
+            selected={
+              timeRange
+                ? { from: new Date(timeRange.from), to: new Date(timeRange.to) }
+                : undefined
+            }
+            onSelect={(daterange) => {
+              const initialDate = daterange?.from || new Date();
+              const endDate = daterange?.to || new Date();
               setTimeRange({
-                from: selectedDate > today ? today : selectedDate,
-                to: today,
+                from: initialDate,
+                to: endDate,
                 selectValue: timeRange?.selectValue || "",
               });
             }}

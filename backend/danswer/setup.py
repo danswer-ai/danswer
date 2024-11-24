@@ -2,7 +2,6 @@ import time
 
 from sqlalchemy.orm import Session
 
-from danswer.chat.load_yamls import load_chat_yamls
 from danswer.configs.app_configs import DISABLE_INDEX_UPDATE_ON_SWAP
 from danswer.configs.app_configs import MANAGED_VESPA
 from danswer.configs.constants import KV_REINDEX_KEY
@@ -10,6 +9,8 @@ from danswer.configs.constants import KV_SEARCH_SETTINGS
 from danswer.configs.model_configs import FAST_GEN_AI_MODEL_VERSION
 from danswer.configs.model_configs import GEN_AI_API_KEY
 from danswer.configs.model_configs import GEN_AI_MODEL_VERSION
+from danswer.context.search.models import SavedSearchSettings
+from danswer.context.search.retrieval.search_runner import download_nltk_data
 from danswer.db.connector import check_connectors_exist
 from danswer.db.connector import create_initial_default_connector
 from danswer.db.connector_credential_pair import associate_default_cc_pair
@@ -37,9 +38,8 @@ from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
-from danswer.search.models import SavedSearchSettings
-from danswer.search.retrieval.search_runner import download_nltk_data
 from danswer.seeding.load_docs import seed_initial_documents
+from danswer.seeding.load_yamls import load_chat_yamls
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.store import load_settings
 from danswer.server.settings.store import store_settings

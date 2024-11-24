@@ -20,6 +20,7 @@ from danswer.auth.schemas import UserRole
 from danswer.configs.chat_configs import BING_API_KEY
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_ABOVE
 from danswer.configs.chat_configs import CONTEXT_CHUNKS_BELOW
+from danswer.context.search.enums import RecencyBiasSetting
 from danswer.db.constants import SLACK_BOT_PERSONA_PREFIX
 from danswer.db.engine import get_sqlalchemy_engine
 from danswer.db.models import DocumentSet
@@ -33,7 +34,6 @@ from danswer.db.models import Tool
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.db.models import UserGroup
-from danswer.search.enums import RecencyBiasSetting
 from danswer.server.features.persona.models import CreatePersonaRequest
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.utils.logger import setup_logger
