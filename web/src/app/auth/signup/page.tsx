@@ -15,11 +15,10 @@ import AuthFlowContainer from "@/components/auth/AuthFlowContainer";
 import ReferralSourceSelector from "./ReferralSourceSelector";
 import { Separator } from "@/components/ui/separator";
 
-const Page = async ({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
+const Page = async (props: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
+  const searchParams = await props.searchParams;
   const nextUrl = Array.isArray(searchParams?.next)
     ? searchParams?.next[0]
     : searchParams?.next || null;

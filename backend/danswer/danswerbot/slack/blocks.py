@@ -22,21 +22,26 @@ from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.danswerbot_configs import DANSWER_BOT_NUM_DOCS_TO_DISPLAY
-from danswer.danswerbot.slack.constants import CONTINUE_IN_WEB_UI_ACTION_ID
 from danswer.context.search.models import SavedSearchDoc
+from danswer.danswerbot.slack.constants import CONTINUE_IN_WEB_UI_ACTION_ID
 from danswer.danswerbot.slack.constants import DISLIKE_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FEEDBACK_DOC_BUTTON_BLOCK_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import FOLLOWUP_BUTTON_RESOLVED_ACTION_ID
 from danswer.danswerbot.slack.constants import IMMEDIATE_RESOLVED_BUTTON_ACTION_ID
 from danswer.danswerbot.slack.constants import LIKE_BLOCK_ACTION_ID
+from danswer.danswerbot.slack.formatting import format_slack_message
 from danswer.danswerbot.slack.icons import source_to_github_img_link
+from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import build_continue_in_web_ui_id
 from danswer.danswerbot.slack.utils import build_feedback_id
 from danswer.danswerbot.slack.utils import remove_slack_text_interactions
 from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
 from danswer.db.chat import get_chat_session_by_message_id
 from danswer.db.engine import get_session_with_tenant
+from danswer.db.models import ChannelConfig
+from danswer.db.models import Persona
+from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.utils.text_processing import decode_escapes
 from danswer.utils.text_processing import replace_whitespaces_w_space
 
@@ -186,7 +191,7 @@ def get_restate_blocks(
     ]
 
 
-def build_documents_blocks(
+def _build_documents_blocks(
     documents: list[SavedSearchDoc],
     message_id: int | None,
     num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
@@ -245,7 +250,7 @@ def build_documents_blocks(
     return section_blocks
 
 
-def build_sources_blocks(
+def _build_sources_blocks(
     cited_documents: list[tuple[int, SavedSearchDoc]],
     num_docs_to_display: int = DANSWER_BOT_NUM_DOCS_TO_DISPLAY,
 ) -> list[Block]:
@@ -363,8 +368,7 @@ def _build_quotes_block(
     return [SectionBlock(text="*Relevant Snippets*\n" + "\n".join(quote_lines))]
 
 
-def build_qa_response_blocks(
-    message_id: int | None,
+def _build_qa_response_blocks(
     answer: str | None,
     quotes: list[DanswerQuote] | None,
     source_filters: list[DocumentSource] | None,
@@ -372,9 +376,8 @@ def build_qa_response_blocks(
     favor_recent: bool,
     skip_quotes: bool = False,
     process_message_for_citations: bool = False,
-    skip_ai_feedback: bool = False,
-    feedback_reminder_id: str | None = None,
 ) -> list[Block]:
+    formatted_answer = format_slack_message(answer) if answer else None
     if DISABLE_GENERATIVE_AI:
         return []
 
@@ -398,14 +401,16 @@ def build_qa_response_blocks(
 
         filter_block = SectionBlock(text=f"_{filter_text}_")
 
-    if not answer:
+    if not formatted_answer:
         answer_blocks = [
             SectionBlock(
                 text="Sorry, I was unable to find an answer, but I did find some potentially relevant docs 🤓"
             )
         ]
     else:
-        answer_processed = decode_escapes(remove_slack_text_interactions(answer))
+        answer_processed = decode_escapes(
+            remove_slack_text_interactions(formatted_answer)
+        )
         if process_message_for_citations:
             answer_processed = _process_citations_for_slack(answer_processed)
         answer_blocks = [
@@ -429,20 +434,13 @@ def build_qa_response_blocks(
 
     response_blocks.extend(answer_blocks)
 
-    if message_id is not None and not skip_ai_feedback:
-        response_blocks.append(
-            _build_qa_feedback_block(
-                message_id=message_id, feedback_reminder_id=feedback_reminder_id
-            )
-        )
-
     if not skip_quotes:
         response_blocks.extend(quotes_blocks)
 
     return response_blocks
 
 
-def build_continue_in_web_ui_block(
+def _build_continue_in_web_ui_block(
     tenant_id: str | None,
     message_id: int,
 ) -> Block:
@@ -456,7 +454,7 @@ def build_continue_in_web_ui_block(
             elements=[
                 ButtonElement(
                     action_id=CONTINUE_IN_WEB_UI_ACTION_ID,
-                    text="Continue in Web UI",
+                    text="Continue Chat in Danswer!",
                     style="primary",
                     url=f"{WEB_DOMAIN}/chat?slackChatId={chat_session.id}",
                 ),
@@ -464,7 +462,7 @@ def build_continue_in_web_ui_block(
         )
 
 
-def build_follow_up_block(message_id: int | None) -> ActionsBlock:
+def _build_follow_up_block(message_id: int | None) -> ActionsBlock:
     return ActionsBlock(
         block_id=build_feedback_id(message_id) if message_id is not None else None,
         elements=[
@@ -509,3 +507,114 @@ def build_follow_up_resolved_blocks(
         ]
     )
     return [text_block, button_block]
+
+
+def block_builder(
+    tenant_id: str | None,
+    message_info: SlackMessageInfo,
+    answer: OneShotQAResponse,
+    persona: Persona | None,
+    channel_conf: ChannelConfig | None,
+    use_citations: bool,
+    feedback_reminder_id: str | None,
+    skip_ai_feedback: bool = False,
+) -> list[Block]:
+    retrieval_info = answer.docs
+    if not retrieval_info:
+        # This should not happen, even with no docs retrieved, there is still info returned
+        raise RuntimeError("Failed to retrieve docs, cannot answer question.")
+
+    top_docs = retrieval_info.top_documents
+    messages = message_info.thread_messages
+
+    # If called with the DanswerBot slash command, the question is lost so we have to reshow it
+    restate_question_block = get_restate_blocks(
+        messages[-1].message, message_info.is_bot_msg
+    )
+
+    answer_blocks = _build_qa_response_blocks(
+        answer=answer.answer,
+        quotes=answer.quotes.quotes if answer.quotes else None,
+        source_filters=retrieval_info.applied_source_filters,
+        time_cutoff=retrieval_info.applied_time_cutoff,
+        favor_recent=retrieval_info.recency_bias_multiplier > 1,
+        # currently Personas don't support quotes
+        # if citations are enabled, also don't use quotes
+        skip_quotes=persona is not None or use_citations,
+        process_message_for_citations=use_citations,
+    )
+
+    web_follow_up_block = []
+    if channel_conf and channel_conf.get("show_continue_in_web_ui"):
+        if answer.chat_message_id is None:
+            raise ValueError(
+                "Unable to find chat session associated with answer: " f"{answer}"
+            )
+        web_follow_up_block.append(
+            _build_continue_in_web_ui_block(
+                tenant_id=tenant_id,
+                message_id=answer.chat_message_id,
+            )
+        )
+
+    # Get the chunks fed to the LLM only, then fill with other docs
+    llm_doc_inds = answer.llm_selected_doc_indices or []
+    llm_docs = [top_docs[i] for i in llm_doc_inds]
+    remaining_docs = [
+        doc for idx, doc in enumerate(top_docs) if idx not in llm_doc_inds
+    ]
+    priority_ordered_docs = llm_docs + remaining_docs
+
+    document_blocks = []
+    citations_block = []
+    # if citations are enabled, only show cited documents
+    if use_citations:
+        citations = answer.citations or []
+        cited_docs = []
+        for citation in citations:
+            matching_doc = next(
+                (d for d in top_docs if d.document_id == citation.document_id),
+                None,
+            )
+            if matching_doc:
+                cited_docs.append((citation.citation_num, matching_doc))
+
+        cited_docs.sort()
+        citations_block = _build_sources_blocks(cited_documents=cited_docs)
+    elif priority_ordered_docs:
+        document_blocks = _build_documents_blocks(
+            documents=priority_ordered_docs,
+            message_id=answer.chat_message_id,
+        )
+        document_blocks = [DividerBlock()] + document_blocks
+
+    follow_up_block = []
+    if channel_conf and channel_conf.get("follow_up_tags") is not None:
+        follow_up_block.append(
+            _build_follow_up_block(message_id=answer.chat_message_id)
+        )
+
+    ai_feedback_block = []
+    if answer.chat_message_id is not None and not skip_ai_feedback:
+        ai_feedback_block.append(
+            _build_qa_feedback_block(
+                message_id=answer.chat_message_id,
+                feedback_reminder_id=feedback_reminder_id,
+            )
+        )
+
+    citations_divider = [DividerBlock()] if citations_block else []
+    buttons_divider = [DividerBlock()] if web_follow_up_block or follow_up_block else []
+
+    all_blocks = (
+        restate_question_block
+        + answer_blocks
+        + ai_feedback_block
+        + citations_divider
+        + citations_block
+        + document_blocks
+        + buttons_divider
+        + web_follow_up_block
+        + follow_up_block
+    )
+    return all_blocks
