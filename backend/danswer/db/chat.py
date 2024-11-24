@@ -276,8 +276,8 @@ def duplicate_chat_session_for_user_from_slack(
         db_session=db_session,
         user_id=user.id if user else None,
         persona_id=new_persona_id,
-        # This will likely be empty but the frontend will force a rename
-        description=chat_session.description,
+        # Set this to empty string so the frontend will force a rename
+        description="",
         llm_override=chat_session.llm_override,
         prompt_override=chat_session.prompt_override,
         # Chat sessions from Slack should put people in the chat UI, not the search
