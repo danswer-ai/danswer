@@ -21,148 +21,162 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
+class DanswerDiscordClient(discord.Client):
+    def __init__(
+        self,
+        start: SecondsSinceUnixEpoch,
+        end: SecondsSinceUnixEpoch,
+        channel_names: List[str] | None = None,
+        server_ids: List[int] | None = None,
+        pull_date_from: str | None = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        # read start_time and end_time
+        self.start_time: SecondsSinceUnixEpoch = start
+        self.end_time: SecondsSinceUnixEpoch = end
+        self.channel_names: List[str] | None = channel_names
+        self.server_ids: List[int] | None = server_ids
+        self.pull_date_from: str | None = pull_date_from  # YYYY-MM-DD
+        self.docs: list[Document] = []
+
+    async def on_ready(self) -> None:
+        try:
+            docs: list[Document] = []
+
+            channel_names = self.channel_names
+            server_ids = self.server_ids
+            start: datetime = datetime.fromtimestamp(self.start_time, tz=timezone.utc)
+            end: datetime = datetime.fromtimestamp(self.end_time, tz=timezone.utc)
+            pull_date_from: datetime | None = (
+                datetime.strptime(self.pull_date_from, "%Y-%m-%d")
+                if self.pull_date_from
+                else None
+            )
+
+            if pull_date_from:
+                start = max(start, pull_date_from)
+
+            if start > end:
+                return docs
+
+            filtered_channels: list[TextChannel] = []
+            async for guild in self.fetch_guilds():
+                if (server_ids is None) or (server_ids and guild.id in server_ids):
+                    guild_channels = await guild.fetch_channels()
+                    for channel in guild_channels:
+                        if (
+                            (channel_names is None)
+                            or (channel_names and channel.name in channel_names)
+                        ) and isinstance(channel, discord.TextChannel):
+                            filtered_channels.append(channel)
+
+            logger.info(
+                f"Found {len(filtered_channels)} channels for the authenticated user"
+            )
+
+            sections: list[Section] = []
+            for channel in filtered_channels:
+                # process the messages not in any thread
+                max_ts = start
+                sections = []
+                async for channel_message in channel.history(after=start, before=end):
+                    if channel_message.thread is None:
+                        sections.append(
+                            Section(
+                                text=channel_message.content,
+                                link=channel_message.jump_url,
+                            )
+                        )
+                        if channel_message.edited_at:
+                            max_ts = max(channel_message.edited_at, max_ts)
+
+                if len(sections) > 0:
+                    docs.append(
+                        Document(
+                            id=str(channel_message.id),
+                            source=DocumentSource.DISCORD,
+                            semantic_identifier=channel.name,
+                            doc_updated_at=max_ts,
+                            title=channel.name,
+                            sections=sections,
+                            metadata={"Channel": channel.name},
+                        )
+                    )
+
+                # process the messages in threads
+                for thread in channel.threads:
+                    sections = []
+                    max_ts = start
+                    async for thread_message in thread.history(
+                        after=start,
+                        before=end,
+                    ):
+                        sections.append(
+                            Section(
+                                text=thread_message.content,
+                                link=thread_message.jump_url,
+                            )
+                        )
+                        if thread_message.edited_at:
+                            max_ts = max(thread_message.edited_at, max_ts)
+                    # if len(docs) >= batch_size:
+                    #     yield docs
+                    #     docs = []
+                    if len(sections) > 0:
+                        docs.append(
+                            Document(
+                                id=str(thread_message.id),
+                                source=DocumentSource.DISCORD,
+                                semantic_identifier=f"{thread.name} in {channel.name}",
+                                doc_updated_at=max_ts,
+                                title=thread.name,
+                                sections=sections,
+                                metadata={
+                                    "Channel": channel.name,
+                                    "Thread": thread.name,
+                                },
+                            )
+                        )
+                self.docs = docs
+        finally:
+            print("Closing the connection")
+            await self.close()
+
+
 async def _fetch_all_docs(
     token: str,
     start: SecondsSinceUnixEpoch,
     end: SecondsSinceUnixEpoch,
-    channels: List[str] | None,
+    channel_names: List[str] | None,
     server_ids: List[int] | None,
-    batch_size: int,
+    pull_date_from: str | None,
 ) -> AsyncIterable[List[Document]]:
-    docs: list[Document] = []
-
-    class DanswerDiscordClient(discord.Client):
-        def __init__(
-            self,
-            start: SecondsSinceUnixEpoch,
-            end: SecondsSinceUnixEpoch,
-            *args: Any,
-            **kwargs: Any,
-        ) -> None:
-            super().__init__(*args, **kwargs)
-            # read start_time and end_time
-            self.start_time = start
-            self.end_time = end
-
-        async def on_ready(self) -> None:
-            try:
-                start: datetime = datetime.fromtimestamp(
-                    self.start_time, tz=timezone.utc
-                )
-                end: datetime = datetime.fromtimestamp(self.end_time, tz=timezone.utc)
-
-                print(f"Connection established start={start} end={end}")
-
-                filtered_channels: list[TextChannel] = []
-                async for guild in client.fetch_guilds():
-                    if (server_ids is None) or (server_ids and guild.id in server_ids):
-                        guild_channels = await guild.fetch_channels()
-                        for channel in guild_channels:
-                            print(channel.name)
-                            if (
-                                (channels is None)
-                                or (channels and channel.name in channels)
-                            ) and isinstance(channel, discord.TextChannel):
-                                filtered_channels.append(channel)
-
-                logger.info(
-                    f"Found {len(filtered_channels)} channels for the authenticated user"
-                )
-                print(
-                    f"Found {len(filtered_channels)} channels for the authenticated user"
-                )
-
-                sections: list[Section] = []
-                for channel in filtered_channels:
-                    # process the messages not in any thread
-                    max_ts = start
-                    sections = []
-                    async for channel_message in channel.history(
-                        limit=batch_size, after=start, before=end
-                    ):  # TODO: pagination
-                        if channel_message.thread is None:
-                            sections.append(
-                                Section(
-                                    text=channel_message.content,
-                                    link=channel_message.jump_url,
-                                )
-                            )
-                            if channel_message.edited_at:
-                                max_ts = max(channel_message.edited_at, max_ts)
-
-                    if len(sections) > 0:
-                        docs.append(
-                            Document(
-                                id=str(channel_message.id),
-                                source=DocumentSource.DISCORD,
-                                semantic_identifier=channel.name,
-                                doc_updated_at=max_ts,
-                                title=channel.name,
-                                sections=sections,
-                                metadata={"Channel": channel.name},
-                            )
-                        )
-
-                    # process the messages in threads
-                    for thread in channel.threads:
-                        sections = []
-                        max_ts = start
-                        async for thread_message in thread.history(
-                            limit=batch_size,
-                            after=start,
-                            before=end,
-                        ):  # TODO: pagination
-                            sections.append(
-                                Section(
-                                    text=thread_message.content,
-                                    link=thread_message.jump_url,
-                                )
-                            )
-                            if thread_message.edited_at:
-                                max_ts = max(thread_message.edited_at, max_ts)
-                        # if len(docs) >= batch_size:
-                        #     yield docs
-                        #     docs = []
-                        if len(sections) > 0:
-                            docs.append(
-                                Document(
-                                    id=str(thread_message.id),
-                                    source=DocumentSource.DISCORD,
-                                    semantic_identifier=f"{thread.name} in {channel.name}",
-                                    doc_updated_at=max_ts,
-                                    title=thread.name,
-                                    sections=sections,
-                                    metadata={
-                                        "Channel": channel.name,
-                                        "Thread": thread.name,
-                                    },
-                                )
-                            )
-                    print("Total docs", len(docs))
-            finally:
-                print("Closing the connection")
-                await self.close()
-
     intents = discord.Intents.default()
     intents.message_content = True
-    client = DanswerDiscordClient(start, end, intents=intents)
+    client = DanswerDiscordClient(
+        start, end, channel_names, server_ids, pull_date_from, intents=intents
+    )
     await client.start(token, reconnect=True)
-    return docs
+    # TODO: not sure how to convert this to a sync iterable ?!!
+    return client.docs
 
 
 class DiscordConnector(PollConnector):
     def __init__(
         self,
         server_ids: list[str] | None = None,
-        channels: list[str] | None = None,
+        channel_names: list[str] | None = None,
+        start_date: str | None = None,  # YYYY-MM-DD
         batch_size: int = INDEX_BATCH_SIZE,
     ):
-        self.channels: list[str] | None = channels
+        self.channel_names: list[str] | None = channel_names
         self.server_ids: list[int] | None = (
             [int(server_id) for server_id in server_ids] if server_ids else None
         )
-        self.batch_size = batch_size
         self.discord_bot_token = None
+        self.pull_date_from = start_date
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.discord_bot_token = credentials["discord_bot_token"]
@@ -174,9 +188,6 @@ class DiscordConnector(PollConnector):
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
-        # if self.discord_bot_token is None:
-        logger.info(self.server_ids)
-        logger.info(self.channels)
         if self.discord_bot_token is None:
             raise ConnectorMissingCredentialError("Discord")
 
@@ -187,9 +198,9 @@ class DiscordConnector(PollConnector):
                 self.discord_bot_token,
                 start,
                 end,
-                self.channels,
+                self.channel_names,
                 self.server_ids,
-                self.batch_size,
+                self.pull_date_from,
             )
         ):
             yield doc
@@ -199,14 +210,15 @@ if __name__ == "__main__":
     import os
     import time
 
-    current = time.time()
-    one_day_ago = current - 24 * 60 * 60 * 3  # 1 day
+    end = time.time()
+    start = end - 24 * 60 * 60 * 1  # 1 day
 
     connector = DiscordConnector(
-        server_ids=["your-test-server-id"],
-        channels=["your-test-channel-name"],
+        server_ids=os.environ.get("server_ids", None),
+        channel_names=os.environ.get("channel_names", None),
+        start_date=os.environ.get("start_date", None),
     )
     connector.load_credentials({"discord_bot_token": os.environ["discord_bot_token"]})
 
-    for doc in connector.poll_source(one_day_ago, current):
+    for doc in connector.poll_source(start, end):
         print(doc)

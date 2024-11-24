@@ -62,7 +62,7 @@ import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import dropboxIcon from "../../../public/Dropbox.png";
 import slackIcon from "../../../public/Slack.png";
-import discordIcon from "../../../public/Discord.png";
+import discordIcon from "../../../public/discord.png";
 
 import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.png";
