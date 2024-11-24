@@ -374,6 +374,26 @@ def process_text(
             "The code demonstrates variable assignment.",
             [],
         ),
+        (
+            "Long JSON string in code block",
+            [
+                "```json\n{",
+                '"name": "John Doe",',
+                '"age": 30,',
+                '"city": "New York",',
+                '"hobbies": ["reading", "swimming", "cycling"],',
+                '"education": {',
+                '    "degree": "Bachelor\'s",',
+                '    "major": "Computer Science",',
+                '    "university": "Example University"',
+                "}",
+                "}\n```",
+            ],
+            '```json\n{"name": "John Doe","age": 30,"city": "New York","hobbies": '
+            '["reading", "swimming", "cycling"],"education": {    '
+            '"degree": "Bachelor\'s",    "major": "Computer Science",    "university": "Example University"}}\n```',
+            [],
+        ),
     ],
 )
 def test_citation_extraction(
