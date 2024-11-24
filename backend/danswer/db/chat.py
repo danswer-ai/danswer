@@ -467,6 +467,11 @@ def add_chats_to_session_from_slack_thread(
     db_session.add(new_user_message)
     db_session.commit()
 
+    search_docs = get_search_docs_for_chat_message(
+        chat_message_id=user_message.id,
+        db_session=db_session,
+    )
+
     new_assistant_message = create_new_chat_message(
         db_session=db_session,
         chat_session_id=new_chat_session_id,
@@ -475,6 +480,7 @@ def add_chats_to_session_from_slack_thread(
         prompt_id=assistant_message.prompt_id,
         token_count=assistant_message.token_count,
         message_type=MessageType.ASSISTANT,
+        reference_docs=search_docs,
     )
     db_session.add(new_assistant_message)
     db_session.commit()
