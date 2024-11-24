@@ -82,8 +82,10 @@ export const SlackChannelConfigCreationForm = ({
               existingSlackChannelConfig?.channel_config?.respond_to_bots ||
               false,
             show_continue_in_web_ui:
+              // If we're updating, we want to keep the existing value
+              // Otherwise, we want to default to true
               existingSlackChannelConfig?.channel_config
-                ?.show_continue_in_web_ui || true,
+                ?.show_continue_in_web_ui ?? !isUpdate,
             enable_auto_filters:
               existingSlackChannelConfig?.enable_auto_filters || false,
             respond_member_group_list:
