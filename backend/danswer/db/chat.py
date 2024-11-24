@@ -3,6 +3,7 @@ from datetime import datetime
 from datetime import timedelta
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import delete
 from sqlalchemy import desc
 from sqlalchemy import func
@@ -30,6 +31,7 @@ from danswer.db.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
 from danswer.db.models import ToolCall
 from danswer.db.models import User
+from danswer.db.persona import get_best_persona_id_for_user
 from danswer.db.pg_file_store import delete_lobj_by_name
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
@@ -250,6 +252,43 @@ def create_chat_session(
     return chat_session
 
 
+def duplicate_chat_session_for_user_from_slack(
+    db_session: Session,
+    user: User | None,
+    chat_session_id: UUID,
+) -> ChatSession:
+    chat_session = get_chat_session_by_id(
+        chat_session_id=chat_session_id,
+        user_id=None,  # Ignore user permissions for this
+        db_session=db_session,
+    )
+    if not chat_session:
+        raise HTTPException(status_code=400, detail="Invalid Chat Session ID provided")
+
+    # This enforces permissions and sets a default
+    new_persona_id = get_best_persona_id_for_user(
+        db_session=db_session,
+        user=user,
+        persona_id=chat_session.persona_id,
+    )
+
+    return create_chat_session(
+        db_session=db_session,
+        user_id=user.id if user else None,
+        persona_id=new_persona_id,
+        # This will likely be empty but the frontend will force a rename
+        description=chat_session.description,
+        llm_override=chat_session.llm_override,
+        prompt_override=chat_session.prompt_override,
+        # Chat sessions from Slack should put people in the chat UI, not the search
+        one_shot=False,
+        # Chat is in UI now so this is false
+        danswerbot_flow=False,
+        # Maybe we want this in the future to track if it was created from Slack
+        slack_thread_id=None,
+    )
+
+
 def update_chat_session(
     db_session: Session,
     user_id: UUID | None,
@@ -375,6 +414,70 @@ def get_chat_messages_by_sessions(
         .order_by(nullsfirst(ChatMessage.parent_message))
     )
     return db_session.execute(stmt).scalars().all()
+
+
+def add_chats_to_session_from_slack_thread(
+    db_session: Session,
+    slack_chat_session_id: UUID,
+    new_chat_session_id: UUID,
+) -> None:
+    new_root_message = ChatMessage(
+        chat_session_id=new_chat_session_id,
+        prompt_id=None,
+        parent_message=None,
+        latest_child_message=None,
+        message="",
+        token_count=0,
+        message_type=MessageType.SYSTEM,
+    )
+    db_session.add(new_root_message)
+    db_session.commit()
+
+    user_message = None
+    assistant_message = None
+    for chat_message in get_chat_messages_by_sessions(
+        chat_session_ids=[slack_chat_session_id],
+        user_id=None,  # Ignore user permissions for this
+        db_session=db_session,
+        skip_permission_check=True,
+    ):
+        # Should only be 3 messages in a Slack chat session
+        if chat_message.message_type == MessageType.SYSTEM:
+            continue
+        elif chat_message.message_type == MessageType.USER:
+            user_message = chat_message
+        elif chat_message.message_type == MessageType.ASSISTANT:
+            assistant_message = chat_message
+
+    if user_message is None or assistant_message is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Couldnt find all messages in Slack chat session",
+        )
+
+    new_user_message = create_new_chat_message(
+        db_session=db_session,
+        chat_session_id=new_chat_session_id,
+        parent_message=new_root_message,
+        message=user_message.message,
+        prompt_id=user_message.prompt_id,
+        token_count=user_message.token_count,
+        message_type=MessageType.USER,
+    )
+    db_session.add(new_user_message)
+    db_session.commit()
+
+    new_assistant_message = create_new_chat_message(
+        db_session=db_session,
+        chat_session_id=new_chat_session_id,
+        parent_message=new_user_message,
+        message=assistant_message.message,
+        prompt_id=assistant_message.prompt_id,
+        token_count=assistant_message.token_count,
+        message_type=MessageType.ASSISTANT,
+    )
+    db_session.add(new_assistant_message)
+    db_session.commit()
 
 
 def get_search_docs_for_chat_message(
