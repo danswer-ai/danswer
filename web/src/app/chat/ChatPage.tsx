@@ -151,17 +151,11 @@ export function ChatPage({
   // available in server-side components
   const settings = useContext(SettingsContext);
   const enterpriseSettings = settings?.enterpriseSettings;
-  if (settings?.settings?.chat_page_enabled === false) {
-    router.push("/search");
-  }
 
   const [documentSidebarToggled, setDocumentSidebarToggled] = useState(false);
+  const [filtersToggled, setFiltersToggled] = useState(false);
 
   const [userSettingsToggled, setUserSettingsToggled] = useState(false);
-
-  const toggleDocumentSidebar = () => {
-    setDocumentSidebarToggled((prev) => !prev);
-  };
 
   const { assistants: availableAssistants, finalAssistants } = useAssistants();
 
@@ -176,7 +170,6 @@ export function ChatPage({
     searchParams.get(SEARCH_PARAM_NAMES.SEND_ON_LOAD)
   );
 
-  const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
   const modelVersionFromSearchParams = searchParams.get(
     SEARCH_PARAM_NAMES.STRUCTURED_MODEL
   );
@@ -1826,15 +1819,30 @@ export function ChatPage({
     setSharedChatSession(chatSession);
   };
   const [documentSelection, setDocumentSelection] = useState(false);
-  const toggleDocumentSelectionAspects = () => {
-    setDocumentSelection((documentSelection) => !documentSelection);
-    setShowDocSidebar(false);
-  };
-  const [filtersToggled, setFiltersToggled] = useState(false);
+  // const toggleDocumentSelectionAspects = () => {
+  //   setDocumentSelection((documentSelection) => !documentSelection);
+  //   setShowDocSidebar(false);
+  // };
 
+  const toggleDocumentSidebar = () => {
+    if (!documentSidebarToggled) {
+      setFiltersToggled(false);
+      setDocumentSidebarToggled(true);
+    } else if (!filtersToggled) {
+      setDocumentSidebarToggled(false);
+    } else {
+      setFiltersToggled(false);
+    }
+  };
   const toggleFilters = () => {
-    setFiltersToggled((filtersToggled) => !filtersToggled);
-    setDocumentSidebarToggled(true);
+    if (!documentSidebarToggled) {
+      setFiltersToggled(true);
+      setDocumentSidebarToggled(true);
+    } else if (filtersToggled) {
+      setDocumentSidebarToggled(false);
+    } else {
+      setFiltersToggled(true);
+    }
   };
 
   interface RegenerationRequest {
@@ -2016,9 +2024,8 @@ export function ChatPage({
                 duration-300
                 ease-in-out
 
-
+                bg-transparent
               overflow-y-hidden
-              bg-background-100
               transition-all
               bg-opacity-80
               duration-300
@@ -2033,8 +2040,8 @@ export function ChatPage({
                 tags={tags}
                 documentSets={documentSets}
                 ref={innerSidebarElementRef}
-                filtersToggled={filtersToggled}
-                toggleFilters={retrievalEnabled ? toggleFilters : undefined}
+                toggleSidebar={toggleDocumentSidebar}
+                showFilters={filtersToggled}
                 closeSidebar={() => setDocumentSidebarToggled(false)}
                 selectedMessage={aiMessage}
                 selectedDocuments={selectedDocuments}
@@ -2080,7 +2087,7 @@ export function ChatPage({
                       ? setSharingModalVisible
                       : undefined
                   }
-                  toggleSidebar={toggleSidebar}
+                  toggleSidebar={toggleDocumentSidebar}
                   currentChatSession={selectedChatSession}
                   documentSidebarToggled={documentSidebarToggled}
                   llmOverrideManager={llmOverrideManager}
@@ -2299,7 +2306,8 @@ export function ChatPage({
                                     <AIMessage
                                       index={i}
                                       documentSelectionToggled={
-                                        documentSidebarToggled
+                                        documentSidebarToggled &&
+                                        !filtersToggled
                                       }
                                       continueGenerating={
                                         i == messageHistory.length - 1 &&
@@ -2338,10 +2346,8 @@ export function ChatPage({
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={() => {
-                                        toggleDocumentSelectionAspects();
-                                        setDocumentSidebarToggled(
-                                          !documentSidebarToggled
-                                        );
+                                        // toggleDocumentSelectionAspects();
+                                        toggleDocumentSidebar();
                                       }}
                                       docs={message.documents}
                                       currentPersona={liveAssistant}
@@ -2559,9 +2565,6 @@ export function ChatPage({
                               </div>
                             )}
                             <ChatInputBar
-                              toggleFilters={
-                                retrievalEnabled ? toggleFilters : undefined
-                              }
                               showConfigureAPIKey={() =>
                                 setShowApiKeyModal(true)
                               }
@@ -2584,6 +2587,7 @@ export function ChatPage({
                               llmOverrideManager={llmOverrideManager}
                               files={currentMessageFiles}
                               setFiles={setCurrentMessageFiles}
+                              toggleFilters={toggleFilters}
                               handleFileUpload={handleImageUpload}
                               textAreaRef={textAreaRef}
                               chatSessionId={chatSessionIdRef.current!}

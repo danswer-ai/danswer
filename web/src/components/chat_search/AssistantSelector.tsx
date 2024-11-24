@@ -51,6 +51,10 @@ const AssistantSelector = ({
   const { refreshUser, user } = useUser();
   const [assistants, setAssistants] = useState<Persona[]>(finalAssistants);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
+  const [localTemperature, setLocalTemperature] = useState<number>(
+    llmOverrideManager?.temperature || 0
+  );
 
   useEffect(() => {
     setAssistants(finalAssistants);
@@ -91,6 +95,21 @@ const AssistantSelector = ({
       await refreshUser();
       await refreshAssistants();
     }
+  };
+
+  const debouncedSetTemperature = useCallback(
+    (value: number) => {
+      const debouncedFunction = debounce((value: number) => {
+        llmOverrideManager?.setTemperature(value);
+      }, 300);
+      return debouncedFunction(value);
+    },
+    [llmOverrideManager]
+  );
+
+  const handleTemperatureChange = (value: number) => {
+    setLocalTemperature(value);
+    debouncedSetTemperature(value);
   };
 
   // Get the user's default model
@@ -170,9 +189,6 @@ const AssistantSelector = ({
                   <h3 className="text-center text-lg font-semibold text-gray-800">
                     Choose an Assistant
                   </h3>
-                  <p className="text-center text-sm text-gray-600">
-                    Select an AI assistant for your specific needs.
-                  </p>
                 </div>
                 <DndContext
                   sensors={sensors}
@@ -209,9 +225,6 @@ const AssistantSelector = ({
                   <h3 className="text-center text-lg font-semibold text-gray-800 ">
                     Choose a Model
                   </h3>
-                  <p className="text-center text-sm text-gray-600">
-                    Select an LLM for your specific needs.
-                  </p>
                 </div>
                 <LlmList
                   currentAssistant={liveAssistant}
@@ -235,6 +248,57 @@ const AssistantSelector = ({
                     setIsOpen(false);
                   }}
                 />
+                <div className="mt-4">
+                  <button
+                    className="flex items-center text-sm font-medium transition-colors duration-200"
+                    onClick={() =>
+                      setIsTemperatureExpanded(!isTemperatureExpanded)
+                    }
+                  >
+                    <span className="mr-2 text-xs text-primary">
+                      {isTemperatureExpanded ? "▼" : "►"}
+                    </span>
+                    <span>Temperature</span>
+                  </button>
+
+                  {isTemperatureExpanded && (
+                    <>
+                      <Text className="mt-2 mb-8">
+                        Adjust the temperature of the LLM. Higher temperatures
+                        will make the LLM generate more creative and diverse
+                        responses, while lower temperature will make the LLM
+                        generate more conservative and focused responses.
+                      </Text>
+
+                      <div className="relative w-full">
+                        <input
+                          type="range"
+                          onChange={(e) =>
+                            handleTemperatureChange(parseFloat(e.target.value))
+                          }
+                          className="w-full p-2 border border-border rounded-md"
+                          min="0"
+                          max="2"
+                          step="0.01"
+                          value={localTemperature}
+                        />
+                        <div
+                          className="absolute text-sm"
+                          style={{
+                            left: `${(localTemperature || 0) * 50}%`,
+                            transform: `translateX(-${Math.min(
+                              Math.max((localTemperature || 0) * 50, 10),
+                              90
+                            )}%)`,
+                            top: "-1.5rem",
+                          }}
+                        >
+                          {localTemperature}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </Tab.Panel>
             </Tab.Panels>
           </Tab.Group>

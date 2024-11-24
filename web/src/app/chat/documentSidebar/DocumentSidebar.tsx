@@ -8,7 +8,7 @@ import { ForwardedRef, forwardRef } from "react";
 import { Separator } from "@/components/ui/separator";
 import { FilterManager } from "@/lib/hooks";
 import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
-import { SourceSelector } from "@/app/chat/shared_chat_search/Filters";
+import { SourceSelector } from "../shared_chat_search/SearchFilters";
 
 interface DocumentSidebarProps {
   filterManager: FilterManager;
@@ -22,11 +22,11 @@ interface DocumentSidebarProps {
   isLoading: boolean;
   initialWidth: number;
   isOpen: boolean;
-  toggleFilters?: () => void;
-  filtersToggled: boolean;
+  toggleSidebar: () => void;
   ccPairs: CCPairBasicInfo[];
   tags: Tag[];
   documentSets: DocumentSet[];
+  showFilters: boolean;
 }
 
 export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
@@ -43,11 +43,11 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       isLoading,
       initialWidth,
       isOpen,
-      filtersToggled,
-      toggleFilters,
+      toggleSidebar,
       ccPairs,
       tags,
       documentSets,
+      showFilters,
     },
     ref: ForwardedRef<HTMLDivElement>
   ) => {
@@ -59,11 +59,6 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     const currentDocuments = selectedMessage?.documents || null;
     const dedupedDocuments = removeDuplicateDocs(currentDocuments || []);
 
-    // NOTE: do not allow selection if less than 75 tokens are left
-    // this is to prevent the case where they are able to select the doc
-    // but it basically is unused since it's truncated right at the very
-    // start of the document (since title + metadata + misc overhead) takes up
-    // space
     const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
 
     const hasSelectedDocuments = selectedDocumentIds.length > 0;
@@ -71,7 +66,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     return (
       <div
         id="danswer-chat-sidebar"
-        className="w-full border-l border-border-strong"
+        className="w-full border-l border-border"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeSidebar();
@@ -89,97 +84,95 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         >
           <div className="pb-6 flex-initial overflow-y-hidden flex flex-col h-screen">
             {popup}
-            <div className="p-4  border-b border-background-400 ">
-              <h2 className="text-xl font-bold text-text-900 mb-2">Sources</h2>
-              {/* <div className="flex items-center justify-between">
-                <span className="text-sm text-text-700 ">
-                  Add to next search
-                </span>
-                <a
-                  href="https://docs.danswer.dev/introduction"
-                  className="text-sm text-primary-600 hover:text-primary-800 transition-colors duration-200 ease-in-out"
-                >
-                  Learn more
-                </a>
-              </div> */}
+            <div className="p-4 border-b border-border flex justify-between items-center">
+              <h2 className="text-xl font-bold text-text-900">
+                {showFilters ? "Filters" : "Sources"}
+              </h2>
+              <button
+                onClick={toggleSidebar}
+                className="text-sm text-primary-600 hover:text-primary-800 transition-colors duration-200 ease-in-out"
+              >
+                Close
+              </button>
             </div>
 
-            <div className="overflow-y-auto default-scrollbar pt-4 flex-grow dark-scrollbar flex relative flex-col">
-              {toggleFilters && (
-                <div className="px-4">
-                  {" "}
-                  <SourceSelector
-                    tagsOnLeft={true}
-                    toggleFilters={toggleFilters}
-                    filtersUntoggled={!filtersToggled}
-                    {...filterManager}
-                    showDocSidebar={false}
-                    // TODO updatef
-                    availableDocumentSets={documentSets}
-                    existingSources={ccPairs.map((ccPair) => ccPair.source)}
-                    availableTags={tags}
-                  />
-                </div>
-              )}
-
-              <Separator />
-              {dedupedDocuments.length > 0 ? (
-                dedupedDocuments.map((document, ind) => (
-                  <div
-                    key={document.document_id}
-                    className={`${
-                      ind === dedupedDocuments.length - 1
-                        ? "mb-5"
-                        : "border-b border-border-light mb-3"
-                    }`}
-                  >
-                    <ChatDocumentDisplay
-                      document={document}
-                      setPopup={setPopup}
-                      queryEventId={null}
-                      isAIPick={false}
-                      isSelected={selectedDocumentIds.includes(
-                        document.document_id
-                      )}
-                      handleSelect={(documentId) => {
-                        toggleDocumentSelection(
-                          dedupedDocuments.find(
-                            (doc) => doc.document_id === documentId
-                          )!
-                        );
-                      }}
-                      tokenLimitReached={tokenLimitReached}
-                    />
-                  </div>
-                ))
+            <div className="overflow-y-auto default-scrollbar flex-grow dark-scrollbar flex relative flex-col">
+              {showFilters ? (
+                <SourceSelector
+                  tagsOnLeft={true}
+                  toggleFilters={() => {}}
+                  filtersUntoggled={false}
+                  {...filterManager}
+                  showDocSidebar={false}
+                  availableDocumentSets={documentSets}
+                  existingSources={ccPairs.map((ccPair) => ccPair.source)}
+                  availableTags={tags}
+                />
               ) : (
-                <div className="mx-3">
-                  <Text>No documents currently selected.</Text>
-                </div>
+                <>
+                  {dedupedDocuments.length > 0 ? (
+                    dedupedDocuments.map((document, ind) => (
+                      <div
+                        key={document.document_id}
+                        className={`${
+                          ind === dedupedDocuments.length - 1
+                            ? "mb-5"
+                            : "border-b border-border-light mb-3"
+                        }`}
+                      >
+                        <ChatDocumentDisplay
+                          document={document}
+                          setPopup={setPopup}
+                          queryEventId={null}
+                          isAIPick={false}
+                          isSelected={selectedDocumentIds.includes(
+                            document.document_id
+                          )}
+                          handleSelect={(documentId) => {
+                            toggleDocumentSelection(
+                              dedupedDocuments.find(
+                                (doc) => doc.document_id === documentId
+                              )!
+                            );
+                          }}
+                          tokenLimitReached={tokenLimitReached}
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="mx-3" />
+                  )}
+                </>
               )}
             </div>
           </div>
 
-          <div className="absolute left-0 bottom-0 w-full bg-gradient-to-b from-white/0 via-white/60 to-white dark:from-black/0 dark:via-black/60 dark:to-black h-[100px]" />
+          {!showFilters && (
+            <>
+              <div className="absolute left-0 bottom-0 w-full bg-gradient-to-b from-white/0 via-white/60 to-white dark:from-black/0 dark:via-black/60 dark:to-black h-[100px]" />
 
-          <div
-            className={`sticky bottom-4 w-full left-0 flex justify-center transition-opacity duration-300 ${
-              hasSelectedDocuments
-                ? "opacity-100"
-                : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <button
-              className="text-sm font-medium py-2 px-4 rounded-full transition-colors bg-black hover:bg-gray-900 text-white"
-              onClick={() => {
-                clearSelectedDocuments();
-              }}
-            >
-              {`Remove ${
-                selectedDocumentIds.length > 0 ? selectedDocumentIds.length : ""
-              } Source${selectedDocumentIds.length > 1 ? "s" : ""}`}
-            </button>
-          </div>
+              <div
+                className={`sticky bottom-4 w-full left-0 flex justify-center transition-opacity duration-300 ${
+                  hasSelectedDocuments
+                    ? "opacity-100"
+                    : "opacity-0 pointer-events-none"
+                }`}
+              >
+                <button
+                  className="text-sm font-medium py-2 px-4 rounded-full transition-colors bg-black hover:bg-gray-900 text-white"
+                  onClick={() => {
+                    clearSelectedDocuments();
+                  }}
+                >
+                  {`Remove ${
+                    selectedDocumentIds.length > 0
+                      ? selectedDocumentIds.length
+                      : ""
+                  } Source${selectedDocumentIds.length > 1 ? "s" : ""}`}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
