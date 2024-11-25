@@ -106,7 +106,21 @@ export function SearchSummary({
           </>
         )}
 
-        {index === 1 && <>{finished ? "Ran search" : "Searching"}</>}
+        {index === 1 && (
+          <>
+            {finished ? "Ran search" : "Searching"}
+            {finalQuery && (
+              <>
+                {" for: "}
+                <i>
+                  {finalQuery.length > 16
+                    ? `${finalQuery.slice(0, 16)}...`
+                    : finalQuery}
+                </i>
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

@@ -32,6 +32,8 @@ import { GearIcon } from "@/components/icons/icons";
 import { LlmOverrideManager } from "@/lib/hooks";
 import { Tab } from "@headlessui/react";
 import { AssistantIcon } from "../assistants/AssistantIcon";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
 
 const AssistantSelector = ({
   liveAssistant,
@@ -74,7 +76,11 @@ const AssistantSelector = ({
   }, []);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -92,8 +98,6 @@ const AssistantSelector = ({
       const updatedAssistants = arrayMove(assistants, oldIndex, newIndex);
       setAssistants(updatedAssistants);
       await updateUserAssistantList(updatedAssistants.map((a) => a.id));
-      // await refreshUser();
-      // await refreshAssistants();
     }
   };
 
@@ -129,7 +133,7 @@ const AssistantSelector = ({
     checkPersonaRequiresImageGeneration(liveAssistant);
 
   return (
-    <div className=" relative" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef}>
       <div className="flex justify-center">
         <div
           onClick={() => {
@@ -194,12 +198,13 @@ const AssistantSelector = ({
                   sensors={sensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
+                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
                 >
                   <SortableContext
                     items={assistants.map((a) => a.id.toString())}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-2 max-h-96  overflow-x-none overflow-y-auto">
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
                       {assistants.map((assistant) => (
                         <DraggableAssistantCard
                           key={assistant.id.toString()}

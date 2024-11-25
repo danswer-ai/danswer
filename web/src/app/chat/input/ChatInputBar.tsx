@@ -547,15 +547,12 @@ export function ChatInputBar({
                 }}
               />
               {toggleFilters && (
-                <>
-                  <ChatInputOption
-                    flexPriority="stiff"
-                    name="Filters"
-                    Icon={FiSearch}
-                    onClick={toggleFilters}
-                  />
-                  <AnimatedToggle isOn={false} handleToggle={() => {}} />
-                </>
+                <ChatInputOption
+                  flexPriority="stiff"
+                  name="Filters"
+                  Icon={FiSearch}
+                  onClick={toggleFilters}
+                />
               )}
             </div>
 

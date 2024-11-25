@@ -651,6 +651,7 @@ export async function useScrollonStream({
   mobile?: boolean;
   enableAutoScroll?: boolean;
 }) {
+  console.log("zzzenableAutoScroll", enableAutoScroll);
   const mobileDistance = 900; // distance that should "engage" the scroll
   const desktopDistance = 500; // distance that should "engage" the scroll
 
@@ -723,7 +724,7 @@ export async function useScrollonStream({
 
   // scroll on end of stream if within distance
   useEffect(() => {
-    if (scrollableDivRef?.current && chatState == "input") {
+    if (scrollableDivRef?.current && chatState == "input" && enableAutoScroll) {
       if (scrollDist.current < distance - 50) {
         scrollableDivRef?.current?.scrollBy({
           left: 0,

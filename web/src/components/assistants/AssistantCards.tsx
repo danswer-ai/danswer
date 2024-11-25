@@ -5,7 +5,7 @@ import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import { getDisplayNameForModel } from "@/lib/hooks";
 import { useSortable } from "@dnd-kit/sortable";
 import React, { useState } from "react";
-import { FiBookmark } from "react-icons/fi";
+import { FiBookmark, FiImage, FiSearch } from "react-icons/fi";
 import { MdDragIndicator } from "react-icons/md";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import { SourceIcon } from "@/components/SourceIcon";
@@ -29,14 +29,14 @@ export const AssistantCard = ({
       case "SearchTool":
         return (
           <>
-            <SourceIcon sourceType="web" iconSize={8} />
+            <FiSearch className="h-3 w-3 my-auto" />
             <span>Search</span>
           </>
         );
       case "ImageGenerationTool":
         return (
           <>
-            <SourceIcon sourceType="web" iconSize={8} />
+            <FiImage className="h-3 w-3 my-auto" />
             <span>Image Gen</span>
           </>
         );
@@ -63,13 +63,6 @@ export const AssistantCard = ({
             <span className="line-clamp-1 text-sm text-black font-semibold leading-tight">
               {assistant.name}
             </span>
-            {assistant.llm_model_version_override && (
-              <Badge size="xs" variant="destructive">
-                {getDisplayNameForModel(
-                  assistant.llm_model_version_override || llmName
-                )}
-              </Badge>
-            )}
             {assistant.tools.map((tool, index) => (
               <Badge key={index} size="xs" variant="secondary" className="ml-1">
                 <div className="flex items-center gap-1">

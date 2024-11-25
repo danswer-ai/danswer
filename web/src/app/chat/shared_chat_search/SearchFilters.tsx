@@ -109,18 +109,20 @@ export function SourceSelector({
       {!filtersUntoggled && (
         <CardContent className="space-y-2">
           <div>
-            <SectionTitle>Time Range</SectionTitle>
-            {timeRange && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setTimeRange(null);
-                }}
-                className="text-sm text-gray-500 hover:text-gray-700"
-              >
-                Clear
-              </button>
-            )}
+            <div className="flex justify-between items-center">
+              <p className="text-sm py-4 font-medium">Time Range</p>
+              {timeRange && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTimeRange(null);
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             <Popover>
               <PopoverTrigger asChild>
                 <Button

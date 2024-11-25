@@ -155,9 +155,12 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
+  autoScrollEnabled,
   regenerate,
   overriddenModel,
+  selectedMessageForDocDisplay,
   continueGenerating,
+  lastMessage,
   shared,
   isActive,
   toggleDocumentSelection,
@@ -183,7 +186,10 @@ export const AIMessage = ({
   onMessageSelection,
   index,
 }: {
+  autoScrollEnabled?: boolean;
+  lastMessage?: boolean;
   index?: number;
+  selectedMessageForDocDisplay?: number | null;
   shared?: boolean;
   isActive?: boolean;
   continueGenerating?: () => void;
@@ -362,12 +368,15 @@ export const AIMessage = ({
     onMessageSelection &&
     otherMessagesCanSwitchTo &&
     otherMessagesCanSwitchTo.length > 1;
-
   return (
     <div
       id="danswer-ai-message"
       ref={trackedElementRef}
-      className={"py-5 ml-4 px-5 relative flex "}
+      className={`py-5 ml-4 px-5 relative flex 
+
+
+        ${lastMessage && !autoScrollEnabled ? "min-h-72" : ""}
+        ${!autoScrollEnabled && !isComplete ? "pb-64" : ""}`}
     >
       <div
         className={`mx-auto ${
@@ -481,7 +490,9 @@ export const AIMessage = ({
                                 ))}
                             <SeeMoreBlock
                               documentSelectionToggled={
-                                documentSelectionToggled || false
+                                (documentSelectionToggled &&
+                                  selectedMessageForDocDisplay === messageId) ||
+                                false
                               }
                               toggleDocumentSelection={toggleDocumentSelection}
                               uniqueSources={uniqueSources}

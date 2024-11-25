@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { FilterManager } from "@/lib/hooks";
 import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
 import { SourceSelector } from "../shared_chat_search/SearchFilters";
+import { XIcon } from "@/components/icons/icons";
 
 interface DocumentSidebarProps {
   filterManager: FilterManager;
@@ -74,7 +75,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         }}
       >
         <div
-          className={`ml-auto h-screen rounded-l-lg relative border-l sidebar z-50 absolute right-0 h-screen transition-all duration-300 ${
+          className={`ml-auto h-screen  relative border-l sidebar z-50 absolute right-0 h-screen transition-all duration-300 ${
             isOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[10%]"
           }`}
           ref={ref}
@@ -89,10 +90,10 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                 {showFilters ? "Filters" : "Sources"}
               </h2>
               <button
-                onClick={toggleSidebar}
+                onClick={closeSidebar}
                 className="text-sm text-primary-600 hover:text-primary-800 transition-colors duration-200 ease-in-out"
               >
-                Close
+                <XIcon className="w-4 h-4" />
               </button>
             </div>
 

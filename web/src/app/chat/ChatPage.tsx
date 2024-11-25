@@ -849,11 +849,13 @@ export function ChatPage({
             0
           )}px`;
 
-          scrollableDivRef?.current.scrollBy({
-            left: 0,
-            top: Math.max(heightDifference, 0),
-            behavior: "smooth",
-          });
+          if (autoScrollEnabled) {
+            scrollableDivRef?.current.scrollBy({
+              left: 0,
+              top: Math.max(heightDifference, 0),
+              behavior: "smooth",
+            });
+          }
         }
         previousHeight.current = newHeight;
       }
@@ -900,6 +902,7 @@ export function ChatPage({
         endDivRef.current.scrollIntoView({
           behavior: fast ? "auto" : "smooth",
         });
+
         setHasPerformedInitialScroll(true);
       }
     }, 50);
@@ -1052,9 +1055,8 @@ export function ChatPage({
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
 
-    if (autoScrollEnabled) {
-      clientScrollToBottom();
-    }
+    clientScrollToBottom();
+
     let currChatSessionId: string;
     const isNewSession = chatSessionIdRef.current === null;
     const searchParamBasedChatSessionName =
@@ -1618,10 +1620,11 @@ export function ChatPage({
     setToggled: removeToggle,
     mobile: settings?.isMobile,
   });
+
   const autoScrollEnabled =
-    user?.auto_scroll == null
-      ? settings?.enterpriseSettings?.auto_scroll
-      : user?.auto_scroll;
+    user?.preferences?.auto_scroll == null
+      ? settings?.enterpriseSettings?.auto_scroll || false
+      : user?.preferences?.auto_scroll!;
 
   useScrollonStream({
     chatState: currentSessionChatState,
@@ -1781,7 +1784,7 @@ export function ChatPage({
       liveAssistant
     );
   });
-  console.log("retrievalEnabled", retrievalEnabled);
+  console.log("enabeldscroll", autoScrollEnabled);
   useEffect(() => {
     if (!retrievalEnabled) {
       setDocumentSidebarToggled(false);
@@ -2057,12 +2060,11 @@ export function ChatPage({
               </div>
             </div>
           </div>
-          {!settings?.isMobile && (
+          {!settings?.isMobile && !retrievalEnabled && (
             <div
               style={{ transition: "width 0.30s ease-out" }}
               className={`
-
-                    flex-none
+                flex-none 
                 fixed
                 right-0
                 z-40
@@ -2072,15 +2074,14 @@ export function ChatPage({
                 bg-opacity-80
                 duration-300
                 ease-in-out
-
                 bg-transparent
-              overflow-y-hidden
-              transition-all
-              bg-opacity-80
-              duration-300
-              ease-in-out
-              h-full
-              ${documentSidebarToggled ? "w-[300px]" : "w-[0px]"}
+                overflow-y-hidden
+                transition-all
+                bg-opacity-80
+                duration-300
+                ease-in-out
+                h-full
+                ${documentSidebarToggled ? "w-[300px]" : "w-[0px]"}
             `}
             >
               <DocumentSidebar
@@ -2161,7 +2162,7 @@ export function ChatPage({
                           duration-300 
                           ease-in-out
                           h-full
-                          ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
+                          ${toggledSidebar ? "w-[200px]" : "w-[0px]"}
                       `}
                         ></div>
                       )}
@@ -2353,7 +2354,18 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      lastMessage={
+                                        currentSessionChatState == "input" &&
+                                        fauxIndex ===
+                                          currentVisibleRange.end -
+                                            currentVisibleRange.start -
+                                            1
+                                      }
+                                      autoScrollEnabled={autoScrollEnabled}
                                       index={i}
+                                      selectedMessageForDocDisplay={
+                                        selectedMessageForDocDisplay
+                                      }
                                       documentSelectionToggled={
                                         documentSidebarToggled &&
                                         !filtersToggled
@@ -2395,8 +2407,17 @@ export function ChatPage({
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
                                       toggleDocumentSelection={() => {
-                                        // toggleDocumentSelectionAspects();
-                                        toggleDocumentSidebar();
+                                        if (
+                                          !documentSidebarToggled ||
+                                          (documentSidebarToggled &&
+                                            selectedMessageForDocDisplay ===
+                                              message.messageId)
+                                        ) {
+                                          toggleDocumentSidebar();
+                                        }
+                                        setSelectedMessageForDocDisplay(
+                                          message.messageId
+                                        );
                                       }}
                                       docs={message.documents}
                                       currentPersona={liveAssistant}
@@ -2405,7 +2426,6 @@ export function ChatPage({
                                       }
                                       messageId={message.messageId}
                                       content={message.message}
-                                      // content={message.message}
                                       files={message.files}
                                       query={
                                         messageHistory[i]?.query || undefined
@@ -2515,6 +2535,7 @@ export function ChatPage({
                                 return (
                                   <div key={messageReactComponentKey}>
                                     <AIMessage
+                                      autoScrollEnabled={autoScrollEnabled}
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
                                       content={
@@ -2557,6 +2578,7 @@ export function ChatPage({
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                               >
                                 <AIMessage
+                                  autoScrollEnabled={autoScrollEnabled}
                                   key={-3}
                                   currentPersona={liveAssistant}
                                   alternativeAssistant={
@@ -2581,6 +2603,7 @@ export function ChatPage({
                             {loadingError && (
                               <div key={-1}>
                                 <AIMessage
+                                  autoScrollEnabled={autoScrollEnabled}
                                   currentPersona={liveAssistant}
                                   messageId={-1}
                                   content={
@@ -2636,7 +2659,9 @@ export function ChatPage({
                               llmOverrideManager={llmOverrideManager}
                               files={currentMessageFiles}
                               setFiles={setCurrentMessageFiles}
-                              toggleFilters={toggleFilters}
+                              toggleFilters={
+                                retrievalEnabled ? toggleFilters : undefined
+                              }
                               handleFileUpload={handleImageUpload}
                               textAreaRef={textAreaRef}
                               chatSessionId={chatSessionIdRef.current!}
@@ -2677,7 +2702,11 @@ export function ChatPage({
                           duration-300 
                           ease-in-out
                           h-full
-                          ${documentSidebarToggled ? "w-[300px]" : "w-[0px]"}
+                          ${
+                            documentSidebarToggled && !retrievalEnabled
+                              ? "w-[300px]"
+                              : "w-[0px]"
+                          }
                       `}
                         ></div>
                       )}
@@ -2712,7 +2741,7 @@ export function ChatPage({
         clearSelectedDocuments={clearSelectedDocuments}
         selectedDocumentTokens={selectedDocumentTokens}
         maxTokens={maxTokens}
-        isLoading={isFetchingChatMessages}
+        isLoading={isFetchingChatMessages} 
         isOpen={documentSelection}
       /> */}
     </>

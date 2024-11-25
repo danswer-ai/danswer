@@ -9,6 +9,7 @@ interface UserPreferences {
   hidden_assistants: number[];
   default_model: string | null;
   recent_assistants: number[];
+  auto_scroll: boolean;
 }
 
 export enum UserStatus {
@@ -61,7 +62,6 @@ export interface User {
   oidc_expiry?: Date;
   is_cloud_superuser?: boolean;
   organization_name: string | null;
-  auto_scroll: boolean | null;
 }
 
 export interface MinimalUserSnapshot {

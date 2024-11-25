@@ -494,14 +494,11 @@ def verify_user_logged_in(
         # if auth type is disabled, return a dummy user with preferences from
         # the key-value store
         if AUTH_TYPE == AuthType.DISABLED:
-            print("FETCHING NO AUTH USER")
             store = get_kv_store()
             user = fetch_no_auth_user(store)
-            print("ll       ", user)
             return user
 
         raise BasicAuthenticationError(detail="User Not Authenticated")
-    print("not disabled", user)
     if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
         raise BasicAuthenticationError(
             detail="Access denied. User's OIDC token has expired.",
