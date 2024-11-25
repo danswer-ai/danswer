@@ -74,8 +74,8 @@ export default function FunctionalHeader({
     router.push(newChatUrl);
   };
   return (
-    <div className="left-0 bg-transparent sticky top-0 z-20 w-full relative flex">
-      <div className="mt-2 mx-2.5 cursor-pointer text-text-700 relative flex w-full">
+    <div className="left-0  sticky top-0 z-20 w-full relative flex">
+      <div className="mt-2 cursor-pointer text-text-700 relative flex w-full">
         <LogoType
           assistantId={currentChatSession?.persona_id}
           page={page}
@@ -123,7 +123,7 @@ export default function FunctionalHeader({
           <div className="mobile:hidden flex my-auto">
             <UserDropdown page={page} toggleUserSettings={toggleUserSettings} />
           </div>
-          <Link
+          {/* <Link
             className="desktop:hidden my-auto"
             href={
               `/${page}` +
@@ -136,8 +136,8 @@ export default function FunctionalHeader({
             <div className="cursor-pointer mr-4 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
               <NewChatIcon size={20} />
             </div>
-          </Link>
-          <div
+          </Link> */}
+          {/* <div
             style={{ transition: "width 0.30s ease-out" }}
             className={`
             mobile:hidden
@@ -150,7 +150,7 @@ export default function FunctionalHeader({
             h-full
             ${documentSidebarToggled ? "w-[300px]" : "w-[0px]"}
             `}
-          />
+          /> */}
         </div>
       </div>
     </div>

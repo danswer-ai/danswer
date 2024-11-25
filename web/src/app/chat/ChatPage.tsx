@@ -2114,7 +2114,7 @@ export function ChatPage({
             ref={masterFlexboxRef}
             className="flex h-full w-full overflow-x-hidden"
           >
-            <div className="flex h-full relative   mx-2  flex-col w-full">
+            <div className="flex h-full relative mx-2 flex-col w-full">
               {/* {liveAssistant && onAssistantChange && (
                 <div className="flex justify-center mt-4 -mb-4 h w-full overflow-visible">
                   <AssistantSelector
@@ -2176,7 +2176,7 @@ export function ChatPage({
                           ref={scrollableDivRef}
                         >
                           {liveAssistant && onAssistantChange && (
-                            <div className="z-[1000] fixed top-4 flex justify-center w-full overflow-visible">
+                            <div className="z-[1000] fixed top-4 left-1/2 transform -translate-x-1/2 overflow-visible">
                               <AssistantSelector
                                 liveAssistant={liveAssistant}
                                 onAssistantChange={onAssistantChange}

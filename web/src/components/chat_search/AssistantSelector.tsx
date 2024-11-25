@@ -4,7 +4,7 @@ import { useChatContext } from "@/components/context/ChatContext";
 import { useUser } from "@/components/user/UserProvider";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { FiChevronDown } from "react-icons/fi";
-import { destructureValue } from "@/lib/llm/utils";
+import { destructureValue, getFinalLLM } from "@/lib/llm/utils";
 import { updateModelOverrideForChatSession } from "@/app/chat/lib";
 import { debounce } from "lodash";
 import { LlmList } from "@/components/llm/LLMList";
@@ -117,6 +117,8 @@ const AssistantSelector = ({
   // Get the user's default model
   const userDefaultModel = user?.preferences.default_model;
 
+  const [_, llmName] = getFinalLLM(llmProviders, liveAssistant, null);
+
   // Get the assistant's default model if it exists
   const assistantDefaultModel = liveAssistant.llm_model_version_override;
 
@@ -125,7 +127,7 @@ const AssistantSelector = ({
     llmOverrideManager?.llmOverride?.modelName ??
     assistantDefaultModel ??
     userDefaultModel ??
-    llmProviders[0].model_names[0];
+    llmName;
 
   const requiresImageGeneration =
     checkPersonaRequiresImageGeneration(liveAssistant);
