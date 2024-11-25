@@ -372,11 +372,7 @@ export const AIMessage = ({
     <div
       id="danswer-ai-message"
       ref={trackedElementRef}
-      className={`py-5 ml-4 px-5 relative flex 
-
-
-        ${lastMessage && !autoScrollEnabled ? "min-h-72" : ""}
-        ${!autoScrollEnabled && !isComplete ? "pb-64" : ""}`}
+      className={`py-5 ml-4 px-5 relative flex `}
     >
       <div
         className={`mx-auto ${

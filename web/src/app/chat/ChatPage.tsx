@@ -373,9 +373,7 @@ export function ChatPage({
     textAreaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
-    const isChatSessionSwitch =
-      chatSessionIdRef.current !== null &&
-      existingChatSessionId !== priorChatSessionId;
+    const isChatSessionSwitch = existingChatSessionId !== priorChatSessionId;
     if (isChatSessionSwitch) {
       // de-select documents
       clearSelectedDocuments();
@@ -2081,7 +2079,7 @@ export function ChatPage({
                 duration-300
                 ease-in-out
                 h-full
-                ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
+                ${documentSidebarToggled ? "w-[375px]" : "w-[0px]"}
             `}
             >
               <DocumentSidebar
@@ -2100,7 +2098,7 @@ export function ChatPage({
                 selectedDocumentTokens={selectedDocumentTokens}
                 maxTokens={maxTokens}
                 isLoading={isFetchingChatMessages}
-                initialWidth={400}
+                initialWidth={375}
                 isOpen={documentSidebarToggled}
               />
             </div>
@@ -2176,7 +2174,23 @@ export function ChatPage({
                           ref={scrollableDivRef}
                         >
                           {liveAssistant && onAssistantChange && (
-                            <div className="z-[1000] fixed top-4 left-1/2 transform -translate-x-1/2 overflow-visible">
+                            <div className="z-[1000] fixed top-4 pointer-events-none left-0 w-full flex justify-center overflow-visible">
+                              {!settings?.isMobile && (
+                                <div
+                                  style={{ transition: "width 0.30s ease-out" }}
+                                  className={`
+                          flex-none 
+                          overflow-y-hidden 
+                          transition-all 
+                          duration-300 
+                          ease-in-out
+                          bg-black
+                          h-full
+                          ${toggledSidebar ? "w-[200px]" : "w-[0px]"}
+                      `}
+                                ></div>
+                              )}
+
                               <AssistantSelector
                                 liveAssistant={liveAssistant}
                                 onAssistantChange={onAssistantChange}
@@ -2195,7 +2209,7 @@ export function ChatPage({
                           h-full
                           ${
                             documentSidebarToggled && retrievalEnabled
-                              ? "w-[400px]"
+                              ? "w-[375px]"
                               : "w-[0px]"
                           }
                       `}
@@ -2634,6 +2648,11 @@ export function ChatPage({
                                 />
                               </div>
                             )}
+                            <div
+                              style={{
+                                height: !autoScrollEnabled ? "50vh" : undefined,
+                              }}
+                            />
 
                             {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                             <div ref={endPaddingRef} className="h-[95px]" />
@@ -2724,7 +2743,7 @@ export function ChatPage({
                           h-full
                           ${
                             documentSidebarToggled && retrievalEnabled
-                              ? "w-[400px]"
+                              ? "w-[375px]"
                               : "w-[0px]"
                           }
                       `}

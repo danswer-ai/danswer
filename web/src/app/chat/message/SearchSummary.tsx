@@ -100,27 +100,14 @@ export function SearchSummary({
         !text-sm !line-clamp-1 !break-all px-0.5`}
         ref={searchingForRef}
       >
-        {index !== 1 && (
-          <>
-            {finished ? "Searched" : "Searching"} for: <i> {finalQuery}</i>
-          </>
-        )}
-
-        {index === 1 && (
-          <>
-            {finished ? "Ran search" : "Searching"}
-            {finalQuery && (
-              <>
-                {" for: "}
-                <i>
-                  {finalQuery.length > 16
-                    ? `${finalQuery.slice(0, 16)}...`
-                    : finalQuery}
-                </i>
-              </>
-            )}
-          </>
-        )}
+        {finished ? "Searched" : "Searching"} for:{" "}
+        <i>
+          {index === 1
+            ? finalQuery.length > 50
+              ? `${finalQuery.slice(0, 50)}...`
+              : finalQuery
+            : finalQuery}
+        </i>
       </div>
     </div>
   );

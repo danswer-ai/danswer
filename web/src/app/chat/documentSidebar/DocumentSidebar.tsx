@@ -75,7 +75,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         }}
       >
         <div
-          className={`ml-auto h-screen  relative border-l sidebar z-50 absolute right-0 h-screen transition-all duration-300 ${
+          className={`ml-auto h-screen relative border-l sidebar z-50 absolute right-0 h-screen transition-all duration-300 ${
             isOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[10%]"
           }`}
           ref={ref}
@@ -119,7 +119,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                         className={`${
                           ind === dedupedDocuments.length - 1
                             ? "mb-5"
-                            : "border-b border-border-light mb-3"
+                            : "border-b border-border-light w-full mb-3"
                         }`}
                       >
                         <ChatDocumentDisplay
@@ -161,7 +161,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                 }`}
               >
                 <button
-                  className="text-sm font-medium py-2 px-4 rounded-full transition-colors bg-black hover:bg-gray-900 text-white"
+                  className="text-sm font-medium py-2 px-4 rounded-full transition-colors hover:bg-gray-900 text-white"
                   onClick={() => {
                     clearSelectedDocuments();
                   }}

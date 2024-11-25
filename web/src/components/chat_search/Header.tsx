@@ -148,7 +148,7 @@ export default function FunctionalHeader({
             duration-300 
             ease-in-out
             h-full
-            ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
+            ${documentSidebarToggled ? "w-[375px]" : "w-[0px]"}
             `}
           />
         </div>
