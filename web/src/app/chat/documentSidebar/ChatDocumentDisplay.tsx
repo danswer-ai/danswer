@@ -41,6 +41,15 @@ export function ChatDocumentDisplay({
           new URL(document.link).hostname
         }&sz=32`
       : null;
+  const source = document.link
+    ? (() => {
+        try {
+          return new URL(document.link).hostname;
+        } catch {
+          return document.link;
+        }
+      })()
+    : document.source_type;
 
   return (
     <div className="opacity-100 will-change-auto">
@@ -67,11 +76,7 @@ export function ChatDocumentDisplay({
             ) : (
               <SourceIcon sourceType={document.source_type} iconSize={18} />
             )}
-            <span>
-              {document.link
-                ? new URL(document.link).hostname
-                : document.source_type}
-            </span>
+            <span>{source}</span>
           </div>
           <div className="line-clamp-2 text-sm font-semibold">
             {document.semantic_identifier || document.document_id}

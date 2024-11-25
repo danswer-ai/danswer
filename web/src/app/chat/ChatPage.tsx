@@ -71,6 +71,7 @@ import { StarterMessages } from "../../components/assistants/StarterMessage";
 import {
   AnswerPiecePacket,
   DanswerDocument,
+  FinalContextDocs,
   StreamStopInfo,
   StreamStopReason,
 } from "@/lib/search/interfaces";

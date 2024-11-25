@@ -110,6 +110,17 @@ export function SourceSelector({
         <CardContent className="space-y-2">
           <div>
             <SectionTitle>Time Range</SectionTitle>
+            {timeRange && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTimeRange(null);
+                }}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Clear
+              </button>
+            )}
             <Popover>
               <PopoverTrigger asChild>
                 <Button

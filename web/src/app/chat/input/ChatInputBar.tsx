@@ -13,6 +13,7 @@ import {
   InputBarPreviewImageProvider,
 } from "../files/InputBarPreview";
 import {
+  AssistantsIconSkeleton,
   FileIcon,
   SendIcon,
   StopGeneratingIcon,
@@ -31,6 +32,10 @@ import { ChatState } from "../types";
 import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import AnimatedToggle from "@/components/search/SearchBar";
+import { Popup } from "@/components/admin/connectors/Popup";
+import { AssistantsTab } from "../modal/configuration/AssistantsTab";
+import { IconType } from "react-icons";
+import { LlmTab } from "../modal/configuration/LlmTab";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -522,72 +527,6 @@ export function ChatInputBar({
               suppressContentEditableWarning={true}
             />
             <div className="flex items-center space-x-3 mr-12 px-4 pb-2">
-              <Popup
-                removePadding
-                content={(close) => (
-                  <AssistantsTab
-                    llmProviders={llmProviders}
-                    selectedAssistant={selectedAssistant}
-                    onSelect={(assistant) => {
-                      setSelectedAssistant(assistant);
-                      close();
-                    }}
-                  />
-                )}
-                flexPriority="shrink"
-                position="top"
-                mobilePosition="top-right"
-              >
-                <ChatInputOption
-                  toggle
-                  flexPriority="shrink"
-                  name={
-                    selectedAssistant ? selectedAssistant.name : "Assistants"
-                  }
-                  Icon={AssistantsIconSkeleton as IconType}
-                />
-              </Popup>
-              <Popup
-                tab
-                content={(close, ref) => (
-                  <LlmTab
-                    currentAssistant={alternativeAssistant || selectedAssistant}
-                    openModelSettings={openModelSettings}
-                    currentLlm={
-                      llmOverrideManager.llmOverride.modelName ||
-                      (selectedAssistant
-                        ? selectedAssistant.llm_model_version_override ||
-                          llmOverrideManager.globalDefault.modelName ||
-                          llmName
-                        : llmName)
-                    }
-                    close={close}
-                    ref={ref}
-                    llmOverrideManager={llmOverrideManager}
-                    chatSessionId={chatSessionId}
-                  />
-                )}
-                position="top"
-              >
-                <ChatInputOption
-                  flexPriority="second"
-                  toggle
-                  name={
-                    settings?.isMobile
-                      ? undefined
-                      : getDisplayNameForModel(
-                          llmOverrideManager.llmOverride.modelName ||
-                            (selectedAssistant
-                              ? selectedAssistant.llm_model_version_override ||
-                                llmOverrideManager.globalDefault.modelName ||
-                                llmName
-                              : llmName)
-                        )
-                  }
-                  Icon={CpuIconSkeleton}
-                />
-              </Popup>
-
               <ChatInputOption
                 flexPriority="stiff"
                 name="File"

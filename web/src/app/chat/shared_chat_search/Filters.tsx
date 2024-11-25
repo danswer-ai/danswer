@@ -123,7 +123,20 @@ export function SourceSelector({
           <Popover>
             <PopoverTrigger asChild>
               <div className="cursor-pointer">
-                <SectionTitle>Time Range</SectionTitle>
+                <div className="flex justify-between items-center">
+                  <SectionTitle>Time Range</SectionTitle>
+                  {true && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTimeRange(null);
+                      }}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
                 <p className="text-sm text-default mt-2">
                   {getTimeAgoString(timeRange?.from!) || "Select a time range"}
                 </p>
