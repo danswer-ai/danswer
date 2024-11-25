@@ -458,13 +458,13 @@ export const AIMessage = ({
                         />
                       )}
 
-                    {isComplete && docs && docs.length > 0 && (
+                    {docs && docs.length > 0 && (
                       <div className="mt-2 -mx-8 w-full mb-4 flex relative">
                         <div className="w-full">
                           <div className="px-8 flex gap-x-2">
                             {!settings?.isMobile &&
-                              filteredDocs.length > 0 &&
-                              filteredDocs
+                              docs.length > 0 &&
+                              docs
                                 .slice(0, 2)
                                 .map((doc, ind) => (
                                   <FirstSourceCard doc={doc} key={ind} />
