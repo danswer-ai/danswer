@@ -106,9 +106,11 @@ def load_personas_from_yaml(
             persona_id=(-1 * p_id) if p_id is not None else None,
             name=persona["name"],
             description=persona["description"],
-            num_chunks=persona.get("num_chunks")
-            if persona.get("num_chunks") is not None
-            else default_chunks,
+            num_chunks=(
+                persona.get("num_chunks")
+                if persona.get("num_chunks") is not None
+                else default_chunks
+            ),
             llm_relevance_filter=persona.get("llm_relevance_filter"),
             starter_messages=persona.get("starter_messages"),
             llm_filter_extraction=persona.get("llm_filter_extraction"),
@@ -122,12 +124,16 @@ def load_personas_from_yaml(
             tool_ids=tool_ids,
             builtin_persona=True,
             is_public=True,
-            display_priority=existing_persona.display_priority
-            if existing_persona is not None
-            else persona.get("display_priority"),
-            is_visible=existing_persona.is_visible
-            if existing_persona is not None
-            else persona.get("is_visible"),
+            display_priority=(
+                existing_persona.display_priority
+                if existing_persona is not None
+                else persona.get("display_priority")
+            ),
+            is_visible=(
+                existing_persona.is_visible
+                if existing_persona is not None
+                else persona.get("is_visible")
+            ),
             db_session=db_session,
         )
 

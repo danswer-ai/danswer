@@ -311,11 +311,11 @@ class WebConnector(LoadConnector):
                             source=DocumentSource.WEB,
                             semantic_identifier=current_url.split("/")[-1],
                             metadata=metadata,
-                            doc_updated_at=_get_datetime_from_last_modified_header(
-                                last_modified
-                            )
-                            if last_modified
-                            else None,
+                            doc_updated_at=(
+                                _get_datetime_from_last_modified_header(last_modified)
+                                if last_modified
+                                else None
+                            ),
                         )
                     )
                     continue
@@ -362,11 +362,11 @@ class WebConnector(LoadConnector):
                         source=DocumentSource.WEB,
                         semantic_identifier=parsed_html.title or current_url,
                         metadata={},
-                        doc_updated_at=_get_datetime_from_last_modified_header(
-                            last_modified
-                        )
-                        if last_modified
-                        else None,
+                        doc_updated_at=(
+                            _get_datetime_from_last_modified_header(last_modified)
+                            if last_modified
+                            else None
+                        ),
                     )
                 )
 

@@ -54,9 +54,11 @@ class PersonaManager:
         response = requests.post(
             f"{API_SERVER_URL}/persona",
             json=persona_creation_request,
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         response.raise_for_status()
         persona_data = response.json()
@@ -122,9 +124,11 @@ class PersonaManager:
         response = requests.patch(
             f"{API_SERVER_URL}/persona/{persona.id}",
             json=persona_update_request,
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         response.raise_for_status()
         updated_persona_data = response.json()
@@ -157,9 +161,11 @@ class PersonaManager:
     ) -> list[PersonaSnapshot]:
         response = requests.get(
             f"{API_SERVER_URL}/admin/persona",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         response.raise_for_status()
         return [PersonaSnapshot(**persona) for persona in response.json()]
@@ -209,9 +215,11 @@ class PersonaManager:
     ) -> bool:
         response = requests.delete(
             f"{API_SERVER_URL}/persona/{persona.id}",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         return response.ok
 
@@ -228,9 +236,11 @@ class PersonaCategoryManager:
                 "name": category.name,
                 "description": category.description,
             },
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         response.raise_for_status()
         response_data = response.json()
@@ -243,9 +253,11 @@ class PersonaCategoryManager:
     ) -> list[DATestPersonaCategory]:
         response = requests.get(
             f"{API_SERVER_URL}/persona/categories",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         response.raise_for_status()
         return [DATestPersonaCategory(**category) for category in response.json()]
@@ -261,9 +273,11 @@ class PersonaCategoryManager:
                 "category_name": category.name,
                 "category_description": category.description,
             },
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         response.raise_for_status()
         return category
@@ -275,9 +289,11 @@ class PersonaCategoryManager:
     ) -> bool:
         response = requests.delete(
             f"{API_SERVER_URL}/admin/persona/category/{category.id}",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         return response.ok
 

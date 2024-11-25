@@ -62,9 +62,11 @@ def get_vespa_http_client(no_timeout: bool = False) -> httpx.Client:
     """
 
     return httpx.Client(
-        cert=cast(tuple[str, str], (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH))
-        if MANAGED_VESPA
-        else None,
+        cert=(
+            cast(tuple[str, str], (VESPA_CLOUD_CERT_PATH, VESPA_CLOUD_KEY_PATH))
+            if MANAGED_VESPA
+            else None
+        ),
         verify=False if not MANAGED_VESPA else True,
         timeout=None if no_timeout else VESPA_REQUEST_TIMEOUT,
         http2=True,

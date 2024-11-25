@@ -150,9 +150,9 @@ def _handle_standard_answers(
             db_session=db_session,
             description="",
             user_id=None,
-            persona_id=slack_channel_config.persona.id
-            if slack_channel_config.persona
-            else 0,
+            persona_id=(
+                slack_channel_config.persona.id if slack_channel_config.persona else 0
+            ),
             danswerbot_flow=True,
             slack_thread_id=slack_thread_id,
             one_shot=True,

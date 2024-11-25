@@ -230,9 +230,11 @@ def convert_drive_item_to_document(
             doc_updated_at=datetime.fromisoformat(file["modifiedTime"]).astimezone(
                 timezone.utc
             ),
-            metadata={}
-            if any(section.text for section in sections)
-            else {IGNORE_FOR_QA: "True"},
+            metadata=(
+                {}
+                if any(section.text for section in sections)
+                else {IGNORE_FOR_QA: "True"}
+            ),
             additional_info=file.get("id"),
         )
     except Exception as e:

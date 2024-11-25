@@ -290,11 +290,13 @@ def query_vespa(
 
     params = dict(
         **query_params,
-        **{
-            "presentation.timing": True,
-        }
-        if LOG_VESPA_TIMING_INFORMATION
-        else {},
+        **(
+            {
+                "presentation.timing": True,
+            }
+            if LOG_VESPA_TIMING_INFORMATION
+            else {}
+        ),
     )
 
     try:

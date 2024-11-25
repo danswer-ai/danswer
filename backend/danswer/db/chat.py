@@ -749,13 +749,15 @@ def translate_db_message_to_chat_message_detail(
         time_sent=chat_message.time_sent,
         citations=chat_message.citations,
         files=chat_message.files or [],
-        tool_call=ToolCallFinalResult(
-            tool_name=chat_message.tool_call.tool_name,
-            tool_args=chat_message.tool_call.tool_arguments,
-            tool_result=chat_message.tool_call.tool_result,
-        )
-        if chat_message.tool_call
-        else None,
+        tool_call=(
+            ToolCallFinalResult(
+                tool_name=chat_message.tool_call.tool_name,
+                tool_args=chat_message.tool_call.tool_arguments,
+                tool_result=chat_message.tool_call.tool_result,
+            )
+            if chat_message.tool_call
+            else None
+        ),
         alternate_assistant_id=chat_message.alternate_assistant_id,
         overridden_model=chat_message.overridden_model,
     )

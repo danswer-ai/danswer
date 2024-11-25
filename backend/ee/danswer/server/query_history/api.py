@@ -236,11 +236,13 @@ def fetch_and_process_chat_session_history_minimal(
         feedback_type: QAFeedbackType | Literal["mixed"] | None = (
             "mixed"
             if has_positive_feedback and has_negative_feedback
-            else QAFeedbackType.LIKE
-            if has_positive_feedback
-            else QAFeedbackType.DISLIKE
-            if has_negative_feedback
-            else None
+            else (
+                QAFeedbackType.LIKE
+                if has_positive_feedback
+                else QAFeedbackType.DISLIKE
+                if has_negative_feedback
+                else None
+            )
         )
 
         if feedback_filter:

@@ -122,17 +122,19 @@ def setup_danswer(
     logger.notice("Verifying Document Index(s) is/are available.")
     document_index = get_default_document_index(
         primary_index_name=search_settings.index_name,
-        secondary_index_name=secondary_search_settings.index_name
-        if secondary_search_settings
-        else None,
+        secondary_index_name=(
+            secondary_search_settings.index_name if secondary_search_settings else None
+        ),
     )
 
     success = setup_vespa(
         document_index,
         IndexingSetting.from_db_model(search_settings),
-        IndexingSetting.from_db_model(secondary_search_settings)
-        if secondary_search_settings
-        else None,
+        (
+            IndexingSetting.from_db_model(secondary_search_settings)
+            if secondary_search_settings
+            else None
+        ),
     )
     if not success:
         raise RuntimeError("Could not connect to Vespa within the specified timeout.")
@@ -230,9 +232,11 @@ def setup_vespa(
             logger.notice(f"Setting up Vespa (attempt {x+1}/{VESPA_ATTEMPTS})...")
             document_index.ensure_indices_exist(
                 index_embedding_dim=index_setting.model_dim,
-                secondary_index_embedding_dim=secondary_index_setting.model_dim
-                if secondary_index_setting
-                else None,
+                secondary_index_embedding_dim=(
+                    secondary_index_setting.model_dim
+                    if secondary_index_setting
+                    else None
+                ),
             )
 
             logger.notice("Vespa setup complete.")

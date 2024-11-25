@@ -253,16 +253,20 @@ def handle_regular_answer(
         answer = _get_answer(
             DirectQARequest(
                 messages=messages,
-                multilingual_query_expansion=saved_search_settings.multilingual_expansion
-                if saved_search_settings
-                else None,
+                multilingual_query_expansion=(
+                    saved_search_settings.multilingual_expansion
+                    if saved_search_settings
+                    else None
+                ),
                 prompt_id=prompt.id if prompt else None,
                 persona_id=persona.id if persona is not None else 0,
                 retrieval_options=retrieval_details,
                 chain_of_thought=not disable_cot,
-                rerank_settings=RerankingDetails.from_db_model(saved_search_settings)
-                if saved_search_settings
-                else None,
+                rerank_settings=(
+                    RerankingDetails.from_db_model(saved_search_settings)
+                    if saved_search_settings
+                    else None
+                ),
             )
         )
     except Exception as e:

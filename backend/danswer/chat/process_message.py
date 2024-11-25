@@ -515,9 +515,9 @@ def stream_chat_message_objects(
             else reserve_message_id(
                 db_session=db_session,
                 chat_session_id=chat_session_id,
-                parent_message=user_message.id
-                if user_message is not None
-                else parent_message.id,
+                parent_message=(
+                    user_message.id if user_message is not None else parent_message.id
+                ),
                 message_type=MessageType.ASSISTANT,
             )
         )
@@ -722,9 +722,11 @@ def stream_chat_message_objects(
                         ai_message_files = [
                             FileDescriptor(
                                 id=str(file_id),
-                                type=ChatFileType.IMAGE
-                                if custom_tool_response.response_type == "image"
-                                else ChatFileType.CSV,
+                                type=(
+                                    ChatFileType.IMAGE
+                                    if custom_tool_response.response_type == "image"
+                                    else ChatFileType.CSV
+                                ),
                             )
                             for file_id in file_ids
                         ]
