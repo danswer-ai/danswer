@@ -77,7 +77,7 @@ class IndexingCallback(IndexingHeartbeatInterface):
         self.started: datetime = datetime.now(timezone.utc)
         self.redis_lock.reacquire()
 
-        self.last_tag: str = ""
+        self.last_tag: str = "IndexingCallback.__init__"
         self.last_lock_reacquire: datetime = datetime.now(timezone.utc)
 
     def should_stop(self) -> bool:
