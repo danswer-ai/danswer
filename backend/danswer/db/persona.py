@@ -390,6 +390,9 @@ def upsert_prompt(
     return prompt
 
 
+# NOTE: This operation cannot update persona configuration options that
+# are core to the persona, such as its display priority and
+# whether or not the assistant is a built-in / default assistant
 def upsert_persona(
     user: User | None,
     name: str,
@@ -458,7 +461,7 @@ def upsert_persona(
         validate_persona_tools(tools)
 
     if persona:
-        if not builtin_persona and persona.builtin_persona:
+        if persona.builtin_persona and not builtin_persona:
             raise ValueError("Cannot update builtin persona with non-builtin.")
 
         # this checks if the user has permission to edit the persona
@@ -474,7 +477,6 @@ def upsert_persona(
         persona.llm_relevance_filter = llm_relevance_filter
         persona.llm_filter_extraction = llm_filter_extraction
         persona.recency_bias = recency_bias
-        persona.builtin_persona = builtin_persona
         persona.llm_model_provider_override = llm_model_provider_override
         persona.llm_model_version_override = llm_model_version_override
         persona.starter_messages = starter_messages
@@ -484,10 +486,8 @@ def upsert_persona(
         persona.icon_shape = icon_shape
         if remove_image or uploaded_image_id:
             persona.uploaded_image_id = uploaded_image_id
-        persona.display_priority = display_priority
         persona.is_visible = is_visible
         persona.search_start_date = search_start_date
-        persona.is_default_persona = is_default_persona
         persona.category_id = category_id
         # Do not delete any associations manually added unless
         # a new updated list is provided
