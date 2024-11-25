@@ -2176,7 +2176,7 @@ export function ChatPage({
                           ref={scrollableDivRef}
                         >
                           {liveAssistant && onAssistantChange && (
-                            <div className="z-[1000] flex justify-center w-full overflow-visible">
+                            <div className="z-[1000] fixed top-4 flex justify-center w-full overflow-visible">
                               <AssistantSelector
                                 liveAssistant={liveAssistant}
                                 onAssistantChange={onAssistantChange}
@@ -2184,6 +2184,7 @@ export function ChatPage({
                               />
                             </div>
                           )}
+
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 
                       the top of the chat page. Oly used in the EE version of the app. */}
 

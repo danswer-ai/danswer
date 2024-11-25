@@ -3,9 +3,8 @@ import { useAssistants } from "@/components/context/AssistantsContext";
 import { useChatContext } from "@/components/context/ChatContext";
 import { useUser } from "@/components/user/UserProvider";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 import { FiChevronDown } from "react-icons/fi";
-import { getFinalLLM, destructureValue } from "@/lib/llm/utils";
+import { destructureValue } from "@/lib/llm/utils";
 import { updateModelOverrideForChatSession } from "@/app/chat/lib";
 import { debounce } from "lodash";
 import { LlmList } from "@/components/llm/LLMList";
@@ -28,7 +27,6 @@ import {
 import { DraggableAssistantCard } from "@/components/assistants/AssistantCards";
 import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
 import Text from "@/components/ui/text";
-import { GearIcon } from "@/components/icons/icons";
 import { LlmOverrideManager } from "@/lib/hooks";
 import { Tab } from "@headlessui/react";
 import { AssistantIcon } from "../assistants/AssistantIcon";
@@ -50,7 +48,7 @@ const AssistantSelector = ({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { llmProviders } = useChatContext();
-  const { refreshUser, user } = useUser();
+  const { user } = useUser();
   const [assistants, setAssistants] = useState<Persona[]>(finalAssistants);
   const [selectedTab, setSelectedTab] = useState(0);
   const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
