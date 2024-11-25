@@ -152,6 +152,10 @@ export default function FunctionalHeader({
             `}
           />
         </div>
+
+        {page != "assistants" && (
+          <div className="h-20 left-0 absolute top-0 z-10 w-full bg-gradient-to-b via-50% z-[-1] from-background via-background to-background/10 flex" />
+        )}
       </div>
     </div>
   );
