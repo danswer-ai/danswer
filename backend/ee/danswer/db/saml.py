@@ -6,11 +6,11 @@ from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.db.models import SamlAccount
-from danswer.db.models import User
 
 
 def upsert_saml_account(
@@ -52,7 +52,7 @@ async def get_saml_account(
     (which is necessarily async due to FastAPI Users)"""
     stmt = (
         select(SamlAccount)
-        .join(User, User.id == SamlAccount.user_id)  # type: ignore
+        .options(selectinload(SamlAccount.user))  # Use selectinload for collections
         .where(
             and_(
                 SamlAccount.encrypted_cookie == cookie,
@@ -62,7 +62,7 @@ async def get_saml_account(
     )
 
     result = await async_db_session.execute(stmt)
-    return result.scalar_one_or_none()
+    return result.scalars().unique().one_or_none()
 
 
 async def expire_saml_account(
