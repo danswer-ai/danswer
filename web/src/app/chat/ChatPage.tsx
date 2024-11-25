@@ -2170,7 +2170,7 @@ export function ChatPage({
                         {...getRootProps()}
                       >
                         <div
-                          className={`w-full h-full flex flex-col default-scrollbar overflow-y-auto overflow-x-hidden relative`}
+                          className={`w-full h-[calc(100vh-130px)]  mb-96 flex flex-col default-scrollbar overflow-y-auto overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
                           {liveAssistant && onAssistantChange && (
