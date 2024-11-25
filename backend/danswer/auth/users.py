@@ -49,7 +49,7 @@ from httpx_oauth.oauth2 import BaseOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
 from pydantic import BaseModel
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from danswer.auth.api_key import get_hashed_api_key_from_request
 from danswer.auth.invited_users import get_invited_users
@@ -80,8 +80,8 @@ from danswer.db.auth import get_default_admin_user_emails
 from danswer.db.auth import get_user_count
 from danswer.db.auth import get_user_db
 from danswer.db.auth import SQLAlchemyUserAdminDB
+from danswer.db.engine import get_async_session
 from danswer.db.engine import get_async_session_with_tenant
-from danswer.db.engine import get_session
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
@@ -609,7 +609,7 @@ optional_fastapi_current_user = fastapi_users.current_user(active=True, optional
 async def optional_user_(
     request: Request,
     user: User | None,
-    db_session: Session,
+    async_db_session: AsyncSession,
 ) -> User | None:
     """NOTE: `request` and `db_session` are not used here, but are included
     for the EE version of this function."""
@@ -618,13 +618,21 @@ async def optional_user_(
 
 async def optional_user(
     request: Request,
-    db_session: Session = Depends(get_session),
+    async_db_session: AsyncSession = Depends(get_async_session),
     user: User | None = Depends(optional_fastapi_current_user),
 ) -> User | None:
     versioned_fetch_user = fetch_versioned_implementation(
         "danswer.auth.users", "optional_user_"
     )
-    return await versioned_fetch_user(request, user, db_session)
+    user = await versioned_fetch_user(request, user, async_db_session)
+
+    # check if an API key is present
+    if user is None:
+        hashed_api_key = get_hashed_api_key_from_request(request)
+        if hashed_api_key:
+            user = await fetch_user_for_api_key(hashed_api_key, async_db_session)
+
+    return user
 
 
 async def double_check_user(
@@ -910,8 +918,8 @@ def get_oauth_router(
     return router
 
 
-def api_key_dep(
-    request: Request, db_session: Session = Depends(get_session)
+async def api_key_dep(
+    request: Request, async_db_session: AsyncSession = Depends(get_async_session)
 ) -> User | None:
     if AUTH_TYPE == AuthType.DISABLED:
         return None
@@ -921,7 +929,7 @@ def api_key_dep(
         raise HTTPException(status_code=401, detail="Missing API key")
 
     if hashed_api_key:
-        user = fetch_user_for_api_key(hashed_api_key, db_session)
+        user = await fetch_user_for_api_key(hashed_api_key, async_db_session)
 
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid API key")

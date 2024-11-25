@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
@@ -44,7 +45,11 @@ def upsert_saml_account(
     return saml_acc.expires_at
 
 
-def get_saml_account(cookie: str, db_session: Session) -> SamlAccount | None:
+async def get_saml_account(
+    cookie: str, async_db_session: AsyncSession
+) -> SamlAccount | None:
+    """NOTE: this is async, since it's used during auth
+    (which is necessarily async due to FastAPI Users)"""
     stmt = (
         select(SamlAccount)
         .join(User, User.id == SamlAccount.user_id)  # type: ignore
@@ -56,10 +61,12 @@ def get_saml_account(cookie: str, db_session: Session) -> SamlAccount | None:
         )
     )
 
-    result = db_session.execute(stmt)
+    result = await async_db_session.execute(stmt)
     return result.scalar_one_or_none()
 
 
-def expire_saml_account(saml_account: SamlAccount, db_session: Session) -> None:
+async def expire_saml_account(
+    saml_account: SamlAccount, async_db_session: AsyncSession
+) -> None:
     saml_account.expires_at = func.now()
-    db_session.commit()
+    await async_db_session.commit()
