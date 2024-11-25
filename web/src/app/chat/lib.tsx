@@ -262,7 +262,6 @@ export async function renameChatSession(
     body: JSON.stringify({
       chat_session_id: chatSessionId,
       name: newName,
-      first_message: null,
     }),
   });
   return response;

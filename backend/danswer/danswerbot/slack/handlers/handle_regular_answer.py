@@ -24,7 +24,7 @@ from danswer.context.search.enums import OptionalSearchSetting
 from danswer.context.search.models import BaseFilters
 from danswer.context.search.models import RerankingDetails
 from danswer.context.search.models import RetrievalDetails
-from danswer.danswerbot.slack.blocks import block_builder
+from danswer.danswerbot.slack.blocks import build_slack_response_blocks
 from danswer.danswerbot.slack.handlers.utils import send_team_member_message
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import respond_in_thread
@@ -405,7 +405,7 @@ def handle_regular_answer(
             )
         return True
 
-    all_blocks = block_builder(
+    all_blocks = build_slack_response_blocks(
         tenant_id=tenant_id,
         message_info=message_info,
         answer=answer,

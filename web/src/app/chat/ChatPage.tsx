@@ -1817,12 +1817,12 @@ export function ChatPage({
     };
   }
 
-  // Add this near the top of the file where other useEffect hooks are
   useEffect(() => {
     const handleSlackChatRedirect = async () => {
       if (!slackChatId) return;
 
-      setIsReady(false); // Set isReady to false before starting retrieval
+      // Set isReady to false before starting retrieval to display loading text
+      setIsReady(false);
 
       try {
         const response = await fetch("/api/chat/seed-chat-session-from-slack", {

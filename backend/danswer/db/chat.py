@@ -257,6 +257,13 @@ def duplicate_chat_session_for_user_from_slack(
     user: User | None,
     chat_session_id: UUID,
 ) -> ChatSession:
+    """
+    This takes a chat session id for a session in Slack and:
+    - Creates a new chat session in the DB
+    - Tries to copy the persona from the original chat session
+        (if it is available to the user clicking the button)
+    - Sets the user to the given user (if provided)
+    """
     chat_session = get_chat_session_by_id(
         chat_session_id=chat_session_id,
         user_id=None,  # Ignore user permissions for this
@@ -421,69 +428,37 @@ def add_chats_to_session_from_slack_thread(
     slack_chat_session_id: UUID,
     new_chat_session_id: UUID,
 ) -> None:
-    new_root_message = ChatMessage(
+    new_root_message = get_or_create_root_message(
         chat_session_id=new_chat_session_id,
-        prompt_id=None,
-        parent_message=None,
-        latest_child_message=None,
-        message="",
-        token_count=0,
-        message_type=MessageType.SYSTEM,
+        db_session=db_session,
     )
-    db_session.add(new_root_message)
-    db_session.commit()
 
-    user_message = None
-    assistant_message = None
     for chat_message in get_chat_messages_by_sessions(
         chat_session_ids=[slack_chat_session_id],
         user_id=None,  # Ignore user permissions for this
         db_session=db_session,
         skip_permission_check=True,
     ):
-        # Should only be 3 messages in a Slack chat session
         if chat_message.message_type == MessageType.SYSTEM:
             continue
-        elif chat_message.message_type == MessageType.USER:
-            user_message = chat_message
-        elif chat_message.message_type == MessageType.ASSISTANT:
-            assistant_message = chat_message
-
-    if user_message is None or assistant_message is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Couldnt find all messages in Slack chat session",
+        # Duplicate the message
+        new_root_message = create_new_chat_message(
+            db_session=db_session,
+            chat_session_id=new_chat_session_id,
+            parent_message=new_root_message,
+            message=chat_message.message,
+            files=chat_message.files,
+            rephrased_query=chat_message.rephrased_query,
+            error=chat_message.error,
+            citations=chat_message.citations,
+            search_docs=chat_message.search_docs,
+            tool_call=chat_message.tool_call,
+            prompt_id=chat_message.prompt_id,
+            token_count=chat_message.token_count,
+            message_type=chat_message.message_type,
+            alternate_assistant_id=chat_message.alternate_assistant_id,
+            overridden_model=chat_message.overridden_model,
         )
-
-    new_user_message = create_new_chat_message(
-        db_session=db_session,
-        chat_session_id=new_chat_session_id,
-        parent_message=new_root_message,
-        message=user_message.message,
-        prompt_id=user_message.prompt_id,
-        token_count=user_message.token_count,
-        message_type=MessageType.USER,
-    )
-    db_session.add(new_user_message)
-    db_session.commit()
-
-    search_docs = get_search_docs_for_chat_message(
-        chat_message_id=user_message.id,
-        db_session=db_session,
-    )
-
-    new_assistant_message = create_new_chat_message(
-        db_session=db_session,
-        chat_session_id=new_chat_session_id,
-        parent_message=new_user_message,
-        message=assistant_message.message,
-        prompt_id=assistant_message.prompt_id,
-        token_count=assistant_message.token_count,
-        message_type=MessageType.ASSISTANT,
-        reference_docs=search_docs,
-    )
-    db_session.add(new_assistant_message)
-    db_session.commit()
 
 
 def get_search_docs_for_chat_message(
@@ -601,7 +576,7 @@ def create_new_chat_message(
     files: list[FileDescriptor] | None = None,
     rephrased_query: str | None = None,
     error: str | None = None,
-    reference_docs: list[DBSearchDoc] | None = None,
+    search_docs: list[DBSearchDoc] | None = None,
     alternate_assistant_id: int | None = None,
     # Maps the citation number [n] to the DB SearchDoc
     citations: dict[int, int] | None = None,
@@ -652,8 +627,8 @@ def create_new_chat_message(
         db_session.add(new_chat_message)
 
     # SQL Alchemy will propagate this to update the reference_docs' foreign keys
-    if reference_docs:
-        new_chat_message.search_docs = reference_docs
+    if search_docs:
+        new_chat_message.search_docs = search_docs
 
     # Flush the session to get an ID for the new chat message
     db_session.flush()
