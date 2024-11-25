@@ -55,8 +55,7 @@ class IndexingPipelineProtocol(Protocol):
         self,
         document_batch: list[Document],
         index_attempt_metadata: IndexAttemptMetadata,
-    ) -> tuple[int, int]:
-        ...
+    ) -> tuple[int, int]: ...
 
 
 def _upsert_documents_in_db(

@@ -310,10 +310,10 @@ def stream_answer_objects(
 
                 if packet.response is not None:
                     for evaluation in packet.response:
-                        document_based_response[
-                            evaluation.document_id
-                        ] = RelevanceAnalysis(
-                            relevant=evaluation.relevant, content=evaluation.content
+                        document_based_response[evaluation.document_id] = (
+                            RelevanceAnalysis(
+                                relevant=evaluation.relevant, content=evaluation.content
+                            )
                         )
 
                 evaluation_response = DocumentRelevance(

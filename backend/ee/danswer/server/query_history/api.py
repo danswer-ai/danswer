@@ -182,9 +182,7 @@ def determine_flow_type(chat_session: ChatSession) -> SessionType:
     return (
         SessionType.SLACK
         if chat_session.danswerbot_flow
-        else SessionType.SEARCH
-        if chat_session.one_shot
-        else SessionType.CHAT
+        else SessionType.SEARCH if chat_session.one_shot else SessionType.CHAT
     )
 
 
@@ -239,9 +237,7 @@ def fetch_and_process_chat_session_history_minimal(
             else (
                 QAFeedbackType.LIKE
                 if has_positive_feedback
-                else QAFeedbackType.DISLIKE
-                if has_negative_feedback
-                else None
+                else QAFeedbackType.DISLIKE if has_negative_feedback else None
             )
         )
 
