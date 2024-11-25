@@ -462,21 +462,6 @@ export const AIMessage = ({
                         />
                       )}
 
-                    {content || files ? (
-                      <>
-                        <FileDisplay files={files || []} />
-
-                        {typeof content === "string" ? (
-                          <div className="overflow-x-visible max-w-content-max">
-                            {renderedMarkdown}
-                          </div>
-                        ) : (
-                          content
-                        )}
-                      </>
-                    ) : isComplete ? null : (
-                      <></>
-                    )}
                     {isComplete && docs && docs.length > 0 && (
                       <div className="mt-2 -mx-8 w-full mb-4 flex relative">
                         <div className="w-full">
@@ -500,6 +485,22 @@ export const AIMessage = ({
                           </div>
                         </div>
                       </div>
+                    )}
+
+                    {content || files ? (
+                      <>
+                        <FileDisplay files={files || []} />
+
+                        {typeof content === "string" ? (
+                          <div className="overflow-x-visible max-w-content-max">
+                            {renderedMarkdown}
+                          </div>
+                        ) : (
+                          content
+                        )}
+                      </>
+                    ) : isComplete ? null : (
+                      <></>
                     )}
                   </div>
 
