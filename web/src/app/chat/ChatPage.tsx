@@ -2648,11 +2648,15 @@ export function ChatPage({
                                 />
                               </div>
                             )}
-                            <div
-                              style={{
-                                height: !autoScrollEnabled ? "50vh" : undefined,
-                              }}
-                            />
+                            {messageHistory.length > 0 && (
+                              <div
+                                style={{
+                                  height: !autoScrollEnabled
+                                    ? "50vh"
+                                    : undefined,
+                                }}
+                              />
+                            )}
 
                             {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                             <div ref={endPaddingRef} className="h-[95px]" />
@@ -2740,7 +2744,6 @@ export function ChatPage({
                           transition-all 
                           duration-300 
                           ease-in-out
-                          h-full
                           ${
                             documentSidebarToggled && retrievalEnabled
                               ? "w-[400px]"

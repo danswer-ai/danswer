@@ -25,17 +25,7 @@ export function DocumentMetadataBlock({
   document: DanswerDocument;
 }) {
   const MAX_METADATA_ITEMS = 3;
-  // const metadataEntries = Object.entries(document.metadata);
-  const metadataEntriesCopy1 = Object.entries(document.metadata || ["l"]);
-  const metadataEntriesCopy2 = Object.entries(document.metadata || ["l"]);
-  const metadataEntriesCopy3 = Object.entries(document.metadata || ["l"]);
-  const metadataEntriesCopy4 = Object.entries(document.metadata || ["l"]);
-  const metadataEntries = [
-    ...metadataEntriesCopy1,
-    ...metadataEntriesCopy2,
-    ...metadataEntriesCopy3,
-    ...metadataEntriesCopy4,
-  ];
+  const metadataEntries = Object.entries(document.metadata);
 
   return (
     <div className="flex items-center overflow-hidden">
@@ -78,20 +68,12 @@ export function ChatDocumentDisplay({
   }
 
   const faviconUrl =
-    isInternet && document.link
+    (isInternet || document.source_type === "web") && document.link
       ? `https://www.google.com/s2/favicons?domain=${
           new URL(document.link).hostname
-        }&sz=32`
+        }&sz=24`
       : null;
-  const source = document.link
-    ? (() => {
-        try {
-          return new URL(document.link).hostname;
-        } catch {
-          return document.link;
-        }
-      })()
-    : document.source_type;
+  console.log(new URL(document.link).hostname);
 
   return (
     <div className="opacity-100 will-change-auto">
@@ -110,8 +92,8 @@ export function ChatDocumentDisplay({
             {faviconUrl ? (
               <img
                 alt="Favicon"
-                width="32"
-                height="32"
+                width="18"
+                height="18"
                 className="rounded-full bg-gray-200 object-cover"
                 src={faviconUrl}
               />
@@ -119,11 +101,16 @@ export function ChatDocumentDisplay({
               <SourceIcon sourceType={document.source_type} iconSize={18} />
             )}
             <div className="line-clamp-1 text-text-900 text-sm font-semibold">
-              {document.semantic_identifier || document.document_id}
+              {(document.semantic_identifier || document.document_id).length >
+              40
+                ? `${(document.semantic_identifier || document.document_id)
+                    .slice(0, 40)
+                    .trim()}...`
+                : document.semantic_identifier || document.document_id}
             </div>
           </div>
           <DocumentMetadataBlock document={document} />
-          <div className="line-clamp-2 pt-2 text-sm font-normal leading-snug text-gray-600">
+          <div className="line-clamp-3 pt-2 text-sm font-normal leading-snug text-gray-600">
             {buildDocumentSummaryDisplay(
               document.match_highlights,
               document.blurb
