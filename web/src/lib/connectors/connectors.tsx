@@ -6,7 +6,7 @@ import { Credential } from "@/lib/connectors/credentials"; // Import Credential 
 
 export function isLoadState(connector_name: string): boolean {
   // TODO: centralize connector metadata like this somewhere instead of hardcoding it here
-  const loadStateConnectors = ["web", "xenforo"];
+  const loadStateConnectors = ["web", "xenforo", "file"];
   if (loadStateConnectors.includes(connector_name)) {
     return true;
   }
@@ -78,11 +78,6 @@ export interface FileOption extends Option {
   default?: string;
 }
 
-export interface ZipOption extends Option {
-  type: "zip";
-  default?: string;
-}
-
 export interface StringTabOption extends Option {
   type: "string_tab";
   default?: string;
@@ -101,7 +96,6 @@ export interface TabOption extends Option {
       | NumberOption
       | SelectOption
       | FileOption
-      | ZipOption
       | StringTabOption
     )[];
   }[];
@@ -118,7 +112,6 @@ export interface ConnectionConfiguration {
     | NumberOption
     | SelectOption
     | FileOption
-    | ZipOption
     | TabOption
   )[];
   advanced_values: (
@@ -128,7 +121,6 @@ export interface ConnectionConfiguration {
     | NumberOption
     | SelectOption
     | FileOption
-    | ZipOption
     | TabOption
   )[];
   overrideDefaultFreq?: number;
@@ -750,10 +742,10 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     description: "Configure Google Sites connector",
     values: [
       {
-        type: "zip",
+        type: "file",
         query: "Enter the zip path:",
-        label: "Zip Path",
-        name: "zip_path",
+        label: "File Locations",
+        name: "file_locations",
         optional: false,
         description:
           "Upload a zip file containing the HTML of your Google Site",
