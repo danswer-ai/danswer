@@ -2060,7 +2060,7 @@ export function ChatPage({
               </div>
             </div>
           </div>
-          {!settings?.isMobile && !retrievalEnabled && (
+          {!settings?.isMobile && retrievalEnabled && (
             <div
               style={{ transition: "width 0.30s ease-out" }}
               className={`
