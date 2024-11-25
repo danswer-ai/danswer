@@ -26,6 +26,7 @@ from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import BasicAuthenticationError
+from danswer.auth.users import create_danswer_oauth_router
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
@@ -323,7 +324,7 @@ def get_application() -> FastAPI:
         oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
         include_router_with_global_prefix_prepended(
             application,
-            fastapi_users.get_oauth_router(
+            create_danswer_oauth_router(
                 oauth_client,
                 auth_backend,
                 USER_AUTH_SECRET,
