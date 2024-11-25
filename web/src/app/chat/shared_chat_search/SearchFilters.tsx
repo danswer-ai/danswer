@@ -256,7 +256,6 @@ export function SourceSelector({
     </div>
   );
 }
-
 export function TagFilter({
   tags,
   selectedTags,
@@ -322,18 +321,77 @@ export function TagFilter({
   }, [filterValue, tags, debouncedFetchTags]);
 
   const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFilterValue(event.target.value);
+    const value = event.target.value;
+    setFilterValue(value);
+    setTagOptionsAreVisible(true);
+
+    // Immediately filter tags based on input
+    const lowercasedFilter = value.toLowerCase();
+    const filtered = tags.filter(
+      (tag) =>
+        tag.tag_key.toLowerCase().includes(lowercasedFilter) ||
+        tag.tag_value.toLowerCase().includes(lowercasedFilter)
+    );
+    setFilteredTags(filtered);
   };
 
   return (
-    <div className="space-y-2">
-      <Input
-        ref={inputRef}
-        placeholder="Find a tag"
-        value={filterValue}
-        onChange={handleFilterChange}
-        onFocus={() => setTagOptionsAreVisible(true)}
-      />
+    <div className="space-y-2 w-full">
+      <Popover
+        open={tagOptionsAreVisible}
+        onOpenChange={setTagOptionsAreVisible}
+      >
+        <PopoverTrigger>
+          <input
+            type="text"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            ref={inputRef}
+            placeholder="Find a tag"
+            // onChange={handleFilterChange}g
+            // onFocus={() => setTagOptionsAreVisible(true)}
+          />
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-72 p-0"
+          align={showTagsOnLeft ? "start" : "end"}
+        >
+          <div ref={popupRef} className="p-2">
+            <div className="flex items-center border-b pb-2 mb-2">
+              <FiTag className="mr-2" />
+              <span className="font-medium text-sm">Tags</span>
+            </div>
+            <div className="max-h-96 overflow-y-auto space-y-1">
+              {filteredTags.length > 0 ? (
+                filteredTags.map((tag) => (
+                  <div
+                    key={tag.tag_key + tag.tag_value}
+                    onClick={() => onSelectTag(tag)}
+                    className={`
+                      text-sm 
+                      cursor-pointer 
+                      p-2 
+                      rounded-md
+                      ${
+                        selectedTags.some(
+                          (t) =>
+                            t.tag_key === tag.tag_key &&
+                            t.tag_value === tag.tag_value
+                        )
+                          ? "bg-gray-200"
+                          : "hover:bg-gray-100"
+                      }
+                    `}
+                  >
+                    {tag.tag_key}={tag.tag_value}
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm p-2">No matching tags found</div>
+              )}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
       {selectedTags.length > 0 && (
         <div className="space-y-2">
           <div className="flex flex-wrap gap-2">
@@ -358,46 +416,6 @@ export function TagFilter({
             Clear all
           </Button>
         </div>
-      )}
-      {tagOptionsAreVisible && (
-        <Popover>
-          <PopoverContent
-            className="w-72"
-            align={showTagsOnLeft ? "start" : "end"}
-          >
-            <div ref={popupRef}>
-              <div className="flex items-center border-b pb-2 mb-2">
-                <FiTag className="mr-2" />
-                <span className="font-medium text-sm">Tags</span>
-              </div>
-              <div className="max-h-96 overflow-y-auto space-y-1">
-                {filteredTags.length > 0 ? (
-                  filteredTags.map((tag) => (
-                    <div
-                      key={tag.tag_key + tag.tag_value}
-                      onClick={() => onSelectTag(tag)}
-                      className={`
-                        text-sm 
-                        cursor-pointer 
-                        p-2 
-                        rounded-md
-                        ${
-                          selectedTags.includes(tag)
-                            ? "bg-accent"
-                            : "hover:bg-accent"
-                        }
-                      `}
-                    >
-                      {tag.tag_key}={tag.tag_value}
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-sm p-2">No matching tags found</div>
-                )}
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
       )}
     </div>
   );

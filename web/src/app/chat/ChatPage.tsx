@@ -2079,7 +2079,7 @@ export function ChatPage({
                 duration-300
                 ease-in-out
                 h-full
-                ${documentSidebarToggled ? "w-[375px]" : "w-[0px]"}
+                ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
             `}
             >
               <DocumentSidebar
@@ -2098,7 +2098,7 @@ export function ChatPage({
                 selectedDocumentTokens={selectedDocumentTokens}
                 maxTokens={maxTokens}
                 isLoading={isFetchingChatMessages}
-                initialWidth={375}
+                initialWidth={400}
                 isOpen={documentSidebarToggled}
               />
             </div>
@@ -2170,7 +2170,7 @@ export function ChatPage({
                         {...getRootProps()}
                       >
                         <div
-                          className={`w-full h-[calc(100vh-130px)]  mb-96 flex flex-col default-scrollbar overflow-y-auto overflow-x-hidden relative`}
+                          className={`w-full h-[calc(100vh-160px)] flex flex-col default-scrollbar overflow-y-auto overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
                           {liveAssistant && onAssistantChange && (
@@ -2200,19 +2200,19 @@ export function ChatPage({
                                 <div
                                   style={{ transition: "width 0.30s ease-out" }}
                                   className={`
-                          flex-none 
-                          overflow-y-hidden 
-                          transition-all 
-                          duration-300 
-                          ease-in-out
-                          bg-black
-                          h-full
-                          ${
-                            documentSidebarToggled && retrievalEnabled
-                              ? "w-[375px]"
-                              : "w-[0px]"
-                          }
-                      `}
+                                    flex-none 
+                                    overflow-y-hidden 
+                                    transition-all 
+                                    duration-300 
+                                    ease-in-out
+                                    bg-black
+                                    h-full
+                                    ${
+                                      documentSidebarToggled && retrievalEnabled
+                                        ? "w-[400px]"
+                                        : "w-[0px]"
+                                    }
+                                `}
                                 ></div>
                               )}
                             </div>
@@ -2650,9 +2650,7 @@ export function ChatPage({
                             )}
                             <div
                               style={{
-                                height: !autoScrollEnabled
-                                  ? "5ob0vh"
-                                  : undefined,
+                                height: !autoScrollEnabled ? "50vh" : undefined,
                               }}
                             />
 
@@ -2745,7 +2743,7 @@ export function ChatPage({
                           h-full
                           ${
                             documentSidebarToggled && retrievalEnabled
-                              ? "w-[375px]"
+                              ? "w-[400px]"
                               : "w-[0px]"
                           }
                       `}
