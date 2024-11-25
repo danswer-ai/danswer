@@ -17,16 +17,21 @@ def set_no_auth_user_preferences(
 
 
 def load_no_auth_user_preferences(store: KeyValueStore) -> UserPreferences:
+    print("LOADING NO AUTH USER PREFERENCES")
     try:
         preferences_data = cast(
             Mapping[str, Any], store.load(KV_NO_AUTH_USER_PREFERENCES_KEY)
         )
+        print("PREFERENCES DATA", preferences_data)
         return UserPreferences(**preferences_data)
     except KvKeyNotFoundError:
-        return UserPreferences(chosen_assistants=None, default_model=None)
+        return UserPreferences(
+            chosen_assistants=None, default_model=None, auto_scroll=True
+        )
 
 
 def fetch_no_auth_user(store: KeyValueStore) -> UserInfo:
+    print("FETCHING NO AUTH USER")
     return UserInfo(
         id="__no_auth_user__",
         email="anonymous@danswer.ai",

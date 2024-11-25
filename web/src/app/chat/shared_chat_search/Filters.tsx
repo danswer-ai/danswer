@@ -8,8 +8,8 @@ import {
   PlusCircleIcon,
   PlusIcon,
   defaultTailwindCSS,
-} from "../../icons/icons";
-import { HoverPopup } from "../../HoverPopup";
+} from "@/components/icons/icons";
+import { HoverPopup } from "@/components/HoverPopup";
 import {
   FiBook,
   FiBookmark,
@@ -18,22 +18,18 @@ import {
   FiTag,
   FiX,
 } from "react-icons/fi";
-import { DateRangeSelector } from "../DateRangeSelector";
+import { DateRangeSelector } from "@/components/search/DateRangeSelector";
 import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
-import { FilterDropdown } from "./FilterDropdown";
 import { listSourceMetadata } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
-import { TagFilter } from "./TagFilter";
+import { TagFilter } from "@/components/search/filtering/TagFilter";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { PopoverContent } from "@radix-ui/react-popover";
 import { CalendarIcon } from "lucide-react";
-import {
-  buildDateString,
-  getDateRangeString,
-  getTimeAgoString,
-} from "@/lib/dateUtils";
+import { buildDateString, getTimeAgoString } from "@/lib/dateUtils";
 import { Separator } from "@/components/ui/separator";
+import { FilterDropdown } from "@/components/search/filtering/FilterDropdown";
 
 const SectionTitle = ({ children }: { children: string }) => (
   <div className="font-bold text-xs mt-2 flex">{children}</div>
@@ -54,9 +50,9 @@ export interface SourceSelectorProps {
   availableDocumentSets: DocumentSet[];
   existingSources: ValidSources[];
   availableTags: Tag[];
-  toggleFilters?: () => void;
-  filtersUntoggled?: boolean;
-  tagsOnLeft?: boolean;
+  toggleFilters: () => void;
+  filtersUntoggled: boolean;
+  tagsOnLeft: boolean;
 }
 
 export function SourceSelector({
@@ -117,10 +113,7 @@ export function SourceSelector({
         showDocSidebar ? "4xl:block" : "!block"
       } duration-1000 flex ease-out transition-all transform origin-top-right`}
     >
-      <button
-        onClick={() => toggleFilters && toggleFilters()}
-        className="flex text-emphasis"
-      >
+      <button onClick={() => toggleFilters()} className="flex text-emphasis">
         <h2 className="font-bold my-auto">Filters</h2>
         <FiFilter className="my-auto ml-2" size="16" />
       </button>
@@ -132,8 +125,7 @@ export function SourceSelector({
               <div className="cursor-pointer">
                 <SectionTitle>Time Range</SectionTitle>
                 <p className="text-sm text-default mt-2">
-                  {getDateRangeString(timeRange?.from!, timeRange?.to!) ||
-                    "Select a time range"}
+                  {getTimeAgoString(timeRange?.from!) || "Select a time range"}
                 </p>
               </div>
             </PopoverTrigger>
@@ -493,10 +485,9 @@ export function HorizontalSourceSelector({
           <div
             className={`
               border 
-              max-w-64
+              max-w-36
               border-border 
               rounded-lg 
-              bg-background
               max-h-96 
               overflow-y-scroll
               overscroll-contain
@@ -508,7 +499,6 @@ export function HorizontalSourceSelector({
               w-fit
               gap-x-1
               hover:bg-hover
-              bg-hover-light
               flex
               items-center
               bg-background-search-filter
@@ -516,13 +506,11 @@ export function HorizontalSourceSelector({
           >
             <CalendarIcon className="h-4 w-4" />
 
-            {timeRange?.from
-              ? getDateRangeString(timeRange.from, timeRange.to)
-              : "Since"}
+            {timeRange?.from ? getTimeAgoString(timeRange.from) : "Since"}
           </div>
         </PopoverTrigger>
         <PopoverContent
-          className="bg-background border-border border rounded-md z-[200] p-0"
+          className="bg-background-search-filter border-border border rounded-md z-[200] p-0"
           align="start"
         >
           <Calendar
@@ -541,7 +529,7 @@ export function HorizontalSourceSelector({
                 selectValue: timeRange?.selectValue || "",
               });
             }}
-            className="rounded-md "
+            className="rounded-md"
           />
         </PopoverContent>
       </Popover>

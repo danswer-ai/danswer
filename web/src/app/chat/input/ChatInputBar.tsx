@@ -1,13 +1,9 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { FiPlusCircle, FiPlus, FiInfo, FiX } from "react-icons/fi";
+import { FiPlusCircle, FiPlus, FiInfo, FiX, FiSearch } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
-import {
-  FilterManager,
-  getDisplayNameForModel,
-  LlmOverrideManager,
-} from "@/lib/hooks";
+import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -17,16 +13,10 @@ import {
   InputBarPreviewImageProvider,
 } from "../files/InputBarPreview";
 import {
-  AssistantsIconSkeleton,
-  CpuIconSkeleton,
   FileIcon,
   SendIcon,
   StopGeneratingIcon,
 } from "@/components/icons/icons";
-import { IconType } from "react-icons";
-import Popup from "../../../components/popup/Popup";
-import { LlmTab } from "../modal/configuration/LlmTab";
-import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import {
@@ -40,6 +30,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
 import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
 import { useAssistants } from "@/components/context/AssistantsContext";
+import AnimatedToggle from "@/components/search/SearchBar";
 
 const MAX_INPUT_HEIGHT = 200;
 
@@ -68,6 +59,7 @@ export function ChatInputBar({
   alternativeAssistant,
   chatSessionId,
   inputPrompts,
+  toggleFilters,
 }: {
   showConfigureAPIKey: () => void;
   openModelSettings: () => void;
@@ -90,6 +82,7 @@ export function ChatInputBar({
   handleFileUpload: (files: File[]) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   chatSessionId?: string;
+  toggleFilters?: () => void;
 }) {
   useEffect(() => {
     const textarea = textAreaRef.current;
@@ -370,9 +363,9 @@ export function ChatInputBar({
             </div>
           )}
 
-          <div>
+          {/* <div>
             <SelectedFilterDisplay filterManager={filterManager} />
-          </div>
+          </div> */}
 
           <UnconfiguredProviderText showConfigureAPIKey={showConfigureAPIKey} />
 
@@ -614,6 +607,17 @@ export function ChatInputBar({
                   input.click();
                 }}
               />
+              {toggleFilters && (
+                <>
+                  <ChatInputOption
+                    flexPriority="stiff"
+                    name="Filters"
+                    Icon={FiSearch}
+                    onClick={toggleFilters}
+                  />
+                  <AnimatedToggle isOn={false} handleToggle={() => {}} />
+                </>
+              )}
             </div>
 
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">

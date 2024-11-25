@@ -52,6 +52,7 @@ from danswer.db.users import list_users
 from danswer.db.users import validate_user_role_update
 from danswer.key_value_store.factory import get_kv_store
 from danswer.server.manage.models import AllUsersResponse
+from danswer.server.manage.models import AutoScrollRequest
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
 from danswer.server.manage.models import UserPreferences
@@ -493,11 +494,14 @@ def verify_user_logged_in(
         # if auth type is disabled, return a dummy user with preferences from
         # the key-value store
         if AUTH_TYPE == AuthType.DISABLED:
+            print("FETCHING NO AUTH USER")
             store = get_kv_store()
-            return fetch_no_auth_user(store)
+            user = fetch_no_auth_user(store)
+            print("ll       ", user)
+            return user
 
         raise BasicAuthenticationError(detail="User Not Authenticated")
-
+    print("not disabled", user)
     if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
         raise BasicAuthenticationError(
             detail="Access denied. User's OIDC token has expired.",
@@ -577,6 +581,30 @@ def update_user_recent_assistants(
         update(User)
         .where(User.id == user.id)  # type: ignore
         .values(recent_assistants=updated_recent_assistants)
+    )
+    db_session.commit()
+
+
+@router.patch("/auto-scroll")
+def update_user_auto_scroll(
+    request: AutoScrollRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    if user is None:
+        if AUTH_TYPE == AuthType.DISABLED:
+            store = get_kv_store()
+            no_auth_user = fetch_no_auth_user(store)
+            no_auth_user.preferences.auto_scroll = request.auto_scroll
+            set_no_auth_user_preferences(store, no_auth_user.preferences)
+            return
+        else:
+            raise RuntimeError("This should never happen")
+
+    db_session.execute(
+        update(User)
+        .where(User.id == user.id)  # type: ignore
+        .values(auto_scroll=request.auto_scroll)
     )
     db_session.commit()
 

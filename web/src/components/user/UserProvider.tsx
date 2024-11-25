@@ -12,6 +12,7 @@ interface UserContextType {
   isCurator: boolean;
   refreshUser: () => Promise<void>;
   isCloudSuperuser: boolean;
+  updateUserAutoScroll: (autoScroll: boolean | null) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -27,6 +28,7 @@ export function UserProvider({
   const [isLoadingUser, setIsLoadingUser] = useState(false);
 
   const posthog = usePostHog();
+  console.log("upToDateUser", upToDateUser);
 
   useEffect(() => {
     if (!posthog) return;
@@ -55,6 +57,31 @@ export function UserProvider({
       setIsLoadingUser(false);
     }
   };
+  const updateUserAutoScroll = async (autoScroll: boolean | null) => {
+    try {
+      const response = await fetch("/api/auto-scroll", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ auto_scroll: autoScroll }),
+      });
+      setUpToDateUser((prevUser) => {
+        if (prevUser) {
+          return { ...prevUser, auto_scroll: autoScroll };
+        }
+        return prevUser;
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update auto-scroll setting");
+      }
+    } catch (error) {
+      console.error("Error updating auto-scroll setting:", error);
+      throw error;
+    }
+    // await updateUserSettings({ auto_scroll: autoScroll });
+  };
 
   const refreshUser = async () => {
     await fetchUser();
@@ -66,6 +93,7 @@ export function UserProvider({
         user: upToDateUser,
         isLoadingUser,
         refreshUser,
+        updateUserAutoScroll,
         isAdmin: upToDateUser?.role === UserRole.ADMIN,
         // Curator status applies for either global or basic curator
         isCurator:

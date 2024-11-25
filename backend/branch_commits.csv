@@ -1,0 +1,551 @@
+Branch,Commit Hash,Author,Date,Subject
+DAN-108,548c081fd6515c2e8b912d145c135e292db4613e,pablodanswer,2024-11-20,k
+DAN-108,0d4abfdc85fdb62c347d0f649744f1b7c12e8011,pablodanswer,2024-11-20,folder clarity
+a,36eee45a03c3227a9b070e18a043e16fe5179cb9,pablodanswer,2024-11-21,llm provider causing re render in effect
+account_for_json,b37d0b91e6a6596af91e1fa32786591b76e05a67,pablodanswer,2024-11-14,fix single quote block in llm answer
+account_for_json,4e0c048acba88f4c83d7c83af52bb0932234ddad,pablodanswer,2024-11-14,nit
+account_for_json,a0371a6750476fccc3b9892a7c58d72182c92507,pablodanswer,2024-11-14,minor logic update
+account_for_json,4f1c4baa80f7b747633bb3d528aed6de5b11f639,pablodanswer,2024-11-14,minor cosmetic update
+account_for_json,b6ef7e713a4eca3d65aa411604e8f67ad5efdd87,pablodanswer,2024-11-14,k
+account_for_json,66df9b6f7dae8bce61e35615d715ddefc6406614,pablodanswer,2024-11-14,improved fallback logic
+account_for_json,0473888ccdb5219cc39f275652bfeb72a420b5d9,pablodanswer,2024-11-13,silence warning
+accurate_user_counting,06f3a4590c05665b04851b30860aa431ad4b7217,pablodanswer,2024-11-02,ensure we remove users in time
+accurate_user_counting,6e75ba007302ce9adc4469b86695aee4b4b5c513,pablodanswer,2024-11-02,validate
+accurate_user_counting,11f3729ebb9f67b8e568c01a9ce1d098560033cf,pablodanswer,2024-11-02,update register
+add_csv_display,e7b044cf38cd3e25fdbe17ea8fcac3e8c17d9570,pablodanswer,2024-11-03,nit
+add_csv_display,93ec944a01ec87d87a4bf2b85c1164b7625a1259,pablodanswer,2024-11-02,update requirements
+add_csv_display,00f8e431ff81d7980c8d2c166bdad5f899752379,pablodanswer,2024-11-02,create portal for modal
+add_csv_display,a019a812bef27a20bd2e94d558974c55ded63035,pablodanswer,2024-11-02,restructure
+add_csv_display,eabc519f062b5e0fec3b2c29e89f109606e747bc,pablodanswer,2024-11-01,add downloading
+add_csv_display,4dbd74cacb350ebbf5ce0554239f999503a14d8f,pablodanswer,2024-11-01,add CSV display
+add_tool_formats,e7361dcb17a1d205627e46c87861f5be4dc06a03,pablodanswer,2024-11-03,add multiple formats to tools
+add_tool_formats,00f8e431ff81d7980c8d2c166bdad5f899752379,pablodanswer,2024-11-02,create portal for modal
+add_tool_formats,a019a812bef27a20bd2e94d558974c55ded63035,pablodanswer,2024-11-02,restructure
+add_tool_formats,eabc519f062b5e0fec3b2c29e89f109606e747bc,pablodanswer,2024-11-01,add downloading
+add_tool_formats,4dbd74cacb350ebbf5ce0554239f999503a14d8f,pablodanswer,2024-11-01,add CSV display
+admin_wonkiness,8a7f032acb35fca9260f1f15e48a6114279a1dc0,pablodanswer,2024-11-20,valid props
+api_keys_are_not_users,39c3e3f84b56f2b1d661f723fe9650503d8602ad,pablodanswer,2024-11-01,typing
+api_keys_are_not_users,cab9c925cc09b636e026f36057795a775d6a8289,pablodanswer,2024-11-01,don't count api keys as users
+assistant_categories,425da2250c6cade36e9dfe4aa9eaca9f60ad7c1f,pablodanswer,2024-11-18,alembic (once again)
+assistant_categories,c079165c60d58d781bb399220f0041a57dd27cde,pablodanswer,2024-11-18,alembic
+assistant_categories,dc5f9e5aa2fbf1a502474bc56cbe9a5eaa34ed91,pablodanswer,2024-11-11,nit
+assistant_categories,7ed84cf536aa5be737f4eff25e244def9987cfb3,pablodanswer,2024-11-11,typing
+assistant_categories,30a58ad86d96f841103f9bf5ef92355ba7550e72,pablodanswer,2024-11-11,finalize
+assistant_categories,4c5d0a45fd07dffa42717c78f4b20025ca7c67ad,pablodanswer,2024-11-11,update typing
+assistant_categories,ed7c62b450dd1b42a8e399c8abcaac8ccb006b1d,pablodanswer,2024-11-11,minor update to tests
+assistant_categories,501c6afdd0a8e4c67ee8ae864392549a19f68b85,pablodanswer,2024-11-11,post rebase update
+assistant_categories,8cd7e50b26d8ac5d5311c1ffc4517c35c2a9a6b6,pablodanswer,2024-11-08,add tests
+assistant_categories,ca0eb6f03344cf833b2aba45c5fbe4d01a112c6f,pablodanswer,2024-11-07,nit
+assistant_categories,2041484a515ebaedaf05dc0e19e3cb5095b34018,pablodanswer,2024-11-07,update assistant category display
+assistant_categories,a124d4e2229bcb9a9f1caf269c444357e4749700,pablodanswer,2024-11-07,finalize
+assistant_categories,59fa1d07f10b7f44010207d54547b947ca789fe1,pablodanswer,2024-11-05,functionality finalized
+assistant_categories,0a226b47e55dc6767dde8f478729616d1b4870f1,pablodanswer,2024-11-05,add assistant categories v1
+assistant_clarity,71c60c52dd37ccebd2d4f8862676d5f21a64acf1,pablodanswer,2024-11-12,minor update
+assistant_clarity,72f05a13485dab5a8ddd0d0e5ac7d4e98aed01a2,pablodanswer,2024-11-12,delete code
+assistant_clarity,0c22f8ab20c32043c9e1f5f991989a07ecbd6387,pablodanswer,2024-11-12,delete code!
+assistant_clarity,e376032f14621d645fda23f058b5712c33224e82,pablodanswer,2024-11-12,update paradigm
+assistant_clarity,3f2738006951ffcf58ea59473da3070e8023a9d0,pablodanswer,2024-11-12,alembic fix
+assistant_clarity,233f186fecb9eba7eefd6aa493ce70b299f68ac6,pablodanswer,2024-11-12,slight rejigger
+assistant_clarity,0582306d9be29f7c3daff7b7d5a2c1ef1517e033,pablodanswer,2024-11-12,k
+assistant_clarity,4f699b2591fe190abf1d68fefb3f2841c0f7f68e,pablodanswer,2024-11-12,add minor clarity
+assistant_clarity,bc6d47a6c5702d102cc04c16e56426a1561fe3e5,pablodanswer,2024-11-12,minor clean up
+assistant_clarity,09ec137a5f6fb230a0c39a67b19e9f772d3441ca,pablodanswer,2024-11-12,update organization
+auth_categories,f51d87833e591bdcb9a650aa762060387a96a292,pablodanswer,2024-11-07,nit
+auth_categories,01f93bab2f698bb0dc84bddb705de40a9a18e660,pablodanswer,2024-11-07,update assistant category display
+auth_categories,b162e9f4c4c9ff4b9cd718f548cc20ab0e60be0f,pablodanswer,2024-11-07,finalize
+auth_categories,c7097dffbd73e1b2d9b34ad67bbd8aa6e072c3b5,pablodanswer,2024-11-05,functionality finalized
+auth_categories,653bbffb3cda5cbc41f61917e5634e22d70d5e26,pablodanswer,2024-11-05,add assistant categories v1
+auto_prompts,06bc8f1f92e33af2c6bb1750936407ad8e29d3c0,pablodanswer,2024-10-28,base functionality
+auto_prompts,8093ceeb45088c813fbb117302738b3d225c2f8b,pablodanswer,2024-10-28,formatting
+auto_prompts,3d0ace1e450ac6d7271ddedc2ec122a2647be7df,pablodanswer,2024-10-28,minor nits
+auto_prompts,553aba79dc41b928c163a83481b202ad56805aae,pablodanswer,2024-10-28,update based on feedback
+auto_prompts,da038b317a0b5185ccc32297b01fcaa97ffbb429,pablodanswer,2024-09-21,remove logs
+auto_prompts,6769dc373faf7576c2d0ac212735b88eae755293,pablodanswer,2024-09-21,minor udpate to ui
+auto_prompts,b35e05315c4c506da87524fe788a9cf5aacb7375,pablodanswer,2024-09-20,use display name + minor updates to models
+auto_prompts,7cfd3d2d442255616ec5c477dc4b3eb0b2cad1ed,pablodanswer,2024-09-20,cleaner cards
+auto_prompts,b2aa1c864b20274386a1bbe699a3ef7e094bd858,pablodanswer,2024-09-20,slightly cleaner animation
+auto_prompts,d2f8177b8f1b9be8eebce520204018e6be59b03c,pablodanswer,2024-09-20,cleaner initial chat screen
+back_to_danswer,262a405195e1b1b07c96e1ae4a39df76b690ed69,pablodanswer,2024-11-06,update redirect
+beat_robustification,63959454df29709c149b71f82672c8752c646cfa,pablodanswer,2024-11-03,Remove locks (#3017)
+beat_robustification,96027f1d732f26b407afd2b52641615a96d5402b,pablodanswer,2024-11-02,ensure versioned apps capture
+beat_robustification,80ea6a36610775a0e57ec236f9a2bdaf419a51e5,pablodanswer,2024-11-01,typing
+beat_robustification,527c409f81a7d31c8ff6ebd2be465418476eba74,pablodanswer,2024-11-01,update
+beat_robustification,19ab457d926a05a0d61ada33684918a5d427e619,pablodanswer,2024-11-01,address comments
+beat_robustification,f5b38cd9362b4c7b84357a6fcf2bbeb4c1e7c8a8,pablodanswer,2024-10-30,nit
+beat_robustification,63d1cc56acdeba0430d5da9f8b752cd470df865f,pablodanswer,2024-10-30,reorg
+beat_robustification,4436bec97019893c256ee1750e28e3061edfd771,pablodanswer,2024-10-30,validate
+beat_robustification,90b7198d53ec8b383051925de16a2818653c4fe3,pablodanswer,2024-10-30,add validated + reformatted dynamic beat acquisition
+better_image_assistant_prompt,e9abbcdefdf21eef2000fc61342e4129bfd1498f,pablodanswer,2024-11-03,nit
+better_image_assistant_prompt,89f51078690bed44b2809aa5229f39b4d543d88e,pablodanswer,2024-11-02,k
+better_image_assistant_prompt,6972874aac31dcccd4ff739484b6a5b563e62405,pablodanswer,2024-11-02,slight upgrade to prompts
+bg_processing_improvements,48d24860e6f5401a265951b8e49e900ed6e40f63,pablodanswer,2024-11-03,improvements
+branding_update,12bbf2ad972a1f8887e5f5eb427b88261ef5097c,pablodanswer,2024-10-28,add additional configuration options
+bugfix/async,8b9e1a07d55b3f090d168768a74d09d60ba19649,pablodanswer,2024-11-11,typing
+bugfix/async,b6301ffcb9bb35f6d73c28ffd502bfb01f49272a,pablodanswer,2024-11-11,spacing
+bugfix/async,490ce0db18df25625446a4abe163790b96431645,pablodanswer,2024-11-11,cleaner approach
+bugfix/async,b2ca13eaae905af768519a62a38d3d84c239cba8,pablodanswer,2024-11-11,treat async values differently
+bugfix/curator_interface,a7312f62366cff5243e4b85c5c47e33e5da29f5c,pablodanswer,2024-11-21,remove values
+bugfix/curator_interface,85e08df5219f0e2e793beb65a1ce4dc36f2481d4,pablodanswer,2024-11-21,update user role
+bugfix/curator_interface,937a07d705a8620f47336c1c6c125ae6b025a950,pablodanswer,2024-11-21,update
+bugfix/curator_interface,1130d456aaa6ea38aeeacd234ab82504e3c5fc68,pablodanswer,2024-11-21,update
+bugfix/curator_interface,cf4cda235ce02bfdea1f1cd17ad4f6a2e0f7f9f7,pablodanswer,2024-11-21,update config
+bugfix/curator_interface,5a07f727c0563061398f50ed253f1efc2f83c176,pablodanswer,2024-11-21,mystery solved
+bugfix/index_attempt_logging_2,209514815547074a31b3121bf47e7b1e350e817d,Richard Kuo (Danswer),2024-11-21,Move unfenced check to check_for_indexing. implement a double check pattern for all indexing error checks
+bugfix/indexing_redux,0c068c47c2cb729a0450910f0f6b6d04b340b131,Richard Kuo (Danswer),2024-11-17,Merge branch 'main' of https://github.com/danswer-ai/danswer into bugfix/indexing_redux
+bugfix/indexing_redux,1dfde97a5a52a8c4c3996d14348e9fffe6073743,Richard Kuo (Danswer),2024-11-14,refactor unknown index attempts and redis lock
+bugfix/indexing_redux,5d95976bf1bc13caaa21655777e8e84efb682cd2,Richard Kuo (Danswer),2024-11-14,raise indexing lock timeout
+bugfix/pagination,1a009c6b6a3d52302e5bbdec20c75ce15a678f5c,pablodanswer,2024-11-07,minor update
+bugfix/pagination,e8cd2630e2bee96496b30f637a169df863e11495,pablodanswer,2024-11-06,minor update
+bugfix/pagination,d835de1f5219248f164221464b257b5a44c6ed8f,pablodanswer,2024-11-06,fixed query history
+bugfix/pagination,c6d35a8ad6be86c28ba8d3645d171d22390cc9fa,pablodanswer,2024-11-06,update side
+bugfix/pagination,a5641e5a5e001dc3a4740bfcdd53c9fafb64c20a,pablodanswer,2024-11-06,fix pagination
+bugfix/pruning,c27308c812f536a5e7410a73b0940f63330fb3fb,pablodanswer,2024-10-30,clarity
+calendar_clarity,7edb205a6837d0328062ecbb9a9318dd6e27f9d5,pablodanswer,2024-11-22,minor calendar cleanup
+callout_clarity,a8787b7be8e66d06edeaa997390ca118d1abaaac,pablodanswer,2024-11-04,k
+callout_clarity,585e6b7b2fec35e17f91d55354c48631cb773ca7,pablodanswer,2024-11-04,k
+callout_clarity,bdbfb62946b644ddf011a2e03a1a9b2158899f36,pablodanswer,2024-11-04,ensure props aligned
+cascade_search,9c975d829d0b67d245da18e905781c22578f413f,pablodanswer,2024-10-30,minor foreign key update
+clean-jira-pr,1eec84a6693add96e571eca96cf181bd32ab42f4,hagen-danswer,2024-11-20,cleanup
+clean-jira-pr,658951f66dfe2cb97e20f590f71f46bcb8b1f1ef,hagen-danswer,2024-11-20,more cleanup of Jira connector
+clean-jira-pr,da153ef5179592cfa11f9ce271c187739e242432,hagen-danswer,2024-11-20,fixed testing
+clean-jira-pr,82118e0837d486e8d66fb7eb26d523c4fa79f8a2,hagen-danswer,2024-11-20,Added Slim connector for Jira
+cloud_auth,bcce7733aa5bb2f3af2842d8e9938af6c5597c9c,pablodanswer,2024-11-11,typing
+cloud_auth,eeeb84c66bf1d5aefd16ad20f9727a61b2ddc5f3,pablodanswer,2024-11-11,minor modification to be best practice
+cloud_auth,a7b13762264b67ac720db21552c3a6c0f42e7c9d,pablodanswer,2024-11-11,k
+cloud_auth,1c020d11c4d4257732a7fca17eecbde979e42804,pablodanswer,2024-11-11,minor clarity
+cloud_auth,cb6fad26b8ec9f77a7bc82a94da8e6748bbc20f0,pablodanswer,2024-11-11,cloud auth referral source
+cohere,444ad36c0801810fadfcc4a0c1f355004f59e317,pablodanswer,2024-11-13,config
+cohere,227faf87c690ef9b30fbe79b1582ad36a4ec95b2,pablodanswer,2024-11-11,update config
+cohere,1bf33a6b7ae5fc84a779c3c6d9d8c514523b5af9,pablodanswer,2024-11-11,ensure we properly expose name(space) for slackbot
+cohere,15bd1d0ca6461ba7a9a1d2f468aea5f981e8750e,pablodanswer,2024-11-11,update configs
+cohere,ce48d189aa6f9f83a6a62b353ea04bd16659d0e2,pablodanswer,2024-11-11,update
+cohere,43b82e50cfdf9a1a260bde312a7e7e4f2929425b,pablodanswer,2024-11-11,update
+cohere,1d06787e1d5734c25e703ba4f4b2d7df6c8bac01,pablodanswer,2024-11-11,minor improvement
+cohere,8386d30f9230565136d2133b7c5cbcb623980761,pablodanswer,2024-11-11,finalize
+cohere,374e51221881fcd722876efa9f53080342f3dcbd,pablodanswer,2024-11-10,add cohere default
+cohere_default,8f67dc310fa1177430b8a47cfa685b4de4af105c,pablodanswer,2024-11-11,update
+cohere_default,ad7d18968075a932a4539ac37d5432fa99fe99f4,pablodanswer,2024-11-11,minor improvement
+cohere_default,72730a5ba3cef93523bfba9ee63994e5a1c0d63f,pablodanswer,2024-11-11,finalize
+cohere_default,df8bd6daf46c1fce951efb50aaeff5e7cbc4b74a,pablodanswer,2024-11-10,add cohere default
+cohere_default,6b78ab0a99bb5727df35c1dfc23c5e39008211ae,pablodanswer,2024-11-11,Cleaner EE fallback for no op (#3106)
+cohere_default,e97bf1d4e28bcbf32080c3a339d0e2ac3d6d0253,Chris Weaver,2024-11-11,New assistants api (#3097)
+cohere_default,293dbfb8eb7b3ac4d2878b7a72068b829b9e3469,rkuo-danswer,2024-11-09,re-enable helm (#3053)
+cohere_default,f4a61202a7b6de8a011d67896b16e14f94eb981a,pablodanswer,2024-11-09,Silence auth logs (#3098)
+cohere_default,53f9d94ceb7a6a8da2a0c2d94fee6971adb29bbf,pablodanswer,2024-11-11,revert
+cohere_default,5058d898b8532881c517e14c22ca5c32784288fe,pablodanswer,2024-11-11,update some configs
+cohere_default,bc7de4ec1b9832059426ed74f2755c9548852459,pablodanswer,2024-11-11,moderate slackbot switch
+cohere_default,3ad98078f5205c2df5a3ea96cc165b982256a975,pablodanswer,2024-11-10,finalized keda
+cohere_default,0fb12b42f10bae3d8633717f763fa42271349442,pablodanswer,2024-11-10,minor update
+cohere_default,158329a3cc659d666328dac36bac7c5ffa87e084,pablodanswer,2024-11-10,finalize slackbot improvements
+cohere_default,7f1a50823baf0f5bbab89587e7df6f03fe552e27,pablodanswer,2024-11-10,fix typing
+cohere_default,0e76bcef454e0c09cb83ce91834730fdd084d930,pablodanswer,2024-11-10,add improved cloud configuration
+csv_limits,45be7156c52d3b32799d67139998de7892c3490e,pablodanswer,2024-11-11,minor enforcement of CSV length for internal processing
+custom_llm_display_fix,01efa818bcc82eef92457cbe4acd6c3c2fab60f0,pablodanswer,2024-11-21,Revert "clean horizontal scrollbar"
+custom_llm_display_fix,dec279a9602825243ed7df4b7a5592ccd267bddd,pablodanswer,2024-11-21,update migration
+custom_llm_display_fix,4b03c0e6e24b36725f4501edb81f46dc2812ff4f,pablodanswer,2024-11-21,k
+custom_llm_display_fix,17eb0d3086b6249c806f51a0a45c78c927249bcd,pablodanswer,2024-11-21,ensure proper migration
+custom_llm_display_fix,0f638229f56966e480d3479de5f9a3108750afc8,pablodanswer,2024-11-20,provider fix
+custom_llm_display_fix,fa592a1b7a69897110a928a222b19eaef3b7267a,pablodanswer,2024-11-21,clean horizontal scrollbar
+danswer_authorization_header,856c2debd98187b28e341940dafeb97eed81cad9,pablodanswer,2024-10-29,add danswer api key header
+default_keys,4907d2271950fb2f45c56c21e6d641b616c02ad7,pablodanswer,2024-11-03,naming
+default_keys,8766502f6dd125a43ef6cc9e9a20cec1c8f3ae8a,pablodanswer,2024-11-03,add cohere as well
+default_keys,589e141bc9d2ed30c467257596f346c4824934a7,pablodanswer,2024-11-03,add default api keys for cloud users
+default_prompts,d1926d47b5b65aeb01c103d7c44fa5bb63e4fb1c,pablodanswer,2024-11-06,update default live assistant logic
+default_prompts,f457bdb49128b010da04612f598ef0e0810dcf7c,pablodanswer,2024-11-06,update starter message
+default_prompts,00adc2d0e0cd23d7c9664b68f4caa7859bdb4eeb,Yuhong Sun,2024-11-06,touchup
+default_prompts,f56b139d8dbcc44248080719fa9f3c81afdf1e81,pablodanswer,2024-11-06,nit
+default_prompts,09cd3c6c2792b94e7db220a921095f0af8054e0c,pablodanswer,2024-11-06,minor update to refresh
+default_prompts,32a688b6277b918afd7497f483ef457b85dc9d05,pablodanswer,2024-11-06,udpate refresh logic
+default_prompts,719fb914f5094f3a35095cbb8e0c75aa4f0d0c45,pablodanswer,2024-11-06,update ux + spacing
+default_prompts,7c5df1cf69e8c890cc02e27b2ba2edeac9c3c22a,pablodanswer,2024-11-05,fallback to all assistants
+default_prompts,8a900b732dd67215718e07273cc62c881b6786e4,pablodanswer,2024-11-03,formating nits
+default_prompts,eab00d7247cf0853b6a83888ae581c63c8c59981,pablodanswer,2024-11-03,nit
+default_prompts,9460009ed306a135110bc88cc6b75f3779df96d0,pablodanswer,2024-11-03,update typing
+default_prompts,4f1aa7f1ff04debb39b6ea8ea79de3d01254f4a5,pablodanswer,2024-11-03,validate
+default_prompts,c97b8938920b4406477f252b01a1e561b3b24f31,pablodanswer,2024-11-03,k
+default_prompts,074334e20d2208f52bbf00bda76e3e79494977c2,pablodanswer,2024-11-03,update user preferences
+default_prompts,85b50855c0778fb34fc32441e7c3791b905485fa,pablodanswer,2024-11-03,update persona defaults
+default_schema_slack,87931b759feb1431ce96090bd390e3e28cb30208,pablodanswer,2024-11-08,adjust default postgres schema for slack listener
+detailed_filters,bde4b4029af5334699e226afbd77ba0753a04797,pablodanswer,2024-11-18,update date range filter
+detailed_filters,d77629fc318db896c5b9f53c45c33dfad5038e6b,pablodanswer,2024-11-05,clarity updates
+detailed_filters,0038c32213681db3dab29dee2f21324743fc6d94,pablodanswer,2024-11-05,add new complicated filters
+double_auth,a7173eb689100c9abd1b68aeab890a992da32cbc,pablodanswer,2024-10-27,ports
+double_auth,45170a28fc8417b6f0de7ac97c643a36e4c03284,pablodanswer,2024-10-27,fix nagging double auth issue
+dropdown,c29beaf403a7722e1ee638cc50c8551931f8c5d9,pablodanswer,2024-11-13,combobox
+dropdown,46f84d15f8af635123557056542829a14d5fca60,pablodanswer,2024-11-13,content scroll differences
+dropdown,e8c93199f24cac94b73e8ac923b43b3159af74c9,pablodanswer,2024-11-13,minor dropdown fix
+fallback_context,3734e683e1719d9f6abe9e80e475a4c2c275cdaf,pablodanswer,2024-11-07,ensure proper attribution
+fallback_context,886e8c7b6e30328c1d95277f22dde48af2cb1a99,pablodanswer,2024-11-07,update comments
+fallback_context,4916d66df0ec3d348caafe6c40c5e16fb28381b1,pablodanswer,2024-11-07,clearer
+fallback_context,6ae512fc4e909a52e90c548f9674b60d536bdc54,pablodanswer,2024-11-06,update typing
+fallback_context,159c8ee22df75036d3db59c292fa13632982b427,pablodanswer,2024-11-06,add sentinel value
+feat/cert_clarity,35307d4f384039ef0df8f979e34912ab1cd4e201,pablodanswer,2024-10-30,first pass
+feat/cert_clarity,e6b9ebc198973a84dc9412302e6b98a24b0a2ce3,pablodanswer,2024-10-29,ensure functionality
+feat/cert_mount,a32e34b5571d60a4b8b8a1d62328b9a77fb0ad27,pablodanswer,2024-10-30,simplify
+feat/cert_mount,2dc7b08a9cb73164479c03dfd4b4fed162029399,pablodanswer,2024-10-30,first pass
+feat/cert_mount,e6b9ebc198973a84dc9412302e6b98a24b0a2ce3,pablodanswer,2024-10-29,ensure functionality
+feat/certificate,152e8c422bb9c6bf7b08221dcfe44a60d7a2de22,pablodanswer,2024-11-01,nit
+feat/certificate,45498a5f51a8efa9955c18fe5cb53b2d0f41ebd3,pablodanswer,2024-10-31,k
+feat/certificate,9ecf237435cd8a5b0ac60ebaca8d26840ab0abed,pablodanswer,2024-10-31,minor clean up
+feat/certificate,fed2c5666cb54d3edcfe14319e3f7d7befbed78e,pablodanswer,2024-10-30,remove now unneeded COPY command
+feat/certificate,56b3f2fa999db64aec3fd069b1de2bc77d00a6b6,pablodanswer,2024-10-30,simplify
+feat/certificate,7d03f3aa8cb8a4ada9af8551db62364eb8e2c217,pablodanswer,2024-10-30,first pass
+feat/silence_unauth_logs,d2ba35ca45ca77701075813fd64858b04c4e9eb2,pablodanswer,2024-11-09,k
+feat/silence_unauth_logs,923176ef6e1e1941f8dc461d1d7b1d76f88c4e1b,pablodanswer,2024-11-09,remove unnecessary line
+feat/silence_unauth_logs,888ce3e0ced3a63c57f7ec2221059d0012e772c2,pablodanswer,2024-11-09,silence auth logs
+feat/tenant_posthog,35ed1d2108dd1a28cf63ba45f776d8a25b91b5d7,pablodanswer,2024-10-27,nit
+feat/tenant_posthog,d1a9e0f6c4618aa4a7e5029dbbeb6179a40ff5c7,pablodanswer,2024-10-27,distinguish tenants in posthog
+fix-answer-with-specified-doc-ids,5fbcc70518bd5d1be00d6595f3fc690f81c52f21,pablodanswer,2024-11-01,minor logging updates for clarity
+fix-answer-with-specified-doc-ids,7db0de9505c3510a4db76e98a47d5b079056dc93,pablodanswer,2024-10-31,minor typo
+fix-answer-with-specified-doc-ids,18b4a8a26331bc013b49e486e2bf82c5ce4bfe73,pablodanswer,2024-10-31,fix stop generating
+fix-answer-with-specified-doc-ids,98660be16459038b438d12616bd6f00dde418b95,Weves,2024-10-31,Fix UT
+fix-answer-with-specified-doc-ids,3620266bddfbf1fca309ff2fe97f72bda7462979,Weves,2024-10-31,Remove unused exception
+fix-answer-with-specified-doc-ids,2132a430cc64abd869632c0f55a35bdc42b30be9,Weves,2024-10-31,Fix image generation slowness
+fix-answer-with-specified-doc-ids,24e34019ce25314c5e749d38dd0895a1c3d5141e,Weves,2024-10-31,More testing
+fix-answer-with-specified-doc-ids,3cd4ed5052277428dc06343f53e0e6486af26208,Weves,2024-10-31,Testing
+fix-answer-with-specified-doc-ids,200bb96853d6d96a99093f6e915fe9721ab5c6b3,Weves,2024-10-31,Add quote support
+fix-answer-with-specified-doc-ids,5a0c6d003607dfb9a7445a6a87df9a6062b73bc6,Weves,2024-10-02,Fix
+fix-openai-tokenizer,566e4cfd0f39db0a1fbc7c7fae040bcf98482f62,pablodanswer,2024-11-08,minor updates
+fix-openai-tokenizer,3b09f3e53e7a8f948cd36255fd53423d7b5827d0,pablodanswer,2024-11-07,minor organizational update
+fix-openai-tokenizer,75d5e6b8b6e81c77063fd79b4cfe532366da723a,pablodanswer,2024-11-07,minor update to ensure consistency
+fix-openai-tokenizer,362bb3557246e86de131c223acdf2adf17fb14e4,pablodanswer,2024-11-06,nit
+fix-openai-tokenizer,6d100d81d284dc98143bb8c94c16c25d64c56633,pablodanswer,2024-11-06,clean up test embeddings
+fix-openai-tokenizer,c5be5dc4c9710b684d0954a5224a75c090befe94,Yuhong Sun,2024-11-05,k
+fix_missing_json,1f6cc578c425f8bbe3b320f65f191f09c8fcfa0b,pablodanswer,2024-11-20,k
+fix_missing_json,d95b7d6695ba087f0b9da9bdf245f7c34e503499,pablodanswer,2024-11-20,k
+fix_missing_json,b75d4af102739a2b9e3ec2dff301f4affd08b3e5,pablodanswer,2024-11-20,remove logs
+fix_missing_json,559d9ed6d4fd27de8941a104c9c83322a75abea6,pablodanswer,2024-11-20,k
+fix_missing_json,9c900d658979341ce0d8c3c2eb87e7cfafd8ccf9,pablodanswer,2024-11-20,initial steps
+formatting_niceties,e2b47fa84c828e1c9f6ab0dd510e2eb83faeb877,pablodanswer,2024-11-20,update styling
+formatting_niceties,e4916209d6c9f4ed5765d7ae20f77903ffd93e9b,pablodanswer,2024-11-20,search bar formatting
+graceful_failure,03245a4366adeb1668a337b37d070d09922f5531,pablodanswer,2024-10-28,fail gracefully on provider fetch
+gtm,acff050f6b2bec0368571e0936f9342b7bcd3919,pablodanswer,2024-11-20,update github workflow
+gtm,b96260442d02c9298ed110ba97f5e9eff1ed9100,pablodanswer,2024-11-20,add gtm for cloud build
+gtm_v2,4f96ddf9e69923ef1209c5586c73eb40b0418aaa,pablodanswer,2024-11-21,quick fix
+horizontal_scrollbar,fa82e8c74cac273563badadec0c04176575ffbbb,pablodanswer,2024-11-21,account for additional edge case
+horizontal_scrollbar,fa592a1b7a69897110a928a222b19eaef3b7267a,pablodanswer,2024-11-21,clean horizontal scrollbar
+improved_cert,3b19c075ad6e8930d785943b24e46b2c08555c3a,pablodanswer,2024-11-07,minor improvements
+improved_cloud,379d569c61801f0c093b7474f888392aa2cb1249,pablodanswer,2024-11-11,include reset engine!
+improved_cloud,53f9d94ceb7a6a8da2a0c2d94fee6971adb29bbf,pablodanswer,2024-11-11,revert
+improved_cloud,5058d898b8532881c517e14c22ca5c32784288fe,pablodanswer,2024-11-11,update some configs
+improved_cloud,bc7de4ec1b9832059426ed74f2755c9548852459,pablodanswer,2024-11-11,moderate slackbot switch
+improved_cloud,3ad98078f5205c2df5a3ea96cc165b982256a975,pablodanswer,2024-11-10,finalized keda
+improved_cloud,0fb12b42f10bae3d8633717f763fa42271349442,pablodanswer,2024-11-10,minor update
+improved_cloud,158329a3cc659d666328dac36bac7c5ffa87e084,pablodanswer,2024-11-10,finalize slackbot improvements
+improved_cloud,7f1a50823baf0f5bbab89587e7df6f03fe552e27,pablodanswer,2024-11-10,fix typing
+improved_cloud,0e76bcef454e0c09cb83ce91834730fdd084d930,pablodanswer,2024-11-10,add improved cloud configuration
+indent,95ded1611c7d2199438b863c54f327eba632a5b0,pablodanswer,2024-10-27,add indent to scan_iter
+indexing_improvements,ff8e5612c9cd67a642314632658f5a55814f7c5e,pablodanswer,2024-11-05,minor
+individual_deployments,fe83d549a356d802ee1e693c8739db7563ed5ddc,pablodanswer,2024-11-02,add k8s configs
+individual_deployments,0e42bb64579328d18ff01049a7aaa2a0b49be142,pablodanswer,2024-10-31,remove unecessary locks
+individual_deployments,41ec9b23309a3bbfe598018832fbf5d3fe91c5e1,pablodanswer,2024-10-31,minor
+individual_deployments,9e4e848b98f35056dcf3df6f0815651e9fe56eba,pablodanswer,2024-10-30,initial removal of locks!
+individual_deployments,1407652e3b5825fae7a90a0d5818ef67ec44f50d,pablodanswer,2024-10-30,nit
+individual_deployments,2758ff7efd4dd47e891ef77c05985d6407e4cbd7,pablodanswer,2024-10-30,reorg
+individual_deployments,0718d5740b714a0222eb2520c6c2f0e70c095aa1,pablodanswer,2024-10-30,validate
+individual_deployments,922f3487fbd7585ce6a7251ff0644cbeca921133,pablodanswer,2024-10-30,add validated + reformatted dynamic beat acquisition
+json_account,f4b3f8356a5911cb4a0610773b824bc6e6eb8c73,pablodanswer,2024-11-14,fix single quote block in llm answer
+k8s_jobs,7124ce0b9a56f0b5dc45a733fe95cd581f9894a4,pablodanswer,2024-11-02,improve workers
+k8s_jobs,10ab08420479ab056d807cbf0942c67a1dd6e7c7,pablodanswer,2024-11-02,improved timeouts + worker configs
+k8s_jobs,9bc478fa1b7f1418fadfbd067383d67b417472aa,pablodanswer,2024-11-02,k
+k8s_jobs,930e392d69ecd1058a73c0dfb0e2e021232921fc,pablodanswer,2024-11-02,update config
+k8s_jobs,6d14ceeadf958cd1e7600b667b69ce0f3bf86830,pablodanswer,2024-11-02,k
+k8s_jobs,efdf95eb232870f83677b2b424ffaa117463649a,pablodanswer,2024-11-02,add k8s configs
+k8s_jobs,f687d3987cd9514f9fe587e563729ce27b8ff224,pablodanswer,2024-11-02,k
+k8s_jobs,af4c9361a926867a992239daa283900300d7247e,pablodanswer,2024-11-02,nit
+k8s_jobs,f74366bbd8699f9987ed8229e3368a5d7be71a53,pablodanswer,2024-11-01,update
+k8s_jobs,734fcdca98aa5eeaa99d9936fa8db716eda93ad7,pablodanswer,2024-10-31,remove unecessary locks
+k8s_jobs,dbc44315ad3cbf79509bd14a4025c2ecc4a6f86e,pablodanswer,2024-10-31,minor
+k8s_jobs,d80049262406a0c30e9ad0fc647bddb23cbfbad9,pablodanswer,2024-10-30,initial removal of locks!
+k8s_jobs,5646675ae094f39f3e7ead937cbcfd3fb7c7f24f,pablodanswer,2024-10-30,add validated + reformatted dynamic beat acquisition
+k8s_jobs,01bdcad4f038c5d4c642ca14680593988c28bf96,pablodanswer,2024-11-02,ensure versioned apps capture
+k8s_jobs,0994ac396612855ecac9afbce6ef9b8bd7e54742,pablodanswer,2024-11-01,typing
+k8s_jobs,8ff8a88d5b6ad2d02a653f959c39cfeeda9ef54c,pablodanswer,2024-11-01,update
+k8s_jobs,e11aee38ba5946a1453693fdc3bbd20d703d9e10,pablodanswer,2024-11-01,address comments
+k8s_jobs,53c6d16c3cdc7ffb3eebd3e7b73474025ef6cafc,pablodanswer,2024-10-30,nit
+k8s_jobs,a85b2a9745587c4e783e040496dee1ac83e492c9,pablodanswer,2024-10-30,reorg
+k8s_jobs,4ace16c905b47b97990de0ab0ef3c029870f9be0,pablodanswer,2024-10-30,validate
+k8s_jobs,89293ecc730387a864be6efc01230fedffdc7b82,pablodanswer,2024-10-30,add validated + reformatted dynamic beat acquisition
+lenient_counting,4836a74e1e2789051b6d1454b7f2bd22daced61a,pablodanswer,2024-11-13,nit
+lenient_counting,f7514011ef4cf62d80ab9afe170320b2e4135da2,pablodanswer,2024-11-13,lenient counting
+max_height_scroll,c354912c704b0aa31737bfd41d4bd8f0c7d85769,pablodanswer,2024-11-20,ensure everythigng has a default max height in selectorformfield
+migrate_tenant_upgrades_to_data_plane,572298aa8920d51320db5fff518f66fee6e42117,pablodanswer,2024-11-05,nit
+migrate_tenant_upgrades_to_data_plane,40b55197ac8336e6ef081074ea65fc4b0cbeb27c,pablodanswer,2024-11-05,minor config update
+migrate_tenant_upgrades_to_data_plane,4b9d868ecb78dedd3816ae7bc28e8f856881c6f4,pablodanswer,2024-11-04,minor pydantic update
+migrate_tenant_upgrades_to_data_plane,1295c3a38e827024d89ba56fe3c846fcbe204bc0,pablodanswer,2024-11-04,ensure proper conditional
+migrate_tenant_upgrades_to_data_plane,f2ac56d80213125f1f5d465b21a6a2e4b47566a2,pablodanswer,2024-11-04,improve import logic
+migrate_tenant_upgrades_to_data_plane,fcdb3891bf196ef7e1f10e9d7a0a77512c752710,pablodanswer,2024-11-04,update provisioning
+migrate_tenant_upgrades_to_data_plane,9a5d60c9a3df0891a769615e540af8332c0b416c,pablodanswer,2024-11-04,simplify
+migrate_tenant_upgrades_to_data_plane,b512f35521bcb8c8ee9e748dae493028093f05bb,pablodanswer,2024-11-04,k
+migrate_tenant_upgrades_to_data_plane,b872b7e778f7e0bd92e6eac9317e74e3157c12e1,pablodanswer,2024-11-04,minor clean up
+migrate_tenant_upgrades_to_data_plane,b7847d16686419fe024d361cfaf2212a4decc397,pablodanswer,2024-11-04,minor cleanup
+migrate_tenant_upgrades_to_data_plane,2f03ddb1bedada32576cb52bfa2cf36074fbb9fe,pablodanswer,2024-11-04,functional but scrappy
+migrate_tenant_upgrades_to_data_plane,dc001a3b7b48df659bc64c2486ceded5eea3ed0f,pablodanswer,2024-11-04,add provisioning on data plane
+minor,c7d58616b5943768e2e581751f4ede7a4f3292da,pablodanswer,2024-11-22,k
+minor,351ee543a0773ecb6acf99f3888dd648091d7f85,pablodanswer,2024-11-22,k
+minor_fixes,ea58c3259505aaa53c66343243667959ca79ecb8,pablodanswer,2024-11-05,minor changes
+minor_fixes,cbf577cf4623c8352664058d21b1a80ae7ab4299,pablodanswer,2024-11-05,nit
+minor_fixes,20d2301a7e594ad803c0486d63d056653c5b8c83,pablodanswer,2024-11-05,minor config update
+minor_fixes,fdf9601375464f3e7f49d4472dbc3eeacd1eab8f,pablodanswer,2024-11-05,form
+minor_fixes,7421328695641e943c7083639483fa36e4e9cfdb,pablodanswer,2024-11-04,minor pydantic update
+minor_fixes,d600d63876e7100894c47a7dc9120b689a55521f,pablodanswer,2024-11-04,ensure proper conditional
+minor_fixes,e7cae46867207789088df6611dbafc78650c8ace,pablodanswer,2024-11-04,improve import logic
+minor_fixes,b0894320f99fea9cb13a94a5fbb5a1e9523ef460,pablodanswer,2024-11-04,update provisioning
+minor_fixes,e623b494568d0bcc74937628984b6cc574aed9a6,pablodanswer,2024-11-04,simplify
+minor_fixes,99d91bd658e812996bcc03d0be29e57277b8fb67,pablodanswer,2024-11-04,k
+minor_fixes,77c180be0f8e91b9f997b90f631e18d41ba8fde2,pablodanswer,2024-11-04,minor clean up
+minor_fixes,baaed72297ef248dc5dc422f0e5adcdff7599416,pablodanswer,2024-11-04,minor cleanup
+minor_fixes,ab7fa7f6d0c3f1a59d97b5450262cb4ef6f8481d,pablodanswer,2024-11-04,functional but scrappy
+minor_fixes,acf3ede8b4baf044391176aacd3bba6f80bb4b3f,pablodanswer,2024-11-04,add provisioning on data plane
+minor_nits,bfcd418ecd9523376c605263565a9714ceeb3a18,pablodanswer,2024-11-09,k
+minor_nits,5dfcb94964f977bb603865858e1e6aa6582454fd,pablodanswer,2024-11-09,update colors
+minor_nits,a287cd94cd8090fefee7c1d20cc494b894bf39c1,pablodanswer,2024-11-09,nit
+minor_nits,2d9586b059cfb1cb8e1f6c0fccc696af6ba8873d,pablodanswer,2024-11-08,nit
+minor_nits,5dcc3692a7748ed20d49adef5f7672d45f600a4a,pablodanswer,2024-11-08,moderate component fixes
+minor_slack_fixes,425a678a5350ad5716c3efd6a60c78f6a9c2738e,pablodanswer,2024-11-20,reset time
+minor_slack_fixes,14adbcb497365f9e93c21aeb0476cffc72cab643,pablodanswer,2024-11-20,update slack redirect + token missing check
+misc_color_cleanup,83c8f04e5a183a289f76b809d9aabdd4ea0e664b,pablodanswer,2024-11-03,formatting
+misc_color_cleanup,334ff6fb5ab2e450e1e0709be16870b1ed07dae3,pablodanswer,2024-11-03,ensure tool call renders
+misc_color_cleanup,94262264e768cdc28ffe4fc31b2947c0cf3774a3,pablodanswer,2024-11-03,ensure tailwind config evaluates properly + update textarea -> input
+misc_color_cleanup,40cb9e9cdb4561eac777ede08ace88219d12ad96,pablodanswer,2024-11-02,additional minor nits
+misc_color_cleanup,2e81962a74567c0c510d911a22aee385c56b3207,pablodanswer,2024-11-02,nit
+misc_color_cleanup,76ca7eb3f2cf2408fee330f540987e6238cd632e,pablodanswer,2024-11-01,nit
+misc_color_cleanup,7269b7a4aa986dbba654be4b375bea1d9334fe01,pablodanswer,2024-11-01,additional nits
+misc_color_cleanup,4726a10fd7503882554d1dfaf1541657ffb45a04,pablodanswer,2024-11-01,misc color clean up
+mobile_scroll,eca41cc514446a2c0b2c756add3164462fb2c49d,pablodanswer,2024-11-11,improved mobile scroll
+modals,8093ceeb45088c813fbb117302738b3d225c2f8b,pablodanswer,2024-10-28,formatting
+modals,3d0ace1e450ac6d7271ddedc2ec122a2647be7df,pablodanswer,2024-10-28,minor nits
+modals,553aba79dc41b928c163a83481b202ad56805aae,pablodanswer,2024-10-28,update based on feedback
+modals,da038b317a0b5185ccc32297b01fcaa97ffbb429,pablodanswer,2024-09-21,remove logs
+modals,6769dc373faf7576c2d0ac212735b88eae755293,pablodanswer,2024-09-21,minor udpate to ui
+modals,b35e05315c4c506da87524fe788a9cf5aacb7375,pablodanswer,2024-09-20,use display name + minor updates to models
+modals,7cfd3d2d442255616ec5c477dc4b3eb0b2cad1ed,pablodanswer,2024-09-20,cleaner cards
+modals,b2aa1c864b20274386a1bbe699a3ef7e094bd858,pablodanswer,2024-09-20,slightly cleaner animation
+modals,d2f8177b8f1b9be8eebce520204018e6be59b03c,pablodanswer,2024-09-20,cleaner initial chat screen
+more_theming,1744d29bd6f6740fb20bbbf8b5651cd60edbf127,pablodanswer,2024-11-21,k
+more_theming,fa592a1b7a69897110a928a222b19eaef3b7267a,pablodanswer,2024-11-21,clean horizontal scrollbar
+multi_api_key,67e347a47fd2e4aa9efe7b17c7b177166c893d10,pablodanswer,2024-10-31,clean
+multi_api_key,3fb6e9bef96da888fa366a16f102358eb8e990e0,pablodanswer,2024-10-31,nit
+multi_api_key,c4514fe68f58a03da0c3c3efae78ad23e2eb88c9,pablodanswer,2024-10-30,organization
+multi_api_key,5b19209129542b885e123a51ce3da93b741d49d2,pablodanswer,2024-10-30,basic multi tenant api key
+new_seq_tool_calling,59e9a33b30ece8d41340787d9d9a82e9a07a8f24,pablodanswer,2024-11-18,k
+new_seq_tool_calling,6e60437c565a185475c715efbbef6caca1cfc2fb,pablodanswer,2024-11-17,quick nits
+new_seq_tool_calling,9cde51f1a2ca1df2f753c9b6d7910b8f9623d8a4,pablodanswer,2024-11-07,scalable but not formalized
+new_seq_tool_calling,8b8952f117e4d05bb484bc5dec1c12d4fbbafcca,pablodanswer,2024-11-07,k
+new_seq_tool_calling,dc01eea610817ab821ded6e5ce584f81fe1ba065,pablodanswer,2024-11-07,add logs
+new_seq_tool_calling,c89d8318c093c860037a839494876eff649f5d26,pablodanswer,2024-11-07,add image prompt citations
+new_seq_tool_calling,3f2d6557dcb5964dbb9ed88ade743f74a4285411,pablodanswer,2024-11-07,functioning albeit janky
+new_seq_tool_calling,b3818877afc406f9500e7bef1f2b7e233faf76fa,pablodanswer,2024-11-07,initial functioning update
+new_theming_updates,102c264fd06232bbc4c7a23615add5cf7c0618be,pablodanswer,2024-11-21,minor updates
+new_theming_updates,1744d29bd6f6740fb20bbbf8b5651cd60edbf127,pablodanswer,2024-11-21,k
+new_theming_updates,fa592a1b7a69897110a928a222b19eaef3b7267a,pablodanswer,2024-11-21,clean horizontal scrollbar
+nit,c68602f456c66279e760bd25067cfdfe03841f8a,pablodanswer,2024-11-10,specifically apply flex none to in progress!
+nit_mx,c5147db1ae5387e8fd5672779689485142fb1b1d,pablodanswer,2024-11-20,formatting
+nit_mx,3a6a74569544ee7d74c6b62a5a56730331838095,pablodanswer,2024-11-20,ensure margin properly applied
+nit_redis,85843632c5fe61a425d425feef6480c639471af7,pablodanswer,2024-10-28,add srem and sadd to tenant wrapper
+no_locks!,f687d3987cd9514f9fe587e563729ce27b8ff224,pablodanswer,2024-11-02,k
+no_locks!,af4c9361a926867a992239daa283900300d7247e,pablodanswer,2024-11-02,nit
+no_locks!,f74366bbd8699f9987ed8229e3368a5d7be71a53,pablodanswer,2024-11-01,update
+no_locks!,734fcdca98aa5eeaa99d9936fa8db716eda93ad7,pablodanswer,2024-10-31,remove unecessary locks
+no_locks!,dbc44315ad3cbf79509bd14a4025c2ecc4a6f86e,pablodanswer,2024-10-31,minor
+no_locks!,d80049262406a0c30e9ad0fc647bddb23cbfbad9,pablodanswer,2024-10-30,initial removal of locks!
+no_locks!,5646675ae094f39f3e7ead937cbcfd3fb7c7f24f,pablodanswer,2024-10-30,add validated + reformatted dynamic beat acquisition
+no_locks!,01bdcad4f038c5d4c642ca14680593988c28bf96,pablodanswer,2024-11-02,ensure versioned apps capture
+no_locks!,0994ac396612855ecac9afbce6ef9b8bd7e54742,pablodanswer,2024-11-01,typing
+no_locks!,8ff8a88d5b6ad2d02a653f959c39cfeeda9ef54c,pablodanswer,2024-11-01,update
+no_locks!,e11aee38ba5946a1453693fdc3bbd20d703d9e10,pablodanswer,2024-11-01,address comments
+no_locks!,53c6d16c3cdc7ffb3eebd3e7b73474025ef6cafc,pablodanswer,2024-10-30,nit
+no_locks!,a85b2a9745587c4e783e040496dee1ac83e492c9,pablodanswer,2024-10-30,reorg
+no_locks!,4ace16c905b47b97990de0ab0ef3c029870f9be0,pablodanswer,2024-10-30,validate
+no_locks!,89293ecc730387a864be6efc01230fedffdc7b82,pablodanswer,2024-10-30,add validated + reformatted dynamic beat acquisition
+pinned,233713cde3516c05b857f878ff452c7714a91c48,pablodanswer,2024-11-20,hide animations
+pinned,c0b17b4c51376d99685976430b9c4153c35e2ffa,Yuhong Sun,2024-11-20,k
+pinned,15f30b00507e337ec9ee85624fc0cc574eb7b952,Yuhong Sun,2024-11-20,k
+pinned,39d9df9b1b58dd2621bd575fa6c7ec720864d3bb,pablodanswer,2024-11-18,k
+point_to_proper_docker_repository,9893301f113691111669bc2ab05a7c3abf19ae32,pablodanswer,2024-11-09,raise exits
+point_to_proper_docker_repository,2344327112c01db8b2226dea0e02b2a8aa9ca875,pablodanswer,2024-11-09,ensure .github changes are passed
+point_to_proper_docker_repository,caa2966ebc607fb8d2899ee78573ed2454983efb,pablodanswer,2024-11-09,robustify cloud deployment + include initial KEDA configuration
+prev_doc,44f82fa928b79e7f51b41a0ee67cc93067880be3,pablodanswer,2024-11-22,k
+prev_doc,2c7c9fbc130b8f0c717fa9fa4e5d2f6073f92be5,pablodanswer,2024-11-22,revert to previous doc select logic
+prompting,4d8edad71ace767917a612dc628e266bd267d7d5,pablodanswer,2024-11-17,k
+prompting,b1265619a27a849f2fbb9ba85b440a8b1b698d7d,pablodanswer,2024-11-16,add proper category delineation
+prompting,dfe2c305866ad414143ce479b0601f8a61e615ea,pablodanswer,2024-11-05,post rebase cleanup
+prompting,236c19230f5165e24ef557db53d863953faa714a,pablodanswer,2024-11-05,add auto-generated starter messages
+proper_tenant_reset,4376bf773a81278ab92846673f193207be96052a,pablodanswer,2024-10-31,minor formatting
+proper_tenant_reset,95f660db67b1327208fde82ae043511f2187452f,pablodanswer,2024-10-31,clear comment
+proper_tenant_reset,1cdb5af9a1519ef8d63c94bf39256b00d4a8bdd2,pablodanswer,2024-10-31,add proper tenant reset
+proper_token_default,4e0c048acba88f4c83d7c83af52bb0932234ddad,pablodanswer,2024-11-14,nit
+proper_token_default,a0371a6750476fccc3b9892a7c58d72182c92507,pablodanswer,2024-11-14,minor logic update
+proper_token_default,4f1c4baa80f7b747633bb3d528aed6de5b11f639,pablodanswer,2024-11-14,minor cosmetic update
+proper_token_default,b6ef7e713a4eca3d65aa411604e8f67ad5efdd87,pablodanswer,2024-11-14,k
+proper_token_default,66df9b6f7dae8bce61e35615d715ddefc6406614,pablodanswer,2024-11-14,improved fallback logic
+proper_token_default,0473888ccdb5219cc39f275652bfeb72a420b5d9,pablodanswer,2024-11-13,silence warning
+regenerate_clarity,3e232c39193b1c67bda9d732c1c2ee77ee14c721,pablodanswer,2024-10-29,minor udpate
+regenerate_clarity,49e2da1c5c4fa34a8568ba0b3f08e79cd17cec93,pablodanswer,2024-10-29,add regeneration clarity
+remove_ee,132802b295b805292f427039617a00e04dca2ae9,pablodanswer,2024-11-09,k
+remove_ee,23883441f87ac3cd4e2ee717d2b033c3e7da9398,pablodanswer,2024-11-09,ensure callable
+remove_ee,f43ed0b6b9391e66e210c5d90acf7a2409c3300b,pablodanswer,2024-11-09,finalize
+remove_ee,fa42e5fa470e340e9b17fed5a3bd0e7976c6255e,pablodanswer,2024-11-08,finalize
+remove_ee,625b5c52a044027b3d469286910a3cdd1c6bee02,pablodanswer,2024-11-08,update
+remove_ee,239200dfc46f6cf18d7e689341b56a8baecdc0f6,pablodanswer,2024-11-08,update
+remove_ee,5b70a8fa6f65d8513670c3bbbfd6cec13c76d530,pablodanswer,2024-11-08,general cleanup
+remove_ee,14dfd6d29e178af9cfeb79ae20b7a846c5958966,pablodanswer,2024-11-08,move token rate limit to non-ee
+remove_ee,dc4fdbb312881585fbc860b7aaff5adb9af4d8c5,pablodanswer,2024-11-08,finalize previous migration
+remove_ee,cfd3d90493fad0af75569c98b6cfc9effa37b471,pablodanswer,2024-11-08,move api key to non-ee
+remove_empty_directory,81e1ac918364467e3009eae376930199e3e2943f,pablodanswer,2024-10-28,remove empty directory
+remove_endpoint,14f57d6475d835da6dfacc4ebd254e25618b3100,pablodanswer,2024-10-31,remove endpoint
+rerender,1392f2454061914ac8c5f6302318a24064034a5b,pablodanswer,2024-11-21,k
+rerender,617e6d905363cc91ca154bba0f6f2a11888b35e6,pablodanswer,2024-11-21,unused
+rerender,da36e208cd53ae25a2c89a4cf0c598333898387a,pablodanswer,2024-11-21,clean
+rerender,36eee45a03c3227a9b070e18a043e16fe5179cb9,pablodanswer,2024-11-21,llm provider causing re render in effect
+reset_all,bde1510923d69ca0eb57340da6b59f9035e3de0a,pablodanswer,2024-11-04,ensure we reset all
+search_chat_rework,931461bc8404fc51f15f0b75ae77e3a772a05989,pablodanswer,2024-11-21,v1
+sequential_messages,5fbcc70518bd5d1be00d6595f3fc690f81c52f21,pablodanswer,2024-11-01,minor logging updates for clarity
+sequential_messages,7db0de9505c3510a4db76e98a47d5b079056dc93,pablodanswer,2024-10-31,minor typo
+sequential_messages,18b4a8a26331bc013b49e486e2bf82c5ce4bfe73,pablodanswer,2024-10-31,fix stop generating
+sequential_messages,98660be16459038b438d12616bd6f00dde418b95,Weves,2024-10-31,Fix UT
+sequential_messages,3620266bddfbf1fca309ff2fe97f72bda7462979,Weves,2024-10-31,Remove unused exception
+sequential_messages,2132a430cc64abd869632c0f55a35bdc42b30be9,Weves,2024-10-31,Fix image generation slowness
+sequential_messages,24e34019ce25314c5e749d38dd0895a1c3d5141e,Weves,2024-10-31,More testing
+sequential_messages,3cd4ed5052277428dc06343f53e0e6486af26208,Weves,2024-10-31,Testing
+sequential_messages,200bb96853d6d96a99093f6e915fe9721ab5c6b3,Weves,2024-10-31,Add quote support
+sequential_messages,5a0c6d003607dfb9a7445a6a87df9a6062b73bc6,Weves,2024-10-02,Fix
+shadcn,fe9be6669538db406a0c67959dcf4c91e8d4858b,pablodanswer,2024-10-28,button + input updates
+shadcn,7cccb775c1f1385bc50131f7d548519d95ac64cd,pablodanswer,2024-10-28,initialization
+sheet_update,98aa32055203d32a6d25eb1266deab6c58a176fb,pablodanswer,2024-11-21,update configuration
+sheet_update,026134805a1418f32b61973f55571756ba102c09,pablodanswer,2024-11-21,finalized
+sheet_update,36c1fc23d087f41db06e2680233a1ade7e65e594,pablodanswer,2024-11-21,k
+sheet_update,3a4804b4b7d54fd3db576b698b5187d8dc0aa5ca,pablodanswer,2024-11-20,add multiple sheet stuff
+sheet_update,5e326bcd08d019103f78da1c8a4a45ba4e401353,pablodanswer,2024-11-20,update sheet
+sheet_update,d7f2a3e112c00bda2813933d673fb18080d6de6d,pablodanswer,2024-11-20,k
+sheet_update,3eaf2a883a5fb52169af2ba2e0571189fb3712eb,pablodanswer,2024-11-20,quick pass
+show_logs,189d62b72e0a2183ac3b25ea62eaea1b4db4366b,pablodanswer,2024-11-08,k
+show_logs,89cb3b503cf219d90338110cec34d288892c27ed,pablodanswer,2024-11-08,minor updates
+show_logs,cdda24f9ea4bc54f6a6c49d7848b63b2b5dacc9e,pablodanswer,2024-11-08,remove log
+show_logs,6dc4ca344c927b5e9c02b28662252a4067a2f7da,pablodanswer,2024-11-08,k
+show_logs,f91bac1cd90da5070247e70682e38adbe2722ce2,pablodanswer,2024-11-08,improved logging
+show_logs,5e25488d0af1e1939a366fe12ab42949daaa77f1,pablodanswer,2024-11-08,add additional logs
+silence_log,7400652fe70f86da3c8aab2a41f26103e395d739,pablodanswer,2024-11-20,silence small error
+single_tool_call,0230920240fa46e06e1cc66fb67fa42f5caf81b3,pablodanswer,2024-11-01,finalize migration
+single_tool_call,e7859e8bb4ea8409657cf0a7464724a5192e953e,pablodanswer,2024-11-01,single tool call per message
+single_tool_call,fd3937179f14968b4103c634a83430f7ae9303bc,pablodanswer,2024-11-01,minor logging updates for clarity
+single_tool_call,7a5a8f68a6e663d2b91badd47847193c92b523d0,pablodanswer,2024-10-31,minor typo
+single_tool_call,122cd2082e4ddd4a56992f5f8c36b9853057581a,pablodanswer,2024-10-31,fix stop generating
+single_tool_call,7384874e54a8ebc136b41efbe0842a327262b738,Weves,2024-10-31,Fix UT
+single_tool_call,2b06789d5133029d99763037ded18766e8d04d74,Weves,2024-10-31,Remove unused exception
+single_tool_call,4bdfd117370ac126e1bdc6e32f0192d59c51dd57,Weves,2024-10-31,Fix image generation slowness
+single_tool_call,6d4ccc354514ff328473a1c35974521c465aa2f5,Weves,2024-10-31,More testing
+single_tool_call,ef0ad8f8fce4eebc38cc9291047b84e5162572f3,Weves,2024-10-31,Testing
+single_tool_call,99b076412aa3501cbff75d7521c4cedb8f793c34,Weves,2024-10-31,Add quote support
+single_tool_call,499272ef25961ddb0861ee2a6ff6d978ea1e7772,Weves,2024-10-02,Fix
+slack_scaling,dd958cff6b0999190c5116e0354497207231d5d6,pablodanswer,2024-10-30,minor foreign key update
+super_user,0cc09c8b4d9ba0dca350a799ddc265fca38f4b90,pablodanswer,2024-11-02,nits
+super_user,ec8ae2b5f4491e3de0701ba31ae3124d8f549e66,pablodanswer,2024-11-02,add super user
+swap_buttons_cards,e6ce503bbbbed4d70734d11ebccc0db4994f69e0,pablodanswer,2024-11-01,nits
+swap_buttons_cards,680a160b2560594c3c99d4f1e8cffc3bfea66064,pablodanswer,2024-11-01,update colors
+swap_buttons_cards,748c99d655739c1bb7da0a25e2829c0d706ff810,pablodanswer,2024-10-31,clean build
+swap_buttons_cards,a222b9d3e7819e9a7e525b6994248caa167c8ac1,pablodanswer,2024-10-30,list item + configuration updates
+swap_buttons_cards,df38bde21a0f457fb6be4c1b66fae196ae32ec20,pablodanswer,2024-10-30,nits
+swap_buttons_cards,ddb22e659d1fb4cd8f30ec952e68db683f5a746e,pablodanswer,2024-10-29,fully swapped
+swap_buttons_cards,d91e54759a022acf478467b0906ee1a2867aa2ca,pablodanswer,2024-10-29,remove tremor
+swap_buttons_cards,f6117b0f16581bac8fbd181e13a5dbc061c5debb,pablodanswer,2024-10-29,begin date picker + badge transfer
+swap_buttons_cards,a8a73590bb24a59371c985931ac5dde96674f5b0,pablodanswer,2024-10-29,fix compiling
+swap_buttons_cards,5f4f0c0ebb3f12e9de996661eb722561a048311b,pablodanswer,2024-10-29,migrate cards
+swap_buttons_cards,8b8173bef0f05997c04ef9899d557d0f0a205767,pablodanswer,2024-10-29,minor updates
+swap_buttons_cards,92b7fe45b1bd1ea39252cd8a4ac6a323a548f518,pablodanswer,2024-10-28,migrate badges
+swap_buttons_cards,74091415c43c39080bd07c1ef9fc683ecc9742e2,pablodanswer,2024-10-28,migrate dividers + buttons
+swap_buttons_cards,80f9af73d0adcb06c8228b868632bdecc362d616,pablodanswer,2024-10-28,button + input updates
+swap_buttons_cards,efbeb2716536ea6b08fac40c1e074698a534ea11,pablodanswer,2024-10-28,initialization
+switch-to-turbopack,09f5fea799633152f59fb9a54451d922eb4914e0,pablodanswer,2024-11-02,slight modification
+switch-to-turbopack,f7ac9ae034605ac59a9c97650ebd6956d5628ed6,Weves,2024-11-02,Fix prettier
+switch-to-turbopack,e42f4c98c487f671887de0c43680a659a9132753,Weves,2024-11-01,Style
+switch-to-turbopack,f800017b21c2618ae51f16ef4f5d9b5e930f01fc,Weves,2024-11-01,Style
+switch-to-turbopack,7f5744974644d6cbbcf41815e27f9017de76d738,Weves,2024-11-01,Fix charts
+switch-to-turbopack,2b6514e75489842c8de0aae99d705e22daee9461,Weves,2024-11-01,Upgrade react
+switch-to-turbopack,85d5857dbcbbf353a883abf7681c85a48dc4f724,Weves,2024-11-01,Remove override
+switch-to-turbopack,7760230bf771cb6d3b0fca46b6e0bb35677ad5ee,Weves,2024-11-01,Update nextjs version
+switch-to-turbopack,a3be5be8c6c2bf653de9df48e6a3dfc01144f849,Weves,2024-11-01,Remove unintended change
+switch-to-turbopack,4d3fdba81ee2ccace76380b0b7318a5a5ed0ab79,Chris Weaver,2024-10-26,Upgrade to NextJS 15 + use turbopacK
+temp/include_file61,20d29eb51cca799b9cc04552dd083bf202c760bc,pablodanswer,2024-11-03,temporary update
+tenant_task_logger,02251aab75bad74647ba526654950b131748eb45,pablodanswer,2024-11-21,update
+tenant_task_logger,805575ef183348ce55a7d8749db477422d0b30de,pablodanswer,2024-11-09,don't prevent seeding
+tenant_task_logger,7146d02d553c568d99e7efd97a3b185f783a219a,pablodanswer,2024-11-06,update app base
+tenant_task_logger,6c360ccc483de4ce42fc88724a55f793398a1445,pablodanswer,2024-11-05,remove logs from beat
+tenant_task_logger,8773f215688e6775ebdf65bb5edda0f1e6080787,pablodanswer,2024-11-05,append
+tenant_task_logger,d715c8be8a0465551e4d5670a43bf52d1d4635de,pablodanswer,2024-11-05,remove tenant id logs
+tenant_task_logger,fa592a1b7a69897110a928a222b19eaef3b7267a,pablodanswer,2024-11-21,clean horizontal scrollbar
+text_view,5d1a664fdc8c712aa644452b061e76b3302f714a,pablodanswer,2024-11-20,nit
+text_view,b13a1d1d851b924f7b8f402894526d92712b09fa,pablodanswer,2024-11-18,k
+text_view,77ab27f982af152818dcb9b4390da80113f17e72,pablodanswer,2024-11-15,update
+text_view,61135ed7db5168d5517b8f11aed05e14b1aba471,pablodanswer,2024-11-14,basic log
+text_view,7c13ca547fc42988ef9ca10bd4a354a0fd4473cc,pablodanswer,2024-11-14,minor testing update
+text_view,46f9f0dc947da29271b16e893152402421cc1c85,pablodanswer,2024-11-14,update tests
+text_view,756b56d2cd63b7792de532d05a03bbaac2c80960,pablodanswer,2024-11-13,wip tests
+text_view,180c176136b46424021d4f0ca84052afae4946dd,pablodanswer,2024-11-13,minor docker file update
+text_view,fa8a92875bc8c3637c7aa0eac937bc3a0818e66a,pablodanswer,2024-11-13,remove left over string
+text_view,c6907ebebe9391140e272ebe0e89b6b6d207f8f5,pablodanswer,2024-11-13,finalize
+text_view,709b87d56d0e770c1ee6240cfbd4bc76743eb521,pablodanswer,2024-11-13,finalized
+text_view,b8df6e22d2d15a099aea2bc3b2e7d4c67b446ae8,pablodanswer,2024-11-13,k
+text_view,ba977e3f5dae439f4ec6b62edc717ada5f49e1f5,pablodanswer,2024-11-12,minor typing update
+text_view,ed5ed616efd0dceee374b2de5bec69adb4553a62,pablodanswer,2024-11-12,typing
+text_view,ff4f3bb211485274250eed299247631cc2f1d9a3,pablodanswer,2024-11-12,update text view
+text_view,e38fd6f7c76f3133fc407d99428a7286328843b6,pablodanswer,2024-11-12,update text view
+text_view,c76602b7be9968643726f2a8818d27d290d400dd,pablodanswer,2024-11-12,k
+text_view,62abe2511b8975ce050c4712a095372bf1d1ddc7,pablodanswer,2024-11-11,initial display
+theming,e1eff26216e42897db4e49a02cb7bb13e9425422,pablodanswer,2024-11-18,nit
+theming,4b1d428f71fd8993c516f35d8c4fa502c40baaae,pablodanswer,2024-11-18,add additional theming options
+theming_updated,f95813e381acf7590e094f774c0811f375cde670,pablodanswer,2024-11-21,update neutral
+theming_updated,804887fd311a783306f160591bc273866388a9f0,pablodanswer,2024-11-21,update
+theming_updates,c6556857cceacce98b8a90f9a42c4ddfac3b7884,pablodanswer,2024-10-30,update our tailwind config
+theming_updates,592394caeae4414bd87108ef9f8de65b77226e37,pablodanswer,2024-10-30,enforce colors
+theming_updates,8f2b0eb72d55347091339c9ba39e2c12f238a776,pablodanswer,2024-10-30,remove pr
+theming_updates,f92f8e7a73c238fc44ccca746d6fb597c5ad5cb8,pablodanswer,2024-10-30,nit
+theming_updates,5c6fc34d6316e033b5e258b9a469fa1bd8ea3167,pablodanswer,2024-10-30,add comments
+theming_updates,3472fb27371f59b454a4b27a699e2160b801ab46,pablodanswer,2024-10-30,ensure tailwind theme updated
+theming_updates,8210c8930b005cfe6248618373a708b150e412f2,pablodanswer,2024-10-29,naming
+theming_updates,e6b9ebc198973a84dc9412302e6b98a24b0a2ce3,pablodanswer,2024-10-29,ensure functionality
+tool_call_per_message,bd0259c05ff9364a99670582ff1cd804fc1b12b7,pablodanswer,2024-11-03,validated
+tool_call_per_message,381aadd24e897e28215964404048c84d7aeaa1df,pablodanswer,2024-11-03,remove print
+tool_call_per_message,90c711322dc19a6c4092a60beb5905ded89079d6,pablodanswer,2024-11-01,k
+tool_call_per_message,20a36e5f46755a55c022dd422c4d31e9abc24d46,pablodanswer,2024-11-01,validate simplify
+tool_call_per_message,9b3a008ef42d31227290f0ddfbc5b37daa82f360,pablodanswer,2024-11-01,minor image generation fix
+tool_call_per_message,a958903bd74c78457ef487debfb6084cd8ab6b2b,pablodanswer,2024-11-01,finalize migration
+tool_call_per_message,4ea0aceca97734ddca8d1f60da930668e0561694,pablodanswer,2024-11-01,single tool call per message
+tool_csv_image,8015e84531263cda72d7ca281ed0f790c0d0bb3f,pablodanswer,2024-11-03,add multiple formats to tools
+tool_search,04be3fcbf7e128136f38760845f5d39197c94a5e,pablodanswer,2024-11-15,k
+tool_search,601d497ed7acd05709384098a3132e1240d32932,pablodanswer,2024-11-15,add tests
+tool_search,4de18b2e23222fc2c628982db8659d17c136adfa,pablodanswer,2024-11-07,update
+tool_search,30e6e9b6dc8bebcc98fcf430fbd77af62faffd1a,pablodanswer,2024-11-07,somewhat cleaner
+tool_search,ac64d4aa71cca26898a0eeb8d849a15a60945e69,pablodanswer,2024-11-06,remove logs
+tool_search,1fd949ccfc6984904020ee50a845b119acd1f0be,pablodanswer,2024-11-06,finish functionality
+tool_search,1253eb27f62c81780def9e37e5498b42321d6f49,pablodanswer,2024-11-06,k
+tool_search,7dafd72d8c37ab505b35596fb3630c738b58688b,pablodanswer,2024-11-06,first pass
+tooltips,5fe453e18565a9c2f3b8f20520fb7868b5e08675,pablodanswer,2024-11-04,nit: fix delay duration
+tooltips,4bb9c461ef4c81543690f51c29c6c39949d3e882,pablodanswer,2024-11-04,clean up tooltips
+typo,4f2f4e6534605287678fa046524a3ffd705e8ab4,pablodanswer,2024-11-18,(minor) typo
+uf_theming,fe49e35ca476c494d0a9f36eb6cfea3e99ed0427,pablodanswer,2024-11-22,ensure added
+uf_theming,804887fd311a783306f160591bc273866388a9f0,pablodanswer,2024-11-21,update
+undo_temporary_fix,59fcdbaf5a096cc1bcd4599a1c0d7a256ca744f0,pablodanswer,2024-11-03,nit
+undo_temporary_fix,c3118f91b9958e736704277b5d3f98a10e3943c2,pablodanswer,2024-11-03,Revert temporary modifications
+update-confluence-behaviour,cc769b8bb9b47da9c955e70174bd498fb0b3231a,hagen-danswer,2024-11-15,has issue with boolean form
+update-confluence-behaviour,e44646dd799c7f95db1df9616e83241344ef0035,hagen-danswer,2024-11-15,fixed mnore treljsertjoslijt
+update-confluence-behaviour,b623630934171868c815b62e30be055fc6f06ec8,hagen-danswer,2024-11-15,whoops!
+update-confluence-behaviour,790db4f8ea6bcb02df170d2892c57ccb50aaa119,hagen-danswer,2024-11-15,so good
+update-confluence-behaviour,ccd6b8f38113b70ba3acf3beda199fa8ee6e3bab,hagen-danswer,2024-11-15,added key
+update-confluence-behaviour,4beffa4be3ed029fe23c95ce08c5d18c9314e54e,hagen-danswer,2024-11-15,details!
+update-confluence-behaviour,dacb1870dc98c986e1105fc797603957a2de4b5a,hagen-danswer,2024-11-15,copy change
+update-confluence-behaviour,008d6cac8e86429884bd38bbe21a23dac96be123,hagen-danswer,2024-11-15,frontend cleanup
+update-confluence-behaviour,f3310fbc73c45773dc19c2ef8da9f2fe4336b559,hagen-danswer,2024-11-15,fixed service account tests
+update-confluence-behaviour,c7819a2c5735f812e150718a3620e4bf90ca6a1e,hagen-danswer,2024-11-15,fixed oauth admin tests
+update-confluence-behaviour,f3fa6f1442910969f24ec4193b8cea3744f5847d,hagen-danswer,2024-11-15,reworked drive+confluence frontend and implied backend changes
+user_defaults,fff98ddc15d8a94b44ffbaf2225545bc2c4c01b6,pablodanswer,2024-11-12,minor clarity
+heads/v0.13.0-cloud.beta.0,102c264fd06232bbc4c7a23615add5cf7c0618be,pablodanswer,2024-11-21,minor updates
+heads/v0.13.0-cloud.beta.0,1744d29bd6f6740fb20bbbf8b5651cd60edbf127,pablodanswer,2024-11-21,k
+heads/v0.13.0-cloud.beta.0,fa592a1b7a69897110a928a222b19eaef3b7267a,pablodanswer,2024-11-21,clean horizontal scrollbar
+validate,afc8075cc3076261c8b98a4fe30822641fb9d2cf,pablodanswer,2024-11-22,add filters to chat
+validate,71123f54a753f243015f7f6bac62c3b8d1e6d05b,pablodanswer,2024-11-22,several steps
+validate,6061adb114ef20c4bf6567c9450ae51a2938c927,pablodanswer,2024-11-22,remove chat / search toggle
+validate,35300f65699862f982016284567ef12974ae05c2,pablodanswer,2024-11-22,update
+validate,fe49e35ca476c494d0a9f36eb6cfea3e99ed0427,pablodanswer,2024-11-22,ensure added
+validate,804887fd311a783306f160591bc273866388a9f0,pablodanswer,2024-11-21,update
+vespa_improvements,7c27de6fdcc6172bc1ff4e9522711210f2113e86,pablodanswer,2024-11-14,minor configuration updates

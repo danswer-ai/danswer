@@ -605,6 +605,7 @@ def stream_chat_message_objects(
                 additional_headers=custom_tool_additional_headers,
             ),
         )
+
         tools: list[Tool] = []
         for tool_list in tool_dict.values():
             tools.extend(tool_list)

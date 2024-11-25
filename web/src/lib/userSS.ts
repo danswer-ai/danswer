@@ -166,6 +166,7 @@ export const getCurrentUserSS = async (): Promise<User | null> => {
       return null;
     }
     const user = await response.json();
+    console.log("user", user);
     return user;
   } catch (e) {
     console.log(`Error fetching user: ${e}`);

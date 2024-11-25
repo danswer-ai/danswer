@@ -7,6 +7,9 @@ import { useSortable } from "@dnd-kit/sortable";
 import React, { useState } from "react";
 import { FiBookmark } from "react-icons/fi";
 import { MdDragIndicator } from "react-icons/md";
+import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { SourceIcon } from "@/components/SourceIcon";
+import { Badge } from "../ui/badge";
 
 export const AssistantCard = ({
   assistant,
@@ -20,58 +23,79 @@ export const AssistantCard = ({
   llmName: string;
 }) => {
   const [hovering, setHovering] = useState(false);
+
+  const renderBadgeContent = (tool: { name: string }) => {
+    switch (tool.name) {
+      case "SearchTool":
+        return (
+          <>
+            <SourceIcon sourceType="web" iconSize={8} />
+            <span>Search</span>
+          </>
+        );
+      case "ImageGenerationTool":
+        return (
+          <>
+            <SourceIcon sourceType="web" iconSize={8} />
+            <span>Image Gen</span>
+          </>
+        );
+      default:
+        return tool.name;
+    }
+  };
+
   return (
     <div
       onClick={() => onSelect(assistant)}
       className={`
-        p-4
+        flex flex-col overflow-hidden  w-full rounded-xl px-3 py-4
         cursor-pointer
-        border 
-        ${isSelected ? "bg-hover" : "hover:bg-hover-light"}
-        shadow-md 
-        rounded-lg
-        border-border
-        grow
-        flex items-center
-        overflow-hidden 
+        ${isSelected ? "bg-background-125" : "hover:bg-background-100"}
       `}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
     >
-      <div className="w-full">
-        <div className="flex items-center mb-2">
-          <AssistantIcon assistant={assistant} />
-          <div className="ml-2 ellipsis truncate font-bold text-sm text-emphasis">
-            {assistant.name}
-          </div>
-        </div>
-
-        <div className="text-xs text-wrap text-subtle mb-2 mt-2 line-clamp-3 py-1">
-          {assistant.description}
-        </div>
-        <div className="mt-2 flex flex-col gap-y-1">
-          {assistant.document_sets.length > 0 && (
-            <div className="text-xs text-subtle flex flex-wrap gap-2">
-              <p className="my-auto font-medium">Document Sets:</p>
-              {assistant.document_sets.map((set) => (
-                <Bubble key={set.id} isSelected={false}>
-                  <div className="flex flex-row gap-1">
-                    <FiBookmark className="mr-1 my-auto" />
-                    {set.name}
-                  </div>
-                </Bubble>
-              ))}
-            </div>
-          )}
-          <div className="text-xs text-subtle">
-            <span className="font-semibold">Default model:</span>{" "}
-            {getDisplayNameForModel(
-              assistant.llm_model_version_override || llmName
+      <div className="flex items-center gap-4">
+        <AssistantIcon size="xs" assistant={assistant} />
+        <div className="overflow-hidden text-ellipsis break-words flex-grow">
+          <div className="flex items-center justify-start gap-2">
+            <span className="line-clamp-1 text-sm text-black font-semibold leading-tight">
+              {assistant.name}
+            </span>
+            {assistant.llm_model_version_override && (
+              <Badge size="xs" variant="destructive">
+                {getDisplayNameForModel(
+                  assistant.llm_model_version_override || llmName
+                )}
+              </Badge>
             )}
+            {assistant.tools.map((tool, index) => (
+              <Badge key={index} size="xs" variant="secondary" className="ml-1">
+                <div className="flex items-center gap-1">
+                  {renderBadgeContent(tool)}
+                </div>
+              </Badge>
+            ))}
           </div>
-          <AssistantTools hovered={hovering} assistant={assistant} />
+          <span className="line-clamp-2 text-xs text-text-700">
+            {assistant.description}
+          </span>
         </div>
       </div>
+
+      {assistant.document_sets.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {assistant.document_sets.map((set) => (
+            <Bubble key={set.id} isSelected={false}>
+              <div className="flex items-center gap-1 text-xs">
+                <FiBookmark className="text-text-500" />
+                {set.name}
+              </div>
+            </Bubble>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

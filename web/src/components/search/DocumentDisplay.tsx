@@ -1,8 +1,10 @@
 "use client";
-
+import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import React from "react";
 import {
   DanswerDocument,
   DocumentRelevance,
+  LoadedDanswerDocument,
   SearchDanswerDocument,
 } from "@/lib/search/interfaces";
 import { DocumentFeedbackBlock } from "./DocumentFeedbackBlock";
@@ -11,7 +13,7 @@ import { PopupSpec } from "../admin/connectors/Popup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
-import { BookIcon, LightBulbIcon } from "../icons/icons";
+import { BookIcon, GlobeIcon, LightBulbIcon } from "../icons/icons";
 
 import { FaStar } from "react-icons/fa";
 import { FiTag } from "react-icons/fi";
@@ -23,7 +25,7 @@ export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
   blurb: string
 ) => {
-  if (matchHighlights.length === 0) {
+  if (!matchHighlights || matchHighlights.length === 0) {
     return blurb;
   }
 
@@ -251,7 +253,11 @@ export const DocumentDisplay = ({
                   >
                     <CustomTooltip showTick line content="Toggle content">
                       <LightBulbIcon
-                        className={`${settings?.isMobile && alternativeToggled ? "text-green-600" : "text-blue-600"} my-auto ml-2 h-4 w-4 cursor-pointer`}
+                        className={`${
+                          settings?.isMobile && alternativeToggled
+                            ? "text-green-600"
+                            : "text-blue-600"
+                        } my-auto ml-2 h-4 w-4 cursor-pointer`}
                       />
                     </CustomTooltip>
                   </button>
@@ -308,7 +314,9 @@ export const AgenticDocumentDisplay = ({
       }}
     >
       <div
-        className={`collapsible ${!hide && "collapsible-closed overflow-y-auto border-transparent"}`}
+        className={`collapsible ${
+          !hide && "collapsible-closed overflow-y-auto border-transparent"
+        }`}
       >
         <div className="flex relative">
           <a
@@ -380,3 +388,33 @@ export const AgenticDocumentDisplay = ({
     </div>
   );
 };
+
+export function CompactDocumentCard({
+  document,
+}: {
+  document: LoadedDanswerDocument;
+}) {
+  return (
+    <div className="max-w-[300px] pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
+      <h3 className="text-sm font-semibold flex items-center gap-x-1 text-text-900 pt-0 mt-0 truncate w-full">
+        <GlobeIcon className="w-4 h-4" />
+        {(document.semantic_identifier || document.document_id).slice(0, 40)}
+        {(document.semantic_identifier || document.document_id).length > 40 &&
+          "..."}
+      </h3>
+      {document.blurb && (
+        <p className="text-xs text-gray-600 line-clamp-2">{document.blurb}</p>
+      )}
+      <div className="flex items-center justify-between w-full ">
+        <span className="text-xs text-gray-500">
+          {new Date(document.updated_at || "").toLocaleDateString()}
+        </span>
+        {document.is_internet ? (
+          <InternetSearchIcon url={document.link} />
+        ) : (
+          <SourceIcon sourceType={document.source_type} iconSize={18} />
+        )}
+      </div>
+    </div>
+  );
+}

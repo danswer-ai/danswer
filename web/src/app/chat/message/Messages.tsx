@@ -36,8 +36,6 @@ import "prismjs/themes/prism-tomorrow.css";
 import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-import { Citation } from "@/components/search/results/Citation";
-import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
 import { LikeFeedback, DislikeFeedback } from "@/components/icons/icons";
 import {
@@ -62,6 +60,10 @@ import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
 import { extractCodeText } from "./codeUtils";
 import ToolResult from "../../../components/tools/ToolResult";
 import CsvContent from "../../../components/tools/CSVContent";
+import FirstSourceCard, {
+  SeeMoreBlock,
+} from "@/components/chat_search/sources/firstsourcecard";
+import { getSourceMetadata } from "@/lib/sources";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -162,6 +164,7 @@ export const AIMessage = ({
   alternativeAssistant,
   docs,
   messageId,
+  documentSelectionToggled,
   content,
   files,
   selectedDocuments,
@@ -178,7 +181,9 @@ export const AIMessage = ({
   currentPersona,
   otherMessagesCanSwitchTo,
   onMessageSelection,
+  index,
 }: {
+  index?: number;
   shared?: boolean;
   isActive?: boolean;
   continueGenerating?: () => void;
@@ -191,6 +196,7 @@ export const AIMessage = ({
   currentPersona: Persona;
   messageId: number | null;
   content: string | JSX.Element;
+  documentSelectionToggled?: boolean;
   files?: FileDescriptor[];
   query?: string;
   citedDocuments?: [string, DanswerDocument][] | null;
@@ -296,7 +302,30 @@ export const AIMessage = ({
 
   const markdownComponents = useMemo(
     () => ({
-      a: MemoizedLink,
+      // a: MemoizedLink,
+      a: ({ node, ...props }: any) => {
+        const value = props.children?.toString();
+        if (value?.startsWith("[") && value?.endsWith("]")) {
+          const match = value.match(/\[(\d+)\]/);
+          if (match) {
+            const index = parseInt(match[1], 10) - 1;
+            const associatedDoc = docs && docs[index];
+
+            const icon = getSourceMetadata(
+              associatedDoc?.source_type || "web"
+            ).icon({
+              size: 18,
+            });
+
+            return (
+              <MemoizedLink {...props} document={{ ...associatedDoc, icon }}>
+                {props.children}
+              </MemoizedLink>
+            );
+          }
+        }
+        return <MemoizedLink {...props}>{props.children}</MemoizedLink>;
+      },
       p: MemoizedParagraph,
       code: ({ node, className, children, ...props }: any) => {
         const codeText = extractCodeText(
@@ -363,6 +392,7 @@ export const AIMessage = ({
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary
+                                index={index || 0}
                                 query={query}
                                 finished={toolCall?.tool_result != undefined}
                                 hasDocs={hasDocs || false}
@@ -444,71 +474,18 @@ export const AIMessage = ({
                           <div className="px-8 flex gap-x-2">
                             {!settings?.isMobile &&
                               filteredDocs.length > 0 &&
-                              filteredDocs.slice(0, 2).map((doc, ind) => (
-                                <div
-                                  key={doc.document_id}
-                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
-                              `}
-                                >
-                                  <a
-                                    href={doc.link || undefined}
-                                    target="_blank"
-                                    className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
-                                    rel="noreferrer"
-                                  >
-                                    <Citation link={doc.link} index={ind + 1} />
-                                    <p className="shrink truncate ellipsis break-all">
-                                      {doc.semantic_identifier ||
-                                        doc.document_id}
-                                    </p>
-                                    <div className="ml-auto flex-none">
-                                      {doc.is_internet ? (
-                                        <InternetSearchIcon url={doc.link} />
-                                      ) : (
-                                        <SourceIcon
-                                          sourceType={doc.source_type}
-                                          iconSize={18}
-                                        />
-                                      )}
-                                    </div>
-                                  </a>
-                                  <div className="flex overscroll-x-scroll mt-.5">
-                                    <DocumentMetadataBlock document={doc} />
-                                  </div>
-                                  <div className="line-clamp-3 text-xs break-words pt-1">
-                                    {doc.blurb}
-                                  </div>
-                                </div>
-                              ))}
-                            <div
-                              onClick={() => {
-                                if (messageId) {
-                                  onMessageSelection?.(messageId);
-                                }
-                                toggleDocumentSelection?.();
-                              }}
-                              key={-1}
-                              className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b"
-                            >
-                              <div className="text-sm flex justify-between font-semibold text-text-700">
-                                <p className="line-clamp-1">See context</p>
-                                <div className="flex gap-x-1">
-                                  {uniqueSources.map((sourceType, ind) => {
-                                    return (
-                                      <div key={ind} className="flex-none">
-                                        <SourceIcon
-                                          sourceType={sourceType}
-                                          iconSize={18}
-                                        />
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                              <div className="line-clamp-3 text-xs break-words pt-1">
-                                See more
-                              </div>
-                            </div>
+                              filteredDocs
+                                .slice(0, 2)
+                                .map((doc, ind) => (
+                                  <FirstSourceCard doc={doc} key={ind} />
+                                ))}
+                            <SeeMoreBlock
+                              documentSelectionToggled={
+                                documentSelectionToggled || false
+                              }
+                              toggleDocumentSelection={toggleDocumentSelection}
+                              uniqueSources={uniqueSources}
+                            />
                           </div>
                         </div>
                       </div>

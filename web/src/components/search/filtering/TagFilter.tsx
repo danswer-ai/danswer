@@ -9,10 +9,12 @@ export function TagFilter({
   tags,
   selectedTags,
   setSelectedTags,
+  showTagsOnLeft = false,
 }: {
   tags: Tag[];
   selectedTags: Tag[];
   setSelectedTags: React.Dispatch<React.SetStateAction<Tag[]>>;
+  showTagsOnLeft?: boolean;
 }) {
   const [filterValue, setFilterValue] = useState("");
   const [tagOptionsAreVisible, setTagOptionsAreVisible] = useState(false);
@@ -72,7 +74,7 @@ export function TagFilter({
   };
 
   return (
-    <div className="relative">
+    <div className="relative ">
       <input
         ref={inputRef}
         className="w-full border border-border py-0.5 px-2 rounded text-sm h-8"
@@ -106,7 +108,13 @@ export function TagFilter({
         </div>
       )}
       {tagOptionsAreVisible && (
-        <div className="absolute top-0 right-0 transform translate-x-[105%] z-40">
+        <div
+          className={` absolute  z-[100] ${
+            showTagsOnLeft
+              ? "left-0   top-0 translate-y-[2rem]"
+              : "right-0 translate-x-[105%] top-0"
+          } z-40`}
+        >
           <div
             ref={popupRef}
             className="p-2 border border-border rounded shadow-lg w-72 bg-background"
