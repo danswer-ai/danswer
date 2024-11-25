@@ -1782,7 +1782,7 @@ export function ChatPage({
       liveAssistant
     );
   });
-  console.log("enabeldscroll", autoScrollEnabled);
+
   useEffect(() => {
     if (!retrievalEnabled) {
       setDocumentSidebarToggled(false);
@@ -2650,7 +2650,9 @@ export function ChatPage({
                             )}
                             <div
                               style={{
-                                height: !autoScrollEnabled ? "50vh" : undefined,
+                                height: !autoScrollEnabled
+                                  ? "5ob0vh"
+                                  : undefined,
                               }}
                             />
 

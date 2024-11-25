@@ -117,23 +117,17 @@ const AssistantSelector = ({
   // Get the user's default model
   const userDefaultModel = user?.preferences.default_model;
 
-  const [_, llmName] = getFinalLLM(llmProviders, liveAssistant, null);
-
-  // Get the assistant's default model if it exists
-  const assistantDefaultModel = liveAssistant.llm_model_version_override;
-
-  // Determine the current LLM model to use
-  const currentLlm =
-    llmOverrideManager?.llmOverride?.modelName ??
-    assistantDefaultModel ??
-    userDefaultModel ??
-    llmName;
+  const [_, currentLlm] = getFinalLLM(
+    llmProviders,
+    liveAssistant,
+    llmOverrideManager?.llmOverride ?? null
+  );
 
   const requiresImageGeneration =
     checkPersonaRequiresImageGeneration(liveAssistant);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="pointer-events-auto relative" ref={dropdownRef}>
       <div className="flex justify-center">
         <div
           onClick={() => {
