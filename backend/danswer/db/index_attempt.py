@@ -225,6 +225,28 @@ def mark_attempt_partially_succeeded(
         raise
 
 
+def mark_attempt_canceled(
+    index_attempt_id: int,
+    db_session: Session,
+    reason: str = "Unknown",
+) -> None:
+    try:
+        attempt = db_session.execute(
+            select(IndexAttempt)
+            .where(IndexAttempt.id == index_attempt_id)
+            .with_for_update()
+        ).scalar_one()
+
+        if not attempt.time_started:
+            attempt.time_started = datetime.now(timezone.utc)
+        attempt.status = IndexingStatus.CANCELED
+        attempt.error_msg = reason
+        db_session.commit()
+    except Exception:
+        db_session.rollback()
+        raise
+
+
 def mark_attempt_failed(
     index_attempt_id: int,
     db_session: Session,

@@ -72,6 +72,7 @@ export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
   | "completed_with_errors"
+  | "canceled"
   | "failed"
   | "in_progress"
   | "not_started";
