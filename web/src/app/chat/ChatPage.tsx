@@ -2081,7 +2081,7 @@ export function ChatPage({
                 duration-300
                 ease-in-out
                 h-full
-                ${documentSidebarToggled ? "w-[300px]" : "w-[0px]"}
+                ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
             `}
             >
               <DocumentSidebar
@@ -2100,7 +2100,7 @@ export function ChatPage({
                 selectedDocumentTokens={selectedDocumentTokens}
                 maxTokens={maxTokens}
                 isLoading={isFetchingChatMessages}
-                initialWidth={300}
+                initialWidth={400}
                 isOpen={documentSidebarToggled}
               />
             </div>
@@ -2182,6 +2182,25 @@ export function ChatPage({
                                 onAssistantChange={onAssistantChange}
                                 llmOverrideManager={llmOverrideManager}
                               />
+                              {!settings?.isMobile && (
+                                <div
+                                  style={{ transition: "width 0.30s ease-out" }}
+                                  className={`
+                          flex-none 
+                          overflow-y-hidden 
+                          transition-all 
+                          duration-300 
+                          ease-in-out
+                          bg-black
+                          h-full
+                          ${
+                            documentSidebarToggled && retrievalEnabled
+                              ? "w-[400px]"
+                              : "w-[0px]"
+                          }
+                      `}
+                                ></div>
+                              )}
                             </div>
                           )}
 
@@ -2704,8 +2723,8 @@ export function ChatPage({
                           ease-in-out
                           h-full
                           ${
-                            documentSidebarToggled && !retrievalEnabled
-                              ? "w-[300px]"
+                            documentSidebarToggled && retrievalEnabled
+                              ? "w-[400px]"
                               : "w-[0px]"
                           }
                       `}

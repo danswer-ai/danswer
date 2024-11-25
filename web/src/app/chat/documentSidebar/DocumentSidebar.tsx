@@ -67,7 +67,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     return (
       <div
         id="danswer-chat-sidebar"
-        className="w-full border-l border-border"
+        className="w-full border-l border-sidebar-border"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeSidebar();
@@ -83,9 +83,9 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             width: initialWidth,
           }}
         >
-          <div className="pb-6 flex-initial overflow-y-hidden flex flex-col h-screen">
+          <div className=" flex-initial overflow-y-hidden flex flex-col h-screen">
             {popup}
-            <div className="p-4 border-b border-border flex justify-between items-center">
+            <div className="p-4 flex justify-between items-center">
               <h2 className="text-xl font-bold text-text-900">
                 {showFilters ? "Filters" : "Sources"}
               </h2>
@@ -96,6 +96,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                 <XIcon className="w-4 h-4" />
               </button>
             </div>
+            <div className="border-b border-divider-history-sidebar-bar mx-3" />
 
             <div className="overflow-y-auto default-scrollbar flex-grow dark-scrollbar flex relative flex-col">
               {showFilters ? (

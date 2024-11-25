@@ -123,7 +123,7 @@ export default function FunctionalHeader({
           <div className="mobile:hidden flex my-auto">
             <UserDropdown page={page} toggleUserSettings={toggleUserSettings} />
           </div>
-          {/* <Link
+          <Link
             className="desktop:hidden my-auto"
             href={
               `/${page}` +
@@ -136,8 +136,8 @@ export default function FunctionalHeader({
             <div className="cursor-pointer mr-4 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
               <NewChatIcon size={20} />
             </div>
-          </Link> */}
-          {/* <div
+          </Link>
+          <div
             style={{ transition: "width 0.30s ease-out" }}
             className={`
             mobile:hidden
@@ -148,9 +148,9 @@ export default function FunctionalHeader({
             duration-300 
             ease-in-out
             h-full
-            ${documentSidebarToggled ? "w-[300px]" : "w-[0px]"}
+            ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
             `}
-          /> */}
+          />
         </div>
       </div>
     </div>

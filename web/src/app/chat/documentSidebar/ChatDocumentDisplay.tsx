@@ -76,10 +76,10 @@ export function ChatDocumentDisplay({
             ) : (
               <SourceIcon sourceType={document.source_type} iconSize={18} />
             )}
-            <span>{source}</span>
-          </div>
-          <div className="line-clamp-2 text-sm font-semibold">
-            {document.semantic_identifier || document.document_id}
+
+            <div className="line-clamp-1 mb-1 text-text-900 text-sm font-semibold">
+              {document.semantic_identifier || document.document_id}
+            </div>
           </div>
           <div className="line-clamp-2 text-sm font-normal leading-snug text-gray-600">
             {buildDocumentSummaryDisplay(
