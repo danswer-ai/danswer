@@ -78,6 +78,7 @@ def upsert_document_external_perms(
         # The upsert function in the indexing pipeline does not overwrite the permissions fields
         document = DbDocument(
             id=doc_id,
+            semantic_id="",
             external_user_emails=external_access.external_user_emails,
             external_user_group_ids=prefixed_external_groups,
             is_public=external_access.is_public,
