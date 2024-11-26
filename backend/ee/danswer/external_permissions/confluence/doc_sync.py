@@ -258,14 +258,11 @@ def confluence_doc_sync(
         **cc_pair.connector.connector_specific_config
     )
     confluence_connector.load_credentials(cc_pair.credential.credential_json)
-    if confluence_connector.confluence_client is None:
-        raise ValueError("Failed to load credentials")
-    confluence_client = confluence_connector.confluence_client
 
     is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
 
     space_permissions_by_space_key = _get_space_permissions(
-        confluence_client=confluence_client,
+        confluence_client=confluence_connector.confluence_client,
         is_cloud=is_cloud,
     )
 
@@ -274,7 +271,7 @@ def confluence_doc_sync(
         slim_docs.extend(doc_batch)
 
     return _fetch_all_page_restrictions_for_space(
-        confluence_client=confluence_client,
+        confluence_client=confluence_connector.confluence_client,
         slim_docs=slim_docs,
         space_permissions_by_space_key=space_permissions_by_space_key,
     )
