@@ -1,5 +1,4 @@
 "use client";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
 import React from "react";
 import {
   DanswerDocument,
@@ -13,13 +12,14 @@ import { PopupSpec } from "../admin/connectors/Popup";
 import { DocumentUpdatedAtBadge } from "./DocumentUpdatedAtBadge";
 import { SourceIcon } from "../SourceIcon";
 import { MetadataBadge } from "../MetadataBadge";
-import { BookIcon, GlobeIcon, LightBulbIcon } from "../icons/icons";
+import { BookIcon, GlobeIcon, LightBulbIcon, SearchIcon } from "../icons/icons";
 
 import { FaStar } from "react-icons/fa";
 import { FiTag } from "react-icons/fi";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { CustomTooltip, TooltipGroup } from "../tooltip/CustomTooltip";
 import { WarningCircle } from "@phosphor-icons/react";
+import { SearchResultIcon } from "../SearchResultIcon";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -396,8 +396,12 @@ export function CompactDocumentCard({
 }) {
   return (
     <div className="max-w-[300px] pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
-      <h3 className="text-sm font-semibold flex items-center gap-x-1 text-text-900 pt-0 mt-0 truncate w-full">
-        <GlobeIcon className="w-4 h-4" />
+      <h3 className="text-sm font-semibold flex  items-center gap-x-1 text-text-900 pt-0 mt-0 truncate w-full">
+        {document.is_internet || document.source_type === "web" ? (
+          <SearchResultIcon url={document.link} />
+        ) : (
+          <SourceIcon sourceType={document.source_type} iconSize={18} />
+        )}
         {(document.semantic_identifier || document.document_id).slice(0, 40)}
         {(document.semantic_identifier || document.document_id).length > 40 &&
           "..."}
@@ -406,14 +410,12 @@ export function CompactDocumentCard({
         <p className="text-xs text-gray-600 line-clamp-2">{document.blurb}</p>
       )}
       <div className="flex items-center justify-between w-full ">
-        <span className="text-xs text-gray-500">
-          {new Date(document.updated_at || "").toLocaleDateString()}
-        </span>
-        {document.is_internet ? (
-          <InternetSearchIcon url={document.link} />
-        ) : (
-          <SourceIcon sourceType={document.source_type} iconSize={18} />
-        )}
+        {document.updated_at &&
+          !isNaN(new Date(document.updated_at).getTime()) && (
+            <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-1 inline-flex items-center">
+              Updated {new Date(document.updated_at).toLocaleDateString()}
+            </span>
+          )}
       </div>
     </div>
   );

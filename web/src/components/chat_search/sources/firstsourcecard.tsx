@@ -1,4 +1,4 @@
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { SearchResultIcon } from "@/components/SearchResultIcon";
 import { SourceIcon } from "@/components/SourceIcon";
 import { DanswerDocument } from "@/lib/search/interfaces";
 
@@ -12,8 +12,8 @@ export default function FirstSourceCard({ doc }: { doc: DanswerDocument }) {
       className="flex flex-col gap-0.5 rounded-sm px-3 py-2.5 hover:bg-background-125 bg-background-100 w-[200px]"
     >
       <div className="line-clamp-1 font-semibold text-ellipsis  text-text-900  flex h-6 items-center gap-2 text-sm">
-        {doc.is_internet ? (
-          <InternetSearchIcon url={doc.link} />
+        {doc.is_internet || doc.source_type === "web" ? (
+          <SearchResultIcon url={doc.link} />
         ) : (
           <SourceIcon sourceType={doc.source_type} iconSize={18} />
         )}

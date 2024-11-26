@@ -34,9 +34,9 @@ const SectionTitle = ({
   children: string;
   modal?: boolean;
 }) => (
-  <CardHeader className={`pb-2 ${modal ? "w-[80vw]" : "w-full"}`}>
-    <CardTitle className="text-sm font-semibold">{children}</CardTitle>
-  </CardHeader>
+  <div className={`mt-4 pb-2 ${modal ? "w-[80vw]" : "w-full"}`}>
+    <p className="text-sm font-semibold">{children}</p>
+  </div>
 );
 
 export interface SourceSelectorProps {
@@ -134,7 +134,7 @@ export function SourceSelector({
       {!filtersUntoggled && (
         <CardContent className="overflow-x-hidden space-y-2">
           <div>
-            <div className="flex px-6 py-2  mt-2  justify-start gap-x-2 items-center">
+            <div className="flex  py-2  mt-2  justify-start gap-x-2 items-center">
               <p className="text-sm font-semibold">Time Range</p>
               {timeRange && (
                 <button

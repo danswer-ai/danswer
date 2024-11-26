@@ -50,7 +50,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useMouseTracking } from "./hooks";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { SearchResultIcon } from "@/components/SearchResultIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";

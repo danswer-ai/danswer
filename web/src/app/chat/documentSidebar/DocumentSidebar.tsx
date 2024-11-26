@@ -4,7 +4,7 @@ import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { Message } from "../interfaces";
-import { ForwardedRef, forwardRef } from "react";
+import { ForwardedRef, forwardRef, useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { FilterManager } from "@/lib/hooks";
 import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
@@ -55,6 +55,19 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     ref: ForwardedRef<HTMLDivElement>
   ) => {
     const { popup, setPopup } = usePopup();
+    const [delayedSelectedDocumentCount, setDelayedSelectedDocumentCount] =
+      useState(0);
+
+    useEffect(() => {
+      const timer = setTimeout(
+        () => {
+          setDelayedSelectedDocumentCount(selectedDocuments?.length || 0);
+        },
+        selectedDocuments?.length == 0 ? 1000 : 0
+      );
+
+      return () => clearTimeout(timer);
+    }, [selectedDocuments]);
 
     const selectedDocumentIds =
       selectedDocuments?.map((document) => document.document_id) || [];
@@ -173,10 +186,10 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                   }}
                 >
                   {`Remove ${
-                    selectedDocumentIds.length > 0
-                      ? selectedDocumentIds.length
+                    delayedSelectedDocumentCount > 0
+                      ? delayedSelectedDocumentCount
                       : ""
-                  } Source${selectedDocumentIds.length > 1 ? "s" : ""}`}
+                  } Source${delayedSelectedDocumentCount > 1 ? "s" : ""}`}
                 </button>
               </div>
             </>

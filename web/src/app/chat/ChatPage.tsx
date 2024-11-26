@@ -1625,6 +1625,16 @@ export function ChatPage({
       ? settings?.enterpriseSettings?.auto_scroll || false
       : user?.preferences?.auto_scroll!;
 
+  console.log("autoScrollEnabled", autoScrollEnabled);
+  console.log(
+    "user?.preferences?.auto_scroll ",
+    user?.preferences?.auto_scroll
+  );
+  console.log(
+    "settings?.enterpriseSettings?.auto_scroll ",
+    settings?.enterpriseSettings?.auto_scroll
+  );
+
   useScrollonStream({
     chatState: currentSessionChatState,
     scrollableDivRef,

@@ -24,10 +24,6 @@ export function Citation({
     : index;
 
   // const CitationTrigger = () => {
-  //   return (
-
-  //   );
-  // };
 
   if (link) {
     return (
@@ -38,7 +34,7 @@ export function Citation({
               onMouseDown={() => window.open(link, "_blank")}
               className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"
             >
-              <span className="relative no-underline -top-0.5 px-1.5 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 hover:text-gray-900 shadow-sm no-underline">
+              <span className="relative min-w-[1.4rem] text-center no-underline -top-0.5 px-1.5 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 hover:text-gray-900 shadow-sm no-underline">
                 {innerText}
               </span>
             </div>
@@ -58,12 +54,12 @@ export function Citation({
               onMouseDown={() => window.open(link, "_blank")}
               className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"
             >
-              <span className="relative no-underline -top-0.5 px-1.5 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 hover:text-gray-900 shadow-sm no-underline">
+              <span className="relative min-w-[1.4rem] text-center no-underline -top-0.5 px-1.5 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 hover:text-gray-900 shadow-sm no-underline">
                 {innerText}
               </span>
             </div>
           </TooltipTrigger>
-          <TooltipContent width="max-w-lg" backgroundColor="bg-background-200">
+          <TooltipContent width="max-w-lg" backgroundColor="bg-background">
             <CompactDocumentCard document={document} />
           </TooltipContent>
         </Tooltip>

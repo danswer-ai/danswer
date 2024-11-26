@@ -5,9 +5,10 @@ import { DanswerDocument } from "@/lib/search/interfaces";
 import { FiInfo, FiRadio, FiTag } from "react-icons/fi";
 import { DocumentSelector } from "./DocumentSelector";
 import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { SearchResultIcon } from "@/components/SearchResultIcon";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { MetadataBadge } from "@/components/MetadataBadge";
+import faviconFetch from "favicon-fetch";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
@@ -73,9 +74,7 @@ export function ChatDocumentDisplay({
 
   const faviconUrl =
     (isInternet || document.source_type === "web") && document.link
-      ? `https://www.google.com/s2/favicons?domain=${
-          new URL(document.link).hostname
-        }&sz=24`
+      ? faviconFetch({ uri: document.link })
       : null;
 
   return (
