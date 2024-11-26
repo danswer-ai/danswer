@@ -69,11 +69,11 @@ export function FeedbackChart({
     const chartConfig = {
       "Positive Feedback": {
         label: "Positive Feedback",
-        color: colors.brand[500], 
+        color: colors.brand[500],
       },
       "Negative Feedback": {
         label: "Negative Feedback",
-        color: colors.brand[300], 
+        color: colors.brand[300],
       },
     } satisfies ChartConfig;
 

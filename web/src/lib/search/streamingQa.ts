@@ -34,6 +34,7 @@ export const searchRequestStreamed = async ({
   finishedSearching,
   updateDocumentRelevance,
   updateComments,
+  teamspaceId,
 }: SearchRequestArgs) => {
   let answer = "";
   let quotes: Quote[] | null = null;
@@ -47,25 +48,30 @@ export const searchRequestStreamed = async ({
       role: "user",
     };
 
-    const response = await fetch("/api/query/stream-answer-with-quote", {
-      method: "POST",
-      body: JSON.stringify({
-        messages: [threadMessage],
-        assistant_id: assistant.id,
-        agentic,
-        prompt_id: assistant.id === 0 ? null : assistant.prompts[0]?.id,
-        retrieval_options: {
-          run_search: "always",
-          real_time: true,
-          filters: filters,
-          enable_auto_detect_filters: false,
+    const response = await fetch(
+      teamspaceId
+        ? `/api/query/stream-answer-with-quote?teamspace_id=${teamspaceId}`
+        : "/api/query/stream-answer-with-quote",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          messages: [threadMessage],
+          assistant_id: assistant.id,
+          agentic,
+          prompt_id: assistant.id === 0 ? null : assistant.prompts[0]?.id,
+          retrieval_options: {
+            run_search: "always",
+            real_time: true,
+            filters: filters,
+            enable_auto_detect_filters: false,
+          },
+          evaluation_type: agentic ? "agentic" : "basic",
+        }),
+        headers: {
+          "Content-Type": "application/json",
         },
-        evaluation_type: agentic ? "agentic" : "basic",
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+      }
+    );
 
     const reader = response.body?.getReader();
     const decoder = new TextDecoder("utf-8");

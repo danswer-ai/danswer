@@ -156,6 +156,7 @@ export interface SearchRequestArgs {
   finishedSearching: () => void;
   updateComments: (comments: any) => void;
   selectedSearchType: SearchType | null;
+  teamspaceId?: string | string[];
 }
 
 export interface SearchRequestOverrides {

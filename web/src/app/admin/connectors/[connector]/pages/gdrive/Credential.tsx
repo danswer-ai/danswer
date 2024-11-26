@@ -300,12 +300,7 @@ export const DriveJsonUploadSection = ({
     <div className="mt-2">
       <p className="mb-2 text-sm">
         Follow the guide{" "}
-        <a
-          className="text-link"
-          target="_blank"
-          href="https://docs.danswer.dev/connectors/google_drive#authorization"
-          rel="noopener"
-        >
+        <a className="text-link" target="_blank" href="#" rel="noopener">
           here
         </a>{" "}
         to either (1) setup a google OAuth App in your company workspace or (2)

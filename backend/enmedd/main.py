@@ -109,6 +109,9 @@ from enmedd.server.manage.llm.models import LLMProviderUpsertRequest
 from enmedd.server.manage.search_settings import router as search_settings_router
 from enmedd.server.manage.users import router as user_router
 from enmedd.server.middleware.latency_logging import add_latency_logging_middleware
+from enmedd.server.middleware.tenant_identification import (
+    add_tenant_identification_middleware,
+)
 from enmedd.server.query_and_chat.chat_backend import router as chat_router
 from enmedd.server.query_and_chat.query_backend import (
     admin_router as admin_query_router,
@@ -116,6 +119,7 @@ from enmedd.server.query_and_chat.query_backend import (
 from enmedd.server.query_and_chat.query_backend import basic_router as query_router
 from enmedd.server.settings.api import admin_router as settings_admin_router
 from enmedd.server.settings.api import basic_router as settings_router
+from enmedd.server.settings.api import router as themes_router
 from enmedd.server.settings.store import load_settings
 from enmedd.server.settings.store import store_settings
 from enmedd.server.token_rate_limits.api import (
@@ -255,9 +259,9 @@ def update_default_multipass_indexing(db_session: Session) -> None:
         update_current_search_settings(db_session, updated_settings)
 
         # Update settings with GPU availability
-        settings = load_settings(db_session)
+        settings = load_settings(db_session, workspace_id=0)  # temporary set to 0
         settings.gpu_enabled = gpu_available
-        store_settings(settings, db_session)
+        store_settings(settings, db_session, workspace_id=0)  # temporary set to 0
         logger.notice(f"Updated settings with GPU availability: {gpu_available}")
 
     else:
@@ -530,6 +534,7 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, gpts_router)
     include_router_with_global_prefix_prepended(application, settings_router)
     include_router_with_global_prefix_prepended(application, settings_admin_router)
+    include_router_with_global_prefix_prepended(application, themes_router)
     include_router_with_global_prefix_prepended(application, ff_instance_admin_router)
     include_router_with_global_prefix_prepended(application, ff_settings_router)
     include_router_with_global_prefix_prepended(application, llm_admin_router)
@@ -616,7 +621,7 @@ def get_application() -> FastAPI:
     )
     if LOG_ENDPOINT_LATENCY:
         add_latency_logging_middleware(application, logger)
-
+    add_tenant_identification_middleware(application, logger)
     # Ensure all routes have auth enabled or are explicitly marked as public
     check_router_auth(application)
 

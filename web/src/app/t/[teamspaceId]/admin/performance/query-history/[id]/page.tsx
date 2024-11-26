@@ -11,7 +11,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Book } from "lucide-react";
 import { FeedbackBadge } from "@/app/ee/admin/performance/query-history/FeedbackBadge";
-import { ChatSessionSnapshot, MessageSnapshot } from "@/app/ee/admin/performance/usage/types";
+import {
+  ChatSessionSnapshot,
+  MessageSnapshot,
+} from "@/app/ee/admin/performance/usage/types";
 
 function MessageDisplay({ message }: { message: MessageSnapshot }) {
   return (

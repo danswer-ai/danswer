@@ -6,6 +6,10 @@ export interface Settings {
   notifications: Notification[];
   needs_reindexing: boolean;
   gpu_enabled: boolean;
+  smtp_server?: string;
+  smtp_port?: number;
+  smtp_username?: string;
+  smtp_password?: string;
 }
 
 export interface Notification {
@@ -34,8 +38,11 @@ export interface TeamspaceSettings {
 export interface Workspaces {
   workspace_name: string | null;
   workspace_description: string | null;
+  custom_logo: string | null;
   use_custom_logo: boolean;
   use_custom_logotype: boolean;
+  brand_color: string;
+  secondary_color: string;
 
   // custom navigation
   custom_nav_items: NavigationItem[];
@@ -63,7 +70,6 @@ export interface FeatureFlags {
 
 export interface CombinedSettings {
   settings: Settings;
-  featureFlags: FeatureFlags;
   workspaces: Workspaces | null;
   customAnalyticsScript: string | null;
   isMobile?: boolean;

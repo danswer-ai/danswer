@@ -8,8 +8,15 @@ import { SuccessfulAssistantUpdateRedirectType } from "@/app/admin/assistants/en
 import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
 import { useParams } from "next/navigation";
 
-export default async function Page({ params }: { params: { teamspaceId: string } }) {
-  const [values, error] = await fetchAssistantEditorInfoSS(undefined, params.teamspaceId);
+export default async function Page({
+  params,
+}: {
+  params: { teamspaceId: string };
+}) {
+  const [values, error] = await fetchAssistantEditorInfoSS(
+    undefined,
+    params.teamspaceId
+  );
 
   let body;
   if (!values) {

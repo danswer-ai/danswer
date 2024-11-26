@@ -29,10 +29,10 @@ export function SettingsForm() {
           >
             <Cog size={16} /> Configuration
           </TabsTrigger>
-          <TabsTrigger value="usage" className="flex items-center gap-2">
+          {/* <TabsTrigger value="usage" className="flex items-center gap-2">
             <ChartNoAxesColumnIncreasing size={16} className="rotate-90" />{" "}
             Usage
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
         <TabsContent value="general" className="w-full">
           <General

@@ -28,6 +28,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Logo } from "@/components/Logo";
 import ArnoldAi from "../../../../public/arnold_ai.png";
 import { PageTab } from "@/components/PageTab";
+import { buildImgUrl } from "../files/images/utils";
 
 export const ChatSidebar = ({
   existingChats,
@@ -113,21 +114,19 @@ export const ChatSidebar = ({
             `}
         id="chat-sidebar"
       >
-        <div className="flex items-center w-full relative justify-center px-4 pb-4">
-          <div className="flex h-full items-center gap-1">
-            {workspaces && workspaces.use_custom_logo ? (
-              <Logo />
-            ) : (
-              <Image src={ArnoldAi} alt="arnoldai-logo" height={32} />
-            )}
-            <span className="text-lg font-semibold">
-              {workspaces && workspaces.workspace_name
-                ? workspaces.workspace_name
-                : "Arnold AI"}
-            </span>
-          </div>
+        <div className="flex items-center gap-1 w-full relative justify-center px-4 pb-5 pt-1">
+          {workspaces && workspaces.custom_header_logo ? (
+            <img
+              src={buildImgUrl(workspaces?.custom_header_logo)}
+              alt="Logo"
+              className="h-8 object-contain w-full"
+            />
+          ) : (
+            <Image src={ArnoldAi} alt="arnoldai-logo" height={32} />
+          )}
+        </div>
 
-          {/* <Button
+        {/* <Button
             variant="ghost"
             size="icon"
             onClick={toggleSideBar}
@@ -135,7 +134,6 @@ export const ChatSidebar = ({
           >
             <PanelLeftClose size={24} />
           </Button> */}
-        </div>
 
         <div className="h-full overflow-y-auto">
           <div className="px-4 text-sm font-medium flex flex-col">
@@ -173,19 +171,6 @@ export const ChatSidebar = ({
                     <Command size={14} />D
                   </div>
                 </Link>
-                {/* {combinedSettings.featureFlags.explore_assistants && (
-                  <Link
-                    href="/assistants/mine"
-                    className={`flex px-4 py-2 h-10 rounded-regular cursor-pointer items-center gap-2 ${
-                      isAssistant
-                        ? "bg-brand-500 text-white"
-                        : "hover:bg-hover-light"
-                    }`}
-                  >
-                    <Headset size={16} />
-                    <span className="truncate">Explore Assistants</span>
-                  </Link>
-                )} */}
               </>
             )}
             <Separator className="mt-4" />

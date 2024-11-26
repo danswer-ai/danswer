@@ -33,7 +33,9 @@ const NavigationRow = ({
         </div>
       )}
       {(formStep > 0 || noCredentials) && (
-        <div className="flex w-full">
+        <div
+          className={`flex w-full ${(formStep > 0 && !noCredentials) || (formStep > 1 && !noAdvanced) ? "justify-center" : ""}`}
+        >
           <Button
             disabled={!isValid}
             onClick={onSubmit}

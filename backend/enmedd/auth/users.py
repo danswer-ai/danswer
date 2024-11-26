@@ -35,6 +35,7 @@ from enmedd.auth.schemas import UserCreate
 from enmedd.auth.schemas import UserRole
 from enmedd.auth.utils import generate_password_reset_email
 from enmedd.auth.utils import generate_user_verification_email
+from enmedd.auth.utils import get_smtp_credentials
 from enmedd.auth.utils import send_reset_password_email
 from enmedd.auth.utils import send_user_verification_email
 from enmedd.configs.app_configs import AUTH_TYPE
@@ -248,25 +249,47 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         )
 
     async def on_after_forgot_password(
-        self, user: User, token: str, request: Optional[Request] = None
+        self,
+        user: User,
+        token: str,
+        request: Optional[Request] = None,
     ) -> None:
-        logger.notice(f"User {user.id} has forgot their password. Reset token: {token}")
+        if not user.email:
+            logger.error(f"User {user.id} does not have a valid email.")
+            return
+        with Session(get_sqlalchemy_engine()) as db_session:
+            logger.notice(
+                f"User {user.id} has forgot their password. Reset token: {token}"
+            )
 
-        reset_url = f"{WEB_DOMAIN}/auth/reset-password?token={token}"
-        subject, body = generate_password_reset_email(user.email, reset_url)
-        send_reset_password_email(user.email, subject, body)
+            smtp_credentials = get_smtp_credentials(
+                workspace_id=0, db_session=db_session
+            )  # Temporary workspace_id
+
+            reset_url = f"{WEB_DOMAIN}/auth/reset-password?token={token}"
+            subject, body = generate_password_reset_email(user.email, reset_url)
+            send_reset_password_email(user.email, subject, body, smtp_credentials)
 
     async def on_after_request_verify(
-        self, user: User, token: str, request: Optional[Request] = None
+        self,
+        user: User,
+        token: str,
+        request: Optional[Request] = None,
     ) -> None:
-        verify_email_domain(user.email)
+        with Session(get_sqlalchemy_engine()) as db_session:
+            verify_email_domain(user.email)
 
-        logger.notice(
-            f"Verification requested for user {user.id}. Verification token: {token}"
-        )
-        link = f"{WEB_DOMAIN}/auth/verify-email?token={token}"
-        subject, body = generate_user_verification_email(user.full_name, link)
-        send_user_verification_email(user.email, subject, body)
+            logger.notice(
+                f"Verification requested for user {user.id}. Verification token: {token}"
+            )
+
+            smtp_credentials = get_smtp_credentials(
+                workspace_id=0, db_session=db_session
+            )  # Temporary workspace_id
+
+            link = f"{WEB_DOMAIN}/auth/verify-email?token={token}"
+            subject, body = generate_user_verification_email(user.full_name, link)
+            send_user_verification_email(user.email, subject, body, smtp_credentials)
 
     async def authenticate(
         self, credentials: OAuth2PasswordRequestForm
@@ -466,10 +489,13 @@ async def current_workspace_admin_user(
         )
 
         if workspace is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="User does not have admin rights for this workspace",
-            )
+            if user.role != UserRole.ADMIN:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User does not have admin rights for this workspace",
+                )
+            user.role = UserRole.ADMIN
+            return user
         user.role = UserRole.ADMIN
         return user
 

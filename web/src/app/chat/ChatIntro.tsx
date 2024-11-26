@@ -31,7 +31,7 @@ export function ChatIntro({
               {liveAssistant?.name || "Arnold AI"}
             </h1>
             <div className="flex items-center gap-2 text-subtle">
-              By {liveAssistant?.owner?.email || "Arnold AI"}
+              By: {liveAssistant?.owner?.email || "Arnold AI"}
             </div>
             <p className="text-center text-dark-900 w-full md:w-3/4 line-clamp">
               {liveAssistant?.description || ""}

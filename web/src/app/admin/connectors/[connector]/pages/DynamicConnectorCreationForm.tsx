@@ -6,6 +6,7 @@ import { FileUpload } from "@/components/admin/connectors/FileUpload";
 import { ConnectionConfiguration } from "@/lib/connectors/connectors";
 import NumberInput from "./ConnectorInput/NumberInput";
 import {
+  BooleanFormField,
   SelectorFormField,
   TextFormField,
 } from "@/components/admin/connectors/Field";
@@ -79,11 +80,17 @@ const DynamicConnectionForm: FC<DynamicConnectionFormProps> = ({
                   name={field.name}
                 />
               ) : field.type === "checkbox" ? (
-                <AdminBooleanFormField
-                  checked={values[field.name]}
-                  subtext={field.description}
+                // <AdminBooleanFormField
+                //   checked={values[field.name]}
+                //   subtext={field.description}
+                //   name={field.name}
+                //   label={field.label}
+                // />
+                <BooleanFormField
                   name={field.name}
                   label={field.label}
+                  subtext={field.description}
+                  alignTop
                 />
               ) : (
                 <TextFormField

@@ -4,7 +4,7 @@ import { ConfigurableSources } from "@/lib/types";
 export default async function Page({
   params,
 }: {
-  params: { connector: string, teamspaceId?: string };
+  params: { connector: string; teamspaceId?: string };
 }) {
   return (
     <ConnectorWrapper

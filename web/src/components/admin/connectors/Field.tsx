@@ -90,7 +90,7 @@ export function LabelWithTooltip({
 }
 
 export function SubLabel({ children }: { children: string | JSX.Element }) {
-  return <p className="text-sm text-muted-foreground">{children}</p>;
+  return <p className="text-sm text-muted-foreground pb-1.5">{children}</p>;
 }
 
 export function ManualErrorMessage({ children }: { children: string }) {
@@ -143,6 +143,7 @@ export function TextFormField({
   width,
   maxHeight,
   small,
+  noPadding,
 }: {
   small?: boolean;
   value?: string;
@@ -173,6 +174,7 @@ export function TextFormField({
   explanationText?: string;
   explanationLink?: string;
   width?: string;
+  noPadding?: boolean;
 }) {
   let heightString = defaultHeight || "";
   if (isTextArea && !heightString) {
@@ -193,7 +195,7 @@ export function TextFormField({
 
   return (
     <div
-      className={`grid pb-4 ${fullWidth ? "w-full" : ""} ${width ? width : ""}`}
+      className={`grid ${noPadding ? "" : "pb-4"} ${fullWidth ? "w-full" : ""} ${width ? width : ""}`}
     >
       {(label || subtext) && (
         <div className="grid leading-none">
@@ -542,7 +544,6 @@ export function TextArrayField<T extends Yup.AnyObject>({
                 arrayHelpers.push("");
               }}
               type="button"
-              className="mt-3 "
             >
               <Plus size={16} /> Add New
             </Button>
@@ -613,7 +614,9 @@ export function SelectorFormField({
         {label && (
           <ShadcnLabel className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed">
             {label}{" "}
-            {optional && <span className="ml-1 text-muted-foreground">(optional)</span>}
+            {optional && (
+              <span className="ml-1 text-muted-foreground">(optional)</span>
+            )}
           </ShadcnLabel>
         )}
         {subtext && <SubLabel>{subtext}</SubLabel>}

@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from operator import and_
+from typing import List
 from typing import Optional
 from uuid import UUID
 
@@ -13,14 +14,17 @@ from sqlalchemy.orm import Session
 from ee.enmedd.server.teamspace.models import TeamspaceCreate
 from ee.enmedd.server.teamspace.models import TeamspaceUpdate
 from ee.enmedd.server.teamspace.models import TeamspaceUserRole
+from ee.enmedd.server.teamspace.models import UserWithRole
 from enmedd.auth.schemas import UserRole
 from enmedd.db.connector_credential_pair import get_connector_credential_pair_from_id
 from enmedd.db.enums import ConnectorCredentialPairStatus
+from enmedd.db.models import Assistant__DocumentSet
 from enmedd.db.models import Assistant__Teamspace
 from enmedd.db.models import ConnectorCredentialPair
 from enmedd.db.models import Credential__Teamspace
 from enmedd.db.models import Document
 from enmedd.db.models import DocumentByConnectorCredentialPair
+from enmedd.db.models import DocumentSet__ConnectorCredentialPair
 from enmedd.db.models import DocumentSet__Teamspace
 from enmedd.db.models import LLMProvider__Teamspace
 from enmedd.db.models import Teamspace
@@ -231,6 +235,31 @@ def _check_teamspace_is_modifiable(teamspace: Teamspace) -> None:
         )
 
 
+def _add_user__teamspace_relationships_with_set_role__no_commit(
+    db_session: Session,
+    teamspace_id: int,
+    users: List[UserWithRole],
+    creator_id: Optional[UUID] = None,
+) -> list[User__Teamspace]:
+    """NOTE: does not commit the transaction."""
+
+    # if creator_id not in user_ids:
+    #     user_ids.append(creator_id)
+
+    relationships = [
+        User__Teamspace(
+            user_id=user.user_id,
+            teamspace_id=teamspace_id,
+            # TODO: replace this with the CREATOR role but with the same
+            # privilege as the ADMIN.
+            role=TeamspaceUserRole.ADMIN if user.user_id == creator_id else user.role,
+        )
+        for user in users
+    ]
+    db_session.add_all(relationships)
+    return relationships
+
+
 def _add_user__teamspace_relationships__no_commit(
     db_session: Session,
     teamspace_id: int,
@@ -381,29 +410,29 @@ def insert_teamspace(
     db_session.add(db_teamspace)
     db_session.flush()  # give the group an ID
 
-    _add_user__teamspace_relationships__no_commit(
-        db_session=db_session,
-        teamspace_id=db_teamspace.id,
-        user_ids=teamspace.user_ids,
-        creator_id=creator_id,
+    _add_workspace__teamspace_relationship(
+        db_session, teamspace.workspace_id, db_teamspace.id
     )
-    _add_teamspace__document_set_relationships__no_commit(
+    _add_user__teamspace_relationships_with_set_role__no_commit(
         db_session=db_session,
         teamspace_id=db_teamspace.id,
-        document_set_ids=teamspace.document_set_ids,
+        users=teamspace.users,
+        creator_id=creator_id,
     )
     _add_teamspace__assistant_relationships__no_commit(
         db_session=db_session,
         teamspace_id=db_teamspace.id,
         assistant_ids=teamspace.assistant_ids,
     )
+    _add_teamspace__document_set_relationships__no_commit(
+        db_session=db_session,
+        teamspace_id=db_teamspace.id,
+        document_set_ids=teamspace.document_set_ids,
+    )
     _add_teamspace__cc_pair_relationships__no_commit(
         db_session=db_session,
         teamspace_id=db_teamspace.id,
         cc_pair_ids=teamspace.cc_pair_ids,
-    )
-    _add_workspace__teamspace_relationship(
-        db_session, teamspace.workspace_id, db_teamspace.id
     )
 
     db_session.commit()
@@ -434,6 +463,52 @@ def _mark_teamspace__assistant_relationships_outdated__no_commit(
     )
     for teamspace__assistant_relationship in teamspace__assistant_relationships:
         teamspace__assistant_relationship.is_current = False
+
+
+def check_assistant_document_set(
+    db_session: Session, assistant_id: int, document_set_ids: list[int]
+) -> list[int]:
+    """
+    Ensures relationships between the assistant and document sets exist.
+    Combines the assistant's existing document set IDs with the provided ones without duplicates.
+
+    """
+    current_document_set_ids = set(
+        db_session.scalars(
+            select(Assistant__DocumentSet.document_set_id).where(
+                Assistant__DocumentSet.assistant_id == assistant_id
+            )
+        ).all()
+    )
+
+    combined_document_set_ids = current_document_set_ids | set(document_set_ids)
+
+    return list(combined_document_set_ids)
+
+
+def check_document_set_connector_credential_pair(
+    db_session: Session, document_set_ids: list[int], cc_pair_ids: list[int]
+) -> list[int]:
+    """
+    Ensures relationships between document sets and connector credential pairs exist.
+    If missing relationships are found, they are added automatically.
+
+    """
+    current_cc_pair_ids = set(
+        db_session.scalars(
+            select(
+                DocumentSet__ConnectorCredentialPair.connector_credential_pair_id
+            ).where(
+                DocumentSet__ConnectorCredentialPair.document_set_id.in_(
+                    document_set_ids
+                )
+            )
+        ).all()
+    )
+
+    combined_cc_pair_ids = current_cc_pair_ids | set(cc_pair_ids)
+
+    return list(combined_cc_pair_ids)
 
 
 def _sync_relationships(

@@ -26,6 +26,7 @@ export function HelperFab() {
         <CustomModal
           trigger={null}
           title="Shortcut Keys"
+          description="Quickly access common actions with these keyboard shortcuts."
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         >

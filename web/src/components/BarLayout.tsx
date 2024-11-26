@@ -11,10 +11,12 @@ interface BarLayoutProps {
   BarComponent?: React.ComponentType<{
     openSidebar: boolean;
     toggleSideBar: () => void;
+    teamspaceId?: string | string;
   }>;
+  teamspaceId?: string | string;
 }
 
-export function BarLayout({ user, BarComponent }: BarLayoutProps) {
+export function BarLayout({ user, BarComponent, teamspaceId }: BarLayoutProps) {
   const [openSidebar, setOpenSidebar] = useState(false);
   const pathname = usePathname();
 
@@ -38,6 +40,7 @@ export function BarLayout({ user, BarComponent }: BarLayoutProps) {
           <BarComponent
             openSidebar={openSidebar}
             toggleSideBar={toggleLeftSideBar}
+            teamspaceId={teamspaceId}
           />
         )}
       </DynamicSidebar>

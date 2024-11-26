@@ -106,9 +106,9 @@ def check_sync_external_teamspace_permissions_task() -> None:
 def check_ttl_management_task() -> None:
     """Runs periodically to check if any ttl tasks should be run and adds them
     to the queue"""
-    settings = load_settings()
-    retention_limit_days = settings.maximum_chat_retention_days
     with Session(get_sqlalchemy_engine()) as db_session:
+        settings = load_settings(db_session, workspace_id=0)  # temporary set to 0
+        retention_limit_days = settings.maximum_chat_retention_days
         if should_perform_chat_ttl_check(retention_limit_days, db_session):
             perform_ttl_management_task.apply_async(
                 kwargs=dict(retention_limit_days=retention_limit_days),

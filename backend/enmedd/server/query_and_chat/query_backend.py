@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -265,6 +267,7 @@ def get_answer_with_quote(
     query_request: DirectQARequest,
     user: User = Depends(current_user),
     _: None = Depends(check_token_rate_limits),
+    teamspace_id: Optional[int] = None,
 ) -> StreamingResponse:
     query = query_request.messages[0].message
 
@@ -275,5 +278,6 @@ def get_answer_with_quote(
         user=user,
         max_document_tokens=None,
         max_history_tokens=0,
+        teamspace_id=teamspace_id,
     )
     return StreamingResponse(packets, media_type="application/json")

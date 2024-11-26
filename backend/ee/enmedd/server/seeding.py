@@ -10,14 +10,14 @@ from sqlalchemy.orm import Session
 from ee.enmedd.db.standard_answer import (
     create_initial_default_standard_answer_category,
 )
-from ee.enmedd.server.enterprise_settings.models import AnalyticsScriptUpload
-from ee.enmedd.server.enterprise_settings.models import EnterpriseSettings
-from ee.enmedd.server.enterprise_settings.models import NavigationItem
-from ee.enmedd.server.enterprise_settings.store import store_analytics_script
-from ee.enmedd.server.enterprise_settings.store import (
+from ee.enmedd.server.workspace.models import AnalyticsScriptUpload
+from ee.enmedd.server.workspace.models import NavigationItem
+from ee.enmedd.server.workspace.models import Workspaces
+from ee.enmedd.server.workspace.store import store_analytics_script
+from ee.enmedd.server.workspace.store import (
     store_settings as store_ee_settings,
 )
-from ee.enmedd.server.enterprise_settings.store import upload_logo
+from ee.enmedd.server.workspace.store import upload_logo
 from enmedd.db.assistant import upsert_assistant
 from enmedd.db.engine import get_session_context_manager
 from enmedd.db.llm import update_default_provider
@@ -59,7 +59,7 @@ class SeedConfiguration(BaseModel):
     seeded_logo_path: str | None = None
     assistants: list[CreateAssistantRequest] | None = None
     settings: Settings | None = None
-    enterprise_settings: EnterpriseSettings | None = None
+    workspace: Workspaces | None = None
 
     # allows for specifying custom navigation items that have your own custom SVG logos
     nav_item_overrides: list[NavigationItemSeed] | None = None
@@ -166,18 +166,13 @@ def _seed_settings(settings: Settings) -> None:
         logger.error(f"Failed to seed Settings: {str(e)}")
 
 
-def _seed_enterprise_settings(seed_config: SeedConfiguration) -> None:
-    if (
-        seed_config.enterprise_settings is not None
-        or seed_config.nav_item_overrides is not None
-    ):
-        final_enterprise_settings = (
-            deepcopy(seed_config.enterprise_settings)
-            if seed_config.enterprise_settings
-            else EnterpriseSettings()
+def _seed_workspace(seed_config: SeedConfiguration) -> None:
+    if seed_config.workspace is not None or seed_config.nav_item_overrides is not None:
+        final_workspace = (
+            deepcopy(seed_config.workspace) if seed_config.workspace else Workspaces()
         )
 
-        final_nav_items = final_enterprise_settings.custom_nav_items
+        final_nav_items = final_workspace.custom_nav_items
         if seed_config.nav_item_overrides is not None:
             final_nav_items = []
             for item in seed_config.nav_item_overrides:
@@ -192,10 +187,10 @@ def _seed_enterprise_settings(seed_config: SeedConfiguration) -> None:
                     )
                 )
 
-        final_enterprise_settings.custom_nav_items = final_nav_items
+        final_workspace.custom_nav_items = final_nav_items
 
         logger.notice("Seeding enterprise settings")
-        store_ee_settings(final_enterprise_settings)
+        store_ee_settings(final_workspace)
 
 
 def _seed_logo(db_session: Session, logo_path: str | None) -> None:
@@ -244,7 +239,7 @@ def seed_db() -> None:
             _seed_custom_tools(db_session, seed_config.custom_tools)
 
         _seed_logo(db_session, seed_config.seeded_logo_path)
-        _seed_enterprise_settings(seed_config)
+        _seed_workspace(seed_config)
         _seed_analytics_script(seed_config)
 
         logger.notice("Verifying default standard answer category exists.")

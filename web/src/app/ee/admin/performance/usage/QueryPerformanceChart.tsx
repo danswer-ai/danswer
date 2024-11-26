@@ -89,7 +89,7 @@ export function QueryPerformanceChart({
     const chartConfig = {
       queries: {
         label: "Queries",
-        color: colors.brand[500], 
+        color: colors.brand[500],
       },
       uniqueUsers: {
         label: "Unique Users",

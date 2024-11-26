@@ -15,7 +15,6 @@ import {
   UsersIcon,
   ZoomInIcon,
 } from "./icons/icons";
-import { SERVER_SIDE_ONLY__PAID_ENTERPRISE_FEATURES_ENABLED } from "@/lib/constants";
 import { AdminSidebar } from "./admin/connectors/AdminSidebar";
 import {
   Cpu,
@@ -38,6 +37,7 @@ import {
 import { useContext } from "react";
 import { SettingsContext } from "./settings/SettingsProvider";
 import { useParams } from "next/navigation";
+import { useFeatureFlag } from "./feature_flag/FeatureFlagContext";
 
 interface SideBarProps {
   isTeamspace?: boolean;
@@ -46,6 +46,8 @@ interface SideBarProps {
 export const SideBar: React.FC<SideBarProps> = ({ isTeamspace }) => {
   const dynamicSettings = useContext(SettingsContext);
   const { teamspaceId } = useParams();
+  const isMultiTeamspaceEnabled = useFeatureFlag("multi_teamspace");
+  const isQueryHistoryEnabled = useFeatureFlag("query_history");
 
   return (
     <div className="w-full h-full p-4 pb-14 overflow-y-auto bg-background">
@@ -211,7 +213,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isTeamspace }) => {
                   : `/admin/users`,
               },
 
-              ...(dynamicSettings?.featureFlags.multi_teamspace && !isTeamspace
+              ...(isMultiTeamspaceEnabled && !isTeamspace
                 ? [
                     {
                       name: (
@@ -262,7 +264,7 @@ export const SideBar: React.FC<SideBarProps> = ({ isTeamspace }) => {
                   ? `/t/${teamspaceId}/admin/performance/usage`
                   : `/admin/performance/usage`,
               },
-              ...(dynamicSettings?.featureFlags.query_history
+              ...(isQueryHistoryEnabled
                 ? [
                     {
                       name: (

@@ -67,7 +67,9 @@ export function PageTab({
   };
 
   return (
-    <div className="mb-1 px-4 transition-all ease-in-out">
+    <div
+      className={`mb-1 transition-all ease-in-out ${!isSearch ? "px-4" : ""}`}
+    >
       {isSearch ? (
         <div className={`transition duration-300 ease-in-out rounded-xs`}>
           {Object.entries(groupedChatSessions).map(

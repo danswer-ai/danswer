@@ -27,6 +27,7 @@ import {
 } from "@/lib/connectors/credentials";
 import { useToast } from "@/hooks/use-toast";
 import { CustomModal } from "../CustomModal";
+import { Button } from "../ui/button";
 
 export default function CredentialSection({
   ccPair,
@@ -37,7 +38,7 @@ export default function CredentialSection({
   sourceType: ValidSources;
   refresh: () => void;
 }) {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const makeShowCreateCredential = () => {
     setShowModifyCredential(false);
     setShowCreateCredential(true);
@@ -64,7 +65,8 @@ export default function CredentialSection({
 
     toast({
       title: "Swap Failed",
-      description: "There was an issue swapping the credential. Please try again.",
+      description:
+        "There was an issue swapping the credential. Please try again.",
       variant: "destructive",
     });
   };
@@ -133,22 +135,22 @@ export default function CredentialSection({
         </Text>
       </div>
       <div className="flex text-sm justify-start mr-auto gap-x-2">
-        <button
+        <Button
           onClick={() => {
             setShowModifyCredential(true);
           }}
-          className="flex items-center gap-x-2 cursor-pointer bg-background-100 border-border border-2 hover:bg-border p-1.5 rounded-lg text-text-700"
+          variant="outline"
         >
           <FaSwatchbook />
           Update Credentials
-        </button>
+        </Button>
       </div>
       {showModifyCredential && (
         <CustomModal
-        onClose={closeModifyCredential}
+          onClose={closeModifyCredential}
           title="Update Credentials"
-      trigger={null}
-      open={showModifyCredential}
+          trigger={null}
+          open={showModifyCredential}
         >
           <ModifyCredential
             showCreate={() => {
@@ -172,10 +174,10 @@ export default function CredentialSection({
 
       {editingCredential && (
         <CustomModal
-        onClose={closeEditingCredential}
+          onClose={closeEditingCredential}
           title="Edit Credential"
-      trigger={null}
-      open={!!editingCredential}
+          trigger={null}
+          open={!!editingCredential}
         >
           <EditCredential
             onUpdate={onUpdateCredential}
@@ -187,10 +189,10 @@ export default function CredentialSection({
 
       {showCreateCredential && (
         <CustomModal
-        onClose={closeCreateCredential}
+          onClose={closeCreateCredential}
           title={`Create ${getSourceDisplayName(sourceType)} Credential`}
-      trigger={null}
-      open={showCreateCredential}
+          trigger={null}
+          open={showCreateCredential}
         >
           <CreateCredential
             sourceType={sourceType}

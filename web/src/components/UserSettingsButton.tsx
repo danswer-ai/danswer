@@ -17,6 +17,7 @@ import { SettingsContext } from "./settings/SettingsProvider";
 import { checkUserIsNoAuthUser, logout } from "@/lib/user";
 import Link from "next/link";
 import { LOGOUT_DISABLED } from "@/lib/constants";
+import { FeatureFlagWrapper } from "./feature_flag/FeatureFlagWrapper";
 
 export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
   const [userInfoVisible, setUserInfoVisible] = useState(false);
@@ -67,14 +68,14 @@ export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          {settings?.featureFlags.profile_page && (
+          <FeatureFlagWrapper flag="profile_page">
             <DropdownMenuItem asChild>
               <Link href="/profile" className="flex gap-2 items-center">
                 <User size={16} strokeWidth={1.5} />
                 <span>Profile Settings</span>
               </Link>
             </DropdownMenuItem>
-          )}
+          </FeatureFlagWrapper>
           <DropdownMenuItem asChild>
             <Link
               // redirect to default page
@@ -112,7 +113,11 @@ export function UserSettingsButton({ defaultPage }: { defaultPage?: string }) {
             </DropdownMenuItem>
           )}
           {showLogout && (
-            <DropdownMenuItem asChild onClick={handleLogout}>
+            <DropdownMenuItem
+              asChild
+              onClick={handleLogout}
+              className="focus:bg-destructive-500"
+            >
               <div className="flex gap-2 items-center">
                 <LogOut size={16} strokeWidth={1.5} />
                 <span>Log out</span>

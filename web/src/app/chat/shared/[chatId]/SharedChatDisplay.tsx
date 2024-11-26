@@ -16,8 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Divider } from "@/components/Divider";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { ThreeDotsLoader } from "@/components/Loading";
-import { User } from "@/lib/types";
-import { useUser } from "@/components/user/UserProvider";
 
 function BackToEnmeddButton() {
   const router = useRouter();
@@ -34,12 +32,13 @@ function BackToEnmeddButton() {
 export function SharedChatDisplay({
   chatSession,
   availableAssistants,
+  isShared,
 }: {
   chatSession: BackendChatSession | null;
   availableAssistants: Assistant[] | null;
+  isShared?: boolean;
 }) {
   const [isReady, setIsReady] = useState(false);
-  const { user, isAdmin, isLoadingUser } = useUser();
   useEffect(() => {
     Prism.highlightAll();
     setIsReady(true);
@@ -86,9 +85,9 @@ export function SharedChatDisplay({
               if (message.type === "user") {
                 return (
                   <HumanMessage
-                    user={user}
                     key={message.messageId}
                     content={message.message}
+                    isShared={isShared}
                   />
                 );
               } else {

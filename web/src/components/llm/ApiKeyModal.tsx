@@ -8,7 +8,7 @@ import { CustomModal } from "../CustomModal";
 
 export const ApiKeyModal = ({
   hide,
-  isOpen
+  isOpen,
 }: {
   hide: () => void;
   isOpen?: boolean;
@@ -28,8 +28,8 @@ export const ApiKeyModal = ({
     <CustomModal
       title="Set an API Key!"
       onClose={() => hide()}
-          trigger={null}
-          open={isOpen}
+      trigger={null}
+      open={isOpen}
     >
       <>
         <div className="text-sm text-gray-700">

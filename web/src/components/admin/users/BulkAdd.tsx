@@ -29,6 +29,7 @@ interface FormProps {
   onSuccess: () => void;
   onFailure: (res: Response) => void;
   onClose: () => void;
+  teamspaceId?: string | string[];
 }
 
 interface FormValues {
@@ -87,22 +88,30 @@ const AddUserForm = withFormik<FormProps, FormValues>({
   },
   handleSubmit: async (values: FormValues, formikBag) => {
     const emails = values.emails.trim().split(WHITESPACE_SPLIT);
-    await addUsers("/api/manage/admin/users", { arg: emails }).then((res) => {
+    await addUsers(
+      formikBag.props.teamspaceId
+        ? `/api/manage/admin/users?teamspace_id=${formikBag.props.teamspaceId}`
+        : "/api/manage/admin/users",
+      { arg: emails }
+    ).then((res) => {
       if (res.ok) {
         formikBag.props.onSuccess();
       } else {
         formikBag.props.onFailure(res);
       }
     });
+
+    console.log(formikBag.props.teamspaceId);
   },
 })(AddUserFormRenderer);
 
-const BulkAdd = ({ onSuccess, onFailure, onClose }: FormProps) => {
+const BulkAdd = ({ onSuccess, onFailure, onClose, teamspaceId }: FormProps) => {
   return (
     <AddUserForm
       onSuccess={onSuccess}
       onFailure={onFailure}
       onClose={onClose}
+      teamspaceId={teamspaceId}
     />
   );
 };

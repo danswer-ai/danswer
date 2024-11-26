@@ -110,6 +110,7 @@ export default async function Page({
         <SharedChatDisplay
           chatSession={chatSession}
           availableAssistants={availableAssistants}
+          isShared
         />
       </div>
     </ChatProvider>

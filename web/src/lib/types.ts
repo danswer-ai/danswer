@@ -51,7 +51,7 @@ export interface User {
   current_token_expiry_length?: number;
   oidc_expiry?: Date;
   groups?: MinimalTeamspaceSnapshot[];
-  profile?: string
+  profile?: string;
 }
 
 export interface MinimalUserSnapshot {
@@ -170,7 +170,7 @@ export interface DocumentSet {
   is_up_to_date: boolean;
   is_public: boolean;
   users: string[];
-  groups: number[];
+  groups: { id: number; name: string; workspace: Workspace[] }[];
 }
 
 export interface Tag {
@@ -224,12 +224,7 @@ export interface MinimalTeamspaceSnapshot {
   id: number;
   name: string;
   logo?: string;
-}
-
-export interface MinimalTeamspaceSnapshot {
-  id: number;
-  name: string;
-  logo?: string;
+  users: User[];
 }
 
 const validSources = [

@@ -55,7 +55,7 @@ const AssistantContent = ({
           {filteredAssistants.map((assistant) => (
             <div
               key={assistant.id}
-              className="border rounded-md flex items-start gap-4"
+              className="border rounded-md flex items-start gap-4 cursor-pointer"
               onClick={() => onSelect && onSelect(assistant)}
             >
               <div className="rounded-l-md h-full w-auto object-contain flex items-center justify-center p-4 border-r">
@@ -143,6 +143,15 @@ export const TeamspaceAssistant = ({
   };
 
   const handleSaveChanges = async () => {
+    if (tempCurrentAssistants.length === 0) {
+      toast({
+        title: "Update Failed",
+        description: "You need to select at least one assistant.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const response = await fetch(
         `/api/manage/admin/teamspace/${teamspace.id}`,
@@ -203,7 +212,7 @@ export const TeamspaceAssistant = ({
     <CustomModal
       trigger={
         <div
-          className={`rounded-md bg-muted w-full p-4 min-h-36 flex flex-col justify-between ${teamspace.is_up_to_date && !teamspace.is_up_for_deletion && "cursor-pointer"}`}
+          className={`rounded-md bg-background-subtle w-full p-4 min-h-36 flex flex-col justify-between ${teamspace.is_up_to_date && !teamspace.is_up_for_deletion && "cursor-pointer"}`}
           onClick={() =>
             setIsAssistantModalOpen(
               teamspace.is_up_to_date && !teamspace.is_up_for_deletion
@@ -229,11 +238,8 @@ export const TeamspaceAssistant = ({
                   variant="white"
                   key={assistant.id}
                   trigger={
-                    <div
-                      key={assistant.id}
-                      className="bg-brand-500 w-10 h-10 rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase border-[1px] border-white"
-                    >
-                      {assistant.name!.charAt(0)}
+                    <div className="w-10 h-10 bg-background rounded-full flex items-center justify-center font-semibold text-inverted text-lg uppercase border overflow-hidden">
+                      <AssistantIcon assistant={assistant} size="small" />
                     </div>
                   }
                 >

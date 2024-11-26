@@ -53,7 +53,7 @@ function SummaryRow({
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
 
   return (
-    <TableRow onClick={onToggle}>
+    <TableRow onClick={onToggle} className="bg-neutral-50">
       <TableCell className="gap-y-2">
         <div className="flex items-center text-xl font-semibold truncate ellipsis gap-x-2">
           <div className="cursor-pointer">
@@ -199,7 +199,7 @@ function ConnectorRow({
       <TableCell className="!w-[200px] xl:!w-[350px] !max-w-[480px] flex truncate">
         <CustomTooltip
           trigger={
-            <p className=" truncate ellipsis w-full">
+            <p className=" truncate ellipsis w-auto">
               {ccPairsIndexingStatus.name}
             </p>
           }
@@ -215,7 +215,7 @@ function ConnectorRow({
       {isPaidEnterpriseFeaturesEnabled && (
         <TableCell>
           {ccPairsIndexingStatus.access_type === "public" ? (
-            <Badge>
+            <Badge variant="secondary">
               <Unlock size={14} /> Public
             </Badge>
           ) : (
@@ -618,12 +618,14 @@ export function CCPairIndexingStatusTable({
                   if (sourceMatches || matchingConnectors.length > 0) {
                     return (
                       <React.Fragment key={ind}>
-                        <SummaryRow
-                          source={source}
-                          summary={groupSummaries[source]}
-                          isOpen={connectorsToggled[source] || false}
-                          onToggle={() => toggleSource(source)}
-                        />
+                        {matchingConnectors.length > 0 && (
+                          <SummaryRow
+                            source={source}
+                            summary={groupSummaries[source]}
+                            isOpen={connectorsToggled[source] || false}
+                            onToggle={() => toggleSource(source)}
+                          />
+                        )}
 
                         {connectorsToggled[source] && (
                           <>

@@ -245,157 +245,148 @@ const RerankingDetailsForm = forwardRef<
                   })}
                 </div>
 
-             <CustomModal
+                <CustomModal
                   onClose={() => setShowGpuWarningModalModel(null)}
-                  open={!!showGpuWarningModalModel} 
-                  trigger={
-                    null
-                  }
-                    title="GPU Not Enabled"
-                  >
-                    <>
-                      <p className="font-semibold text-error">Warning:</p>
-                      <p>
-                        Local reranking models require significant computational
-                        resources and may perform slowly without GPU
-                        acceleration. Consider switching to GPU-enabled
-                        infrastructure or using a cloud-based alternative for
-                        better performance.
-                      </p>
-                      <div className="flex justify-end mt-4">
-                        <Button
-                          onClick={() => setShowGpuWarningModalModel(null)}
-                        >
-                          Understood
-                        </Button>
-                      </div>
-                    </>
-                  </CustomModal> 
-
-                  <CustomModal
-                    onClose={() => {
-                      resetForm();
-                      setShowLiteLLMConfigurationModal(false);
-                    }}
-                    title="API Key Configuration"
-                    trigger={null}
-                    open={showLiteLLMConfigurationModal}
-                  >
-                    <div className="flex flex-col w-full px-4 gap-y-4">
-                      <TextFormField
-                        subtext="Set the URL at which your LiteLLM Proxy is hosted"
-                        placeholder={values.rerank_api_url || undefined}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const value = e.target.value;
-                          setRerankingDetails({
-                            ...values,
-                            rerank_api_url: value,
-                          });
-                          setFieldValue("rerank_api_url", value);
-                        }}
-                        type="text"
-                        label="LiteLLM Proxy  URL"
-                        name="rerank_api_url"
-                      />
-
-                      <TextFormField
-                        subtext="Set the key to access your LiteLLM Proxy"
-                        placeholder={
-                          values.rerank_api_key
-                            ? "*".repeat(values.rerank_api_key.length)
-                            : undefined
-                        }
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const value = e.target.value;
-                          setRerankingDetails({
-                            ...values,
-                            rerank_api_key: value,
-                          });
-                          setFieldValue("rerank_api_key", value);
-                        }}
-                        type="password"
-                        label="LiteLLM Proxy Key"
-                        name="rerank_api_key"
-                        optional
-                      />
-
-                      <TextFormField
-                        subtext="Set the model name to use for LiteLLM Proxy"
-                        placeholder={
-                          values.rerank_model_name
-                            ? "*".repeat(values.rerank_model_name.length)
-                            : undefined
-                        }
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const value = e.target.value;
-                          setRerankingDetails({
-                            ...values,
-                            rerank_model_name: value,
-                          });
-                          setFieldValue("rerank_model_name", value);
-                        }}
-                        label="LiteLLM Model Name"
-                        name="rerank_model_name"
-                        optional
-                      />
-
-                      <div className="flex justify-end w-full mt-4">
-                        <Button
-                          onClick={() => {
-                            setShowLiteLLMConfigurationModal(false);
-                          }}
-                        >
-                          Update
-                        </Button>
-                      </div>
+                  open={!!showGpuWarningModalModel}
+                  trigger={null}
+                  title="GPU Not Enabled"
+                >
+                  <>
+                    <p className="font-semibold text-error">Warning:</p>
+                    <p>
+                      Local reranking models require significant computational
+                      resources and may perform slowly without GPU acceleration.
+                      Consider switching to GPU-enabled infrastructure or using
+                      a cloud-based alternative for better performance.
+                    </p>
+                    <div className="flex justify-end mt-4">
+                      <Button onClick={() => setShowGpuWarningModalModel(null)}>
+                        Understood
+                      </Button>
                     </div>
-                  </CustomModal>
+                  </>
+                </CustomModal>
 
-                  <CustomModal
-                    onClose={() => {
-                      Object.keys(originalRerankingDetails).forEach((key) => {
-                        setFieldValue(
-                          key,
-                          originalRerankingDetails[
-                            key as keyof RerankingDetails
-                          ]
-                        );
-                      });
+                <CustomModal
+                  onClose={() => {
+                    resetForm();
+                    setShowLiteLLMConfigurationModal(false);
+                  }}
+                  title="API Key Configuration"
+                  trigger={null}
+                  open={showLiteLLMConfigurationModal}
+                >
+                  <div className="flex flex-col w-full px-4 gap-y-4">
+                    <TextFormField
+                      subtext="Set the URL at which your LiteLLM Proxy is hosted"
+                      placeholder={values.rerank_api_url || undefined}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = e.target.value;
+                        setRerankingDetails({
+                          ...values,
+                          rerank_api_url: value,
+                        });
+                        setFieldValue("rerank_api_url", value);
+                      }}
+                      type="text"
+                      label="LiteLLM Proxy  URL"
+                      name="rerank_api_url"
+                    />
 
-                      setIsApiKeyModalOpen(false);
-                    }}
-                    title="API Key Configuration"
-                    trigger={null}
-                    open={isApiKeyModalOpen}
-                  >
-                    <div className="w-full px-4">
-                      <TextFormField
-                        placeholder={
-                          values.rerank_api_key
-                            ? "*".repeat(values.rerank_api_key.length)
-                            : undefined
-                        }
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const value = e.target.value;
-                          setRerankingDetails({
-                            ...values,
-                            rerank_api_key: value,
-                          });
-                          setFieldValue("api_key", value);
+                    <TextFormField
+                      subtext="Set the key to access your LiteLLM Proxy"
+                      placeholder={
+                        values.rerank_api_key
+                          ? "*".repeat(values.rerank_api_key.length)
+                          : undefined
+                      }
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = e.target.value;
+                        setRerankingDetails({
+                          ...values,
+                          rerank_api_key: value,
+                        });
+                        setFieldValue("rerank_api_key", value);
+                      }}
+                      type="password"
+                      label="LiteLLM Proxy Key"
+                      name="rerank_api_key"
+                      optional
+                    />
+
+                    <TextFormField
+                      subtext="Set the model name to use for LiteLLM Proxy"
+                      placeholder={
+                        values.rerank_model_name
+                          ? "*".repeat(values.rerank_model_name.length)
+                          : undefined
+                      }
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = e.target.value;
+                        setRerankingDetails({
+                          ...values,
+                          rerank_model_name: value,
+                        });
+                        setFieldValue("rerank_model_name", value);
+                      }}
+                      label="LiteLLM Model Name"
+                      name="rerank_model_name"
+                      optional
+                    />
+
+                    <div className="flex justify-end w-full mt-4">
+                      <Button
+                        onClick={() => {
+                          setShowLiteLLMConfigurationModal(false);
                         }}
-                        type="password"
-                        label="Cohere API Key"
-                        name="rerank_api_key"
-                      />
-                      <div className="flex justify-end w-full mt-4">
-                        <Button
-                          onClick={() => setIsApiKeyModalOpen(false)}
-                        >
-                          Update
-                        </Button>
-                      </div>
+                      >
+                        Update
+                      </Button>
                     </div>
-                  </CustomModal>
+                  </div>
+                </CustomModal>
+
+                <CustomModal
+                  onClose={() => {
+                    Object.keys(originalRerankingDetails).forEach((key) => {
+                      setFieldValue(
+                        key,
+                        originalRerankingDetails[key as keyof RerankingDetails]
+                      );
+                    });
+
+                    setIsApiKeyModalOpen(false);
+                  }}
+                  title="API Key Configuration"
+                  trigger={null}
+                  open={isApiKeyModalOpen}
+                >
+                  <div className="w-full px-4">
+                    <TextFormField
+                      placeholder={
+                        values.rerank_api_key
+                          ? "*".repeat(values.rerank_api_key.length)
+                          : undefined
+                      }
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = e.target.value;
+                        setRerankingDetails({
+                          ...values,
+                          rerank_api_key: value,
+                        });
+                        setFieldValue("api_key", value);
+                      }}
+                      type="password"
+                      label="Cohere API Key"
+                      name="rerank_api_key"
+                    />
+                    <div className="flex justify-end w-full mt-4">
+                      <Button onClick={() => setIsApiKeyModalOpen(false)}>
+                        Update
+                      </Button>
+                    </div>
+                  </div>
+                </CustomModal>
               </Form>
             </div>
           );

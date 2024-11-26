@@ -15,7 +15,7 @@ export function SelectModelModal({
 }) {
   return (
     <CustomModal
-    onClose={onCancel}
+      onClose={onCancel}
       title={`Select ${model.model_name}`}
       trigger={null}
       open={!!model}

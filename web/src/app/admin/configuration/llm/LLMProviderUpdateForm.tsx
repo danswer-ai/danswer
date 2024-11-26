@@ -1,6 +1,5 @@
 import { LoadingAnimation } from "@/components/Loading";
 import { AdvancedOptionsToggle } from "@/components/AdvancedOptionsToggle";
-import { Divider, Text } from "@tremor/react";
 import { Form, Formik } from "formik";
 import { FiTrash } from "react-icons/fi";
 import { LLM_PROVIDERS_ADMIN_URL } from "./constants";
@@ -18,6 +17,7 @@ import isEqual from "lodash/isEqual";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Divider } from "@/components/Divider";
 
 export function LLMProviderUpdateForm({
   llmProviderDescriptor,
@@ -104,7 +104,7 @@ export function LLMProviderUpdateForm({
       : {}),
     deployment_name: llmProviderDescriptor.deployment_name_required
       ? Yup.string().required("Deployment Name is required")
-      : Yup.string(),
+      : Yup.string().nullable(),
     default_model_name: Yup.string().required("Model name is required"),
     fast_default_model_name: Yup.string().nullable(),
     // EE Only
@@ -376,9 +376,9 @@ export function LLMProviderUpdateForm({
           )}
           <div>
             {/* NOTE: this is above the test button to make sure it's visible */}
-            {testError && <Text className="text-error mt-2">{testError}</Text>}
+            {testError && <p className="text-error mt-2">{testError}</p>}
 
-            <div className="flex w-full mt-4 justify-end gap-2">
+            <div className="flex w-full justify-end mt-4 gap-2">
               {existingLlmProvider && (
                 <Button
                   type="button"

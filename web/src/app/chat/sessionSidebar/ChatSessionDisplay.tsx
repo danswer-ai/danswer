@@ -40,6 +40,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FeatureFlagWrapper } from "@/components/feature_flag/FeatureFlagWrapper";
 
 export function ChatSessionDisplay({
   chatSession,
@@ -215,17 +216,17 @@ export function ChatSessionDisplay({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                               <DropdownMenuGroup>
-                                {/* {combinedSettings?.featureFlags.share_chat && ( */}
                                 <DropdownMenuItem asChild>
-                                  <ShareChatSessionModal
-                                    chatSessionId={chatSession.id}
-                                    existingSharedStatus={
-                                      chatSession.shared_status
-                                    }
-                                    onPopover
-                                  />
+                                  <FeatureFlagWrapper flag="share_chat">
+                                    <ShareChatSessionModal
+                                      chatSessionId={chatSession.id}
+                                      existingSharedStatus={
+                                        chatSession.shared_status
+                                      }
+                                      onPopover
+                                    />
+                                  </FeatureFlagWrapper>
                                 </DropdownMenuItem>
-                                {/* )} */}
 
                                 <DropdownMenuItem
                                   asChild

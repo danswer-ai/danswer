@@ -112,7 +112,7 @@ export const BulkAddTeamspace = ({
   }, [selectedEmails, filteredUsers]);
 
   return (
-    <div>
+    <div className="pb-8">
       <div className="flex items-center mt-4 gap-x-2 w-full md:w-1/2 ml-auto mb-6">
         <Input
           type="text"

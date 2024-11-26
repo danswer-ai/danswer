@@ -2,10 +2,18 @@ import { ModalWrapper } from "@/components/modals/ModalWrapper";
 import { CustomModal } from "../CustomModal";
 import { Button } from "../ui/button";
 
-export const NoAssistantModal = ({ isAdmin, open, onClose }: { isAdmin: boolean; open?:boolean; onClose?: ()=>void; }) => {
+export const NoAssistantModal = ({
+  isAdmin,
+  open,
+  onClose,
+}: {
+  isAdmin: boolean;
+  open?: boolean;
+  onClose?: () => void;
+}) => {
   return (
-    <CustomModal 
-      title='No Assistant Available'
+    <CustomModal
+      title="No Assistant Available"
       trigger={null}
       open={open}
       onClose={onClose}

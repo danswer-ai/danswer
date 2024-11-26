@@ -60,7 +60,7 @@ export function ImageUpload({
 
           {tmpImageUrl && (
             <>
-              <div className="mt-4 mb-8">
+              <div className="mt-4">
                 <SubLabel>Uploaded Image:</SubLabel>
                 <Image
                   src={tmpImageUrl}

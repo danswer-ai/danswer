@@ -8,8 +8,15 @@ import { AssistantEditor } from "@/app/admin/assistants/AssistantEditor";
 import { SuccessfulAssistantUpdateRedirectType } from "@/app/admin/assistants/enums";
 import { DeleteAssistantButton } from "@/app/admin/assistants/[id]/DeleteAssistantButton";
 
-export default async function Page({ params }: { params: { id: string, teamspaceId: string } }) {
-  const [values, error] = await fetchAssistantEditorInfoSS(params.id, params.teamspaceId);
+export default async function Page({
+  params,
+}: {
+  params: { id: string; teamspaceId: string };
+}) {
+  const [values, error] = await fetchAssistantEditorInfoSS(
+    params.id,
+    params.teamspaceId
+  );
 
   let body;
   if (!values) {

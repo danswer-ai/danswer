@@ -13,7 +13,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { InfoIcon, SearchIcon } from "@/components/icons/icons";
 import Link from "next/link";
 import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { FiInfo } from "react-icons/fi";
 import {
   Table,
@@ -30,8 +30,13 @@ const NUM_IN_PAGE = 8;
 // This is the number of pages to fetch at a time
 const BATCH_SIZE = 8;
 
-export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
-  const { teamspaceId } = useParams();
+export function IndexingAttemptsTable({
+  ccPair,
+  teamspaceId,
+}: {
+  ccPair: CCPairFullInfo;
+  teamspaceId?: string | string[];
+}) {
   const [indexAttemptTracePopupId, setIndexAttemptTracePopupId] = useState<
     number | null
   >(null);
@@ -303,7 +308,11 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
                         {indexAttempt.error_count > 0 && (
                           <Link
                             className="my-auto cursor-pointer"
-                            href={`/admin/indexing/${indexAttempt.id}`}
+                            href={
+                              teamspaceId
+                                ? `/t/${teamspaceId}/admin/indexing/${indexAttempt.id}`
+                                : "/admin/indexing/${indexAttempt.id}"
+                            }
                           >
                             <Text className="flex flex-wrap whitespace-normal text-link">
                               <SearchIcon />

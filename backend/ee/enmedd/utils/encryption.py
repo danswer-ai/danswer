@@ -1,6 +1,7 @@
 from functools import lru_cache
 from os import urandom
 
+from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers import algorithms
@@ -8,10 +9,12 @@ from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import modes
 
 from enmedd.configs.app_configs import ENCRYPTION_KEY_SECRET
+from enmedd.configs.app_configs import SECRET_KEY
 from enmedd.utils.logger import setup_logger
 from enmedd.utils.variable_functionality import fetch_versioned_implementation
 
 logger = setup_logger()
+cipher = Fernet(SECRET_KEY)
 
 
 @lru_cache(maxsize=1)
@@ -83,3 +86,13 @@ def test_encryption() -> None:
     decrypted_string = decrypt_bytes_to_string(encrypted_bytes)
     if test_string != decrypted_string:
         raise RuntimeError("Encryption decryption test failed")
+
+
+def encrypt_password(plain_password: str) -> str:
+    """Encrypt the SMTP password."""
+    return cipher.encrypt(plain_password.encode()).decode()
+
+
+def decrypt_password(encrypted_password: str) -> str:
+    """Decrypt the SMTP password."""
+    return cipher.decrypt(encrypted_password.encode()).decode()

@@ -266,7 +266,9 @@ export function CustomLLMProviderUpdateForm({
               optional
             />
 
-            <Label>[Optional] Custom Configs</Label>
+            <Label className="text-sm font-semibold leading-none peer-disabled:cursor-not-allowed pb-1.5">
+              [Optional] Custom Configs
+            </Label>
             <SubLabel>
               <>
                 <div>
@@ -351,7 +353,6 @@ export function CustomLLMProviderUpdateForm({
                     onClick={() => {
                       arrayHelpers.push(["", ""]);
                     }}
-                    className="mt-3 "
                   >
                     <FiPlus /> Add New
                   </Button>

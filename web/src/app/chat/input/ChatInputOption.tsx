@@ -50,11 +50,11 @@
 //     <div
 //       ref={componentRef}
 //       className={`
-//         relative 
-//         cursor-pointer 
-//         flex 
-//         items-center 
-//         space-x-2 
+//         relative
+//         cursor-pointer
+//         flex
+//         items-center
+//         space-x-2
 //         text-text-700
 //         hover:bg-hover
 //         hover:text-emphasis

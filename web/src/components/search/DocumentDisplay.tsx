@@ -202,7 +202,9 @@ export const DocumentDisplay = ({
     >
       <div
         className={`collapsible space-y-2.5 overflow-hidden ${
-          hide ? "collapsible-closed overflow-y-auto border-transparent max-h-0 min-h-0" : "max-h-max"
+          hide
+            ? "collapsible-closed overflow-y-auto border-transparent max-h-0 min-h-0"
+            : "max-h-max"
         }`}
       >
         <div className="flex relative">
@@ -307,7 +309,9 @@ export const AgenticDocumentDisplay = ({
     >
       <div
         className={`collapsible space-y-2.5 overflow-hidden ${
-          hide ? "collapsible-closed overflow-y-auto border-transparent max-h-0 min-h-0" : "max-h-max"
+          hide
+            ? "collapsible-closed overflow-y-auto border-transparent max-h-0 min-h-0"
+            : "max-h-max"
         }`}
       >
         <div className="flex relative">

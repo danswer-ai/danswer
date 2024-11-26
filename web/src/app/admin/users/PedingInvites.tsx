@@ -28,13 +28,17 @@ const RemoveUserButton = ({
   user,
   onSuccess,
   onError,
+  teamspaceId,
 }: {
   user: User;
   onSuccess: () => void;
   onError: () => void;
+  teamspaceId?: string | string[];
 }) => {
   const { trigger } = useSWRMutation(
-    "/api/manage/admin/remove-invited-user",
+    teamspaceId
+      ? `/api/manage/admin/remove-invited-user?teamspace_id=${teamspaceId}`
+      : "/api/manage/admin/remove-invited-user",
     userMutationFetcher,
     { onSuccess, onError }
   );
@@ -130,106 +134,97 @@ export const PendingInvites = ({
   };
 
   return (
-    <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
-      <div className="xl:w-2/5">
-        <h2 className="text-lg md:text-2xl text-strong font-bold">
-          Pending Invites
-        </h2>
-        <p className="text-sm mt-2">Invitations awaiting a response.</p>
-      </div>
-
-      {invited.length > 0 ? (
-        <div className="flex-1 space-y-4">
-          <Input
-            placeholder="Search user..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {filteredUsers.length > 0 ? (
-            <Card className="mt-4">
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-4">
-                            <div className="border rounded-full w-10 h-10 flex items-center justify-center">
-                              <UserIcon />
-                            </div>
-                            <span className="text-sm text-subtle truncate max-w-44">
-                              {user.email}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2 justify-end">
-                            <CustomModal
-                              trigger={
-                                <Button
-                                  variant="destructive"
-                                  onClick={() => {
-                                    setIsCancelModalVisible(true);
-                                    setSelectedUser(user);
-                                  }}
-                                >
-                                  Cancel Invite
-                                </Button>
-                              }
-                              title="Revoke Invite"
-                              onClose={() => {
-                                setIsCancelModalVisible(false);
-                                setSelectedUser(null);
-                              }}
-                              open={isCancelModalVisible}
-                            >
-                              <div>
-                                <p>
-                                  Revoking an invite will no longer allow this
-                                  person to become a member of your space. You
-                                  can always invite them again if you change
-                                  your mind.
-                                </p>
-
-                                <div className="flex gap-2 pt-8 justify-end">
-                                  <Button
-                                    onClick={() =>
-                                      setIsCancelModalVisible(false)
-                                    }
-                                  >
-                                    Keep Member
-                                  </Button>
-                                  {selectedUser && (
-                                    <RemoveUserButton
-                                      user={selectedUser}
-                                      onSuccess={onRemovalSuccess}
-                                      onError={onRemovalError}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                            </CustomModal>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          ) : (
-            <p>No user found.</p>
+    <>
+      <CustomModal
+        trigger={null}
+        title="Revoke Invite"
+        description="Revoking an invite will no longer allow this person to become a member of your space. You can always invite them again if you change your mind."
+        onClose={() => {
+          setIsCancelModalVisible(false);
+          setSelectedUser(null);
+        }}
+        open={isCancelModalVisible}
+      >
+        <div className="flex gap-2 justify-end">
+          <Button onClick={() => setIsCancelModalVisible(false)}>
+            Keep Invite
+          </Button>
+          {selectedUser && (
+            <RemoveUserButton
+              user={selectedUser}
+              onSuccess={onRemovalSuccess}
+              onError={onRemovalError}
+              teamspaceId={teamspaceId}
+            />
           )}
         </div>
-      ) : (
-        <p>No invited user.</p>
-      )}
-    </div>
+      </CustomModal>
+
+      <div className="flex gap-10 w-full flex-col xl:gap-20 xl:flex-row">
+        <div className="xl:w-2/5">
+          <h2 className="text-lg md:text-2xl text-strong font-bold">
+            Pending Invites
+          </h2>
+          <p className="text-sm mt-2">Invitations awaiting a response.</p>
+        </div>
+
+        {filteredUsers.length > 0 ? (
+          <div className="flex-1 space-y-4">
+            <Input
+              placeholder="Search user..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {filteredUsers.length > 0 ? (
+              <Card className="mt-4">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-4">
+                              <div className="border rounded-full w-10 h-10 flex items-center justify-center">
+                                <UserIcon />
+                              </div>
+                              <span className="text-sm text-subtle truncate max-w-64">
+                                {user.email}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                onClick={() => {
+                                  setIsCancelModalVisible(true);
+                                  setSelectedUser(user);
+                                }}
+                                variant="destructive"
+                              >
+                                Cancel Invite
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ) : (
+              <p>No user found.</p>
+            )}
+          </div>
+        ) : (
+          <p>No invited user.</p>
+        )}
+      </div>
+    </>
   );
 };

@@ -118,6 +118,8 @@ import { SIDEBAR_WIDTH_CONST } from "@/lib/constants";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useAssistants } from "@/context/AssistantsContext";
 import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
+import { NoValidAssistantModal } from "./NoValidAssistantModal";
+import { FeatureFlagWrapper } from "@/components/feature_flag/FeatureFlagWrapper";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -150,7 +152,8 @@ export function ChatPage({
 
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
-  const { user, isAdmin, isLoadingUser, refreshUser } = useUser();
+  const { user, isAdmin, isLoadingUser, refreshUser, isTeamspaceAdmin } =
+    useUser();
 
   const existingChatIdRaw = searchParams.get("chatId");
   const currentAssistantId = searchParams.get(SEARCH_PARAM_NAMES.ASSISTANT_ID);
@@ -228,6 +231,16 @@ export function ChatPage({
     availableAssistants[0];
 
   const noAssistants = liveAssistant == null || liveAssistant == undefined;
+
+  if (noAssistants) {
+    return (
+      <NoValidAssistantModal
+        assistants={liveAssistant}
+        teamspaceId={teamspaceId}
+        isTeamspaceAdmin={isTeamspaceAdmin}
+      />
+    );
+  }
 
   useEffect(() => {
     if (!loadedIdSessionRef.current && !currentAssistantId) {
@@ -1799,7 +1812,7 @@ export function ChatPage({
         )
       )}
 
-      {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
+      {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit.
       Only used in the EE version of the app. */}
 
       <ChatPopup />
@@ -1850,7 +1863,7 @@ export function ChatPage({
                     className={`w-full sm:relative flex flex-col lg:px-10 3xl:px-0 ${
                       !retrievalEnabled ? "" : ""
                     }
-                      flex-auto transition-margin duration-300 
+                      flex-auto transition-margin duration-300
                       overflow-x-auto  overflow-y-auto
                       `}
                     {...getRootProps()}
@@ -1873,8 +1886,8 @@ export function ChatPage({
                             <Image src={Logo} alt="Logo" width={112} />
                           </div>
                           <div className="flex ml-auto gap-2 items-center">
-                            {settings?.featureFlags.share_chat &&
-                              chatSessionIdRef.current !== null && (
+                            {chatSessionIdRef.current !== null && (
+                              <FeatureFlagWrapper flag="share_chat">
                                 <ShareChatSessionModal
                                   chatSessionId={chatSessionIdRef.current}
                                   existingSharedStatus={chatSessionSharedStatus}
@@ -1886,7 +1899,8 @@ export function ChatPage({
                                     )
                                   }
                                 />
-                              )}
+                              </FeatureFlagWrapper>
+                            )}
 
                             {retrievalEnabled && (
                               <CustomTooltip
@@ -1917,7 +1931,7 @@ export function ChatPage({
                       className="w-full h-full flex flex-col overflow-x-hidden relative scroll-smooth flex-1 pt-6 lg:pt-0"
                       ref={scrollableDivRef}
                     >
-                      {/* ChatBanner is a custom banner that displays a admin-specified message at 
+                      {/* ChatBanner is a custom banner that displays a admin-specified message at
                       the top of the chat page. Only used in the EE version of the app. */}
                       {/*  <ChatBanner /> */}
 
@@ -2053,7 +2067,9 @@ export function ChatPage({
                               (selectedMessageForDocDisplay !== null &&
                                 selectedMessageForDocDisplay ===
                                   message.messageId) ||
-                              i === messageHistory.length - 1;
+                              (selectedMessageForDocDisplay ===
+                                TEMP_USER_MESSAGE_ID &&
+                                i === messageHistory.length - 1);
                             const previousMessage =
                               i !== 0 ? messageHistory[i - 1] : null;
 
@@ -2264,6 +2280,7 @@ export function ChatPage({
                                   }}
                                   onSubmit={onFeedback}
                                   currentFeedback={currentFeedback}
+                                  llmProviders={llmProviders}
                                 />
                               </div>
                             );

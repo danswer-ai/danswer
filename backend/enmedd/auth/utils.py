@@ -2,14 +2,46 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from enmedd.configs.app_configs import EMAIL_FROM
+from sqlalchemy.orm import Session
+
+from ee.enmedd.utils.encryption import decrypt_password
 from enmedd.configs.app_configs import SMTP_PASS
 from enmedd.configs.app_configs import SMTP_PORT
 from enmedd.configs.app_configs import SMTP_SERVER
 from enmedd.configs.app_configs import SMTP_USER
+from enmedd.db.models import WorkspaceSettings
 from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
+
+
+def get_smtp_credentials(workspace_id: int, db_session: Session):
+    """Fetch SMTP credentials for a given workspace."""
+    workspace_settings = (
+        db_session.query(WorkspaceSettings)
+        .filter(WorkspaceSettings.workspace_id == workspace_id)
+        .first()
+    )
+
+    if not workspace_settings:
+        raise ValueError(f"No SMTP settings found for workspace_id: {workspace_id}")
+
+    smtp_server = workspace_settings.smtp_server
+    smtp_port = workspace_settings.smtp_port
+    smtp_user = workspace_settings.smtp_username
+    smtp_password_encrypted = workspace_settings.smtp_password
+
+    # Decrypt the password
+    smtp_password = (
+        decrypt_password(smtp_password_encrypted) if smtp_password_encrypted else None
+    )
+
+    return {
+        "smtp_server": smtp_server,
+        "smtp_port": smtp_port,
+        "smtp_user": smtp_user,
+        "smtp_password": smtp_password,
+    }
 
 
 def generate_password_reset_email(email: str, reset_url: str):
@@ -76,20 +108,23 @@ def generate_2fa_email(full_name: str, code: str):
 
 
 def send_user_verification_email(
-    to_email: str, subject: str, body: str, mail_from: str = EMAIL_FROM
+    to_email: str,
+    subject: str,
+    body: str,
+    smtp_credentials: dict,
 ) -> None:
     # Email configuration
-    sender_email = SMTP_USER
-    sender_password = SMTP_PASS
-    smtp_server = SMTP_SERVER
-    smtp_port = SMTP_PORT
+    sender_email = smtp_credentials["smtp_user"] or SMTP_USER
+    sender_password = smtp_credentials["smtp_password"] or SMTP_PASS
+    smtp_server = smtp_credentials["smtp_server"] or SMTP_SERVER
+    smtp_port = smtp_credentials["smtp_port"] or SMTP_PORT
 
     # Create MIME message
     message = MIMEMultipart()
     message["To"] = to_email
     message["Subject"] = subject
-    if mail_from:
-        message["From"] = mail_from
+    if sender_email:
+        message["From"] = sender_email
     message.attach(MIMEText(body, "plain"))
 
     try:
@@ -102,19 +137,24 @@ def send_user_verification_email(
         print(f"Failed to send password reset email: {str(e)}")
 
 
-def send_2fa_email(to_email: str, subject: str, body: str, mail_from: str = EMAIL_FROM):
+def send_2fa_email(
+    to_email: str,
+    subject: str,
+    body: str,
+    smtp_credentials: dict,
+) -> None:
     # Email configuration
-    sender_email = SMTP_USER
-    sender_password = SMTP_PASS
-    smtp_server = SMTP_SERVER
-    smtp_port = SMTP_PORT
+    sender_email = smtp_credentials["smtp_user"] or SMTP_USER
+    sender_password = smtp_credentials["smtp_password"] or SMTP_PASS
+    smtp_server = smtp_credentials["smtp_server"] or SMTP_SERVER
+    smtp_port = smtp_credentials["smtp_port"] or SMTP_PORT
 
     # Create MIME message
     message = MIMEMultipart()
     message["To"] = to_email
     message["Subject"] = subject
-    if mail_from:
-        message["From"] = mail_from
+    if sender_email:
+        message["From"] = sender_email
     message.attach(MIMEText(body, "html"))
 
     # Send email
@@ -129,13 +169,16 @@ def send_2fa_email(to_email: str, subject: str, body: str, mail_from: str = EMAI
 
 
 def send_reset_password_email(
-    to_email: str, subject: str, body: str, mail_from: str = EMAIL_FROM
-):
+    to_email: str,
+    subject: str,
+    body: str,
+    smtp_credentials: dict,
+) -> None:
     # Email configuration
-    sender_email = SMTP_USER
-    sender_password = SMTP_PASS
-    smtp_server = SMTP_SERVER
-    smtp_port = SMTP_PORT
+    sender_email = smtp_credentials["smtp_user"] or SMTP_USER
+    sender_password = smtp_credentials["smtp_password"] or SMTP_PASS
+    smtp_server = smtp_credentials["smtp_server"] or SMTP_SERVER
+    smtp_port = smtp_credentials["smtp_port"] or SMTP_PORT
 
     logger.debug(
         f"Sending using the following email configuration: {sender_email}, {sender_password}, {smtp_server}, {smtp_port}"
@@ -145,8 +188,8 @@ def send_reset_password_email(
     message = MIMEMultipart()
     message["To"] = to_email
     message["Subject"] = subject
-    if mail_from:
-        message["From"] = mail_from
+    if sender_email:
+        message["From"] = sender_email
     message.attach(MIMEText(body, "plain"))
 
     # Send email

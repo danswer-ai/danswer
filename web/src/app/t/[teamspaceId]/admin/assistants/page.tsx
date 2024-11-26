@@ -8,8 +8,14 @@ import { SquarePlus } from "lucide-react";
 import { Assistant } from "@/app/admin/assistants/interfaces";
 import { AssistantsTable } from "@/app/admin/assistants/AssistantTable";
 
-export default async function Page({ params }: { params: { teamspaceId: string } }) {
-  const allAssistantResponse = await fetchSS(`/admin/assistant?teamspace_id=${params.teamspaceId}`);
+export default async function Page({
+  params,
+}: {
+  params: { teamspaceId: string };
+}) {
+  const allAssistantResponse = await fetchSS(
+    `/admin/assistant?teamspace_id=${params.teamspaceId}`
+  );
   const editableAssistantResponse = await fetchSS(
     `/admin/assistant?get_editable=true&teamspace_id=${params.teamspaceId}`
   );
@@ -48,7 +54,10 @@ export default async function Page({ params }: { params: { teamspaceId: string }
         </ul>
 
         <h3 className="pt-4">Create an Assistant</h3>
-        <Link href={`/t/${params.teamspaceId}/admin/assistants/new`} className="flex items-center">
+        <Link
+          href={`/t/${params.teamspaceId}/admin/assistants/new`}
+          className="flex items-center"
+        >
           <Button className="mt-2">
             <SquarePlus size={16} />
             New Assistant

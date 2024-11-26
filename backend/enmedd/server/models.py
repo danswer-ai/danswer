@@ -63,6 +63,12 @@ class DisplayPriorityRequest(BaseModel):
     display_priority_map: Dict[int, int]
 
 
+class MinimalWorkspaceInfo(BaseModel):
+    workspace_name: str
+    workspace_description: Optional[str] = None
+    custom_logo: Optional[str] = None
+
+
 class MinimalWorkspaceSnapshot(BaseModel):
     id: int
     workspace_name: Optional[str] = None

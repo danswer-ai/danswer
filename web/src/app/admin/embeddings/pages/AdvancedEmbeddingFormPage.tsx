@@ -9,6 +9,7 @@ import { BooleanFormField } from "@/components/admin/connectors/Field";
 import NumberInput from "../../connectors/[connector]/pages/ConnectorInput/NumberInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 interface AdvancedEmbeddingFormPageProps {
   updateAdvancedEmbeddingDetails: (
@@ -58,23 +59,25 @@ const AdvancedEmbeddingFormPage = forwardRef<
                   {values.multilingual_expansion.map(
                     (_: any, index: number) => (
                       <div key={index} className="w-full flex mb-4 gap-2">
-                        <Input
-                          name={`multilingual_expansion.${index}`}
-                        />
-                        <Button
-                        variant="destructive"
-                          onClick={() => remove(index)}
-                          size="icon"
+                        <Input name={`multilingual_expansion.${index}`} />
+                        <CustomTooltip
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              onClick={() => remove(index)}
+                              size="icon"
+                            >
+                              <TrashIcon className="text-white my-auto" />
+                            </Button>
+                          }
+                          variant="destructive"
                         >
-                          <TrashIcon className="text-white my-auto" />
-                        </Button>
+                          Delete
+                        </CustomTooltip>
                       </div>
                     )
                   )}
-                  <Button
-                    onClick={() => push("")}
-                    className="mb-4"
-                  >
+                  <Button onClick={() => push("")} className="mb-4">
                     <FaPlus className="mr-2" />
                     Add Language
                   </Button>

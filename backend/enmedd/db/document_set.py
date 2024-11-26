@@ -3,6 +3,7 @@ from typing import cast
 from typing import Optional
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import and_
 from sqlalchemy import delete
 from sqlalchemy import exists
@@ -187,9 +188,9 @@ def _check_if_cc_pairs_are_owned_by_groups(
         )
         for cc_pair in cc_pairs:
             if cc_pair.access_type != AccessType.PUBLIC:
-                raise ValueError(
-                    f"Connector Credential Pair with ID: '{cc_pair.id}'"
-                    " is not owned by the specified groups"
+                raise HTTPException(
+                    status_code=400,
+                    detail="Connector Credential Pair is already owned by the an specific group",
                 )
 
 

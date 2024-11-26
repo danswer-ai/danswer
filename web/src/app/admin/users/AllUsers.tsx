@@ -34,6 +34,7 @@ import { CustomTooltip } from "@/components/CustomTooltip";
 import { CustomModal } from "@/components/CustomModal";
 import { Badge } from "@/components/ui/badge";
 import { DeleteModal } from "@/components/DeleteModal";
+import { InviteUserButton } from "./InviteUserButton";
 
 const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   if (!validDomains.length) {
@@ -325,10 +326,19 @@ export const AllUsers = ({
         <div className="xl:w-2/5">
           <h2 className="text-lg md:text-2xl text-strong font-bold">Users</h2>
           <ValidDomainsDisplay validDomains={validDomains} />
-          <AddUserButton
-            teamspaceId={teamspaceId}
-            refreshUsers={refreshUsers}
-          />
+          <div className="flex gap-2">
+            {teamspaceId && (
+              <AddUserButton
+                teamspaceId={teamspaceId}
+                refreshUsers={refreshUsers}
+              />
+            )}
+
+            <InviteUserButton
+              teamspaceId={teamspaceId}
+              refreshUsers={refreshUsers}
+            />
+          </div>
         </div>
         <div className="flex-1 space-y-4">
           <Input

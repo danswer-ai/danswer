@@ -63,10 +63,6 @@ function DefaultLLMProviderDisplay({
   const providerName =
     llmProviderDescriptor?.display_name || llmProviderDescriptor?.name;
 
-  const handleClose = () => {
-    setFormIsVisible(false);
-  };
-
   return (
     <div className="flex p-3 border rounded shadow-sm border-border md:w-96">
       <div className="my-auto">
@@ -79,12 +75,12 @@ function DefaultLLMProviderDisplay({
             <Button onClick={() => setFormIsVisible(true)}>Set up</Button>
           }
           open={formIsVisible}
-          onClose={handleClose}
+          onClose={() => setFormIsVisible(false)}
           title={`Setup ${providerName}`}
         >
           <LLMProviderUpdateModal
             llmProviderDescriptor={llmProviderDescriptor}
-            onClose={handleClose}
+            onClose={() => setFormIsVisible(false)}
             shouldMarkAsDefault={shouldMarkAsDefault}
           />
         </CustomModal>
@@ -100,10 +96,6 @@ function AddCustomLLMProvider({
 }) {
   const [formIsVisible, setFormIsVisible] = useState(false);
 
-  const handleClose = () => {
-    setFormIsVisible(false);
-  };
-
   return (
     <CustomModal
       trigger={
@@ -111,13 +103,13 @@ function AddCustomLLMProvider({
           Add Custom LLM Provider
         </Button>
       }
-      onClose={handleClose}
+      onClose={() => setFormIsVisible(false)}
       open={formIsVisible}
       title="Setup Custom LLM Provider"
     >
       <div>
         <CustomLLMProviderUpdateForm
-          onClose={handleClose}
+          onClose={() => setFormIsVisible(false)}
           shouldMarkAsDefault={existingLlmProviders.length === 0}
         />
       </div>
@@ -156,7 +148,7 @@ export function LLMConfiguration() {
           />
         </>
       ) : (
-        <Card className="md:w-96 flex border rounded shadow-sm border-border md:w-96">
+        <Card className="flex border rounded shadow-sm border-border md:w-96">
           <CardContent className="p-3">
             <h3>No LLM providers configured yet</h3>
             <p className="text-subtle text-sm pt-2">

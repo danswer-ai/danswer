@@ -5,10 +5,10 @@ import { TeamspaceSidebarContent } from "./TeamspaceSidebarContent";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Assistant } from "@/app/admin/assistants/interfaces";
+import { useGradient } from "@/hooks/useGradient";
 
 interface TeamspaceSidebarProps {
   selectedTeamspace?: Teamspace;
-  generateGradient: (teamspaceName: string) => string;
   onClose: () => void;
   isExpanded: boolean;
   assistants: Assistant[];
@@ -19,7 +19,6 @@ interface TeamspaceSidebarProps {
 
 export const TeamspaceSidebar = ({
   selectedTeamspace,
-  generateGradient,
   onClose,
   isExpanded,
   assistants,
@@ -89,7 +88,7 @@ export const TeamspaceSidebar = ({
             <TeamspaceSidebarContent
               teamspace={{
                 ...selectedTeamspace,
-                gradient: generateGradient(selectedTeamspace.name),
+                gradient: useGradient(selectedTeamspace.name),
               }}
               assistants={assistants}
               ccPairs={ccPairs}

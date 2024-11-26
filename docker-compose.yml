@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     command: >
       /bin/sh -c "alembic upgrade 5d12a446f5c0 &&
-      alembic upgrade 17ca0f0827de &&
+      alembic upgrade f7beb96d150d &&
       echo \"Starting Arnold AI Api Server\" &&
       uvicorn enmedd.main:app --host 0.0.0.0 --port 8080"
     depends_on:

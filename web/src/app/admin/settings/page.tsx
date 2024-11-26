@@ -10,12 +10,6 @@ export default async function Page() {
           title="Workspace Settings"
           icon={<Settings size={32} className="my-auto" />}
         />
-
-        <p className="mb-8">
-          Manage general Arnold AI settings applicable to all users in the
-          workspace.
-        </p>
-
         <SettingsForm />
       </div>
     </div>

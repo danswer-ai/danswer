@@ -12,14 +12,7 @@ import {
 import { ThreeDotsLoader } from "@/components/Loading";
 import { useDocumentSets } from "@/app/admin/documents/sets/hooks";
 import { useParams } from "next/navigation";
-
-const generateGradient = (teamspaceName: string) => {
-  const colors = ["#CCCCCC", "#999999", "#666666", "#333333", "#000000"];
-  const index = teamspaceName.charCodeAt(0) % colors.length;
-  return `linear-gradient(135deg, ${colors[index]}, ${
-    colors[(index + 1) % colors.length]
-  })`;
-};
+import { useGradient } from "@/hooks/useGradient";
 
 export const Main = ({ assistants }: { assistants: Assistant[] }) => {
   const { teamspaceId } = useParams();
@@ -79,7 +72,7 @@ export const Main = ({ assistants }: { assistants: Assistant[] }) => {
 
   const teamspacesWithGradients = data.map((teamspace) => ({
     ...teamspace,
-    gradient: generateGradient(teamspace.name),
+    gradient: useGradient(teamspace.name),
   }));
 
   const handleCloseSidebar = () => {
@@ -106,7 +99,6 @@ export const Main = ({ assistants }: { assistants: Assistant[] }) => {
       <TeamspaceSidebar
         assistants={assistants}
         selectedTeamspace={selectedTeamspace}
-        generateGradient={generateGradient}
         onClose={handleCloseSidebar}
         isExpanded={isExpanded}
         ccPairs={ccPairs}

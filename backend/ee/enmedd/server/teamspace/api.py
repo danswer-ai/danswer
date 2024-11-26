@@ -5,6 +5,8 @@ from fastapi import Response
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
+from ee.enmedd.db.teamspace import check_assistant_document_set
+from ee.enmedd.db.teamspace import check_document_set_connector_credential_pair
 from ee.enmedd.db.teamspace import fetch_teamspace
 from ee.enmedd.db.teamspace import insert_teamspace
 from ee.enmedd.db.teamspace import prepare_teamspace_for_deletion
@@ -15,7 +17,7 @@ from ee.enmedd.server.teamspace.models import TeamspaceUpdate
 from ee.enmedd.server.teamspace.models import TeamspaceUpdateName
 from ee.enmedd.server.teamspace.models import TeamspaceUserRole
 from ee.enmedd.server.teamspace.models import UpdateUserRoleRequest
-from ee.enmedd.server.workspace.store import _LOGO_FILENAME
+from ee.enmedd.server.workspace.store import _TEAMSPACELOGO_FILENAME
 from ee.enmedd.server.workspace.store import upload_teamspace_logo
 from enmedd.auth.users import current_teamspace_admin_user
 from enmedd.auth.users import current_user
@@ -28,6 +30,8 @@ from enmedd.db.models import User__Teamspace
 from enmedd.db.models import UserRole
 from enmedd.db.users import get_user_by_email
 from enmedd.file_store.file_store import get_default_file_store
+from enmedd.server.settings.models import Settings
+from enmedd.server.settings.store import store_settings
 from enmedd.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -66,12 +70,54 @@ def get_teamspace_by_id(
     return teamspace_data
 
 
+# fetch all teamspaces for the user
+@basic_router.get("/user-list")
+def list_user_teamspaces(
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> list[Teamspace]:
+    teamspaces = (
+        db_session.query(TeamspaceModel)
+        .filter(TeamspaceModel.is_up_for_deletion == False)  # noqa E712
+        .join(User__Teamspace)
+        .filter(User__Teamspace.user_id == user.id)
+        .all()
+    )
+
+    teamspace_list = []
+
+    for teamspace_model in teamspaces:
+        user_roles = (
+            db_session.query(User__Teamspace)
+            .filter(User__Teamspace.teamspace_id == teamspace_model.id)
+            .all()
+        )
+
+        user_role_dict = {ur.user_id: ur.role for ur in user_roles}
+
+        for user in teamspace_model.users:
+            user.role = user_role_dict.get(user.id, UserRole.BASIC)
+
+        teamspace_data = Teamspace.from_model(teamspace_model)
+        teamspace_list.append(teamspace_data)
+
+    return teamspace_list
+
+
 @admin_router.get("/admin/teamspace")
 def list_teamspaces(
     user: User | None = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
+    include_deleted: bool = False,
 ) -> list[Teamspace]:
-    teamspaces = db_session.query(TeamspaceModel).all()
+    if include_deleted:
+        teamspaces = db_session.query(TeamspaceModel).all()
+    else:
+        teamspaces = (
+            db_session.query(TeamspaceModel)
+            .filter(TeamspaceModel.is_up_for_deletion == False)  # noqa E712
+            .all()
+        )
 
     teamspace_list = []
 
@@ -99,25 +145,79 @@ def create_teamspace(
     current_user: User = Depends(current_workspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> Teamspace:
-    # try:
-    db_teamspace = insert_teamspace(db_session, teamspace, creator_id=current_user.id)
-    # except IntegrityError:
-    #     raise HTTPException(
-    #         400,
-    #         f"Teamspace with name '{teamspace.name}' already exists. Please "
-    #         + "choose a different name.",
-    #     )
-    return Teamspace.from_model(db_teamspace)
+    try:
+        updated_document_set_ids = set()
+        for assistant_id in teamspace.assistant_ids:
+            updated_document_set_ids.update(
+                check_assistant_document_set(
+                    db_session=db_session,
+                    assistant_id=assistant_id,
+                    document_set_ids=teamspace.document_set_ids,
+                )
+            )
+        teamspace.document_set_ids = list(updated_document_set_ids)
+
+        updated_cc_pair_ids = set(
+            check_document_set_connector_credential_pair(
+                db_session=db_session,
+                document_set_ids=teamspace.document_set_ids,
+                cc_pair_ids=teamspace.cc_pair_ids,
+            )
+        )
+        teamspace.cc_pair_ids = list(updated_cc_pair_ids)
+
+        db_teamspace = insert_teamspace(
+            db_session, teamspace, creator_id=current_user.id
+        )
+        default_settings = Settings()
+        store_settings(
+            settings=default_settings,
+            db_session=db_session,
+            teamspace_id=db_teamspace.id,
+        )
+
+        return Teamspace.from_model(db_teamspace)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create teamspace: {str(e)}",
+        )
 
 
 @admin_router.patch("/admin/teamspace/{teamspace_id}")
 def patch_teamspace(
     teamspace_id: int,
     teamspace: TeamspaceUpdate,
-    _: User = Depends(current_teamspace_admin_user),
+    _: User = Depends(current_workspace_admin_user or current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> Teamspace:
     try:
+        updated_document_set_ids = set()
+        updated_cc_pair_ids = set()
+
+        for assistant_id in teamspace.assistant_ids:
+            updated_document_set_ids.update(
+                check_assistant_document_set(
+                    db_session=db_session,
+                    assistant_id=assistant_id,
+                    document_set_ids=teamspace.document_set_ids,
+                )
+            )
+
+        teamspace.document_set_ids = list(updated_document_set_ids)
+
+        for document_set_id in teamspace.document_set_ids:
+            updated_cc_pair_ids.update(
+                check_document_set_connector_credential_pair(
+                    db_session=db_session,
+                    document_set_ids=[document_set_id],
+                    cc_pair_ids=teamspace.cc_pair_ids,
+                )
+            )
+
+        teamspace.cc_pair_ids = list(updated_cc_pair_ids)
+
         return Teamspace.from_model(
             update_teamspace(db_session, teamspace_id, teamspace)
         )
@@ -128,7 +228,7 @@ def patch_teamspace(
 @admin_router.delete("/admin/teamspace/{teamspace_id}")
 def delete_teamspace(
     teamspace_id: int,
-    _: User = Depends(current_teamspace_admin_user),
+    _: User = Depends(current_workspace_admin_user or current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
@@ -168,6 +268,50 @@ def update_teamspace_name(
     db_session.commit()
 
     return Teamspace.from_model(db_teamspace)
+
+
+# Leave current user to teamspace admin can leave but not the creator
+@basic_router.delete("/leave/{teamspace_id}")
+def leave_teamspace(
+    teamspace_id: int,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    teamspace = db_session.query(TeamspaceModel).filter_by(id=teamspace_id).first()
+    if not teamspace:
+        raise HTTPException(status_code=404, detail="Teamspace not found")
+
+    # Creator can only leave if there are other admins
+    if user.id == teamspace.creator_id:
+        other_admins_exist = (
+            db_session.query(User__Teamspace)
+            .filter(
+                User__Teamspace.teamspace_id == teamspace_id,
+                User__Teamspace.role == TeamspaceUserRole.ADMIN,
+                User__Teamspace.user_id != user.id,
+            )
+            .first()
+            is not None
+        )
+        if not other_admins_exist:
+            raise HTTPException(
+                status_code=400,
+                detail="Creator cannot leave the teamspace as no other admins are present",
+            )
+
+    user_teamspace = (
+        db_session.query(User__Teamspace)
+        .filter_by(teamspace_id=teamspace_id, user_id=user.id)
+        .first()
+    )
+
+    if not user_teamspace:
+        raise HTTPException(status_code=404, detail="User not found in the teamspace")
+
+    db_session.delete(user_teamspace)
+    db_session.commit()
+
+    return {"message": "You have left the teamspace successfully"}
 
 
 @admin_router.patch("/admin/teamspace/user-role/{teamspace_id}")
@@ -218,7 +362,7 @@ def update_teamspace_user_role(
 def add_teamspace_users(
     teamspace_id: int,
     emails: list[str],
-    _: User = Depends(current_teamspace_admin_user),
+    _: User = Depends(current_workspace_admin_user or current_teamspace_admin_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     added_users = []
@@ -342,7 +486,7 @@ def remove_teamspace_logo(
     _: User = Depends(current_teamspace_admin_user),
 ) -> None:
     try:
-        file_name = f"{teamspace_id}{_LOGO_FILENAME}"
+        file_name = f"{teamspace_id}{_TEAMSPACELOGO_FILENAME}"
 
         file_store = get_default_file_store(db_session)
         file_store.delete_file(file_name)
@@ -369,7 +513,7 @@ def fetch_teamspace_logo(
     db_session: Session = Depends(get_session),
 ) -> Response:
     try:
-        file_path = f"{teamspace_id}{_LOGO_FILENAME}"
+        file_path = f"{teamspace_id}{_TEAMSPACELOGO_FILENAME}"
 
         file_store = get_default_file_store(db_session)
         file_io = file_store.read_file(file_path, mode="b")

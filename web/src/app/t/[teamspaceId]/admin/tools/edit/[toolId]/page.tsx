@@ -7,7 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Wrench } from "lucide-react";
 import { DeleteToolButton } from "@/app/admin/tools/edit/[toolId]/DeleteToolButton";
 
-export default async function Page({ params }: { params: { toolId: string, teamspaceId: string } }) {
+export default async function Page({
+  params,
+}: {
+  params: { toolId: string; teamspaceId: string };
+}) {
   const tool = await fetchToolByIdSS(params.toolId);
 
   let body;
@@ -36,7 +40,10 @@ export default async function Page({ params }: { params: { toolId: string, teams
               Click the button below to permanently delete this tool.
             </p>
             <div className="flex mt-6">
-              <DeleteToolButton toolId={tool.id} teamspaceId={params.teamspaceId} />
+              <DeleteToolButton
+                toolId={tool.id}
+                teamspaceId={params.teamspaceId}
+              />
             </div>
           </div>
         </div>

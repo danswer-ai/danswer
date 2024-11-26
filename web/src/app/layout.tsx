@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Inter as FontSans } from "next/font/google";
+import { Inter } from "next/font/google";
 import { fetchSettingsSS } from "@/components/settings/lib";
 import { CUSTOM_ANALYTICS_ENABLED } from "@/lib/constants";
 import { SettingsProvider } from "@/components/settings/SettingsProvider";
@@ -13,8 +13,11 @@ import { Card } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
+import ThemeProvider from "@/components/ThemeProvider";
+import { fetchFeatureFlagSS } from "@/components/feature_flag/lib";
+import { FeatureFlagProvider } from "@/components/feature_flag/FeatureFlagContext";
 
-const fontSans = FontSans({
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
 });
@@ -45,11 +48,13 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const combinedSettings = await fetchSettingsSS();
+  const featureFlags = await fetchFeatureFlagSS();
+
   if (!combinedSettings) {
     // Just display a simple full page error if fetching fails.
 
     return (
-      <html lang="en" className={`${fontSans.variable} font-sans`}>
+      <html lang="en" className={`${inter.variable} font-sans`}>
         <Head>
           <title>Settings Unavailable | Arnold AI</title>
         </Head>
@@ -95,19 +100,22 @@ export default async function RootLayout({
       )}
 
       <body
-        className={`${fontSans.variable} font-sans text-default bg-background ${
+        className={`${inter.variable} font-sans text-default bg-background ${
           process.env.THEME_IS_DARK?.toLowerCase() === "true" ? "dark" : ""
         }`}
       >
-        <UserProvider>
-          <ProviderContextProvider>
-            <SettingsProvider settings={combinedSettings}>
-              {children}
-              <Toaster />
-              <PageSwitcher />
-            </SettingsProvider>
-          </ProviderContextProvider>
-        </UserProvider>
+        <FeatureFlagProvider flags={featureFlags}>
+          <UserProvider>
+            <ProviderContextProvider>
+              <SettingsProvider settings={combinedSettings}>
+                <ThemeProvider />
+                {children}
+                <Toaster />
+                <PageSwitcher />
+              </SettingsProvider>
+            </ProviderContextProvider>
+          </UserProvider>
+        </FeatureFlagProvider>
       </body>
     </html>
   );

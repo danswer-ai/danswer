@@ -5,7 +5,10 @@ import { ThumbsUpIcon } from "@/components/icons/icons";
 import { useMostReactedToDocuments } from "@/lib/hooks";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { DocumentFeedbackTable } from "@/app/admin/documents/feedback/DocumentFeedbackTable";
-import { numPages, numToDisplay } from "@/app/admin/documents/feedback/constants";
+import {
+  numPages,
+  numToDisplay,
+} from "@/app/admin/documents/feedback/constants";
 
 const Main = () => {
   const {

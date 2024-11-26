@@ -13,6 +13,8 @@ workspaces:
     custom_logo: null
     custom_header_logo: null
     custom_header_content: null
+    brand_color: "#65007E"
+    secondary_color: "#EEB3FE"
 
 teamspaces:
   - id: 0

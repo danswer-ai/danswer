@@ -97,7 +97,7 @@ export const TeamspaceContent = ({
       </div>
 
       {filteredTeamspaces.length > 0 ? (
-        <div className="grid gap-8 grid-cols-[repeat(auto-fit,minmax(250px,1fr))] 2xl:grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
+        <div className="grid gap-8 grid-cols-[repeat(auto-fill,minmax(250px,381px))]">
           {filteredTeamspaces
             .filter((teamspace) => !teamspace.is_up_for_deletion)
             .map((teamspace) => {

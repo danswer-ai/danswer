@@ -8,12 +8,12 @@ export function DeleteCredentialsModal({
   modelProvider,
   onConfirm,
   onCancel,
-  showDeleteCredentialsModal
+  showDeleteCredentialsModal,
 }: {
   modelProvider: CloudEmbeddingProvider;
   onConfirm: () => void;
   onCancel: () => void;
-  showDeleteCredentialsModal: boolean
+  showDeleteCredentialsModal: boolean;
 }) {
   return (
     <CustomModal

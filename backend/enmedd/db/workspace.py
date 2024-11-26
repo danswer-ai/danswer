@@ -5,11 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import Session
 
-from ee.enmedd.server.workspace.models import InstanceSubscriptionPlan
-from ee.enmedd.server.workspace.models import WorkspaceCreate
 from ee.enmedd.server.workspace.models import WorkspaceUpdate
 from enmedd.auth.schemas import UserRole
-from enmedd.db.models import Instance
 from enmedd.db.models import User
 from enmedd.db.models import Workspace
 from enmedd.db.models import Workspace__Users
@@ -25,38 +22,6 @@ def _add_user__workspace_relationships__no_commit(
     ]
     db_session.add_all(relationships)
     return relationships
-
-
-def insert_workspace(
-    db_session: Session, workspace: WorkspaceCreate, user_id: UUID
-) -> Workspace:
-    db_instance = Instance(
-        instance_name=workspace.workspace_name,
-        subscription_plan=InstanceSubscriptionPlan.PARTNER,  # You can modify this if needed
-        owner_id=user_id,
-    )
-    db_session.add(db_instance)
-    db_session.flush()  # flush to assign the instance an ID
-    db_workspace = Workspace(
-        instance_id=db_instance.id,
-        workspace_name=workspace.workspace_name,
-        workspace_description=workspace.workspace_description,
-        use_custom_logo=workspace.use_custom_logo,
-        custom_logo=workspace.custom_logo,
-        custom_header_logo=workspace.custom_header_logo,
-        custom_header_content=workspace.custom_header_content,
-    )
-    db_session.add(db_workspace)
-    db_session.flush()  # give the workspace an ID
-
-    _add_user__workspace_relationships__no_commit(
-        db_session=db_session,
-        workspace_id=db_workspace.id,
-        user_ids=workspace.user_ids,
-    )
-
-    db_session.commit()
-    return db_workspace
 
 
 # def put_workspace(
@@ -138,6 +103,8 @@ def upsert_workspace(
     workspace_description: str | None = None,
     use_custom_logo: bool = False,
     custom_header_content: str | None = None,
+    brand_color: str | None = None,
+    secondary_color: str | None = None,
     commit: bool = True,
 ) -> Workspace:
     try:
@@ -145,14 +112,26 @@ def upsert_workspace(
         workspace = db_session.scalar(select(Workspace).where(Workspace.id == id))
 
         if workspace:
-            # Update existing workspace
-            workspace.instance_id = instance_id
-            workspace.workspace_name = workspace_name
-            workspace.custom_logo = custom_logo
-            workspace.custom_header_logo = custom_header_logo
-            workspace.workspace_description = workspace_description
-            workspace.use_custom_logo = use_custom_logo
-            workspace.custom_header_content = custom_header_content
+            # Update only the fields that have new values
+            if instance_id is not None:
+                workspace.instance_id = instance_id
+            if workspace_name is not None:
+                workspace.workspace_name = workspace_name
+            if custom_logo is not None:
+                workspace.custom_logo = custom_logo
+            if custom_header_logo is not None:
+                workspace.custom_header_logo = custom_header_logo
+            if workspace_description is not None:
+                workspace.workspace_description = workspace_description
+            if use_custom_logo is not None:
+                if not workspace.use_custom_logo or use_custom_logo:
+                    workspace.use_custom_logo = use_custom_logo
+            if custom_header_content is not None:
+                workspace.custom_header_content = custom_header_content
+            if brand_color is not None:
+                workspace.brand_color = brand_color
+            if secondary_color is not None:
+                workspace.secondary_color = secondary_color
         else:
             # Create new workspace
             workspace = Workspace(
@@ -164,6 +143,8 @@ def upsert_workspace(
                 workspace_description=workspace_description,
                 use_custom_logo=use_custom_logo,
                 custom_header_content=custom_header_content,
+                brand_color=brand_color,
+                secondary_color=secondary_color,
             )
             db_session.add(workspace)
 

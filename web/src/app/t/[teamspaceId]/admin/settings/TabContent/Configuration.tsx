@@ -295,7 +295,7 @@ export function Configuration() {
         <h2 className="font-bold text:lg md:text-xl">Page and Chat Setup</h2>
         <p className="text-sm">
           Manage general Arnold AI settings applicable to all users in the
-          workspace.
+          teamspace.
         </p>
       </div>
 

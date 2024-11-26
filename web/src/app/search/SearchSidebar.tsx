@@ -14,6 +14,7 @@ import { useSearchContext } from "@/context/SearchContext";
 import { ChatSession } from "../chat/interfaces";
 import { Logo } from "@/components/Logo";
 import ArnoldAi from "../../../public/arnold_ai.png";
+import { buildImgUrl } from "../chat/files/images/utils";
 
 export const SearchSidebar = ({
   isExpanded,
@@ -50,28 +51,16 @@ export const SearchSidebar = ({
             `}
         id="chat-sidebar"
       >
-        <div className="flex items-center gap-2 w-full relative justify-center px-4 pb-4">
-          <div className="flex h-full items-center gap-1">
-            {workspaces && workspaces.use_custom_logo ? (
-              <Logo />
-            ) : (
-              <Image src={ArnoldAi} alt="arnoldai-logo" height={32} />
-            )}
-            <span className="text-lg font-semibold">
-              {workspaces && workspaces.workspace_name
-                ? workspaces.workspace_name
-                : "Arnold AI"}
-            </span>
-          </div>
-
-          {/* <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSideBar}
-            className="lg:hidden"
-          >
-            <PanelLeftClose size={24} />
-          </Button> */}
+        <div className="flex items-center gap-1 w-full relative justify-center px-4 pb-5 pt-1">
+          {workspaces && workspaces.custom_header_logo ? (
+            <img
+              src={buildImgUrl(workspaces?.custom_header_logo)}
+              alt="Logo"
+              className="h-8 object-contain w-full"
+            />
+          ) : (
+            <Image src={ArnoldAi} alt="arnoldai-logo" height={32} />
+          )}
         </div>
 
         <div className="h-full overflow-y-auto">
@@ -108,15 +97,6 @@ export const SearchSidebar = ({
                     <Command size={14} />D
                   </div>
                 </Link>
-                {/* {combinedSettings.featureFlags.explore_assistants && (
-                  <Link
-                    href="/assistants/mine"
-                    className="flex px-4 py-2 h-10 rounded-regular cursor-pointer hover:bg-hover-light items-center gap-2"
-                  >
-                    <Headset size={16} />
-                    <span className="truncate">Explore Assistants</span>
-                  </Link>
-                )} */}
               </>
             )}
             <Separator className="mt-4" />

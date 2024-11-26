@@ -5,7 +5,7 @@ import { basicLogin, basicSignup } from "@/lib/user";
 import { Form, Formik } from "formik";
 import { useRouter } from "next/navigation";
 import * as Yup from "yup";
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { Spinner } from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -17,12 +17,16 @@ import MicrosoftIcon from "../../../../public/microsoft.svg";
 import Image from "next/image";
 import Link from "next/link";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import ReCAPTCHA from "react-google-recaptcha";
+import { NEXT_PUBLIC_CAPTCHA_SITE_KEY } from "@/lib/constants";
+import { useFeatureFlag } from "@/components/feature_flag/FeatureFlagContext";
 
 export function LogInForms({}: {}) {
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const settings = useContext(SettingsContext);
+  const isTwoFactorAuthEnabled = useFeatureFlag("two_factor_auth");
 
   return (
     <>
@@ -37,11 +41,21 @@ export function LogInForms({}: {}) {
           password: Yup.string().required(),
         })}
         onSubmit={async (values) => {
+          const captchaValue = recaptchaRef.current?.getValue();
+          if (!captchaValue && NEXT_PUBLIC_CAPTCHA_SITE_KEY) {
+            toast({
+              title: "ReCAPTCHA Missing",
+              description: "Please complete the ReCAPTCHA to proceed.",
+              variant: "destructive",
+            });
+            return;
+          }
+
           setIsLoading(true);
 
           const loginResponse = await basicLogin(values.email, values.password);
           if (loginResponse.ok) {
-            if (settings?.featureFlags.two_factor_auth == true) {
+            if (isTwoFactorAuthEnabled) {
               router.push(`/auth/2factorverification/?email=${values.email}`);
               await fetch("/api/users/generate-otp", {
                 method: "PATCH",
@@ -87,12 +101,20 @@ export function LogInForms({}: {}) {
               placeholder="Enter your password"
             />
 
+            {NEXT_PUBLIC_CAPTCHA_SITE_KEY && (
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={NEXT_PUBLIC_CAPTCHA_SITE_KEY}
+                className="pb-4"
+              />
+            )}
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Checkbox id="remember" />
+                {/* <Checkbox id="remember" />
                 <Label className="p-0" htmlFor="remember">
                   Remember me
-                </Label>
+                </Label> */}
               </div>
               <Link
                 href="/auth/forgot-password"

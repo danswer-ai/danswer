@@ -129,13 +129,15 @@ export function SourceSelector({
                 >
                   <label
                     htmlFor={source.internalName}
-                    className="flex items-center w-full px-2 py-3"
+                    className="flex items-center w-full px-2 py-3 truncate"
                   >
                     <SourceIcon
                       sourceType={source.internalName}
                       iconSize={18}
                     />
-                    <span className="ml-3 text-sm">{source.displayName}</span>
+                    <span className="ml-3 text-sm w-4/5 truncate">
+                      {source.displayName}
+                    </span>
                   </label>
                   <Checkbox id={source.internalName} />
                 </div>
@@ -157,7 +159,7 @@ export function SourceSelector({
                 >
                   <label
                     htmlFor={documentSet.name}
-                    className="flex items-center w-full px-2 py-3"
+                    className="flex items-center w-full px-2 py-3 truncate"
                     onClick={() => handleDocumentSetSelect(documentSet.name)}
                   >
                     <CustomTooltip
@@ -172,7 +174,9 @@ export function SourceSelector({
                         <div className="mt-1">{documentSet.description}</div>
                       </div>
                     </CustomTooltip>
-                    <span className="text-sm">{documentSet.name}</span>
+                    <span className="text-sm w-4/5 truncate">
+                      {documentSet.name}
+                    </span>
                   </label>
                   <Checkbox id={documentSet.name} />
                 </div>

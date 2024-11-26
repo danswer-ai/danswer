@@ -21,7 +21,7 @@ export function ProviderCreationModal({
   isProxy,
   isAzure,
   updateCurrentModel,
-  showTentativeProvider
+  showTentativeProvider,
 }: {
   updateCurrentModel: (
     newModel: string,
@@ -177,7 +177,12 @@ export function ProviderCreationModal({
 
   return (
     <CustomModal
-      title={<div className="flex items-center gap-4">{selectedProvider.icon({ size: 24 })} Configure {selectedProvider.provider_type}</div>}
+      title={
+        <div className="flex items-center gap-4">
+          {selectedProvider.icon({ size: 24 })} Configure{" "}
+          {selectedProvider.provider_type}
+        </div>
+      }
       onClose={onCancel}
       trigger={null}
       open={showTentativeProvider}
@@ -282,11 +287,7 @@ export function ProviderCreationModal({
                 </Callout>
               )}
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isProcessing ? (
                   <LoadingAnimation />
                 ) : existingProvider ? (

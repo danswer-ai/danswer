@@ -632,11 +632,13 @@ export function ChatInputBar({
               <div className="flex w-auto items-center">
                 <Button
                   variant="ghost"
-                  className="mr-2 border"
+                  className="mr-2 border max-w-60"
                   onClick={openModal}
                 >
                   <Cpu size={16} className="shrink-0" />
-                  {selectedAssistant ? selectedAssistant.name : "Assistants"}
+                  <span className="truncate">
+                    {selectedAssistant ? selectedAssistant.name : "Assistants"}
+                  </span>
                 </Button>
 
                 <Button

@@ -1,5 +1,7 @@
 import CredentialSubText from "@/components/credentials/CredentialFields";
+import { CustomTooltip } from "@/components/CustomTooltip";
 import { TrashIcon } from "@/components/icons/icons";
+import { Button } from "@/components/ui/button";
 import { ListOption } from "@/lib/connectors/connectors";
 import { Field, FieldArray, useField } from "formik";
 import { FaPlus } from "react-icons/fa";
@@ -37,25 +39,34 @@ export default function ListInput({
                 className="w-full bg-input text-sm p-2 border border-border-medium rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mr-2"
                 optional={field.optional}
               />
-              <button
-                className="p-2 my-auto bg-input flex-none rounded-md bg-red-500 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                type="button"
-                onClick={() => {
-                  remove(index);
-                  if (onUpdate) {
-                    const newValue = fieldProps.value.filter(
-                      (_: any, i: number) => i !== index
-                    );
-                    onUpdate(newValue);
-                  }
-                }}
+
+              <CustomTooltip
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    type="button"
+                    onClick={() => {
+                      remove(index);
+                      if (onUpdate) {
+                        const newValue = fieldProps.value.filter(
+                          (_: any, i: number) => i !== index
+                        );
+                        onUpdate(newValue);
+                      }
+                    }}
+                  >
+                    <TrashIcon className="text-white my-auto" />
+                  </Button>
+                }
+                variant="destructive"
               >
-                <TrashIcon className="text-white my-auto" />
-              </button>
+                Delete
+              </CustomTooltip>
             </div>
           ))}
 
-          <button
+          <Button
             type="button"
             onClick={() => {
               push("");
@@ -63,11 +74,11 @@ export default function ListInput({
                 onUpdate([...fieldProps.value, ""]);
               }
             }}
-            className="mt-2 p-2 bg-rose-500 text-xs text-white rounded-md hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-opacity-50 flex items-center"
+            className="mb-4"
           >
-            <FaPlus className="mr-2" />
+            <FaPlus />
             Add {field.label}
-          </button>
+          </Button>
         </div>
       )}
     </FieldArray>

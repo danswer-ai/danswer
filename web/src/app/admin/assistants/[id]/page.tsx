@@ -30,7 +30,7 @@ export default async function Page({ params }: { params: { id: string } }) {
           </CardContent>
         </Card>
 
-        <div className="mt-12">
+        <div className="mt-12 flex justify-center">
           <DeleteAssistantButton
             assistantId={values.existingAssistant!.id}
             redirectType={SuccessfulAssistantUpdateRedirectType.ADMIN}

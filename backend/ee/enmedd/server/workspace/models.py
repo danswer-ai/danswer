@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 from typing import Optional
 from uuid import UUID
 
@@ -21,6 +22,8 @@ class Workspaces(BaseModel):
     custom_logo: Optional[str] = None
     custom_header_logo: Optional[str] = None
     custom_header_content: Optional[str] = None
+    brand_color: Optional[str] = None
+    secondary_color: Optional[str] = None
     groups: Optional[list[Teamspace]] = None
 
     @classmethod
@@ -34,6 +37,8 @@ class Workspaces(BaseModel):
             custom_logo=workspace_model.custom_logo,
             custom_header_logo=workspace_model.custom_header_logo,
             custom_header_content=workspace_model.custom_header_content,
+            brand_color=workspace_model.brand_color,
+            secondary_color=workspace_model.secondary_color,
             groups=[
                 Teamspace.from_model(teamspace_model)
                 for teamspace_model in workspace_model.groups
@@ -44,6 +49,24 @@ class Workspaces(BaseModel):
         return
 
 
+class NavigationItem(BaseModel):
+    link: str
+    title: str
+    # Right now must be one of the FA icons
+    icon: str | None = None
+    # NOTE: SVG must not have a width / height specified
+    # This is the actual SVG as a string. Done this way to reduce
+    # complexity / having to store additional "logos" in Postgres
+    svg_logo: str | None = None
+
+    @classmethod
+    def model_validate(cls, *args: Any, **kwargs: Any) -> "NavigationItem":
+        instance = super().model_validate(*args, **kwargs)
+        if bool(instance.icon) == bool(instance.svg_logo):
+            raise ValueError("Exactly one of fa_icon or svg_logo must be specified")
+        return instance
+
+
 class WorkspaceCreate(BaseModel):
     workspace_name: str
     workspace_description: Optional[str] = None
@@ -51,6 +74,8 @@ class WorkspaceCreate(BaseModel):
     custom_logo: Optional[str] = None
     custom_header_logo: Optional[str] = None
     custom_header_content: Optional[str] = None
+    brand_color: Optional[str] = None
+    secondary_color: Optional[str] = None
     user_ids: list[UUID]
 
 
@@ -61,6 +86,8 @@ class WorkspaceUpdate(BaseModel):
     custom_logo: Optional[str] = None
     custom_header_logo: Optional[str] = None
     custom_header_content: Optional[str] = None
+    brand_color: Optional[str] = None
+    secondary_color: Optional[str] = None
     user_ids: Optional[list[UUID]] = None
 
 

@@ -31,7 +31,7 @@ jobs:
     permissions: write-all
     # See https://runs-on.com/runners/linux/
     # use a lower powered instance since this just does i/o to docker hub
-    runs-on: [runs-on,runner=2cpu-linux-x64,"run-id=${{ github.run_id }}"]
+    runs-on: ubuntu-latest
     steps:
     
       # needs AWS_SECRET_ACCESS_KEY for write access to merge PR's

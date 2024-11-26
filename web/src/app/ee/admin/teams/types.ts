@@ -9,6 +9,6 @@ export interface SetCuratorRequest {
 }
 export interface TeamspaceCreation {
   name: string;
-  user_ids: string[];
+  users: { user_id: string; role: string }[];
   cc_pair_ids: number[];
 }

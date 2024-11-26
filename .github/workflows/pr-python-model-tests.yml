@@ -1,10 +1,9 @@
 name: Connector Tests
 
 on:
-  schedule:
-    # This cron expression runs the job daily at 16:00 UTC (9am PT)
-    - cron: "0 16 * * *"
-
+  push:
+    branches:
+      - main
 env:
   # Bedrock
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -17,7 +16,7 @@ env:
 jobs:
   connectors-check:
     # See https://runs-on.com/runners/linux/
-    runs-on: [runs-on,runner=8cpu-linux-x64,"run-id=${{ github.run_id }}"]
+    runs-on: ubuntu-latest
 
     env:
       PYTHONPATH: ./backend
@@ -46,13 +45,3 @@ jobs:
         run: |
           py.test -o junit_family=xunit2 -xv --ff backend/tests/daily/llm
           py.test -o junit_family=xunit2 -xv --ff backend/tests/daily/embedding
-
-      - name: Alert on Failure
-        if: failure() && github.event_name == 'schedule'
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        run: |
-          curl -X POST \
-            -H 'Content-type: application/json' \
-            --data '{"text":"Scheduled Model Tests failed! Check the run at: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
-            $SLACK_WEBHOOK

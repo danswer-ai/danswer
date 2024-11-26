@@ -292,12 +292,7 @@ export const GmailJsonUploadSection = ({
     <div className="mt-2">
       <p className="mb-2 text-sm">
         Follow the guide{" "}
-        <a
-          className="text-link"
-          target="_blank"
-          href="https://docs.danswer.dev/connectors/gmail#authorization"
-          rel="noopener"
-        >
+        <a className="text-link" target="_blank" href="#" rel="noopener">
           here
         </a>{" "}
         to setup a google OAuth App in your company workspace.

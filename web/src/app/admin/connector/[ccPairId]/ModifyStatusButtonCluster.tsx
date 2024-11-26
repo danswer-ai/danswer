@@ -17,10 +17,7 @@ export function ModifyStatusButtonCluster({
           trigger={
             <Button
               onClick={() =>
-                setCCPairStatus(
-                  ccPair.id,
-                  ConnectorCredentialPairStatus.ACTIVE,
-                )
+                setCCPairStatus(ccPair.id, ConnectorCredentialPairStatus.ACTIVE)
               }
             >
               Re-Enable
@@ -36,16 +33,14 @@ export function ModifyStatusButtonCluster({
             <Button
               variant="destructive"
               onClick={() =>
-                setCCPairStatus(
-                  ccPair.id,
-                  ConnectorCredentialPairStatus.PAUSED,
-                )
+                setCCPairStatus(ccPair.id, ConnectorCredentialPairStatus.PAUSED)
               }
             >
               Pause
             </Button>
           }
           asChild
+          variant="destructive"
         >
           When paused, the connectors documents will still be visible. However,
           no new documents will be indexed.

@@ -77,7 +77,7 @@ export const useConnectorCredentialIndexingStatus = (
       /&$/,
       ""
     );
-    
+
   const swrResponse = useSWR<ConnectorIndexingStatus<any, any>[]>(
     url,
     errorHandlingFetcher,
@@ -132,18 +132,26 @@ export const useUsers = (
   teamspaceId?: string | string[]
 ) => {
   const baseUrl = "/api/manage/users";
-  
+
   const userApiUrl = (() => {
-    if (q || acceptedPage !== undefined || invitedPage !== undefined || teamspaceId) {
+    if (
+      q ||
+      acceptedPage !== undefined ||
+      invitedPage !== undefined ||
+      teamspaceId
+    ) {
       const queryParams = new URLSearchParams();
       if (q) queryParams.append("q", encodeURI(q));
-      if (acceptedPage !== undefined) queryParams.append("accepted_page", (acceptedPage - 1).toString());
-      if (invitedPage !== undefined) queryParams.append("invited_page", (invitedPage - 1).toString());
-      if (teamspaceId) queryParams.append("teamspace_id", teamspaceId.toString());
+      if (acceptedPage !== undefined)
+        queryParams.append("accepted_page", (acceptedPage - 1).toString());
+      if (invitedPage !== undefined)
+        queryParams.append("invited_page", (invitedPage - 1).toString());
+      if (teamspaceId)
+        queryParams.append("teamspace_id", teamspaceId.toString());
 
       return `${baseUrl}?${queryParams.toString()}`;
     }
-    return baseUrl; 
+    return baseUrl;
   })();
 
   const swrResponse = useSWR<UsersResponse>(userApiUrl, errorHandlingFetcher);

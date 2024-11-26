@@ -163,7 +163,7 @@ function ToolForm({
       />
       <div className="p-4 mt-4 text-sm border border-blue-200 rounded-md bg-blue-50">
         <Link
-          href="https://docs.danswer.dev/tools/custom"
+          href="#"
           className="flex items-center text-link hover:underline"
           target="_blank"
           rel="noopener noreferrer"

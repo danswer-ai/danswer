@@ -17,13 +17,13 @@ function ReIndexPopup({
   credentialId,
   ccPairId,
   hide,
-  reIndexPopupVisible
+  reIndexPopupVisible,
 }: {
   connectorId: number;
   credentialId: number;
   ccPairId: number;
   hide: () => void;
-  reIndexPopupVisible: boolean
+  reIndexPopupVisible: boolean;
 }) {
   const { toast } = useToast();
   async function triggerIndexing(fromBeginning: boolean) {
@@ -49,12 +49,12 @@ function ReIndexPopup({
   }
 
   return (
-    <CustomModal 
-      title="Run Indexing" 
-      onClose={hide} 
+    <CustomModal
+      title="Run Indexing"
+      onClose={hide}
       trigger={null}
       open={reIndexPopupVisible}
-      >
+    >
       <div>
         <Button
           className="ml-auto"
@@ -131,7 +131,7 @@ export function ReIndexButton({
                 setReIndexPopupVisible(true);
               }}
               disabled={isDisabled || isDeleting}
-              variant='outline'
+              variant="outline"
             >
               Index
             </Button>

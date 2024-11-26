@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     command: >
       /bin/sh -c "alembic upgrade 5d12a446f5c0 &&
-      alembic upgrade 17ca0f0827de &&
+      alembic upgrade f7beb96d150d &&
       echo \"Starting Arnold AI Api Server\" &&
       uvicorn enmedd.main:app --host 0.0.0.0 --port 8080"
     depends_on:
@@ -77,7 +77,6 @@ services:
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       # Leave this on pretty please? Nothing sensitive is collected!
-      # https://docs.danswer.dev/more/telemetry
       - DISABLE_TELEMETRY=${DISABLE_TELEMETRY:-}
       - LOG_LEVEL=${LOG_LEVEL:-info}  # Set to debug to get more fine-grained logs
       - LOG_ALL_MODEL_INTERACTIONS=${LOG_ALL_MODEL_INTERACTIONS:-}  # LiteLLM Verbose Logging

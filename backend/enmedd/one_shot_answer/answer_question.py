@@ -94,6 +94,7 @@ def stream_answer_objects(
     timeout: int = QA_TIMEOUT,
     bypass_acl: bool = False,
     use_citations: bool = False,
+    teamspace_id: int | None = None,
     retrieval_metrics_callback: (
         Callable[[RetrievalMetricsContainer], None] | None
     ) = None,
@@ -116,6 +117,7 @@ def stream_answer_objects(
         user_id=user_id,
         assistant_id=query_req.assistant_id,
         one_shot=True,
+        teamspace_id=teamspace_id,
     )
 
     temporary_assistant: Assistant | None = None
@@ -329,6 +331,7 @@ def stream_search_answer(
     user: User | None,
     max_document_tokens: int | None,
     max_history_tokens: int | None,
+    teamspace_id: int | None = None,
 ) -> Iterator[str]:
     with get_session_context_manager() as session:
         objects = stream_answer_objects(
@@ -336,6 +339,7 @@ def stream_search_answer(
             user=user,
             max_document_tokens=max_document_tokens,
             max_history_tokens=max_history_tokens,
+            teamspace_id=teamspace_id,
             db_session=session,
         )
         for obj in objects:

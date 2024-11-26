@@ -1,6 +1,6 @@
-from typing import Optional
 import uuid
 from collections.abc import Sequence
+from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -15,11 +15,12 @@ from enmedd.auth.schemas import UserRole
 from enmedd.db.models import User
 from enmedd.db.models import User__Teamspace
 
+
 def list_users(
     db_session: Session,
     q: str = "",
     teamspace_id: Optional[int] = None,
-    include_teamspace_user: bool = True
+    include_teamspace_user: bool = True,
 ) -> Sequence[User]:
     """List all users. No pagination as of now, as the # of users
     is assumed to be relatively small (<< 1 million)"""
@@ -29,9 +30,13 @@ def list_users(
 
     if teamspace_id is not None:
         if include_teamspace_user:
-            query = query.join(User__Teamspace).filter(User__Teamspace.teamspace_id == teamspace_id)
+            query = query.join(User__Teamspace).filter(
+                User__Teamspace.teamspace_id == teamspace_id
+            )
         else:
-            subquery = select(User__Teamspace.user_id).where(User__Teamspace.teamspace_id == teamspace_id)
+            subquery = select(User__Teamspace.user_id).where(
+                User__Teamspace.teamspace_id == teamspace_id
+            )
             query = query.filter(~User.id.in_(subquery))
 
     return query.all()

@@ -707,9 +707,7 @@ export const ToggleUp = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => {
-  return (
-    <ChevronUp size={size} className={className} />
-  );
+  return <ChevronUp size={size} className={className} />;
 };
 
 export const BroomIcon = ({

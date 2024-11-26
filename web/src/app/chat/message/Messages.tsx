@@ -44,6 +44,7 @@ import {
   ThumbsDownIcon,
   ThumbsUp,
   ThumbsUpIcon,
+  User,
   Wrench,
 } from "lucide-react";
 import { FeedbackModal } from "../modal/FeedbackModal";
@@ -141,6 +142,7 @@ export const AIMessage = ({
   onSubmit,
   otherMessagesCanSwitchTo,
   onMessageSelection,
+  llmProviders,
 }: {
   alternativeAssistant?: Assistant | null;
   currentAssistant: Assistant;
@@ -178,12 +180,14 @@ export const AIMessage = ({
     feedbackDetails: string,
     predefinedFeedback: string | undefined
   ) => Promise<void>;
+  llmProviders?: LLMProviderDescriptor[];
 }) => {
   const [isLikeModalOpen, setIsLikeModalOpen] = useState(false);
   const [isDislikeModalOpen, setIsDislikeModalOpen] = useState(false);
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [showLikeButton, setShowLikeButton] = useState(true);
   const [showDislikeButton, setShowDislikeButton] = useState(true);
+  const [_, llmName] = getFinalLLM(llmProviders || [], null, null);
 
   const handleLikeSubmit = async (
     messageId: number,
@@ -351,7 +355,7 @@ export const AIMessage = ({
 
   return (
     <div className={`w-full`}>
-      <div className="">
+      <div className="w-full relative">
         <div className="flex items-center">
           <div className="mx-1 flex items-center">
             <AssistantIcon
@@ -359,17 +363,26 @@ export const AIMessage = ({
               assistant={alternativeAssistant || currentAssistant}
             />
           </div>
-
-          <div className="my-auto ml-2 font-bold text-inverted-inverted">
-            {assistantName || "Arnold AI"}
+          <div
+            className={`my-auto ml-2 font-bold text-inverted-inverted flex flex-col truncate w-full`}
+          >
+            <span className="truncate w-3/4">
+              {assistantName || "Arnold AI"}
+            </span>
+            {llmName && (
+              <span className="font-normal text-xs text-neutral-600">
+                {llmName}
+              </span>
+            )}
           </div>
 
-          {query === undefined &&
+          {query !== undefined &&
             hasDocs &&
             handleShowRetrieved !== undefined &&
             isCurrentlyShowingRetrieved !== undefined &&
             !retrievalDisabled && (
-              <div className="absolute flex ml-8 w-message-xs 2xl:w-message-sm 3xl:w-message-default">
+              // <div className="absolute flex ml-8 w-message-xs 2xl:w-message-sm 3xl:w-message-default">
+              <div className="absolute flex w-full">
                 <div className="ml-auto">
                   <ShowHideDocsButton
                     messageId={messageId}
@@ -509,7 +522,7 @@ export const AIMessage = ({
           )}
         </div>
         {handleFeedback && (
-          <div className="flex flex-row gap-x-0.5 pl-1 md:pl-12 mt-1.5">
+          <div className="flex flex-row gap-x-0.5 pl-1 md:pl-14 mt-1.5">
             <div className="flex justify-start w-full gap-x-0.5">
               {includeMessageSwitcher && (
                 <div className="-mx-1 mr-auto">
@@ -681,6 +694,8 @@ import { UserProfile } from "@/components/UserProfile";
 import { Hoverable } from "@/components/Hoverable";
 import RegenerateOption from "../RegenerateOption";
 import { useMouseTracking } from "./hooks";
+import { getFinalLLM } from "@/lib/llm/utils";
+import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
 
 export const HumanMessage = ({
   content,
@@ -691,6 +706,7 @@ export const HumanMessage = ({
   onMessageSelection,
   user,
   stopGenerating = () => null,
+  isShared,
 }: {
   content: string;
   files?: FileDescriptor[];
@@ -700,6 +716,7 @@ export const HumanMessage = ({
   onMessageSelection?: (messageId: number) => void;
   user?: UserTypes | null;
   stopGenerating?: () => void;
+  isShared?: boolean;
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -745,7 +762,7 @@ export const HumanMessage = ({
         <div className="">
           <div className="flex">
             <div className="mx-1">
-              <UserProfile user={user} size={40} />
+              <UserProfile user={user} size={40} isShared={isShared} />
             </div>
 
             <div className="my-auto ml-2 font-bold text-inverted-inverted">

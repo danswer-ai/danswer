@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from enmedd.configs.constants import NotificationType
 from enmedd.db.models import Notification as NotificationDBModel
@@ -37,12 +38,16 @@ class Settings(BaseModel):
 
     chat_page_enabled: bool = True
     search_page_enabled: bool = True
-    chat_history_enabled: Optional[bool] = None
+    chat_history_enabled: Optional[bool] = True
     default_page: PageType = PageType.CHAT
     maximum_chat_retention_days: int | None = None
-    gpu_enabled: bool | None = None
-    num_indexing_workers: int | None = None
-    vespa_searcher_threads: int | None = None
+    gpu_enabled: bool | None = False
+    num_indexing_workers: int | None = 1
+    vespa_searcher_threads: int | None = 2
+    smtp_server: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
 
     def check_validity(self) -> None:
         chat_page_enabled = self.chat_page_enabled
@@ -86,3 +91,36 @@ class TeamspaceSettings(BaseModel):
             default_page=settings_model.default_page,
             maximum_chat_retention_days=settings_model.maximum_chat_retention_days,
         )
+
+
+class SmtpUpdate(BaseModel):
+    smtp_server: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+
+
+class ThemeColors(BaseModel):
+    """Model to define theme colors"""
+
+    color_50: str = Field(..., alias="50")
+    color_100: str = Field(..., alias="100")
+    color_200: str = Field(..., alias="200")
+    color_300: str = Field(..., alias="300")
+    color_400: str = Field(..., alias="400")
+    color_500: str = Field(..., alias="500")
+    color_600: str = Field(..., alias="600")
+    color_700: str = Field(..., alias="700")
+    color_800: str = Field(..., alias="800")
+    color_900: str = Field(..., alias="900")
+    color_950: str = Field(..., alias="950")
+
+
+class WorkspaceThemes(BaseModel):
+    """Model for workspace themes"""
+
+    brand: ThemeColors
+    secondary: ThemeColors
+
+    def check_validity(self) -> None:
+        return

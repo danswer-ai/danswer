@@ -57,9 +57,13 @@ const VALID_QUESTION_RESPONSE_DEFAULT: ValidQuestionResponse = {
 
 interface SearchSectionProps {
   defaultSearchType: SearchType;
+  teamspaceId?: string | string[];
 }
 
-export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
+export const SearchSection = ({
+  defaultSearchType,
+  teamspaceId,
+}: SearchSectionProps) => {
   const {
     ccPairs,
     documentSets,
@@ -72,9 +76,6 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
   const [query, setQuery] = useState<string>("");
   const [comments, setComments] = useState<any>(null);
   const [contentEnriched, setContentEnriched] = useState(false);
-
-  const { teamspaceId } = useParams();
-  const { toast } = useToast();
 
   const [searchResponse, setSearchResponse] = useState<SearchResponse>({
     suggestedSearchType: null,
@@ -431,6 +432,7 @@ export const SearchSection = ({ defaultSearchType }: SearchSectionProps) => {
       }),
       selectedSearchType: searchType ?? selectedSearchType,
       offset: offset ?? defaultOverrides.offset,
+      teamspaceId: teamspaceId,
     };
 
     await Promise.all([searchRequestStreamed(searchFnArgs)]);

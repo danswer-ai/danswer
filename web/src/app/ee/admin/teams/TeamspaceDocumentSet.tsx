@@ -51,7 +51,7 @@ const DocumentSetContent = ({
           {filteredDocumentSets.map((documentSet) => (
             <div
               key={documentSet.id}
-              className="border rounded-md flex items-start gap-4 p-4"
+              className="border rounded-md flex items-start gap-4 p-4 cursor-pointer"
               onClick={() => onSelect && onSelect(documentSet)}
             >
               <Globe className="shrink-0" />
@@ -196,7 +196,7 @@ export const TeamspaceDocumentSet = ({
     <CustomModal
       trigger={
         <div
-          className={`rounded-md bg-muted w-full p-4 min-h-36 flex flex-col justify-between ${teamspace.is_up_to_date && !teamspace.is_up_for_deletion && "cursor-pointer"}`}
+          className={`rounded-md bg-background-subtle w-full p-4 min-h-36 flex flex-col justify-between ${teamspace.is_up_to_date && !teamspace.is_up_for_deletion && "cursor-pointer"}`}
           onClick={() =>
             setIsDocumentSetModalOpen(
               teamspace.is_up_to_date && !teamspace.is_up_for_deletion

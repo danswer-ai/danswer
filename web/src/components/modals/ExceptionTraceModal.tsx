@@ -7,7 +7,7 @@ import { Button } from "../ui/button";
 export default function ExceptionTraceModal({
   onOutsideClick,
   exceptionTrace,
-  isOpen
+  isOpen,
 }: {
   onOutsideClick: () => void;
   exceptionTrace: string;
@@ -33,16 +33,12 @@ export default function ExceptionTraceModal({
               }}
             >
               Copy full trace
-              <CopyIcon 
-                className="shrink-0 stoke-white"/>
+              <CopyIcon className="shrink-0 stoke-white" />
             </Button>
           ) : (
-            <Button >
+            <Button>
               Copied to clipboard
-              <CheckmarkIcon
-                className="shrink-0"
-                size={16}
-              />
+              <CheckmarkIcon className="shrink-0" size={16} />
             </Button>
           )}
         </div>

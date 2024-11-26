@@ -25,7 +25,7 @@ const EditCredential = ({
     onSuccess: () => void
   ) => Promise<void>;
 }) => {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const validationSchema = createEditingValidationSchema(
     credential.credential_json
   );

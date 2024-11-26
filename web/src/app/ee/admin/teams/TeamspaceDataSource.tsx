@@ -55,7 +55,7 @@ const DataSourceContent = ({
           {filteredDataSources?.map((dataSource) => (
             <div
               key={dataSource.id}
-              className="border rounded-md flex items-start gap-4 p-4"
+              className="border rounded-md flex items-start gap-4 p-4 cursor-pointer"
               onClick={() => onSelect && onSelect(dataSource)}
             >
               <Globe className="shrink-0 my-auto" />
@@ -202,7 +202,7 @@ export const TeamspaceDataSource = ({
     <CustomModal
       trigger={
         <div
-          className={`rounded-md bg-muted w-full p-4 min-h-36 flex flex-col justify-between ${teamspace.is_up_to_date && !teamspace.is_up_for_deletion && "cursor-pointer"}`}
+          className={`rounded-md bg-background-subtle w-full p-4 min-h-36 flex flex-col justify-between ${teamspace.is_up_to_date && !teamspace.is_up_for_deletion && "cursor-pointer"}`}
           onClick={() =>
             setIsDataSourceModalOpen(
               teamspace.is_up_to_date && !teamspace.is_up_for_deletion

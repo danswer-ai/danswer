@@ -73,8 +73,8 @@ export const TeamspacesCard = ({
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
   return (
-    <div className="relative">
-      <DropdownMenu>
+    <div className="relative w-full max-w-[400px]">
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger
           asChild
           className="absolute cursor-pointer top-3 right-3"
@@ -112,7 +112,8 @@ export const TeamspacesCard = ({
           open={isDeleteModalOpen}
           type="Delete"
           onConfirm={async (event) => {
-            event.stopPropagation();
+            // event.stopPropagation();
+            event.preventDefault();
             const response = await deleteTeamspace(teamspace.id);
             if (response.ok) {
               toast({
@@ -135,7 +136,7 @@ export const TeamspacesCard = ({
 
       <Card
         key={teamspace.id}
-        className="overflow-hidden !rounded-xl cursor-pointer xl:min-w-[280px] md:max-w-[400px] justify-start items-start"
+        className="overflow-hidden !rounded-xl cursor-pointer w-full justify-start items-start"
         onClick={() => onClick(teamspace.id)}
       >
         <CardHeader
@@ -145,11 +146,11 @@ export const TeamspacesCard = ({
         <CardContent className="relative flex flex-col justify-between min-h-48 bg-muted/50">
           <div className="absolute top-0 w-12 h-12 -translate-y-1/2 right-4 flex items-center justify-center">
             {teamspace.logo ? (
-              <div className="rounded-md w-10 h-10 bg-background overflow-hidden">
+              <div className="rounded-md w-10 h-10 bg-background overflow-hidden shrink-0">
                 <img
                   src={buildImgUrl(teamspace.logo)}
                   alt="Teamspace Logo"
-                  className="object-cover w-full h-full shrink-0"
+                  className="object-cover w-full h-full"
                   width={40}
                   height={40}
                 />

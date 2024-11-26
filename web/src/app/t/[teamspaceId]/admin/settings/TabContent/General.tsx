@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useGradient } from "@/hooks/useGradient";
 
 interface GeneralProps {
   teamspaceId: string | string[];
@@ -210,7 +211,12 @@ export default function General({
                 className="w-full h-full object-cover object-center"
               />
             ) : (
-              <Skeleton className="w-16 h-16 rounded-full" />
+              <div
+                style={{ background: useGradient(teamspaceName) }}
+                className={`font-bold text-inverted shrink-0  bg-brand-500 text-2xl flex justify-center items-center uppercase w-full h-full`}
+              >
+                {teamspaceName.charAt(0)}
+              </div>
             )}
           </div>
 

@@ -16,7 +16,7 @@ export function SetDefaultModelModal({
   onClose,
   setLlmOverride,
   defaultModel,
-  settingsToggled
+  settingsToggled,
 }: {
   llmProviders: LLMProviderDescriptor[];
   setLlmOverride: Dispatch<SetStateAction<LlmOverride>>;
@@ -24,7 +24,7 @@ export function SetDefaultModelModal({
   defaultModel: string | null;
   settingsToggled?: boolean;
 }) {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const { refreshUser } = useUser();
   const containerRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
@@ -117,7 +117,8 @@ export function SetDefaultModelModal({
     } catch (error) {
       toast({
         title: "Update Failed",
-        description: "There was an issue updating the default model. Please try again.",
+        description:
+          "There was an issue updating the default model. Please try again.",
         variant: "destructive",
       });
     }
@@ -129,9 +130,9 @@ export function SetDefaultModelModal({
   return (
     <CustomModal
       onClose={onClose}
-          title="Set Default Model"
-          trigger={null}
-          open={settingsToggled}
+      title="Set Default Model"
+      trigger={null}
+      open={settingsToggled}
     >
       <>
         <Text className="mb-4">

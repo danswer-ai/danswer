@@ -157,7 +157,12 @@ export function ChangeCredentialsModal({
 
   return (
     <CustomModal
-      title={<div className="flex items-center gap-4">{provider.icon({ size: 24 })} Modify your ${provider.provider_type} ${isProxy ? "Configuration" : "key"}</div>}
+      title={
+        <div className="flex items-center gap-4">
+          {provider.icon({ size: 24 })} Modify your ${provider.provider_type} $
+          {isProxy ? "Configuration" : "key"}
+        </div>
+      }
       onClose={onCancel}
       open={!!provider}
       trigger={null}

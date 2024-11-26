@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Modal } from "@/components/Modal";
-import { Text, Badge } from "@tremor/react";
+import { Text } from "@tremor/react";
 import { ValidSources } from "@/lib/types";
 import {
   EditIcon,
@@ -24,6 +23,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DeleteModal } from "@/components/DeleteModal";
+import { Badge } from "@/components/ui/badge";
+import { CustomTooltip } from "@/components/CustomTooltip";
 
 const CredentialSelectionTable = ({
   credentials,
@@ -104,7 +105,7 @@ const CredentialSelectionTable = ({
                             className="w-4 h-4 ml-4 text-blue-600 transition duration-150 ease-in-out form-radio"
                           />
                         ) : (
-                          <Badge>selected</Badge>
+                          <Badge>Selected</Badge>
                         )}
                       </TableCell>
                       <TableCell>{credential.id}</TableCell>
@@ -118,16 +119,24 @@ const CredentialSelectionTable = ({
                         {new Date(credential.time_updated).toLocaleString()}
                       </TableCell>
                       <TableCell className="flex content-center gap-x-2">
-                        <Button
+                        <CustomTooltip
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled={selected || !editable}
+                              onClick={async () => {
+                                onDeleteCredential(credential);
+                              }}
+                              className="my-auto disabled:opacity-20 enabled:cursor-pointer"
+                            >
+                              <TrashIcon />
+                            </Button>
+                          }
                           variant="destructive"
-                          disabled={selected || !editable}
-                          onClick={async () => {
-                            onDeleteCredential(credential);
-                          }}
-                          className="my-auto disabled:opacity-20 enabled:cursor-pointer"
                         >
-                          <TrashIcon />
-                        </Button>
+                          Delete
+                        </CustomTooltip>
                         {onEditCredential && (
                           <button
                             disabled={!editable}

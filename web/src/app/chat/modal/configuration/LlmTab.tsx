@@ -97,21 +97,20 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
             onClick={() => setIsTemperatureExpanded(!isTemperatureExpanded)}
           >
             <Thermometer />
-        Temperature
+            Temperature
           </button>
 
           {isTemperatureExpanded && (
             <CustomModal
-            onClose={() => setIsTemperatureExpanded(false)}
-            title="Adjust the temperature of the LLM."
-            trigger={null}
-            open={isTemperatureExpanded}
+              onClose={() => setIsTemperatureExpanded(false)}
+              title="Adjust the temperature of the LLM."
+              trigger={null}
+              open={isTemperatureExpanded}
             >
               <Text className="mt-2 mb-8">
-                Higher temperatures will make
-                the LLM generate more creative and diverse responses, while
-                lower temperature will make the LLM generate more conservative
-                and focused responses.
+                Higher temperatures will make the LLM generate more creative and
+                diverse responses, while lower temperature will make the LLM
+                generate more conservative and focused responses.
               </Text>
 
               <div className="relative w-full">

@@ -23,7 +23,7 @@ INDEX_SEPARATOR = "==="
 ENMEDD_METADATA_FILENAME = ".enmedd_metadata.json"
 
 # Image quality
-QUALITY = 50
+QUALITY = 60
 SIZE = (200, 200)
 
 # Messages

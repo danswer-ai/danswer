@@ -1,6 +1,7 @@
 import { Connector } from "@/lib/connectors/connectors";
 import { Credential } from "@/lib/connectors/credentials";
 import {
+  AccessType,
   DeletionAttemptSnapshot,
   IndexAttemptSnapshot,
   ValidStatuses,
@@ -22,7 +23,7 @@ export interface CCPairFullInfo {
   number_of_index_attempts: number;
   last_index_attempt_status: ValidStatuses | null;
   latest_deletion_attempt: DeletionAttemptSnapshot | null;
-  is_public: boolean;
+  access_type: AccessType;
   is_editable_for_current_user: boolean;
   deletion_failure_message: string | null;
 }

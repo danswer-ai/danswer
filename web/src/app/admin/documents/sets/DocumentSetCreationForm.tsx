@@ -53,10 +53,14 @@ export const DocumentSetCreationForm = ({
     ccPair.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const connectorItems = filteredCcPairs.map((ccPair) => ({
-    value: ccPair.cc_pair_id.toString(),
-    label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
-  }));
+  const connectorItems = filteredCcPairs
+    .filter((ccPair) => ccPair.access_type !== "private")
+    .map((ccPair) => ({
+      value: ccPair.cc_pair_id.toString(),
+      label: ccPair.name || `Connector ${ccPair.cc_pair_id}`,
+    }));
+
+  console.log(existingDocumentSet);
 
   return (
     <div>
@@ -70,7 +74,7 @@ export const DocumentSetCreationForm = ({
             ) ?? [],
           is_public: existingDocumentSet?.is_public ?? true,
           users: existingDocumentSet?.users ?? [],
-          groups: existingDocumentSet?.groups ?? [],
+          groups: existingDocumentSet?.groups.map((group) => group.id) ?? [],
         }}
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Please enter a name for the set"),

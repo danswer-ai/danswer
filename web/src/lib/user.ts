@@ -1,3 +1,4 @@
+import { UUID } from "crypto";
 import { User } from "./types";
 
 export const checkUserIsNoAuthUser = (userId: string) => {
@@ -75,5 +76,19 @@ export const basicSignup = async (
       password,
     }),
   });
+  return response;
+};
+
+export const validateInvite = async (email: string, token: string) => {
+  const response = await fetch(
+    `/api/users/validate-token-invite?email=${email}&token=${token}`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
   return response;
 };

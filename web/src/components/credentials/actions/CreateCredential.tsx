@@ -46,8 +46,8 @@ const CreateButton = ({
       type="button"
       disabled={isSubmitting || (!isAdmin && groups.length === 0)}
     >
-        <PlusCircleIcon size={16} className="text-indigo-100" />
-        Create
+      <PlusCircleIcon size={16} className="text-indigo-100" />
+      Create
     </Button>
   </div>
 );
@@ -274,8 +274,8 @@ export default function CreateCredential({
                 type="button"
                 disabled={formikProps.isSubmitting}
               >
-                  <FaAccusoft />
-                  Create
+                <FaAccusoft />
+                Create
               </Button>
             </div>
           )}

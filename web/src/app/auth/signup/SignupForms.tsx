@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useToast } from "@/hooks/use-toast";
-import { basicLogin, basicSignup } from "@/lib/user";
+import { basicLogin, basicSignup, validateInvite } from "@/lib/user";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/Spinner";
 import { TextFormField } from "@/components/admin/connectors/Field";
@@ -13,13 +13,17 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PasswordRequirements } from "./PasswordRequirements";
 import { usePasswordValidation } from "@/hooks/usePasswordValidation"; // Import the custom hook
+import ReCAPTCHA from "react-google-recaptcha";
+import { NEXT_PUBLIC_CAPTCHA_SITE_KEY } from "@/lib/constants";
 
 export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
+  const token = searchParams.get("invitetoken") || "";
 
   // Use the custom hook
   const {
@@ -54,6 +58,16 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
             .oneOf([Yup.ref("password")], "Passwords must match"),
         })}
         onSubmit={async (values) => {
+          const captchaValue = recaptchaRef.current?.getValue();
+          if (!captchaValue && NEXT_PUBLIC_CAPTCHA_SITE_KEY) {
+            toast({
+              title: "ReCAPTCHA Missing",
+              description: "Please complete the ReCAPTCHA to proceed.",
+              variant: "destructive",
+            });
+            return;
+          }
+
           if (
             !(
               values.password.length >= 8 &&
@@ -98,6 +112,9 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
 
           const loginResponse = await basicLogin(values.email, values.password);
           if (loginResponse.ok) {
+            if (token) {
+              await validateInvite(values.email, token);
+            }
             if (shouldVerify) {
               router.push("/auth/waiting-on-verification");
             } else {
@@ -161,11 +178,19 @@ export function SignupForms({ shouldVerify }: { shouldVerify?: boolean }) {
               placeholder="Enter your password"
             />
 
+            {NEXT_PUBLIC_CAPTCHA_SITE_KEY && (
+              <ReCAPTCHA
+                ref={recaptchaRef}
+                sitekey={NEXT_PUBLIC_CAPTCHA_SITE_KEY}
+                className="pb-4"
+              />
+            )}
+
             <div className="flex items-center gap-2">
-              <Checkbox id="remember" />
+              {/* <Checkbox id="remember" />
               <Label className="p-0" htmlFor="remember">
                 Remember me
-              </Label>
+              </Label> */}
             </div>
 
             <div className="flex pt-8">

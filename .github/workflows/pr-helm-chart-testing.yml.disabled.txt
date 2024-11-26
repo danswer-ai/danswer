@@ -13,7 +13,7 @@ on:
 jobs:
   lint-test:
     # See https://runs-on.com/runners/linux/
-    runs-on: [runs-on,runner=8cpu-linux-x64,hdd=256,"run-id=${{ github.run_id }}"]
+    runs-on: ubuntu-latest
 
     # fetch-depth 0 is required for helm/chart-testing-action
     steps:

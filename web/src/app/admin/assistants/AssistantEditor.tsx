@@ -420,6 +420,14 @@ export function AssistantEditor({
               tool_ids: enabledTools,
               remove_image: removeAssistantImage,
             });
+
+            if (assistantResponse?.ok) {
+              toast({
+                title: "Assistant Updated",
+                description: `"${values.name}" has been successfully updated.`,
+                variant: "success",
+              });
+            }
           } else {
             [promptResponse, assistantResponse] = await createAssistant({
               ...values,
@@ -897,42 +905,49 @@ export function AssistantEditor({
                                   </SubLabel>
                                 </div>
 
-                                {documentSets.length > 0 ? (
+                                {documentSets.filter(
+                                  (documentSet) => documentSet.is_public
+                                ).length > 0 ? (
                                   <FieldArray
                                     name="document_set_ids"
                                     render={(arrayHelpers: ArrayHelpers) => (
                                       <div>
                                         <div className="flex flex-wrap gap-2 mt-2 mb-3 text-sm">
-                                          {documentSets.map((documentSet) => {
-                                            const ind =
-                                              values.document_set_ids.indexOf(
-                                                documentSet.id
+                                          {documentSets
+                                            .filter(
+                                              (documentSet) =>
+                                                documentSet.is_public
+                                            )
+                                            .map((documentSet) => {
+                                              const ind =
+                                                values.document_set_ids.indexOf(
+                                                  documentSet.id
+                                                );
+                                              let isSelected = ind !== -1;
+                                              return (
+                                                <DocumentSetSelectable
+                                                  key={documentSet.id}
+                                                  documentSet={documentSet}
+                                                  isSelected={isSelected}
+                                                  onSelect={() => {
+                                                    if (isSelected) {
+                                                      arrayHelpers.remove(ind);
+                                                    } else {
+                                                      arrayHelpers.push(
+                                                        documentSet.id
+                                                      );
+                                                    }
+                                                  }}
+                                                />
                                               );
-                                            let isSelected = ind !== -1;
-                                            return (
-                                              <DocumentSetSelectable
-                                                key={documentSet.id}
-                                                documentSet={documentSet}
-                                                isSelected={isSelected}
-                                                onSelect={() => {
-                                                  if (isSelected) {
-                                                    arrayHelpers.remove(ind);
-                                                  } else {
-                                                    arrayHelpers.push(
-                                                      documentSet.id
-                                                    );
-                                                  }
-                                                }}
-                                              />
-                                            );
-                                          })}
+                                            })}
                                         </div>
                                       </div>
                                     )}
                                   />
                                 ) : (
                                   <i className="text-sm">
-                                    No Document Sets available.{" "}
+                                    No Public Document Sets available.{" "}
                                     {user?.role !== "admin" && (
                                       <>
                                         If this functionality would be useful,
@@ -1051,7 +1066,6 @@ export function AssistantEditor({
                         }}
                         defaultHeight="h-40"
                         explanationText="Learn about prompting in our docs!"
-                        explanationLink="https://docs.danswer.dev/guides/assistants"
                         optional
                       />
                     </>

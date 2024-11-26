@@ -11,11 +11,7 @@ env:
   
 jobs:
   build:
-    runs-on:
-      - runs-on
-      - runner=${{ matrix.platform == 'linux/amd64' && '8cpu-linux-x64' || '8cpu-linux-arm64' }}
-      - run-id=${{ github.run_id }}
-      - tag=platform-${{ matrix.platform }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
