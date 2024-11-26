@@ -359,6 +359,7 @@ export function AssistantEditor({
           if (!promptResponse.ok) {
             error = await promptResponse.text();
           }
+
           if (!personaResponse) {
             error = "Failed to create Assistant - no response received";
           } else if (!personaResponse.ok) {
