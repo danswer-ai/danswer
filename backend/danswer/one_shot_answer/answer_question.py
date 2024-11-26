@@ -349,7 +349,7 @@ def stream_answer_objects(
         token_count=len(llm_tokenizer.encode(answer.llm_answer)),
         message_type=MessageType.ASSISTANT,
         error=None,
-        search_docs=reference_db_search_docs,
+        reference_docs=reference_db_search_docs,
         db_session=db_session,
         commit=True,
     )

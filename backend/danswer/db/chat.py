@@ -451,7 +451,7 @@ def add_chats_to_session_from_slack_thread(
             rephrased_query=chat_message.rephrased_query,
             error=chat_message.error,
             citations=chat_message.citations,
-            search_docs=chat_message.search_docs,
+            reference_docs=chat_message.search_docs,
             tool_call=chat_message.tool_call,
             prompt_id=chat_message.prompt_id,
             token_count=chat_message.token_count,
@@ -576,7 +576,7 @@ def create_new_chat_message(
     files: list[FileDescriptor] | None = None,
     rephrased_query: str | None = None,
     error: str | None = None,
-    search_docs: list[DBSearchDoc] | None = None,
+    reference_docs: list[DBSearchDoc] | None = None,
     alternate_assistant_id: int | None = None,
     # Maps the citation number [n] to the DB SearchDoc
     citations: dict[int, int] | None = None,
@@ -627,8 +627,8 @@ def create_new_chat_message(
         db_session.add(new_chat_message)
 
     # SQL Alchemy will propagate this to update the reference_docs' foreign keys
-    if search_docs:
-        new_chat_message.search_docs = search_docs
+    if reference_docs:
+        new_chat_message.search_docs = reference_docs
 
     # Flush the session to get an ID for the new chat message
     db_session.flush()
