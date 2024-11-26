@@ -228,6 +228,16 @@ def _fetch_all_page_restrictions_for_space(
                     external_access=space_permissions,
                 )
             )
+            if (
+                not space_permissions.is_public
+                and not space_permissions.external_user_emails
+                and not space_permissions.external_user_group_ids
+            ):
+                logger.warning(
+                    f"Permissions are empty for document: {slim_doc.id}\n"
+                    "This means space permissions are may be wrong for"
+                    f" Space key: {space_key}"
+                )
             continue
 
         logger.warning(f"No permissions found for document {slim_doc.id}")
