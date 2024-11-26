@@ -456,7 +456,6 @@ export function ChatPage({
         }
       }
       setIsFetchingChatMessages(false);
-      console.log("stuff", chatSession);
 
       // if this is a seeded chat, then kick off the AI message generation
       if (
@@ -1851,7 +1850,7 @@ export function ChatPage({
     };
 
     handleSlackChatRedirect();
-  }, [searchParams, router]); // Add any other dependencies needed
+  }, [searchParams, router]);
 
   return (
     <>
