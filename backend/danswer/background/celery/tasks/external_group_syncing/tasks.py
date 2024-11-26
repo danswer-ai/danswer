@@ -49,7 +49,7 @@ def _is_external_group_sync_due(cc_pair: ConnectorCredentialPair) -> bool:
     if cc_pair.access_type != AccessType.SYNC:
         return False
 
-    # skip pruning if not active
+    # skip external group sync if not active
     if cc_pair.status != ConnectorCredentialPairStatus.ACTIVE:
         return False
 
