@@ -44,6 +44,7 @@ def _get_access_for_documents(
         for document_id, group_names in fetch_user_groups_for_documents(
             db_session=db_session,
             document_ids=document_ids,
+            exclude_sync_access=True,
         )
     }
     documents = get_documents_by_ids(
