@@ -8,9 +8,9 @@ from typing import List
 import discord
 from discord.channel import TextChannel
 
-from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
+from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
@@ -24,8 +24,8 @@ logger = setup_logger()
 class DanswerDiscordClient(discord.Client):
     def __init__(
         self,
-        start: SecondsSinceUnixEpoch,
-        end: SecondsSinceUnixEpoch,
+        start: datetime,
+        end: datetime,
         channel_names: List[str] | None = None,
         server_ids: List[int] | None = None,
         pull_date_from: str | None = None,
@@ -34,8 +34,8 @@ class DanswerDiscordClient(discord.Client):
     ) -> None:
         super().__init__(*args, **kwargs)
         # read start_time and end_time
-        self.start_time: SecondsSinceUnixEpoch = start
-        self.end_time: SecondsSinceUnixEpoch = end
+        self.start_time: datetime = start
+        self.end_time: datetime = end
         self.channel_names: List[str] | None = channel_names
         self.server_ids: List[int] | None = server_ids
         self.pull_date_from: str | None = pull_date_from  # YYYY-MM-DD
@@ -47,8 +47,8 @@ class DanswerDiscordClient(discord.Client):
 
             channel_names = self.channel_names
             server_ids = self.server_ids
-            start: datetime = datetime.fromtimestamp(self.start_time, tz=timezone.utc)
-            end: datetime = datetime.fromtimestamp(self.end_time, tz=timezone.utc)
+            start: datetime = self.start_time
+            end: datetime = self.end_time
             pull_date_from: datetime | None = (
                 datetime.strptime(self.pull_date_from, "%Y-%m-%d")
                 if self.pull_date_from
@@ -59,7 +59,8 @@ class DanswerDiscordClient(discord.Client):
                 start = max(start, pull_date_from)
 
             if start > end:
-                return docs
+                self.docs = []
+                return
 
             filtered_channels: list[TextChannel] = []
             async for guild in self.fetch_guilds():
@@ -147,8 +148,8 @@ class DanswerDiscordClient(discord.Client):
 
 async def _fetch_all_docs(
     token: str,
-    start: SecondsSinceUnixEpoch,
-    end: SecondsSinceUnixEpoch,
+    start: datetime,
+    end: datetime,
     channel_names: List[str] | None,
     server_ids: List[int] | None,
     pull_date_from: str | None,
@@ -163,13 +164,12 @@ async def _fetch_all_docs(
     return client.docs
 
 
-class DiscordConnector(PollConnector):
+class DiscordConnector(PollConnector, LoadConnector):
     def __init__(
         self,
         server_ids: list[str] | None = None,
         channel_names: list[str] | None = None,
         start_date: str | None = None,  # YYYY-MM-DD
-        batch_size: int = INDEX_BATCH_SIZE,
     ):
         self.channel_names: list[str] | None = channel_names
         self.server_ids: list[int] | None = (
@@ -196,8 +196,24 @@ class DiscordConnector(PollConnector):
         for doc in asyncio.run(
             _fetch_all_docs(
                 self.discord_bot_token,
-                start,
-                end,
+                datetime.fromtimestamp(start, tz=timezone.utc),
+                datetime.fromtimestamp(end, tz=timezone.utc),
+                self.channel_names,
+                self.server_ids,
+                self.pull_date_from,
+            )
+        ):
+            yield doc
+
+    def load_from_state(self) -> GenerateDocumentsOutput:
+        if self.discord_bot_token is None:
+            raise ConnectorMissingCredentialError("Discord")
+
+        for doc in asyncio.run(
+            _fetch_all_docs(
+                self.discord_bot_token,
+                datetime(1970, 1, 1, tzinfo=timezone.utc),
+                datetime.now(timezone.utc),
                 self.channel_names,
                 self.server_ids,
                 self.pull_date_from,
@@ -212,10 +228,14 @@ if __name__ == "__main__":
 
     end = time.time()
     start = end - 24 * 60 * 60 * 1  # 1 day
+    server_ids: str | None = os.environ.get("server_ids", None)  # "1,2,3"
+    channel_names: str | None = os.environ.get(
+        "channel_names", None
+    )  # "channel1,channel2"
 
     connector = DiscordConnector(
-        server_ids=os.environ.get("server_ids", None),
-        channel_names=os.environ.get("channel_names", None),
+        server_ids=server_ids.split(",") if server_ids else None,
+        channel_names=channel_names.split(",") if channel_names else None,
         start_date=os.environ.get("start_date", None),
     )
     connector.load_credentials({"discord_bot_token": os.environ["discord_bot_token"]})
