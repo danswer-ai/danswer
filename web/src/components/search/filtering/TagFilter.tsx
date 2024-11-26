@@ -6,11 +6,13 @@ import debounce from "lodash/debounce";
 import { getValidTags } from "@/lib/tags/tagUtils";
 
 export function TagFilter({
+  modal,
   tags,
   selectedTags,
   setSelectedTags,
   showTagsOnLeft = false,
 }: {
+  modal?: boolean;
   tags: Tag[];
   selectedTags: Tag[];
   setSelectedTags: React.Dispatch<React.SetStateAction<Tag[]>>;
@@ -77,7 +79,9 @@ export function TagFilter({
     <div className="relative ">
       <input
         ref={inputRef}
-        className="w-full border border-border py-0.5 px-2 rounded text-sm h-8"
+        className={`w-full border border-border py-0.5 px-2 rounded text-sm h-8 ${
+          modal ? "w-[80vw]" : "w-full"
+        }`}
         placeholder="Find a tag"
         value={filterValue}
         onChange={handleFilterChange}

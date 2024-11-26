@@ -47,7 +47,7 @@ export default function FixedLogo({
         </div>
       </Link>
       <div className="mobile:hidden fixed left-2.5 bottom-4">
-        <FiSidebar className="text-text-mobile-sidebar" />
+        {/* <FiSidebar className="text-text-mobile-sidebar" /> */}
       </div>
     </>
   );

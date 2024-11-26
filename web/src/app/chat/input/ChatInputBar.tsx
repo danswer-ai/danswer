@@ -36,10 +36,13 @@ import { Popup } from "@/components/admin/connectors/Popup";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 import { IconType } from "react-icons";
 import { LlmTab } from "../modal/configuration/LlmTab";
+import { XIcon } from "lucide-react";
 
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
+  removeFilters,
+  removeDocs,
   openModelSettings,
   showDocs,
   showConfigureAPIKey,
@@ -66,6 +69,8 @@ export function ChatInputBar({
   inputPrompts,
   toggleFilters,
 }: {
+  removeFilters: () => void;
+  removeDocs: () => void;
   showConfigureAPIKey: () => void;
   openModelSettings: () => void;
   chatState: ChatState;
@@ -427,16 +432,21 @@ export function ChatInputBar({
             )}
             {(selectedDocuments.length > 0 || files.length > 0) && (
               <div className="flex gap-x-2 px-2 pt-2">
-                <div className="flex gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end miniscroll">
+                <div className="flex gap-x-1 px-2 overflow-visible overflow-x-scroll items-end miniscroll">
                   {selectedDocuments.length > 0 && (
                     <button
                       onClick={showDocs}
-                      className="flex-none flex cursor-pointer hover:bg-background-200 transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-150 max-w-[100px]"
+                      className="flex-none relative overflow-visible flex items-center gap-x-2 h-10 px-3 rounded-lg bg-background-150 hover:bg-background-200 transition-colors duration-300 cursor-pointer max-w-[150px]"
                     >
-                      <FileIcon size={24} />
-                      <p className="text-xs">
+                      <FileIcon size={20} />
+                      <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                         {selectedDocuments.length} selected
-                      </p>
+                      </span>
+                      <XIcon
+                        onClick={removeDocs}
+                        size={16}
+                        className="text-text-400 hover:text-text-600 ml-auto"
+                      />
                     </button>
                   )}
                   {files.map((file) => (

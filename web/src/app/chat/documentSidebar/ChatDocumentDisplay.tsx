@@ -12,6 +12,7 @@ import { MetadataBadge } from "@/components/MetadataBadge";
 interface DocumentDisplayProps {
   document: DanswerDocument;
   queryEventId: number | null;
+  modal?: boolean;
   isAIPick: boolean;
   isSelected: boolean;
   handleSelect: (documentId: string) => void;
@@ -20,8 +21,10 @@ interface DocumentDisplayProps {
 }
 
 export function DocumentMetadataBlock({
+  modal,
   document,
 }: {
+  modal?: boolean;
   document: DanswerDocument;
 }) {
   const MAX_METADATA_ITEMS = 3;
@@ -30,7 +33,7 @@ export function DocumentMetadataBlock({
   return (
     <div className="flex items-center overflow-hidden">
       {document.updated_at && (
-        <DocumentUpdatedAtBadge updatedAt={document.updated_at} />
+        <DocumentUpdatedAtBadge updatedAt={document.updated_at} modal={modal} />
       )}
 
       {metadataEntries.length > 0 && (
@@ -54,6 +57,7 @@ export function DocumentMetadataBlock({
 
 export function ChatDocumentDisplay({
   document,
+  modal,
   queryEventId,
   isAIPick,
   isSelected,
@@ -73,12 +77,11 @@ export function ChatDocumentDisplay({
           new URL(document.link).hostname
         }&sz=24`
       : null;
-  console.log(new URL(document.link).hostname);
 
   return (
-    <div className="opacity-100 will-change-auto">
+    <div className={`opacity-100   ${modal ? "w-[90vw]" : "w-full"}`}>
       <div
-        className={`flex relative flex-col gap-0.5  rounded-xl mx-2 my-1.5 ${
+        className={`flex relative flex-col gap-0.5  rounded-xl mx-2 my-1 ${
           isSelected ? "bg-gray-200" : "hover:bg-background-125"
         }`}
       >
@@ -102,14 +105,14 @@ export function ChatDocumentDisplay({
             )}
             <div className="line-clamp-1 text-text-900 text-sm font-semibold">
               {(document.semantic_identifier || document.document_id).length >
-              40
+              (modal ? 30 : 40)
                 ? `${(document.semantic_identifier || document.document_id)
-                    .slice(0, 40)
+                    .slice(0, modal ? 30 : 40)
                     .trim()}...`
                 : document.semantic_identifier || document.document_id}
             </div>
           </div>
-          <DocumentMetadataBlock document={document} />
+          <DocumentMetadataBlock modal={modal} document={document} />
           <div className="line-clamp-3 pt-2 text-sm font-normal leading-snug text-gray-600">
             {buildDocumentSummaryDisplay(
               document.match_highlights,

@@ -115,6 +115,7 @@ import {
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import AssistantBanner from "../../components/assistants/AssistantBanner";
 import AssistantSelector from "@/components/chat_search/AssistantSelector";
+import { Modal } from "@/components/Modal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1958,6 +1959,37 @@ export function ChatPage({
         />
       )}
 
+      {retrievalEnabled && documentSidebarToggled && settings?.isMobile && (
+        <div className="md:hidden">
+          <Modal
+            height="max-h-[70vh]"
+            noPadding
+            onOutsideClick={() => setDocumentSidebarToggled(false)}
+          >
+            <DocumentSidebar
+              modal={true}
+              filterManager={filterManager}
+              ccPairs={ccPairs}
+              tags={tags}
+              documentSets={documentSets}
+              ref={innerSidebarElementRef}
+              toggleSidebar={toggleDocumentSidebar}
+              showFilters={filtersToggled}
+              closeSidebar={() => setDocumentSidebarToggled(false)}
+              selectedMessage={aiMessage}
+              selectedDocuments={selectedDocuments}
+              toggleDocumentSelection={toggleDocumentSelection}
+              clearSelectedDocuments={clearSelectedDocuments}
+              selectedDocumentTokens={selectedDocumentTokens}
+              maxTokens={maxTokens}
+              isLoading={isFetchingChatMessages}
+              initialWidth={400}
+              isOpen={true}
+            />
+          </Modal>
+        </div>
+      )}
+
       {deletingChatSession && (
         <DeleteEntityModal
           entityType="chat"
@@ -2065,7 +2097,7 @@ export function ChatPage({
                 flex-none 
                 fixed
                 right-0
-                z-40
+                z-[1000]
                 bg-background-100
                 h-screen
                 transition-all
@@ -2083,6 +2115,7 @@ export function ChatPage({
             `}
             >
               <DocumentSidebar
+                modal={false}
                 filterManager={filterManager}
                 ccPairs={ccPairs}
                 tags={tags}
@@ -2112,7 +2145,7 @@ export function ChatPage({
             ref={masterFlexboxRef}
             className="flex h-full w-full overflow-x-hidden"
           >
-            <div className="flex h-full relative mx-2 flex-col w-full">
+            <div className="flex h-full relative px-2 flex-col w-full">
               {/* {liveAssistant && onAssistantChange && (
                 <div className="flex justify-center mt-4 -mb-4 h w-full overflow-visible">
                   <AssistantSelector
@@ -2135,7 +2168,7 @@ export function ChatPage({
                       ? setSharingModalVisible
                       : undefined
                   }
-                  toggleSidebar={toggleDocumentSidebar}
+                  toggleSidebar={toggleSidebar}
                   currentChatSession={selectedChatSession}
                   documentSidebarToggled={documentSidebarToggled}
                   llmOverrideManager={llmOverrideManager}
@@ -2174,24 +2207,26 @@ export function ChatPage({
                           ref={scrollableDivRef}
                         >
                           {liveAssistant && onAssistantChange && (
-                            <div className="z-[1000] fixed top-4 pointer-events-none left-0 w-full flex justify-center overflow-visible">
+                            <div className="z-20 fixed top-4 pointer-events-none left-0 w-full flex justify-center overflow-visible">
                               {!settings?.isMobile && (
                                 <div
                                   style={{ transition: "width 0.30s ease-out" }}
                                   className={`
-                          flex-none 
-                          overflow-y-hidden 
-                          transition-all 
-                          duration-300 
-                          ease-in-out
-                          bg-black
-                          h-full
-                          ${toggledSidebar ? "w-[200px]" : "w-[0px]"}
-                      `}
+                                  flex-none 
+                                  overflow-y-hidden 
+                                  transition-all 
+                                  pointer-events-none
+                                  duration-300 
+                                  ease-in-out
+                                  bg-black
+                                  h-full
+                                  ${toggledSidebar ? "w-[200px]" : "w-[0px]"}
+                              `}
                                 ></div>
                               )}
 
                               <AssistantSelector
+                                isMobile={settings?.isMobile!}
                                 liveAssistant={liveAssistant}
                                 onAssistantChange={onAssistantChange}
                                 llmOverrideManager={llmOverrideManager}
@@ -2207,6 +2242,7 @@ export function ChatPage({
                                     ease-in-out
                                     bg-black
                                     h-full
+                                    pointer-events-none
                                     ${
                                       documentSidebarToggled && retrievalEnabled
                                         ? "w-[400px]"
@@ -2225,7 +2261,7 @@ export function ChatPage({
                             !isFetchingChatMessages &&
                             currentSessionChatState == "input" &&
                             !loadingError && (
-                              <div className="h-full mt-12 flex flex-col justify-center items-center">
+                              <div className="h-full w-[95%] mx-auto mt-12 flex flex-col justify-center items-center">
                                 <ChatIntro selectedPersona={liveAssistant} />
 
                                 <StarterMessages
@@ -2247,6 +2283,7 @@ export function ChatPage({
                                         Recent Assistants
                                       </div>
                                       <AssistantBanner
+                                        mobile={settings?.isMobile}
                                         recentAssistants={recentAssistants}
                                         liveAssistant={liveAssistant}
                                         allAssistants={allAssistants}
@@ -2680,6 +2717,15 @@ export function ChatPage({
                               </div>
                             )}
                             <ChatInputBar
+                              removeDocs={() => {
+                                clearSelectedDocuments();
+                              }}
+                              removeFilters={() => {
+                                filterManager.setSelectedSources([]);
+                                filterManager.setSelectedTags([]);
+                                filterManager.setSelectedDocumentSets([]);
+                                setDocumentSidebarToggled(false);
+                              }}
                               showConfigureAPIKey={() =>
                                 setShowApiKeyModal(true)
                               }
@@ -2760,7 +2806,11 @@ export function ChatPage({
                   <div
                     style={{ transition: "width 0.30s ease-out" }}
                     className={`flex-none bg-transparent transition-all bg-opacity-80 duration-300 epase-in-out h-full
-                        ${toggledSidebar ? "w-[250px] " : "w-[0px]"}`}
+                        ${
+                          toggledSidebar && !settings?.isMobile
+                            ? "w-[250px] "
+                            : "w-[0px]"
+                        }`}
                   />
                   <div className="my-auto">
                     <DanswerInitializingLoader />

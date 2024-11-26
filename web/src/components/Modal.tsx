@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { isEventWithinRef } from "@/lib/contains";
 import ReactDOM from "react-dom";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface ModalProps {
   icon?: ({ size, className }: IconProps) => JSX.Element;
@@ -18,6 +19,7 @@ interface ModalProps {
   hideDividerForTitle?: boolean;
   hideCloseButton?: boolean;
   noPadding?: boolean;
+  height?: string;
 }
 
 export function Modal({
@@ -28,6 +30,7 @@ export function Modal({
   width,
   titleSize,
   hideDividerForTitle,
+  height,
   noPadding,
   icon,
   hideCloseButton,
@@ -56,8 +59,10 @@ export function Modal({
   const modalContent = (
     <div
       onMouseDown={handleMouseDown}
-      className={`fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm h-full
-        flex items-center justify-center z-[9999] transition-opacity duration-300 ease-in-out`}
+      className={cn(
+        `fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm h-full
+        flex items-center justify-center z-[9999] transition-opacity duration-300 ease-in-out`
+      )}
     >
       <div
         ref={modalRef}
@@ -94,7 +99,7 @@ export function Modal({
           </div>
         )}
 
-        <div className="w-full flex flex-col h-full justify-stretch">
+        <div className="w-full overflow-y-hidden flex flex-col h-full justify-stretch">
           {title && (
             <>
               <div className="flex mb-4">
@@ -110,7 +115,14 @@ export function Modal({
               {!hideDividerForTitle && <Separator />}
             </>
           )}
-          <div className="max-h-[60vh] overflow-y-scroll">{children}</div>
+          <div
+            className={cn(
+              "overflow-x-hidden overflow-y-scroll",
+              height || "max-h-[60vh]"
+            )}
+          >
+            {children}
+          </div>
         </div>
       </div>
     </div>

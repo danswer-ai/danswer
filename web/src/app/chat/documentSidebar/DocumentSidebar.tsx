@@ -23,6 +23,7 @@ interface DocumentSidebarProps {
   isLoading: boolean;
   initialWidth: number;
   isOpen: boolean;
+  modal: boolean;
   toggleSidebar: () => void;
   ccPairs: CCPairBasicInfo[];
   tags: Tag[];
@@ -34,6 +35,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
   (
     {
       closeSidebar,
+      modal,
       selectedMessage,
       selectedDocuments,
       filterManager,
@@ -67,7 +69,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     return (
       <div
         id="danswer-chat-sidebar"
-        className="w-full border-l border-sidebar-border"
+        className={` w-full  ${!modal ? "border-l border-sidebar-border" : ""}`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeSidebar();
@@ -75,7 +77,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         }}
       >
         <div
-          className={`ml-auto h-screen relative border-l sidebar z-50 absolute right-0 h-screen transition-all duration-300 ${
+          className={`ml-auto h-screen relative sidebar z-50 absolute right-0 h-screen transition-all duration-300 ${
             isOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[10%]"
           }`}
           ref={ref}
@@ -98,9 +100,10 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             </div>
             <div className="border-b border-divider-history-sidebar-bar mx-3" />
 
-            <div className="overflow-y-auto default-scrollbar flex-grow dark-scrollbar flex relative flex-col">
+            <div className="overflow-y-auto gap-y-0 default-scrollbar flex-grow dark-scrollbar flex relative flex-col">
               {showFilters ? (
                 <SourceSelector
+                  modal={modal}
                   tagsOnLeft={true}
                   toggleFilters={() => {}}
                   filtersUntoggled={false}
@@ -118,11 +121,12 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                         key={document.document_id}
                         className={`${
                           ind === dedupedDocuments.length - 1
-                            ? "mb-5"
-                            : "border-b border-border-light w-full mb-3"
+                            ? ""
+                            : "border-b border-border-light w-full "
                         }`}
                       >
                         <ChatDocumentDisplay
+                          modal={modal}
                           document={document}
                           setPopup={setPopup}
                           queryEventId={null}
@@ -151,17 +155,19 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
 
           {!showFilters && (
             <>
-              <div className="absolute left-0 bottom-0 w-full bg-gradient-to-b from-white/0 via-white/60 to-white dark:from-black/0 dark:via-black/60 dark:to-black h-[100px]" />
+              {/* <div className="fixed left-0 bottom-0 w-full bg-gradient-to-b from-white/0 via-white/60 to-white dark:from-black/0 dark:via-black/60 dark:to-black h-[100px]" /> */}
 
               <div
-                className={`sticky bottom-4 w-full left-0 flex justify-center transition-opacity duration-300 ${
+                className={`sticky bottom-4  ${
+                  modal ? " w-[90vw]" : "w-full"
+                } left-0 flex justify-center transition-opacity duration-300 ${
                   hasSelectedDocuments
                     ? "opacity-100"
                     : "opacity-0 pointer-events-none"
                 }`}
               >
                 <button
-                  className="text-sm font-medium py-2 px-4 rounded-full transition-colors hover:bg-gray-900 text-white"
+                  className="text-sm font-medium py-2 px-4 rounded-full transition-colors bg-gray-900 text-white"
                   onClick={() => {
                     clearSelectedDocuments();
                   }}
