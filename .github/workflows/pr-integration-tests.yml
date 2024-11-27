@@ -1,4 +1,4 @@
-name: Run Integration Tests v2
+name: Run Integration Tests
 concurrency:
   group: Run-Integration-Tests-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
   cancel-in-progress: true
@@ -189,9 +189,8 @@ jobs:
         run: |
           # Run docker command to list all test modules and format as JSON array
           modules=$(docker run --rm danswer/danswer-integration:test \
-            find /app/tests/integration -type f \( -name "test_*.py" -o -name "*_test.py" \) -print0 | \
-            xargs -0 -n1 basename | \
-            jq -R -s 'split("\n")[:-1] | map("/app/tests/integration/" + .)')
+            /bin/bash -c "find /app/tests/integration -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print" | \
+            jq -R -s 'split("\n")[:-1] | map(select(length > 0))')
           
           # Check if modules array is empty
           if [ "$(echo $modules | jq 'length')" -eq 0 ]; then
