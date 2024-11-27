@@ -235,10 +235,15 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     last_attempt = get_last_attempt_for_cc_pair(
                         cc_pair.id, search_settings_instance.id, db_session
                     )
+
+                    search_settings_primary = False
+                    if search_settings_instance.id == primary_search_settings.id:
+                        search_settings_primary = True
                     if not _should_index(
                         cc_pair=cc_pair,
                         last_index=last_attempt,
                         search_settings_instance=search_settings_instance,
+                        search_settings_primary=search_settings_primary,
                         secondary_index_building=len(search_settings) > 1,
                         db_session=db_session,
                     ):
@@ -325,6 +330,7 @@ def _should_index(
     cc_pair: ConnectorCredentialPair,
     last_index: IndexAttempt | None,
     search_settings_instance: SearchSettings,
+    search_settings_primary: bool,
     secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
@@ -389,9 +395,10 @@ def _should_index(
     ):
         return False
 
-    # if a manual indexing trigger is on the cc pair, honor it
-    if cc_pair.indexing_trigger is not None:
-        return True
+    if search_settings_primary:
+        if cc_pair.indexing_trigger is not None:
+            # if a manual indexing trigger is on the cc pair, honor it for primary search settings
+            return True
 
     # if no attempt has ever occurred, we should index regardless of refresh_freq
     if not last_index:
