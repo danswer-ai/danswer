@@ -405,7 +405,7 @@ export function AssistantEditor({
                   message: `"${assistant.name}" has been added to your list.`,
                   type: "success",
                 });
-                router.refresh();
+                await refreshAssistants();
               } else {
                 setPopup({
                   message: `"${assistant.name}" could not be added to your list.`,
