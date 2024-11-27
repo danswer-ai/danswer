@@ -239,6 +239,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     search_settings_primary = False
                     if search_settings_instance.id == primary_search_settings.id:
                         search_settings_primary = True
+
                     if not _should_index(
                         cc_pair=cc_pair,
                         last_index=last_attempt,
@@ -251,6 +252,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
 
                     reindex = False
                     if search_settings_instance.id == primary_search_settings.id:
+                        # the indexing trigger is only checked and cleared with the primary search settings
                         if cc_pair.indexing_trigger is not None:
                             if cc_pair.indexing_trigger == IndexingMode.REINDEX:
                                 reindex = True
