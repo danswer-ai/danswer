@@ -311,10 +311,10 @@ CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD = int(
 # Due to breakages in the confluence API, the timezone offset must be specified client side
 # to match the user's specified timezone.
 
-# what doesn't work:
+# The current state of affairs:
+# CQL queries are parsed in the user's timezone and cannot be specified in UTC
 # no API retrieves the user's timezone
-# All data is returned in UTC
-# CQL queries are parse in the user's timezone and cannot be set to UTC
+# All data is returned in UTC, so we can't derive the user's timezone from that
 
 # https://community.developer.atlassian.com/t/confluence-cloud-time-zone-get-via-rest-api/35954/16
 # https://jira.atlassian.com/browse/CONFCLOUD-69670
