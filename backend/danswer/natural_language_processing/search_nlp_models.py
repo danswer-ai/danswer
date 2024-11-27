@@ -6,6 +6,8 @@ from typing import Any
 
 import requests
 from httpx import HTTPError
+from requests import JSONDecodeError
+from requests import RequestException
 from requests import Response
 from retry import retry
 
@@ -17,7 +19,9 @@ from danswer.configs.model_configs import (
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.db.models import SearchSettings
 from danswer.indexing.indexing_heartbeat import IndexingHeartbeatInterface
-from danswer.natural_language_processing.exceptions import ModelServerRateLimitError
+from danswer.natural_language_processing.exceptions import (
+    ModelServerRateLimitError,
+)
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.natural_language_processing.utils import tokenizer_trim_content
 from danswer.utils.logger import setup_logger
@@ -117,7 +121,11 @@ class EmbeddingModel:
         # if the text type is a passage, add some default
         # retries + handling for rate limiting
         if embed_request.text_type == EmbedTextType.PASSAGE:
-            final_make_request_func = retry(tries=3, delay=5)(final_make_request_func)
+            final_make_request_func = retry(
+                tries=3,
+                delay=5,
+                exceptions=(RequestException, ValueError, JSONDecodeError),
+            )(final_make_request_func)
             # use 10 second delay as per Azure suggestion
             final_make_request_func = retry(
                 tries=10, delay=10, exceptions=ModelServerRateLimitError
