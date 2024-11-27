@@ -7,6 +7,7 @@ import { mutate } from "swr";
 import { buildCCPairInfoUrl } from "./lib";
 import { setCCPairStatus } from "@/lib/ccPair";
 import { useState } from "react";
+import { LoadingAnimation } from "@/components/Loading";
 
 export function ModifyStatusButtonCluster({
   ccPair,
@@ -15,20 +16,12 @@ export function ModifyStatusButtonCluster({
 }) {
   const { popup, setPopup } = usePopup();
   const [isUpdating, setIsUpdating] = useState(false);
-  const [buttonText, setButtonText] = useState<string | null>(null);
 
   const handleStatusChange = async (
     newStatus: ConnectorCredentialPairStatus
   ) => {
     if (isUpdating) return; // Prevent double-clicks or multiple requests
     setIsUpdating(true);
-
-    // Temporarily set the button text to reflect the action
-    setButtonText(
-      newStatus === ConnectorCredentialPairStatus.ACTIVE
-        ? "Resuming..."
-        : "Pausing..."
-    );
 
     try {
       // Call the backend to update the status
@@ -41,21 +34,25 @@ export function ModifyStatusButtonCluster({
     } finally {
       // Reset local updating state and button text after mutation
       setIsUpdating(false);
-      setButtonText(null);
     }
   };
 
   // Compute the button text based on current state and backend status
-  const computedButtonText = buttonText
-    ? buttonText
-    : ccPair.status === ConnectorCredentialPairStatus.PAUSED
+  const buttonText =
+    ccPair.status === ConnectorCredentialPairStatus.PAUSED
       ? "Re-Enable"
       : "Pause";
+
+  const tooltip =
+    ccPair.status === ConnectorCredentialPairStatus.PAUSED
+      ? "Click to start indexing again!"
+      : "When paused, the connector's documents will still be visible. However, no new documents will be indexed.";
 
   return (
     <>
       {popup}
       <Button
+        className="flex items-center justify-center w-auto min-w-[100px] px-4 py-2"
         variant={
           ccPair.status === ConnectorCredentialPairStatus.PAUSED
             ? "success-reverse"
@@ -69,13 +66,20 @@ export function ModifyStatusButtonCluster({
               : ConnectorCredentialPairStatus.PAUSED
           )
         }
-        tooltip={
-          ccPair.status === ConnectorCredentialPairStatus.PAUSED
-            ? "Click to start indexing again!"
-            : "When paused, the connector's documents will still be visible. However, no new documents will be indexed."
-        }
+        tooltip={tooltip}
       >
-        {computedButtonText}
+        {isUpdating ? (
+          <LoadingAnimation
+            text={
+              ccPair.status === ConnectorCredentialPairStatus.PAUSED
+                ? "Resuming"
+                : "Pausing"
+            }
+            size="text-md"
+          />
+        ) : (
+          buttonText
+        )}
       </Button>
     </>
   );
