@@ -72,13 +72,6 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
     const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
 
     const hasSelectedDocuments = selectedDocumentIds.length > 0;
-    const [documentCount, setDocumentCount] = useState(0);
-
-    useEffect(() => {
-      console.log("Document count:", documentCount);
-      console.log(dedupedDocuments);
-      setDocumentCount((prevCount) => prevCount + 1);
-    }, [dedupedDocuments]);
 
     return (
       <div
