@@ -198,7 +198,8 @@ jobs:
             exit 1
           fi
           
-          echo "modules=$modules" >> $GITHUB_OUTPUT
+          # Correctly format the modules as a JSON string for GitHub Actions
+          echo "modules=${modules}" >> $GITHUB_ENV
           
           # Print the modules for verification
           echo "Found the following test modules:"
