@@ -238,7 +238,7 @@ def test_slack_group_permission_sync(
         email="test_user_1@onyx-test.com",
     )
 
-    # Create a user group and add test_user_1 to it
+    # Create a user group and adding the non-admin user to it
     user_group = UserGroupManager.create(
         name="test_group",
         user_ids=[test_user_1.id],
@@ -292,6 +292,7 @@ def test_slack_group_permission_sync(
         connector_id=connector.id,
         access_type=AccessType.SYNC,
         user_performing_action=admin_user,
+        groups=[user_group.id],
     )
 
     # Add a test message to the private channel
