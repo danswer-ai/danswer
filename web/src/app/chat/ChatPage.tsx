@@ -8,7 +8,6 @@ import {
   ChatFileType,
   ChatSession,
   ChatSessionSharedStatus,
-  DocumentsResponse,
   FileDescriptor,
   FileChatDisplay,
   Message,
@@ -106,13 +105,6 @@ import BlurBackground from "./shared_chat_search/BlurBackground";
 import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import { Separator } from "@/components/ui/separator";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
-import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import AssistantBanner from "../../components/assistants/AssistantBanner";
 import AssistantSelector from "@/components/chat_search/AssistantSelector";
 import { Modal } from "@/components/Modal";
@@ -165,7 +157,7 @@ export function ChatPage({
     !shouldShowWelcomeModal
   );
 
-  const { user, isAdmin, isLoadingUser, refreshUser } = useUser();
+  const { user, isAdmin, isLoadingUser } = useUser();
 
   const slackChatId = searchParams.get("slackChatId");
 
@@ -2824,19 +2816,6 @@ export function ChatPage({
         </div>
         {/* Right Sidebar - DocumentSidebar */}
       </div>
-      {/* <DocumentSidebar
-        initialWidth={350}
-        ref={innerSidebarElementRef}
-        closeSidebar={() => setDocumentSelection(false)}
-        selectedMessage={aiMessage}
-        selectedDocuments={selectedDocuments}
-        toggleDocumentSelection={toggleDocumentSelection}
-        clearSelectedDocuments={clearSelectedDocuments}
-        selectedDocumentTokens={selectedDocumentTokens}
-        maxTokens={maxTokens}
-        isLoading={isFetchingChatMessages} 
-        isOpen={documentSelection}
-      /> */}
     </>
   );
 }

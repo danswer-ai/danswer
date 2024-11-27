@@ -44,7 +44,11 @@ export function DocumentMetadataBlock({
             {metadataEntries
               .slice(0, MAX_METADATA_ITEMS)
               .map(([key, value], index) => (
-                <MetadataBadge icon={FiTag} value={`${key}=${value}`} />
+                <MetadataBadge
+                  key={index}
+                  icon={FiTag}
+                  value={`${key}=${value}`}
+                />
               ))}
             {metadataEntries.length > MAX_METADATA_ITEMS && (
               <span className="ml-1 text-xs text-gray-500">...</span>

@@ -1,29 +1,22 @@
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { AssistantTools } from "@/app/assistants/ToolsDisplay";
 import { Bubble } from "@/components/Bubble";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
-import { getDisplayNameForModel } from "@/lib/hooks";
 import { useSortable } from "@dnd-kit/sortable";
 import React, { useState } from "react";
 import { FiBookmark, FiImage, FiSearch } from "react-icons/fi";
 import { MdDragIndicator } from "react-icons/md";
-import { InternetSearchIcon } from "@/components/InternetSearchIcon";
-import { SourceIcon } from "@/components/SourceIcon";
+
 import { Badge } from "../ui/badge";
 
 export const AssistantCard = ({
   assistant,
   isSelected,
   onSelect,
-  llmName,
 }: {
   assistant: Persona;
   isSelected: boolean;
   onSelect: (assistant: Persona) => void;
-  llmName: string;
 }) => {
-  const [hovering, setHovering] = useState(false);
-
   const renderBadgeContent = (tool: { name: string }) => {
     switch (tool.name) {
       case "SearchTool":
@@ -54,8 +47,6 @@ export const AssistantCard = ({
         cursor-pointer
         ${isSelected ? "bg-background-125" : "hover:bg-background-100"}
       `}
-      onMouseEnter={() => setHovering(true)}
-      onMouseLeave={() => setHovering(false)}
     >
       <div className="flex items-center gap-4">
         <AssistantIcon size="xs" assistant={assistant} />
