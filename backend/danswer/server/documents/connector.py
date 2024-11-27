@@ -17,7 +17,9 @@ from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
+from danswer.background.celery.versioned_apps.primary import app as primary_app
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
+from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
 from danswer.connectors.google_utils.google_auth import (
@@ -862,6 +864,13 @@ def connector_run_once(
                 f"cc_pair={cc_pair.id} "
                 f"indexing_trigger={indexing_mode}"
             )
+
+    # run the beat task to pick up the triggers immediately
+    primary_app.send_task(
+        "check_for_indexing",
+        priority=DanswerCeleryPriority.HIGH,
+        kwargs={"tenant_id": tenant_id},
+    )
 
     msg = f"Marked {num_triggers} index attempts with indexing triggers."
     return StatusResponse(
