@@ -38,7 +38,6 @@ export const AssistantCard = ({
     }
   };
 
-  console.log("assistant", assistant);
   return (
     <div
       onClick={() => onSelect(assistant)}

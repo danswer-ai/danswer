@@ -65,7 +65,6 @@ export async function fetchAssistantData(): Promise<AssistantData> {
         provider.provider === "openai" ||
         provider.model_names.some((model) => checkLLMSupportsImageInput(model))
     );
-    console.log("filteredAssistants", filteredAssistants);
 
     // Filter out image generation tools if no compatible model
     if (!hasImageCompatibleModel) {

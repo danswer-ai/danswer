@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-// NOTE: This is the preivous version of the citations which works just fine
+
 export function Citation({
   children,
   link,
@@ -24,8 +24,6 @@ export function Citation({
   const innerText = children
     ? children?.toString().split("[")[1].split("]")[0]
     : index;
-
-  // const CitationTrigger = () => {
 
   if (link) {
     return (

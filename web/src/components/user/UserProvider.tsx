@@ -28,7 +28,6 @@ export function UserProvider({
   const [isLoadingUser, setIsLoadingUser] = useState(false);
 
   const posthog = usePostHog();
-  console.log("upToDateUser", upToDateUser);
 
   useEffect(() => {
     if (!posthog) return;
@@ -80,7 +79,6 @@ export function UserProvider({
       console.error("Error updating auto-scroll setting:", error);
       throw error;
     }
-    // await updateUserSettings({ auto_scroll: autoScroll });
   };
 
   const refreshUser = async () => {
