@@ -51,7 +51,7 @@ _RESTRICTIONS_EXPANSION_FIELDS = [
     "restrictions.read.restrictions.group",
 ]
 
-_SLIM_DOC_BATCH_SIZE = 1000
+_SLIM_DOC_BATCH_SIZE = 5000
 
 
 class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):

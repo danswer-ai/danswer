@@ -120,7 +120,7 @@ def handle_confluence_rate_limit(confluence_call: F) -> F:
     return cast(F, wrapped_call)
 
 
-_DEFAULT_PAGINATION_LIMIT = 100
+_DEFAULT_PAGINATION_LIMIT = 1000
 
 
 class OnyxConfluence(Confluence):
