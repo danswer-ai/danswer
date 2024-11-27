@@ -3,9 +3,9 @@ import random
 import re
 import string
 import time
+import uuid
 from typing import Any
 from typing import cast
-from typing import Optional
 
 from retry import retry
 from slack_sdk import WebClient
@@ -216,6 +216,13 @@ def build_feedback_id(
     return unique_prefix + ID_SEPARATOR + feedback_id
 
 
+def build_continue_in_web_ui_id(
+    message_id: int,
+) -> str:
+    unique_prefix = str(uuid.uuid4())[:10]
+    return unique_prefix + ID_SEPARATOR + str(message_id)
+
+
 def decompose_action_id(feedback_id: str) -> tuple[int, str | None, int | None]:
     """Decompose into query_id, document_id, document_rank, see above function"""
     try:
@@ -313,7 +320,7 @@ def get_channel_name_from_id(
         raise e
 
 
-def fetch_user_ids_from_emails(
+def fetch_slack_user_ids_from_emails(
     user_emails: list[str], client: WebClient
 ) -> tuple[list[str], list[str]]:
     user_ids: list[str] = []
@@ -522,7 +529,7 @@ class SlackRateLimiter:
             self.last_reset_time = time.time()
 
     def notify(
-        self, client: WebClient, channel: str, position: int, thread_ts: Optional[str]
+        self, client: WebClient, channel: str, position: int, thread_ts: str | None
     ) -> None:
         respond_in_thread(
             client=client,

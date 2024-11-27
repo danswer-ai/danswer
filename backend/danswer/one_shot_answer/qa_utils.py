@@ -51,3 +51,31 @@ def combine_message_thread(
         total_token_count += message_token_count
 
     return "\n\n".join(message_strs)
+
+
+def slackify_message(message: ThreadMessage) -> str:
+    if message.role != MessageType.USER:
+        return message.message
+
+    return f"{message.sender or 'Unknown User'} said in Slack:\n{message.message}"
+
+
+def slackify_message_thread(messages: list[ThreadMessage]) -> str:
+    if not messages:
+        return ""
+
+    message_strs: list[str] = []
+    for message in messages:
+        if message.role == MessageType.USER:
+            message_text = (
+                f"{message.sender or 'Unknown User'} said in Slack:\n{message.message}"
+            )
+        elif message.role == MessageType.ASSISTANT:
+            message_text = f"DanswerBot said in Slack:\n{message.message}"
+        else:
+            message_text = (
+                f"{message.role.value.upper()} said in Slack:\n{message.message}"
+            )
+        message_strs.append(message_text)
+
+    return "\n\n".join(message_strs)

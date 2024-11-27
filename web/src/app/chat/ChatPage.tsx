@@ -161,6 +161,8 @@ export function ChatPage({
 
   const { user, isAdmin, isLoadingUser, refreshUser } = useUser();
 
+  const slackChatId = searchParams.get("slackChatId");
+
   const existingChatIdRaw = searchParams.get("chatId");
   const [sendOnLoad, setSendOnLoad] = useState<string | null>(
     searchParams.get(SEARCH_PARAM_NAMES.SEND_ON_LOAD)
@@ -403,6 +405,7 @@ export function ChatPage({
         }
         return;
       }
+      setIsReady(true);
       const shouldScrollToBottom =
         visibleRange.get(existingChatSessionId) === undefined ||
         visibleRange.get(existingChatSessionId)?.end == 0;
@@ -468,9 +471,12 @@ export function ChatPage({
         });
         // force re-name if the chat session doesn't have one
         if (!chatSession.description) {
-          await nameChatSession(existingChatSessionId, seededMessage);
+          await nameChatSession(existingChatSessionId);
           refreshChatSessions();
         }
+      } else if (newMessageHistory.length === 2 && !chatSession.description) {
+        await nameChatSession(existingChatSessionId);
+        refreshChatSessions();
       }
     }
 
@@ -1428,7 +1434,7 @@ export function ChatPage({
 
       if (!searchParamBasedChatSessionName) {
         await new Promise((resolve) => setTimeout(resolve, 200));
-        await nameChatSession(currChatSessionId, currMessage);
+        await nameChatSession(currChatSessionId);
         refreshChatSessions();
       }
 
@@ -1809,6 +1815,42 @@ export function ChatPage({
       });
     };
   }
+
+  useEffect(() => {
+    const handleSlackChatRedirect = async () => {
+      if (!slackChatId) return;
+
+      // Set isReady to false before starting retrieval to display loading text
+      setIsReady(false);
+
+      try {
+        const response = await fetch("/api/chat/seed-chat-session-from-slack", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chat_session_id: slackChatId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to seed chat from Slack");
+        }
+
+        const data = await response.json();
+        router.push(data.redirect_url);
+      } catch (error) {
+        console.error("Error seeding chat from Slack:", error);
+        setPopup({
+          message: "Failed to load chat from Slack",
+          type: "error",
+        });
+      }
+    };
+
+    handleSlackChatRedirect();
+  }, [searchParams, router]);
 
   return (
     <>
