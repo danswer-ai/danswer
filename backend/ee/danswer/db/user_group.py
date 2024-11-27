@@ -312,8 +312,11 @@ def fetch_user_groups_for_documents(
         )
         .join(
             ConnectorCredentialPair,
-            ConnectorCredentialPair.id == UserGroup__ConnectorCredentialPair.cc_pair_id,
-            ConnectorCredentialPair.access_type != AccessType.SYNC,
+            and_(
+                ConnectorCredentialPair.id
+                == UserGroup__ConnectorCredentialPair.cc_pair_id,
+                ConnectorCredentialPair.access_type != AccessType.SYNC,
+            ),
         )
         .join(
             DocumentByConnectorCredentialPair,
