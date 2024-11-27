@@ -50,7 +50,7 @@ export const AssistantCard = ({
       <div className="flex items-center gap-4">
         <AssistantIcon size="xs" assistant={assistant} />
         <div className="overflow-hidden text-ellipsis break-words flex-grow">
-          <div className="flex items-center justify-start gap-2">
+          <div className="flex items-start justify-start gap-2">
             <span className="line-clamp-1 text-sm text-black font-semibold leading-tight">
               {assistant.name}
             </span>
