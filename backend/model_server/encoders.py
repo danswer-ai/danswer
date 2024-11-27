@@ -11,6 +11,7 @@ from fastapi import APIRouter
 from fastapi import HTTPException
 from google.oauth2 import service_account  # type: ignore
 from litellm import embedding
+from litellm.exceptions import RateLimitError
 from retry import retry
 from sentence_transformers import CrossEncoder  # type: ignore
 from sentence_transformers import SentenceTransformer  # type: ignore
@@ -205,28 +206,22 @@ class CloudEmbedding:
         model_name: str | None = None,
         deployment_name: str | None = None,
     ) -> list[Embedding]:
-        try:
-            if self.provider == EmbeddingProvider.OPENAI:
-                return self._embed_openai(texts, model_name)
-            elif self.provider == EmbeddingProvider.AZURE:
-                return self._embed_azure(texts, f"azure/{deployment_name}")
-            elif self.provider == EmbeddingProvider.LITELLM:
-                return self._embed_litellm_proxy(texts, model_name)
+        if self.provider == EmbeddingProvider.OPENAI:
+            return self._embed_openai(texts, model_name)
+        elif self.provider == EmbeddingProvider.AZURE:
+            return self._embed_azure(texts, f"azure/{deployment_name}")
+        elif self.provider == EmbeddingProvider.LITELLM:
+            return self._embed_litellm_proxy(texts, model_name)
 
-            embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
-            if self.provider == EmbeddingProvider.COHERE:
-                return self._embed_cohere(texts, model_name, embedding_type)
-            elif self.provider == EmbeddingProvider.VOYAGE:
-                return self._embed_voyage(texts, model_name, embedding_type)
-            elif self.provider == EmbeddingProvider.GOOGLE:
-                return self._embed_vertex(texts, model_name, embedding_type)
-            else:
-                raise ValueError(f"Unsupported provider: {self.provider}")
-        except Exception as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error embedding text with {self.provider}: {str(e)}",
-            )
+        embedding_type = EmbeddingModelTextType.get_type(self.provider, text_type)
+        if self.provider == EmbeddingProvider.COHERE:
+            return self._embed_cohere(texts, model_name, embedding_type)
+        elif self.provider == EmbeddingProvider.VOYAGE:
+            return self._embed_voyage(texts, model_name, embedding_type)
+        elif self.provider == EmbeddingProvider.GOOGLE:
+            return self._embed_vertex(texts, model_name, embedding_type)
+        else:
+            raise ValueError(f"Unsupported provider: {self.provider}")
 
     @staticmethod
     def create(
@@ -430,6 +425,11 @@ async def process_embed_request(
             prefix=prefix,
         )
         return EmbedResponse(embeddings=embeddings)
+    except RateLimitError as e:
+        raise HTTPException(
+            status_code=429,
+            detail=str(e),
+        )
     except Exception as e:
         exception_detail = f"Error during embedding process:\n{str(e)}"
         logger.exception(exception_detail)
