@@ -119,9 +119,7 @@ export function getUserCreatedAssistants(
   );
 }
 
-/**
- * Filters assistants based on connector status and image compatibility.
- */
+// Filter assistants based on connector status, image compatibility and visibility
 export function filterAssistants(
   assistants: Persona[],
   hasAnyConnectors: boolean,
