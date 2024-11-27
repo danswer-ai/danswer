@@ -72,6 +72,14 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
     const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
 
     const hasSelectedDocuments = selectedDocumentIds.length > 0;
+    const [documentCount, setDocumentCount] = useState(0);
+
+    useEffect(() => {
+      console.log("Document count:", documentCount);
+      console.log(dedupedDocuments);
+      setDocumentCount((prevCount) => prevCount + 1);
+    }, [dedupedDocuments]);
+
     return (
       <div
         id="danswer-chat-sidebar"
@@ -114,10 +122,8 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
                 <SourceSelector
                   modal={modal}
                   tagsOnLeft={true}
-                  toggleFilters={() => {}}
                   filtersUntoggled={false}
                   {...filterManager}
-                  showDocSidebar={false}
                   availableDocumentSets={documentSets}
                   existingSources={ccPairs.map((ccPair) => ccPair.source)}
                   availableTags={tags}
@@ -137,9 +143,6 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
                         <ChatDocumentDisplay
                           modal={modal}
                           document={document}
-                          setPopup={setPopup}
-                          queryEventId={null}
-                          isAIPick={false}
                           isSelected={selectedDocumentIds.includes(
                             document.document_id
                           )}

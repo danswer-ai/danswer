@@ -8,5 +8,10 @@ export function DocumentUpdatedAtBadge({
   updatedAt: string;
   modal?: boolean;
 }) {
-  return <MetadataBadge value={modal ? "" : "Updated " + timeAgo(updatedAt)} />;
+  return (
+    <MetadataBadge
+      flexNone={modal}
+      value={(modal ? "" : "Updated ") + timeAgo(updatedAt)}
+    />
+  );
 }

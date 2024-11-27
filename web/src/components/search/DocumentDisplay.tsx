@@ -397,13 +397,8 @@ export function CompactDocumentCard({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="max-w-[300px] pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
+    <div className="max-w-[250px] pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
       <h3 className="text-sm font-semibold flex  items-center gap-x-1 text-text-900 pt-0 mt-0 truncate w-full">
-        {/* {document.is_internet || document.source_type === "web" ? (
-          <SearchResultIcon url={document.link} />
-        ) : (
-          <SourceIcon sourceType={document.source_type} iconSize={18} />
-        )} */}
         {icon}
         {(document.semantic_identifier || document.document_id).slice(0, 40)}
         {(document.semantic_identifier || document.document_id).length > 40 &&
@@ -412,10 +407,10 @@ export function CompactDocumentCard({
       {document.blurb && (
         <p className="text-xs text-gray-600 line-clamp-2">{document.blurb}</p>
       )}
-      <div className="flex items-center justify-between w-full ">
+      <div className="flex mt-0 pt-0 items-center justify-between w-full ">
         {document.updated_at &&
           !isNaN(new Date(document.updated_at).getTime()) && (
-            <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-1 inline-flex items-center">
+            <span className="text-xs text-gray-500">
               Updated {new Date(document.updated_at).toLocaleDateString()}
             </span>
           )}

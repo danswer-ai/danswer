@@ -46,14 +46,14 @@ export interface SourceSelectorProps {
   availableDocumentSets: DocumentSet[];
   existingSources: ValidSources[];
   availableTags: Tag[];
-  toggleFilters: () => void;
   filtersUntoggled: boolean;
-  tagsOnLeft: boolean;
   modal?: boolean;
+  tagsOnLeft: boolean;
 }
 
 export function SourceSelector({
   timeRange,
+  filtersUntoggled,
   setTimeRange,
   selectedSources,
   setSelectedSources,
@@ -63,12 +63,8 @@ export function SourceSelector({
   setSelectedTags,
   availableDocumentSets,
   existingSources,
-  availableTags,
-  showDocSidebar,
-  toggleFilters,
-  filtersUntoggled,
-  tagsOnLeft,
   modal,
+  availableTags,
 }: SourceSelectorProps) {
   const handleSelect = (source: SourceMetadata) => {
     setSelectedSources((prev: SourceMetadata[]) => {

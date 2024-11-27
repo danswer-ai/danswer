@@ -9,15 +9,14 @@ import { SearchResultIcon } from "@/components/SearchResultIcon";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { MetadataBadge } from "@/components/MetadataBadge";
 import faviconFetch from "favicon-fetch";
+import { useContext } from "react";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
-  queryEventId: number | null;
   modal?: boolean;
-  isAIPick: boolean;
   isSelected: boolean;
   handleSelect: (documentId: string) => void;
-  setPopup: (popupSpec: PopupSpec | null) => void;
   tokenLimitReached: boolean;
 }
 
@@ -63,11 +62,8 @@ export function DocumentMetadataBlock({
 export function ChatDocumentDisplay({
   document,
   modal,
-  queryEventId,
-  isAIPick,
   isSelected,
   handleSelect,
-  setPopup,
   tokenLimitReached,
 }: DocumentDisplayProps) {
   const isInternet = document.is_internet;
