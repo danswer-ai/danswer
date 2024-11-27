@@ -209,14 +209,14 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         confluence_page_ids: list[str] = []
 
         page_query = self.cql_page_query + self.cql_label_filter + self.cql_time_filter
-        logger.info(f"page_query: {page_query}")
+        logger.debug(f"page_query: {page_query}")
         # Fetch pages as Documents
         for page in self.confluence_client.paginated_cql_retrieval(
             cql=page_query,
             expand=",".join(_PAGE_EXPANSION_FIELDS),
             limit=self.batch_size,
         ):
-            logger.info(f"_fetch_document_batches: {page['title']}")
+            logger.debug(f"_fetch_document_batches: {page['id']}")
             confluence_page_ids.append(page["id"])
             doc = self._convert_object_to_document(page)
             if doc is not None:
