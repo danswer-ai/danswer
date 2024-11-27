@@ -259,7 +259,7 @@ export function ChatPage({
     refreshRecentAssistants,
   } = useAssistants();
 
-  const liveAssistant =
+  const liveAssistant: Persona | undefined =
     alternativeAssistant ||
     selectedAssistant ||
     recentAssistants[0] ||
@@ -269,6 +269,7 @@ export function ChatPage({
   const noAssistants = liveAssistant == null || liveAssistant == undefined;
   // always set the model override for the chat session, when an assistant, llm provider, or user preference exists
   useEffect(() => {
+    if (noAssistants) return;
     const personaDefault = getLLMProviderOverrideForPersona(
       liveAssistant,
       llmProviders
@@ -753,7 +754,7 @@ export function ChatPage({
   useEffect(() => {
     async function fetchMaxTokens() {
       const response = await fetch(
-        `/api/chat/max-selected-document-tokens?persona_id=${liveAssistant.id}`
+        `/api/chat/max-selected-document-tokens?persona_id=${liveAssistant?.id}`
       );
       if (response.ok) {
         const maxTokens = (await response.json()).max_tokens as number;
@@ -1809,18 +1810,23 @@ export function ChatPage({
       });
     };
   }
+  if (noAssistants)
+    return (
+      <>
+        <HealthCheckBanner />
+        <NoAssistantModal isAdmin={isAdmin} />
+      </>
+    );
 
   return (
     <>
       <HealthCheckBanner />
 
-      {showApiKeyModal && !shouldShowWelcomeModal ? (
+      {showApiKeyModal && !shouldShowWelcomeModal && (
         <ApiKeyModal
           hide={() => setShowApiKeyModal(false)}
           setPopup={setPopup}
         />
-      ) : (
-        noAssistants && <NoAssistantModal isAdmin={isAdmin} />
       )}
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
