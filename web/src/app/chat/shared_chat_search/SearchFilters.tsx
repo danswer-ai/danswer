@@ -1,31 +1,23 @@
-import { containsObject, objectsAreEquivalent } from "@/lib/contains";
-import { useEffect, useRef, useState } from "react";
-import debounce from "lodash/debounce";
-import { getValidTags } from "@/lib/tags/tagUtils";
 import { DocumentSet, Tag, ValidSources } from "@/lib/types";
 import { SourceMetadata } from "@/lib/search/interfaces";
 import { InfoIcon, defaultTailwindCSS } from "@/components/icons/icons";
 import { HoverPopup } from "@/components/HoverPopup";
-import { FiFilter, FiTag, FiX } from "react-icons/fi";
 import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
-import { listSourceMetadata } from "@/lib/sources";
 import { SourceIcon } from "@/components/SourceIcon";
-
+import { Checkbox } from "@/components/ui/checkbox";
+import { TagFilter } from "@/components/search/filtering/TagFilter";
+import { CardContent } from "@/components/ui/card";
+import { useEffect } from "react";
+import { useState } from "react";
+import { listSourceMetadata } from "@/lib/sources";
 import { Calendar } from "@/components/ui/calendar";
+import { getTimeAgoString } from "@/lib/dateUtils";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
-  PopoverTrigger,
   PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
-import { getTimeAgoString } from "@/lib/dateUtils";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Divide } from "lucide-react";
-import { TagFilter } from "@/components/search/filtering/TagFilter";
 
 const SectionTitle = ({
   children,
@@ -132,9 +124,9 @@ export function SourceSelector({
   return (
     <div>
       {!filtersUntoggled && (
-        <CardContent className="overflow-x-hidden max-w-full  space-y-2">
+        <CardContent className="overflow-x-hidden  space-y-2">
           <div>
-            <div className="flex  py-2  mt-2  justify-start gap-x-2 items-center">
+            <div className="flex py-2 mt-2 justify-start gap-x-2 items-center">
               <p className="text-sm font-semibold">Time Range</p>
               {timeRange && (
                 <button
@@ -152,9 +144,7 @@ export function SourceSelector({
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={`${
-                    modal ? "w-[80vw]" : "w-full"
-                  } justify-start text-left font-normal`}
+                  className={`w-full justify-start text-left font-normal`}
                 >
                   <span>
                     {getTimeAgoString(timeRange?.from!) ||

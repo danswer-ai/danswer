@@ -1,6 +1,5 @@
 "use client";
 import { Separator } from "@/components/ui/separator";
-import { FiX } from "react-icons/fi";
 import { IconProps, XIcon } from "./icons/icons";
 import { useRef } from "react";
 import { isEventWithinRef } from "@/lib/contains";
@@ -20,6 +19,7 @@ interface ModalProps {
   hideCloseButton?: boolean;
   noPadding?: boolean;
   height?: string;
+  noScroll?: boolean;
 }
 
 export function Modal({
@@ -34,6 +34,7 @@ export function Modal({
   noPadding,
   icon,
   hideCloseButton,
+  noScroll,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -98,7 +99,6 @@ export function Modal({
             </button>
           </div>
         )}
-
         <div className="w-full overflow-y-hidden flex flex-col h-full justify-stretch">
           {title && (
             <>
@@ -117,7 +117,7 @@ export function Modal({
           )}
           <div
             className={cn(
-              "overflow-x-hidden overflow-y-scroll",
+              noScroll ? "overflow-auto" : "overflow-x-hidden",
               height || "max-h-[60vh]"
             )}
           >

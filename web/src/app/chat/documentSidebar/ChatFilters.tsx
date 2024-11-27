@@ -1,17 +1,15 @@
 import { DanswerDocument } from "@/lib/search/interfaces";
-import Text from "@/components/ui/text";
 import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { Message } from "../interfaces";
 import { ForwardedRef, forwardRef, useEffect, useState } from "react";
-import { Separator } from "@/components/ui/separator";
 import { FilterManager } from "@/lib/hooks";
 import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
 import { SourceSelector } from "../shared_chat_search/SearchFilters";
 import { XIcon } from "@/components/icons/icons";
 
-interface DocumentSidebarProps {
+interface ChatFiltersProps {
   filterManager: FilterManager;
   closeSidebar: () => void;
   selectedMessage: Message | null;
@@ -20,18 +18,16 @@ interface DocumentSidebarProps {
   clearSelectedDocuments: () => void;
   selectedDocumentTokens: number;
   maxTokens: number;
-  isLoading: boolean;
   initialWidth: number;
   isOpen: boolean;
   modal: boolean;
-  toggleSidebar: () => void;
   ccPairs: CCPairBasicInfo[];
   tags: Tag[];
   documentSets: DocumentSet[];
   showFilters: boolean;
 }
 
-export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
+export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
   (
     {
       closeSidebar,
@@ -43,10 +39,8 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
       clearSelectedDocuments,
       selectedDocumentTokens,
       maxTokens,
-      isLoading,
       initialWidth,
       isOpen,
-      toggleSidebar,
       ccPairs,
       tags,
       documentSets,
@@ -78,11 +72,10 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
 
     const hasSelectedDocuments = selectedDocumentIds.length > 0;
-
     return (
       <div
         id="danswer-chat-sidebar"
-        className={` max-w-full  ${
+        className={`relative m-2 max-w-full ${
           !modal ? "border-l border-sidebar-border" : ""
         }`}
         onClick={(e) => {
@@ -92,19 +85,17 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
         }}
       >
         <div
-          className={`ml-auto h-screen relative sidebar z-50 absolute right-0 h-screen transition-all duration-300 ${
-            isOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-[10%]"
-          }`}
-          ref={ref}
+          className={`ml-auto h-full relative sidebar transition-all duration-300 
+            ${
+              isOpen
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 translate-x-[10%]"
+            }`}
           style={{
-            width: initialWidth,
+            width: modal ? undefined : initialWidth,
           }}
         >
-          <div
-            className={`${
-              modal ? "w-[90vw]" : "w-full"
-            } overflow-y-hidden flex flex-col h-screen`}
-          >
+          <div className="flex flex-col h-full">
             {popup}
             <div className="p-4 flex justify-between items-center">
               <h2 className="text-xl font-bold text-text-900">
@@ -118,8 +109,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
               </button>
             </div>
             <div className="border-b border-divider-history-sidebar-bar mx-3" />
-
-            <div className="overflow-y-auto gap-y-0 default-scrollbar flex-grow dark-scrollbar flex relative flex-col">
+            <div className="overflow-y-auto flex-grow gap-y-0 default-scrollbar dark-scrollbar flex flex-col">
               {showFilters ? (
                 <SourceSelector
                   modal={modal}
@@ -141,7 +131,7 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
                         className={`${
                           ind === dedupedDocuments.length - 1
                             ? ""
-                            : "border-b border-border-light w-full "
+                            : "border-b border-border-light w-full"
                         }`}
                       >
                         <ChatDocumentDisplay
@@ -171,34 +161,25 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
               )}
             </div>
           </div>
-
           {!showFilters && (
-            <>
-              {/* <div className="fixed left-0 bottom-0 w-full bg-gradient-to-b from-white/0 via-white/60 to-white dark:from-black/0 dark:via-black/60 dark:to-black h-[100px]" /> */}
-
-              <div
-                className={`sticky bottom-4  ${
-                  modal ? " w-[90vw]" : "w-full"
-                } left-0 flex justify-center transition-opacity duration-300 ${
-                  hasSelectedDocuments
-                    ? "opacity-100"
-                    : "opacity-0 pointer-events-none"
-                }`}
+            <div
+              className={`sticky bottom-4 w-full left-0 flex justify-center transition-opacity duration-300 ${
+                hasSelectedDocuments
+                  ? "opacity-100"
+                  : "opacity-0 pointer-events-none"
+              }`}
+            >
+              <button
+                className="text-sm font-medium py-2 px-4 rounded-full transition-colors bg-gray-900 text-white"
+                onClick={clearSelectedDocuments}
               >
-                <button
-                  className="text-sm font-medium py-2 px-4 rounded-full transition-colors bg-gray-900 text-white"
-                  onClick={() => {
-                    clearSelectedDocuments();
-                  }}
-                >
-                  {`Remove ${
-                    delayedSelectedDocumentCount > 0
-                      ? delayedSelectedDocumentCount
-                      : ""
-                  } Source${delayedSelectedDocumentCount > 1 ? "s" : ""}`}
-                </button>
-              </div>
-            </>
+                {`Remove ${
+                  delayedSelectedDocumentCount > 0
+                    ? delayedSelectedDocumentCount
+                    : ""
+                } Source${delayedSelectedDocumentCount > 1 ? "s" : ""}`}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -206,4 +187,4 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
   }
 );
 
-DocumentSidebar.displayName = "DocumentSidebar";
+ChatFilters.displayName = "ChatFilters";

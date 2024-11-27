@@ -59,7 +59,7 @@ import { useDocumentSelection } from "./useDocumentSelection";
 import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { ChatState, FeedbackType, RegenerationState } from "./types";
-import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
+import { ChatFilters } from "./documentSidebar/ChatFilters";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
@@ -1953,18 +1953,16 @@ export function ChatPage({
 
       {retrievalEnabled && documentSidebarToggled && settings?.isMobile && (
         <div className="md:hidden">
-          <Modal height="max-h-[70vh]" noPadding>
-            <DocumentSidebar
+          <Modal noPadding noScroll>
+            <ChatFilters
               modal={true}
               filterManager={filterManager}
               ccPairs={ccPairs}
               tags={tags}
               documentSets={documentSets}
               ref={innerSidebarElementRef}
-              toggleSidebar={toggleDocumentSidebar}
               showFilters={filtersToggled}
               closeSidebar={() => {
-                console.log("close sidebar");
                 setDocumentSidebarToggled(false);
               }}
               selectedMessage={aiMessage}
@@ -1973,7 +1971,6 @@ export function ChatPage({
               clearSelectedDocuments={clearSelectedDocuments}
               selectedDocumentTokens={selectedDocumentTokens}
               maxTokens={maxTokens}
-              isLoading={isFetchingChatMessages}
               initialWidth={400}
               isOpen={true}
             />
@@ -2105,14 +2102,13 @@ export function ChatPage({
                 ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
             `}
             >
-              <DocumentSidebar
+              <ChatFilters
                 modal={false}
                 filterManager={filterManager}
                 ccPairs={ccPairs}
                 tags={tags}
                 documentSets={documentSets}
                 ref={innerSidebarElementRef}
-                toggleSidebar={toggleDocumentSidebar}
                 showFilters={filtersToggled}
                 closeSidebar={() => setDocumentSidebarToggled(false)}
                 selectedMessage={aiMessage}
@@ -2121,7 +2117,6 @@ export function ChatPage({
                 clearSelectedDocuments={clearSelectedDocuments}
                 selectedDocumentTokens={selectedDocumentTokens}
                 maxTokens={maxTokens}
-                isLoading={isFetchingChatMessages}
                 initialWidth={400}
                 isOpen={documentSidebarToggled}
               />
@@ -2137,15 +2132,6 @@ export function ChatPage({
             className="flex h-full w-full overflow-x-hidden"
           >
             <div className="flex h-full relative px-2 flex-col w-full">
-              {/* {liveAssistant && onAssistantChange && (
-                <div className="flex justify-center mt-4 -mb-4 h w-full overflow-visible">
-                  <AssistantSelector
-                    liveAssistant={liveAssistant}
-                    onAssistantChange={onAssistantChange}
-                    llmOverrideManager={llmOverrideManager}
-                  />
-                </div>
-              )} */}
               {liveAssistant && (
                 <FunctionalHeader
                   toggleUserSettings={() => setUserSettingsToggled(true)}
