@@ -81,8 +81,9 @@ import cohereIcon from "../../../public/Cohere.svg";
 import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 import xenforoIcon from "../../../public/Xenforo.svg";
-import { FaRobot } from "react-icons/fa";
+import { FaGithub, FaRobot } from "react-icons/fa";
 import { isConstructSignatureDeclaration } from "typescript";
+import { cn } from "@/lib/utils";
 
 export interface IconProps {
   size?: number;
@@ -473,13 +474,6 @@ export const XSquareIcon = ({
   className = defaultTailwindCSS,
 }: IconProps) => {
   return <XSquare size={size} className={className} />;
-};
-
-export const GlobeIcon = ({
-  size = 16,
-  className = defaultTailwindCSSBlue,
-}: IconProps) => {
-  return <FiGlobe size={size} className={className} />;
 };
 
 export const FileIcon = ({
@@ -1035,8 +1029,15 @@ export const GithubIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => (
-  <LogoIcon size={size} className={className} src="/Github.png" />
+  <FaGithub size={size} className={cn(className, "text-black")} />
 );
+
+export const GlobeIcon = ({
+  size = 16,
+  className = defaultTailwindCSSBlue,
+}: IconProps) => {
+  return <FiGlobe size={size} className={className} />;
+};
 
 export const GmailIcon = ({
   size = 16,

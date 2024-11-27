@@ -651,7 +651,6 @@ export async function useScrollonStream({
   mobile?: boolean;
   enableAutoScroll?: boolean;
 }) {
-  console.log("zzzenableAutoScroll", enableAutoScroll);
   const mobileDistance = 900; // distance that should "engage" the scroll
   const desktopDistance = 500; // distance that should "engage" the scroll
 

@@ -391,17 +391,20 @@ export const AgenticDocumentDisplay = ({
 
 export function CompactDocumentCard({
   document,
+  icon,
 }: {
   document: LoadedDanswerDocument;
+  icon?: React.ReactNode;
 }) {
   return (
     <div className="max-w-[300px] pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
       <h3 className="text-sm font-semibold flex  items-center gap-x-1 text-text-900 pt-0 mt-0 truncate w-full">
-        {document.is_internet || document.source_type === "web" ? (
+        {/* {document.is_internet || document.source_type === "web" ? (
           <SearchResultIcon url={document.link} />
         ) : (
           <SourceIcon sourceType={document.source_type} iconSize={18} />
-        )}
+        )} */}
+        {icon}
         {(document.semantic_identifier || document.document_id).slice(0, 40)}
         {(document.semantic_identifier || document.document_id).length > 40 &&
           "..."}

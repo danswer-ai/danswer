@@ -1625,16 +1625,6 @@ export function ChatPage({
       ? settings?.enterpriseSettings?.auto_scroll || false
       : user?.preferences?.auto_scroll!;
 
-  console.log("autoScrollEnabled", autoScrollEnabled);
-  console.log(
-    "user?.preferences?.auto_scroll ",
-    user?.preferences?.auto_scroll
-  );
-  console.log(
-    "settings?.enterpriseSettings?.auto_scroll ",
-    settings?.enterpriseSettings?.auto_scroll
-  );
-
   useScrollonStream({
     chatState: currentSessionChatState,
     scrollableDivRef,
@@ -1971,11 +1961,7 @@ export function ChatPage({
 
       {retrievalEnabled && documentSidebarToggled && settings?.isMobile && (
         <div className="md:hidden">
-          <Modal
-            height="max-h-[70vh]"
-            noPadding
-            onOutsideClick={() => setDocumentSidebarToggled(false)}
-          >
+          <Modal height="max-h-[70vh]" noPadding>
             <DocumentSidebar
               modal={true}
               filterManager={filterManager}
@@ -1985,7 +1971,10 @@ export function ChatPage({
               ref={innerSidebarElementRef}
               toggleSidebar={toggleDocumentSidebar}
               showFilters={filtersToggled}
-              closeSidebar={() => setDocumentSidebarToggled(false)}
+              closeSidebar={() => {
+                console.log("close sidebar");
+                setDocumentSidebarToggled(false);
+              }}
               selectedMessage={aiMessage}
               selectedDocuments={selectedDocuments}
               toggleDocumentSelection={toggleDocumentSelection}

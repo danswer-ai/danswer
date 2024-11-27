@@ -76,10 +76,10 @@ export function TagFilter({
   };
 
   return (
-    <div className="relative ">
+    <div className="relative w-full ">
       <input
         ref={inputRef}
-        className={`w-full border border-border py-0.5 px-2 rounded text-sm h-8 ${
+        className={` border border-border py-0.5 px-2 rounded text-sm h-8 ${
           modal ? "w-[80vw]" : "w-full"
         }`}
         placeholder="Find a tag"

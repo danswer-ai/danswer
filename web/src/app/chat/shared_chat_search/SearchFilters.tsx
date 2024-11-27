@@ -132,7 +132,7 @@ export function SourceSelector({
   return (
     <div>
       {!filtersUntoggled && (
-        <CardContent className="overflow-x-hidden space-y-2">
+        <CardContent className="overflow-x-hidden max-w-full  space-y-2">
           <div>
             <div className="flex  py-2  mt-2  justify-start gap-x-2 items-center">
               <p className="text-sm font-semibold">Time Range</p>

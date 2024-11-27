@@ -82,7 +82,9 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
     return (
       <div
         id="danswer-chat-sidebar"
-        className={` w-full  ${!modal ? "border-l border-sidebar-border" : ""}`}
+        className={` max-w-full  ${
+          !modal ? "border-l border-sidebar-border" : ""
+        }`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             closeSidebar();
@@ -98,7 +100,11 @@ export const DocumentSidebar = forwardRef<HTMLDivElement, DocumentSidebarProps>(
             width: initialWidth,
           }}
         >
-          <div className=" flex-initial overflow-y-hidden flex flex-col h-screen">
+          <div
+            className={`${
+              modal ? "w-[90vw]" : "w-full"
+            } overflow-y-hidden flex flex-col h-screen`}
+          >
             {popup}
             <div className="p-4 flex justify-between items-center">
               <h2 className="text-xl font-bold text-text-900">

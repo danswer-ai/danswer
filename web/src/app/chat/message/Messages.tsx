@@ -37,7 +37,13 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 
-import { LikeFeedback, DislikeFeedback } from "@/components/icons/icons";
+import {
+  LikeFeedback,
+  DislikeFeedback,
+  GithubIcon,
+  GlobeIcon,
+  LikeFeedbackIcon,
+} from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
@@ -63,7 +69,7 @@ import CsvContent from "../../../components/tools/CSVContent";
 import FirstSourceCard, {
   SeeMoreBlock,
 } from "@/components/chat_search/sources/firstsourcecard";
-import { getSourceMetadata } from "@/lib/sources";
+import { getSourceMetadata, SOURCE_METADATA_MAP } from "@/lib/sources";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -316,12 +322,13 @@ export const AIMessage = ({
           if (match) {
             const index = parseInt(match[1], 10) - 1;
             const associatedDoc = docs && docs[index];
-
-            const icon = getSourceMetadata(
-              associatedDoc?.source_type || "web"
-            ).icon({
-              size: 18,
-            });
+            const getIcon = (sourceType: ValidSources, link: string) => {
+              return getSourceMetadata(sourceType).icon({ size: 18 });
+            };
+            const icon = getIcon(
+              associatedDoc?.source_type || "web",
+              associatedDoc?.link || ""
+            );
 
             return (
               <MemoizedLink {...props} document={{ ...associatedDoc, icon }}>
