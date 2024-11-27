@@ -223,6 +223,9 @@ def test_slack_group_permission_sync(
     vespa_client: vespa_fixture,
     slack_test_setup: tuple[dict[str, Any], dict[str, Any]],
 ) -> None:
+    """
+    This test ensures that permission sync overrides danswer group access.
+    """
     public_channel, private_channel = slack_test_setup
 
     # Creating an admin user (first user created is automatically an admin)
