@@ -44,9 +44,11 @@ class LLMProviderManager:
         llm_response = requests.put(
             f"{API_SERVER_URL}/admin/llm/provider",
             json=llm_provider.model_dump(),
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         llm_response.raise_for_status()
         response_data = llm_response.json()
@@ -65,9 +67,11 @@ class LLMProviderManager:
 
         set_default_response = requests.post(
             f"{API_SERVER_URL}/admin/llm/provider/{llm_response.json()['id']}/default",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         set_default_response.raise_for_status()
 
@@ -80,9 +84,11 @@ class LLMProviderManager:
     ) -> bool:
         response = requests.delete(
             f"{API_SERVER_URL}/admin/llm/provider/{llm_provider.id}",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         response.raise_for_status()
         return True
@@ -93,9 +99,11 @@ class LLMProviderManager:
     ) -> list[FullLLMProvider]:
         response = requests.get(
             f"{API_SERVER_URL}/admin/llm/provider",
-            headers=user_performing_action.headers
-            if user_performing_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_performing_action.headers
+                if user_performing_action
+                else GENERAL_HEADERS
+            ),
         )
         response.raise_for_status()
         return [FullLLMProvider(**ug) for ug in response.json()]

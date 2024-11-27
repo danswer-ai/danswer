@@ -120,9 +120,11 @@ class UserManager:
             user_to_perform_action = user
         response = requests.get(
             url=f"{API_SERVER_URL}/manage/users",
-            headers=user_to_perform_action.headers
-            if user_to_perform_action
-            else GENERAL_HEADERS,
+            headers=(
+                user_to_perform_action.headers
+                if user_to_perform_action
+                else GENERAL_HEADERS
+            ),
         )
         response.raise_for_status()
 

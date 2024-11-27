@@ -128,7 +128,7 @@ class Chunker:
         mini_chunk_size: int = MINI_CHUNK_SIZE,
         callback: IndexingHeartbeatInterface | None = None,
     ) -> None:
-        from llama_index.text_splitter import SentenceSplitter
+        from llama_index.core.node_parser.text.sentence import SentenceSplitter
 
         self.include_metadata = include_metadata
         self.chunk_token_limit = chunk_token_limit

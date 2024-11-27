@@ -15,7 +15,7 @@ def test_thread_to_document() -> None:
         full_email_thread = json.load(f)
 
     doc = thread_to_document(full_email_thread)
-    assert type(doc) == Document
+    assert isinstance(doc, Document)
     assert doc.source == DocumentSource.GMAIL
     assert doc.semantic_identifier == "Email Chain 1"
     assert doc.doc_updated_at == datetime.datetime(

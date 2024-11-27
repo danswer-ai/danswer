@@ -131,9 +131,9 @@ def _translate_citations(
     citation_to_saved_doc_id_map: dict[int, int] = {}
     for citation in citations_list:
         if citation.citation_num not in citation_to_saved_doc_id_map:
-            citation_to_saved_doc_id_map[
-                citation.citation_num
-            ] = doc_id_to_saved_doc_id_map[citation.document_id]
+            citation_to_saved_doc_id_map[citation.citation_num] = (
+                doc_id_to_saved_doc_id_map[citation.document_id]
+            )
 
     return MessageSpecificCitations(citation_map=citation_to_saved_doc_id_map)
 
@@ -515,9 +515,9 @@ def stream_chat_message_objects(
             else reserve_message_id(
                 db_session=db_session,
                 chat_session_id=chat_session_id,
-                parent_message=user_message.id
-                if user_message is not None
-                else parent_message.id,
+                parent_message=(
+                    user_message.id if user_message is not None else parent_message.id
+                ),
                 message_type=MessageType.ASSISTANT,
             )
         )
@@ -722,9 +722,11 @@ def stream_chat_message_objects(
                         ai_message_files = [
                             FileDescriptor(
                                 id=str(file_id),
-                                type=ChatFileType.IMAGE
-                                if custom_tool_response.response_type == "image"
-                                else ChatFileType.CSV,
+                                type=(
+                                    ChatFileType.IMAGE
+                                    if custom_tool_response.response_type == "image"
+                                    else ChatFileType.CSV
+                                ),
                             )
                             for file_id in file_ids
                         ]

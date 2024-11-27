@@ -51,13 +51,15 @@ class PreviousMessage(BaseModel):
                 for file in available_files
                 if str(file.file_id) in message_file_ids
             ],
-            tool_call=ToolCallFinalResult(
-                tool_name=chat_message.tool_call.tool_name,
-                tool_args=chat_message.tool_call.tool_arguments,
-                tool_result=chat_message.tool_call.tool_result,
-            )
-            if chat_message.tool_call
-            else None,
+            tool_call=(
+                ToolCallFinalResult(
+                    tool_name=chat_message.tool_call.tool_name,
+                    tool_args=chat_message.tool_call.tool_arguments,
+                    tool_result=chat_message.tool_call.tool_result,
+                )
+                if chat_message.tool_call
+                else None
+            ),
         )
 
     def to_langchain_msg(self) -> BaseMessage:
