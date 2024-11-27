@@ -25,11 +25,13 @@ from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import DocumentSource
+from danswer.db.connector import mark_ccpair_with_indexing_trigger
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
+from danswer.db.enums import IndexingMode
 from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
 from danswer.db.index_attempt import create_index_attempt
@@ -240,13 +242,30 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     ):
                         continue
 
+                    reindex = False
+                    if search_settings_instance.id == primary_search_settings.id:
+                        if cc_pair.indexing_trigger is not None:
+                            if cc_pair.indexing_trigger == IndexingMode.REINDEX:
+                                reindex = True
+
+                            task_logger.info(
+                                f"Connector indexing manual trigger detected: "
+                                f"cc_pair={cc_pair.id} "
+                                f"search_settings={search_settings_instance.id} "
+                                f"indexing_mode={cc_pair.indexing_trigger}"
+                            )
+
+                            mark_ccpair_with_indexing_trigger(
+                                cc_pair.id, None, db_session
+                            )
+
                     # using a task queue and only allowing one task per cc_pair/search_setting
                     # prevents us from starving out certain attempts
                     attempt_id = try_creating_indexing_task(
                         self.app,
                         cc_pair,
                         search_settings_instance,
-                        False,
+                        reindex,
                         db_session,
                         r,
                         tenant_id,
@@ -281,7 +300,6 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                 mark_attempt_failed(
                     attempt.id, db_session, failure_reason=failure_reason
                 )
-
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."
@@ -367,6 +385,10 @@ def _should_index(
         or connector.source == DocumentSource.INGESTION_API
     ):
         return False
+
+    # if a manual indexing trigger is on the cc pair, honor it
+    if cc_pair.indexing_trigger is not None:
+        return True
 
     # if no attempt has ever occurred, we should index regardless of refresh_freq
     if not last_index:
