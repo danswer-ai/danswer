@@ -81,6 +81,7 @@ def load_personas_from_yaml(
 
         p_id = persona.get("id")
         tool_ids = []
+
         if persona.get("image_generation"):
             image_gen_tool = (
                 db_session.query(ToolDBModel)
