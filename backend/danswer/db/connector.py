@@ -317,6 +317,8 @@ def mark_cc_pair_as_external_group_synced(db_session: Session, cc_pair_id: int) 
 def mark_ccpair_with_indexing_trigger(
     cc_pair_id: int, indexing_mode: IndexingMode | None, db_session: Session
 ) -> None:
+    """indexing_mode sets a field which will be picked up by a background task
+    to trigger indexing. Set to None to disable the trigger."""
     try:
         cc_pair = db_session.execute(
             select(ConnectorCredentialPair)
