@@ -188,7 +188,10 @@ jobs:
         id: get-modules
         run: |
           # Run docker command to list all test modules and format as JSON array
-          modules=$(docker run --rm danswer/danswer-integration:test find /app/tests/integration -type f -name "test_*.py" -o -name "*_test.py" | jq -R -s -c 'split("\n")[:-1]')
+          modules=$(docker run --rm danswer/danswer-integration:test \
+            find /app/tests/integration -type f \( -name "test_*.py" -o -name "*_test.py" \) -print0 | \
+            xargs -0 basename -a | \
+            jq -R -s 'split("\n")[:-1] | map("/app/tests/integration/" + .)')
           echo "modules=$modules" >> $GITHUB_OUTPUT
 
       - name: Run Integration Tests in Parallel
