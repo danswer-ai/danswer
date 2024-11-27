@@ -161,7 +161,7 @@ def get_unfenced_index_attempt_ids(db_session: Session, r: redis.Redis) -> list[
 )
 def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
     tasks_created = 0
-
+    locked = False
     r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat: RedisLock = r.lock(
@@ -173,6 +173,8 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
         # these tasks should never overlap
         if not lock_beat.acquire(blocking=False):
             return None
+
+        locked = True
 
         # check for search settings swap
         with get_session_with_tenant(tenant_id=tenant_id) as db_session:
@@ -307,13 +309,14 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
     except Exception:
         task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
-        if lock_beat.owned():
-            lock_beat.release()
-        else:
-            task_logger.error(
-                "check_for_indexing - Lock not owned on completion: "
-                f"tenant={tenant_id}"
-            )
+        if locked:
+            if lock_beat.owned():
+                lock_beat.release()
+            else:
+                task_logger.error(
+                    "check_for_indexing - Lock not owned on completion: "
+                    f"tenant={tenant_id}"
+                )
 
     return tasks_created
 
