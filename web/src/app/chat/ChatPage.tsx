@@ -2699,7 +2699,9 @@ export function ChatPage({
                               <div
                                 style={{
                                   height: !autoScrollEnabled
-                                    ? "50vh"
+                                    ? settings?.isMobile
+                                      ? "40vh"
+                                      : "50vh"
                                     : undefined,
                                 }}
                               />
