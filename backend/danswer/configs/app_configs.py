@@ -234,7 +234,7 @@ except ValueError:
         CELERY_WORKER_LIGHT_PREFETCH_MULTIPLIER_DEFAULT
     )
 
-CELERY_WORKER_INDEXING_CONCURRENCY_DEFAULT = 1
+CELERY_WORKER_INDEXING_CONCURRENCY_DEFAULT = 3
 try:
     env_value = os.environ.get("CELERY_WORKER_INDEXING_CONCURRENCY")
     if not env_value:
@@ -421,6 +421,9 @@ LOG_ALL_MODEL_INTERACTIONS = (
 # Logs Danswer only model interactions like prompts, responses, messages etc.
 LOG_DANSWER_MODEL_INTERACTIONS = (
     os.environ.get("LOG_DANSWER_MODEL_INTERACTIONS", "").lower() == "true"
+)
+LOG_INDIVIDUAL_MODEL_TOKENS = (
+    os.environ.get("LOG_INDIVIDUAL_MODEL_TOKENS", "").lower() == "true"
 )
 # If set to `true` will enable additional logs about Vespa query performance
 # (time spent on finding the right docs + time spent fetching summaries from disk)

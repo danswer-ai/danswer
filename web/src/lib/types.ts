@@ -72,6 +72,7 @@ export type ValidInputTypes = "load_state" | "poll" | "event";
 export type ValidStatuses =
   | "success"
   | "completed_with_errors"
+  | "canceled"
   | "failed"
   | "in_progress"
   | "not_started";
@@ -207,6 +208,7 @@ export interface ChannelConfig {
   channel_name: string;
   respond_tag_only?: boolean;
   respond_to_bots?: boolean;
+  show_continue_in_web_ui?: boolean;
   respond_member_group_list?: string[];
   answer_filters?: AnswerFilterOption[];
   follow_up_tags?: string[];

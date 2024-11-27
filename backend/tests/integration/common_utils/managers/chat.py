@@ -4,12 +4,12 @@ from uuid import UUID
 import requests
 from requests.models import Response
 
+from danswer.context.search.models import RetrievalDetails
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import ThreadMessage
-from danswer.search.models import RetrievalDetails
 from danswer.server.query_and_chat.models import ChatSessionCreationRequest
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from tests.integration.common_utils.constants import API_SERVER_URL

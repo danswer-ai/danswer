@@ -618,7 +618,6 @@ def update_user_assistant_list(
     if user is None:
         if AUTH_TYPE == AuthType.DISABLED:
             store = get_kv_store()
-
             no_auth_user = fetch_no_auth_user(store)
             no_auth_user.preferences.chosen_assistants = request.chosen_assistants
             set_no_auth_user_preferences(store, no_auth_user.preferences)

@@ -57,7 +57,7 @@ from danswer.utils.special_types import JSON_ro
 from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
-from danswer.search.enums import RecencyBiasSetting
+from danswer.context.search.enums import RecencyBiasSetting
 from danswer.utils.encryption import decrypt_bytes_to_string
 from danswer.utils.encryption import encrypt_string_to_bytes
 from danswer.utils.headers import HeaderItemDict
@@ -1480,6 +1480,7 @@ class ChannelConfig(TypedDict):
     # If None then no follow up
     # If empty list, follow up with no tags
     follow_up_tags: NotRequired[list[str]]
+    show_continue_in_web_ui: NotRequired[bool]  # defaults to False
 
 
 class SlackBotResponseType(str, PyEnum):

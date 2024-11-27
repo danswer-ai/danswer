@@ -18,6 +18,11 @@ from danswer.configs.chat_configs import DISABLE_LLM_DOC_RELEVANCE
 from danswer.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.constants import MessageType
+from danswer.context.search.enums import LLMEvaluationType
+from danswer.context.search.models import RerankMetricsContainer
+from danswer.context.search.models import RetrievalMetricsContainer
+from danswer.context.search.utils import chunks_or_sections_to_search_docs
+from danswer.context.search.utils import dedupe_documents
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_db_search_doc
 from danswer.db.chat import create_new_chat_message
@@ -42,11 +47,7 @@ from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.one_shot_answer.models import QueryRephrase
 from danswer.one_shot_answer.qa_utils import combine_message_thread
-from danswer.search.enums import LLMEvaluationType
-from danswer.search.models import RerankMetricsContainer
-from danswer.search.models import RetrievalMetricsContainer
-from danswer.search.utils import chunks_or_sections_to_search_docs
-from danswer.search.utils import dedupe_documents
+from danswer.one_shot_answer.qa_utils import slackify_message_thread
 from danswer.secondary_llm_flows.answer_validation import get_answer_validity
 from danswer.secondary_llm_flows.query_expansion import thread_based_query_rephrase
 from danswer.server.query_and_chat.models import ChatMessageDetail
@@ -194,13 +195,22 @@ def stream_answer_objects(
             )
         prompt = persona.prompts[0]
 
+    user_message_str = query_msg.message
+    # For this endpoint, we only save one user message to the chat session
+    # However, for slackbot, we want to include the history of the entire thread
+    if danswerbot_flow:
+        # Right now, we only support bringing over citations and search docs
+        # from the last message in the thread, not the entire thread
+        # in the future, we may want to retrieve the entire thread
+        user_message_str = slackify_message_thread(query_req.messages)
+
     # Create the first User query message
     new_user_message = create_new_chat_message(
         chat_session_id=chat_session.id,
         parent_message=root_message,
         prompt_id=query_req.prompt_id,
-        message=query_msg.message,
-        token_count=len(llm_tokenizer.encode(query_msg.message)),
+        message=user_message_str,
+        token_count=len(llm_tokenizer.encode(user_message_str)),
         message_type=MessageType.USER,
         db_session=db_session,
         commit=True,

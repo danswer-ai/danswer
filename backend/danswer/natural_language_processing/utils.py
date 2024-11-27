@@ -7,7 +7,7 @@ from transformers import logging as transformer_logging  # type:ignore
 
 from danswer.configs.model_configs import DOC_EMBEDDING_CONTEXT_SIZE
 from danswer.configs.model_configs import DOCUMENT_ENCODER_MODEL
-from danswer.search.models import InferenceChunk
+from danswer.context.search.models import InferenceChunk
 from danswer.utils.logger import setup_logger
 from shared_configs.enums import EmbeddingProvider
 
@@ -131,7 +131,7 @@ def _try_initialize_tokenizer(
             return tokenizer
         except Exception as hf_error:
             logger.warning(
-                f"Error initializing HuggingFaceTokenizer for {model_name}: {hf_error}"
+                f"Failed to initialize HuggingFaceTokenizer for {model_name}: {hf_error}"
             )
 
     # If both initializations fail, return None

@@ -171,6 +171,35 @@ module.exports = {
         "text-800": "var(--text-800)",
         "text-900": "var(--text-900)",
         "text-950": "var(--text-950)",
+        // Light mode
+        // Light mode
+        "calendar-bg-selected": "var(--background-800)",
+        "calendar-bg-outside-selected": "var(--background-200)",
+        "calendar-text-muted": "var(--text-400)",
+        "calendar-text-selected": "var(--white)",
+        "calendar-range-middle": "var(--neutral-800)",
+        "calendar-range-end": "var(--white)",
+        "calendar-text-in-range": "var(--text-200)",
+        "calendar-text-end": "var(--text-900)",
+
+        // Dark mode
+        "calendar-bg-outside-selected-dark": "var(--background-700)",
+        "calendar-text-muted-dark": "var(--text-500)",
+        "calendar-text-selected-dark": "var(--white)",
+        "calendar-range-middle-dark": "var(--background-800)",
+        "calendar-text-in-range-dark": "var(--text-200)",
+
+        // Hover effects
+        "calendar-hover-bg": "var(--background-200)",
+        "calendar-hover-bg-dark": "var(--background-700)",
+        "calendar-hover-text": "var(--text-800)",
+        "calendar-hover-text-dark": "var(--text-200)",
+
+        // Today's date
+        "calendar-today-bg": "var(--background-100)",
+        "calendar-today-bg-dark": "var(--background-800)",
+        "calendar-today-text": "var(--text-800)",
+        "calendar-today-text-dark": "var(--text-200)",
 
         "user-text": "var(--text-800)",
 

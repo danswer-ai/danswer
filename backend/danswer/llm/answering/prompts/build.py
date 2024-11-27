@@ -58,8 +58,8 @@ class AnswerPromptBuilder:
         user_message: HumanMessage,
         message_history: list[PreviousMessage],
         llm_config: LLMConfig,
+        raw_user_text: str,
         single_message_history: str | None = None,
-        raw_user_text: str | None = None,
     ) -> None:
         self.max_tokens = compute_max_llm_input_tokens(llm_config)
 
@@ -89,11 +89,7 @@ class AnswerPromptBuilder:
 
         self.new_messages_and_token_cnts: list[tuple[BaseMessage, int]] = []
 
-        self.raw_user_message = (
-            HumanMessage(content=raw_user_text)
-            if raw_user_text is not None
-            else user_message
-        )
+        self.raw_user_message = raw_user_text
 
     def update_system_prompt(self, system_message: SystemMessage | None) -> None:
         if not system_message:

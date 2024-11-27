@@ -5,8 +5,8 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from danswer.auth.schemas import UserRole
+from danswer.context.search.enums import RecencyBiasSetting
 from danswer.db.enums import AccessType
-from danswer.search.enums import RecencyBiasSetting
 from danswer.server.documents.models import DocumentSource
 from danswer.server.documents.models import InputType
 

@@ -8,13 +8,13 @@ from pydantic import field_validator
 
 from danswer.configs.chat_configs import NUM_RETURNED_HITS
 from danswer.configs.constants import DocumentSource
+from danswer.context.search.enums import LLMEvaluationType
+from danswer.context.search.enums import OptionalSearchSetting
+from danswer.context.search.enums import SearchType
 from danswer.db.models import Persona
 from danswer.db.models import SearchSettings
 from danswer.indexing.models import BaseChunk
 from danswer.indexing.models import IndexingSetting
-from danswer.search.enums import LLMEvaluationType
-from danswer.search.enums import OptionalSearchSetting
-from danswer.search.enums import SearchType
 from shared_configs.enums import RerankerProvider
 
 

@@ -7,7 +7,6 @@ from typing import TypeVar
 
 from retry import retry
 from slack_sdk import WebClient
-from slack_sdk.models.blocks import DividerBlock
 from slack_sdk.models.blocks import SectionBlock
 
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
@@ -21,12 +20,11 @@ from danswer.configs.danswerbot_configs import DANSWER_BOT_USE_QUOTES
 from danswer.configs.danswerbot_configs import DANSWER_FOLLOWUP_EMOJI
 from danswer.configs.danswerbot_configs import DANSWER_REACT_EMOJI
 from danswer.configs.danswerbot_configs import ENABLE_DANSWERBOT_REFLEXION
-from danswer.danswerbot.slack.blocks import build_documents_blocks
-from danswer.danswerbot.slack.blocks import build_follow_up_block
-from danswer.danswerbot.slack.blocks import build_qa_response_blocks
-from danswer.danswerbot.slack.blocks import build_sources_blocks
-from danswer.danswerbot.slack.blocks import get_restate_blocks
-from danswer.danswerbot.slack.formatting import format_slack_message
+from danswer.context.search.enums import OptionalSearchSetting
+from danswer.context.search.models import BaseFilters
+from danswer.context.search.models import RerankingDetails
+from danswer.context.search.models import RetrievalDetails
+from danswer.danswerbot.slack.blocks import build_slack_response_blocks
 from danswer.danswerbot.slack.handlers.utils import send_team_member_message
 from danswer.danswerbot.slack.models import SlackMessageInfo
 from danswer.danswerbot.slack.utils import respond_in_thread
@@ -48,10 +46,6 @@ from danswer.llm.utils import get_max_input_tokens
 from danswer.one_shot_answer.answer_question import get_search_answer
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import OneShotQAResponse
-from danswer.search.enums import OptionalSearchSetting
-from danswer.search.models import BaseFilters
-from danswer.search.models import RerankingDetails
-from danswer.search.models import RetrievalDetails
 from danswer.utils.logger import DanswerLoggingAdapter
 
 
@@ -411,61 +405,15 @@ def handle_regular_answer(
             )
         return True
 
-    # If called with the DanswerBot slash command, the question is lost so we have to reshow it
-    restate_question_block = get_restate_blocks(messages[-1].message, is_bot_msg)
-    formatted_answer = format_slack_message(answer.answer) if answer.answer else None
-
-    answer_blocks = build_qa_response_blocks(
-        message_id=answer.chat_message_id,
-        answer=formatted_answer,
-        quotes=answer.quotes.quotes if answer.quotes else None,
-        source_filters=retrieval_info.applied_source_filters,
-        time_cutoff=retrieval_info.applied_time_cutoff,
-        favor_recent=retrieval_info.recency_bias_multiplier > 1,
-        # currently Personas don't support quotes
-        # if citations are enabled, also don't use quotes
-        skip_quotes=persona is not None or use_citations,
-        process_message_for_citations=use_citations,
+    all_blocks = build_slack_response_blocks(
+        tenant_id=tenant_id,
+        message_info=message_info,
+        answer=answer,
+        persona=persona,
+        channel_conf=channel_conf,
+        use_citations=use_citations,
         feedback_reminder_id=feedback_reminder_id,
     )
-
-    # Get the chunks fed to the LLM only, then fill with other docs
-    llm_doc_inds = answer.llm_selected_doc_indices or []
-    llm_docs = [top_docs[i] for i in llm_doc_inds]
-    remaining_docs = [
-        doc for idx, doc in enumerate(top_docs) if idx not in llm_doc_inds
-    ]
-    priority_ordered_docs = llm_docs + remaining_docs
-
-    document_blocks = []
-    citations_block = []
-    # if citations are enabled, only show cited documents
-    if use_citations:
-        citations = answer.citations or []
-        cited_docs = []
-        for citation in citations:
-            matching_doc = next(
-                (d for d in top_docs if d.document_id == citation.document_id),
-                None,
-            )
-            if matching_doc:
-                cited_docs.append((citation.citation_num, matching_doc))
-
-        cited_docs.sort()
-        citations_block = build_sources_blocks(cited_documents=cited_docs)
-    elif priority_ordered_docs:
-        document_blocks = build_documents_blocks(
-            documents=priority_ordered_docs,
-            message_id=answer.chat_message_id,
-        )
-        document_blocks = [DividerBlock()] + document_blocks
-
-    all_blocks = (
-        restate_question_block + answer_blocks + citations_block + document_blocks
-    )
-
-    if channel_conf and channel_conf.get("follow_up_tags") is not None:
-        all_blocks.append(build_follow_up_block(message_id=answer.chat_message_id))
 
     try:
         respond_in_thread(

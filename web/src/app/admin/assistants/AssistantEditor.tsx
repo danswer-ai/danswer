@@ -379,6 +379,7 @@ export function AssistantEditor({
           if (!promptResponse.ok) {
             error = await promptResponse.text();
           }
+
           if (!personaResponse) {
             error = "Failed to create Assistant - no response received";
           } else if (!personaResponse.ok) {
@@ -404,7 +405,7 @@ export function AssistantEditor({
                   message: `"${assistant.name}" has been added to your list.`,
                   type: "success",
                 });
-                router.refresh();
+                await refreshAssistants();
               } else {
                 setPopup({
                   message: `"${assistant.name}" could not be added to your list.`,
@@ -412,6 +413,7 @@ export function AssistantEditor({
                 });
               }
             }
+
             await refreshAssistants();
             router.push(
               redirectType === SuccessfulPersonaUpdateRedirectType.ADMIN

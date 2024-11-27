@@ -81,6 +81,11 @@ export const SlackChannelConfigCreationForm = ({
             respond_to_bots:
               existingSlackChannelConfig?.channel_config?.respond_to_bots ||
               false,
+            show_continue_in_web_ui:
+              // If we're updating, we want to keep the existing value
+              // Otherwise, we want to default to true
+              existingSlackChannelConfig?.channel_config
+                ?.show_continue_in_web_ui ?? !isUpdate,
             enable_auto_filters:
               existingSlackChannelConfig?.enable_auto_filters || false,
             respond_member_group_list:
@@ -119,6 +124,7 @@ export const SlackChannelConfigCreationForm = ({
             questionmark_prefilter_enabled: Yup.boolean().required(),
             respond_tag_only: Yup.boolean().required(),
             respond_to_bots: Yup.boolean().required(),
+            show_continue_in_web_ui: Yup.boolean().required(),
             enable_auto_filters: Yup.boolean().required(),
             respond_member_group_list: Yup.array().of(Yup.string()).required(),
             still_need_help_enabled: Yup.boolean().required(),
@@ -261,14 +267,22 @@ export const SlackChannelConfigCreationForm = ({
                   </Tabs>
                 </div>
 
-                <AdvancedOptionsToggle
-                  showAdvancedOptions={showAdvancedOptions}
-                  setShowAdvancedOptions={setShowAdvancedOptions}
-                />
+                <div className="mt-6">
+                  <AdvancedOptionsToggle
+                    showAdvancedOptions={showAdvancedOptions}
+                    setShowAdvancedOptions={setShowAdvancedOptions}
+                  />
+                </div>
 
                 {showAdvancedOptions && (
                   <div className="mt-4">
-                    <div className="w-64 mb-4">
+                    <BooleanFormField
+                      name="show_continue_in_web_ui"
+                      removeIndent
+                      label="Show Continue in Web UI button"
+                      tooltip="If set, will show a button at the bottom of the response that allows the user to continue the conversation in the Danswer Web UI"
+                    />
+                    <div className="w-64 mb-4 mt-4">
                       <SelectorFormField
                         name="response_type"
                         label="Answer Type"
@@ -369,7 +383,7 @@ export const SlackChannelConfigCreationForm = ({
                   <Button
                     type="submit"
                     variant="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !values.channel_name}
                     className="mx-auto w-64"
                   >
                     {isUpdate ? "Update!" : "Create!"}

@@ -10,6 +10,7 @@ from pydantic import model_validator
 from danswer.auth.schemas import UserRole
 from danswer.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
 from danswer.configs.constants import AuthType
+from danswer.context.search.models import SavedSearchSettings
 from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
@@ -17,7 +18,6 @@ from danswer.db.models import SlackBot as SlackAppModel
 from danswer.db.models import SlackBotResponseType
 from danswer.db.models import SlackChannelConfig as SlackChannelConfigModel
 from danswer.db.models import User
-from danswer.search.models import SavedSearchSettings
 from danswer.server.features.persona.models import PersonaSnapshot
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
@@ -156,6 +156,7 @@ class SlackChannelConfigCreationRequest(BaseModel):
     channel_name: str
     respond_tag_only: bool = False
     respond_to_bots: bool = False
+    show_continue_in_web_ui: bool = False
     enable_auto_filters: bool = False
     # If no team members, assume respond in the channel to everyone
     respond_member_group_list: list[str] = Field(default_factory=list)

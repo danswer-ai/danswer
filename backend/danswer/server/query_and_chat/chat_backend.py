@@ -27,9 +27,11 @@ from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
 from danswer.configs.model_configs import LITELLM_PASS_THROUGH_HEADERS
+from danswer.db.chat import add_chats_to_session_from_slack_thread
 from danswer.db.chat import create_chat_session
 from danswer.db.chat import create_new_chat_message
 from danswer.db.chat import delete_chat_session
+from danswer.db.chat import duplicate_chat_session_for_user_from_slack
 from danswer.db.chat import get_chat_message
 from danswer.db.chat import get_chat_messages_by_session
 from danswer.db.chat import get_chat_session_by_id
@@ -529,6 +531,38 @@ def seed_chat(
 
     return ChatSeedResponse(
         redirect_url=f"{WEB_DOMAIN}/chat?chatId={new_chat_session.id}&seeded=true"
+    )
+
+
+class SeedChatFromSlackRequest(BaseModel):
+    chat_session_id: UUID
+
+
+class SeedChatFromSlackResponse(BaseModel):
+    redirect_url: str
+
+
+@router.post("/seed-chat-session-from-slack")
+def seed_chat_from_slack(
+    chat_seed_request: SeedChatFromSlackRequest,
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> SeedChatFromSlackResponse:
+    slack_chat_session_id = chat_seed_request.chat_session_id
+    new_chat_session = duplicate_chat_session_for_user_from_slack(
+        db_session=db_session,
+        user=user,
+        chat_session_id=slack_chat_session_id,
+    )
+
+    add_chats_to_session_from_slack_thread(
+        db_session=db_session,
+        slack_chat_session_id=slack_chat_session_id,
+        new_chat_session_id=new_chat_session.id,
+    )
+
+    return SeedChatFromSlackResponse(
+        redirect_url=f"{WEB_DOMAIN}/chat?chatId={new_chat_session.id}"
     )
 
 

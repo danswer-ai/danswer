@@ -176,6 +176,9 @@ def create_persona(
     )
 
 
+# NOTE: This endpoint cannot update persona configuration options that
+# are core to the persona, such as its display priority and
+# whether or not the assistant is a built-in / default assistant
 @basic_router.patch("/{persona_id}")
 def update_persona(
     persona_id: int,

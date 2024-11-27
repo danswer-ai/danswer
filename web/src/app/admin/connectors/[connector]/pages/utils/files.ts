@@ -7,7 +7,6 @@ import { AccessType } from "@/lib/types";
 export const submitFiles = async (
   selectedFiles: File[],
   setPopup: (popup: PopupSpec) => void,
-  setSelectedFiles: (files: File[]) => void,
   name: string,
   access_type: string,
   groups?: number[]
@@ -102,7 +101,6 @@ export const submitFiles = async (
     return false;
   }
 
-  setSelectedFiles([]);
   setPopup({
     type: "success",
     message: "Successfully uploaded files!",
