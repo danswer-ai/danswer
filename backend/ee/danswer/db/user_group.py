@@ -298,12 +298,11 @@ def fetch_documents_for_user_group_paginated(
 def fetch_user_groups_for_documents(
     db_session: Session,
     document_ids: list[str],
-    exclude_sync_access: bool = False,
 ) -> Sequence[tuple[str, list[str]]]:
     """
     Fetches all user groups that have access to the given documents.
 
-    can use exclude_sync_access to exclude groups for sync access
+    NOTE: this doesn't include groups if the cc_pair is access type SYNC
     """
     stmt = (
         select(Document.id, func.array_agg(UserGroup.name))
@@ -314,14 +313,9 @@ def fetch_user_groups_for_documents(
         .join(
             ConnectorCredentialPair,
             ConnectorCredentialPair.id == UserGroup__ConnectorCredentialPair.cc_pair_id,
+            ConnectorCredentialPair.access_type != AccessType.SYNC,
         )
-    )
-
-    if exclude_sync_access:
-        stmt = stmt.where(ConnectorCredentialPair.access_type != AccessType.SYNC)
-
-    stmt = (
-        stmt.join(
+        .join(
             DocumentByConnectorCredentialPair,
             and_(
                 DocumentByConnectorCredentialPair.connector_id
