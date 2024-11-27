@@ -189,7 +189,7 @@ jobs:
         run: |
           # Run docker command to list all test modules and format as JSON array
           modules=$(docker run --rm danswer/danswer-integration:test \
-            /bin/bash -c "find /app/tests/integration -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print" | \
+            find /app/tests/integration -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print | \
             jq -R -s 'split("\n")[:-1] | map(select(length > 0))')
           
           # Check if modules array is empty
@@ -199,7 +199,7 @@ jobs:
           fi
           
           # Correctly format the modules as a JSON string for GitHub Actions
-          echo "modules=${modules}" >> $GITHUB_ENV
+          echo "modules=$modules" >> $GITHUB_OUTPUT
           
           # Print the modules for verification
           echo "Found the following test modules:"
@@ -207,9 +207,11 @@ jobs:
 
       - name: Run Integration Tests in Parallel
         uses: actions/github-script@v7
+        env:
+          MODULES: ${{ steps.get-modules.outputs.modules }}
         with:
           script: |
-            const modules = ${{ steps.get-modules.outputs.modules }};
+            const modules = JSON.parse(process.env.MODULES);
             const batchSize = 4; // Run 4 tests in parallel
             
             for (let i = 0; i < modules.length; i += batchSize) {
