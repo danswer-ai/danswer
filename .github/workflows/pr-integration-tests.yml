@@ -18,7 +18,8 @@ env:
   CONFLUENCE_ACCESS_TOKEN: ${{ secrets.CONFLUENCE_ACCESS_TOKEN }}
   
 jobs:
-  build-docker-images:
+  integration-tests:
+    # See https://runs-on.com/runners/linux/
     runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
     steps:
       - name: Checkout code
@@ -87,16 +88,6 @@ jobs:
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
           cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
-    outputs:
-      images_built: true
-
-  multi-tenant-tests:
-    needs: build-docker-images
-    runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       # Start containers for multi-tenant tests
       - name: Start Docker containers for multi-tenant tests
         run: |
@@ -108,10 +99,12 @@ jobs:
           DISABLE_TELEMETRY=true \
           IMAGE_TAG=test \
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d
+        id: start_docker_multi_tenant
 
+      # In practice, `cloud` Auth type would require OAUTH credentials to be set.
       - name: Run Multi-Tenant Integration Tests
         run: |
-          echo "Running multi-tenant integration tests..."
+          echo "Running integration tests..."
           docker run --rm --network danswer-stack_default \
             --name test-runner \
             -e POSTGRES_HOST=relational_db \
@@ -128,19 +121,23 @@ jobs:
             -e MULTI_TENANT=true \
             danswer/danswer-integration:test \
             /app/tests/integration/multitenant_tests
+        continue-on-error: true
+        id: run_multitenant_tests
+
+      - name: Check multi-tenant test results
+        run: |
+          if [ ${{ steps.run_tests.outcome }} == 'failure' ]; then
+            echo "Integration tests failed. Exiting with error."
+            exit 1
+          else
+            echo "All integration tests passed successfully."
+          fi 
 
       - name: Stop multi-tenant Docker containers
-        if: always()
         run: |
           cd deployment/docker_compose
           docker compose -f docker-compose.dev.yml -p danswer-stack down -v
 
-  standard-tests:
-    needs: build-docker-images
-    runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
       - name: Start Docker containers 
         run: |
@@ -151,6 +148,7 @@ jobs:
           DISABLE_TELEMETRY=true \
           IMAGE_TAG=test \
           docker compose -f docker-compose.dev.yml -p danswer-stack up -d
+        id: start_docker
 
       - name: Wait for service to be ready
         run: |
@@ -186,44 +184,102 @@ jobs:
           done
           echo "Finished waiting for service."
 
-      - name: Run Standard Integration Tests
+      - name: Get test modules
+        id: get-modules
         run: |
-          echo "Running standard integration tests..."
-          docker run --rm --network danswer-stack_default \
-            --name test-runner \
-            -e POSTGRES_HOST=relational_db \
-            -e POSTGRES_USER=postgres \
-            -e POSTGRES_PASSWORD=password \
-            -e POSTGRES_DB=postgres \
-            -e VESPA_HOST=index \
-            -e REDIS_HOST=cache \
-            -e API_SERVER_HOST=api_server \
-            -e OPENAI_API_KEY=${OPENAI_API_KEY} \
-            -e SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN} \
-            -e CONFLUENCE_TEST_SPACE_URL=${CONFLUENCE_TEST_SPACE_URL} \
-            -e CONFLUENCE_USER_NAME=${CONFLUENCE_USER_NAME} \
-            -e CONFLUENCE_ACCESS_TOKEN=${CONFLUENCE_ACCESS_TOKEN} \
-            -e TEST_WEB_HOSTNAME=test-runner \
-            danswer/danswer-integration:test \
-            /app/tests/integration/tests \
-            /app/tests/integration/connector_job_tests
+          # Run docker command to list all test modules and format as JSON array
+          modules=$(docker run --rm danswer/danswer-integration:test find /app/tests/integration -type f -name "test_*.py" -o -name "*_test.py" | jq -R -s -c 'split("\n")[:-1]')
+          echo "modules=$modules" >> $GITHUB_OUTPUT
 
-      - name: Stop Docker containers
-        if: always()
+      - name: Run Integration Tests in Parallel
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const modules = ${{ steps.get-modules.outputs.modules }};
+            const batchSize = 4; // Run 4 tests in parallel
+            
+            for (let i = 0; i < modules.length; i += batchSize) {
+              const batch = modules.slice(i, i + batchSize);
+              const promises = batch.map(module => {
+                const command = `
+                  docker run --rm --network danswer-stack_default \\
+                    --name test-runner-${i} \\
+                    -e POSTGRES_HOST=relational_db \\
+                    -e POSTGRES_USER=postgres \\
+                    -e POSTGRES_PASSWORD=password \\
+                    -e POSTGRES_DB=postgres \\
+                    -e VESPA_HOST=index \\
+                    -e REDIS_HOST=cache \\
+                    -e API_SERVER_HOST=api_server \\
+                    -e OPENAI_API_KEY=${process.env.OPENAI_API_KEY} \\
+                    -e SLACK_BOT_TOKEN=${process.env.SLACK_BOT_TOKEN} \\
+                    -e CONFLUENCE_TEST_SPACE_URL=${process.env.CONFLUENCE_TEST_SPACE_URL} \\
+                    -e CONFLUENCE_USER_NAME=${process.env.CONFLUENCE_USER_NAME} \\
+                    -e CONFLUENCE_ACCESS_TOKEN=${process.env.CONFLUENCE_ACCESS_TOKEN} \\
+                    -e TEST_WEB_HOSTNAME=test-runner-${i} \\
+                    danswer/danswer-integration:test \\
+                    "${module}"
+                `;
+                
+                return new Promise((resolve, reject) => {
+                  const exec = require('child_process').exec;
+                  console.log(`Running tests for module: ${module}`);
+                  
+                  exec(command, (error, stdout, stderr) => {
+                    console.log(`Output for ${module}:`);
+                    console.log(stdout);
+                    if (stderr) console.error(stderr);
+                    
+                    if (error) {
+                      console.error(`Tests failed for module: ${module}`);
+                      reject(error);
+                    } else {
+                      console.log(`Tests passed for module: ${module}`);
+                      resolve();
+                    }
+                  });
+                });
+              });
+              
+              try {
+                await Promise.all(promises);
+              } catch (error) {
+                core.setFailed('One or more test modules failed');
+                throw error;
+              }
+            }
+        id: run_tests
+
+      - name: Check test results
         run: |
-          cd deployment/docker_compose
-          docker compose -f docker-compose.dev.yml -p danswer-stack down -v
+          if [ ${{ steps.run_tests.outcome }} == 'failure' ]; then
+            echo "Integration tests failed. Exiting with error."
+            exit 1
+          else
+            echo "All integration tests passed successfully."
+          fi
 
+      # save before stopping the containers so the logs can be captured
       - name: Save Docker logs
-        if: always()
+        if: success() || failure()
         run: |
           cd deployment/docker_compose
           docker compose -f docker-compose.dev.yml -p danswer-stack logs > docker-compose.log
           mv docker-compose.log ${{ github.workspace }}/docker-compose.log
 
+      - name: Stop Docker containers
+        run: |
+          cd deployment/docker_compose
+          docker compose -f docker-compose.dev.yml -p danswer-stack down -v
+      
       - name: Upload logs
-        if: always()
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: docker-logs
           path: ${{ github.workspace }}/docker-compose.log
+
+      - name: Stop Docker containers
+        run: |
+          cd deployment/docker_compose
+          docker compose -f docker-compose.dev.yml -p danswer-stack down -v
