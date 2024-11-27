@@ -71,6 +71,7 @@ export function Modal({
           ${width ?? "w-11/12 max-w-4xl"}
           ${noPadding ? "" : "p-10"}
           ${className || ""}`}
+        style={{ position: "relative", overflow: "visible" }}
       >
         {onOutsideClick && !hideCloseButton && (
           <div className="absolute top-2 right-2">
