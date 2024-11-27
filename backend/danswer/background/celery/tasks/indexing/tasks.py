@@ -249,7 +249,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                             f"Connector indexing queued: "
                             f"index_attempt={attempt_id} "
                             f"cc_pair={cc_pair.id} "
-                            f"search_settings={search_settings_instance.id} "
+                            f"search_settings={search_settings_instance.id}"
                         )
                         tasks_created += 1
 
