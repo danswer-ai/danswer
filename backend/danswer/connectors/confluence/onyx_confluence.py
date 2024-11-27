@@ -134,7 +134,7 @@ class OnyxConfluence(Confluence):
         super(OnyxConfluence, self).__init__(url, *args, **kwargs)
         self._wrap_methods()
 
-    def get_current_user(self, expand=None):
+    def get_current_user(self, expand: str | None = None) -> Any:
         """
         Implements a method that isn't in the third party client.
 
@@ -144,7 +144,7 @@ class OnyxConfluence(Confluence):
         :return: Returns the user details
         """
 
-        from atlassian.errors import ApiPermissionError
+        from atlassian.errors import ApiPermissionError  # type:ignore
 
         url = "rest/api/user/current"
         params = {}
