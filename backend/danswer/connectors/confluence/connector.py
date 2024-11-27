@@ -51,7 +51,7 @@ _RESTRICTIONS_EXPANSION_FIELDS = [
     "restrictions.read.restrictions.group",
 ]
 
-_SLIM_DOC_BATCH_SIZE = 1000
+_SLIM_DOC_BATCH_SIZE = 5000
 
 
 class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
@@ -301,5 +301,8 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                         perm_sync_data=perm_sync_data,
                     )
                 )
-            yield doc_metadata_list
-            doc_metadata_list = []
+            if len(doc_metadata_list) > _SLIM_DOC_BATCH_SIZE:
+                yield doc_metadata_list[:_SLIM_DOC_BATCH_SIZE]
+                doc_metadata_list = doc_metadata_list[_SLIM_DOC_BATCH_SIZE:]
+
+        yield doc_metadata_list
