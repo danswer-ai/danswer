@@ -11,6 +11,7 @@ import { ChevronDownIcon } from "./icons/icons";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 import { Popover } from "./popover/Popover";
 import { createPortal } from "react-dom";
+import { useDropdownPosition } from "@/lib/dropdown";
 
 export interface Option<T> {
   name: string;
@@ -91,39 +92,7 @@ export function SearchMultiSelectDropdown({
     };
   }, []);
 
-  // Improved positioning logic
-  const updateMenuPosition = useCallback(() => {
-    if (isOpen && dropdownRef.current && dropdownMenuRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect();
-      const menuRect = dropdownMenuRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-
-      let top = rect.bottom + window.scrollY;
-
-      // Check if the menu would go off the bottom of the viewport
-      if (top + menuRect.height > viewportHeight) {
-        // Position the menu above the input if it would go off the bottom
-        top = rect.top + window.scrollY - menuRect.height;
-      }
-
-      dropdownMenuRef.current.style.position = "absolute";
-      dropdownMenuRef.current.style.top = `${top}px`;
-      dropdownMenuRef.current.style.left = `${rect.left + window.scrollX}px`;
-      dropdownMenuRef.current.style.width = `${rect.width}px`;
-      dropdownMenuRef.current.style.zIndex = "10000";
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    updateMenuPosition();
-    window.addEventListener("resize", updateMenuPosition);
-    window.addEventListener("scroll", updateMenuPosition);
-
-    return () => {
-      window.removeEventListener("resize", updateMenuPosition);
-      window.removeEventListener("scroll", updateMenuPosition);
-    };
-  }, [isOpen, updateMenuPosition]);
+  useDropdownPosition({ isOpen, dropdownRef, dropdownMenuRef });
 
   return (
     <div className="relative text-left w-full" ref={dropdownRef}>
