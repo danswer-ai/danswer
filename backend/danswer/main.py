@@ -45,6 +45,7 @@ from danswer.configs.constants import AuthType
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
 from danswer.db.engine import SqlEngine
 from danswer.db.engine import warm_up_connections
+from danswer.server.api_key.api import router as api_key_router
 from danswer.server.auth_check import check_router_auth
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -281,6 +282,7 @@ def get_application() -> FastAPI:
         application, get_full_openai_assistants_api_router()
     )
     include_router_with_global_prefix_prepended(application, long_term_logs_router)
+    include_router_with_global_prefix_prepended(application, api_key_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
