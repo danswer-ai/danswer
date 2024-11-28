@@ -97,3 +97,53 @@ export function getDatesList(startDate: Date): string[] {
 
   return datesList;
 }
+
+export interface PersonaMessageAnalytics {
+  total_messages: number;
+  date: string;
+  persona_id: number;
+}
+
+export interface PersonaSnapshot {
+  id: number;
+  name: string;
+  description: string;
+  is_visible: boolean;
+  is_public: boolean;
+}
+
+export const usePersonaList = () => {
+  const { data, error, isLoading } = useSWR<PersonaSnapshot[]>(
+    "/api/persona",
+    errorHandlingFetcher
+  );
+
+  return {
+    data,
+    error,
+    isLoading,
+  };
+};
+
+export const usePersonaMessages = (
+  personaIds: number[],
+  timeRange: DateRangePickerValue
+) => {
+  const url = buildApiPath(`/api/analytics/admin/persona/messages`, {
+    persona_ids: personaIds.join(","),
+    start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
+    end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
+  });
+
+  const { data, error, isLoading } = useSWR<PersonaMessageAnalytics[]>(
+    personaIds.length > 0 ? url : null,
+    errorHandlingFetcher
+  );
+
+  return {
+    data,
+    error,
+    isLoading,
+    refreshPersonaMessages: () => mutate(url),
+  };
+};

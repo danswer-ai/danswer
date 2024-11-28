@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from fastapi import APIRouter
 from fastapi import Depends
+from fastapi import Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -11,6 +12,7 @@ from danswer.db.engine import get_session
 from danswer.db.models import User
 from ee.danswer.db.analytics import fetch_danswerbot_analytics
 from ee.danswer.db.analytics import fetch_per_user_query_analytics
+from ee.danswer.db.analytics import fetch_persona_message_analytics
 from ee.danswer.db.analytics import fetch_query_analytics
 
 router = APIRouter(prefix="/analytics")
@@ -115,3 +117,43 @@ def get_danswerbot_analytics(
     ]
 
     return resolution_results
+
+
+class PersonaMessageAnalyticsResponse(BaseModel):
+    total_messages: int
+    date: datetime.date
+    persona_id: int
+
+
+@router.get("/admin/persona/messages")
+def get_persona_messages(
+    persona_ids: str = Query(...),  # ... means this parameter is required
+    start: datetime.datetime | None = None,
+    end: datetime.datetime | None = None,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[PersonaMessageAnalyticsResponse]:
+    """Fetch daily message counts for multiple personas within the given time range."""
+    # Convert comma-separated string to list of integers
+    parsed_persona_ids = [
+        int(id.strip()) for id in persona_ids.split(",") if id.strip()
+    ]
+    persona_message_counts = []
+    start = start or (datetime.datetime.utcnow() - datetime.timedelta(days=30))
+    end = end or datetime.datetime.utcnow()
+    for persona_id in parsed_persona_ids:
+        for count, date in fetch_persona_message_analytics(
+            db_session=db_session,
+            persona_id=int(persona_id),
+            start=start,
+            end=end,
+        ):
+            persona_message_counts.append(
+                PersonaMessageAnalyticsResponse(
+                    total_messages=count,
+                    date=date,
+                    persona_id=persona_id,
+                )
+            )
+
+    return persona_message_counts

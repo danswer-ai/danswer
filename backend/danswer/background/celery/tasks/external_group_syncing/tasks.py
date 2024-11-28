@@ -230,7 +230,9 @@ def connector_external_group_sync_generator_task(
             if ext_group_sync_func is None:
                 raise ValueError(f"No external group sync func found for {source_type}")
 
-            logger.info(f"Syncing docs for {source_type}")
+            logger.info(
+                f"Syncing external groups for {source_type} with cc_pair={cc_pair_id}"
+            )
 
             external_user_groups: list[ExternalUserGroup] = ext_group_sync_func(cc_pair)
 
