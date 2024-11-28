@@ -27,7 +27,7 @@ export function Citation({
 
   if (link) {
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>
             <div
@@ -47,7 +47,7 @@ export function Citation({
     );
   } else {
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={0}>
         <Tooltip>
           <TooltipTrigger asChild>
             <div
