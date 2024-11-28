@@ -16,7 +16,7 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 _VIEWSPACE_PERMISSION_TYPE = "VIEWSPACE"
-_REQUEST_PAGINATION_LIMIT = 100
+_REQUEST_PAGINATION_LIMIT = 5000
 
 
 def _get_server_space_permissions(
