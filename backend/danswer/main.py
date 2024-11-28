@@ -45,6 +45,7 @@ from danswer.configs.constants import AuthType
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
 from danswer.db.engine import SqlEngine
 from danswer.db.engine import warm_up_connections
+from danswer.server.api_key.api import router as api_key_router
 from danswer.server.auth_check import check_router_auth
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -91,7 +92,6 @@ from danswer.server.settings.api import basic_router as settings_router
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
-from danswer.server.api_key.api import router as api_key_router
 from danswer.setup import setup_danswer
 from danswer.setup import setup_multitenant_danswer
 from danswer.utils.logger import setup_logger
