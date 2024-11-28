@@ -66,11 +66,21 @@ export function Modal({
             e.stopPropagation();
           }
         }}
-        className={`bg-background text-emphasis rounded shadow-2xl 
-          transform transition-all duration-300 ease-in-out
+        className={`
+          bg-background 
+          text-emphasis 
+          rounded 
+          shadow-2xl 
+          transform 
+          transition-all 
+          duration-300 
+          ease-in-out
+          relative
+          overflow-visible
           ${width ?? "w-11/12 max-w-4xl"}
           ${noPadding ? "" : "p-10"}
-          ${className || ""}`}
+          ${className || ""}
+        `}
       >
         {onOutsideClick && !hideCloseButton && (
           <div className="absolute top-2 right-2">

@@ -113,6 +113,31 @@ def fetch_persona_by_id(
     return persona
 
 
+def get_best_persona_id_for_user(
+    db_session: Session, user: User | None, persona_id: int | None = None
+) -> int | None:
+    if persona_id is not None:
+        stmt = select(Persona).where(Persona.id == persona_id).distinct()
+        stmt = _add_user_filters(
+            stmt=stmt,
+            user=user,
+            # We don't want to filter by editable here, we just want to see if the
+            # persona is usable by the user
+            get_editable=False,
+        )
+        persona = db_session.scalars(stmt).one_or_none()
+        if persona:
+            return persona.id
+
+    # If the persona is not found, or the slack bot is using doc sets instead of personas,
+    # we need to find the best persona for the user
+    # This is the persona with the highest display priority that the user has access to
+    stmt = select(Persona).order_by(Persona.display_priority.desc()).distinct()
+    stmt = _add_user_filters(stmt=stmt, user=user, get_editable=True)
+    persona = db_session.scalars(stmt).one_or_none()
+    return persona.id if persona else None
+
+
 def _get_persona_by_name(
     persona_name: str, user: User | None, db_session: Session
 ) -> Persona | None:

@@ -49,7 +49,7 @@ def _is_external_group_sync_due(cc_pair: ConnectorCredentialPair) -> bool:
     if cc_pair.access_type != AccessType.SYNC:
         return False
 
-    # skip pruning if not active
+    # skip external group sync if not active
     if cc_pair.status != ConnectorCredentialPairStatus.ACTIVE:
         return False
 
@@ -195,7 +195,7 @@ def connector_external_group_sync_generator_task(
     tenant_id: str | None,
 ) -> None:
     """
-    Permission sync task that handles document permission syncing for a given connector credential pair
+    Permission sync task that handles external group syncing for a given connector credential pair
     This task assumes that the task has already been properly fenced
     """
 
@@ -228,9 +228,13 @@ def connector_external_group_sync_generator_task(
 
             ext_group_sync_func = GROUP_PERMISSIONS_FUNC_MAP.get(source_type)
             if ext_group_sync_func is None:
-                raise ValueError(f"No external group sync func found for {source_type}")
+                raise ValueError(
+                    f"No external group sync func found for {source_type} for cc_pair: {cc_pair_id}"
+                )
 
-            logger.info(f"Syncing docs for {source_type}")
+            logger.info(
+                f"Syncing external groups for {source_type} for cc_pair: {cc_pair_id}"
+            )
 
             external_user_groups: list[ExternalUserGroup] = ext_group_sync_func(cc_pair)
 
