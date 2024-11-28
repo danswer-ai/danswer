@@ -1,12 +1,16 @@
 import { ThreeDotsLoader } from "@/components/Loading";
-import { getDatesList, usePersonaList, usePersonaMessages } from "../lib";
+import { X, Search } from "lucide-react";
+import {
+  getDatesList,
+  usePersonaList,
+  usePersonaMessages,
+  usePersonaUniqueUsers,
+} from "../lib";
 import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
 import Text from "@/components/ui/text";
 import Title from "@/components/ui/title";
 import CardSection from "@/components/admin/CardSection";
 import { AreaChartDisplay } from "@/components/ui/areaChart";
-import { Badge } from "@/components/ui/badge";
-import { X, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,16 +18,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState, useMemo } from "react";
-import { cn } from "@/lib/utils";
+import { useState, useMemo, useEffect } from "react";
 
 export function PersonaMessagesChart({
   timeRange,
 }: {
   timeRange: DateRangePickerValue;
 }) {
-  const [selectedPersonaIds, setSelectedPersonaIds] = useState<number[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<
+    number | undefined
+  >(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const {
     data: personaList,
     isLoading: isPersonaListLoading,
@@ -34,50 +40,75 @@ export function PersonaMessagesChart({
     data: personaMessagesData,
     isLoading: isPersonaMessagesLoading,
     error: personaMessagesError,
-  } = usePersonaMessages(selectedPersonaIds, timeRange);
-
-  const isLoading = isPersonaListLoading || isPersonaMessagesLoading;
-  const hasError = personaListError || personaMessagesError;
-
-  const colors = useMemo(
-    () => [
-      "#10B981",
-      "#3B82F6",
-      "#9333EA",
-      "#F59E0B",
-      "#F43F5E",
-      "#6366F1",
-      "#06B6D4",
-      "#EC4899",
-    ],
-    []
+  } = usePersonaMessages(
+    selectedPersonaId !== undefined ? [selectedPersonaId] : [],
+    timeRange
   );
 
-  const getPersonaColor = useMemo(
-    () => (index: number) => colors[index % colors.length],
-    [colors]
+  const {
+    data: personaUniqueUsersData,
+    isLoading: isPersonaUniqueUsersLoading,
+    error: personaUniqueUsersError,
+  } = usePersonaUniqueUsers(
+    selectedPersonaId !== undefined ? [selectedPersonaId] : [],
+    timeRange
   );
 
-  // Define color classes for badges
-  const colorClasses = useMemo(
-    () => ({
-      "#10B981": "bg-emerald-100 hover:bg-emerald-200 text-emerald-700",
-      "#3B82F6": "bg-blue-100 hover:bg-blue-200 text-blue-700",
-      "#9333EA": "bg-purple-100 hover:bg-purple-200 text-purple-700",
-      "#F59E0B": "bg-amber-100 hover:bg-amber-200 text-amber-700",
-      "#F43F5E": "bg-rose-100 hover:bg-rose-200 text-rose-700",
-      "#6366F1": "bg-indigo-100 hover:bg-indigo-200 text-indigo-700",
-      "#06B6D4": "bg-cyan-100 hover:bg-cyan-200 text-cyan-700",
-      "#EC4899": "bg-pink-100 hover:bg-pink-200 text-pink-700",
-    }),
-    []
-  );
+  const isLoading =
+    isPersonaListLoading ||
+    isPersonaMessagesLoading ||
+    isPersonaUniqueUsersLoading;
+  const hasError =
+    personaListError || personaMessagesError || personaUniqueUsersError;
+
+  const filteredPersonaList = useMemo(() => {
+    if (!personaList) return [];
+    return personaList.filter((persona) =>
+      persona.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [personaList, searchQuery]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) =>
+          prev < filteredPersonaList.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : prev));
+        break;
+      case "Enter":
+        if (
+          highlightedIndex >= 0 &&
+          highlightedIndex < filteredPersonaList.length
+        ) {
+          setSelectedPersonaId(filteredPersonaList[highlightedIndex].id);
+          setSearchQuery("");
+          setHighlightedIndex(-1);
+        }
+        break;
+      case "Escape":
+        setSearchQuery("");
+        setHighlightedIndex(-1);
+        break;
+    }
+  };
+
+  // Reset highlight when search query changes
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [searchQuery]);
 
   const chartData = useMemo(() => {
     if (
       !personaMessagesData?.length ||
-      !personaList ||
-      selectedPersonaIds.length === 0
+      !personaUniqueUsersData?.length ||
+      selectedPersonaId === undefined
     ) {
       return null;
     }
@@ -91,36 +122,29 @@ export function PersonaMessagesChart({
       );
     const dateRange = getDatesList(initialDate);
 
-    // Create a map for each persona's data
-    const personaDataMaps = selectedPersonaIds.map((personaId) => {
-      const personaData = personaMessagesData.filter(
-        (d) => d.persona_id === personaId
-      );
-      return {
-        personaId,
-        dataMap: new Map(personaData.map((entry) => [entry.date, entry])),
-      };
-    });
+    // Create maps for messages and unique users data
+    const messagesMap = new Map(
+      personaMessagesData.map((entry) => [entry.date, entry])
+    );
+    const uniqueUsersMap = new Map(
+      personaUniqueUsersData.map((entry) => [entry.date, entry])
+    );
 
     return dateRange.map((dateStr) => {
-      const dataPoint: any = { Day: dateStr };
-      personaDataMaps.forEach(({ personaId, dataMap }) => {
-        const persona = personaList.find((p) => p.id === personaId);
-        const messageData = dataMap.get(dateStr);
-        dataPoint[persona?.name || `Persona ${personaId}`] =
-          messageData?.total_messages || 0;
-      });
-      return dataPoint;
+      const messageData = messagesMap.get(dateStr);
+      const uniqueUserData = uniqueUsersMap.get(dateStr);
+      return {
+        Day: dateStr,
+        Messages: messageData?.total_messages || 0,
+        "Unique Users": uniqueUserData?.unique_users || 0,
+      };
     });
-  }, [personaMessagesData, timeRange.from]);
-
-  const categories = useMemo(
-    () =>
-      selectedPersonaIds.map(
-        (id) => personaList?.find((p) => p.id === id)?.name || `Persona ${id}`
-      ),
-    [selectedPersonaIds, personaList]
-  );
+  }, [
+    personaMessagesData,
+    personaUniqueUsersData,
+    timeRange.from,
+    selectedPersonaId,
+  ]);
 
   let content;
   if (isLoading) {
@@ -135,17 +159,17 @@ export function PersonaMessagesChart({
         <p className="m-auto">Failed to fetch data...</p>
       </div>
     );
-  } else if (selectedPersonaIds.length === 0) {
+  } else if (selectedPersonaId === undefined) {
     content = (
       <div className="h-80 text-gray-500 flex flex-col">
-        <p className="m-auto">Select personas to view message analytics</p>
+        <p className="m-auto">Select a persona to view analytics</p>
       </div>
     );
   } else if (!personaMessagesData?.length) {
     content = (
       <div className="h-80 text-gray-500 flex flex-col">
         <p className="m-auto">
-          No messages found for selected personas in the selected time range
+          No data found for selected persona in the selected time range
         </p>
       </div>
     );
@@ -154,87 +178,59 @@ export function PersonaMessagesChart({
       <AreaChartDisplay
         className="mt-4"
         data={chartData}
-        categories={categories}
+        categories={["Messages", "Unique Users"]}
         index="Day"
-        colors={selectedPersonaIds.map((_, i) => getPersonaColor(i))}
+        colors={["indigo", "fuchsia"]}
         yAxisWidth={60}
       />
     );
   }
 
-  const selectedPersonas =
-    personaList?.filter((p) => selectedPersonaIds.includes(p.id)) || [];
+  const selectedPersona = personaList?.find((p) => p.id === selectedPersonaId);
 
   return (
     <CardSection className="mt-8">
-      <Title>Persona Messages</Title>
+      <Title>Persona Analytics</Title>
       <div className="flex flex-col gap-4">
-        <Text>Messages per day for selected personas</Text>
+        <Text>Messages and unique users per day for selected persona</Text>
         <div className="flex items-center gap-4">
           <Select
-            value=""
+            value={selectedPersonaId?.toString() ?? ""}
             onValueChange={(value) => {
-              const personaId = parseInt(value);
-              if (selectedPersonaIds.includes(personaId)) {
-                // Remove if already selected
-                setSelectedPersonaIds(
-                  selectedPersonaIds.filter((id) => id !== personaId)
-                );
-              } else {
-                // Add to the end if not selected
-                setSelectedPersonaIds([...selectedPersonaIds, personaId]);
-              }
-            }}
-            open={isOpen}
-            onOpenChange={(open) => {
-              // Only allow closing the dropdown when clicking outside or on the trigger
-              if (!open) {
-                const activeElement = document.activeElement;
-                const isSelectItem =
-                  activeElement?.getAttribute("role") === "option";
-                if (!isSelectItem) {
-                  setIsOpen(false);
-                }
-              } else {
-                setIsOpen(true);
-              }
+              setSelectedPersonaId(parseInt(value));
             }}
           >
             <SelectTrigger className="flex w-full max-w-xs">
-              <SelectValue placeholder="Select personas to display" />
+              <SelectValue placeholder="Select a persona to display" />
             </SelectTrigger>
             <SelectContent>
-              <div className="flex items-center px-3 pb-2">
-                <Search className="mr-2 h-4 w-4" />
+              <div className="flex items-center px-2 pb-2 sticky top-0 bg-background border-b">
+                <Search className="h-4 w-4 mr-2 shrink-0 opacity-50" />
                 <input
-                  className="flex h-8 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-8 w-full rounded-sm bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="Search personas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  onFocus={(e) => e.stopPropagation()}
-                  onChange={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const input = e.target.value.toLowerCase();
-                    const items = document.querySelectorAll('[role="option"]');
-                    items.forEach((item) => {
-                      const text = item.textContent?.toLowerCase() || "";
-                      (item as HTMLElement).style.display = text.includes(input)
-                        ? ""
-                        : "none";
-                    });
-                  }}
+                  onKeyDown={handleKeyDown}
                 />
+                {searchQuery && (
+                  <X
+                    className="h-4 w-4 shrink-0 opacity-50 cursor-pointer hover:opacity-100"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setHighlightedIndex(-1);
+                    }}
+                  />
+                )}
               </div>
-              {personaList?.map((persona) => (
+              {filteredPersonaList.map((persona, index) => (
                 <SelectItem
                   key={persona.id}
                   value={persona.id.toString()}
-                  className={cn(
-                    "cursor-pointer hover:bg-gray-100",
-                    selectedPersonaIds.includes(persona.id) &&
-                      "!bg-blue-50 hover:!bg-blue-50"
-                  )}
+                  className={`${highlightedIndex === index ? "hover" : ""}`}
+                  onMouseEnter={() => setHighlightedIndex(index)}
                 >
                   {persona.name}
                 </SelectItem>
@@ -242,36 +238,6 @@ export function PersonaMessagesChart({
             </SelectContent>
           </Select>
         </div>
-
-        {selectedPersonas.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {selectedPersonas.map((persona) => {
-              const index = selectedPersonaIds.indexOf(persona.id);
-              return (
-                <Badge
-                  key={persona.id}
-                  variant="secondary"
-                  className={cn(
-                    "flex items-center gap-1",
-                    colorClasses[
-                      colors[index % colors.length] as keyof typeof colorClasses
-                    ]
-                  )}
-                >
-                  {persona.name}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() =>
-                      setSelectedPersonaIds(
-                        selectedPersonaIds.filter((id) => id !== persona.id)
-                      )
-                    }
-                  />
-                </Badge>
-              );
-            })}
-          </div>
-        )}
       </div>
       {content}
     </CardSection>

@@ -147,3 +147,32 @@ export const usePersonaMessages = (
     refreshPersonaMessages: () => mutate(url),
   };
 };
+
+export interface PersonaUniqueUserAnalytics {
+  unique_users: number;
+  date: string;
+  persona_id: number;
+}
+
+export const usePersonaUniqueUsers = (
+  personaIds: number[],
+  timeRange: DateRangePickerValue
+) => {
+  const url = buildApiPath(`/api/analytics/admin/persona/unique-users`, {
+    persona_ids: personaIds.join(","),
+    start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
+    end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
+  });
+
+  const { data, error, isLoading } = useSWR<PersonaUniqueUserAnalytics[]>(
+    personaIds.length > 0 ? url : null,
+    errorHandlingFetcher
+  );
+
+  return {
+    data,
+    error,
+    isLoading,
+    refreshPersonaUniqueUsers: () => mutate(url),
+  };
+};

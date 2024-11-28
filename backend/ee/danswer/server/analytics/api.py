@@ -1,5 +1,6 @@
 import datetime
 from collections import defaultdict
+from typing import Any
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -13,6 +14,7 @@ from danswer.db.models import User
 from ee.danswer.db.analytics import fetch_danswerbot_analytics
 from ee.danswer.db.analytics import fetch_per_user_query_analytics
 from ee.danswer.db.analytics import fetch_persona_message_analytics
+from ee.danswer.db.analytics import fetch_persona_unique_users
 from ee.danswer.db.analytics import fetch_query_analytics
 
 router = APIRouter(prefix="/analytics")
@@ -157,3 +159,32 @@ def get_persona_messages(
             )
 
     return persona_message_counts
+
+
+@router.get("/admin/persona/unique-users")
+def get_persona_unique_users(
+    persona_ids: str,
+    start: datetime.datetime,
+    end: datetime.datetime,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+) -> list[dict[str, Any]]:
+    """Get unique users per day for each persona."""
+    persona_id_list = [int(pid) for pid in persona_ids.split(",")]
+    results = []
+    for persona_id in persona_id_list:
+        daily_counts = fetch_persona_unique_users(
+            db_session=db_session,
+            persona_id=persona_id,
+            start=start,
+            end=end,
+        )
+        for count, date in daily_counts:
+            results.append(
+                {
+                    "unique_users": count,
+                    "date": date.isoformat(),
+                    "persona_id": persona_id,
+                }
+            )
+    return results
