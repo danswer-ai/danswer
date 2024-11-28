@@ -8,6 +8,7 @@ export function SearchResultIcon({ url }: { url: string }) {
   if (!faviconUrl) {
     return <SourceIcon sourceType="web" iconSize={18} />;
   }
+  console.log("faviconUrl", faviconUrl);
   console.log(faviconUrl);
   return (
     <div className="rounded-full w-[18px] h-[18px] overflow-hidden bg-gray-200">
