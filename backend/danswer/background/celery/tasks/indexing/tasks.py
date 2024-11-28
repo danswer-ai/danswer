@@ -39,12 +39,13 @@ from danswer.db.index_attempt import delete_index_attempt
 from danswer.db.index_attempt import get_all_index_attempts_by_status
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_last_attempt_for_cc_pair
+from danswer.db.index_attempt import mark_attempt_canceled
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexAttempt
 from danswer.db.models import SearchSettings
+from danswer.db.search_settings import get_active_search_settings
 from danswer.db.search_settings import get_current_search_settings
-from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
 from danswer.indexing.indexing_heartbeat import IndexingHeartbeatInterface
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
@@ -209,17 +210,10 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
 
             redis_connector = RedisConnector(tenant_id, cc_pair_id)
             with get_session_with_tenant(tenant_id) as db_session:
-                # Get the primary search settings
-                primary_search_settings = get_current_search_settings(db_session)
-                search_settings = [primary_search_settings]
-
-                # Check for secondary search settings
-                secondary_search_settings = get_secondary_search_settings(db_session)
-                if secondary_search_settings is not None:
-                    # If secondary settings exist, add them to the list
-                    search_settings.append(secondary_search_settings)
-
-                for search_settings_instance in search_settings:
+                search_settings_list: list[SearchSettings] = get_active_search_settings(
+                    db_session
+                )
+                for search_settings_instance in search_settings_list:
                     redis_connector_index = redis_connector.new_index(
                         search_settings_instance.id
                     )
@@ -237,7 +231,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     )
 
                     search_settings_primary = False
-                    if search_settings_instance.id == primary_search_settings.id:
+                    if search_settings_instance.id == search_settings_list[0].id:
                         search_settings_primary = True
 
                     if not _should_index(
@@ -245,13 +239,13 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                         last_index=last_attempt,
                         search_settings_instance=search_settings_instance,
                         search_settings_primary=search_settings_primary,
-                        secondary_index_building=len(search_settings) > 1,
+                        secondary_index_building=len(search_settings_list) > 1,
                         db_session=db_session,
                     ):
                         continue
 
                     reindex = False
-                    if search_settings_instance.id == primary_search_settings.id:
+                    if search_settings_instance.id == search_settings_list[0].id:
                         # the indexing trigger is only checked and cleared with the primary search settings
                         if cc_pair.indexing_trigger is not None:
                             if cc_pair.indexing_trigger == IndexingMode.REINDEX:
@@ -284,7 +278,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                             f"Connector indexing queued: "
                             f"index_attempt={attempt_id} "
                             f"cc_pair={cc_pair.id} "
-                            f"search_settings={search_settings_instance.id} "
+                            f"search_settings={search_settings_instance.id}"
                         )
                         tasks_created += 1
 
@@ -529,8 +523,11 @@ def try_creating_indexing_task(
     return index_attempt_id
 
 
-@shared_task(name="connector_indexing_proxy_task", acks_late=False, track_started=True)
+@shared_task(
+    name="connector_indexing_proxy_task", bind=True, acks_late=False, track_started=True
+)
 def connector_indexing_proxy_task(
+    self: Task,
     index_attempt_id: int,
     cc_pair_id: int,
     search_settings_id: int,
@@ -543,6 +540,10 @@ def connector_indexing_proxy_task(
         f"cc_pair={cc_pair_id} "
         f"search_settings={search_settings_id}"
     )
+
+    if not self.request.id:
+        task_logger.error("self.request.id is None!")
+
     client = SimpleJobClient()
 
     job = client.submit(
@@ -571,8 +572,30 @@ def connector_indexing_proxy_task(
         f"search_settings={search_settings_id}"
     )
 
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    redis_connector_index = redis_connector.new_index(search_settings_id)
+
     while True:
-        sleep(10)
+        sleep(5)
+
+        if self.request.id and redis_connector_index.terminating(self.request.id):
+            task_logger.warning(
+                "Indexing proxy - termination signal detected: "
+                f"attempt={index_attempt_id} "
+                f"tenant={tenant_id} "
+                f"cc_pair={cc_pair_id} "
+                f"search_settings={search_settings_id}"
+            )
+
+            with get_session_with_tenant(tenant_id) as db_session:
+                mark_attempt_canceled(
+                    index_attempt_id,
+                    db_session,
+                    "Connector termination signal detected",
+                )
+
+            job.cancel()
+            break
 
         # do nothing for ongoing jobs that haven't been stopped
         if not job.done():

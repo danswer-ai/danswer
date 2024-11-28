@@ -8,6 +8,7 @@ from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
+from redis.lock import Lock as RedisLock
 
 from danswer.access.models import DocExternalAccess
 from danswer.background.celery.apps.app_base import task_logger
@@ -27,7 +28,7 @@ from danswer.db.models import ConnectorCredentialPair
 from danswer.db.users import batch_add_ext_perm_user_if_not_exists
 from danswer.redis.redis_connector import RedisConnector
 from danswer.redis.redis_connector_doc_perm_sync import (
-    RedisConnectorPermissionSyncData,
+    RedisConnectorPermissionSyncPayload,
 )
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import doc_permission_sync_ctx
@@ -138,7 +139,7 @@ def try_creating_permissions_sync_task(
 
     LOCK_TIMEOUT = 30
 
-    lock = r.lock(
+    lock: RedisLock = r.lock(
         DANSWER_REDIS_FUNCTION_LOCK_PREFIX + "try_generate_permissions_sync_tasks",
         timeout=LOCK_TIMEOUT,
     )
@@ -162,7 +163,7 @@ def try_creating_permissions_sync_task(
 
         custom_task_id = f"{redis_connector.permissions.generator_task_key}_{uuid4()}"
 
-        app.send_task(
+        result = app.send_task(
             "connector_permission_sync_generator_task",
             kwargs=dict(
                 cc_pair_id=cc_pair_id,
@@ -174,8 +175,8 @@ def try_creating_permissions_sync_task(
         )
 
         # set a basic fence to start
-        payload = RedisConnectorPermissionSyncData(
-            started=None,
+        payload = RedisConnectorPermissionSyncPayload(
+            started=None, celery_task_id=result.id
         )
 
         redis_connector.permissions.set_fence(payload)
@@ -247,9 +248,11 @@ def connector_permission_sync_generator_task(
 
             logger.info(f"Syncing docs for {source_type} with cc_pair={cc_pair_id}")
 
-            payload = RedisConnectorPermissionSyncData(
-                started=datetime.now(timezone.utc),
-            )
+            payload = redis_connector.permissions.payload
+            if not payload:
+                raise ValueError(f"No fence payload found: cc_pair={cc_pair_id}")
+
+            payload.started = datetime.now(timezone.utc)
             redis_connector.permissions.set_fence(payload)
 
             document_external_accesses: list[DocExternalAccess] = doc_sync_func(cc_pair)
