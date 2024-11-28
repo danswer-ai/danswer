@@ -1,6 +1,5 @@
 import datetime
 from collections import defaultdict
-from typing import Any
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -161,6 +160,12 @@ def get_persona_messages(
     return persona_message_counts
 
 
+class PersonaUniqueUsersResponse(BaseModel):
+    unique_users: int
+    date: datetime.date
+    persona_id: int
+
+
 @router.get("/admin/persona/unique-users")
 def get_persona_unique_users(
     persona_ids: str,
@@ -168,7 +173,7 @@ def get_persona_unique_users(
     end: datetime.datetime,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
-) -> list[dict[str, Any]]:
+) -> list[PersonaUniqueUsersResponse]:
     """Get unique users per day for each persona."""
     persona_id_list = [int(pid) for pid in persona_ids.split(",")]
     results = []
@@ -181,10 +186,10 @@ def get_persona_unique_users(
         )
         for count, date in daily_counts:
             results.append(
-                {
-                    "unique_users": count,
-                    "date": date.isoformat(),
-                    "persona_id": persona_id,
-                }
+                PersonaUniqueUsersResponse(
+                    unique_users=count,
+                    date=date,
+                    persona_id=persona_id,
+                )
             )
     return results
