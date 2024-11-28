@@ -5,15 +5,19 @@ import { FeedbackType } from "../types";
 import { Modal } from "@/components/Modal";
 import { FilledLikeIcon } from "@/components/icons/icons";
 
-const predefinedPositiveFeedbackOptions =
-  process.env.NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS?.split(",") ||
-  [];
-const predefinedNegativeFeedbackOptions =
-  process.env.NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS?.split(",") || [
-    "Retrieved documents were not relevant",
-    "AI misread the documents",
-    "Cited source had incorrect information",
-  ];
+const predefinedPositiveFeedbackOptions = process.env
+  .NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS
+  ? process.env.NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS.split(",")
+  : [];
+
+const predefinedNegativeFeedbackOptions = process.env
+  .NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS
+  ? process.env.NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS.split(",")
+  : [
+      "Retrieved documents were not relevant",
+      "AI misread the documents",
+      "Cited source had incorrect information",
+    ];
 
 interface FeedbackModalProps {
   feedbackType: FeedbackType;

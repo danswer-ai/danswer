@@ -19,6 +19,11 @@ class IndexingStatus(str, PyEnum):
         return self in terminal_states
 
 
+class IndexingMode(str, PyEnum):
+    UPDATE = "update"
+    REINDEX = "reindex"
+
+
 # these may differ in the future, which is why we're okay with this duplication
 class DeletionStatus(str, PyEnum):
     NOT_STARTED = "not_started"

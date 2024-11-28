@@ -25,11 +25,13 @@ from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import DocumentSource
+from danswer.db.connector import mark_ccpair_with_indexing_trigger
 from danswer.db.connector_credential_pair import fetch_connector_credential_pairs
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.engine import get_db_current_time
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import ConnectorCredentialPairStatus
+from danswer.db.enums import IndexingMode
 from danswer.db.enums import IndexingStatus
 from danswer.db.enums import IndexModelStatus
 from danswer.db.index_attempt import create_index_attempt
@@ -37,12 +39,13 @@ from danswer.db.index_attempt import delete_index_attempt
 from danswer.db.index_attempt import get_all_index_attempts_by_status
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_last_attempt_for_cc_pair
+from danswer.db.index_attempt import mark_attempt_canceled
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexAttempt
 from danswer.db.models import SearchSettings
+from danswer.db.search_settings import get_active_search_settings
 from danswer.db.search_settings import get_current_search_settings
-from danswer.db.search_settings import get_secondary_search_settings
 from danswer.db.swap_index import check_index_swap
 from danswer.indexing.indexing_heartbeat import IndexingHeartbeatInterface
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
@@ -159,7 +162,7 @@ def get_unfenced_index_attempt_ids(db_session: Session, r: redis.Redis) -> list[
 )
 def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
     tasks_created = 0
-
+    locked = False
     r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat: RedisLock = r.lock(
@@ -171,6 +174,8 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
         # these tasks should never overlap
         if not lock_beat.acquire(blocking=False):
             return None
+
+        locked = True
 
         # check for search settings swap
         with get_session_with_tenant(tenant_id=tenant_id) as db_session:
@@ -205,17 +210,10 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
 
             redis_connector = RedisConnector(tenant_id, cc_pair_id)
             with get_session_with_tenant(tenant_id) as db_session:
-                # Get the primary search settings
-                primary_search_settings = get_current_search_settings(db_session)
-                search_settings = [primary_search_settings]
-
-                # Check for secondary search settings
-                secondary_search_settings = get_secondary_search_settings(db_session)
-                if secondary_search_settings is not None:
-                    # If secondary settings exist, add them to the list
-                    search_settings.append(secondary_search_settings)
-
-                for search_settings_instance in search_settings:
+                search_settings_list: list[SearchSettings] = get_active_search_settings(
+                    db_session
+                )
+                for search_settings_instance in search_settings_list:
                     redis_connector_index = redis_connector.new_index(
                         search_settings_instance.id
                     )
@@ -231,14 +229,38 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     last_attempt = get_last_attempt_for_cc_pair(
                         cc_pair.id, search_settings_instance.id, db_session
                     )
+
+                    search_settings_primary = False
+                    if search_settings_instance.id == search_settings_list[0].id:
+                        search_settings_primary = True
+
                     if not _should_index(
                         cc_pair=cc_pair,
                         last_index=last_attempt,
                         search_settings_instance=search_settings_instance,
-                        secondary_index_building=len(search_settings) > 1,
+                        search_settings_primary=search_settings_primary,
+                        secondary_index_building=len(search_settings_list) > 1,
                         db_session=db_session,
                     ):
                         continue
+
+                    reindex = False
+                    if search_settings_instance.id == search_settings_list[0].id:
+                        # the indexing trigger is only checked and cleared with the primary search settings
+                        if cc_pair.indexing_trigger is not None:
+                            if cc_pair.indexing_trigger == IndexingMode.REINDEX:
+                                reindex = True
+
+                            task_logger.info(
+                                f"Connector indexing manual trigger detected: "
+                                f"cc_pair={cc_pair.id} "
+                                f"search_settings={search_settings_instance.id} "
+                                f"indexing_mode={cc_pair.indexing_trigger}"
+                            )
+
+                            mark_ccpair_with_indexing_trigger(
+                                cc_pair.id, None, db_session
+                            )
 
                     # using a task queue and only allowing one task per cc_pair/search_setting
                     # prevents us from starving out certain attempts
@@ -246,7 +268,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                         self.app,
                         cc_pair,
                         search_settings_instance,
-                        False,
+                        reindex,
                         db_session,
                         r,
                         tenant_id,
@@ -256,7 +278,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                             f"Connector indexing queued: "
                             f"index_attempt={attempt_id} "
                             f"cc_pair={cc_pair.id} "
-                            f"search_settings={search_settings_instance.id} "
+                            f"search_settings={search_settings_instance.id}"
                         )
                         tasks_created += 1
 
@@ -281,7 +303,6 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                 mark_attempt_failed(
                     attempt.id, db_session, failure_reason=failure_reason
                 )
-
     except SoftTimeLimitExceeded:
         task_logger.info(
             "Soft time limit exceeded, task is being terminated gracefully."
@@ -289,13 +310,14 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
     except Exception:
         task_logger.exception(f"Unexpected exception: tenant={tenant_id}")
     finally:
-        if lock_beat.owned():
-            lock_beat.release()
-        else:
-            task_logger.error(
-                "check_for_indexing - Lock not owned on completion: "
-                f"tenant={tenant_id}"
-            )
+        if locked:
+            if lock_beat.owned():
+                lock_beat.release()
+            else:
+                task_logger.error(
+                    "check_for_indexing - Lock not owned on completion: "
+                    f"tenant={tenant_id}"
+                )
 
     return tasks_created
 
@@ -304,6 +326,7 @@ def _should_index(
     cc_pair: ConnectorCredentialPair,
     last_index: IndexAttempt | None,
     search_settings_instance: SearchSettings,
+    search_settings_primary: bool,
     secondary_index_building: bool,
     db_session: Session,
 ) -> bool:
@@ -367,6 +390,11 @@ def _should_index(
         or connector.source == DocumentSource.INGESTION_API
     ):
         return False
+
+    if search_settings_primary:
+        if cc_pair.indexing_trigger is not None:
+            # if a manual indexing trigger is on the cc pair, honor it for primary search settings
+            return True
 
     # if no attempt has ever occurred, we should index regardless of refresh_freq
     if not last_index:
@@ -495,8 +523,11 @@ def try_creating_indexing_task(
     return index_attempt_id
 
 
-@shared_task(name="connector_indexing_proxy_task", acks_late=False, track_started=True)
+@shared_task(
+    name="connector_indexing_proxy_task", bind=True, acks_late=False, track_started=True
+)
 def connector_indexing_proxy_task(
+    self: Task,
     index_attempt_id: int,
     cc_pair_id: int,
     search_settings_id: int,
@@ -509,6 +540,10 @@ def connector_indexing_proxy_task(
         f"cc_pair={cc_pair_id} "
         f"search_settings={search_settings_id}"
     )
+
+    if not self.request.id:
+        task_logger.error("self.request.id is None!")
+
     client = SimpleJobClient()
 
     job = client.submit(
@@ -537,8 +572,30 @@ def connector_indexing_proxy_task(
         f"search_settings={search_settings_id}"
     )
 
+    redis_connector = RedisConnector(tenant_id, cc_pair_id)
+    redis_connector_index = redis_connector.new_index(search_settings_id)
+
     while True:
-        sleep(10)
+        sleep(5)
+
+        if self.request.id and redis_connector_index.terminating(self.request.id):
+            task_logger.warning(
+                "Indexing proxy - termination signal detected: "
+                f"attempt={index_attempt_id} "
+                f"tenant={tenant_id} "
+                f"cc_pair={cc_pair_id} "
+                f"search_settings={search_settings_id}"
+            )
+
+            with get_session_with_tenant(tenant_id) as db_session:
+                mark_attempt_canceled(
+                    index_attempt_id,
+                    db_session,
+                    "Connector termination signal detected",
+                )
+
+            job.cancel()
+            break
 
         # do nothing for ongoing jobs that haven't been stopped
         if not job.done():

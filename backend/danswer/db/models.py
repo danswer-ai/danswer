@@ -42,7 +42,7 @@ from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
-from danswer.db.enums import AccessType
+from danswer.db.enums import AccessType, IndexingMode
 from danswer.configs.constants import NotificationType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.constants import TokenRateLimitScope
@@ -437,6 +437,10 @@ class ConnectorCredentialPair(Base):
     )
 
     total_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
+
+    indexing_trigger: Mapped[IndexingMode | None] = mapped_column(
+        Enum(IndexingMode, native_enum=False), nullable=True
+    )
 
     connector: Mapped["Connector"] = relationship(
         "Connector", back_populates="credentials"
