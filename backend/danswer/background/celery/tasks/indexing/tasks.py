@@ -37,6 +37,7 @@ from danswer.db.index_attempt import delete_index_attempt
 from danswer.db.index_attempt import get_all_index_attempts_by_status
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import get_last_attempt_for_cc_pair
+from danswer.db.index_attempt import mark_attempt_canceled
 from danswer.db.index_attempt import mark_attempt_failed
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexAttempt
@@ -541,7 +542,7 @@ def connector_indexing_proxy_task(
     redis_connector_index = redis_connector.new_index(search_settings_id)
 
     while True:
-        sleep(10)
+        sleep(5)
 
         if self.request.id and redis_connector_index.terminating(self.request.id):
             task_logger.warning(
@@ -549,8 +550,16 @@ def connector_indexing_proxy_task(
                 f"attempt={index_attempt_id} "
                 f"tenant={tenant_id} "
                 f"cc_pair={cc_pair_id} "
-                f"search_settings={search_settings_id} "
+                f"search_settings={search_settings_id}"
             )
+
+            with get_session_with_tenant(tenant_id) as db_session:
+                mark_attempt_canceled(
+                    index_attempt_id,
+                    db_session,
+                    "Connector termination signal detected",
+                )
+
             job.cancel()
             break
 

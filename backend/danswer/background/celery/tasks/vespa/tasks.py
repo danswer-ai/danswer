@@ -46,6 +46,7 @@ from danswer.db.document_set import fetch_document_sets_for_document
 from danswer.db.document_set import get_document_set_by_id
 from danswer.db.document_set import mark_document_set_as_synced
 from danswer.db.engine import get_session_with_tenant
+from danswer.db.enums import IndexingStatus
 from danswer.db.index_attempt import delete_index_attempts
 from danswer.db.index_attempt import get_index_attempt
 from danswer.db.index_attempt import mark_attempt_failed
@@ -676,11 +677,15 @@ def monitor_ccpair_indexing_taskset(
 
                 index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
                 if index_attempt:
-                    mark_attempt_failed(
-                        index_attempt_id=payload.index_attempt_id,
-                        db_session=db_session,
-                        failure_reason=msg,
-                    )
+                    if (
+                        index_attempt.status != IndexingStatus.CANCELED
+                        and index_attempt.status != IndexingStatus.FAILED
+                    ):
+                        mark_attempt_failed(
+                            index_attempt_id=payload.index_attempt_id,
+                            db_session=db_session,
+                            failure_reason=msg,
+                        )
 
                 redis_connector_index.reset()
         return
