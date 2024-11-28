@@ -206,6 +206,10 @@ def handle_message(
                 thread_ts=None,
             )
 
+    # If it's a bot command, ensure we only send to the sender
+    if is_bot_msg and sender_id:
+        message_info.force_ephemeral = True
+
     try:
         send_msg_ack_to_user(message_info, client)
     except SlackApiError as e:
