@@ -67,7 +67,13 @@ export function UserProvider({
       });
       setUpToDateUser((prevUser) => {
         if (prevUser) {
-          return { ...prevUser, auto_scroll: autoScroll };
+          return {
+            ...prevUser,
+            preferences: {
+              ...prevUser.preferences,
+              auto_scroll: autoScroll,
+            },
+          };
         }
         return prevUser;
       });
