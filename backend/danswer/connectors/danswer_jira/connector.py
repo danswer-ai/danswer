@@ -35,8 +35,8 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 JIRA_API_VERSION = os.environ.get("JIRA_API_VERSION") or "2"
-_JIRA_SLIM_PAGE_SIZE = 500
-_JIRA_FULL_PAGE_SIZE = 50
+_JIRA_SLIM_PAGE_SIZE = 1000
+_JIRA_FULL_PAGE_SIZE = 100
 
 
 def _paginate_jql_search(
@@ -70,7 +70,7 @@ def _paginate_jql_search(
         start += max_results
 
 
-def fetch_jira_issues_batch(
+def _fetch_jira_issues_as_docs(
     jira_client: JIRA,
     jql: str,
     batch_size: int,
@@ -111,7 +111,7 @@ def fetch_jira_issues_batch(
             )
             continue
 
-        page_url = f"{jira_client.client_info()}/browse/{issue.key}"
+        page_url = build_jira_url(jira_client, issue.key)
 
         people = set()
         try:
@@ -196,7 +196,7 @@ class JiraConnector(LoadConnector, PollConnector, SlimConnector):
         jql = f"project = {self.quoted_jira_project}"
 
         document_batch = []
-        for doc in fetch_jira_issues_batch(
+        for doc in _fetch_jira_issues_as_docs(
             jira_client=self.jira_client,
             jql=jql,
             batch_size=_JIRA_FULL_PAGE_SIZE,
@@ -227,7 +227,7 @@ class JiraConnector(LoadConnector, PollConnector, SlimConnector):
         )
 
         document_batch = []
-        for doc in fetch_jira_issues_batch(
+        for doc in _fetch_jira_issues_as_docs(
             jira_client=self.jira_client,
             jql=jql,
             batch_size=_JIRA_FULL_PAGE_SIZE,

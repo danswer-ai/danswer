@@ -26,20 +26,11 @@ def mock_jira_cc_pair() -> ConnectorCredentialPair:
 def test_jira_doc_sync(mock_jira_cc_pair: ConnectorCredentialPair) -> None:
     retrieved_docs: list[DocExternalAccess] = jira_doc_sync(mock_jira_cc_pair)
 
-    for doc in retrieved_docs:
-        print(doc)
+    assert len(retrieved_docs) == 1
 
-    # assert len(retrieved_docs) == 6
-
-    # expected_groups: dict[str, set[str]] = {
-    #     "org-admins": {"chris@danswer.ai"},
-    #     "jira-users-danswerai": {"chris@danswer.ai", "hagen@danswer.ai"},
-    #     "jira-admins-danswerai": {"hagen@danswer.ai"},
-    #     "confluence-user-access-admins-danswerai": {"hagen@danswer.ai"},
-    #     "jira-user-access-admins-danswerai": {"hagen@danswer.ai"},
-    #     "confluence-users-danswerai": {"chris@danswer.ai", "hagen@danswer.ai"},
-    # }
-
-    # for group in retrieved_groups:
-    #     assert group.id in expected_groups
-    #     assert set(group.user_emails) == expected_groups[group.id]
+    main_issue = retrieved_docs[0]
+    assert main_issue.doc_id == "https://danswerai.atlassian.net/browse/AS-2"
+    assert main_issue.external_access.external_user_emails == {
+        "chris@danswer.ai",
+        "hagen@danswer.ai",
+    }

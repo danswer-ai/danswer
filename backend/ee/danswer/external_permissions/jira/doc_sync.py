@@ -1,5 +1,4 @@
 from jira import JIRA
-from jira.resources import PermissionScheme
 
 from danswer.access.models import DocExternalAccess
 from danswer.access.models import ExternalAccess
@@ -10,39 +9,34 @@ from danswer.utils.logger import setup_logger
 
 logger = setup_logger()
 
+# Max is 1k
+_PAGE_SIZE = 1000
+
 
 def _get_project_permissions(
     jira_client: JIRA,
     jira_project_key: str,
 ) -> ExternalAccess:
-    project_permissions = jira_client._find_for_resource(
-        resource_cls=PermissionScheme,
-        ids=jira_project_key,
-        expand="permissions,user,group",
-    )
-
-    print(project_permissions)
+    query = {
+        "query": "*",
+        "projectKey": jira_project_key,
+        "maxResults": _PAGE_SIZE,
+        "startAt": 0,
+    }
 
     user_emails = set()
-    # Jira enforces that group names are unique
+    while True:
+        result = jira_client._get_json(path="/user/viewissue/search", params=query)
+        for user in result:
+            if email := user.get("emailAddress"):
+                user_emails.add(email)
+        if len(result) < _PAGE_SIZE:
+            break
+        query["startAt"] += _PAGE_SIZE
+
+    # Group names are not given space permissions, so we these are empty per document
     group_names = set()
     is_externally_public = False
-    for permission in project_permissions:
-        subs = permission.get("subjects")
-        if subs:
-            # If there are subjects, then there are explicit users or groups with access
-            if email := subs.get("user", {}).get("results", [{}])[0].get("email"):
-                user_emails.add(email)
-            if group_name := subs.get("group", {}).get("results", [{}])[0].get("name"):
-                group_names.add(group_name)
-        else:
-            # If there are no subjects, then the permission is for everyone
-            if permission.get("operation", {}).get(
-                "operation"
-            ) == "read" and permission.get("anonymousAccess", False):
-                # If the permission specifies read access for anonymous users, then
-                # the space is publicly accessible
-                is_externally_public = True
     return ExternalAccess(
         external_user_emails=user_emails,
         external_user_group_ids=group_names,
@@ -67,10 +61,9 @@ def jira_doc_sync(
         jira_client=jira_connector.jira_client,
         jira_project_key=jira_project_key,
     )
-    jira_document_ids = jira_connector.retrieve_all_slim_documents()
 
     doc_permissions: list[DocExternalAccess] = []
-    for slim_doc_batch in jira_document_ids:
+    for slim_doc_batch in jira_connector.retrieve_all_slim_documents():
         for slim_doc in slim_doc_batch:
             doc_permissions.append(
                 DocExternalAccess(
