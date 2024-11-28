@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from danswer.configs.app_configs import DEFAULT_PRUNING_FREQ
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import InputType
+from danswer.db.enums import IndexingMode
 from danswer.db.models import Connector
 from danswer.db.models import ConnectorCredentialPair
 from danswer.db.models import IndexAttempt
@@ -311,3 +312,25 @@ def mark_cc_pair_as_external_group_synced(db_session: Session, cc_pair_id: int) 
     # If this changes, we need to update this function.
     cc_pair.last_time_external_group_sync = datetime.now(timezone.utc)
     db_session.commit()
+
+
+def mark_ccpair_with_indexing_trigger(
+    cc_pair_id: int, indexing_mode: IndexingMode | None, db_session: Session
+) -> None:
+    """indexing_mode sets a field which will be picked up by a background task
+    to trigger indexing. Set to None to disable the trigger."""
+    try:
+        cc_pair = db_session.execute(
+            select(ConnectorCredentialPair)
+            .where(ConnectorCredentialPair.id == cc_pair_id)
+            .with_for_update()
+        ).scalar_one()
+
+        if cc_pair is None:
+            raise ValueError(f"No cc_pair with ID: {cc_pair_id}")
+
+        cc_pair.indexing_trigger = indexing_mode
+        db_session.commit()
+    except Exception:
+        db_session.rollback()
+        raise
