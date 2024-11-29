@@ -83,9 +83,7 @@ def build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> 
 
     # add filter to ignore image summaries if multimodal is not wanted
     if not CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING:
-        logger.warning("trying to skip summaries...")
         filter_str += '!(metadata matches "is_image_summary") and '
-        logger.warning(filter_str)
 
     return filter_str
 

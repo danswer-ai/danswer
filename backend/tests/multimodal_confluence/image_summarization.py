@@ -14,7 +14,7 @@ from danswer.connectors.confluence.utils import attachment_to_content
 from danswer.connectors.confluence.utils import ImageSummarization
 from danswer.file_processing.image_summarization import _encode_image
 from danswer.file_processing.image_summarization import _resize_image_if_needed
-from danswer.file_processing.image_summarization import summarize_image
+from danswer.file_processing.image_summarization import _summarize_image
 
 
 # Mocking global variables
@@ -73,7 +73,7 @@ def test_summarization_of_images():
     system_prompt = "You are a helpful assistant."
     llm = MockLLM()
 
-    result = summarize_image(
+    result = _summarize_image(
         encoded_image=encoded_image, query=query, system_prompt=system_prompt, llm=llm
     )
     assert result == "This is a summary of the image."
@@ -119,7 +119,7 @@ def test_summarize_image_raises_value_error_on_failure(
 
     # Use pytest.raises to assert that the exception is raised
     with pytest.raises(ValueError) as excinfo:
-        summarize_image("encoded_image_string", llm, "test query", "system prompt")
+        _summarize_image("encoded_image_string", llm, "test query", "system prompt")
 
     # Assert that the exception message matches the expected message
     assert expected_output == str(excinfo.value)
@@ -220,26 +220,27 @@ async def test_summarize_page_images(sample_page_image, confluence_xml):
     ):
         # Mock the summarize_image function to return a predefined summary
         with patch(
-            "danswer.file_processing.image_summarization.summarize_image",
-            return_value="This is a summary.",
+            "danswer.file_processing.image_summarization._summarize_image",
+            return_value="This is a summary of the image.",
         ):
             # Mock the image summarization pipeline
             with patch(
                 "danswer.file_processing.image_summarization.summarize_image_pipeline",
-                return_value="This is a summary.",
+                return_value="This is a summary of the image.",
             ):
                 result = await _summarize_page_images(
                     sample_page_image,
                     mock_confluence_client,
                     USER_PROMPT,
                     confluence_xml,
+                    MockLLM(),
                 )
                 print(result)
 
     assert len(result) == 1
     assert isinstance(result[0], ImageSummarization)
     assert result[0].title == sample_page_image["title"]
-    assert result[0].summary == "This is a summary."
+    assert result[0].summary == "This is a summary of the image."
     assert result[0].media_type == sample_page_image["metadata"]["mediaType"]
 
 
@@ -266,7 +267,10 @@ def test_attachment_to_content_with_no_image(sample_page_no_image, confluence_xm
 
     with patch("danswer.connectors.confluence.utils._summarize_page_images"):
         result = attachment_to_content(
-            confluence_client, sample_page_no_image, confluence_xml
+            confluence_client,
+            sample_page_no_image,
+            confluence_xml,
+            MockLLM(),
         )
         print(result)
 

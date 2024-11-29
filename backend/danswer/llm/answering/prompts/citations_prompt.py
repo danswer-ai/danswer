@@ -21,7 +21,7 @@ from danswer.prompts.direct_qa_prompts import CITATIONS_PROMPT
 from danswer.prompts.direct_qa_prompts import CITATIONS_PROMPT_FOR_TOOL_CALLING
 from danswer.prompts.direct_qa_prompts import HISTORY_BLOCK
 from danswer.prompts.prompt_utils import add_date_time_to_prompt
-from danswer.prompts.prompt_utils import build_complete_context_str, build_complete_context_str_eval_format
+from danswer.prompts.prompt_utils import build_complete_context_str
 from danswer.prompts.prompt_utils import build_task_prompt_reminders
 from danswer.prompts.token_counts import ADDITIONAL_INFO_TOKEN_CNT
 from danswer.prompts.token_counts import (
@@ -152,7 +152,6 @@ def build_citations_user_message(
 
     if context_docs:
         context_docs_str = build_complete_context_str(context_docs)
-        logger.notice(f"retrieved contexts to answer question: \n{build_complete_context_str_eval_format(context_docs)}")
         optional_ignore = "" if all_doc_useful else DEFAULT_IGNORE_STATEMENT
 
         user_prompt = CITATIONS_PROMPT.format(

@@ -38,9 +38,9 @@ def test_validate_llm_configuration_vision_support(vision_support, expected_exce
 
         if expected_exception:
             with pytest.raises(expected_exception) as excinfo:
-                connector.validate_llm(llm)
+                connector._validate_llm(llm)
                 assert "Your default LLM seems to be not multimodal." in str(
                     excinfo.value
                 )
         else:
-            connector.validate_llm(llm)
+            connector._validate_llm(llm)

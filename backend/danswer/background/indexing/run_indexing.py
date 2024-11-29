@@ -4,7 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 
-from sqlalchemy.orm import Session   # type: ignore
+from sqlalchemy.orm import Session
 
 from danswer.background.indexing.checkpointing import get_time_windows_for_index_attempt
 from danswer.background.indexing.tracer import DanswerTracer

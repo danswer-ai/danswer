@@ -4,16 +4,19 @@ from io import BytesIO
 from PIL import Image
 
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
-from danswer.llm.factory import get_default_llms
 from danswer.llm.interfaces import LLM
 from danswer.llm.utils import message_to_string
 from danswer.utils.logger import setup_logger
+
 
 logger = setup_logger()
 
 
 def summarize_image_pipeline(
-    image_data: bytes, query: str | None = None, system_prompt: str | None = None
+    llm: LLM,
+    image_data: bytes,
+    query: str | None = None,
+    system_prompt: str | None = None,
 ) -> str | None:
     """Pipeline to generate a summary of an image.
     Resizes images if it is bigger than 20MB. Encodes image as a base64 string.
@@ -24,9 +27,9 @@ def summarize_image_pipeline(
     # encode image (base64)
     encoded_image = _encode_image(image_data)
 
-    llm, _ = get_default_llms(timeout=5, temperature=0.0)
+    # llm, _ = get_default_llms(timeout=5, temperature=0.0)
 
-    summary = summarize_image(
+    summary = _summarize_image(
         encoded_image,
         llm,
         query,
@@ -36,7 +39,7 @@ def summarize_image_pipeline(
     return summary
 
 
-def summarize_image(
+def _summarize_image(
     encoded_image: str,
     llm: LLM,
     query: str | None = None,

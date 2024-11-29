@@ -29,7 +29,9 @@ from danswer.connectors.confluence.onyx_confluence import (
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_processing.html_utils import format_document_soup
 from danswer.file_processing.image_summarization import summarize_image_pipeline
+from danswer.llm.interfaces import LLM
 from danswer.utils.logger import setup_logger
+
 
 logger = setup_logger()
 
@@ -200,6 +202,7 @@ def attachment_to_content(
     confluence_client: OnyxConfluence,
     attachment: dict[str, Any],
     page_context: str,
+    llm: LLM,
 ) -> str | None:
     """If it returns None, assume that we should skip this attachment."""
     if (
@@ -224,6 +227,7 @@ def attachment_to_content(
                     confluence_client,
                     CONFLUENCE_IMAGE_SUMMARIZATION_USER_PROMPT,
                     page_context,
+                    llm,
                 )
             )
             return page_images
@@ -326,6 +330,7 @@ async def _summarize_page_images(
     confluence_client: Confluence,
     USER_PROMPT: str,
     page_context: str,
+    llm: LLM,
 ) -> List[ImageSummarization]:
     """Create LLM summaries of all embedded (used) image attachments on the given page"""
 
@@ -354,7 +359,7 @@ async def _summarize_page_images(
             title=title, page_title=page["title"], confluence_xml=page_context
         )
         summary = summarize_image_pipeline(
-            image_data, USER_PROMPT, CONFLUENCE_IMAGE_SUMMARIZATION_SYSTEM_PROMPT
+            llm, image_data, USER_PROMPT, CONFLUENCE_IMAGE_SUMMARIZATION_SYSTEM_PROMPT
         )
 
         base64_image = base64.b64encode(image_data).decode("utf-8")
