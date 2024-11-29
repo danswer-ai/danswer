@@ -1,3 +1,4 @@
+import copy
 import io
 import json
 from collections.abc import Callable
@@ -385,6 +386,52 @@ def test_llm(llm: LLM) -> str | None:
     return error_msg
 
 
+def get_model_map() -> dict:
+    starting_map = copy.deepcopy(cast(dict, litellm.model_cost))
+    starting_map["ollama/llama3.2"] = {
+        "max_tokens": 128000,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 128000,
+    }
+    starting_map["ollama/llama3.2:1b"] = {
+        "max_tokens": 128000,
+        "max_input_tokens": 128000,
+        "max_output_tokens": 128000,
+    }
+    return starting_map
+
+
+def _strip_extra_provider_from_model_name(model_name: str) -> str:
+    return model_name.split("/")[1] if "/" in model_name else model_name
+
+
+def _strip_colon_from_model_name(model_name: str) -> str:
+    return ":".join(model_name.split(":")[:-1]) if ":" in model_name else model_name
+
+
+def _find_model_obj(
+    model_map: dict, provider: str, model_names: list[str | None]
+) -> dict | None:
+    # Filter out None values and deduplicate model names
+    filtered_model_names = [name for name in model_names if name]
+
+    # First try all model names with provider prefix
+    for model_name in filtered_model_names:
+        model_obj = model_map.get(f"{provider}/{model_name}")
+        if model_obj:
+            logger.debug(f"Using model object for {provider}/{model_name}")
+            return model_obj
+
+    # Then try all model names without provider prefix
+    for model_name in filtered_model_names:
+        model_obj = model_map.get(model_name)
+        if model_obj:
+            logger.debug(f"Using model object for {model_name}")
+            return model_obj
+
+    return None
+
+
 def get_llm_max_tokens(
     model_map: dict,
     model_name: str,
@@ -397,22 +444,22 @@ def get_llm_max_tokens(
         return GEN_AI_MAX_TOKENS
 
     try:
-        model_obj = model_map.get(f"{model_provider}/{model_name}")
-        if model_obj:
-            logger.debug(f"Using model object for {model_provider}/{model_name}")
-
-        if not model_obj:
-            model_obj = model_map.get(model_name)
-            if model_obj:
-                logger.debug(f"Using model object for {model_name}")
-
-        if not model_obj:
-            model_name_split = model_name.split("/")
-            if len(model_name_split) > 1:
-                model_obj = model_map.get(model_name_split[1])
-            if model_obj:
-                logger.debug(f"Using model object for {model_name_split[1]}")
-
+        extra_provider_stripped_model_name = _strip_extra_provider_from_model_name(
+            model_name
+        )
+        model_obj = _find_model_obj(
+            model_map,
+            model_provider,
+            [
+                model_name,
+                # Remove leading extra provider. Usually for cases where user has a
+                # customer model proxy which appends another prefix
+                extra_provider_stripped_model_name,
+                # remove :XXXX from the end, if present. Needed for ollama.
+                _strip_colon_from_model_name(model_name),
+                _strip_colon_from_model_name(extra_provider_stripped_model_name),
+            ],
+        )
         if not model_obj:
             raise RuntimeError(
                 f"No litellm entry found for {model_provider}/{model_name}"
@@ -488,7 +535,7 @@ def get_max_input_tokens(
     # `model_cost` dict is a named public interface:
     # https://litellm.vercel.app/docs/completion/token_usage#7-model_cost
     # model_map is  litellm.model_cost
-    litellm_model_map = litellm.model_cost
+    litellm_model_map = get_model_map()
 
     input_toks = (
         get_llm_max_tokens(
