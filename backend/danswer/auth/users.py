@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from functools import lru_cache
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -47,7 +48,12 @@ from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from httpx_oauth.integrations.fastapi import OAuth2AuthorizeCallback
 from httpx_oauth.oauth2 import BaseOAuth2
 from httpx_oauth.oauth2 import OAuth2Token
+from jwt import decode as jwt_decode
+from jwt import PyJWKClient
+from jwt import PyJWTError
 from pydantic import BaseModel
+from sqlalchemy import func
+from sqlalchemy import select
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -60,6 +66,7 @@ from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import DISABLE_VERIFICATION
 from danswer.configs.app_configs import EMAIL_FROM
+from danswer.configs.app_configs import JWT_PUBLIC_KEY_URL
 from danswer.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SMTP_PASS
@@ -606,14 +613,11 @@ fastapi_users = FastAPIUserWithLogoutRouter[User, uuid.UUID](
 optional_fastapi_current_user = fastapi_users.current_user(active=True, optional=True)
 
 
-async def optional_user_(
-    request: Request,
-    user: User | None,
-    async_db_session: AsyncSession,
-) -> User | None:
-    """NOTE: `request` and `db_session` are not used here, but are included
-    for the EE version of this function."""
-    return user
+@lru_cache()
+def get_jwk_client():
+    if not JWT_PUBLIC_KEY_URL:
+        raise ValueError("JWT_PUBLIC_KEY_URL is not set")
+    return PyJWKClient(JWT_PUBLIC_KEY_URL)
 
 
 async def optional_user(
@@ -632,6 +636,30 @@ async def optional_user(
         if hashed_api_key:
             user = await fetch_user_for_api_key(hashed_api_key, async_db_session)
 
+    # If user is still None, check for JWT in Authorization header
+    if user is None:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header[len("Bearer ") :].strip()
+            try:
+                jwk_client = get_jwk_client()
+                signing_key = jwk_client.get_signing_key_from_jwt(token)
+                payload = jwt_decode(
+                    token,
+                    signing_key.key,
+                    algorithms=["RS256"],
+                    audience=None,
+                )
+                email = payload.get("email")
+                if email:
+                    result = await async_db_session.execute(
+                        select(User).where(func.lower(User.email) == func.lower(email))
+                    )
+                    user = result.scalars().first()
+            except PyJWTError:
+                # Clear the cached JWK client and re-raise the exception
+                get_jwk_client.cache_clear()
+                raise
     return user
 
 
