@@ -388,16 +388,26 @@ def test_llm(llm: LLM) -> str | None:
 
 def get_model_map() -> dict:
     starting_map = copy.deepcopy(cast(dict, litellm.model_cost))
-    starting_map["ollama/llama3.2"] = {
-        "max_tokens": 128000,
-        "max_input_tokens": 128000,
-        "max_output_tokens": 128000,
-    }
-    starting_map["ollama/llama3.2:1b"] = {
-        "max_tokens": 128000,
-        "max_input_tokens": 128000,
-        "max_output_tokens": 128000,
-    }
+
+    # NOTE: we could add additional models here in the future,
+    # but for now there is no point. Ollama allows the user to
+    # to specify their desired max context window, and it's
+    # unlikely to be standard across users even for the same model
+    # (it heavily depends on their hardware). For now, we'll just
+    # rely on GEN_AI_MODEL_FALLBACK_MAX_TOKENS to cover this.
+    # for model_name in [
+    #     "llama3.2",
+    #     "llama3.2:1b",
+    #     "llama3.2:3b",
+    #     "llama3.2:11b",
+    #     "llama3.2:90b",
+    # ]:
+    #     starting_map[f"ollama/{model_name}"] = {
+    #         "max_tokens": 128000,
+    #         "max_input_tokens": 128000,
+    #         "max_output_tokens": 128000,
+    #     }
+
     return starting_map
 
 
