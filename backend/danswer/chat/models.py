@@ -4,12 +4,14 @@ from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
+from pydantic import Field
 
 from danswer.configs.constants import DocumentSource
+from danswer.configs.constants import MessageType
 from danswer.context.search.enums import QueryFlow
+from danswer.context.search.enums import RecencyBiasSetting
 from danswer.context.search.enums import SearchType
 from danswer.context.search.models import RetrievalDocs
-from danswer.context.search.models import SearchResponse
 from danswer.tools.tool_implementations.custom.base_tool_types import ToolResultType
 
 
@@ -118,20 +120,6 @@ class StreamingError(BaseModel):
     stack_trace: str | None = None
 
 
-class DanswerQuote(BaseModel):
-    # This is during inference so everything is a string by this point
-    quote: str
-    document_id: str
-    link: str | None
-    source_type: str
-    semantic_identifier: str
-    blurb: str
-
-
-class DanswerQuotes(BaseModel):
-    quotes: list[DanswerQuote]
-
-
 class DanswerContext(BaseModel):
     content: str
     document_id: str
@@ -147,14 +135,20 @@ class DanswerAnswer(BaseModel):
     answer: str | None
 
 
-class QAResponse(SearchResponse, DanswerAnswer):
-    quotes: list[DanswerQuote] | None
-    contexts: list[DanswerContexts] | None
-    predicted_flow: QueryFlow
-    predicted_search: SearchType
-    eval_res_valid: bool | None = None
+class ThreadMessage(BaseModel):
+    message: str
+    sender: str | None = None
+    role: MessageType = MessageType.USER
+
+
+class ChatDanswerBotResponse(BaseModel):
+    answer: str | None = None
+    citations: list[CitationInfo] | None = None
+    docs: QADocsResponse | None = None
     llm_selected_doc_indices: list[int] | None = None
     error_msg: str | None = None
+    chat_message_id: int | None = None
+    answer_valid: bool = True  # Reflexion result, default True if Reflexion not run
 
 
 class FileChatDisplay(BaseModel):
@@ -166,9 +160,41 @@ class CustomToolResponse(BaseModel):
     tool_name: str
 
 
+class ToolConfig(BaseModel):
+    id: int
+
+
+class PromptOverrideConfig(BaseModel):
+    name: str
+    description: str = ""
+    system_prompt: str
+    task_prompt: str = ""
+    include_citations: bool = True
+    datetime_aware: bool = True
+
+
+class PersonaOverrideConfig(BaseModel):
+    name: str
+    description: str
+    search_type: SearchType = SearchType.SEMANTIC
+    num_chunks: float | None = None
+    llm_relevance_filter: bool = False
+    llm_filter_extraction: bool = False
+    recency_bias: RecencyBiasSetting = RecencyBiasSetting.AUTO
+    llm_model_provider_override: str | None = None
+    llm_model_version_override: str | None = None
+
+    prompts: list[PromptOverrideConfig] = Field(default_factory=list)
+    prompt_ids: list[int] = Field(default_factory=list)
+
+    document_set_ids: list[int] = Field(default_factory=list)
+    tools: list[ToolConfig] = Field(default_factory=list)
+    tool_ids: list[int] = Field(default_factory=list)
+    custom_tools_openapi: list[dict[str, Any]] = Field(default_factory=list)
+
+
 AnswerQuestionPossibleReturn = (
     DanswerAnswerPiece
-    | DanswerQuotes
     | CitationInfo
     | DanswerContexts
     | FileChatDisplay

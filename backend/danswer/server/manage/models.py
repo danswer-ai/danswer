@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -15,7 +16,6 @@ from danswer.danswerbot.slack.config import VALID_SLACK_FILTERS
 from danswer.db.models import AllowedAnswerFilters
 from danswer.db.models import ChannelConfig
 from danswer.db.models import SlackBot as SlackAppModel
-from danswer.db.models import SlackBotResponseType
 from danswer.db.models import SlackChannelConfig as SlackChannelConfigModel
 from danswer.db.models import User
 from danswer.server.features.persona.models import PersonaSnapshot
@@ -148,6 +148,12 @@ class SlackBotTokens(BaseModel):
     model_config = ConfigDict(frozen=True)
 
 
+# TODO No longer in use, remove later
+class SlackBotResponseType(str, Enum):
+    QUOTES = "quotes"
+    CITATIONS = "citations"
+
+
 class SlackChannelConfigCreationRequest(BaseModel):
     slack_bot_id: int
     # currently, a persona is created for each Slack channel config
@@ -197,7 +203,6 @@ class SlackChannelConfig(BaseModel):
     id: int
     persona: PersonaSnapshot | None
     channel_config: ChannelConfig
-    response_type: SlackBotResponseType
     # XXX this is going away soon
     standard_answer_categories: list[StandardAnswerCategory]
     enable_auto_filters: bool
@@ -217,7 +222,6 @@ class SlackChannelConfig(BaseModel):
                 else None
             ),
             channel_config=slack_channel_config_model.channel_config,
-            response_type=slack_channel_config_model.response_type,
             # XXX this is going away soon
             standard_answer_categories=[
                 StandardAnswerCategory.from_model(standard_answer_category_model)

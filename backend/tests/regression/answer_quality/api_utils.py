@@ -2,14 +2,8 @@ import requests
 from retry import retry
 
 from danswer.configs.constants import DocumentSource
-from danswer.configs.constants import MessageType
 from danswer.connectors.models import InputType
-from danswer.context.search.models import IndexFilters
-from danswer.context.search.models import OptionalSearchSetting
-from danswer.context.search.models import RetrievalDetails
 from danswer.db.enums import IndexingStatus
-from danswer.one_shot_answer.models import DirectQARequest
-from danswer.one_shot_answer.models import ThreadMessage
 from danswer.server.documents.models import ConnectorBase
 from tests.regression.answer_quality.cli_utils import get_api_server_host_port
 
@@ -27,48 +21,51 @@ def _api_url_builder(env_name: str, api_path: str) -> str:
 def get_answer_from_query(
     query: str, only_retrieve_docs: bool, env_name: str
 ) -> tuple[list[str], str]:
-    filters = IndexFilters(
-        source_type=None,
-        document_set=None,
-        time_cutoff=None,
-        tags=None,
-        access_control_list=None,
-    )
+    return [], ""
+    # TODO reenable with chat
 
-    messages = [ThreadMessage(message=query, sender=None, role=MessageType.USER)]
+    # filters = IndexFilters(
+    #     source_type=None,
+    #     document_set=None,
+    #     time_cutoff=None,
+    #     tags=None,
+    #     access_control_list=None,
+    # )
 
-    new_message_request = DirectQARequest(
-        messages=messages,
-        prompt_id=0,
-        persona_id=0,
-        retrieval_options=RetrievalDetails(
-            run_search=OptionalSearchSetting.ALWAYS,
-            real_time=True,
-            filters=filters,
-            enable_auto_detect_filters=False,
-        ),
-        chain_of_thought=False,
-        return_contexts=True,
-        skip_gen_ai_answer_generation=only_retrieve_docs,
-    )
+    # messages = [ThreadMessage(message=query, sender=None, role=MessageType.USER)]
 
-    url = _api_url_builder(env_name, "/query/answer-with-quote/")
-    headers = {
-        "Content-Type": "application/json",
-    }
+    # new_message_request = DirectQARequest(
+    #     messages=messages,
+    #     prompt_id=0,
+    #     persona_id=0,
+    #     retrieval_options=RetrievalDetails(
+    #         run_search=OptionalSearchSetting.ALWAYS,
+    #         real_time=True,
+    #         filters=filters,
+    #         enable_auto_detect_filters=False,
+    #     ),
+    #     chain_of_thought=False,
+    #     return_contexts=True,
+    #     skip_gen_ai_answer_generation=only_retrieve_docs,
+    # )
 
-    body = new_message_request.model_dump()
-    body["user"] = None
-    try:
-        response_json = requests.post(url, headers=headers, json=body).json()
-        context_data_list = response_json.get("contexts", {}).get("contexts", [])
-        answer = response_json.get("answer", "") or ""
-    except Exception as e:
-        print("Failed to answer the questions:")
-        print(f"\t {str(e)}")
-        raise e
+    # url = _api_url_builder(env_name, "/query/answer-with-quote/")
+    # headers = {
+    #     "Content-Type": "application/json",
+    # }
 
-    return context_data_list, answer
+    # body = new_message_request.model_dump()
+    # body["user"] = None
+    # try:
+    #     response_json = requests.post(url, headers=headers, json=body).json()
+    #     context_data_list = response_json.get("contexts", {}).get("contexts", [])
+    #     answer = response_json.get("answer", "") or ""
+    # except Exception as e:
+    #     print("Failed to answer the questions:")
+    #     print(f"\t {str(e)}")
+    #     raise e
+
+    # return context_data_list, answer
 
 
 @retry(tries=10, delay=10)

@@ -8,7 +8,6 @@ from pydantic.v1 import BaseModel as BaseModel__v1
 
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import StreamStopInfo
 from danswer.chat.models import StreamStopReason
 from danswer.file_store.models import InMemoryChatFile
@@ -30,7 +29,6 @@ if TYPE_CHECKING:
 ResponsePart = (
     DanswerAnswerPiece
     | CitationInfo
-    | DanswerQuotes
     | ToolCallKickoff
     | ToolResponse
     | ToolCallFinalResult
