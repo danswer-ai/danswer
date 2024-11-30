@@ -89,7 +89,8 @@ class CreateChatMessageRequest(ChunkContext):
     # If search_doc_ids provided, then retrieval options are unused
     search_doc_ids: list[int] | None
     retrieval_options: RetrievalDetails | None
-    rerank_settings: RerankingDetails | None
+    # Useable via the APIs but not recommended for most flows
+    rerank_settings: RerankingDetails | None = None
     # allows the caller to specify the exact search query they want to use
     # will disable Query Rewording if specified
     query_override: str | None = None
