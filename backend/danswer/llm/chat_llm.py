@@ -273,7 +273,7 @@ class DefaultMultiLLM(LLM):
             for k, v in custom_config.items():
                 os.environ[k] = v
 
-        model_kwargs: dict[str, Any] = model_kwargs or {}
+        model_kwargs = model_kwargs or {}
         if extra_headers:
             model_kwargs.update({"extra_headers": extra_headers})
         if extra_body:
