@@ -1,5 +1,8 @@
+from typing import Any
+
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import QA_TIMEOUT
+from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
 from danswer.configs.model_configs import GEN_AI_TEMPERATURE
 from danswer.db.engine import get_session_context_manager
 from danswer.db.llm import fetch_default_provider
@@ -11,6 +14,15 @@ from danswer.llm.interfaces import LLM
 from danswer.llm.override_models import LLMOverride
 from danswer.utils.headers import build_llm_extra_headers
 from danswer.utils.long_term_log import LongTermLogger
+
+
+def _build_extra_model_kwargs(provider: str) -> dict[str, Any]:
+    """Ollama requires us to specify the max context window.
+
+    For now, just using the GEN_AI_MODEL_FALLBACK_MAX_TOKENS value.
+    TODO: allow model-specific values to be configured via the UI.
+    """
+    return {"num_ctx": GEN_AI_MODEL_FALLBACK_MAX_TOKENS} if provider == "ollama" else {}
 
 
 def get_main_llm_from_tuple(
@@ -132,5 +144,6 @@ def get_llm(
         temperature=temperature,
         custom_config=custom_config,
         extra_headers=build_llm_extra_headers(additional_headers),
+        model_kwargs=_build_extra_model_kwargs(provider),
         long_term_logger=long_term_logger,
     )
