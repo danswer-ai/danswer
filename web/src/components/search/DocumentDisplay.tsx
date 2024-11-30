@@ -392,12 +392,14 @@ export const AgenticDocumentDisplay = ({
 export function CompactDocumentCard({
   document,
   icon,
+  url,
 }: {
   document: LoadedDanswerDocument;
   icon?: React.ReactNode;
+  url?: string;
 }) {
   return (
-    <div className="max-w-[250px] pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
+    <div className="max-w-[250px]  pb-0 pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
       <h3 className="text-sm font-semibold flex  items-center gap-x-1 text-text-900 pt-0 mt-0 truncate w-full">
         {icon}
         {(document.semantic_identifier || document.document_id).slice(0, 40)}
@@ -405,16 +407,19 @@ export function CompactDocumentCard({
           "..."}
       </h3>
       {document.blurb && (
-        <p className="text-xs text-gray-600 line-clamp-2">{document.blurb}</p>
+        <p className="text-xs  mb-0 text-gray-600 line-clamp-2">
+          {document.blurb}
+        </p>
       )}
-      <div className="flex mt-0 pt-0 items-center justify-between w-full ">
-        {document.updated_at &&
-          !isNaN(new Date(document.updated_at).getTime()) && (
+      {document.updated_at && (
+        <div className=" flex mt-0 pt-0 items-center justify-between w-full ">
+          {!isNaN(new Date(document.updated_at).getTime()) && (
             <span className="text-xs text-gray-500">
               Updated {new Date(document.updated_at).toLocaleDateString()}
             </span>
           )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

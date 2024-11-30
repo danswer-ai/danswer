@@ -13,6 +13,7 @@ export const MemoizedLink = memo((props: any) => {
   } else if (value?.toString().startsWith("[")) {
     return (
       <Citation
+        url={document?.url}
         icon={document?.icon as React.ReactNode}
         link={rest?.href}
         document={document as LoadedDanswerDocument}

@@ -56,7 +56,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useMouseTracking } from "./hooks";
-import { SearchResultIcon } from "@/components/SearchResultIcon";
+import { getFaviconUrl, SearchResultIcon } from "@/components/SearchResultIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
@@ -314,7 +314,6 @@ export const AIMessage = ({
 
   const markdownComponents = useMemo(
     () => ({
-      // a: MemoizedLink,
       a: ({ node, ...props }: any) => {
         const value = props.children?.toString();
         if (value?.startsWith("[") && value?.endsWith("]")) {
@@ -322,16 +321,36 @@ export const AIMessage = ({
           if (match) {
             const index = parseInt(match[1], 10) - 1;
             const associatedDoc = docs && docs[index];
+
+            const url = associatedDoc?.link
+              ? new URL(associatedDoc.link).origin + "/favicon.ico"
+              : "";
+
             const getIcon = (sourceType: ValidSources, link: string) => {
               return getSourceMetadata(sourceType).icon({ size: 18 });
             };
-            const icon = getIcon(
-              associatedDoc?.source_type || "web",
-              associatedDoc?.link || ""
-            );
+
+            const icon =
+              associatedDoc?.source_type == "web" ? (
+                <img
+                  className="my-0 py-0"
+                  src={`https://www.google.com/s2/favicons?domain=${
+                    new URL(associatedDoc.link).hostname
+                  }`}
+                  alt="favicon"
+                />
+              ) : (
+                getIcon(
+                  associatedDoc?.source_type || "web",
+                  associatedDoc?.link || ""
+                )
+              );
 
             return (
-              <MemoizedLink {...props} document={{ ...associatedDoc, icon }}>
+              <MemoizedLink
+                {...props}
+                document={{ ...associatedDoc, icon, url }}
+              >
                 {props.children}
               </MemoizedLink>
             );

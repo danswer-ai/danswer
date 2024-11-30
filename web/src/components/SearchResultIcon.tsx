@@ -4,38 +4,44 @@ import { SourceIcon } from "./SourceIcon";
 
 const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
+export async function getFaviconUrl(url: string): Promise<string | null> {
+  const getCachedFavicon = () => {
+    const cachedData = localStorage.getItem(`favicon_${url}`);
+    if (cachedData) {
+      const { favicon, timestamp } = JSON.parse(cachedData);
+      if (Date.now() - timestamp < CACHE_DURATION) {
+        return favicon;
+      }
+    }
+    return null;
+  };
+
+  const cachedFavicon = getCachedFavicon();
+  if (cachedFavicon) {
+    return cachedFavicon;
+  }
+
+  const newFaviconUrl = await faviconFetch({ uri: url });
+  if (newFaviconUrl) {
+    localStorage.setItem(
+      `favicon_${url}`,
+      JSON.stringify({ favicon: newFaviconUrl, timestamp: Date.now() })
+    );
+    return newFaviconUrl;
+  }
+
+  return null;
+}
+
 export function SearchResultIcon({ url }: { url: string }) {
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const getCachedFavicon = () => {
-      const cachedData = localStorage.getItem(`favicon_${url}`);
-      if (cachedData) {
-        const { favicon, timestamp } = JSON.parse(cachedData);
-        if (Date.now() - timestamp < CACHE_DURATION) {
-          return favicon;
-        }
+    getFaviconUrl(url).then((favicon) => {
+      if (favicon) {
+        setFaviconUrl(favicon);
       }
-      return null;
-    };
-
-    const fetchAndCacheFavicon = async () => {
-      const newFaviconUrl = await faviconFetch({ uri: url });
-      if (newFaviconUrl) {
-        setFaviconUrl(newFaviconUrl);
-        localStorage.setItem(
-          `favicon_${url}`,
-          JSON.stringify({ favicon: newFaviconUrl, timestamp: Date.now() })
-        );
-      }
-    };
-
-    const cachedFavicon = getCachedFavicon();
-    if (cachedFavicon) {
-      setFaviconUrl(cachedFavicon);
-    } else {
-      fetchAndCacheFavicon();
-    }
+    });
   }, [url]);
 
   if (!faviconUrl) {

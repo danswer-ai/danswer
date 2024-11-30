@@ -27,7 +27,6 @@ export function SetDefaultModelModal({
   onClose: () => void;
   defaultModel: string | null;
 }) {
-  console.log("defaultModel", defaultModel);
   const { refreshUser, user, updateUserAutoScroll } = useUser();
   const containerRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
@@ -101,8 +100,6 @@ export function SetDefaultModelModal({
   const router = useRouter();
   const handleChangedefaultModel = async (defaultModel: string | null) => {
     try {
-      console.log("defaultModel", defaultModel);
-
       const response = await setUserDefaultModel(defaultModel);
 
       if (response.ok) {

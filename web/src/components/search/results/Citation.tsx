@@ -14,12 +14,14 @@ export function Citation({
   document,
   index,
   icon,
+  url,
 }: {
   link?: string;
   children?: JSX.Element | string | null | ReactNode;
   index?: number;
   document: LoadedDanswerDocument;
   icon?: React.ReactNode;
+  url?: string;
 }) {
   const innerText = children
     ? children?.toString().split("[")[1].split("]")[0]
@@ -39,8 +41,8 @@ export function Citation({
               </span>
             </div>
           </TooltipTrigger>
-          <TooltipContent width="w-f" className="bg-background">
-            <CompactDocumentCard icon={icon} document={document} />
+          <TooltipContent width="mb-2 max-w-lg" className="bg-background">
+            <CompactDocumentCard url={url} icon={icon} document={document} />
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -59,8 +61,8 @@ export function Citation({
               </span>
             </div>
           </TooltipTrigger>
-          <TooltipContent width="max-w-lg" backgroundColor="bg-background">
-            <CompactDocumentCard icon={icon} document={document} />
+          <TooltipContent width="mb-2 max-w-lg" backgroundColor="bg-background">
+            <CompactDocumentCard url={url} icon={icon} document={document} />
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
