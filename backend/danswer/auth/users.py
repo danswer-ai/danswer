@@ -620,6 +620,16 @@ def get_jwk_client():
     return PyJWKClient(JWT_PUBLIC_KEY_URL)
 
 
+async def optional_user_(
+    request: Request,
+    user: User | None,
+    async_db_session: AsyncSession,
+) -> User | None:
+    """NOTE: `request` and `db_session` are not used here, but are included
+    for the EE version of this function."""
+    return user
+
+
 async def optional_user(
     request: Request,
     async_db_session: AsyncSession = Depends(get_async_session),
