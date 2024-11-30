@@ -1,21 +1,40 @@
+from functools import lru_cache
+
+import requests
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Request
 from fastapi import status
+from jwt import decode as jwt_decode
+from jwt import InvalidTokenError
+from jwt import PyJWTError
+from sqlalchemy import func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from danswer.auth.users import current_admin_user
 from danswer.configs.app_configs import AUTH_TYPE
-from danswer.configs.app_configs import SUPER_CLOUD_API_KEY
-from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.constants import AuthType
 from danswer.db.models import User
 from danswer.utils.logger import setup_logger
+from ee.danswer.configs.app_configs import JWT_PUBLIC_KEY_URL
+from ee.danswer.configs.app_configs import SUPER_CLOUD_API_KEY
+from ee.danswer.configs.app_configs import SUPER_USERS
 from ee.danswer.db.saml import get_saml_account
 from ee.danswer.server.seeding import get_seed_config
 from ee.danswer.utils.secrets import extract_hashed_cookie
 
+
 logger = setup_logger()
+
+
+@lru_cache()
+def get_public_key() -> str:
+    if not JWT_PUBLIC_KEY_URL:
+        raise ValueError("JWT_PUBLIC_KEY_URL is not set")
+    response = requests.get(JWT_PUBLIC_KEY_URL)
+    response.raise_for_status()
+    return response.text
 
 
 def verify_auth_setting() -> None:
@@ -37,7 +56,34 @@ async def optional_user_(
                 cookie=saved_cookie, async_db_session=async_db_session
             )
             user = saml_account.user if saml_account else None
-
+    # If user is still None, check for JWT in Authorization header
+    if user is None:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header[len("Bearer ") :].strip()
+            try:
+                public_key_pem = get_public_key()
+                # Verify the JWT using the public key
+                payload = jwt_decode(
+                    token,
+                    public_key_pem,
+                    algorithms=["RS256"],
+                    audience=None,
+                )
+                email = payload.get("email")
+                if email:
+                    result = await async_db_session.execute(
+                        select(User).where(func.lower(User.email) == func.lower(email))
+                    )
+                    user = result.scalars().first()
+            except InvalidTokenError:
+                logger.error("Invalid JWT token")
+                # Clear the cached public key
+                get_public_key.cache_clear()
+            except PyJWTError as e:
+                logger.error(f"JWT decoding error: {str(e)}")
+                # Clear the cached public key
+                get_public_key.cache_clear()
     return user
 
 
