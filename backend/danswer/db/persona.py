@@ -185,7 +185,7 @@ def create_update_persona(
             "persona_id": persona_id,
             "user": user,
             "db_session": db_session,
-            **create_persona_request.dict(exclude={"users", "groups"}),
+            **create_persona_request.model_dump(exclude={"users", "groups"}),
         }
 
         persona = upsert_persona(**persona_data)
@@ -758,6 +758,8 @@ def get_prompt_by_name(
     if user and user.role != UserRole.ADMIN:
         stmt = stmt.where(Prompt.user_id == user.id)
 
+    # Order by ID to ensure consistent result when multiple prompts exist
+    stmt = stmt.order_by(Prompt.id).limit(1)
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 
