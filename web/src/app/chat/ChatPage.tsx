@@ -138,6 +138,36 @@ export function ChatPage({
     shouldShowWelcomeModal,
     refreshChatSessions,
   } = useChatContext();
+  function useScreenSize() {
+    const [screenSize, setScreenSize] = useState({
+      width: typeof window !== "undefined" ? window.innerWidth : 0,
+      height: typeof window !== "undefined" ? window.innerHeight : 0,
+    });
+
+    useEffect(() => {
+      const handleResize = () => {
+        setScreenSize({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+      };
+
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    return screenSize;
+  }
+
+  const { height: screenHeight } = useScreenSize();
+
+  const getContainerHeight = () => {
+    if (autoScrollEnabled) return undefined;
+
+    if (screenHeight < 600) return "20vh";
+    if (screenHeight < 1200) return "40vh";
+    return "50vh";
+  };
 
   // handle redirect if chat page is disabled
   // NOTE: this must be done here, in a client component since
@@ -2196,7 +2226,6 @@ export function ChatPage({
                                   pointer-events-none
                                   duration-300 
                                   ease-in-out
-                                  bg-black
                                   h-full
                                   ${toggledSidebar ? "w-[200px]" : "w-[0px]"}
                               `}
@@ -2218,7 +2247,6 @@ export function ChatPage({
                                     transition-all 
                                     duration-300 
                                     ease-in-out
-                                    bg-black
                                     h-full
                                     pointer-events-none
                                     ${
@@ -2667,9 +2695,7 @@ export function ChatPage({
                               <div
                                 style={{
                                   height: !autoScrollEnabled
-                                    ? settings?.isMobile
-                                      ? "40vh"
-                                      : "50vh"
+                                    ? getContainerHeight()
                                     : undefined,
                                 }}
                               />
