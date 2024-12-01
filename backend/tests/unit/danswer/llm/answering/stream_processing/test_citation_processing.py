@@ -385,6 +385,16 @@ def process_text(
             "Here is some text[[1]](https://0.com). Some other text",
             ["doc_0"],
         ),
+        # ['To', ' set', ' up', ' D', 'answer', ',', ' if', ' you', ' are', ' running', ' it', ' yourself', ' and',
+        # ' need', ' access', ' to', ' certain', ' features', ' like', ' auto', '-sync', 'ing', ' document',
+        # '-level', ' access', ' permissions', ',', ' you', ' should', ' reach', ' out', ' to', ' the', ' D',
+        # 'answer', ' team', ' to', ' receive', ' access', ' [[', '4', ']].', '']
+        (
+            "Unique tokens with double brackets and a single token that ends the citation and has characters after it.",
+            ["... to receive access", " [[", "1", "]].", ""],
+            "... to receive access [[1]](https://0.com).",
+            ["doc_0"],
+        ),
     ],
 )
 def test_citation_extraction(
