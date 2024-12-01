@@ -1331,8 +1331,6 @@ export function ChatPage({
                 // we have to use -1)
                 setSelectedMessageForDocDisplay(user_message_id);
               }
-
-              console.log("documents", documents);
             } else if (Object.hasOwn(packet, "tool_name")) {
               // Will only ever be one tool call per message
               toolCall = {
@@ -1400,12 +1398,6 @@ export function ChatPage({
               });
             };
 
-            if (finalMessage?.context_docs?.top_documents) {
-              console.log(
-                "finalMessage?.context_docs?.top_documents",
-                finalMessage?.context_docs?.top_documents
-              );
-            }
             updateFn([
               {
                 messageId: regenerationRequest
@@ -1429,9 +1421,7 @@ export function ChatPage({
                 type: error ? "error" : "assistant",
                 retrievalType,
                 query: finalMessage?.rephrased_query || query,
-                documents:
-                  // finalMessage?.context_docs?.top_documents ||
-                  documents,
+                documents: documents,
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCall: finalMessage?.tool_call || toolCall,
