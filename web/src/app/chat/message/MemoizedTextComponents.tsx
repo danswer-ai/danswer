@@ -1,6 +1,47 @@
 import { Citation } from "@/components/search/results/Citation";
+import { WebResultIcon } from "@/components/WebResultIcon";
 import { LoadedDanswerDocument } from "@/lib/search/interfaces";
+import { getSourceMetadata } from "@/lib/sources";
+import { ValidSources } from "@/lib/types";
 import React, { memo } from "react";
+import isEqual from "lodash/isEqual";
+
+export const MemoizedA = memo(({ docs, children }: any) => {
+  console.log(children);
+  const value = children?.toString();
+  if (value?.startsWith("[") && value?.endsWith("]")) {
+    const match = value.match(/\[(\d+)\]/);
+    if (match) {
+      const index = parseInt(match[1], 10) - 1;
+      const associatedDoc = docs && docs[index];
+
+      const url = associatedDoc?.link
+        ? new URL(associatedDoc.link).origin + "/favicon.ico"
+        : "";
+
+      const getIcon = (sourceType: ValidSources, link: string) => {
+        return getSourceMetadata(sourceType).icon({ size: 18 });
+      };
+
+      const icon =
+        associatedDoc?.source_type == "web" ? (
+          <WebResultIcon url={associatedDoc.link} />
+        ) : (
+          getIcon(
+            associatedDoc?.source_type || "web",
+            associatedDoc?.link || ""
+          )
+        );
+
+      return (
+        <MemoizedLink document={{ ...associatedDoc, icon, url }}>
+          {children}
+        </MemoizedLink>
+      );
+    }
+  }
+  return <MemoizedLink>{children}</MemoizedLink>;
+});
 
 export const MemoizedLink = memo((props: any) => {
   const { node, document, ...rest } = props;
@@ -35,9 +76,15 @@ export const MemoizedLink = memo((props: any) => {
   }
 });
 
-export const MemoizedParagraph = memo(({ ...props }: any) => {
-  return <p {...props} className="text-default" />;
-});
+export const MemoizedParagraph = memo(
+  function MemoizedParagraph({ children }: any) {
+    return <p className="text-default">{children}</p>;
+  },
+  (prevProps, nextProps) => {
+    const areEqual = isEqual(prevProps.children, nextProps.children);
+    return areEqual;
+  }
+);
 
 MemoizedLink.displayName = "MemoizedLink";
 MemoizedParagraph.displayName = "MemoizedParagraph";

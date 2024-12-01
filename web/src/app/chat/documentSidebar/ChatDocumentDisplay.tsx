@@ -1,17 +1,11 @@
-import { HoverPopup } from "@/components/HoverPopup";
 import { SourceIcon } from "@/components/SourceIcon";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { DanswerDocument } from "@/lib/search/interfaces";
-import { FiInfo, FiRadio, FiTag } from "react-icons/fi";
+import { FiTag } from "react-icons/fi";
 import { DocumentSelector } from "./DocumentSelector";
 import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay";
-import { SearchResultIcon } from "@/components/SearchResultIcon";
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { MetadataBadge } from "@/components/MetadataBadge";
-import faviconFetch from "favicon-fetch";
-import { useContext } from "react";
-import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { ResultSearchIcon } from "@/components/SearchIcon";
+import { WebResultIcon } from "@/components/WebResultIcon";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
@@ -88,7 +82,7 @@ export function ChatDocumentDisplay({
         >
           <div className="line-clamp-1 mb-1 flex h-6 items-center gap-2 text-xs">
             {document.is_internet || document.source_type === "web" ? (
-              <ResultSearchIcon url={document.link} />
+              <WebResultIcon url={document.link} />
             ) : (
               <SourceIcon sourceType={document.source_type} iconSize={18} />
             )}

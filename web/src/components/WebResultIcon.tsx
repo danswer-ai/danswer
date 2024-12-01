@@ -1,6 +1,6 @@
 import { SourceIcon } from "./SourceIcon";
 
-export function ResultSearchIcon({ url }: { url: string }) {
+export function WebResultIcon({ url }: { url: string }) {
   const hostname = new URL(url).hostname;
   return hostname == "https://docs.danswer.dev" ? (
     <img

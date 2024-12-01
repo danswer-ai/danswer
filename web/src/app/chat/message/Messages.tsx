@@ -8,14 +8,22 @@ import {
   FiGlobe,
 } from "react-icons/fi";
 import { FeedbackType } from "../types";
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import {
   DanswerDocument,
   FilteredDanswerDocument,
 } from "@/lib/search/interfaces";
 import { SearchSummary } from "./SearchSummary";
-import { SourceIcon } from "@/components/SourceIcon";
+
 import { SkippedSearch } from "./SkippedSearch";
 import remarkGfm from "remark-gfm";
 import { CopyButton } from "@/components/CopyButton";
@@ -37,14 +45,7 @@ import "./custom-code-styles.css";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 
-import {
-  LikeFeedback,
-  DislikeFeedback,
-  GithubIcon,
-  GlobeIcon,
-  LikeFeedbackIcon,
-  SearchIcon,
-} from "@/components/icons/icons";
+import { LikeFeedback, DislikeFeedback } from "@/components/icons/icons";
 import {
   CustomTooltip,
   TooltipGroup,
@@ -57,21 +58,24 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useMouseTracking } from "./hooks";
-import { getFaviconUrl, SearchResultIcon } from "@/components/SearchResultIcon";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
-import { MemoizedLink, MemoizedParagraph } from "./MemoizedTextComponents";
+import {
+  MemoizedA,
+  MemoizedLink,
+  MemoizedParagraph,
+} from "./MemoizedTextComponents";
 import { extractCodeText } from "./codeUtils";
 import ToolResult from "../../../components/tools/ToolResult";
 import CsvContent from "../../../components/tools/CSVContent";
-import FirstSourceCard, {
+import SourceCard, {
   SeeMoreBlock,
-} from "@/components/chat_search/sources/firstsourcecard";
-import { getSourceMetadata, SOURCE_METADATA_MAP } from "@/lib/sources";
-import { ResultSearchIcon } from "@/components/SearchIcon";
+} from "@/components/chat_search/sources/SourceCard";
+import { getSourceMetadata } from "@/lib/sources";
+import { WebResultIcon } from "@/components/WebResultIcon";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -163,12 +167,10 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
-  autoScrollEnabled,
   regenerate,
   overriddenModel,
   selectedMessageForDocDisplay,
   continueGenerating,
-  lastMessage,
   shared,
   isActive,
   toggleDocumentSelection,
@@ -194,8 +196,6 @@ export const AIMessage = ({
   onMessageSelection,
   index,
 }: {
-  autoScrollEnabled?: boolean;
-  lastMessage?: boolean;
   index?: number;
   selectedMessageForDocDisplay?: number | null;
   shared?: boolean;
@@ -307,54 +307,27 @@ export const AIMessage = ({
       });
   }
 
+  const paragraphCallback = useCallback(
+    (props: any) => <MemoizedParagraph children={props.children} />,
+    []
+  );
+  const aCallback = useCallback(
+    (props: any) => <MemoizedA docs={docs} children={props.children} />,
+    [docs]
+  );
+
   const currentMessageInd = messageId
     ? otherMessagesCanSwitchTo?.indexOf(messageId)
     : undefined;
+
   const uniqueSources: ValidSources[] = Array.from(
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
 
   const markdownComponents = useMemo(
     () => ({
-      a: ({ node, ...props }: any) => {
-        const value = props.children?.toString();
-        if (value?.startsWith("[") && value?.endsWith("]")) {
-          const match = value.match(/\[(\d+)\]/);
-          if (match) {
-            const index = parseInt(match[1], 10) - 1;
-            const associatedDoc = docs && docs[index];
-
-            const url = associatedDoc?.link
-              ? new URL(associatedDoc.link).origin + "/favicon.ico"
-              : "";
-
-            const getIcon = (sourceType: ValidSources, link: string) => {
-              return getSourceMetadata(sourceType).icon({ size: 18 });
-            };
-
-            const icon =
-              associatedDoc?.source_type == "web" ? (
-                <ResultSearchIcon url={associatedDoc.link} />
-              ) : (
-                getIcon(
-                  associatedDoc?.source_type || "web",
-                  associatedDoc?.link || ""
-                )
-              );
-
-            return (
-              <MemoizedLink
-                {...props}
-                document={{ ...associatedDoc, icon, url }}
-              >
-                {props.children}
-              </MemoizedLink>
-            );
-          }
-        }
-        return <MemoizedLink {...props}>{props.children}</MemoizedLink>;
-      },
-      p: MemoizedParagraph,
+      a: aCallback,
+      p: paragraphCallback,
       code: ({ node, className, children, ...props }: any) => {
         const codeText = extractCodeText(
           node,
@@ -369,7 +342,7 @@ export const AIMessage = ({
         );
       },
     }),
-    [finalContent]
+    [aCallback, paragraphCallback, finalContent]
   );
 
   const renderedMarkdown = useMemo(() => {
@@ -489,7 +462,7 @@ export const AIMessage = ({
                               docs
                                 .slice(0, 2)
                                 .map((doc, ind) => (
-                                  <FirstSourceCard doc={doc} key={ind} />
+                                  <SourceCard doc={doc} key={ind} />
                                 ))}
                             <SeeMoreBlock
                               documentSelectionToggled={

@@ -1,9 +1,8 @@
-import { ResultSearchIcon } from "@/components/SearchIcon";
-import { SearchResultIcon } from "@/components/SearchResultIcon";
+import { WebResultIcon } from "@/components/WebResultIcon";
 import { SourceIcon } from "@/components/SourceIcon";
 import { DanswerDocument } from "@/lib/search/interfaces";
 
-export default function FirstSourceCard({ doc }: { doc: DanswerDocument }) {
+export default function SourceCard({ doc }: { doc: DanswerDocument }) {
   return (
     <a
       key={doc.document_id}
@@ -14,7 +13,7 @@ export default function FirstSourceCard({ doc }: { doc: DanswerDocument }) {
     >
       <div className="line-clamp-1 font-semibold text-ellipsis  text-text-900  flex h-6 items-center gap-2 text-sm">
         {doc.is_internet || doc.source_type === "web" ? (
-          <ResultSearchIcon url={doc.link} />
+          <WebResultIcon url={doc.link} />
         ) : (
           <SourceIcon sourceType={doc.source_type} iconSize={18} />
         )}
@@ -24,7 +23,6 @@ export default function FirstSourceCard({ doc }: { doc: DanswerDocument }) {
             <span className="text-text-500">...</span>
           )}
         </p>
-        {/* {doc.source_type} */}
       </div>
       <div className="line-clamp-2 text-sm font-semibold"></div>
       <div className="line-clamp-2 text-sm font-normal leading-snug text-text-700">
