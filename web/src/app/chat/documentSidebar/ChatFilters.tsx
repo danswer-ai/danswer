@@ -110,7 +110,7 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
               </button>
             </div>
             <div className="border-b border-divider-history-sidebar-bar mx-3" />
-            <div className="overflow-y-auto flex-grow gap-y-0 default-scrollbar dark-scrollbar flex flex-col">
+            <div className="overflow-y-auto -mx-1 sm:mx-0 flex-grow gap-y-0 default-scrollbar dark-scrollbar flex flex-col">
               {showFilters ? (
                 <SourceSelector
                   modal={modal}
