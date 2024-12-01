@@ -29,6 +29,9 @@ def get_default_document_index(
         index_name=primary_index_name,
         secondary_index_name=secondary_index_name,
         multitenant=MULTI_TENANT,
+        preserve_existing_indices=bool(
+            VECTOR_DB_INDEX_NAME_PREFIX__INTEGRATION_TEST_ONLY
+        ),
     )
 
 

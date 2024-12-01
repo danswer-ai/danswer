@@ -9,14 +9,18 @@ import sys
 import time
 import uuid
 from collections.abc import Callable
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import NamedTuple
 
 import requests
 import yaml
 
+from danswer.document_index.vespa.index import VespaIndex
 
-COMPOSE_DIR_PATH = Path("deployment/docker_compose")
+
+BACKEND_DIR_PATH = Path(__file__).parent.parent.parent
+COMPOSE_DIR_PATH = BACKEND_DIR_PATH.parent / "deployment/docker_compose"
 
 
 class DeploymentConfig(NamedTuple):
@@ -63,7 +67,6 @@ def setup_db(
     postgres_port: int,
 ) -> None:
     env = os.environ.copy()
-    dir = str(Path(__file__).parent / "backend")
 
     # Wait for postgres to be ready
     max_attempts = 10
@@ -120,7 +123,7 @@ def setup_db(
             "POSTGRES_DB": db_name,
         },
         check=True,
-        cwd=dir,
+        cwd=str(BACKEND_DIR_PATH),
     )
 
 
@@ -158,7 +161,6 @@ def start_api_server(
     )
 
     port = get_random_port()
-    dir = str(Path(__file__).parent / "backend")
 
     # Open log file for API server in /tmp
     log_file = open(f"/tmp/api_server_{instance_num}.txt", "w")
@@ -173,7 +175,7 @@ def start_api_server(
             str(port),
         ],
         env=env,
-        cwd=dir,
+        cwd=str(BACKEND_DIR_PATH),
         stdout=log_file,
         stderr=subprocess.STDOUT,
     )
@@ -207,7 +209,6 @@ def start_model_server(
     )
 
     port = get_random_port()
-    dir = str(Path(__file__).parent / "backend")
 
     # Open log file for model server in /tmp
     log_file = open(f"/tmp/model_server_{instance_num}.txt", "w")
@@ -222,7 +223,7 @@ def start_model_server(
             str(port),
         ],
         env=env,
-        cwd=dir,
+        cwd=str(BACKEND_DIR_PATH),
         stdout=log_file,
         stderr=subprocess.STDOUT,
     )
@@ -258,7 +259,7 @@ def start_background(
         }
     )
 
-    dir = str(Path(__file__).parent / "backend")
+    str(Path(__file__).parent / "backend")
 
     # Open log file for background process in /tmp
     log_file = open(f"/tmp/background_{instance_num}.txt", "w")
@@ -266,7 +267,7 @@ def start_background(
     process = subprocess.Popen(
         ["supervisord", "-n", "-c", "./supervisord.conf"],
         env=env,
-        cwd=dir,
+        cwd=str(BACKEND_DIR_PATH),
         stdout=log_file,
         stderr=subprocess.STDOUT,
     )
@@ -325,6 +326,13 @@ def start_shared_services(run_id: uuid.UUID) -> tuple[int, int, int]:
     )
 
     return postgres_port, vespa_port, vespa_tenant_port
+
+
+def prepare_vespa(instance_ids: list[int]) -> None:
+    schema_names = [
+        (get_vector_db_prefix(instance_id), 768, False) for instance_id in instance_ids
+    ]
+    VespaIndex.create_indices(schema_names)
 
 
 def start_redis(
@@ -477,13 +485,14 @@ def cleanup_instance(instance_num: int) -> None:
             print(f"Removed temporary compose file for instance {instance_num}")
 
 
-def main() -> None:
+def run_x_instances(num_instances: int) -> tuple[uuid.UUID, list[DeploymentConfig]]:
+    """Start x instances of the application and return their configurations."""
     run_id = uuid.uuid4()
-
-    _PIDS: list[int] = []
+    instance_ids = list(range(1, num_instances + 1))
+    _pids: list[int] = []
 
     def register_process(process) -> None:
-        _PIDS.append(process.pid)
+        _pids.append(process.pid)
 
     def cleanup_all_instances() -> None:
         """Cleanup all instances."""
@@ -525,29 +534,30 @@ def main() -> None:
             except subprocess.CalledProcessError:
                 print(f"Error cleaning up Redis instance {instance_id}")
 
-        for pid in _PIDS:
+        for pid in _pids:
             cleanup_pid(pid)
 
     # Register cleanup handler
     atexit.register(cleanup_all_instances)
 
-    # Start database services first (without Redis, since it's
-    # (1) very lightweight and (2) a hassle to manage since
-    # it's used as a Celery broker)
+    # Start database services first
     postgres_port, vespa_port, vespa_tenant_port = start_shared_services(run_id)
+    prepare_vespa(instance_ids)
 
-    # Launch instances (Redis will be started per instance)
-    port_configs: list[DeploymentConfig] = []
-    for i in range(1, 2):
-        ports = launch_instance(
-            i,
-            postgres_port,
-            vespa_port,
-            vespa_tenant_port,
-            register_process,
-        )
-        port_configs.append(ports)
-        wait_for_instance(ports)
+    # Use ThreadPool to launch instances in parallel and collect results
+    with ThreadPool(processes=num_instances) as pool:
+        # Create list of arguments for each instance
+        launch_args = [
+            (i, postgres_port, vespa_port, vespa_tenant_port, register_process)
+            for i in instance_ids
+        ]
+
+        # Launch instances and get results
+        port_configs = pool.starmap(launch_instance, launch_args)
+
+    # Wait for all instances to be healthy
+    for config in port_configs:
+        wait_for_instance(config)
 
     print("All instances launched!")
     print("Database Services:")
@@ -561,18 +571,24 @@ def main() -> None:
             f"API={ports.api_port}, Web={ports.web_port}, Nginx={ports.nginx_port}"
         )
 
-        # Run pytest with the API server port set
-        api_port = ports.api_port  # Use first instance's API port
-        try:
-            subprocess.run(
-                ["pytest", "tests/integration/openai_assistants_api"],
-                env={**os.environ, "API_SERVER_PORT": str(api_port)},
-                cwd=str(Path(__file__).parent / "backend"),
-                check=True,
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"Tests failed with exit code {e.returncode}")
-            sys.exit(e.returncode)
+    return run_id, port_configs
+
+
+def main() -> None:
+    run_id, port_configs = run_x_instances(1)
+
+    # Run pytest with the API server port set
+    api_port = port_configs[0].api_port  # Use first instance's API port
+    try:
+        subprocess.run(
+            ["pytest", "tests/integration/openai_assistants_api"],
+            env={**os.environ, "API_SERVER_PORT": str(api_port)},
+            cwd=str(BACKEND_DIR_PATH),
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Tests failed with exit code {e.returncode}")
+        sys.exit(e.returncode)
 
     time.sleep(5)
 

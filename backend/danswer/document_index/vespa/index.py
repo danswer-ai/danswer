@@ -129,23 +129,38 @@ class VespaIndex(DocumentIndex):
         index_name: str,
         secondary_index_name: str | None,
         multitenant: bool = False,
+        preserve_existing_indices: bool = False,
     ) -> None:
         self.index_name = index_name
         self.secondary_index_name = secondary_index_name
         self.multitenant = multitenant
+        self.preserve_existing_indices = preserve_existing_indices
         self.http_client = get_vespa_http_client()
 
-    def ensure_indices_exist(
-        self,
-        index_embedding_dim: int,
-        secondary_index_embedding_dim: int | None,
-    ) -> None:
-        if MULTI_TENANT:
-            logger.info(
-                "Skipping Vespa index seup for multitenant (would wipe all indices)"
-            )
-            return None
+    @classmethod
+    def _get_existing_schemas(cls) -> list[tuple[str, int, bool]]:
+        schema_url = f"{VESPA_APPLICATION_ENDPOINT}/application/v2/tenant/default/application/default/schema"
+        response = requests.get(schema_url)
+        response.raise_for_status()
 
+        indices: list[tuple[str, int, bool]] = []
+
+        # Add existing indices that we're not explicitly creating
+        for schema in response.json():
+            # Extract embedding dimension from schema content
+            for field in schema["fields"]:
+                if field["name"] == "embeddings":
+                    dim = field["tensorType"]["dimensions"][0]["size"]
+                    indices.append((schema["name"], dim, False))
+                    logger.info(
+                        f"Preserving existing index: {schema['name']} with dimension {dim}"
+                    )
+                    break
+
+        return indices
+
+    @classmethod
+    def create_indices(cls, indices: list[tuple[str, int, bool]]) -> None:
         deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
         logger.notice(f"Deploying Vespa application package to {deploy_url}")
 
@@ -159,21 +174,13 @@ class VespaIndex(DocumentIndex):
         with open(services_file, "r") as services_f:
             services_template = services_f.read()
 
-        schema_names = [self.index_name, self.secondary_index_name]
+        schema_names = [index_name for (index_name, _, _) in indices]
 
         doc_lines = _create_document_xml_lines(schema_names)
         services = services_template.replace(DOCUMENT_REPLACEMENT_PAT, doc_lines)
         services = services.replace(
             SEARCH_THREAD_NUMBER_PAT, str(VESPA_SEARCHER_THREADS)
         )
-
-        kv_store = get_kv_store()
-
-        needs_reindexing = False
-        try:
-            needs_reindexing = cast(bool, kv_store.load(KV_REINDEX_KEY))
-        except Exception:
-            logger.debug("Could not load the reindexing flag. Using ngrams")
 
         with open(overrides_file, "r") as overrides_f:
             overrides_template = overrides_f.read()
@@ -195,19 +202,14 @@ class VespaIndex(DocumentIndex):
             schema_template = schema_f.read()
         schema_template = schema_template.replace(TENANT_ID_PAT, "")
 
-        schema = schema_template.replace(
-            DANSWER_CHUNK_REPLACEMENT_PAT, self.index_name
-        ).replace(VESPA_DIM_REPLACEMENT_PAT, str(index_embedding_dim))
+        for index_name, index_embedding_dim, needs_reindexing in indices:
+            schema = schema_template.replace(
+                DANSWER_CHUNK_REPLACEMENT_PAT, index_name
+            ).replace(VESPA_DIM_REPLACEMENT_PAT, str(index_embedding_dim))
 
-        schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
-        schema = schema.replace(TENANT_ID_PAT, "")
-        zip_dict[f"schemas/{schema_names[0]}.sd"] = schema.encode("utf-8")
-
-        if self.secondary_index_name:
-            upcoming_schema = schema_template.replace(
-                DANSWER_CHUNK_REPLACEMENT_PAT, self.secondary_index_name
-            ).replace(VESPA_DIM_REPLACEMENT_PAT, str(secondary_index_embedding_dim))
-            zip_dict[f"schemas/{schema_names[1]}.sd"] = upcoming_schema.encode("utf-8")
+            schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
+            schema = schema.replace(TENANT_ID_PAT, "")
+            zip_dict[f"schemas/{index_name}.sd"] = schema.encode("utf-8")
 
         zip_file = in_memory_zip_from_file_bytes(zip_dict)
 
@@ -217,6 +219,41 @@ class VespaIndex(DocumentIndex):
             raise RuntimeError(
                 f"Failed to prepare Vespa Danswer Index. Response: {response.text}"
             )
+
+    def ensure_indices_exist(
+        self,
+        index_embedding_dim: int,
+        secondary_index_embedding_dim: int | None,
+    ) -> None:
+        if self.multitenant or MULTI_TENANT:  # be extra safe here
+            logger.info(
+                "Skipping Vespa index setup for multitenant (would wipe all indices)"
+            )
+            return None
+
+        kv_store = get_kv_store()
+        primary_needs_reindexing = False
+        try:
+            primary_needs_reindexing = cast(bool, kv_store.load(KV_REINDEX_KEY))
+        except Exception:
+            logger.debug("Could not load the reindexing flag. Using ngrams")
+
+        indices = [
+            (self.index_name, index_embedding_dim, primary_needs_reindexing),
+        ]
+        if self.secondary_index_name and secondary_index_embedding_dim:
+            indices.append(
+                (self.secondary_index_name, secondary_index_embedding_dim, False)
+            )
+
+        if self.preserve_existing_indices:
+            existing_indices = self._get_existing_schemas()
+            for index_info in existing_indices:
+                if index_info[0] in [self.index_name, self.secondary_index_name]:
+                    continue
+                indices.append(index_info)
+
+        self.create_indices(indices)
 
     @staticmethod
     def register_multitenant_indices(
