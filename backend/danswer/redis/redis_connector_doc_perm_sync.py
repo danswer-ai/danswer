@@ -12,6 +12,7 @@ from danswer.access.models import DocExternalAccess
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
+from danswer.configs.constants import DanswerCeleryTask
 
 
 class RedisConnectorPermissionSyncPayload(BaseModel):
@@ -149,7 +150,7 @@ class RedisConnectorPermissionSync:
             self.redis.sadd(self.taskset_key, custom_task_id)
 
             result = celery_app.send_task(
-                "update_external_document_permissions_task",
+                DanswerCeleryTask.UPDATE_EXTERNAL_DOCUMENT_PERMISSIONS_TASK,
                 kwargs=dict(
                     tenant_id=self.tenant_id,
                     serialized_doc_external_access=doc_perm.to_dict(),

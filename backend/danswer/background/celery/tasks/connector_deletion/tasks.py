@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from danswer.background.celery.apps.app_base import task_logger
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
+from danswer.configs.constants import DanswerCeleryTask
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
@@ -28,7 +29,7 @@ class TaskDependencyError(RuntimeError):
 
 
 @shared_task(
-    name="check_for_connector_deletion_task",
+    name=DanswerCeleryTask.CHECK_FOR_CONNECTOR_DELETION,
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
     bind=True,
