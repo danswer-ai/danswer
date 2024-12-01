@@ -138,30 +138,15 @@ class VespaIndex(DocumentIndex):
         self.http_client = get_vespa_http_client()
 
     @classmethod
-    def _get_existing_schemas(cls) -> list[tuple[str, int, bool]]:
-        schema_url = f"{VESPA_APPLICATION_ENDPOINT}/application/v2/tenant/default/application/default/schema"
-        response = requests.get(schema_url)
-        response.raise_for_status()
-
-        indices: list[tuple[str, int, bool]] = []
-
-        # Add existing indices that we're not explicitly creating
-        for schema in response.json():
-            # Extract embedding dimension from schema content
-            for field in schema["fields"]:
-                if field["name"] == "embeddings":
-                    dim = field["tensorType"]["dimensions"][0]["size"]
-                    indices.append((schema["name"], dim, False))
-                    logger.info(
-                        f"Preserving existing index: {schema['name']} with dimension {dim}"
-                    )
-                    break
-
-        return indices
-
-    @classmethod
-    def create_indices(cls, indices: list[tuple[str, int, bool]]) -> None:
-        deploy_url = f"{VESPA_APPLICATION_ENDPOINT}/tenant/default/prepareandactivate"
+    def create_indices(
+        cls,
+        indices: list[tuple[str, int, bool]],
+        application_endpoint: str = VESPA_APPLICATION_ENDPOINT,
+    ) -> None:
+        """
+        Create indices in Vespa based on the passed in configuration(s).
+        """
+        deploy_url = f"{application_endpoint}/tenant/default/prepareandactivate"
         logger.notice(f"Deploying Vespa application package to {deploy_url}")
 
         vespa_schema_path = os.path.join(
@@ -209,6 +194,10 @@ class VespaIndex(DocumentIndex):
 
             schema = add_ngrams_to_schema(schema) if needs_reindexing else schema
             schema = schema.replace(TENANT_ID_PAT, "")
+            logger.info(
+                f"Creating index: {index_name} with embedding "
+                f"dimension: {index_embedding_dim}. Schema:\n\n {schema}"
+            )
             zip_dict[f"schemas/{index_name}.sd"] = schema.encode("utf-8")
 
         zip_file = in_memory_zip_from_file_bytes(zip_dict)
@@ -216,6 +205,7 @@ class VespaIndex(DocumentIndex):
         headers = {"Content-Type": "application/zip"}
         response = requests.post(deploy_url, headers=headers, data=zip_file)
         if response.status_code != 200:
+            logger.error(f"Failed to create Vespa indices: {response.text}")
             raise RuntimeError(
                 f"Failed to prepare Vespa Danswer Index. Response: {response.text}"
             )
@@ -229,6 +219,12 @@ class VespaIndex(DocumentIndex):
             logger.info(
                 "Skipping Vespa index setup for multitenant (would wipe all indices)"
             )
+            return None
+
+        # Used in IT
+        # NOTE: this means that we can't switch embedding models
+        if self.preserve_existing_indices:
+            logger.info("Preserving existing indices")
             return None
 
         kv_store = get_kv_store()
@@ -245,13 +241,6 @@ class VespaIndex(DocumentIndex):
             indices.append(
                 (self.secondary_index_name, secondary_index_embedding_dim, False)
             )
-
-        if self.preserve_existing_indices:
-            existing_indices = self._get_existing_schemas()
-            for index_info in existing_indices:
-                if index_info[0] in [self.index_name, self.secondary_index_name]:
-                    continue
-                indices.append(index_info)
 
         self.create_indices(indices)
 

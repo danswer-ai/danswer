@@ -22,12 +22,23 @@ from danswer.document_index.vespa.index import VespaIndex
 BACKEND_DIR_PATH = Path(__file__).parent.parent.parent
 COMPOSE_DIR_PATH = BACKEND_DIR_PATH.parent / "deployment/docker_compose"
 
+DEFAULT_EMBEDDING_DIMENSION = 768
+DEFAULT_SCHEMA_NAME = "danswer_chunk_nomic_ai_nomic_embed_text_v1"
+
 
 class DeploymentConfig(NamedTuple):
     instance_num: int
     api_port: int
     web_port: int
     nginx_port: int
+    redis_port: int
+
+
+class SharedServicesConfig(NamedTuple):
+    run_id: uuid.UUID
+    postgres_port: int
+    vespa_port: int
+    vespa_tenant_port: int
 
 
 def get_random_port() -> int:
@@ -157,6 +168,7 @@ def start_api_server(
             "VESPA_TENANT_PORT": str(vespa_tenant_port),
             "MODEL_SERVER_PORT": str(model_server_port),
             "VECTOR_DB_INDEX_NAME_PREFIX__INTEGRATION_TEST_ONLY": vector_db_prefix,
+            "LOG_LEVEL": "debug",
         }
     )
 
@@ -205,6 +217,7 @@ def start_model_server(
             "VESPA_HOST": "localhost",
             "VESPA_PORT": str(vespa_port),
             "VESPA_TENANT_PORT": str(vespa_tenant_port),
+            "LOG_LEVEL": "debug",
         }
     )
 
@@ -256,6 +269,7 @@ def start_background(
             "VECTOR_DB_INDEX_NAME_PREFIX__INTEGRATION_TEST_ONLY": get_vector_db_prefix(
                 instance_num
             ),
+            "LOG_LEVEL": "debug",
         }
     )
 
@@ -274,7 +288,7 @@ def start_background(
     register_process(process)
 
 
-def start_shared_services(run_id: uuid.UUID) -> tuple[int, int, int]:
+def start_shared_services(run_id: uuid.UUID) -> SharedServicesConfig:
     """Start Postgres and Vespa using docker-compose.
     Returns (postgres_port, vespa_port, vespa_tenant_port)
     """
@@ -325,14 +339,30 @@ def start_shared_services(run_id: uuid.UUID) -> tuple[int, int, int]:
         check=True,
     )
 
-    return postgres_port, vespa_port, vespa_tenant_port
+    return SharedServicesConfig(run_id, postgres_port, vespa_port, vespa_tenant_port)
 
 
-def prepare_vespa(instance_ids: list[int]) -> None:
+def prepare_vespa(instance_ids: list[int], vespa_tenant_port: int) -> None:
     schema_names = [
-        (get_vector_db_prefix(instance_id), 768, False) for instance_id in instance_ids
+        (
+            f"{get_vector_db_prefix(instance_id)}_{DEFAULT_SCHEMA_NAME}",
+            DEFAULT_EMBEDDING_DIMENSION,
+            False,
+        )
+        for instance_id in instance_ids
     ]
-    VespaIndex.create_indices(schema_names)
+    print(f"Creating indices: {schema_names}")
+    for _ in range(7):
+        try:
+            VespaIndex.create_indices(
+                schema_names, f"http://localhost:{vespa_tenant_port}/application/v2"
+            )
+            return
+        except Exception as e:
+            print(f"Error creating indices: {e}. Trying again in 5 seconds...")
+            time.sleep(5)
+
+    raise RuntimeError("Failed to create indices in Vespa")
 
 
 def start_redis(
@@ -422,7 +452,7 @@ def launch_instance(
         print(f"Failed to start API server for instance {instance_num}: {e}")
         raise
 
-    return DeploymentConfig(instance_num, api_port, web_port, nginx_port)
+    return DeploymentConfig(instance_num, api_port, web_port, nginx_port, redis_port)
 
 
 def wait_for_instance(
@@ -485,7 +515,9 @@ def cleanup_instance(instance_num: int) -> None:
             print(f"Removed temporary compose file for instance {instance_num}")
 
 
-def run_x_instances(num_instances: int) -> tuple[uuid.UUID, list[DeploymentConfig]]:
+def run_x_instances(
+    num_instances: int,
+) -> tuple[SharedServicesConfig, list[DeploymentConfig]]:
     """Start x instances of the application and return their configurations."""
     run_id = uuid.uuid4()
     instance_ids = list(range(1, num_instances + 1))
@@ -541,14 +573,25 @@ def run_x_instances(num_instances: int) -> tuple[uuid.UUID, list[DeploymentConfi
     atexit.register(cleanup_all_instances)
 
     # Start database services first
-    postgres_port, vespa_port, vespa_tenant_port = start_shared_services(run_id)
-    prepare_vespa(instance_ids)
+    print("Starting shared services...")
+    shared_services_config = start_shared_services(run_id)
+
+    # create documents
+    print("Creating indices in Vespa...")
+    prepare_vespa(instance_ids, shared_services_config.vespa_tenant_port)
 
     # Use ThreadPool to launch instances in parallel and collect results
+    print("Launching instances...")
     with ThreadPool(processes=num_instances) as pool:
         # Create list of arguments for each instance
         launch_args = [
-            (i, postgres_port, vespa_port, vespa_tenant_port, register_process)
+            (
+                i,
+                shared_services_config.postgres_port,
+                shared_services_config.vespa_port,
+                shared_services_config.vespa_tenant_port,
+                register_process,
+            )
             for i in instance_ids
         ]
 
@@ -556,14 +599,15 @@ def run_x_instances(num_instances: int) -> tuple[uuid.UUID, list[DeploymentConfi
         port_configs = pool.starmap(launch_instance, launch_args)
 
     # Wait for all instances to be healthy
-    for config in port_configs:
-        wait_for_instance(config)
+    print("Waiting for instances to be healthy...")
+    with ThreadPool(processes=len(port_configs)) as pool:
+        pool.map(wait_for_instance, port_configs)
 
     print("All instances launched!")
     print("Database Services:")
-    print(f"Postgres port: {postgres_port}")
-    print(f"Vespa main port: {vespa_port}")
-    print(f"Vespa tenant port: {vespa_tenant_port}")
+    print(f"Postgres port: {shared_services_config.postgres_port}")
+    print(f"Vespa main port: {shared_services_config.vespa_port}")
+    print(f"Vespa tenant port: {shared_services_config.vespa_tenant_port}")
     print("\nApplication Instances:")
     for ports in port_configs:
         print(
@@ -571,11 +615,11 @@ def run_x_instances(num_instances: int) -> tuple[uuid.UUID, list[DeploymentConfi
             f"API={ports.api_port}, Web={ports.web_port}, Nginx={ports.nginx_port}"
         )
 
-    return run_id, port_configs
+    return shared_services_config, port_configs
 
 
 def main() -> None:
-    run_id, port_configs = run_x_instances(1)
+    shared_services_config, port_configs = run_x_instances(1)
 
     # Run pytest with the API server port set
     api_port = port_configs[0].api_port  # Use first instance's API port
