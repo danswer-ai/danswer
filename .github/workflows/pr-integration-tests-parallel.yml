@@ -8,7 +8,7 @@ on:
   pull_request:
     branches:
       - main
-      - 'release/**'
+      - "release/**"
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -16,11 +16,12 @@ env:
   CONFLUENCE_TEST_SPACE_URL: ${{ secrets.CONFLUENCE_TEST_SPACE_URL }}
   CONFLUENCE_USER_NAME: ${{ secrets.CONFLUENCE_USER_NAME }}
   CONFLUENCE_ACCESS_TOKEN: ${{ secrets.CONFLUENCE_ACCESS_TOKEN }}
-  
+
 jobs:
   integration-tests:
     # See https://runs-on.com/runners/linux/
-    runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
+    runs-on:
+      [runs-on, runner=8cpu-linux-x64, ram=16, "run-id=${{ github.run_id }}"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,7 +34,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
-      
+
       - name: Build integration test Docker image
         uses: ./.github/actions/custom-build-and-push
         with:
@@ -46,11 +47,13 @@ jobs:
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
           cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
-
       - name: Run Standard Integration Tests
         run: |
           echo "Running integration tests..."
-          docker run danswer/danswer-integration:test PYTHONPATH=. python tests/integration/run.py
+          docker run \
+            -e PYTHONPATH=/app \
+            danswer/danswer-integration:test \
+            python /app/tests/integration/run.py
         continue-on-error: true
         id: run_tests
 
@@ -75,7 +78,7 @@ jobs:
       #   run: |
       #     cd deployment/docker_compose
       #     docker compose -f docker-compose.dev.yml -p danswer-stack down -v
-      
+
       # - name: Upload logs
       #   if: success() || failure()
       #   uses: actions/upload-artifact@v4
