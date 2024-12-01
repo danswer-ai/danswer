@@ -154,7 +154,18 @@ export default function FunctionalHeader({
         </div>
 
         {page != "assistants" && (
-          <div className="h-20 absolute top-0 left-1/2 transform -translate-x-1/2 z-10  w-full sm:w-[90%] lg:w-[70%] bg-gradient-to-b via-50% z-[-1] from-background via-background to-background/10 flex" />
+          <div
+            className={`
+              h-20 absolute top-0 z-10 w-full sm:w-[90%] lg:w-[70%]
+              bg-gradient-to-b via-50% z-[-1] from-background via-background to-background/10 flex
+              transition-all duration-300 ease-in-out
+              ${
+                documentSidebarToggled
+                  ? "left-[200px] transform -translate-x-[calc(50%+100px)]"
+                  : "left-1/2 transform -translate-x-1/2"
+              }
+            `}
+          />
         )}
       </div>
     </div>

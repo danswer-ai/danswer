@@ -2086,7 +2086,8 @@ export function ChatPage({
                 fixed
                 right-0
                 z-[1000]
-                bg-background-100
+
+                  bg-background
                 h-screen
                 transition-all
                 bg-opacity-80

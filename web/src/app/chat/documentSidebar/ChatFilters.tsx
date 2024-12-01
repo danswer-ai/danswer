@@ -76,8 +76,8 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
     return (
       <div
         id="danswer-chat-sidebar"
-        className={`relative m-2 max-w-full ${
-          !modal ? "border-l border-sidebar-border" : ""
+        className={`relative py-2 max-w-full ${
+          !modal ? "border-l h-full border-sidebar-border" : ""
         }`}
         onClick={(e) => {
           if (e.target === e.currentTarget) {
@@ -104,7 +104,7 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
               </h2>
               <button
                 onClick={closeSidebar}
-                className="text-sm text-primary-600 hover:text-primary-800 transition-colors duration-200 ease-in-out"
+                className="text-sm text-primary-600 mr-2  hover:text-primary-800 transition-colors duration-200 ease-in-out"
               >
                 <XIcon className="w-4 h-4" />
               </button>
