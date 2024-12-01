@@ -18,6 +18,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ToolTipDetails } from "@/components/admin/connectors/Field";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 const SectionTitle = ({
   children,
@@ -120,7 +128,7 @@ export function SourceSelector({
   return (
     <div>
       {!filtersUntoggled && (
-        <CardContent className="overflow-x-hidden  space-y-2">
+        <CardContent className=" space-y-2">
           <div>
             <div className="flex py-2 mt-2 justify-start gap-x-2 items-center">
               <p className="text-sm font-semibold">Time Range</p>
@@ -160,8 +168,17 @@ export function SourceSelector({
                       : undefined
                   }
                   onSelect={(daterange) => {
-                    const initialDate = daterange?.from || new Date();
-                    const endDate = daterange?.to || new Date();
+                    const today = new Date();
+                    const initialDate = daterange?.from
+                      ? new Date(
+                          Math.min(daterange.from.getTime(), today.getTime())
+                        )
+                      : today;
+                    const endDate = daterange?.to
+                      ? new Date(
+                          Math.min(daterange.to.getTime(), today.getTime())
+                        )
+                      : today;
                     setTimeRange({
                       from: initialDate,
                       to: endDate,
@@ -192,19 +209,22 @@ export function SourceSelector({
               <SectionTitle modal={modal}>Sources</SectionTitle>
 
               <div className="space-y-0">
-                <div className="flex items-center space-x-2 cursor-pointer hover:bg-background-200 rounded-md p-2">
-                  <Checkbox
-                    id="select-all-sources"
-                    checked={allSourcesSelected}
-                    onCheckedChange={toggleAllSources}
-                  />
-                  <label
-                    htmlFor="select-all-sources"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Select All
-                  </label>
-                </div>
+                {existingSources.length > 1 && (
+                  <div className="flex items-center space-x-2 cursor-pointer hover:bg-background-200 rounded-md p-2">
+                    <Checkbox
+                      id="select-all-sources"
+                      checked={allSourcesSelected}
+                      onCheckedChange={toggleAllSources}
+                    />
+
+                    <label
+                      htmlFor="select-all-sources"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Select All
+                    </label>
+                  </div>
+                )}
                 {listSourceMetadata()
                   .filter((source) =>
                     existingSources.includes(source.internalName)
@@ -219,7 +239,6 @@ export function SourceSelector({
                         checked={selectedSources
                           .map((s) => s.internalName)
                           .includes(source.internalName)}
-                        onCheckedChange={() => handleSelect(source)}
                       />
                       <SourceIcon
                         sourceType={source.internalName}
@@ -239,26 +258,29 @@ export function SourceSelector({
                 {availableDocumentSets.map((documentSet) => (
                   <div
                     key={documentSet.name}
-                    className="flex items-center space-x-2 cursor-pointer hover:bg-accent rounded-md p-2"
+                    className="flex items-center space-x-2 cursor-pointer hover:bg-background-200 rounded-md p-2"
                     onClick={() => handleDocumentSetSelect(documentSet.name)}
                   >
                     <Checkbox
                       checked={selectedDocumentSets.includes(documentSet.name)}
-                      onCheckedChange={() =>
-                        handleDocumentSetSelect(documentSet.name)
-                      }
                     />
-                    <HoverPopup
-                      mainContent={
-                        <InfoIcon className={`${defaultTailwindCSS} h-4 w-4`} />
-                      }
-                      popupContent={
-                        <div className="text-sm w-64">
-                          <div className="font-medium">Description</div>
-                          <div className="mt-1">{documentSet.description}</div>
-                        </div>
-                      }
-                    />
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <InfoIcon
+                            className={`${defaultTailwindCSS} h-4 w-4`}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="text-sm w-64">
+                            <div className="font-medium">Description</div>
+                            <div className="mt-1">
+                              {documentSet.description}
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <span className="text-sm">{documentSet.name}</span>
                   </div>
                 ))}

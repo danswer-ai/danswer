@@ -2117,14 +2117,13 @@ export function ChatPage({
                 right-0
                 z-[1000]
 
-                  bg-background
+                bg-background
                 h-screen
                 transition-all
                 bg-opacity-80
                 duration-300
                 ease-in-out
                 bg-transparent
-                overflow-y-hidden
                 transition-all
                 bg-opacity-80
                 duration-300

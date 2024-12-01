@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import { useChatContext } from "@/components/context/ChatContext";
 import { useUser } from "@/components/user/UserProvider";
@@ -17,6 +17,7 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  slack,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -48,37 +49,22 @@ const AssistantSelector = ({
   llmOverrideManager?: LlmOverrideManager;
   isMobile: boolean;
 }) => {
-  const { finalAssistants, refreshAssistants } = useAssistants();
+  const { finalAssistants } = useAssistants();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { llmProviders } = useChatContext();
   const { user } = useUser();
   const [assistants, setAssistants] = useState<Persona[]>(finalAssistants);
-  const [selectedTab, setSelectedTab] = useState(0);
   const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
   const [localTemperature, setLocalTemperature] = useState<number>(
     llmOverrideManager?.temperature || 0
   );
 
-  useEffect(() => {
-    setAssistants(finalAssistants);
-  }, [finalAssistants]);
-
-  useEffect(() => {
-    if (!isMobile) {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          dropdownRef.current &&
-          !dropdownRef.current.contains(event.target as Node)
-        ) {
-          setIsOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }
-  }, [isMobile]);
+  // Initialize selectedTab from localStorage
+  const [selectedTab, setSelectedTab] = useState<number>(() => {
+    const storedTab = localStorage.getItem("assistantSelectorSelectedTab");
+    return storedTab !== null ? Number(storedTab) : 0;
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -121,6 +107,12 @@ const AssistantSelector = ({
     debouncedSetTemperature(value);
   };
 
+  // Handle tab change and update localStorage
+  const handleTabChange = (index: number) => {
+    setSelectedTab(index);
+    localStorage.setItem("assistantSelectorSelectedTab", index.toString());
+  };
+
   // Get the user's default model
   const userDefaultModel = user?.preferences.default_model;
 
@@ -135,16 +127,16 @@ const AssistantSelector = ({
 
   const content = (
     <>
-      <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
+      <Tab.Group selectedIndex={selectedTab} onChange={handleTabChange}>
         <Tab.List className="flex p-1 space-x-1 bg-gray-100 rounded-t-md">
           <Tab
             className={({ selected }) =>
               `w-full py-2.5 text-sm leading-5 font-medium rounded-md
-               ${
-                 selected
-                   ? "bg-white text-gray-700 shadow"
-                   : "text-gray-500 hover:bg-white/[0.12] hover:text-gray-700"
-               }`
+                 ${
+                   selected
+                     ? "bg-white text-gray-700 shadow"
+                     : "text-gray-500 hover:bg-white/[0.12] hover:text-gray-700"
+                 }`
             }
           >
             Assistant
@@ -152,11 +144,11 @@ const AssistantSelector = ({
           <Tab
             className={({ selected }) =>
               `w-full py-2.5 text-sm leading-5 font-medium rounded-md
-               ${
-                 selected
-                   ? "bg-white text-gray-700 shadow"
-                   : "text-gray-500 hover:bg-white/[0.12] hover:text-gray-700"
-               }`
+                 ${
+                   selected
+                     ? "bg-white text-gray-700 shadow"
+                     : "text-gray-500 hover:bg-white/[0.12] hover:text-gray-700"
+                 }`
             }
           >
             Model
@@ -282,13 +274,35 @@ const AssistantSelector = ({
     </>
   );
 
+  useEffect(() => {
+    if (!isMobile) {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target as Node)
+        ) {
+          setIsOpen(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isMobile]);
+
   return (
     <div className="pointer-events-auto relative" ref={dropdownRef}>
       <div className="flex justify-center">
         <div
           onClick={() => {
             setIsOpen(!isOpen);
-            setSelectedTab(0);
+            // Get selectedTab from localStorage when opening
+            const storedTab = localStorage.getItem(
+              "assistantSelectorSelectedTab"
+            );
+            setSelectedTab(storedTab !== null ? Number(storedTab) : 0);
           }}
           className="flex items-center gap-x-2 justify-between px-6 py-3 text-sm font-medium text-white bg-black rounded-full shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
         >
