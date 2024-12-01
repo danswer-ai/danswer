@@ -12,7 +12,7 @@ Can you please summarize it in a sentence or two? Do NOT include image urls or b
 """
 
 
-def build_custom_image_generation_user_prompt(
+def build_custom_file_generation_user_prompt(
     query: str, file_type: ChatFileType, files: list[InMemoryChatFile] | None = None
 ) -> HumanMessage:
     return HumanMessage(

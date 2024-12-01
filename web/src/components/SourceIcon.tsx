@@ -10,6 +10,7 @@ export function SourceIcon({
   sourceType: ValidSources;
   iconSize: number;
 }) {
+  console.log("sourceType is ", sourceType);
   return getSourceMetadata(sourceType).icon({
     size: iconSize,
   });

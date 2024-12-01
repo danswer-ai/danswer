@@ -150,3 +150,16 @@ class StreamedResponse(BaseModel):
     relevance_summaries: list[dict[str, Any]] | None = None
     tool_result: Any | None = None
     user: str | None = None
+
+
+class DATestToolHeader(BaseModel):
+    key: str
+    value: str
+
+
+class DATestTool(BaseModel):
+    id: int
+    name: str
+    description: str
+    definition: dict[str, Any]
+    custom_headers: list[DATestToolHeader]

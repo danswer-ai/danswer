@@ -256,6 +256,7 @@ export interface UserGroup {
 }
 
 const validSources = [
+  "custom_tool",
   "web",
   "github",
   "gitlab",
@@ -303,8 +304,10 @@ export type ValidSources = (typeof validSources)[number];
 // The valid sources that are actually valid to select in the UI
 export type ConfigurableSources = Exclude<
   ValidSources,
-  "not_applicable" | "ingestion_api"
+  "not_applicable" | "ingestion_api" | "custom_tool"
 >;
+
+export const nonSearchableSources: ValidSources[] = ["custom_tool"];
 
 // The sources that have auto-sync support on the backend
 export const validAutoSyncSources = [

@@ -1,4 +1,4 @@
-import { ValidSources } from "../types";
+import { ConfigurableSources, ValidSources } from "../types";
 
 export interface CredentialBase<T> {
   credential_json: T;
@@ -195,7 +195,7 @@ export interface FirefliesCredentialJson {
 export interface MediaWikiCredentialJson {}
 export interface WikipediaCredentialJson extends MediaWikiCredentialJson {}
 
-export const credentialTemplates: Record<ValidSources, any> = {
+export const credentialTemplates: Record<ConfigurableSources, any> = {
   github: { github_access_token: "" } as GithubCredentialJson,
   gitlab: {
     gitlab_url: "",
@@ -304,8 +304,6 @@ export const credentialTemplates: Record<ValidSources, any> = {
   wikipedia: null,
   mediawiki: null,
   web: null,
-  not_applicable: null,
-  ingestion_api: null,
 
   // NOTE: These are Special Cases
   google_drive: { google_tokens: "" } as GoogleDriveCredentialJson,

@@ -125,6 +125,8 @@ class CustomToolConfig(BaseModel):
     chat_session_id: UUID | None = None
     message_id: int | None = None
     additional_headers: dict[str, str] | None = None
+    answer_style_config: AnswerStyleConfig | None = None
+    prompt_config: PromptConfig | None = None
 
 
 def construct_tools(
@@ -228,6 +230,8 @@ def construct_tools(
                             custom_tool_config.additional_headers or {}
                         )
                     ),
+                    answer_style_config=custom_tool_config.answer_style_config,
+                    prompt_config=custom_tool_config.prompt_config,
                 ),
             )
 

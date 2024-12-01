@@ -9,6 +9,7 @@ import {
   buildDocumentSummaryDisplay,
 } from "@/components/search/DocumentDisplay";
 import { InternetSearchIcon } from "@/components/InternetSearchIcon";
+import { nonSearchableSources, ValidSources } from "@/lib/types";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
@@ -101,13 +102,14 @@ export function ChatDocumentDisplay({
           </div>
         )}
 
-        {!isInternet && (
-          <DocumentSelector
-            isSelected={isSelected}
-            handleSelect={() => handleSelect(document.document_id)}
-            isDisabled={tokenLimitReached && !isSelected}
-          />
-        )}
+        {!isInternet &&
+          !nonSearchableSources.includes(document.source_type) && (
+            <DocumentSelector
+              isSelected={isSelected}
+              handleSelect={() => handleSelect(document.document_id)}
+              isDisabled={tokenLimitReached && !isSelected}
+            />
+          )}
       </div>
       <div>
         <div className="mt-1">

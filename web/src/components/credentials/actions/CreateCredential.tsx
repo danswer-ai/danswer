@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ValidSources } from "@/lib/types";
+import { ConfigurableSources } from "@/lib/types";
 import { FaAccusoft } from "react-icons/fa";
 import { submitCredential } from "@/components/admin/connectors/CredentialForm";
 import { TextFormField } from "@/components/admin/connectors/Field";
@@ -71,7 +71,7 @@ export default function CreateCredential({
 }: {
   // Source information
   hideSource?: boolean; // hides docs link
-  sourceType: ValidSources;
+  sourceType: ConfigurableSources;
 
   setPopup: (popupSpec: PopupSpec | null) => void;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { ValidSources } from "@/lib/types";
+import { ConfigurableSources, ValidSources } from "@/lib/types";
 import useSWR, { mutate } from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { FaSwatchbook } from "react-icons/fa";
@@ -35,7 +35,7 @@ export default function CredentialSection({
   refresh,
 }: {
   ccPair: CCPairFullInfo;
-  sourceType: ValidSources;
+  sourceType: ConfigurableSources;
   refresh: () => void;
 }) {
   const makeShowCreateCredential = () => {
