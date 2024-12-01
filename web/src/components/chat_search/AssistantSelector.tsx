@@ -17,7 +17,6 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-  slack,
 } from "@dnd-kit/core";
 import {
   arrayMove,

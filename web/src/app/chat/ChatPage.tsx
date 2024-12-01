@@ -165,8 +165,8 @@ export function ChatPage({
     if (autoScrollEnabled) return undefined;
 
     if (screenHeight < 600) return "20vh";
-    if (screenHeight < 1200) return "40vh";
-    return "50vh";
+    if (screenHeight < 1200) return "30vh";
+    return "40vh";
   };
 
   // handle redirect if chat page is disabled
