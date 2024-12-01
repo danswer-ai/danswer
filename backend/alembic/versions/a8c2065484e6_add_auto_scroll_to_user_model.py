@@ -1,7 +1,7 @@
 """add auto scroll to user model
 
 Revision ID: a8c2065484e6
-Revises: 6d562f86c78b
+Revises: abe7378b8217
 Create Date: 2024-11-22 17:34:09.690295
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "a8c2065484e6"
-down_revision = "6d562f86c78b"
+down_revision = "abe7378b8217"
 branch_labels = None
 depends_on = None
 
