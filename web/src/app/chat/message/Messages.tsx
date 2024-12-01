@@ -43,6 +43,7 @@ import {
   GithubIcon,
   GlobeIcon,
   LikeFeedbackIcon,
+  SearchIcon,
 } from "@/components/icons/icons";
 import {
   CustomTooltip,
@@ -70,6 +71,7 @@ import FirstSourceCard, {
   SeeMoreBlock,
 } from "@/components/chat_search/sources/firstsourcecard";
 import { getSourceMetadata, SOURCE_METADATA_MAP } from "@/lib/sources";
+import { ResultSearchIcon } from "@/components/SearchIcon";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -332,13 +334,7 @@ export const AIMessage = ({
 
             const icon =
               associatedDoc?.source_type == "web" ? (
-                <img
-                  className="my-0 py-0"
-                  src={`https://www.google.com/s2/favicons?domain=${
-                    new URL(associatedDoc.link).hostname
-                  }`}
-                  alt="favicon"
-                />
+                <ResultSearchIcon url={associatedDoc.link} />
               ) : (
                 getIcon(
                   associatedDoc?.source_type || "web",

@@ -11,6 +11,7 @@ import { MetadataBadge } from "@/components/MetadataBadge";
 import faviconFetch from "favicon-fetch";
 import { useContext } from "react";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
+import { ResultSearchIcon } from "@/components/SearchIcon";
 
 interface DocumentDisplayProps {
   document: DanswerDocument;
@@ -72,11 +73,6 @@ export function ChatDocumentDisplay({
     return null;
   }
 
-  const faviconUrl =
-    (isInternet || document.source_type === "web") && document.link
-      ? faviconFetch({ uri: document.link })
-      : null;
-
   return (
     <div className={`opacity-100   ${modal ? "w-[90vw]" : "w-full"}`}>
       <div
@@ -91,14 +87,8 @@ export function ChatDocumentDisplay({
           className="cursor-pointer flex flex-col px-2 py-1.5"
         >
           <div className="line-clamp-1 mb-1 flex h-6 items-center gap-2 text-xs">
-            {faviconUrl ? (
-              <img
-                alt="Favicon"
-                width="18"
-                height="18"
-                className="rounded-full bg-gray-200 object-cover"
-                src={faviconUrl}
-              />
+            {document.is_internet || document.source_type === "web" ? (
+              <ResultSearchIcon url={document.link} />
             ) : (
               <SourceIcon sourceType={document.source_type} iconSize={18} />
             )}
