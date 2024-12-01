@@ -53,7 +53,7 @@ jobs:
           docker run \
             -e PYTHONPATH=/app \
             danswer/danswer-integration:test \
-            python /app/tests/integration/run.py
+            /usr/local/bin/python /app/tests/integration/run.py
         continue-on-error: true
         id: run_tests
 
