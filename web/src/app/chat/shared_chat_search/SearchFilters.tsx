@@ -11,7 +11,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { listSourceMetadata } from "@/lib/sources";
 import { Calendar } from "@/components/ui/calendar";
-import { getTimeAgoString } from "@/lib/dateUtils";
+import { getDateRangeString } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -143,7 +143,7 @@ export function SourceSelector({
                   className={`w-full justify-start text-left font-normal`}
                 >
                   <span>
-                    {getTimeAgoString(timeRange?.from!) ||
+                    {getDateRangeString(timeRange?.from!, timeRange?.to!) ||
                       "Select a time range"}
                   </span>
                 </Button>
