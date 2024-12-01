@@ -67,9 +67,9 @@ class CitationProcessor:
                 if piece_that_comes_after == "\n" and in_code_block(self.llm_out):
                     self.curr_segment = self.curr_segment.replace("```", "```plaintext")
 
-        citation_pattern = r"\[(\d+)\]|\[\[(\d+)\]\]"
+        citation_pattern = r"\[(\d+)\]|\[\[(\d+)\]\]"  # [1], [[1]], etc.
         citations_found = list(re.finditer(citation_pattern, self.curr_segment))
-        possible_citation_pattern = r"(\[+\d*$)"
+        possible_citation_pattern = r"(\[+\d*$)"  # [1, [, [[, [[2, etc.
         possible_citation_found = re.search(
             possible_citation_pattern, self.curr_segment
         )
