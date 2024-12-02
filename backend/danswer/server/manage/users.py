@@ -495,8 +495,7 @@ def verify_user_logged_in(
         # the key-value store
         if AUTH_TYPE == AuthType.DISABLED:
             store = get_kv_store()
-            user = fetch_no_auth_user(store)
-            return user
+            return fetch_no_auth_user(store)
 
         raise BasicAuthenticationError(detail="User Not Authenticated")
     if user.oidc_expiry and user.oidc_expiry < datetime.now(timezone.utc):
