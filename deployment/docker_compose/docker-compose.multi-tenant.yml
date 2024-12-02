@@ -1,0 +1,30 @@
+version: "3"
+services:
+  control-tenants-service:
+    image: danswer/control-tenants-service:test
+    environment:
+      - POSTGRES_HOST=relational_db
+      - POSTGRES_PORT=5432
+    ports:
+      - "8082:8082"
+    depends_on:
+      relational_db:
+        condition: service_healthy
+
+  relational_db:
+    image: postgres:15.2-alpine
+    restart: always
+    ports:
+      - "5434:5432"
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    command: ["postgres", "-c", "log_statement=all"]
+
+volumes:
+  db_volume:

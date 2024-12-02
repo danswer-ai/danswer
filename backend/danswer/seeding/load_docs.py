@@ -33,6 +33,7 @@ from danswer.server.documents.models import ConnectorBase
 from danswer.utils.logger import setup_logger
 from danswer.utils.retry_wrapper import retry_builder
 from danswer.utils.variable_functionality import fetch_versioned_implementation
+from ee.danswer.configs.app_configs import INTEGRATION_TEST_MODE
 
 logger = setup_logger()
 
@@ -127,6 +128,9 @@ def seed_initial_documents(
     - Indexing the documents into Vespa
     - Create a fake index attempt with fake times
     """
+    if INTEGRATION_TEST_MODE:
+        return
+
     logger.info("Seeding initial documents")
 
     kv_store = get_kv_store()
