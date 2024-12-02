@@ -49,7 +49,12 @@ jobs:
 
       - name: Run Standard Integration Tests
         run: |
+          # Print a message indicating that tests are starting
           echo "Running integration tests..."
+          
+          # Run the integration tests in a Docker container
+          # Mount the Docker socket to allow Docker-in-Docker (DinD)
+          # Use host network for easier communication with other services
           docker run \
             -v /var/run/docker.sock:/var/run/docker.sock \
             --network host \
