@@ -89,17 +89,22 @@ def handle_regular_answer(
                 user = get_user_by_email(message_info.email, db_session)
 
     document_set_names: list[str] | None = None
-
+    prompt = None
     # If no persona is specified, use the default search based persona
     # This way slack flow always has a persona
     persona = slack_channel_config.persona if slack_channel_config else None
     if not persona:
         with get_session_with_tenant(tenant_id) as db_session:
             persona = get_persona_by_id(DEFAULT_PERSONA_ID, user, db_session)
-
-    prompt = None
-    document_set_names = [document_set.name for document_set in persona.document_sets]
-    prompt = persona.prompts[0] if persona.prompts else None
+            document_set_names = [
+                document_set.name for document_set in persona.document_sets
+            ]
+            prompt = persona.prompts[0] if persona.prompts else None
+    else:
+        document_set_names = [
+            document_set.name for document_set in persona.document_sets
+        ]
+        prompt = persona.prompts[0] if persona.prompts else None
 
     should_respond_even_with_no_docs = persona.num_chunks == 0 if persona else False
 
@@ -123,6 +128,7 @@ def handle_regular_answer(
 
     combined_message = slackify_message_thread(messages)
 
+    bypass_acl = False
     if (
         slack_channel_config
         and slack_channel_config.persona
@@ -155,7 +161,7 @@ def handle_regular_answer(
                 bypass_acl=bypass_acl,
             )
 
-        answer = gather_stream_for_slack(packets)
+            answer = gather_stream_for_slack(packets)
 
         if answer.error_msg:
             raise RuntimeError(answer.error_msg)
