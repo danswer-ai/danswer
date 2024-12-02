@@ -35,8 +35,6 @@ class ConnectorManager:
             groups=groups or [],
         )
 
-        print("headers are ", user_performing_action.headers)
-
         response = requests.post(
             url=f"{API_SERVER_URL}/manage/admin/connector",
             json=connector_update_request.model_dump(),
