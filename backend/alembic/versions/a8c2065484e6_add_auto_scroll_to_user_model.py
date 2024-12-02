@@ -17,7 +17,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Add the auto_scroll column with a default value of True
     op.add_column(
         "user",
         sa.Column("auto_scroll", sa.Boolean(), nullable=True, server_default=None),
@@ -25,5 +24,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Remove the auto_scroll column
     op.drop_column("user", "auto_scroll")
