@@ -30,8 +30,6 @@ logger = setup_logger()
 
 @lru_cache()
 def get_public_key() -> str:
-    if not JWT_PUBLIC_KEY_URL:
-        raise ValueError("JWT_PUBLIC_KEY_URL is not set")
     response = requests.get(JWT_PUBLIC_KEY_URL)
     response.raise_for_status()
     return response.text
@@ -82,7 +80,7 @@ async def optional_user_(
             user = saml_account.user if saml_account else None
 
     # If user is still None, check for JWT in Authorization header
-    if user is None:
+    if user is None and JWT_PUBLIC_KEY_URL is not None:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header[len("Bearer ") :].strip()
