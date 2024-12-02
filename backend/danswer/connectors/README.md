@@ -31,8 +31,10 @@ Refer to [interfaces.py](https://github.com/danswer-ai/danswer/blob/main/backend
 and this first contributor created Pull Request for a new connector (Shoutout to Dan Brown):
 [Reference Pull Request](https://github.com/danswer-ai/danswer/pull/139)
 
-For Slim Connectors, refer to this PR for an example of adding a slim connector interface to an existing connector as well as the tests:
+For implementing a Slim Connector, refer to the comments in this PR:
 [Slim Connector PR](https://github.com/danswer-ai/danswer/pull/3303/files)
+
+All new connectors should have tests added to the `backend/tests/daily/connectors` directory. Refer to the above PR for an example of adding tests for a new connector.
 
 
 #### Implementing the new Connector
