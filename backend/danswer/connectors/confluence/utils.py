@@ -203,10 +203,16 @@ def attachment_to_content(
     llm: LLM,
 ) -> str | ImageSummarization | None:
     """If it returns None, assume that we should skip this attachment."""
+    download_link = confluence_client.url + attachment["_links"]["download"]
+
     media_type = attachment["metadata"]["mediaType"]
 
-    if media_type.startswith("video/"):
-        logger.warning("Skipping video attachment %s", attachment["title"])
+    if media_type.startswith("video/") or media_type == "application/gliffy+json":
+        logger.warning(
+            "Cannot convert attachment %s with unsupported media type to text: %s.",
+            download_link,
+            media_type,
+        )
         return None
 
     if media_type.startswith("image/"):
@@ -225,8 +231,6 @@ def attachment_to_content(
         else:
             logger.warning("Skipping image attachment %s", attachment["title"])
             return None
-
-    download_link = confluence_client.url + attachment["_links"]["download"]
 
     attachment_size = attachment["extensions"]["fileSize"]
     if attachment_size > CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD:

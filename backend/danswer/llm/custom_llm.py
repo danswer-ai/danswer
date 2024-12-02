@@ -75,9 +75,6 @@ class CustomModelServer(LLM):
     def log_model_configs(self) -> None:
         logger.debug(f"Custom model at: {self._endpoint}")
 
-    def vision_support(self) -> bool | None:
-        return False
-
     def _invoke_implementation(
         self,
         prompt: LanguageModelInput,
