@@ -21,13 +21,11 @@ def summarize_image_pipeline(
     """Pipeline to generate a summary of an image.
     Resizes images if it is bigger than 20MB. Encodes image as a base64 string.
     And finally uses the Default LLM to generate a textual summary of the image."""
-    # resize image if its bigger than 20MB
+    # resize image if it's bigger than 20MB
     image_data = _resize_image_if_needed(image_data)
 
     # encode image (base64)
     encoded_image = _encode_image(image_data)
-
-    # llm, _ = get_default_llms(timeout=5, temperature=0.0)
 
     summary = _summarize_image(
         encoded_image,
@@ -74,7 +72,7 @@ def _summarize_image(
             logger.warning(f"Summarization failed with error: {e}.")
             return None
         else:
-            raise ValueError(f"Summarization failed with error: {e}.")
+            raise ValueError(f"Summarization failed. Messages: {messages}") from e
 
 
 def _encode_image(image_data: bytes) -> str:

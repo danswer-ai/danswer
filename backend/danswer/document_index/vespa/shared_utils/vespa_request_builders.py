@@ -3,7 +3,7 @@ from datetime import timedelta
 from datetime import timezone
 
 from danswer.configs.app_configs import (
-    CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING,
+    CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED,
 )
 from danswer.configs.constants import INDEX_SEPARATOR
 from danswer.context.search.models import IndexFilters
@@ -82,7 +82,7 @@ def build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> 
     filter_str += _build_time_filter(filters.time_cutoff)
 
     # add filter to ignore image summaries if multimodal is not wanted
-    if not CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING:
+    if not CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED:
         filter_str += '!(metadata matches "is_image_summary") and '
 
     return filter_str

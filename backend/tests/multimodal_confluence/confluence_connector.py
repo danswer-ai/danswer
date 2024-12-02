@@ -4,7 +4,7 @@ import pytest
 
 from danswer.connectors.confluence.connector import ConfluenceConnector
 
-CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING = True
+CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED = True
 
 
 # Mocking the LLM and its methods
@@ -38,9 +38,9 @@ def test_validate_llm_configuration_vision_support(vision_support, expected_exce
 
         if expected_exception:
             with pytest.raises(expected_exception) as excinfo:
-                connector._validate_llm(llm)
+                connector._check_vision_support(llm)
                 assert "Your default LLM seems to be not multimodal." in str(
                     excinfo.value
                 )
         else:
-            connector._validate_llm(llm)
+            connector._check_vision_support(llm)

@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import (
-    CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING,
+    CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED,
 )
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
@@ -29,7 +29,6 @@ from danswer.connectors.models import Document
 from danswer.connectors.models import Section
 from danswer.connectors.models import SlimDocument
 from danswer.llm.factory import get_default_llms
-from danswer.llm.interfaces import LLM
 from danswer.utils.logger import setup_logger
 
 
@@ -112,9 +111,15 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             )
             self.cql_label_filter = f" and label not in ({comma_separated_labels})"
 
-        # check if llm is configured and multimodal
-        if CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING:
-            self.llm = self._check_llm_configuration()
+        # If image summarization is enabled, but not supported by the default LLM, raise an error.
+        if CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED:
+            llm, _ = get_default_llms(timeout=5)
+            if not llm.vision_support():
+                raise ValueError(
+                    "The configured default LLM doesn't seem to have vision support for image summarization."
+                )
+
+            self.llm = llm
         else:
             self.llm = None
 
@@ -123,34 +128,6 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         if self._confluence_client is None:
             raise ConnectorMissingCredentialError("Confluence")
         return self._confluence_client
-
-    def _check_llm_configuration(self) -> LLM:
-        """Checks if LLM is configured and multimodal if multimodal features should be used."""
-        try:
-            llm, _ = get_default_llms(timeout=5)
-            self._validate_llm(llm)  # Call the new method with the LLM
-            return llm
-
-        except Exception as e:
-            raise ValueError(
-                f"Something seems to be wrong with your default LLM. Please configure a multimodal LLM and retry. Exception: {e}"
-            )
-
-    def _validate_llm(self, llm):
-        """Validates the LLM to check if it supports vision."""
-        if llm is None:
-            raise ValueError(
-                "No LLM is defined. Please configure a multimodal LLM and retry."
-            )
-
-        vision_support = llm.vision_support()
-
-        if vision_support:
-            logger.notice("Connection to multimodal LLM successful.")
-        else:
-            raise ValueError(
-                "Your default LLM seems to be not multimodal. Please use a LLM that supports vision and retry."
-            )
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         # see https://github.com/atlassian-api/atlassian-python-api/blob/master/atlassian/rest_client.py
@@ -186,12 +163,13 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         self,
         confluence_object: dict[str, Any],
         confluence_xml: str = None,
-    ) -> Document | list[ImageSummarization] | None:
+    ) -> Document | None:
         """
         Takes in a confluence object, extracts all metadata, and converts it into a document.
-        If its a page, it extracts the text, adds the comments for the document text.
-        If its an attachment, it just downloads the attachment and converts that into a document.
-        If multimodality is true, images are extracted and summarized by the default LLM.
+        If it's a page, it extracts the text, adds the comments for the document text.
+        If it's an attachment, it just downloads the attachment and converts that into a document.
+        If image summarization is enabled (env var CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED is set),
+        images are extracted and summarized by the default LLM.
         """
         # The url and the id are the same
         object_url = build_confluence_document_id(
@@ -214,7 +192,6 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         last_modified = datetime_from_string(confluence_object["version"]["when"])
         author_email = confluence_object["version"].get("by", {}).get("email")
 
-        object_text = None
         # Extract text from page
         if confluence_object["type"] == "page":
             object_text = extract_text_from_confluence_html(
@@ -243,16 +220,16 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         # Extract content from attachment
         elif confluence_object["type"] == "attachment":
-            attachments = attachment_to_content(
+            content = attachment_to_content(
                 confluence_client=self.confluence_client,
                 attachment=confluence_object,
                 page_context=confluence_xml,
                 llm=self.llm,
             )
-            if isinstance(attachments, str):
+            if isinstance(content, str):
                 return Document(
                     id=object_url,
-                    sections=[Section(link=object_url, text=attachments)],
+                    sections=[Section(link=object_url, text=content)],
                     source=DocumentSource.CONFLUENCE,
                     semantic_identifier=confluence_object["title"],
                     doc_updated_at=last_modified,
@@ -262,34 +239,21 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                     metadata=doc_metadata,
                 )
 
-            elif isinstance(attachments, list):
+            elif isinstance(content, ImageSummarization):
                 # if attachment of a page contains any images: add summary of each image as document
-                images = []
-                if attachments:
-                    for image in attachments:
-                        doc_metadata["is_image_summary"] = "True"
+                doc_metadata["is_image_summary"] = "True"
 
-                        images.append(
-                            Document(
-                                id=image.url,
-                                sections=[
-                                    Section(link=object_url, text=image.summary or "")
-                                ],
-                                source=DocumentSource.CONFLUENCE,
-                                semantic_identifier=image.title,
-                                doc_updated_at=last_modified,
-                                primary_owners=(
-                                    [BasicExpertInfo(email=author_email)]
-                                    if author_email
-                                    else None
-                                ),
-                                metadata=doc_metadata,
-                            )
-                        )
-                    logger.notice(
-                        f"number of images: {len(images)} for page: {object_url}"
-                    )
-                return images
+                return Document(
+                    id=content.url,
+                    sections=[Section(link=object_url, text=content.summary or "")],
+                    source=DocumentSource.CONFLUENCE,
+                    semantic_identifier=content.title,
+                    doc_updated_at=last_modified,
+                    primary_owners=(
+                        [BasicExpertInfo(email=author_email)] if author_email else None
+                    ),
+                    metadata=doc_metadata,
+                )
 
             else:
                 return None
@@ -315,7 +279,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
             # fetch attachments of each page directly after each page
             # to be able to use the XML text of each page as context when summarizing the images of each page
-            # (only if CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING = True, otherwise images will be skipped)
+            # (only if CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED = True, otherwise images will be skipped)
             attachment_cql = f"type=attachment and container='{page['id']}'"
             attachment_cql += self.cql_label_filter
 
@@ -329,10 +293,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                     attachment, confluence_xml
                 )
 
-                if isinstance(attachment_doc, list):
-                    # add each image doc to the doc batch
-                    doc_batch.extend(attachment_doc)
-                elif attachment_doc is not None:
+                if attachment_doc is not None:
                     # add doc of page/attachment to the doc batch
                     doc_batch.append(attachment_doc)
 
