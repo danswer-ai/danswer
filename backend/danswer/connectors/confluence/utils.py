@@ -1,16 +1,12 @@
-import base64
 import io
 from datetime import datetime
 from datetime import timezone
 from typing import Any
 from typing import Dict
-from typing import List
 from urllib.parse import quote
 
 import bs4  # type: ignore
 import requests  # type: ignore
-from attr import dataclass  # type: ignore
-from bs4 import SoupStrainer  # type: ignore
 
 from danswer.configs.app_configs import (
     CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD,
@@ -35,15 +31,6 @@ logger = setup_logger()
 
 
 _USER_EMAIL_CACHE: dict[str, str | None] = {}
-
-
-@dataclass
-class ImageSummarization:
-    url: str
-    title: str
-    base64_encoded: str
-    media_type: str
-    summary: str | None
 
 
 def get_user_email_from_username__server(
@@ -201,12 +188,27 @@ def attachment_to_content(
     attachment: dict[str, Any],
     page_context: str,
     llm: LLM,
-) -> str | ImageSummarization | None:
+) -> str | None:
     """If it returns None, assume that we should skip this attachment."""
+    download_link = _attachment_to_download_link(confluence_client, attachment)
+
     media_type = attachment["metadata"]["mediaType"]
 
-    if media_type.startswith("video/"):
-        logger.warning("Skipping video attachment %s", attachment["title"])
+    if media_type.startswith("video/") or media_type == "application/gliffy+json":
+        logger.warning(
+            "Cannot convert attachment %s with unsupported media type to text: %s.",
+            download_link,
+            media_type,
+        )
+        return None
+
+    attachment_size = attachment["extensions"]["fileSize"]
+    if attachment_size > CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD:
+        logger.warning(
+            f"Skipping attachment {download_link} due to size. "
+            f"size={attachment_size} "
+            f"threshold={CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD}"
+        )
         return None
 
     if media_type.startswith("image/"):
@@ -223,19 +225,11 @@ def attachment_to_content(
             except Exception as e:
                 logger.error(f"Failed to summarize image: {attachment}", exc_info=e)
         else:
-            logger.warning("Skipping image attachment %s", attachment["title"])
+            logger.warning(
+                "Image summarization is disabled. Skipping image attachment %s",
+                download_link,
+            )
             return None
-
-    download_link = confluence_client.url + attachment["_links"]["download"]
-
-    attachment_size = attachment["extensions"]["fileSize"]
-    if attachment_size > CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD:
-        logger.warning(
-            f"Skipping {download_link} due to size. "
-            f"size={attachment_size} "
-            f"threshold={CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD}"
-        )
-        return None
 
     logger.info(f"_attachment_to_content - _session.get: link={download_link}")
     response = confluence_client._session.get(download_link)
@@ -250,9 +244,17 @@ def attachment_to_content(
         file_name=attachment["title"],
         break_on_unprocessable=False,
     )
+
+    if not extracted_text:
+        logger.warning(
+            "Text conversion of attachment %s resulted in an empty string.",
+            download_link,
+        )
+        return None
+
     if len(extracted_text) > CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD:
         logger.warning(
-            f"Skipping {download_link} due to char count. "
+            f"Skipping attachment {download_link} due to char count. "
             f"char count={len(extracted_text)} "
             f"threshold={CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD}"
         )
@@ -321,7 +323,7 @@ def _summarize_image_attachment(
     page_context: str,
     confluence_client: OnyxConfluence,
     llm: LLM,
-) -> ImageSummarization:
+) -> str:
     title = attachment["title"]
     download_link = _attachment_to_download_link(confluence_client, attachment)
 
@@ -344,51 +346,4 @@ def _summarize_image_attachment(
         llm, image_data, user_prompt, CONFLUENCE_IMAGE_SUMMARIZATION_SYSTEM_PROMPT
     )
 
-    base64_image = base64.b64encode(image_data).decode("utf-8")
-
-    return ImageSummarization(
-        url=download_link,
-        title=title,
-        base64_encoded=base64_image,
-        media_type=attachment["metadata"]["mediaType"],
-        summary=summary,
-    )
-
-
-def _get_embedded_image_attachments(
-    attachment: Dict[str, Any],
-    page_context: str,
-) -> List[Dict[str, Any]]:
-    """Extracts all images in the attachment of the given page."""
-    relevant_tags = SoupStrainer(["ac:image", "ac:structured-macro"])
-    soup = bs4.BeautifulSoup(page_context, "html.parser", parse_only=relevant_tags)
-
-    image_attachment_tags = soup.find_all(
-        lambda tag: tag.name == "ri:attachment"
-        and tag.parent is not None
-        and tag.parent.name == "ac:image"
-    )
-    image_attachments = []
-    attachment_filenames = [tag["ri:filename"] for tag in image_attachment_tags]
-    if attachment["title"] in attachment_filenames and attachment["metadata"][
-        "mediaType"
-    ].startswith("image/"):
-        image_attachments.append(attachment)
-
-    gliffy_macro_tags = soup.find_all(
-        "ac:structured-macro", attrs={"ac:name": "gliffy"}
-    )
-    gliffy_attachments = []
-    if attachment["id"] in [
-        tag.find(attrs={"ac:name": "imageAttachmentId"}).string
-        for tag in gliffy_macro_tags
-        if tag.find(attrs={"ac:name": "imageAttachmentId"}) is not None
-    ]:
-        gliffy_attachments.append(attachment)
-
-    # Combine and ensure uniqueness
-    combined_attachments = {
-        att["id"]: att for att in image_attachments + gliffy_attachments
-    }.values()
-
-    return list(combined_attachments)
+    return summary
