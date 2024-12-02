@@ -51,7 +51,6 @@ jobs:
         run: |
           echo "Running integration tests..."
           docker run \
-            # allow container to start docker containers
             -v /var/run/docker.sock:/var/run/docker.sock \
             --network host \
             danswer/danswer-integration:test \
