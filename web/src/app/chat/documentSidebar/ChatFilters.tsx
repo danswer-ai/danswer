@@ -3,7 +3,14 @@ import { ChatDocumentDisplay } from "./ChatDocumentDisplay";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { removeDuplicateDocs } from "@/lib/documentUtils";
 import { Message } from "../interfaces";
-import { ForwardedRef, forwardRef, useEffect, useState } from "react";
+import {
+  Dispatch,
+  ForwardedRef,
+  forwardRef,
+  SetStateAction,
+  useEffect,
+  useState,
+} from "react";
 import { FilterManager } from "@/lib/hooks";
 import { CCPairBasicInfo, DocumentSet, Tag } from "@/lib/types";
 import { SourceSelector } from "../shared_chat_search/SearchFilters";
@@ -25,6 +32,7 @@ interface ChatFiltersProps {
   tags: Tag[];
   documentSets: DocumentSet[];
   showFilters: boolean;
+  setPresentingDocument: Dispatch<SetStateAction<DanswerDocument | null>>;
 }
 
 export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
@@ -43,6 +51,7 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
       isOpen,
       ccPairs,
       tags,
+      setPresentingDocument,
       documentSets,
       showFilters,
     },
@@ -134,6 +143,8 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
                         }`}
                       >
                         <ChatDocumentDisplay
+                          setPresentingDocument={setPresentingDocument}
+                          closeSidebar={closeSidebar}
                           modal={modal}
                           document={document}
                           isSelected={selectedDocumentIds.includes(
