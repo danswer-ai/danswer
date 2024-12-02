@@ -657,10 +657,7 @@ def create_connector_from_model(
     db_session: Session = Depends(get_session),
 ) -> ObjectCreationIdResponse:
     try:
-        print("user is ", user)
-        print("user role", user.role)
         _validate_connector_allowed(connector_data.source)
-        print("HERE 1")
 
         fetch_ee_implementation_or_noop(
             "danswer.db.user_group", "validate_user_creation_permissions", None
@@ -671,7 +668,6 @@ def create_connector_from_model(
             object_is_public=connector_data.access_type == AccessType.PUBLIC,
             object_is_perm_sync=connector_data.access_type == AccessType.SYNC,
         )
-        print("HERE")
         connector_base = connector_data.to_connector_base()
         return create_connector(
             db_session=db_session,
