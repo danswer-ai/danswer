@@ -28,12 +28,13 @@ import { DraggableAssistantCard } from "@/components/assistants/AssistantCards";
 import { updateUserAssistantList } from "@/lib/assistants/updateAssistantPreferences";
 
 import Text from "@/components/ui/text";
-import { LlmOverrideManager } from "@/lib/hooks";
+import { getDisplayNameForModel, LlmOverrideManager } from "@/lib/hooks";
 import { Tab } from "@headlessui/react";
 import { AssistantIcon } from "../assistants/AssistantIcon";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../ui/drawer";
+import { truncateString } from "@/lib/utils";
 
 const AssistantSelector = ({
   liveAssistant,
@@ -310,7 +311,9 @@ const AssistantSelector = ({
             <span className="font-bold">{liveAssistant.name}</span>
           </div>
           <div className="flex items-center">
-            <span className="mr-2 text-xs">{currentLlm}</span>
+            <span className="mr-2 text-xs">
+              {truncateString(getDisplayNameForModel(currentLlm), 30)}
+            </span>
             <FiChevronDown
               className={`w-5 h-5 text-white transition-transform duration-300 transform ${
                 isOpen ? "rotate-180" : ""

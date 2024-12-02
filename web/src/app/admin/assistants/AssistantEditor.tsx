@@ -24,13 +24,6 @@ import {
   TextFormField,
 } from "@/components/admin/connectors/Field";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { getDisplayNameForModel, useCategories } from "@/lib/hooks";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
