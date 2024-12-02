@@ -1,6 +1,7 @@
 import { WebResultIcon } from "@/components/WebResultIcon";
 import { SourceIcon } from "@/components/SourceIcon";
 import { DanswerDocument } from "@/lib/search/interfaces";
+import { truncateString } from "@/lib/utils";
 
 export default function SourceCard({ doc }: { doc: DanswerDocument }) {
   return (
@@ -17,12 +18,7 @@ export default function SourceCard({ doc }: { doc: DanswerDocument }) {
         ) : (
           <SourceIcon sourceType={doc.source_type} iconSize={18} />
         )}
-        <p>
-          {(doc.semantic_identifier || doc.document_id).slice(0, 12).trim()}
-          {(doc.semantic_identifier || doc.document_id).length > 12 && (
-            <span className="text-text-500">...</span>
-          )}
-        </p>
+        <p>{truncateString(doc.semantic_identifier || doc.document_id, 12)}</p>
       </div>
       <div className="line-clamp-2 text-sm font-semibold"></div>
       <div className="line-clamp-2 text-sm font-normal leading-snug text-text-700">
