@@ -229,9 +229,16 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
-        referral_source = None
-        if request is not None:
-            referral_source = request.cookies.get("referral_source", None)
+        referral_source = (
+            request.cookies.get("referral_source", None)
+            if request is not None
+            else None
+        )
+        if referral_source:
+            await fetch_ee_implementation_or_noop(
+                "danswer.server.tenants.provisioning",
+                "submit_to_hubspot",
+            )(user_create.email, referral_source, request)
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
@@ -297,9 +304,14 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> User:
-        referral_source = None
-        if request:
-            referral_source = getattr(request.state, "referral_source", None)
+        referral_source = (
+            getattr(request.state, "referral_source", None) if request else None
+        )
+        if referral_source:
+            await fetch_ee_implementation_or_noop(
+                "danswer.server.tenants.provisioning",
+                "submit_to_hubspot",
+            )(account_email, referral_source, request)
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "danswer.server.tenants.provisioning",
