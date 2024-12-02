@@ -654,24 +654,28 @@ def monitor_ccpair_indexing_taskset(
     # outer = result.state in READY state
     status_int = redis_connector_index.get_completion()
     if status_int is None:  # inner signal not set ... possible error
-        result_state = result.state
+        task_state = result.state
         if (
-            result_state in READY_STATES
+            task_state in READY_STATES
         ):  # outer signal in terminal state ... possible error
             # Now double check!
             if redis_connector_index.get_completion() is None:
                 # inner signal still not set (and cannot change when outer result_state is READY)
                 # Task is finished but generator complete isn't set.
                 # We have a problem! Worker may have crashed.
+                task_result = str(result.result)
+                task_traceback = str(result.traceback)
 
                 msg = (
                     f"Connector indexing aborted or exceptioned: "
                     f"attempt={payload.index_attempt_id} "
                     f"celery_task={payload.celery_task_id} "
-                    f"result_state={result_state} "
                     f"cc_pair={cc_pair_id} "
                     f"search_settings={search_settings_id} "
-                    f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
+                    f"elapsed_submitted={elapsed_submitted.total_seconds():.2f} "
+                    f"result.state={task_state} "
+                    f"result.result={task_result} "
+                    f"result.traceback={task_traceback}"
                 )
                 task_logger.warning(msg)
 
