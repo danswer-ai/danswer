@@ -20,7 +20,7 @@ export function Citation({
   link?: string;
   children?: JSX.Element | string | null | ReactNode;
   index?: number;
-  updatePresentingDocument?: (documentIndex: number) => void;
+  updatePresentingDocument?: (documentIndex: LoadedDanswerDocument) => void;
   document: LoadedDanswerDocument;
   icon?: React.ReactNode;
   url?: string;
@@ -37,9 +37,10 @@ export function Citation({
             <div
               onMouseDown={() => {
                 if (updatePresentingDocument) {
-                  updatePresentingDocument(Number(innerText));
+                  console.log("documenti  ", document);
+                  updatePresentingDocument(document);
                 } else {
-                  window.open(link, "_blank");
+                  // window.open(link, "_blank");
                 }
               }}
               className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"
@@ -61,7 +62,14 @@ export function Citation({
         <Tooltip>
           <TooltipTrigger asChild>
             <div
-              onMouseDown={() => window.open(link, "_blank")}
+              onMouseDown={() => {
+                if (updatePresentingDocument) {
+                  console.log("documenti  ", document);
+                  updatePresentingDocument(document);
+                } else {
+                  // window.open(link, "_blank");
+                }
+              }}
               className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"
             >
               <span className="relative min-w-[1.4rem]  pchatno-underline -top-0.5 px-1.5 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 hover:text-gray-900 shadow-sm no-underline">

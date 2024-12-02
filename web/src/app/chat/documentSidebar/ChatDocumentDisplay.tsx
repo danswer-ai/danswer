@@ -73,11 +73,15 @@ export function ChatDocumentDisplay({
   }
 
   const handleViewFile = async () => {
-    closeSidebar();
+    if (document.link) {
+      window.open(document.link, "_blank");
+    } else {
+      closeSidebar();
 
-    setTimeout(async () => {
-      setPresentingDocument(document);
-    }, 100);
+      setTimeout(async () => {
+        setPresentingDocument(document);
+      }, 100);
+    }
   };
 
   return (
@@ -87,11 +91,9 @@ export function ChatDocumentDisplay({
           isSelected ? "bg-gray-200" : "hover:bg-background-125"
         }`}
       >
-        <a
-          href={document.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cursor-pointer flex flex-col px-2 py-1.5"
+        <button
+          onClick={handleViewFile}
+          className="cursor-pointer text-left flex flex-col px-2 py-1.5"
         >
           <div className="line-clamp-1 mb-1 flex h-6 items-center gap-2 text-xs">
             {document.is_internet || document.source_type === "web" ? (
@@ -124,7 +126,7 @@ export function ChatDocumentDisplay({
               />
             )}
           </div>
-        </a>
+        </button>
       </div>
     </div>
   );
