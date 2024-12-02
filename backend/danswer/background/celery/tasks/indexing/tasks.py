@@ -597,6 +597,14 @@ def connector_indexing_proxy_task(
             finally:
                 # if the DB exceptions, we'll just get an unfriendly failure message
                 # in the UI instead of the cancellation message
+                logger.exception(
+                    "Indexing watchdog - transient exception marking index attempt as canceled: "
+                    f"attempt={index_attempt_id} "
+                    f"tenant={tenant_id} "
+                    f"cc_pair={cc_pair_id} "
+                    f"search_settings={search_settings_id}"
+                )
+
                 job.cancel()
 
             break
