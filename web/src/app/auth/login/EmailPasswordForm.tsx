@@ -10,6 +10,8 @@ import * as Yup from "yup";
 import { requestEmailVerification } from "../lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
+import { useUser } from "@/components/user/UserProvider";
+import { useAssistants } from "@/components/context/AssistantsContext";
 
 export function EmailPasswordForm({
   isSignup = false,
@@ -25,6 +27,8 @@ export function EmailPasswordForm({
   const router = useRouter();
   const { popup, setPopup } = usePopup();
   const [isWorking, setIsWorking] = useState(false);
+  const { refreshUser } = useUser();
+  const { refreshAssistants } = useAssistants();
 
   return (
     <>
@@ -69,9 +73,9 @@ export function EmailPasswordForm({
           if (loginResponse.ok) {
             if (isSignup && shouldVerify) {
               await requestEmailVerification(values.email);
-              router.push("/auth/waiting-on-verification");
+              window.location.href = "/auth/waiting-on-verification";
             } else {
-              router.push(nextUrl ? encodeURI(nextUrl) : "/");
+              window.location.href = nextUrl ? encodeURI(nextUrl) : "/";
             }
           } else {
             setIsWorking(false);

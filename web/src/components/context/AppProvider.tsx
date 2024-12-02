@@ -1,3 +1,4 @@
+"use client";
 import { CombinedSettings } from "@/app/admin/settings/interfaces";
 import { UserProvider } from "../user/UserProvider";
 import { ProviderContextProvider } from "../chat_search/ProviderContext";
