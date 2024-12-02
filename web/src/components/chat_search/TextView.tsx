@@ -137,13 +137,8 @@ export default function TextView({
               </div>
             ) : (
               <div
-                style={{
-                  transform: `scale(${zoom / 100})`,
-                  transformOrigin: "center center",
-                  transition: "transform 0.3s ease",
-                  width: "100%",
-                  height: "100%",
-                }}
+                className={`w-full h-full transform origin-center transition-transform duration-300 ease-in-out`}
+                style={{ transform: `scale(${zoom / 100})` }}
               >
                 {isSupportedIframeFormat(fileType) ? (
                   <iframe
@@ -152,10 +147,7 @@ export default function TextView({
                     title="File Viewer"
                   />
                 ) : isMarkdownFormat(fileType) ? (
-                  <div
-                    className="w-full p-6 overflow-y-scroll overflow-x-hidden"
-                    style={{ height: "100%" }}
-                  >
+                  <div className="w-full h-full p-6 overflow-y-scroll overflow-x-hidden">
                     <MinimalMarkdown
                       content={fileContent}
                       className="w-full pb-4 h-full text-lg text-wrap break-words"
