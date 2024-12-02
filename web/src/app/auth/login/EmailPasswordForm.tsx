@@ -66,8 +66,12 @@ export function EmailPasswordForm({
           if (loginResponse.ok) {
             if (isSignup && shouldVerify) {
               await requestEmailVerification(values.email);
+              // Use window.location.href to force a full page reload,
+              // ensuring app re-initializes with the new state (including
+              // server-side provider values)
               window.location.href = "/auth/waiting-on-verification";
             } else {
+              // See above comment
               window.location.href = nextUrl ? encodeURI(nextUrl) : "/";
             }
           } else {
