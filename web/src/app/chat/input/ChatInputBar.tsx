@@ -18,7 +18,7 @@ import {
   SendIcon,
   StopGeneratingIcon,
 } from "@/components/icons/icons";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { DanswerDocument, SourceMetadata } from "@/lib/search/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import {
   Tooltip,
@@ -37,8 +37,40 @@ import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 import { IconType } from "react-icons";
 import { LlmTab } from "../modal/configuration/LlmTab";
 import { XIcon } from "lucide-react";
+import { FilterPills } from "./FilterPills";
+import { Tag } from "@/lib/types";
+import FiltersDisplay from "./FilterDisplay";
 
 const MAX_INPUT_HEIGHT = 200;
+
+interface ChatInputBarProps {
+  removeFilters: () => void;
+  removeDocs: () => void;
+  openModelSettings: () => void;
+  showDocs: () => void;
+  showConfigureAPIKey: () => void;
+  selectedDocuments: DanswerDocument[];
+  message: string;
+  setMessage: (message: string) => void;
+  stopGenerating: () => void;
+  onSubmit: () => void;
+  filterManager: FilterManager;
+  llmOverrideManager: LlmOverrideManager;
+  chatState: ChatState;
+  alternativeAssistant: Persona | null;
+  inputPrompts: InputPrompt[];
+  // assistants
+  selectedAssistant: Persona;
+  setSelectedAssistant: (assistant: Persona) => void;
+  setAlternativeAssistant: (alternativeAssistant: Persona | null) => void;
+
+  files: FileDescriptor[];
+  setFiles: (files: FileDescriptor[]) => void;
+  handleFileUpload: (files: File[]) => void;
+  textAreaRef: React.RefObject<HTMLTextAreaElement>;
+  chatSessionId?: string;
+  toggleFilters?: () => void;
+}
 
 export function ChatInputBar({
   removeFilters,
@@ -68,32 +100,7 @@ export function ChatInputBar({
   chatSessionId,
   inputPrompts,
   toggleFilters,
-}: {
-  removeFilters: () => void;
-  removeDocs: () => void;
-  showConfigureAPIKey: () => void;
-  openModelSettings: () => void;
-  chatState: ChatState;
-  stopGenerating: () => void;
-  showDocs: () => void;
-  selectedDocuments: DanswerDocument[];
-  setAlternativeAssistant: (alternativeAssistant: Persona | null) => void;
-  setSelectedAssistant: (assistant: Persona) => void;
-  inputPrompts: InputPrompt[];
-  message: string;
-  setMessage: (message: string) => void;
-  onSubmit: () => void;
-  filterManager: FilterManager;
-  llmOverrideManager: LlmOverrideManager;
-  selectedAssistant: Persona;
-  alternativeAssistant: Persona | null;
-  files: FileDescriptor[];
-  setFiles: (files: FileDescriptor[]) => void;
-  handleFileUpload: (files: File[]) => void;
-  textAreaRef: React.RefObject<HTMLTextAreaElement>;
-  chatSessionId?: string;
-  toggleFilters?: () => void;
-}) {
+}: ChatInputBarProps) {
   useEffect(() => {
     const textarea = textAreaRef.current;
     if (textarea) {
@@ -340,23 +347,26 @@ export function ChatInputBar({
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
             >
               <div className="rounded-lg py-1.5 bg-white border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
-                {filteredPrompts.map((currentPrompt, index) => (
-                  <button
-                    key={index}
-                    className={`px-2 ${
-                      tabbingIconIndex == index && "bg-hover"
-                    } rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
-                    onClick={() => {
-                      updateInputPrompt(currentPrompt);
-                    }}
-                  >
-                    <p className="font-bold">{currentPrompt.prompt}:</p>
-                    <p className="text-left flex-grow mr-auto line-clamp-1">
-                      {currentPrompt.id == selectedAssistant.id && "(default) "}
-                      {currentPrompt.content?.trim()}
-                    </p>
-                  </button>
-                ))}
+                {filteredPrompts.map(
+                  (currentPrompt: InputPrompt, index: number) => (
+                    <button
+                      key={index}
+                      className={`px-2 ${
+                        tabbingIconIndex == index && "bg-hover"
+                      } rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
+                      onClick={() => {
+                        updateInputPrompt(currentPrompt);
+                      }}
+                    >
+                      <p className="font-bold">{currentPrompt.prompt}:</p>
+                      <p className="text-left flex-grow mr-auto line-clamp-1">
+                        {currentPrompt.id == selectedAssistant.id &&
+                          "(default) "}
+                        {currentPrompt.content?.trim()}
+                      </p>
+                    </button>
+                  )
+                )}
 
                 <a
                   key={filteredPrompts.length}
@@ -430,6 +440,7 @@ export function ChatInputBar({
                 </div>
               </div>
             )}
+
             {(selectedDocuments.length > 0 || files.length > 0) && (
               <div className="flex gap-x-2 px-2 pt-2">
                 <div className="flex gap-x-1 px-2 overflow-visible overflow-x-scroll items-end miniscroll">
@@ -564,6 +575,16 @@ export function ChatInputBar({
                   onClick={toggleFilters}
                 />
               )}
+              {(filterManager.selectedSources.length > 0 ||
+                filterManager.selectedDocumentSets.length > 0 ||
+                filterManager.selectedTags.length > 0 ||
+                filterManager.timeRange) &&
+                toggleFilters && (
+                  <FiltersDisplay
+                    filterManager={filterManager}
+                    toggleFilters={toggleFilters}
+                  />
+                )}
             </div>
 
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">

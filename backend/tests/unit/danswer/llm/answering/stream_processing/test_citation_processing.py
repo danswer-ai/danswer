@@ -46,6 +46,7 @@ mock_docs = [
         updated_at=datetime.now(),
         link=f"https://{int(id/2)}.com" if int(id / 2) % 2 == 0 else None,
         source_links={0: "https://mintlify.com/docs/settings/broken-links"},
+        match_highlights=[],
     )
     for id in range(10)
 ]

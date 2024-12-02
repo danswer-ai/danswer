@@ -64,6 +64,7 @@ def mock_search_results() -> list[LlmDoc]:
             updated_at=datetime(2023, 1, 1),
             link="https://example.com/doc1",
             source_links={0: "https://example.com/doc1"},
+            match_highlights=[],
         ),
         LlmDoc(
             content="Search result 2",
@@ -75,6 +76,7 @@ def mock_search_results() -> list[LlmDoc]:
             updated_at=datetime(2023, 1, 2),
             link="https://example.com/doc2",
             source_links={0: "https://example.com/doc2"},
+            match_highlights=[],
         ),
     ]
 
