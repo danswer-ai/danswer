@@ -5,13 +5,10 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { basicLogin, basicSignup } from "@/lib/user";
 import { Button } from "@/components/ui/button";
 import { Form, Formik } from "formik";
-import { useRouter } from "next/navigation";
 import * as Yup from "yup";
 import { requestEmailVerification } from "../lib";
 import { useState } from "react";
 import { Spinner } from "@/components/Spinner";
-import { useUser } from "@/components/user/UserProvider";
-import { useAssistants } from "@/components/context/AssistantsContext";
 
 export function EmailPasswordForm({
   isSignup = false,
@@ -24,12 +21,8 @@ export function EmailPasswordForm({
   referralSource?: string;
   nextUrl?: string | null;
 }) {
-  const router = useRouter();
   const { popup, setPopup } = usePopup();
   const [isWorking, setIsWorking] = useState(false);
-  const { refreshUser } = useUser();
-  const { refreshAssistants } = useAssistants();
-
   return (
     <>
       {isWorking && <Spinner />}
