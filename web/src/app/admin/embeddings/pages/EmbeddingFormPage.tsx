@@ -56,10 +56,7 @@ export default function EmbeddingForm() {
     key: keyof AdvancedSearchConfiguration,
     value: any
   ) => {
-    console.log("key", key);
-    console.log("value", value);
     setAdvancedEmbeddingDetails((values) => ({ ...values, [key]: value }));
-    console.log("older advancedEmbeddingDetails", advancedEmbeddingDetails);
   };
 
   async function updateSearchSettings(searchSettings: SavedSearchSettings) {
