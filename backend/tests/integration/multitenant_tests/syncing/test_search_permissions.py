@@ -4,7 +4,6 @@ from tests.integration.common_utils.managers.cc_pair import CCPairManager
 from tests.integration.common_utils.managers.chat import ChatSessionManager
 from tests.integration.common_utils.managers.document import DocumentManager
 from tests.integration.common_utils.managers.llm_provider import LLMProviderManager
-from tests.integration.common_utils.managers.tenant import TenantManager
 from tests.integration.common_utils.managers.user import UserManager
 from tests.integration.common_utils.test_models import DATestAPIKey
 from tests.integration.common_utils.test_models import DATestCCPair
@@ -13,14 +12,17 @@ from tests.integration.common_utils.test_models import DATestUser
 
 
 def test_multi_tenant_access_control(reset_multitenant: None) -> None:
-    # Create Tenant 1 and its Admin User
-    TenantManager.create("tenant_dev1", "test1@test.com", "Data Plane Registration")
-    test_user1: DATestUser = UserManager.create(name="test1", email="test1@test.com")
+    # Create Tenant 1 and its Admin User (when you create a user in multi-tenant, they automatically provision a new tenant.)
+    test_user1: DATestUser = UserManager.create(
+        name="test1", email="1123asd4test2214@test.com"
+    )
+
     assert UserManager.verify_role(test_user1, UserRole.ADMIN)
 
     # Create Tenant 2 and its Admin User
-    TenantManager.create("tenant_dev2", "test2@test.com", "Data Plane Registration")
-    test_user2: DATestUser = UserManager.create(name="test2", email="test2@test.com")
+    test_user2: DATestUser = UserManager.create(
+        name="test2", email="1tesasfdt231234211@test.com"
+    )
     assert UserManager.verify_role(test_user2, UserRole.ADMIN)
 
     # Create connectors for Tenant 1
