@@ -17,9 +17,9 @@ Connectors come in 3 different flows:
   without needing to fetch/embed/index every document which would be too slow to do frequently on large sets of
   documents.
 - Slim Connector:
-  - The purpose of this connector is to be a lighter weight method of checking all documents in the source to see if they still exist.
+  - This connector should be a lighter weight method of checking all documents in the source to see if they still exist.
   - This connector should be identical to the Poll or Load Connector except that it only fetches the IDs of the documents, not the documents themselves.
-  - This is used for our pruning job that removes old documents from the index.
+  - This is used by our pruning job which removes old documents from the index.
   - The optional start and end datetimes can be ignored.
 - Event Based connectors:
   - Connectors that listen to events and update documents accordingly.
