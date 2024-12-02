@@ -75,9 +75,9 @@ def main() -> None:
     print(f"Found {len(tests)} tests to run")
 
     # For debugging
-    tests = [test for test in tests if "openai_assistants_api" in test]
-    tests = tests[:2]
-    print(f"Running {len(tests)} tests")
+    # tests = [test for test in tests if "openai_assistants_api" in test]
+    # tests = tests[:2]
+    # print(f"Running {len(tests)} tests")
 
     # Start all instances at once
     shared_services_config, deployment_configs = run_x_instances(len(tests))
