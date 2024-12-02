@@ -8,7 +8,6 @@ import {
   ChatFileType,
   ChatSession,
   ChatSessionSharedStatus,
-  DocumentsResponse,
   FileDescriptor,
   FileChatDisplay,
   Message,
@@ -60,7 +59,7 @@ import { useDocumentSelection } from "./useDocumentSelection";
 import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { ChatState, FeedbackType, RegenerationState } from "./types";
-import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
+import { ChatFilters } from "./documentSidebar/ChatFilters";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
@@ -71,6 +70,7 @@ import { StarterMessages } from "../../components/assistants/StarterMessage";
 import {
   AnswerPiecePacket,
   DanswerDocument,
+  FinalContextDocs,
   StreamStopInfo,
   StreamStopReason,
 } from "@/lib/search/interfaces";
@@ -105,14 +105,9 @@ import BlurBackground from "./shared_chat_search/BlurBackground";
 import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import { Separator } from "@/components/ui/separator";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
-import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import AssistantBanner from "../../components/assistants/AssistantBanner";
+import AssistantSelector from "@/components/chat_search/AssistantSelector";
+import { Modal } from "@/components/Modal";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -132,8 +127,9 @@ export function ChatPage({
 
   const {
     chatSessions,
-    availableSources,
-    availableDocumentSets,
+    ccPairs,
+    tags,
+    documentSets,
     llmProviders,
     folders,
     openedFolders,
@@ -142,6 +138,36 @@ export function ChatPage({
     shouldShowWelcomeModal,
     refreshChatSessions,
   } = useChatContext();
+  function useScreenSize() {
+    const [screenSize, setScreenSize] = useState({
+      width: typeof window !== "undefined" ? window.innerWidth : 0,
+      height: typeof window !== "undefined" ? window.innerHeight : 0,
+    });
+
+    useEffect(() => {
+      const handleResize = () => {
+        setScreenSize({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+      };
+
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    return screenSize;
+  }
+
+  const { height: screenHeight } = useScreenSize();
+
+  const getContainerHeight = () => {
+    if (autoScrollEnabled) return undefined;
+
+    if (screenHeight < 600) return "20vh";
+    if (screenHeight < 1200) return "30vh";
+    return "40vh";
+  };
 
   // handle redirect if chat page is disabled
   // NOTE: this must be done here, in a client component since
@@ -149,9 +175,11 @@ export function ChatPage({
   // available in server-side components
   const settings = useContext(SettingsContext);
   const enterpriseSettings = settings?.enterpriseSettings;
-  if (settings?.settings?.chat_page_enabled === false) {
-    router.push("/search");
-  }
+
+  const [documentSidebarToggled, setDocumentSidebarToggled] = useState(false);
+  const [filtersToggled, setFiltersToggled] = useState(false);
+
+  const [userSettingsToggled, setUserSettingsToggled] = useState(false);
 
   const { assistants: availableAssistants, finalAssistants } = useAssistants();
 
@@ -159,16 +187,13 @@ export function ChatPage({
     !shouldShowWelcomeModal
   );
 
-  const { user, isAdmin, isLoadingUser, refreshUser } = useUser();
-
+  const { user, isAdmin, isLoadingUser } = useUser();
   const slackChatId = searchParams.get("slackChatId");
-
   const existingChatIdRaw = searchParams.get("chatId");
   const [sendOnLoad, setSendOnLoad] = useState<string | null>(
     searchParams.get(SEARCH_PARAM_NAMES.SEND_ON_LOAD)
   );
 
-  const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
   const modelVersionFromSearchParams = searchParams.get(
     SEARCH_PARAM_NAMES.STRUCTURED_MODEL
   );
@@ -261,7 +286,7 @@ export function ChatPage({
     refreshRecentAssistants,
   } = useAssistants();
 
-  const liveAssistant =
+  const liveAssistant: Persona | undefined =
     alternativeAssistant ||
     selectedAssistant ||
     recentAssistants[0] ||
@@ -269,8 +294,20 @@ export function ChatPage({
     availableAssistants[0];
 
   const noAssistants = liveAssistant == null || liveAssistant == undefined;
+
+  const availableSources = ccPairs.map((ccPair) => ccPair.source);
+  const [finalAvailableSources, finalAvailableDocumentSets] =
+    computeAvailableFilters({
+      selectedPersona: availableAssistants.find(
+        (assistant) => assistant.id === liveAssistant?.id
+      ),
+      availableSources: availableSources,
+      availableDocumentSets: documentSets,
+    });
+
   // always set the model override for the chat session, when an assistant, llm provider, or user preference exists
   useEffect(() => {
+    if (noAssistants) return;
     const personaDefault = getLLMProviderOverrideForPersona(
       liveAssistant,
       llmProviders
@@ -357,9 +394,7 @@ export function ChatPage({
     textAreaRef.current?.focus();
 
     // only clear things if we're going from one chat session to another
-    const isChatSessionSwitch =
-      chatSessionIdRef.current !== null &&
-      existingChatSessionId !== priorChatSessionId;
+    const isChatSessionSwitch = existingChatSessionId !== priorChatSessionId;
     if (isChatSessionSwitch) {
       // de-select documents
       clearSelectedDocuments();
@@ -449,9 +484,9 @@ export function ChatPage({
       }
 
       if (shouldScrollToBottom) {
-        if (!hasPerformedInitialScroll) {
+        if (!hasPerformedInitialScroll && autoScrollEnabled) {
           clientScrollToBottom();
-        } else if (isChatSessionSwitch) {
+        } else if (isChatSessionSwitch && autoScrollEnabled) {
           clientScrollToBottom(true);
         }
       }
@@ -759,7 +794,7 @@ export function ChatPage({
   useEffect(() => {
     async function fetchMaxTokens() {
       const response = await fetch(
-        `/api/chat/max-selected-document-tokens?persona_id=${liveAssistant.id}`
+        `/api/chat/max-selected-document-tokens?persona_id=${liveAssistant?.id}`
       );
       if (response.ok) {
         const maxTokens = (await response.json()).max_tokens as number;
@@ -833,11 +868,13 @@ export function ChatPage({
             0
           )}px`;
 
-          scrollableDivRef?.current.scrollBy({
-            left: 0,
-            top: Math.max(heightDifference, 0),
-            behavior: "smooth",
-          });
+          if (autoScrollEnabled) {
+            scrollableDivRef?.current.scrollBy({
+              left: 0,
+              top: Math.max(heightDifference, 0),
+              behavior: "smooth",
+            });
+          }
         }
         previousHeight.current = newHeight;
       }
@@ -884,6 +921,7 @@ export function ChatPage({
         endDivRef.current.scrollIntoView({
           behavior: fast ? "auto" : "smooth",
         });
+
         setHasPerformedInitialScroll(true);
       }
     }, 50);
@@ -1035,7 +1073,9 @@ export function ChatPage({
     }
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
+
     clientScrollToBottom();
+
     let currChatSessionId: string;
     const isNewSession = chatSessionIdRef.current === null;
     const searchParamBasedChatSessionName =
@@ -1281,8 +1321,8 @@ export function ChatPage({
 
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
-            } else if (Object.hasOwn(packet, "top_documents")) {
-              documents = (packet as DocumentsResponse).top_documents;
+            } else if (Object.hasOwn(packet, "final_context_docs")) {
+              documents = (packet as FinalContextDocs).final_context_docs;
               retrievalType = RetrievalType.Search;
               if (documents && documents.length > 0) {
                 // point to the latest message (we don't know the messageId yet, which is why
@@ -1379,8 +1419,7 @@ export function ChatPage({
                 type: error ? "error" : "assistant",
                 retrievalType,
                 query: finalMessage?.rephrased_query || query,
-                documents:
-                  finalMessage?.context_docs?.top_documents || documents,
+                documents: documents,
                 citations: finalMessage?.citations || {},
                 files: finalMessage?.files || aiMessageImages || [],
                 toolCall: finalMessage?.tool_call || toolCall,
@@ -1599,6 +1638,11 @@ export function ChatPage({
     mobile: settings?.isMobile,
   });
 
+  const autoScrollEnabled =
+    user?.preferences?.auto_scroll == null
+      ? settings?.enterpriseSettings?.auto_scroll || false
+      : user?.preferences?.auto_scroll!;
+
   useScrollonStream({
     chatState: currentSessionChatState,
     scrollableDivRef,
@@ -1607,6 +1651,7 @@ export function ChatPage({
     debounceNumber,
     waitForScrollRef,
     mobile: settings?.isMobile,
+    enableAutoScroll: autoScrollEnabled,
   });
 
   // Virtualization + Scrolling related effects and functions
@@ -1756,6 +1801,13 @@ export function ChatPage({
       liveAssistant
     );
   });
+
+  useEffect(() => {
+    if (!retrievalEnabled) {
+      setDocumentSidebarToggled(false);
+    }
+  }, [retrievalEnabled]);
+
   const [stackTraceModalContent, setStackTraceModalContent] = useState<
     string | null
   >(null);
@@ -1764,58 +1816,6 @@ export function ChatPage({
   const [settingsToggled, setSettingsToggled] = useState(false);
 
   const currentPersona = alternativeAssistant || liveAssistant;
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey) {
-        switch (event.key.toLowerCase()) {
-          case "e":
-            event.preventDefault();
-            toggleSidebar();
-            break;
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router]);
-  const [sharedChatSession, setSharedChatSession] =
-    useState<ChatSession | null>();
-  const [deletingChatSession, setDeletingChatSession] =
-    useState<ChatSession | null>();
-
-  const showDeleteModal = (chatSession: ChatSession) => {
-    setDeletingChatSession(chatSession);
-  };
-  const showShareModal = (chatSession: ChatSession) => {
-    setSharedChatSession(chatSession);
-  };
-  const [documentSelection, setDocumentSelection] = useState(false);
-  const toggleDocumentSelectionAspects = () => {
-    setDocumentSelection((documentSelection) => !documentSelection);
-    setShowDocSidebar(false);
-  };
-
-  interface RegenerationRequest {
-    messageId: number;
-    parentMessage: Message;
-  }
-
-  function createRegenerator(regenerationRequest: RegenerationRequest) {
-    // Returns new function that only needs `modelOverRide` to be specified when called
-    return async function (modelOverRide: LlmOverride) {
-      return await onSubmit({
-        modelOverRide,
-        messageIdToResend: regenerationRequest.parentMessage.messageId,
-        regenerationRequest,
-      });
-    };
-  }
-
   useEffect(() => {
     const handleSlackChatRedirect = async () => {
       if (!slackChatId) return;
@@ -1851,18 +1851,94 @@ export function ChatPage({
 
     handleSlackChatRedirect();
   }, [searchParams, router]);
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case "e":
+            event.preventDefault();
+            toggleSidebar();
+            break;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router]);
+  const [sharedChatSession, setSharedChatSession] =
+    useState<ChatSession | null>();
+  const [deletingChatSession, setDeletingChatSession] =
+    useState<ChatSession | null>();
+
+  const showDeleteModal = (chatSession: ChatSession) => {
+    setDeletingChatSession(chatSession);
+  };
+  const showShareModal = (chatSession: ChatSession) => {
+    setSharedChatSession(chatSession);
+  };
+  const [documentSelection, setDocumentSelection] = useState(false);
+  // const toggleDocumentSelectionAspects = () => {
+  //   setDocumentSelection((documentSelection) => !documentSelection);
+  //   setShowDocSidebar(false);
+  // };
+
+  const toggleDocumentSidebar = () => {
+    if (!documentSidebarToggled) {
+      setFiltersToggled(false);
+      setDocumentSidebarToggled(true);
+    } else if (!filtersToggled) {
+      setDocumentSidebarToggled(false);
+    } else {
+      setFiltersToggled(false);
+    }
+  };
+  const toggleFilters = () => {
+    if (!documentSidebarToggled) {
+      setFiltersToggled(true);
+      setDocumentSidebarToggled(true);
+    } else if (filtersToggled) {
+      setDocumentSidebarToggled(false);
+    } else {
+      setFiltersToggled(true);
+    }
+  };
+
+  interface RegenerationRequest {
+    messageId: number;
+    parentMessage: Message;
+  }
+
+  function createRegenerator(regenerationRequest: RegenerationRequest) {
+    // Returns new function that only needs `modelOverRide` to be specified when called
+    return async function (modelOverRide: LlmOverride) {
+      return await onSubmit({
+        modelOverRide,
+        messageIdToResend: regenerationRequest.parentMessage.messageId,
+        regenerationRequest,
+      });
+    };
+  }
+  if (noAssistants)
+    return (
+      <>
+        <HealthCheckBanner />
+        <NoAssistantModal isAdmin={isAdmin} />
+      </>
+    );
 
   return (
     <>
       <HealthCheckBanner />
 
-      {showApiKeyModal && !shouldShowWelcomeModal ? (
+      {showApiKeyModal && !shouldShowWelcomeModal && (
         <ApiKeyModal
           hide={() => setShowApiKeyModal(false)}
           setPopup={setPopup}
         />
-      ) : (
-        noAssistants && <NoAssistantModal isAdmin={isAdmin} />
       )}
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
@@ -1886,14 +1962,44 @@ export function ChatPage({
         />
       )}
 
-      {settingsToggled && (
+      {(settingsToggled || userSettingsToggled) && (
         <SetDefaultModelModal
           setPopup={setPopup}
           setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
           llmProviders={llmProviders}
-          onClose={() => setSettingsToggled(false)}
+          onClose={() => {
+            setUserSettingsToggled(false);
+            setSettingsToggled(false);
+          }}
         />
+      )}
+
+      {retrievalEnabled && documentSidebarToggled && settings?.isMobile && (
+        <div className="md:hidden">
+          <Modal noPadding noScroll>
+            <ChatFilters
+              modal={true}
+              filterManager={filterManager}
+              ccPairs={ccPairs}
+              tags={tags}
+              documentSets={documentSets}
+              ref={innerSidebarElementRef}
+              showFilters={filtersToggled}
+              closeSidebar={() => {
+                setDocumentSidebarToggled(false);
+              }}
+              selectedMessage={aiMessage}
+              selectedDocuments={selectedDocuments}
+              toggleDocumentSelection={toggleDocumentSelection}
+              clearSelectedDocuments={clearSelectedDocuments}
+              selectedDocumentTokens={selectedDocumentTokens}
+              maxTokens={maxTokens}
+              initialWidth={400}
+              isOpen={true}
+            />
+          </Modal>
+        </div>
       )}
 
       {deletingChatSession && (
@@ -1996,6 +2102,50 @@ export function ChatPage({
               </div>
             </div>
           </div>
+          {!settings?.isMobile && retrievalEnabled && (
+            <div
+              style={{ transition: "width 0.30s ease-out" }}
+              className={`
+                flex-none 
+                fixed
+                right-0
+                z-[1000]
+
+                bg-background
+                h-screen
+                transition-all
+                bg-opacity-80
+                duration-300
+                ease-in-out
+                bg-transparent
+                transition-all
+                bg-opacity-80
+                duration-300
+                ease-in-out
+                h-full
+                ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
+            `}
+            >
+              <ChatFilters
+                modal={false}
+                filterManager={filterManager}
+                ccPairs={ccPairs}
+                tags={tags}
+                documentSets={documentSets}
+                ref={innerSidebarElementRef}
+                showFilters={filtersToggled}
+                closeSidebar={() => setDocumentSidebarToggled(false)}
+                selectedMessage={aiMessage}
+                selectedDocuments={selectedDocuments}
+                toggleDocumentSelection={toggleDocumentSelection}
+                clearSelectedDocuments={clearSelectedDocuments}
+                selectedDocumentTokens={selectedDocumentTokens}
+                maxTokens={maxTokens}
+                initialWidth={400}
+                isOpen={documentSidebarToggled}
+              />
+            </div>
+          )}
 
           <BlurBackground
             visible={!untoggled && (showDocSidebar || toggledSidebar)}
@@ -2005,9 +2155,12 @@ export function ChatPage({
             ref={masterFlexboxRef}
             className="flex h-full w-full overflow-x-hidden"
           >
-            <div className="flex h-full flex-col w-full">
+            <div className="flex h-full relative px-2 flex-col w-full">
               {liveAssistant && (
                 <FunctionalHeader
+                  toggleUserSettings={() => setUserSettingsToggled(true)}
+                  liveAssistant={liveAssistant}
+                  onAssistantChange={onAssistantChange}
                   sidebarToggled={toggledSidebar}
                   reset={() => setMessage("")}
                   page="chat"
@@ -2018,6 +2171,8 @@ export function ChatPage({
                   }
                   toggleSidebar={toggleSidebar}
                   currentChatSession={selectedChatSession}
+                  documentSidebarToggled={documentSidebarToggled}
+                  llmOverrideManager={llmOverrideManager}
                 />
               )}
 
@@ -2039,7 +2194,7 @@ export function ChatPage({
                           duration-300 
                           ease-in-out
                           h-full
-                          ${toggledSidebar ? "w-[250px]" : "w-[0px]"}
+                          ${toggledSidebar ? "w-[200px]" : "w-[0px]"}
                       `}
                         ></div>
                       )}
@@ -2049,9 +2204,55 @@ export function ChatPage({
                         {...getRootProps()}
                       >
                         <div
-                          className={`w-full h-full flex flex-col default-scrollbar overflow-y-auto overflow-x-hidden relative`}
+                          className={`w-full h-[calc(100vh-160px)] flex flex-col default-scrollbar overflow-y-auto overflow-x-hidden relative`}
                           ref={scrollableDivRef}
                         >
+                          {liveAssistant && onAssistantChange && (
+                            <div className="z-20 fixed top-4 pointer-events-none left-0 w-full flex justify-center overflow-visible">
+                              {!settings?.isMobile && (
+                                <div
+                                  style={{ transition: "width 0.30s ease-out" }}
+                                  className={`
+                                  flex-none 
+                                  overflow-y-hidden 
+                                  transition-all 
+                                  pointer-events-none
+                                  duration-300 
+                                  ease-in-out
+                                  h-full
+                                  ${toggledSidebar ? "w-[200px]" : "w-[0px]"}
+                              `}
+                                ></div>
+                              )}
+
+                              <AssistantSelector
+                                isMobile={settings?.isMobile!}
+                                liveAssistant={liveAssistant}
+                                onAssistantChange={onAssistantChange}
+                                llmOverrideManager={llmOverrideManager}
+                              />
+                              {!settings?.isMobile && (
+                                <div
+                                  style={{ transition: "width 0.30s ease-out" }}
+                                  className={`
+                                    flex-none 
+                                    overflow-y-hidden 
+                                    transition-all 
+                                    duration-300 
+                                    ease-in-out
+                                    h-full
+                                    pointer-events-none
+                                    ${
+                                      documentSidebarToggled && retrievalEnabled
+                                        ? "w-[400px]"
+                                        : "w-[0px]"
+                                    }
+                                `}
+                                ></div>
+                              )}
+                            </div>
+                          )}
+
                           {/* ChatBanner is a custom banner that displays a admin-specified message at 
                       the top of the chat page. Oly used in the EE version of the app. */}
 
@@ -2059,7 +2260,7 @@ export function ChatPage({
                             !isFetchingChatMessages &&
                             currentSessionChatState == "input" &&
                             !loadingError && (
-                              <div className="h-full mt-12 flex flex-col justify-center items-center">
+                              <div className="h-full w-[95%] mx-auto mt-12 flex flex-col justify-center items-center">
                                 <ChatIntro selectedPersona={liveAssistant} />
 
                                 <StarterMessages
@@ -2081,6 +2282,7 @@ export function ChatPage({
                                         Recent Assistants
                                       </div>
                                       <AssistantBanner
+                                        mobile={settings?.isMobile}
                                         recentAssistants={recentAssistants}
                                         liveAssistant={liveAssistant}
                                         allAssistants={allAssistants}
@@ -2222,6 +2424,14 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      index={i}
+                                      selectedMessageForDocDisplay={
+                                        selectedMessageForDocDisplay
+                                      }
+                                      documentSelectionToggled={
+                                        documentSidebarToggled &&
+                                        !filtersToggled
+                                      }
                                       continueGenerating={
                                         i == messageHistory.length - 1 &&
                                         currentCanContinue()
@@ -2258,9 +2468,19 @@ export function ChatPage({
                                       }}
                                       isActive={messageHistory.length - 1 == i}
                                       selectedDocuments={selectedDocuments}
-                                      toggleDocumentSelection={
-                                        toggleDocumentSelectionAspects
-                                      }
+                                      toggleDocumentSelection={() => {
+                                        if (
+                                          !documentSidebarToggled ||
+                                          (documentSidebarToggled &&
+                                            selectedMessageForDocDisplay ===
+                                              message.messageId)
+                                        ) {
+                                          toggleDocumentSidebar();
+                                        }
+                                        setSelectedMessageForDocDisplay(
+                                          message.messageId
+                                        );
+                                      }}
                                       docs={message.documents}
                                       currentPersona={liveAssistant}
                                       alternativeAssistant={
@@ -2268,7 +2488,6 @@ export function ChatPage({
                                       }
                                       messageId={message.messageId}
                                       content={message.message}
-                                      // content={message.message}
                                       files={message.files}
                                       query={
                                         messageHistory[i]?.query || undefined
@@ -2454,6 +2673,15 @@ export function ChatPage({
                                 />
                               </div>
                             )}
+                            {messageHistory.length > 0 && (
+                              <div
+                                style={{
+                                  height: !autoScrollEnabled
+                                    ? getContainerHeight()
+                                    : undefined,
+                                }}
+                              />
+                            )}
 
                             {/* Some padding at the bottom so the search bar has space at the bottom to not cover the last message*/}
                             <div ref={endPaddingRef} className="h-[95px]" />
@@ -2477,6 +2705,15 @@ export function ChatPage({
                               </div>
                             )}
                             <ChatInputBar
+                              removeDocs={() => {
+                                clearSelectedDocuments();
+                              }}
+                              removeFilters={() => {
+                                filterManager.setSelectedSources([]);
+                                filterManager.setSelectedTags([]);
+                                filterManager.setSelectedDocumentSets([]);
+                                setDocumentSidebarToggled(false);
+                              }}
                               showConfigureAPIKey={() =>
                                 setShowApiKeyModal(true)
                               }
@@ -2499,6 +2736,9 @@ export function ChatPage({
                               llmOverrideManager={llmOverrideManager}
                               files={currentMessageFiles}
                               setFiles={setCurrentMessageFiles}
+                              toggleFilters={
+                                retrievalEnabled ? toggleFilters : undefined
+                              }
                               handleFileUpload={handleImageUpload}
                               textAreaRef={textAreaRef}
                               chatSessionId={chatSessionIdRef.current!}
@@ -2529,6 +2769,23 @@ export function ChatPage({
                           </div>
                         </div>
                       </div>
+                      {!settings?.isMobile && (
+                        <div
+                          style={{ transition: "width 0.30s ease-out" }}
+                          className={`
+                          flex-none 
+                          overflow-y-hidden 
+                          transition-all 
+                          duration-300 
+                          ease-in-out
+                          ${
+                            documentSidebarToggled && retrievalEnabled
+                              ? "w-[400px]"
+                              : "w-[0px]"
+                          }
+                      `}
+                        ></div>
+                      )}
                     </div>
                   )}
                 </Dropzone>
@@ -2537,7 +2794,11 @@ export function ChatPage({
                   <div
                     style={{ transition: "width 0.30s ease-out" }}
                     className={`flex-none bg-transparent transition-all bg-opacity-80 duration-300 epase-in-out h-full
-                        ${toggledSidebar ? "w-[250px] " : "w-[0px]"}`}
+                        ${
+                          toggledSidebar && !settings?.isMobile
+                            ? "w-[250px] "
+                            : "w-[0px]"
+                        }`}
                   />
                   <div className="my-auto">
                     <DanswerInitializingLoader />
@@ -2548,20 +2809,8 @@ export function ChatPage({
           </div>
           <FixedLogo backgroundToggled={toggledSidebar || showDocSidebar} />
         </div>
+        {/* Right Sidebar - DocumentSidebar */}
       </div>
-      <DocumentSidebar
-        initialWidth={350}
-        ref={innerSidebarElementRef}
-        closeSidebar={() => setDocumentSelection(false)}
-        selectedMessage={aiMessage}
-        selectedDocuments={selectedDocuments}
-        toggleDocumentSelection={toggleDocumentSelection}
-        clearSelectedDocuments={clearSelectedDocuments}
-        selectedDocumentTokens={selectedDocumentTokens}
-        maxTokens={maxTokens}
-        isLoading={isFetchingChatMessages}
-        isOpen={documentSelection}
-      />
     </>
   );
 }

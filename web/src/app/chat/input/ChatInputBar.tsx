@@ -1,13 +1,9 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { FiPlusCircle, FiPlus, FiInfo, FiX } from "react-icons/fi";
+import { FiPlusCircle, FiPlus, FiInfo, FiX, FiSearch } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
-import {
-  FilterManager,
-  getDisplayNameForModel,
-  LlmOverrideManager,
-} from "@/lib/hooks";
+import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -18,15 +14,10 @@ import {
 } from "../files/InputBarPreview";
 import {
   AssistantsIconSkeleton,
-  CpuIconSkeleton,
   FileIcon,
   SendIcon,
   StopGeneratingIcon,
 } from "@/components/icons/icons";
-import { IconType } from "react-icons";
-import Popup from "../../../components/popup/Popup";
-import { LlmTab } from "../modal/configuration/LlmTab";
-import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import {
@@ -40,10 +31,18 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
 import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
 import { useAssistants } from "@/components/context/AssistantsContext";
+import AnimatedToggle from "@/components/search/SearchBar";
+import { Popup } from "@/components/admin/connectors/Popup";
+import { AssistantsTab } from "../modal/configuration/AssistantsTab";
+import { IconType } from "react-icons";
+import { LlmTab } from "../modal/configuration/LlmTab";
+import { XIcon } from "lucide-react";
 
 const MAX_INPUT_HEIGHT = 200;
 
 export function ChatInputBar({
+  removeFilters,
+  removeDocs,
   openModelSettings,
   showDocs,
   showConfigureAPIKey,
@@ -68,7 +67,10 @@ export function ChatInputBar({
   alternativeAssistant,
   chatSessionId,
   inputPrompts,
+  toggleFilters,
 }: {
+  removeFilters: () => void;
+  removeDocs: () => void;
   showConfigureAPIKey: () => void;
   openModelSettings: () => void;
   chatState: ChatState;
@@ -90,6 +92,7 @@ export function ChatInputBar({
   handleFileUpload: (files: File[]) => void;
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   chatSessionId?: string;
+  toggleFilters?: () => void;
 }) {
   useEffect(() => {
     const textarea = textAreaRef.current;
@@ -370,9 +373,9 @@ export function ChatInputBar({
             </div>
           )}
 
-          <div>
+          {/* <div>
             <SelectedFilterDisplay filterManager={filterManager} />
-          </div>
+          </div> */}
 
           <UnconfiguredProviderText showConfigureAPIKey={showConfigureAPIKey} />
 
@@ -429,16 +432,21 @@ export function ChatInputBar({
             )}
             {(selectedDocuments.length > 0 || files.length > 0) && (
               <div className="flex gap-x-2 px-2 pt-2">
-                <div className="flex gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end miniscroll">
+                <div className="flex gap-x-1 px-2 overflow-visible overflow-x-scroll items-end miniscroll">
                   {selectedDocuments.length > 0 && (
                     <button
                       onClick={showDocs}
-                      className="flex-none flex cursor-pointer hover:bg-background-200 transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-150 max-w-[100px]"
+                      className="flex-none relative overflow-visible flex items-center gap-x-2 h-10 px-3 rounded-lg bg-background-150 hover:bg-background-200 transition-colors duration-300 cursor-pointer max-w-[150px]"
                     >
-                      <FileIcon size={24} />
-                      <p className="text-xs">
+                      <FileIcon size={20} />
+                      <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                         {selectedDocuments.length} selected
-                      </p>
+                      </span>
+                      <XIcon
+                        onClick={removeDocs}
+                        size={16}
+                        className="text-text-400 hover:text-text-600 ml-auto"
+                      />
                     </button>
                   )}
                   {files.map((file) => (
@@ -529,72 +537,6 @@ export function ChatInputBar({
               suppressContentEditableWarning={true}
             />
             <div className="flex items-center space-x-3 mr-12 px-4 pb-2">
-              <Popup
-                removePadding
-                content={(close) => (
-                  <AssistantsTab
-                    llmProviders={llmProviders}
-                    selectedAssistant={selectedAssistant}
-                    onSelect={(assistant) => {
-                      setSelectedAssistant(assistant);
-                      close();
-                    }}
-                  />
-                )}
-                flexPriority="shrink"
-                position="top"
-                mobilePosition="top-right"
-              >
-                <ChatInputOption
-                  toggle
-                  flexPriority="shrink"
-                  name={
-                    selectedAssistant ? selectedAssistant.name : "Assistants"
-                  }
-                  Icon={AssistantsIconSkeleton as IconType}
-                />
-              </Popup>
-              <Popup
-                tab
-                content={(close, ref) => (
-                  <LlmTab
-                    currentAssistant={alternativeAssistant || selectedAssistant}
-                    openModelSettings={openModelSettings}
-                    currentLlm={
-                      llmOverrideManager.llmOverride.modelName ||
-                      (selectedAssistant
-                        ? selectedAssistant.llm_model_version_override ||
-                          llmOverrideManager.globalDefault.modelName ||
-                          llmName
-                        : llmName)
-                    }
-                    close={close}
-                    ref={ref}
-                    llmOverrideManager={llmOverrideManager}
-                    chatSessionId={chatSessionId}
-                  />
-                )}
-                position="top"
-              >
-                <ChatInputOption
-                  flexPriority="second"
-                  toggle
-                  name={
-                    settings?.isMobile
-                      ? undefined
-                      : getDisplayNameForModel(
-                          llmOverrideManager.llmOverride.modelName ||
-                            (selectedAssistant
-                              ? selectedAssistant.llm_model_version_override ||
-                                llmOverrideManager.globalDefault.modelName ||
-                                llmName
-                              : llmName)
-                        )
-                  }
-                  Icon={CpuIconSkeleton}
-                />
-              </Popup>
-
               <ChatInputOption
                 flexPriority="stiff"
                 name="File"
@@ -614,6 +556,14 @@ export function ChatInputBar({
                   input.click();
                 }}
               />
+              {toggleFilters && (
+                <ChatInputOption
+                  flexPriority="stiff"
+                  name="Filters"
+                  Icon={FiSearch}
+                  onClick={toggleFilters}
+                />
+              )}
             </div>
 
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">
