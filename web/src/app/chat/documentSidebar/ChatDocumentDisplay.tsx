@@ -6,13 +6,16 @@ import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { MetadataBadge } from "@/components/MetadataBadge";
 import { WebResultIcon } from "@/components/WebResultIcon";
+import { Dispatch, SetStateAction } from "react";
 
 interface DocumentDisplayProps {
+  closeSidebar: () => void;
   document: DanswerDocument;
   modal?: boolean;
   isSelected: boolean;
   handleSelect: (documentId: string) => void;
   tokenLimitReached: boolean;
+  setPresentingDocument: Dispatch<SetStateAction<DanswerDocument | null>>;
 }
 
 export function DocumentMetadataBlock({
@@ -55,17 +58,27 @@ export function DocumentMetadataBlock({
 }
 
 export function ChatDocumentDisplay({
+  closeSidebar,
   document,
   modal,
   isSelected,
   handleSelect,
   tokenLimitReached,
+  setPresentingDocument,
 }: DocumentDisplayProps) {
   const isInternet = document.is_internet;
 
   if (document.score === null) {
     return null;
   }
+
+  const handleViewFile = async () => {
+    closeSidebar();
+
+    setTimeout(async () => {
+      setPresentingDocument(document);
+    }, 100);
+  };
 
   return (
     <div className={`opacity-100   ${modal ? "w-[90vw]" : "w-full"}`}>

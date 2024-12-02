@@ -147,7 +147,7 @@ def verify_email_is_invited(email: str) -> None:
     whitelist = get_invited_users()
     if not whitelist:
         return
-
+    print("whitelist is", whitelist)
     if not email:
         raise PermissionError("Email must be specified")
 

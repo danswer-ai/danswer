@@ -64,6 +64,7 @@ export interface DanswerDocument {
   updated_at: string | null;
   db_doc_id?: number;
   is_internet: boolean;
+  file_url: string | null;
   validationState?: null | "good" | "bad";
 }
 export interface LoadedDanswerDocument extends DanswerDocument {

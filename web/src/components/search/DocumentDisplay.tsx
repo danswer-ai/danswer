@@ -19,6 +19,7 @@ import { FiTag } from "react-icons/fi";
 import { SettingsContext } from "../settings/SettingsProvider";
 import { CustomTooltip, TooltipGroup } from "../tooltip/CustomTooltip";
 import { WarningCircle } from "@phosphor-icons/react";
+import TextView from "../chat_search/TextView";
 import { SearchResultIcon } from "../SearchResultIcon";
 
 export const buildDocumentSummaryDisplay = (
@@ -188,6 +189,12 @@ export const DocumentDisplay = ({
   const relevance_explanation =
     document.relevance_explanation ?? additional_relevance?.content;
   const settings = useContext(SettingsContext);
+  const [presentingDocument, setPresentingDocument] =
+    useState<DanswerDocument | null>(null);
+
+  const handleViewFile = async () => {
+    setPresentingDocument(document);
+  };
 
   return (
     <div
@@ -219,19 +226,22 @@ export const DocumentDisplay = ({
         }`}
       >
         <div className="flex relative">
-          <a
-            className={`rounded-lg flex font-bold text-link max-w-full ${
-              document.link ? "" : "pointer-events-none"
-            }`}
-            href={document.link}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            className={`rounded-lg flex font-bold text-link max-w-full`}
+            onClick={() => {
+              if (document.link) {
+                window.open(document.link, "_blank");
+              } else {
+                handleViewFile();
+              }
+            }}
           >
             <SourceIcon sourceType={document.source_type} iconSize={22} />
             <p className="truncate text-wrap break-all ml-2 my-auto line-clamp-1 text-base max-w-full">
               {document.semantic_identifier || document.document_id}
             </p>
-          </a>
+          </button>
           <div className="ml-auto flex items-center">
             <TooltipGroup>
               {isHovered && messageId && (
@@ -270,6 +280,13 @@ export const DocumentDisplay = ({
           <DocumentMetadataBlock document={document} />
         </div>
 
+        {presentingDocument && (
+          <TextView
+            presentingDocument={presentingDocument}
+            onClose={() => setPresentingDocument(null)}
+          />
+        )}
+
         <p
           style={{ transition: "height 0.30s ease-in-out" }}
           className="pl-1 pt-2 pb-3 break-words text-wrap"
@@ -297,11 +314,14 @@ export const AgenticDocumentDisplay = ({
   setPopup,
 }: DocumentDisplayProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [presentingDocument, setPresentingDocument] =
+    useState<DanswerDocument | null>(null);
 
   const [alternativeToggled, setAlternativeToggled] = useState(false);
 
   const relevance_explanation =
     document.relevance_explanation ?? additional_relevance?.content;
+
   return (
     <div
       key={document.semantic_identifier}
@@ -320,19 +340,24 @@ export const AgenticDocumentDisplay = ({
         }`}
       >
         <div className="flex relative">
-          <a
+          <button
+            type="button"
             className={`rounded-lg flex font-bold text-link max-w-full ${
               document.link ? "" : "pointer-events-none"
             }`}
-            href={document.link}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={() => {
+              if (document.link) {
+                window.open(document.link, "_blank");
+              } else {
+                setPresentingDocument(document);
+              }
+            }}
           >
             <SourceIcon sourceType={document.source_type} iconSize={22} />
             <p className="truncate text-wrap break-all ml-2 my-auto line-clamp-1 text-base max-w-full">
               {document.semantic_identifier || document.document_id}
             </p>
-          </a>
+          </button>
 
           <div className="ml-auto items-center flex">
             <TooltipGroup>
@@ -365,6 +390,12 @@ export const AgenticDocumentDisplay = ({
         <div className="mt-1">
           <DocumentMetadataBlock document={document} />
         </div>
+        {presentingDocument && (
+          <TextView
+            presentingDocument={presentingDocument}
+            onClose={() => setPresentingDocument(null)}
+          />
+        )}
 
         <div className="pt-2 break-words flex gap-x-2">
           <p

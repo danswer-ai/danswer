@@ -295,6 +295,9 @@ class VespaIndex(DocumentIndex):
 
         zip_file = in_memory_zip_from_file_bytes(zip_dict)
 
+        # Reset the file pointer to the beginning for the subsequent POST request
+        zip_file.seek(0)
+
         headers = {"Content-Type": "application/zip"}
         response = requests.post(deploy_url, headers=headers, data=zip_file)
 

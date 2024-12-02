@@ -644,7 +644,6 @@ export async function useScrollonStream({
 }: {
   chatState: ChatState;
   scrollableDivRef: RefObject<HTMLDivElement>;
-  waitForScrollRef: RefObject<boolean>;
   scrollDist: MutableRefObject<number>;
   endDivRef: RefObject<HTMLDivElement>;
   debounceNumber: number;

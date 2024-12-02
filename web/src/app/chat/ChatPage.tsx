@@ -106,8 +106,10 @@ import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import { Separator } from "@/components/ui/separator";
 import AssistantBanner from "../../components/assistants/AssistantBanner";
+import TextView from "@/components/chat_search/TextView";
 import AssistantSelector from "@/components/chat_search/AssistantSelector";
 import { Modal } from "@/components/Modal";
+import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -241,10 +243,10 @@ export function ChatPage({
           (assistant) => assistant.id === existingChatSessionAssistantId
         )
       : defaultAssistantId !== undefined
-        ? availableAssistants.find(
-            (assistant) => assistant.id === defaultAssistantId
-          )
-        : undefined
+      ? availableAssistants.find(
+          (assistant) => assistant.id === defaultAssistantId
+        )
+      : undefined
   );
   // Gather default temperature settings
   const search_param_temperature = searchParams.get(
@@ -254,12 +256,12 @@ export function ChatPage({
   const defaultTemperature = search_param_temperature
     ? parseFloat(search_param_temperature)
     : selectedAssistant?.tools.some(
-          (tool) =>
-            tool.in_code_tool_id === "SearchTool" ||
-            tool.in_code_tool_id === "InternetSearchTool"
-        )
-      ? 0
-      : 0.7;
+        (tool) =>
+          tool.in_code_tool_id === "SearchTool" ||
+          tool.in_code_tool_id === "InternetSearchTool"
+      )
+    ? 0
+    : 0.7;
 
   const setSelectedAssistantFromId = (assistantId: number) => {
     // NOTE: also intentionally look through available assistants here, so that
@@ -278,6 +280,9 @@ export function ChatPage({
 
   const [alternativeAssistant, setAlternativeAssistant] =
     useState<Persona | null>(null);
+
+  const [presentingDocument, setPresentingDocument] =
+    useState<DanswerDocument | null>(null);
 
   const {
     visibleAssistants: assistants,
@@ -490,6 +495,7 @@ export function ChatPage({
           clientScrollToBottom(true);
         }
       }
+
       setIsFetchingChatMessages(false);
 
       // if this is a seeded chat, then kick off the AI message generation
@@ -1152,8 +1158,8 @@ export function ChatPage({
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
       : alternativeAssistant
-        ? alternativeAssistant.id
-        : liveAssistant.id;
+      ? alternativeAssistant.id
+      : liveAssistant.id;
 
     resetInputBar();
     let messageUpdates: Message[] | null = null;
@@ -1649,7 +1655,6 @@ export function ChatPage({
     scrollDist,
     endDivRef,
     debounceNumber,
-    waitForScrollRef,
     mobile: settings?.isMobile,
     enableAutoScroll: autoScrollEnabled,
   });
@@ -1946,6 +1951,7 @@ export function ChatPage({
       {popup}
 
       <ChatPopup />
+
       {currentFeedback && (
         <FeedbackModal
           feedbackType={currentFeedback[0]}
@@ -2021,6 +2027,13 @@ export function ChatPage({
             }
             refreshChatSessions();
           }}
+        />
+      )}
+
+      {presentingDocument && (
+        <TextView
+          presentingDocument={presentingDocument}
+          onClose={() => setPresentingDocument(null)}
         />
       )}
 
@@ -2424,6 +2437,9 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      setPresentingDocument={
+                                        setPresentingDocument
+                                      }
                                       index={i}
                                       selectedMessageForDocDisplay={
                                         selectedMessageForDocDisplay
@@ -2811,6 +2827,20 @@ export function ChatPage({
         </div>
         {/* Right Sidebar - DocumentSidebar */}
       </div>
+      <DocumentSidebar
+        initialWidth={350}
+        ref={innerSidebarElementRef}
+        closeSidebar={() => setDocumentSelection(false)}
+        selectedMessage={aiMessage}
+        selectedDocuments={selectedDocuments}
+        toggleDocumentSelection={toggleDocumentSelection}
+        clearSelectedDocuments={clearSelectedDocuments}
+        selectedDocumentTokens={selectedDocumentTokens}
+        maxTokens={maxTokens}
+        isLoading={isFetchingChatMessages}
+        isOpen={documentSelection}
+        setPresentingDocument={setPresentingDocument}
+      />
     </>
   );
 }

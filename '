@@ -1,0 +1,10 @@
+basic tests
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch text_view
+# Changes to be committed:
+#	modified:   backend/danswer/server/query_and_chat/query_backend.py
+#	modified:   backend/tests/integration/common_utils/managers/file.py
+#	modified:   backend/tests/integration/tests/file/test_file_detection.py
+#

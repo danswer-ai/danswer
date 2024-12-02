@@ -10,6 +10,7 @@ import {
 import { FeedbackType } from "../types";
 import React, {
   memo,
+  ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -21,6 +22,7 @@ import ReactMarkdown from "react-markdown";
 import {
   DanswerDocument,
   FilteredDanswerDocument,
+  LoadedDanswerDocument,
 } from "@/lib/search/interfaces";
 import { SearchSummary } from "./SearchSummary";
 
@@ -70,6 +72,10 @@ import CsvContent from "../../../components/tools/CSVContent";
 import SourceCard, {
   SeeMoreBlock,
 } from "@/components/chat_search/sources/SourceCard";
+import { Citation } from "@/components/search/results/Citation";
+import { SourceIcon } from "@/components/SourceIcon";
+import { SearchResultIcon } from "@/components/SearchResultIcon";
+import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -188,6 +194,7 @@ export const AIMessage = ({
   currentPersona,
   otherMessagesCanSwitchTo,
   onMessageSelection,
+  setPresentingDocument,
   index,
 }: {
   index?: number;
@@ -218,6 +225,7 @@ export const AIMessage = ({
   retrievalDisabled?: boolean;
   overriddenModel?: string;
   regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
+  setPresentingDocument?: (document: DanswerDocument) => void;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
@@ -308,7 +316,12 @@ export const AIMessage = ({
 
   const anchorCallback = useCallback(
     (props: any) => (
-      <MemoizedAnchor docs={docs}>{props.children}</MemoizedAnchor>
+      <MemoizedAnchor
+        updatePresentingDocument={setPresentingDocument}
+        docs={docs}
+      >
+        {props.children}
+      </MemoizedAnchor>
     ),
     [docs]
   );
@@ -320,6 +333,11 @@ export const AIMessage = ({
   const uniqueSources: ValidSources[] = Array.from(
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
+
+  const updatePresentingDocument = (documentIndex: number) => {
+    setPresentingDocument &&
+      setPresentingDocument(filteredDocs[documentIndex - 1]);
+  };
 
   const markdownComponents = useMemo(
     () => ({
@@ -339,7 +357,7 @@ export const AIMessage = ({
         );
       },
     }),
-    [anchorCallback, paragraphCallback, finalContent]
+    [anchorCallback, paragraphCallback, finalContent, updatePresentingDocument]
   );
 
   const renderedMarkdown = useMemo(() => {
@@ -489,6 +507,91 @@ export const AIMessage = ({
                       </>
                     ) : isComplete ? null : (
                       <></>
+                    )}
+                    {isComplete && docs && docs.length > 0 && (
+                      <div className="mt-2 -mx-8 w-full mb-4 flex relative">
+                        <div className="w-full">
+                          <div className="px-8 flex gap-x-2">
+                            {!settings?.isMobile &&
+                              filteredDocs.length > 0 &&
+                              filteredDocs.slice(0, 2).map((doc, ind) => (
+                                <div
+                                  key={doc.document_id}
+                                  className={`w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 pb-2 pt-1 border-b
+                              `}
+                                >
+                                  <button
+                                    onClick={() => {
+                                      if (setPresentingDocument) {
+                                        setPresentingDocument(doc);
+                                      } else {
+                                        window.open(doc.link, "_blank");
+                                      }
+                                    }}
+                                    className="text-sm flex w-full pt-1 gap-x-1.5 overflow-hidden justify-between font-semibold text-text-700"
+                                  >
+                                    <Citation
+                                      link={doc.link}
+                                      index={ind + 1}
+                                      document={
+                                        doc as unknown as LoadedDanswerDocument
+                                      }
+                                    />
+                                    <p className="shrink truncate ellipsis break-all">
+                                      {doc.semantic_identifier ||
+                                        doc.document_id}
+                                    </p>
+                                    <div className="ml-auto flex-none">
+                                      {doc.is_internet ? (
+                                        <SearchResultIcon url={doc.link} />
+                                      ) : (
+                                        <SourceIcon
+                                          sourceType={doc.source_type}
+                                          iconSize={18}
+                                        />
+                                      )}
+                                    </div>
+                                  </button>
+                                  <div className="flex overscroll-x-scroll mt-.5">
+                                    <DocumentMetadataBlock document={doc} />
+                                  </div>
+                                  <div className="line-clamp-3 text-xs break-words pt-1">
+                                    {doc.blurb}
+                                  </div>
+                                </div>
+                              ))}
+                            <div
+                              onClick={() => {
+                                if (messageId) {
+                                  onMessageSelection?.(messageId);
+                                }
+                                toggleDocumentSelection?.();
+                              }}
+                              key={-1}
+                              className="cursor-pointer w-[200px] rounded-lg flex-none transition-all duration-500 hover:bg-background-125 bg-text-100 px-4 py-2 border-b"
+                            >
+                              <div className="text-sm flex justify-between font-semibold text-text-700">
+                                <p className="line-clamp-1">See context</p>
+                                <div className="flex gap-x-1">
+                                  {uniqueSources.map((sourceType, ind) => {
+                                    return (
+                                      <div key={ind} className="flex-none">
+                                        <SourceIcon
+                                          sourceType={sourceType}
+                                          iconSize={18}
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                              <div className="line-clamp-3 text-xs break-words pt-1">
+                                See more
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </div>
 
