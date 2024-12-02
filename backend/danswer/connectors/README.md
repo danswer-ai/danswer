@@ -11,11 +11,16 @@ Connectors come in 3 different flows:
 - Load Connector:
   - Bulk indexes documents to reflect a point in time. This type of connector generally works by either pulling all
   documents via a connector's API or loads the documents from some sort of a dump file.
-- Poll connector:
+- Poll Connector:
   - Incrementally updates documents based on a provided time range. It is used by the background job to pull the latest
   changes and additions since the last round of polling. This connector helps keep the document index up to date
   without needing to fetch/embed/index every document which would be too slow to do frequently on large sets of
   documents.
+- Slim Connector:
+  - The purpose of this connector is to be a lighter weight method of checking all documents in the source to see if they still exist.
+  - This connector should be identical to the Poll or Load Connector except that it only fetches the IDs of the documents, not the documents themselves.
+  - This is used for our pruning job that removes old documents from the index.
+  - The optional start and end datetimes can be ignored.
 - Event Based connectors:
   - Connectors that listen to events and update documents accordingly.
   - Currently not used by the background job, this exists for future design purposes.
@@ -26,8 +31,12 @@ Refer to [interfaces.py](https://github.com/danswer-ai/danswer/blob/main/backend
 and this first contributor created Pull Request for a new connector (Shoutout to Dan Brown):
 [Reference Pull Request](https://github.com/danswer-ai/danswer/pull/139)
 
+For Slim Connectors, refer to this PR for an example of adding a slim connector interface to an existing connector as well as the tests:
+[Slim Connector PR](https://github.com/danswer-ai/danswer/pull/3303/files)
+
+
 #### Implementing the new Connector
-The connector must subclass one or more of LoadConnector, PollConnector, or EventConnector.
+The connector must subclass one or more of LoadConnector, PollConnector, SlimConnector, or EventConnector.
 
 The `__init__` should take arguments for configuring what documents the connector will and where it finds those
 documents. For example, if you have a wiki site, it may include the configuration for the team, topic, folder, etc. of
