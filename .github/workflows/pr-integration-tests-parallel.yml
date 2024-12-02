@@ -51,9 +51,11 @@ jobs:
         run: |
           echo "Running integration tests..."
           docker run \
-            -e PYTHONPATH=/app \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            --network host \
             danswer/danswer-integration:test \
-            /usr/local/bin/python /app/tests/integration/run.py
+            # allow container to start docker containers
+            python /app/tests/integration/run.py
         continue-on-error: true
         id: run_tests
 
