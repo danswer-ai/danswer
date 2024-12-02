@@ -43,8 +43,6 @@ def set_new_search_settings(
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> IdReturn:
-    print("set_new_search_settings")
-    print(search_settings_new.__dict__)
     """Creates a new EmbeddingModel row and cancels the previous secondary indexing if any
     Gives an error if the same model name is used as the current or secondary index
     """
