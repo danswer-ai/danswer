@@ -37,10 +37,9 @@ export function Citation({
             <div
               onMouseDown={() => {
                 if (updatePresentingDocument) {
-                  console.log("documenti  ", document);
                   updatePresentingDocument(document);
                 } else {
-                  // window.open(link, "_blank");
+                  window.open(link, "_blank");
                 }
               }}
               className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"
@@ -64,10 +63,9 @@ export function Citation({
             <div
               onMouseDown={() => {
                 if (updatePresentingDocument) {
-                  console.log("documenti  ", document);
                   updatePresentingDocument(document);
                 } else {
-                  // window.open(link, "_blank");
+                  window.open(link, "_blank");
                 }
               }}
               className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"

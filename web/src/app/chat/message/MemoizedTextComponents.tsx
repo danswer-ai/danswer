@@ -8,7 +8,6 @@ import isEqual from "lodash/isEqual";
 
 export const MemoizedAnchor = memo(
   ({ docs, updatePresentingDocument, children }: any) => {
-    console.log(children);
     const value = children?.toString();
     if (value?.startsWith("[") && value?.endsWith("]")) {
       const match = value.match(/\[(\d+)\]/);
