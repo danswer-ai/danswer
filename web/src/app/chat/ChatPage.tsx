@@ -109,7 +109,6 @@ import AssistantBanner from "../../components/assistants/AssistantBanner";
 import TextView from "@/components/chat_search/TextView";
 import AssistantSelector from "@/components/chat_search/AssistantSelector";
 import { Modal } from "@/components/Modal";
-import { DocumentSidebar } from "./documentSidebar/DocumentSidebar";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -2829,20 +2828,6 @@ export function ChatPage({
         </div>
         {/* Right Sidebar - DocumentSidebar */}
       </div>
-      <DocumentSidebar
-        initialWidth={350}
-        ref={innerSidebarElementRef}
-        closeSidebar={() => setDocumentSelection(false)}
-        selectedMessage={aiMessage}
-        selectedDocuments={selectedDocuments}
-        toggleDocumentSelection={toggleDocumentSelection}
-        clearSelectedDocuments={clearSelectedDocuments}
-        selectedDocumentTokens={selectedDocumentTokens}
-        maxTokens={maxTokens}
-        isLoading={isFetchingChatMessages}
-        isOpen={documentSelection}
-        setPresentingDocument={setPresentingDocument}
-      />
     </>
   );
 }

@@ -72,10 +72,6 @@ import CsvContent from "../../../components/tools/CSVContent";
 import SourceCard, {
   SeeMoreBlock,
 } from "@/components/chat_search/sources/SourceCard";
-import { Citation } from "@/components/search/results/Citation";
-import { SourceIcon } from "@/components/SourceIcon";
-import { SearchResultIcon } from "@/components/SearchResultIcon";
-import { DocumentMetadataBlock } from "@/components/search/DocumentDisplay";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -334,11 +330,6 @@ export const AIMessage = ({
     new Set((docs || []).map((doc) => doc.source_type))
   ).slice(0, 3);
 
-  const updatePresentingDocument = (documentIndex: number) => {
-    setPresentingDocument &&
-      setPresentingDocument(filteredDocs[documentIndex - 1]);
-  };
-
   const markdownComponents = useMemo(
     () => ({
       a: anchorCallback,
@@ -357,7 +348,7 @@ export const AIMessage = ({
         );
       },
     }),
-    [anchorCallback, paragraphCallback, finalContent, updatePresentingDocument]
+    [anchorCallback, paragraphCallback, finalContent]
   );
 
   const renderedMarkdown = useMemo(() => {

@@ -20,7 +20,7 @@ export function Citation({
   link?: string;
   children?: JSX.Element | string | null | ReactNode;
   index?: number;
-  updatePresentingDocument?: (documentIndex: LoadedDanswerDocument) => void;
+  updatePresentingDocument: (documentIndex: LoadedDanswerDocument) => void;
   document: LoadedDanswerDocument;
   icon?: React.ReactNode;
   url?: string;
@@ -36,7 +36,7 @@ export function Citation({
           <TooltipTrigger asChild>
             <div
               onMouseDown={() => {
-                if (updatePresentingDocument) {
+                if (!link) {
                   updatePresentingDocument(document);
                 } else {
                   window.open(link, "_blank");
@@ -62,7 +62,7 @@ export function Citation({
           <TooltipTrigger asChild>
             <div
               onMouseDown={() => {
-                if (updatePresentingDocument) {
+                if (!link) {
                   updatePresentingDocument(document);
                 } else {
                   window.open(link, "_blank");
