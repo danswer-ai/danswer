@@ -37,6 +37,30 @@ def get_public_key() -> str:
     return response.text
 
 
+async def verify_jwt_token(token: str, async_db_session: AsyncSession) -> User | None:
+    try:
+        public_key_pem = get_public_key()
+        payload = jwt_decode(
+            token,
+            public_key_pem,
+            algorithms=["RS256"],
+            audience=None,
+        )
+        email = payload.get("email")
+        if email:
+            result = await async_db_session.execute(
+                select(User).where(func.lower(User.email) == func.lower(email))
+            )
+            return result.scalars().first()
+    except InvalidTokenError:
+        logger.error("Invalid JWT token")
+        get_public_key.cache_clear()
+    except PyJWTError as e:
+        logger.error(f"JWT decoding error: {str(e)}")
+        get_public_key.cache_clear()
+    return None
+
+
 def verify_auth_setting() -> None:
     # All the Auth flows are valid for EE version
     logger.notice(f"Using Auth Type: {AUTH_TYPE.value}")
@@ -56,34 +80,14 @@ async def optional_user_(
                 cookie=saved_cookie, async_db_session=async_db_session
             )
             user = saml_account.user if saml_account else None
+
     # If user is still None, check for JWT in Authorization header
     if user is None:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header[len("Bearer ") :].strip()
-            try:
-                public_key_pem = get_public_key()
-                # Verify the JWT using the public key
-                payload = jwt_decode(
-                    token,
-                    public_key_pem,
-                    algorithms=["RS256"],
-                    audience=None,
-                )
-                email = payload.get("email")
-                if email:
-                    result = await async_db_session.execute(
-                        select(User).where(func.lower(User.email) == func.lower(email))
-                    )
-                    user = result.scalars().first()
-            except InvalidTokenError:
-                logger.error("Invalid JWT token")
-                # Clear the cached public key
-                get_public_key.cache_clear()
-            except PyJWTError as e:
-                logger.error(f"JWT decoding error: {str(e)}")
-                # Clear the cached public key
-                get_public_key.cache_clear()
+            user = await verify_jwt_token(token, async_db_session)
+
     return user
 
 
