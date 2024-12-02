@@ -29,7 +29,11 @@ logger = setup_logger()
 
 
 @lru_cache()
-def get_public_key() -> str:
+def get_public_key() -> str | None:
+    if JWT_PUBLIC_KEY_URL is None:
+        logger.error("JWT_PUBLIC_KEY_URL is not set")
+        return None
+
     response = requests.get(JWT_PUBLIC_KEY_URL)
     response.raise_for_status()
     return response.text
@@ -38,6 +42,10 @@ def get_public_key() -> str:
 async def verify_jwt_token(token: str, async_db_session: AsyncSession) -> User | None:
     try:
         public_key_pem = get_public_key()
+        if public_key_pem is None:
+            logger.error("Failed to retrieve public key")
+            return None
+
         payload = jwt_decode(
             token,
             public_key_pem,
