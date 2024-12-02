@@ -106,6 +106,7 @@ import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import { Separator } from "@/components/ui/separator";
 import AssistantBanner from "../../components/assistants/AssistantBanner";
+import TextView from "@/components/chat_search/TextView";
 import AssistantSelector from "@/components/chat_search/AssistantSelector";
 import { Modal } from "@/components/Modal";
 
@@ -278,6 +279,9 @@ export function ChatPage({
 
   const [alternativeAssistant, setAlternativeAssistant] =
     useState<Persona | null>(null);
+
+  const [presentingDocument, setPresentingDocument] =
+    useState<DanswerDocument | null>(null);
 
   const {
     visibleAssistants: assistants,
@@ -490,6 +494,7 @@ export function ChatPage({
           clientScrollToBottom(true);
         }
       }
+
       setIsFetchingChatMessages(false);
 
       // if this is a seeded chat, then kick off the AI message generation
@@ -1649,7 +1654,6 @@ export function ChatPage({
     scrollDist,
     endDivRef,
     debounceNumber,
-    waitForScrollRef,
     mobile: settings?.isMobile,
     enableAutoScroll: autoScrollEnabled,
   });
@@ -1946,6 +1950,7 @@ export function ChatPage({
       {popup}
 
       <ChatPopup />
+
       {currentFeedback && (
         <FeedbackModal
           feedbackType={currentFeedback[0]}
@@ -1979,6 +1984,7 @@ export function ChatPage({
         <div className="md:hidden">
           <Modal noPadding noScroll>
             <ChatFilters
+              setPresentingDocument={setPresentingDocument}
               modal={true}
               filterManager={filterManager}
               ccPairs={ccPairs}
@@ -2021,6 +2027,13 @@ export function ChatPage({
             }
             refreshChatSessions();
           }}
+        />
+      )}
+
+      {presentingDocument && (
+        <TextView
+          presentingDocument={presentingDocument}
+          onClose={() => setPresentingDocument(null)}
         />
       )}
 
@@ -2127,6 +2140,7 @@ export function ChatPage({
             `}
             >
               <ChatFilters
+                setPresentingDocument={setPresentingDocument}
                 modal={false}
                 filterManager={filterManager}
                 ccPairs={ccPairs}
@@ -2424,6 +2438,9 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      setPresentingDocument={
+                                        setPresentingDocument
+                                      }
                                       index={i}
                                       selectedMessageForDocDisplay={
                                         selectedMessageForDocDisplay

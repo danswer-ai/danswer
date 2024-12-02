@@ -10,6 +10,7 @@ import {
 import { FeedbackType } from "../types";
 import React, {
   memo,
+  ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -21,6 +22,7 @@ import ReactMarkdown from "react-markdown";
 import {
   DanswerDocument,
   FilteredDanswerDocument,
+  LoadedDanswerDocument,
 } from "@/lib/search/interfaces";
 import { SearchSummary } from "./SearchSummary";
 
@@ -188,6 +190,7 @@ export const AIMessage = ({
   currentPersona,
   otherMessagesCanSwitchTo,
   onMessageSelection,
+  setPresentingDocument,
   index,
 }: {
   index?: number;
@@ -218,6 +221,7 @@ export const AIMessage = ({
   retrievalDisabled?: boolean;
   overriddenModel?: string;
   regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
+  setPresentingDocument?: (document: DanswerDocument) => void;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
@@ -308,7 +312,12 @@ export const AIMessage = ({
 
   const anchorCallback = useCallback(
     (props: any) => (
-      <MemoizedAnchor docs={docs}>{props.children}</MemoizedAnchor>
+      <MemoizedAnchor
+        updatePresentingDocument={setPresentingDocument}
+        docs={docs}
+      >
+        {props.children}
+      </MemoizedAnchor>
     ),
     [docs]
   );

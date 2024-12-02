@@ -6,45 +6,53 @@ import { ValidSources } from "@/lib/types";
 import React, { memo } from "react";
 import isEqual from "lodash/isEqual";
 
-export const MemoizedAnchor = memo(({ docs, children }: any) => {
-  console.log(children);
-  const value = children?.toString();
-  if (value?.startsWith("[") && value?.endsWith("]")) {
-    const match = value.match(/\[(\d+)\]/);
-    if (match) {
-      const index = parseInt(match[1], 10) - 1;
-      const associatedDoc = docs && docs[index];
+export const MemoizedAnchor = memo(
+  ({ docs, updatePresentingDocument, children }: any) => {
+    const value = children?.toString();
+    if (value?.startsWith("[") && value?.endsWith("]")) {
+      const match = value.match(/\[(\d+)\]/);
+      if (match) {
+        const index = parseInt(match[1], 10) - 1;
+        const associatedDoc = docs && docs[index];
 
-      const url = associatedDoc?.link
-        ? new URL(associatedDoc.link).origin + "/favicon.ico"
-        : "";
+        const url = associatedDoc?.link
+          ? new URL(associatedDoc.link).origin + "/favicon.ico"
+          : "";
 
-      const getIcon = (sourceType: ValidSources, link: string) => {
-        return getSourceMetadata(sourceType).icon({ size: 18 });
-      };
+        const getIcon = (sourceType: ValidSources, link: string) => {
+          return getSourceMetadata(sourceType).icon({ size: 18 });
+        };
 
-      const icon =
-        associatedDoc?.source_type === "web" ? (
-          <WebResultIcon url={associatedDoc.link} />
-        ) : (
-          getIcon(
-            associatedDoc?.source_type || "web",
-            associatedDoc?.link || ""
-          )
+        const icon =
+          associatedDoc?.source_type === "web" ? (
+            <WebResultIcon url={associatedDoc.link} />
+          ) : (
+            getIcon(
+              associatedDoc?.source_type || "web",
+              associatedDoc?.link || ""
+            )
+          );
+
+        return (
+          <MemoizedLink
+            updatePresentingDocument={updatePresentingDocument}
+            document={{ ...associatedDoc, icon, url }}
+          >
+            {children}
+          </MemoizedLink>
         );
-
-      return (
-        <MemoizedLink document={{ ...associatedDoc, icon, url }}>
-          {children}
-        </MemoizedLink>
-      );
+      }
     }
+    return (
+      <MemoizedLink updatePresentingDocument={updatePresentingDocument}>
+        {children}
+      </MemoizedLink>
+    );
   }
-  return <MemoizedLink>{children}</MemoizedLink>;
-});
+);
 
 export const MemoizedLink = memo((props: any) => {
-  const { node, document, ...rest } = props;
+  const { node, document, updatePresentingDocument, ...rest } = props;
   const value = rest.children;
 
   if (value?.toString().startsWith("*")) {
@@ -58,22 +66,21 @@ export const MemoizedLink = memo((props: any) => {
         icon={document?.icon as React.ReactNode}
         link={rest?.href}
         document={document as LoadedDanswerDocument}
+        updatePresentingDocument={updatePresentingDocument}
       >
         {rest.children}
       </Citation>
     );
-  } else {
-    return (
-      <a
-        onMouseDown={() =>
-          rest.href ? window.open(rest.href, "_blank") : undefined
-        }
-        className="cursor-pointer text-link hover:text-link-hover"
-      >
-        {rest.children}
-      </a>
-    );
   }
+
+  return (
+    <a
+      onMouseDown={() => rest.href && window.open(rest.href, "_blank")}
+      className="cursor-pointer text-link hover:text-link-hover"
+    >
+      {rest.children}
+    </a>
+  );
 });
 
 export const MemoizedParagraph = memo(

@@ -6,13 +6,16 @@ import { buildDocumentSummaryDisplay } from "@/components/search/DocumentDisplay
 import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBadge";
 import { MetadataBadge } from "@/components/MetadataBadge";
 import { WebResultIcon } from "@/components/WebResultIcon";
+import { Dispatch, SetStateAction } from "react";
 
 interface DocumentDisplayProps {
+  closeSidebar: () => void;
   document: DanswerDocument;
   modal?: boolean;
   isSelected: boolean;
   handleSelect: (documentId: string) => void;
   tokenLimitReached: boolean;
+  setPresentingDocument: Dispatch<SetStateAction<DanswerDocument | null>>;
 }
 
 export function DocumentMetadataBlock({
@@ -55,17 +58,31 @@ export function DocumentMetadataBlock({
 }
 
 export function ChatDocumentDisplay({
+  closeSidebar,
   document,
   modal,
   isSelected,
   handleSelect,
   tokenLimitReached,
+  setPresentingDocument,
 }: DocumentDisplayProps) {
   const isInternet = document.is_internet;
 
   if (document.score === null) {
     return null;
   }
+
+  const handleViewFile = async () => {
+    if (document.link) {
+      window.open(document.link, "_blank");
+    } else {
+      closeSidebar();
+
+      setTimeout(async () => {
+        setPresentingDocument(document);
+      }, 100);
+    }
+  };
 
   return (
     <div className={`opacity-100   ${modal ? "w-[90vw]" : "w-full"}`}>
@@ -74,11 +91,9 @@ export function ChatDocumentDisplay({
           isSelected ? "bg-gray-200" : "hover:bg-background-125"
         }`}
       >
-        <a
-          href={document.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cursor-pointer flex flex-col px-2 py-1.5"
+        <button
+          onClick={handleViewFile}
+          className="cursor-pointer text-left flex flex-col px-2 py-1.5"
         >
           <div className="line-clamp-1 mb-1 flex h-6 items-center gap-2 text-xs">
             {document.is_internet || document.source_type === "web" ? (
@@ -111,7 +126,7 @@ export function ChatDocumentDisplay({
               />
             )}
           </div>
-        </a>
+        </button>
       </div>
     </div>
   );
