@@ -8,22 +8,20 @@ from litellm import BadRequestError
 from openai import RateLimitError
 from PIL import Image
 
-from danswer.connectors.confluence.utils import _get_embedded_image_attachments
-from danswer.connectors.confluence.utils import _summarize_page_images
 from danswer.connectors.confluence.utils import attachment_to_content
 from danswer.connectors.confluence.utils import ImageSummarization
 from danswer.file_processing.image_summarization import _encode_image
 from danswer.file_processing.image_summarization import _resize_image_if_needed
 from danswer.file_processing.image_summarization import _summarize_image
-
+from danswer.llm.interfaces import LLM
 
 # Mocking global variables
-CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING = True
+CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED = True
 CONFLUENCE_IMAGE_SUMMARIZATION_USER_PROMPT = "Summarize this image"
 
 
 # Mock LLM class for testing
-class MockLLM:
+class MockLLM(LLM):
     def invoke(self, messages):
         # Simulate a response object with a 'content' attribute
         class Response:
@@ -183,25 +181,7 @@ def confluence_xml():
     """
 
 
-def test_get_embedded_image_attachments_with_image(sample_page_image, confluence_xml):
-    result = _get_embedded_image_attachments(sample_page_image, confluence_xml)
-    print(result)
-
-    assert len(result) == 1
-    assert result[0]["id"] == sample_page_image["id"]
-    assert result[0]["title"] == sample_page_image["title"]
-
-
-def test_get_embedded_image_attachment_with_no_image_on_page(
-    sample_page_no_image, confluence_xml
-):
-    result = _get_embedded_image_attachments(sample_page_no_image, confluence_xml)
-
-    assert len(result) == 0
-
-
-@pytest.mark.asyncio
-async def test_summarize_page_images(sample_page_image, confluence_xml):
+def test_summarize_page_images(sample_page_image, confluence_xml):
     USER_PROMPT = "Summarize this image"
 
     # Mock the Confluence client
@@ -228,12 +208,11 @@ async def test_summarize_page_images(sample_page_image, confluence_xml):
                 "danswer.file_processing.image_summarization.summarize_image_pipeline",
                 return_value="This is a summary of the image.",
             ):
-                result = await _summarize_page_images(
+                result = _summarize_image(
                     sample_page_image,
+                    MockLLM(),
                     mock_confluence_client,
                     USER_PROMPT,
-                    confluence_xml,
-                    MockLLM(),
                 )
                 print(result)
 

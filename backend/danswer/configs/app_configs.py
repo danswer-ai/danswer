@@ -457,9 +457,8 @@ PARSE_WITH_TRAFILATURA = os.environ.get("PARSE_WITH_TRAFILATURA", "").lower() ==
 # Multimodal-Settings
 # # enable usage of summaries
 # -> add summaries to Vespa when indexing and therefore use them in the answer generation as well
-CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING = (
-    os.environ.get("CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING", "").lower()
-    == "true"
+CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED = (
+    os.environ.get("CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED", "").lower() == "true"
 )
 
 #####

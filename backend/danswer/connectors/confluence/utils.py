@@ -1,4 +1,3 @@
-import asyncio
 import base64
 import io
 from datetime import datetime
@@ -10,7 +9,6 @@ from urllib.parse import quote
 
 import bs4  # type: ignore
 import requests  # type: ignore
-from atlassian import Confluence  # type:ignore
 from attr import dataclass  # type: ignore
 from bs4 import SoupStrainer  # type: ignore
 
@@ -19,7 +17,7 @@ from danswer.configs.app_configs import (
 )
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESHOLD
 from danswer.configs.app_configs import (
-    CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING,
+    CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED,
 )
 from danswer.configs.chat_configs import CONFLUENCE_IMAGE_SUMMARIZATION_SYSTEM_PROMPT
 from danswer.configs.chat_configs import CONFLUENCE_IMAGE_SUMMARIZATION_USER_PROMPT
@@ -203,36 +201,29 @@ def attachment_to_content(
     attachment: dict[str, Any],
     page_context: str,
     llm: LLM,
-) -> str | None:
+) -> str | ImageSummarization | None:
     """If it returns None, assume that we should skip this attachment."""
-    if (
-        attachment["metadata"]["mediaType"]
-        in [
-            "image/jpeg",
-            "image/png",
-            "image/gif",
-            "image/svg+xml",
-            "video/mp4",
-            "video/quicktime",
-        ]
-        or "GLIFFY" in attachment["history"]["lastUpdated"]["message"]
-    ):
-        page_images = None
+    media_type = attachment["metadata"]["mediaType"]
 
-        if CONFLUENCE_IMAGE_SUMMARIZATION_MULTIMODAL_ANSWERING:
-            # get images from page
-            page_images = asyncio.run(
-                _summarize_page_images(
-                    attachment,
-                    confluence_client,
-                    CONFLUENCE_IMAGE_SUMMARIZATION_USER_PROMPT,
-                    page_context,
-                    llm,
+    if media_type.startswith("video/"):
+        logger.warning("Skipping video attachment %s", attachment["title"])
+        return None
+
+    if media_type.startswith("image/"):
+        if CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED:
+            try:
+                # get images from page
+                summarization = _summarize_image_attachment(
+                    attachment=attachment,
+                    page_context=page_context,
+                    confluence_client=confluence_client,
+                    llm=llm,
                 )
-            )
-            return page_images
-
+                return summarization
+            except Exception as e:
+                logger.error(f"Failed to summarize image: {attachment}", exc_info=e)
         else:
+            logger.warning("Skipping image attachment %s", attachment["title"])
             return None
 
     download_link = confluence_client.url + attachment["_links"]["download"]
@@ -319,64 +310,49 @@ def datetime_from_string(datetime_string: str) -> datetime:
 
 
 def _attachment_to_download_link(
-    confluence_client: Confluence, attachment: dict[str, Any]
+    confluence_client: OnyxConfluence, attachment: dict[str, Any]
 ) -> str:
     """Extracts the download link to images."""
     return confluence_client.url + attachment["_links"]["download"]
 
 
-async def _summarize_page_images(
-    page: Dict[str, Any],
-    confluence_client: Confluence,
-    USER_PROMPT: str,
+def _summarize_image_attachment(
+    attachment: Dict[str, Any],
     page_context: str,
+    confluence_client: OnyxConfluence,
     llm: LLM,
-) -> List[ImageSummarization]:
-    """Create LLM summaries of all embedded (used) image attachments on the given page"""
+) -> ImageSummarization:
+    title = attachment["title"]
+    download_link = _attachment_to_download_link(confluence_client, attachment)
 
-    attachments = _get_embedded_image_attachments(page, page_context)
-
-    async def summarize_attachment(attachment, USER_PROMPT):
-        title = attachment["title"]
-        download_link = _attachment_to_download_link(confluence_client, attachment)
-
-        try:
-            # get image from url
-            image_data = confluence_client.get(
-                download_link, absolute=True, not_json_response=True
-            )
-        except requests.exceptions.RequestException as e:
-            logger.error(
-                "Failed to fetch image for summarization. url=%s",
-                download_link,
-                exc_info=e,
-            )
-            return None
-
-        # get image summary
-        # format user prompt: add page title and XML content of page to provide a better summarization
-        USER_PROMPT = CONFLUENCE_IMAGE_SUMMARIZATION_USER_PROMPT.format(
-            title=title, page_title=page["title"], confluence_xml=page_context
+    try:
+        # get image from url
+        image_data = confluence_client.get(
+            download_link, absolute=True, not_json_response=True
         )
-        summary = summarize_image_pipeline(
-            llm, image_data, USER_PROMPT, CONFLUENCE_IMAGE_SUMMARIZATION_SYSTEM_PROMPT
-        )
+    except requests.exceptions.RequestException as e:
+        raise ValueError(
+            f"Failed to fetch image for summarization from {download_link}"
+        ) from e
 
-        base64_image = base64.b64encode(image_data).decode("utf-8")
-
-        return ImageSummarization(
-            url=download_link,
-            title=title,
-            base64_encoded=base64_image,
-            media_type=attachment["metadata"]["mediaType"],
-            summary=summary,
-        )
-
-    results = await asyncio.gather(
-        *[summarize_attachment(attachment, USER_PROMPT) for attachment in attachments]
+    # get image summary
+    # format user prompt: add page title and XML content of page to provide a better summarization
+    user_prompt = CONFLUENCE_IMAGE_SUMMARIZATION_USER_PROMPT.format(
+        title=title, page_title=attachment["title"], confluence_xml=page_context
+    )
+    summary = summarize_image_pipeline(
+        llm, image_data, user_prompt, CONFLUENCE_IMAGE_SUMMARIZATION_SYSTEM_PROMPT
     )
 
-    return [result for result in results if result is not None]
+    base64_image = base64.b64encode(image_data).decode("utf-8")
+
+    return ImageSummarization(
+        url=download_link,
+        title=title,
+        base64_encoded=base64_image,
+        media_type=attachment["metadata"]["mediaType"],
+        summary=summary,
+    )
 
 
 def _get_embedded_image_attachments(
