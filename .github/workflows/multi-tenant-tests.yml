@@ -16,10 +16,8 @@ env:
 
 jobs:
   multi-tenant-integration-tests:
-    runs-on: ubuntu-latest
-
-    # runs-on:
-    #   [runs-on, runner=8cpu-linux-x64, ram=16, "run-id=${{ github.run_id }}"]
+    runs-on:
+      [runs-on, runner=8cpu-linux-x64, ram=16, "run-id=${{ github.run_id }}"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
