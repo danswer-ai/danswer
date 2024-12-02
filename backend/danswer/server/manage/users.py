@@ -34,7 +34,6 @@ from danswer.auth.users import optional_user
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import ENABLE_EMAIL_INVITES
 from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
-from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
 from danswer.db.api_key import is_api_key_email_address
@@ -64,6 +63,7 @@ from danswer.server.models import MinimalUserSnapshot
 from danswer.server.utils import send_user_email_invite
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
+from ee.danswer.configs.app_configs import SUPER_USERS
 from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
