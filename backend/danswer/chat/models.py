@@ -25,6 +25,7 @@ class LlmDoc(BaseModel):
     updated_at: datetime | None
     link: str | None
     source_links: dict[int, str] | None
+    match_highlights: list[str] | None
 
 
 # First chunk of info for streaming QA

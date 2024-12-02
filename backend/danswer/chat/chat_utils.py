@@ -31,6 +31,7 @@ def llm_doc_from_inference_section(inference_section: InferenceSection) -> LlmDo
         if inference_section.center_chunk.source_links
         else None,
         source_links=inference_section.center_chunk.source_links,
+        match_highlights=inference_section.center_chunk.match_highlights,
     )
 
 

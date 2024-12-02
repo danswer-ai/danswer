@@ -96,7 +96,7 @@ export function SourceSelector({
     });
   };
 
-  let allSourcesSelected = selectedSources.length > 0;
+  let allSourcesSelected = selectedSources.length == existingSources.length;
 
   const toggleAllSources = () => {
     if (allSourcesSelected) {
