@@ -63,19 +63,13 @@ import GeneratingImageDisplay from "../tools/GeneratingImageDisplay";
 import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
-import {
-  MemoizedA,
-  MemoizedLink,
-  MemoizedParagraph,
-} from "./MemoizedTextComponents";
+import { MemoizedAnchor, MemoizedParagraph } from "./MemoizedTextComponents";
 import { extractCodeText } from "./codeUtils";
 import ToolResult from "../../../components/tools/ToolResult";
 import CsvContent from "../../../components/tools/CSVContent";
 import SourceCard, {
   SeeMoreBlock,
 } from "@/components/chat_search/sources/SourceCard";
-import { getSourceMetadata } from "@/lib/sources";
-import { WebResultIcon } from "@/components/WebResultIcon";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -308,11 +302,14 @@ export const AIMessage = ({
   }
 
   const paragraphCallback = useCallback(
-    (props: any) => <MemoizedParagraph children={props.children} />,
+    (props: any) => <MemoizedParagraph>{props.children}</MemoizedParagraph>,
     []
   );
-  const aCallback = useCallback(
-    (props: any) => <MemoizedA docs={docs} children={props.children} />,
+
+  const anchorCallback = useCallback(
+    (props: any) => (
+      <MemoizedAnchor docs={docs}>{props.children}</MemoizedAnchor>
+    ),
     [docs]
   );
 
@@ -326,9 +323,9 @@ export const AIMessage = ({
 
   const markdownComponents = useMemo(
     () => ({
-      a: aCallback,
+      a: anchorCallback,
       p: paragraphCallback,
-      code: ({ node, className, children, ...props }: any) => {
+      code: ({ node, className, children }: any) => {
         const codeText = extractCodeText(
           node,
           finalContent as string,
@@ -342,7 +339,7 @@ export const AIMessage = ({
         );
       },
     }),
-    [aCallback, paragraphCallback, finalContent]
+    [anchorCallback, paragraphCallback, finalContent]
   );
 
   const renderedMarkdown = useMemo(() => {

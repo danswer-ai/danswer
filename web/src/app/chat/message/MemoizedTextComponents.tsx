@@ -6,7 +6,7 @@ import { ValidSources } from "@/lib/types";
 import React, { memo } from "react";
 import isEqual from "lodash/isEqual";
 
-export const MemoizedA = memo(({ docs, children }: any) => {
+export const MemoizedAnchor = memo(({ docs, children }: any) => {
   console.log(children);
   const value = children?.toString();
   if (value?.startsWith("[") && value?.endsWith("]")) {
@@ -24,7 +24,7 @@ export const MemoizedA = memo(({ docs, children }: any) => {
       };
 
       const icon =
-        associatedDoc?.source_type == "web" ? (
+        associatedDoc?.source_type === "web" ? (
           <WebResultIcon url={associatedDoc.link} />
         ) : (
           getIcon(
@@ -86,5 +86,6 @@ export const MemoizedParagraph = memo(
   }
 );
 
+MemoizedAnchor.displayName = "MemoizedAnchor";
 MemoizedLink.displayName = "MemoizedLink";
 MemoizedParagraph.displayName = "MemoizedParagraph";
