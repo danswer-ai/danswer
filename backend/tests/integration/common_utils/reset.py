@@ -211,7 +211,6 @@ def reset_postgres_multitenant() -> None:
     for schema in tenant_schemas:
         schema_name = schema[0]
         cur.execute(f'DROP SCHEMA "{schema_name}" CASCADE')
-
     cur.close()
     conn.close()
 
