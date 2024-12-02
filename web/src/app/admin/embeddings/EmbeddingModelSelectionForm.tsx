@@ -132,6 +132,7 @@ export function EmbeddingModelSelection({
   };
 
   const onSelectOpenSource = async (model: HostedEmbeddingModel) => {
+    console.log("model", model);
     if (selectedProvider?.model_name === INVALID_OLD_MODEL) {
       await onConfirmSelection(model);
     } else {
