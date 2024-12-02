@@ -373,32 +373,24 @@ def start_redis(
     print(f"Starting Redis for instance {instance_num}...")
 
     redis_port = get_random_port()
+    container_name = f"redis-danswer-{instance_num}"
 
-    # Create a Redis-specific compose file
-    redis_compose = {
-        "services": {
-            f"cache_{instance_num}": {
-                "image": "redis:7.4-alpine",
-                "ports": [f"{redis_port}:6379"],
-                "command": 'redis-server --save "" --appendonly no',
-            },
-        },
-    }
-
-    temp_compose = Path(f"/tmp/docker-compose.redis.{instance_num}.yml")
-    with open(temp_compose, "w") as f:
-        yaml.dump(redis_compose, f)
-
+    # Start Redis using docker run
     subprocess.run(
         [
             "docker",
-            "compose",
-            "-f",
-            str(temp_compose),
-            "-p",
-            f"redis-danswer-{instance_num}",
-            "up",
+            "run",
             "-d",
+            "--name",
+            container_name,
+            "-p",
+            f"{redis_port}:6379",
+            "redis:7.4-alpine",
+            "redis-server",
+            "--save",
+            '""',
+            "--appendonly",
+            "no",
         ],
         check=True,
     )
@@ -544,27 +536,13 @@ def run_x_instances(
             check=True,
         )
 
-        # Stop all Redis instances
-        for compose_file in Path("/tmp").glob("docker-compose.redis.*.yml"):
-            instance_id = compose_file.stem.split(".")[
-                -1
-            ]  # Extract instance number from filename
+        # Stop and remove all Redis containers
+        for instance_id in range(1, num_instances + 1):
+            container_name = f"redis-danswer-{instance_id}"
             try:
-                subprocess.run(
-                    [
-                        "docker",
-                        "compose",
-                        "-f",
-                        str(compose_file),
-                        "-p",
-                        f"redis-danswer-{instance_id}",
-                        "down",
-                    ],
-                    check=True,
-                )
-                compose_file.unlink()  # Remove the temporary compose file
+                subprocess.run(["docker", "rm", "-f", container_name], check=True)
             except subprocess.CalledProcessError:
-                print(f"Error cleaning up Redis instance {instance_id}")
+                print(f"Error cleaning up Redis container {container_name}")
 
         for pid in _pids:
             cleanup_pid(pid)
@@ -581,8 +559,9 @@ def run_x_instances(
     prepare_vespa(instance_ids, shared_services_config.vespa_tenant_port)
 
     # Use ThreadPool to launch instances in parallel and collect results
+    # NOTE: only kick off 10 at a time to avoid overwhelming the system
     print("Launching instances...")
-    with ThreadPool(processes=num_instances) as pool:
+    with ThreadPool(processes=min(10, num_instances)) as pool:
         # Create list of arguments for each instance
         launch_args = [
             (
@@ -600,7 +579,7 @@ def run_x_instances(
 
     # Wait for all instances to be healthy
     print("Waiting for instances to be healthy...")
-    with ThreadPool(processes=len(port_configs)) as pool:
+    with ThreadPool(processes=min(10, len(port_configs))) as pool:
         pool.map(wait_for_instance, port_configs)
 
     print("All instances launched!")
