@@ -1,0 +1,113 @@
+name: Run Multi-Tenant Integration Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - "release/**"
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+  CONFLUENCE_TEST_SPACE_URL: ${{ secrets.CONFLUENCE_TEST_SPACE_URL }}
+  CONFLUENCE_USER_NAME: ${{ secrets.CONFLUENCE_USER_NAME }}
+  CONFLUENCE_ACCESS_TOKEN: ${{ secrets.CONFLUENCE_ACCESS_TOKEN }}
+
+jobs:
+  multi-tenant-integration-tests:
+    runs-on: ubuntu-latest
+
+    # runs-on:
+    #   [runs-on, runner=8cpu-linux-x64, ram=16, "run-id=${{ github.run_id }}"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Pull Required Docker Images
+        run: |
+          docker pull danswer/danswer-backend:latest
+          docker tag danswer/danswer-backend:latest danswer/danswer-backend:test
+
+          docker pull danswer/danswer-model-server:latest
+          docker tag danswer/danswer-model-server:latest danswer/danswer-model-server:test
+
+          docker pull danswer/danswer-web-server:latest
+          docker tag danswer/danswer-web-server:latest danswer/danswer-web-server:test
+
+          docker pull danswer/control-tenants-service:latest
+          docker tag danswer/control-tenants-service:latest danswer/control-tenants-service:test
+
+      - name: Build Integration Test Docker Image
+        uses: ./.github/actions/custom-build-and-push
+        with:
+          context: ./backend
+          file: ./backend/tests/integration/Dockerfile
+          platforms: linux/amd64
+          tags: danswer/danswer-integration:test
+          push: false
+          load: true
+
+      - name: Start Docker Containers for Multi-Tenant Tests
+        run: |
+          cd deployment/docker_compose
+          ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true \
+          MULTI_TENANT=true \
+          INTEGRATION_TEST_MODE=true \  
+          AUTH_TYPE=basic \
+          REQUIRE_EMAIL_VERIFICATION=false \
+          DISABLE_TELEMETRY=true \
+          IMAGE_TAG=test \
+          CONTROL_TENANTS_SERVICE_IMAGE=danswer/control-tenants-service:test \
+          docker compose -f docker-compose.dev.yml -f docker-compose.multi-tenant.yml -p danswer-stack up -d
+
+      - name: Run Multi-Tenant Integration Tests
+        run: |
+          echo "Running multi-tenant integration tests..."
+          docker run --rm --network danswer-stack_default \
+            --name test-runner \
+            -e POSTGRES_HOST=relational_db \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD=password \
+            -e POSTGRES_DB=postgres \
+            -e VESPA_HOST=index \
+            -e REDIS_HOST=cache \
+            -e API_SERVER_HOST=api_server \
+            -e OPENAI_API_KEY=${OPENAI_API_KEY} \
+            -e SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN} \
+            -e TEST_WEB_HOSTNAME=test-runner \
+            -e AUTH_TYPE=cloud \
+            -e MULTI_TENANT=true \
+            danswer/danswer-integration:test \
+            /app/tests/integration/multitenant_tests
+        continue-on-error: true
+        id: run_multitenant_tests
+
+      - name: Check Multi-Tenant Test Results
+        run: |
+          if [ ${{ steps.run_multitenant_tests.outcome }} == 'failure' ]; then
+            echo "Integration tests failed. Exiting with error."
+            exit 1
+          else
+            echo "All integration tests passed successfully."
+          fi
+
+      - name: Stop Docker Containers
+        run: |
+          cd deployment/docker_compose
+          docker compose -f docker-compose.dev.yml -p danswer-stack down -v
+
+      - name: Upload Logs
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs
+          path: ${{ github.workspace }}/docker-compose.log

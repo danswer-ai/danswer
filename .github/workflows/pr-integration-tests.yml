@@ -8,7 +8,7 @@ on:
   pull_request:
     branches:
       - main
-      - 'release/**'
+      - "release/**"
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -16,11 +16,12 @@ env:
   CONFLUENCE_TEST_SPACE_URL: ${{ secrets.CONFLUENCE_TEST_SPACE_URL }}
   CONFLUENCE_USER_NAME: ${{ secrets.CONFLUENCE_USER_NAME }}
   CONFLUENCE_ACCESS_TOKEN: ${{ secrets.CONFLUENCE_ACCESS_TOKEN }}
-  
+
 jobs:
   integration-tests:
     # See https://runs-on.com/runners/linux/
-    runs-on: [runs-on,runner=8cpu-linux-x64,ram=16,"run-id=${{ github.run_id }}"]
+    runs-on:
+      [runs-on, runner=8cpu-linux-x64, ram=16, "run-id=${{ github.run_id }}"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,9 +37,9 @@ jobs:
 
       # tag every docker image with "test" so that we can spin up the correct set
       # of images during testing
-      
+
       # We don't need to build the Web Docker image since it's not yet used
-      # in the integration tests. We have a separate action to verify that it builds 
+      # in the integration tests. We have a separate action to verify that it builds
       # successfully.
       - name: Pull Web Docker image
         run: |
@@ -50,7 +51,7 @@ jobs:
       # https://runs-on.com/caching/s3-cache-for-github-actions/
       # https://runs-on.com/caching/docker/
       # https://github.com/moby/buildkit#s3-cache-experimental
-      
+
       # images are built and run locally for testing purposes. Not pushed.
       - name: Build Backend Docker image
         uses: ./.github/actions/custom-build-and-push
@@ -75,7 +76,7 @@ jobs:
           load: true
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
           cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
-      
+
       - name: Build integration test Docker image
         uses: ./.github/actions/custom-build-and-push
         with:
@@ -88,58 +89,7 @@ jobs:
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
           cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
 
-      # Start containers for multi-tenant tests
-      - name: Start Docker containers for multi-tenant tests
-        run: |
-          cd deployment/docker_compose
-          ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true \
-          MULTI_TENANT=true \
-          AUTH_TYPE=basic \
-          REQUIRE_EMAIL_VERIFICATION=false \
-          DISABLE_TELEMETRY=true \
-          IMAGE_TAG=test \
-          docker compose -f docker-compose.dev.yml -p danswer-stack up -d
-        id: start_docker_multi_tenant
-
-      # In practice, `cloud` Auth type would require OAUTH credentials to be set.
-      - name: Run Multi-Tenant Integration Tests
-        run: |
-          echo "Running integration tests..."
-          docker run --rm --network danswer-stack_default \
-            --name test-runner \
-            -e POSTGRES_HOST=relational_db \
-            -e POSTGRES_USER=postgres \
-            -e POSTGRES_PASSWORD=password \
-            -e POSTGRES_DB=postgres \
-            -e VESPA_HOST=index \
-            -e REDIS_HOST=cache \
-            -e API_SERVER_HOST=api_server \
-            -e OPENAI_API_KEY=${OPENAI_API_KEY} \
-            -e SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN} \
-            -e TEST_WEB_HOSTNAME=test-runner \
-            -e AUTH_TYPE=cloud \
-            -e MULTI_TENANT=true \
-            danswer/danswer-integration:test \
-            /app/tests/integration/multitenant_tests
-        continue-on-error: true
-        id: run_multitenant_tests
-
-      - name: Check multi-tenant test results
-        run: |
-          if [ ${{ steps.run_tests.outcome }} == 'failure' ]; then
-            echo "Integration tests failed. Exiting with error."
-            exit 1
-          else
-            echo "All integration tests passed successfully."
-          fi 
-
-      - name: Stop multi-tenant Docker containers
-        run: |
-          cd deployment/docker_compose
-          docker compose -f docker-compose.dev.yml -p danswer-stack down -v
-
-
-      - name: Start Docker containers 
+      - name: Start Docker containers
         run: |
           cd deployment/docker_compose
           ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=true \
@@ -153,12 +103,12 @@ jobs:
       - name: Wait for service to be ready
         run: |
           echo "Starting wait-for-service script..."
-          
+
           docker logs -f danswer-stack-api_server-1 &
 
           start_time=$(date +%s)
           timeout=300  # 5 minutes in seconds
-          
+
           while true; do
             current_time=$(date +%s)
             elapsed_time=$((current_time - start_time))
@@ -229,7 +179,7 @@ jobs:
         run: |
           cd deployment/docker_compose
           docker compose -f docker-compose.dev.yml -p danswer-stack down -v
-      
+
       - name: Upload logs
         if: success() || failure()
         uses: actions/upload-artifact@v4
