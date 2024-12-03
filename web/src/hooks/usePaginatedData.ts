@@ -124,18 +124,22 @@ export function usePaginatedData<T>({
     [endpoint, pagesPerBatch, itemsPerPage, query]
   );
 
-  const goToPage = useCallback(
-    (newPage: number) => {
-      setCurrentPage(newPage);
-
+  const updatePageUrl = useCallback(
+    (page: number) => {
       if (currentPath) {
-        router.replace(`${currentPath}?page=${newPage}`, { scroll: false });
-        // remove if we dont want it to jump to top
-        // and check pageSelector component for the rest of page adjustment logic
+        router.replace(`${currentPath}?page=${page}`, { scroll: false });
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       }
     },
     [currentPath, router]
+  );
+
+  const goToPage = useCallback(
+    (newPage: number) => {
+      setCurrentPage(newPage);
+      updatePageUrl(newPage);
+    },
+    [updatePageUrl]
   );
 
   // Effect to load current and adjacent batches
@@ -188,11 +192,12 @@ export function usePaginatedData<T>({
     await fetchBatchData(batchNum);
   }, [currentPage, pagesPerBatch, fetchBatchData]);
 
-  // Reset state when path changes
+  // Reset state when path or query changes
   useEffect(() => {
-    setCurrentPage(1);
     setCachedBatches({});
-  }, [currentPath]);
+    setTotalItems(0);
+    goToPage(1);
+  }, [currentPath, query]);
 
   return {
     currentPage,

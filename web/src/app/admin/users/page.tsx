@@ -2,7 +2,7 @@
 import InvitedUserTable from "@/components/admin/users/InvitedUserTable";
 import SignedUpUserTable from "@/components/admin/users/SignedUpUserTable";
 import { SearchBar } from "@/components/search/SearchBar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiPlusSquare } from "react-icons/fi";
 import { Modal } from "@/components/Modal";
 
@@ -11,7 +11,7 @@ import Text from "@/components/ui/text";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { UsersIcon } from "@/components/icons/icons";
-import useSWR, { mutate } from "swr";
+import { mutate } from "swr";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import BulkAdd from "@/components/admin/users/BulkAdd";
 
@@ -48,24 +48,21 @@ const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   );
 };
 
-const UsersTables = ({
-  q,
-  setPopup,
-}: {
-  q: string;
-  setPopup: (spec: PopupSpec) => void;
-}) => {
-  return (
-    <>
-      <SignedUpUserTable setPopup={setPopup} q={q} />
-    </>
-  );
+const useDebounce = <T,>(value: T, delay: number): [T, (value: T) => void] => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return [debouncedValue, setDebouncedValue] as const;
 };
 
 const SearchableTables = () => {
   const { popup, setPopup } = usePopup();
-  const [query, setQuery] = useState("");
-  const [q, setQ] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useDebounce(searchQuery, 300);
 
   return (
     <div>
@@ -73,16 +70,16 @@ const SearchableTables = () => {
 
       <div className="flex flex-col gap-y-4">
         <div className="flex gap-x-4">
-          <AddUserButton setPopup={setPopup} q={q} />
+          <AddUserButton setPopup={setPopup} q={debouncedQuery} />
           <div className="flex-grow">
             <SearchBar
-              query={query}
-              setQuery={setQuery}
-              onSearch={() => setQ(query)}
+              query={searchQuery}
+              setQuery={setSearchQuery}
+              onSearch={() => setDebouncedQuery(searchQuery)}
             />
           </div>
         </div>
-        <UsersTables q={q} setPopup={setPopup} />
+        <SignedUpUserTable q={debouncedQuery} setPopup={setPopup} />
       </div>
     </div>
   );
