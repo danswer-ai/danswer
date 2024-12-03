@@ -5,8 +5,11 @@ from datetime import datetime
 from datetime import timezone
 from typing import Any
 
-import discord
+from discord import Client
 from discord.channel import TextChannel
+from discord.enums import MessageType
+from discord.flags import Intents
+from discord.message import Message as DiscordMessage
 
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -22,7 +25,63 @@ from danswer.utils.logger import setup_logger
 logger = setup_logger()
 
 
-class DanswerDiscordClient(discord.Client):
+_DISCORD_DOC_ID_PREFIX = "DISCORD_"
+_SNIPPET_LENGTH = 30
+
+
+def _convert_message_to_document(
+    message: DiscordMessage, sections: list[Section]
+) -> Document:
+    """
+    Convert a discord message to a document
+    Sections are collected before calling this function because it relies on async
+        calls to fetch the thread history if there is one
+    """
+
+    metadata: dict[str, str | list[str]] = {}
+    semantic_substring = ""
+
+    # Only messages from TextChannels will make it here but we have to check for it anyways
+    if isinstance(message.channel, TextChannel) and (
+        channel_name := message.channel.name
+    ):
+        metadata["Channel"] = channel_name
+        semantic_substring += f" in Channel: #{channel_name}"
+
+    # Single messages dont have a title
+    title = ""
+
+    # If there is a thread, add more detail to the metadata, title, and semantic identifier
+    if message.thread:
+        # If its a thread, update the metadata, title, and semantic_substring
+        metadata["Thread"] = message.thread.name
+
+        # Threads do have a title
+        title = message.thread.name
+
+        # Add more detail to the semantic identifier if available
+        semantic_substring += f" in Thread: {message.thread.name}"
+
+    snippet: str = (
+        message.content[:_SNIPPET_LENGTH].rstrip() + "..."
+        if len(message.content) > _SNIPPET_LENGTH
+        else message.content
+    )
+
+    semantic_identifier = f"{message.author.name} said{semantic_substring}: {snippet}"
+
+    return Document(
+        id=f"{_DISCORD_DOC_ID_PREFIX}{message.id}",
+        source=DocumentSource.DISCORD,
+        semantic_identifier=semantic_identifier,
+        doc_updated_at=message.edited_at,
+        title=title,
+        sections=sections,
+        metadata=metadata,
+    )
+
+
+class DanswerDiscordClient(Client):
     def __init__(
         self,
         channel_names: list[str] | None = None,
@@ -56,6 +115,9 @@ class DanswerDiscordClient(discord.Client):
         self.ready = asyncio.Event()
         self.done = False
 
+    async def on_ready(self) -> None:
+        self.ready.set()
+
     async def _fetch_filtered_channels(self) -> list[TextChannel]:
         filtered_channels: list[TextChannel] = []
 
@@ -74,86 +136,59 @@ class DanswerDiscordClient(discord.Client):
         )
         return filtered_channels
 
-    async def on_ready(self) -> None:
-        self.ready.set()
+    async def _fetch_documents_from_channel(
+        self, channel: TextChannel
+    ) -> AsyncIterable[Document]:
+        async for channel_message in channel.history(
+            after=self.start_time,
+            before=self.end_time,
+        ):
+            # Skip messages that are not the default type
+            if channel_message.type != MessageType.default:
+                continue
 
-    async def process_messages(self) -> AsyncIterable[Document]:
-        await self.ready.wait()
-        try:
-            filtered_channels: list[TextChannel] = await self._fetch_filtered_channels()
+            # Reset sections for each top level message since each message is a new document
+            # Add the initial message as a section
+            sections: list[Section] = [
+                Section(
+                    text=channel_message.content,
+                    link=channel_message.jump_url,
+                )
+            ]
 
-            for channel in filtered_channels:
-                # process the messages not in any thread
-                sections: list[Section] = []
-                metadata: dict[str, str | list[str]] = {"Channel": channel.name}
-                title = ""
-
-                async for channel_message in channel.history(
+            # If there is a thread, add all the messages from the thread to the sections
+            # This is done here because the thread history must be fetched async
+            if channel_message.thread:
+                async for thread_message in channel_message.thread.history(
                     after=self.start_time,
                     before=self.end_time,
                 ):
-                    if channel_message.type != discord.MessageType.default:
+                    # Skip messages that are not the default type
+                    if thread_message.type != MessageType.default:
                         continue
-
-                    # Reset sections for each message since each message is a new document
-                    sections = []
-                    # Add the initial message as a section
                     sections.append(
                         Section(
-                            text=channel_message.content,
-                            link=channel_message.jump_url,
+                            text=thread_message.content,
+                            link=thread_message.jump_url,
                         )
                     )
 
-                    snippet = (
-                        channel_message.content[:30].rstrip() + "..."
-                        if len(channel_message.content) > 30
-                        else channel_message.content
-                    )
-                    semantic_substring = f"Channel: #{channel.name}"
+            yield _convert_message_to_document(channel_message, sections)
 
-                    thread_message = channel_message  # Default to channel message
-                    # Add the messages in the thread as sections
-                    if channel_message.thread:
-                        # If its a thread, update the metadata, title, and semantic_substring
-                        metadata["Thread"] = channel_message.thread.name
-                        title = channel_message.thread.name
-                        semantic_substring += (
-                            f" in Thread: {channel_message.thread.name}"
-                        )
-
-                        async for thread_message in channel_message.thread.history(
-                            after=self.start_time,
-                            before=self.end_time,
-                        ):
-                            if thread_message.type != discord.MessageType.default:
-                                continue
-                            sections.append(
-                                Section(
-                                    text=thread_message.content,
-                                    link=thread_message.jump_url,
-                                )
-                            )
-
-                    semantic_identifier = f"{channel_message.author.name} said in {semantic_substring}: {snippet}"
-
-                    yield Document(
-                        id=str(channel_message.id),
-                        source=DocumentSource.DISCORD,
-                        semantic_identifier=semantic_identifier,
-                        doc_updated_at=thread_message.edited_at,
-                        title=title,
-                        sections=sections,
-                        metadata=metadata,
-                    )
-
+    async def fetch_all_documents(self) -> AsyncIterable[Document]:
+        await self.ready.wait()
+        try:
+            filtered_channels: list[TextChannel] = await self._fetch_filtered_channels()
+            for channel in filtered_channels:
+                async for doc in self._fetch_documents_from_channel(channel):
+                    yield doc
         finally:
             self.done = True
             logger.info("Closing the danswer discord client connection")
             await self.close()
 
 
-def _fetch_all_docs(
+def _manage_async_retrieval(
     token: str,
     start: datetime | None = None,
     end: datetime | None = None,
@@ -162,7 +197,7 @@ def _fetch_all_docs(
     server_ids: list[int] | None = None,
 ) -> Iterable[Document]:
     async def _async_fetch() -> AsyncIterable[Document]:
-        intents = discord.Intents.default()
+        intents = Intents.default()
         intents.message_content = True
         client = DanswerDiscordClient(
             channel_names=channel_names,
@@ -175,7 +210,7 @@ def _fetch_all_docs(
 
         try:
             asyncio.create_task(client.start(token))
-            async for doc in client.process_messages():
+            async for doc in client.fetch_all_documents():
                 yield doc
         finally:
             if not client.is_closed():
@@ -183,13 +218,15 @@ def _fetch_all_docs(
 
     def run_and_yield() -> Iterable[Document]:
         loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
         try:
+            # Get the async generator
             async_gen = _async_fetch()
+            # Convert to AsyncIterator
+            async_iter = async_gen.__aiter__()
             while True:
                 try:
-                    # Create a coroutine by calling anext with the async generator
-                    next_coro = anext(async_gen)  # type: ignore
+                    # Create a coroutine by calling anext with the async iterator
+                    next_coro = anext(async_iter)
                     # Run the coroutine to get the next document
                     doc = loop.run_until_complete(next_coro)
                     yield doc
@@ -225,16 +262,13 @@ class DiscordConnector(PollConnector, LoadConnector):
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self._discord_bot_token = credentials["discord_bot_token"]
-        # intents = discord.Intents.default()
-        # intents.message_content = True
-        # self.client = discord.Client(intents=intents)
         return None
 
     def poll_source(
         self, start: SecondsSinceUnixEpoch, end: SecondsSinceUnixEpoch
     ) -> GenerateDocumentsOutput:
         doc_batch = []
-        for doc in _fetch_all_docs(
+        for doc in _manage_async_retrieval(
             token=self.discord_bot_token,
             start=datetime.fromtimestamp(start, tz=timezone.utc),
             end=datetime.fromtimestamp(end, tz=timezone.utc),
@@ -252,7 +286,7 @@ class DiscordConnector(PollConnector, LoadConnector):
 
     def load_from_state(self) -> GenerateDocumentsOutput:
         doc_batch = []
-        for doc in _fetch_all_docs(
+        for doc in _manage_async_retrieval(
             token=self.discord_bot_token,
             requested_start_date_string=self.requested_start_date_string,
             channel_names=self.channel_names,
