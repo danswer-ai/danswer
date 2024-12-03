@@ -71,6 +71,7 @@ def get_llms_for_persona(
             api_base=llm_provider.api_base,
             api_version=llm_provider.api_version,
             custom_config=llm_provider.custom_config,
+            temperature=temperature_override or GEN_AI_TEMPERATURE,
             additional_headers=additional_headers,
             long_term_logger=long_term_logger,
         )
