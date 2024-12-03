@@ -35,7 +35,8 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
       checkPersonaRequiresImageGeneration(currentAssistant);
 
     const { llmProviders } = useChatContext();
-    const { setLlmOverride, temperature, setTemperature } = llmOverrideManager;
+    const { updateLLMOverride, temperature, setTemperature } =
+      llmOverrideManager;
     const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
     const [localTemperature, setLocalTemperature] = useState<number>(
       temperature || 0
@@ -76,7 +77,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
             if (value == null) {
               return;
             }
-            setLlmOverride(destructureValue(value));
+            updateLLMOverride(destructureValue(value));
             if (chatSessionId) {
               updateModelOverrideForChatSession(chatSessionId, value as string);
             }

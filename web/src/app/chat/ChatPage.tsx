@@ -272,6 +272,7 @@ export function ChatPage({
   };
 
   const llmOverrideManager = useLlmOverride(
+    llmProviders,
     modelVersionFromSearchParams || (user?.preferences.default_model ?? null),
     selectedChatSession,
     defaultTemperature
@@ -318,9 +319,9 @@ export function ChatPage({
     );
 
     if (personaDefault) {
-      llmOverrideManager.setLlmOverride(personaDefault);
+      llmOverrideManager.updateLLMOverride(personaDefault);
     } else if (user?.preferences.default_model) {
-      llmOverrideManager.setLlmOverride(
+      llmOverrideManager.updateLLMOverride(
         destructureValue(user?.preferences.default_model)
       );
     }
@@ -921,7 +922,6 @@ export function ChatPage({
           setHasPerformedInitialScroll(true);
         }, 100);
       } else {
-        console.log("All messages are already rendered, scrolling immediately");
         // If all messages are already rendered, scroll immediately
         endDivRef.current.scrollIntoView({
           behavior: fast ? "auto" : "smooth",
@@ -1184,7 +1184,6 @@ export function ChatPage({
       assistant_message_id: number;
       frozenMessageMap: Map<number, Message>;
     } = null;
-
     try {
       const mapKeys = Array.from(
         currentMessageMap(completeMessageDetail).keys()
