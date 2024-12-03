@@ -18,6 +18,7 @@ from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DANSWER_REDIS_FUNCTION_LOCK_PREFIX
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
+from danswer.configs.constants import DanswerCeleryTask
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import DocumentSource
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
@@ -82,7 +83,7 @@ def _is_external_doc_permissions_sync_due(cc_pair: ConnectorCredentialPair) -> b
 
 
 @shared_task(
-    name="check_for_doc_permissions_sync",
+    name=DanswerCeleryTask.CHECK_FOR_DOC_PERMISSIONS_SYNC,
     soft_time_limit=JOB_TIMEOUT,
     bind=True,
 )
@@ -164,7 +165,7 @@ def try_creating_permissions_sync_task(
         custom_task_id = f"{redis_connector.permissions.generator_task_key}_{uuid4()}"
 
         result = app.send_task(
-            "connector_permission_sync_generator_task",
+            DanswerCeleryTask.CONNECTOR_PERMISSION_SYNC_GENERATOR_TASK,
             kwargs=dict(
                 cc_pair_id=cc_pair_id,
                 tenant_id=tenant_id,
@@ -191,7 +192,7 @@ def try_creating_permissions_sync_task(
 
 
 @shared_task(
-    name="connector_permission_sync_generator_task",
+    name=DanswerCeleryTask.CONNECTOR_PERMISSION_SYNC_GENERATOR_TASK,
     acks_late=False,
     soft_time_limit=JOB_TIMEOUT,
     track_started=True,
@@ -286,7 +287,7 @@ def connector_permission_sync_generator_task(
 
 
 @shared_task(
-    name="update_external_document_permissions_task",
+    name=DanswerCeleryTask.UPDATE_EXTERNAL_DOCUMENT_PERMISSIONS_TASK,
     soft_time_limit=LIGHT_SOFT_TIME_LIMIT,
     time_limit=LIGHT_TIME_LIMIT,
     max_retries=DOCUMENT_PERMISSIONS_UPDATE_MAX_RETRIES,

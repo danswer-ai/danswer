@@ -25,6 +25,7 @@ from danswer.background.celery.tasks.shared.tasks import LIGHT_TIME_LIMIT
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
+from danswer.configs.constants import DanswerCeleryTask
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.db.connector import fetch_connector_by_id
 from danswer.db.connector import mark_cc_pair_as_permissions_synced
@@ -80,7 +81,7 @@ logger = setup_logger()
 # celery auto associates tasks created inside another task,
 # which bloats the result metadata considerably. trail=False prevents this.
 @shared_task(
-    name="check_for_vespa_sync_task",
+    name=DanswerCeleryTask.CHECK_FOR_VESPA_SYNC_TASK,
     soft_time_limit=JOB_TIMEOUT,
     trail=False,
     bind=True,
@@ -707,7 +708,7 @@ def monitor_ccpair_indexing_taskset(
     redis_connector_index.reset()
 
 
-@shared_task(name="monitor_vespa_sync", soft_time_limit=300, bind=True)
+@shared_task(name=DanswerCeleryTask.MONITOR_VESPA_SYNC, soft_time_limit=300, bind=True)
 def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
     """This is a celery beat task that monitors and finalizes metadata sync tasksets.
     It scans for fence values and then gets the counts of any associated tasksets.
@@ -818,7 +819,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 
 
 @shared_task(
-    name="vespa_metadata_sync_task",
+    name=DanswerCeleryTask.VESPA_METADATA_SYNC_TASK,
     bind=True,
     soft_time_limit=LIGHT_SOFT_TIME_LIMIT,
     time_limit=LIGHT_TIME_LIMIT,

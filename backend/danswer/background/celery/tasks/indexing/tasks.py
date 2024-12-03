@@ -23,6 +23,7 @@ from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DANSWER_REDIS_FUNCTION_LOCK_PREFIX
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
+from danswer.configs.constants import DanswerCeleryTask
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import DocumentSource
 from danswer.db.connector import mark_ccpair_with_indexing_trigger
@@ -156,7 +157,7 @@ def get_unfenced_index_attempt_ids(db_session: Session, r: redis.Redis) -> list[
 
 
 @shared_task(
-    name="check_for_indexing",
+    name=DanswerCeleryTask.CHECK_FOR_INDEXING,
     soft_time_limit=300,
     bind=True,
 )
@@ -486,7 +487,7 @@ def try_creating_indexing_task(
         # when the task is sent, we have yet to finish setting up the fence
         # therefore, the task must contain code that blocks until the fence is ready
         result = celery_app.send_task(
-            "connector_indexing_proxy_task",
+            DanswerCeleryTask.CONNECTOR_INDEXING_PROXY_TASK,
             kwargs=dict(
                 index_attempt_id=index_attempt_id,
                 cc_pair_id=cc_pair.id,
@@ -524,7 +525,10 @@ def try_creating_indexing_task(
 
 
 @shared_task(
-    name="connector_indexing_proxy_task", bind=True, acks_late=False, track_started=True
+    name=DanswerCeleryTask.CONNECTOR_INDEXING_PROXY_TASK,
+    bind=True,
+    acks_late=False,
+    track_started=True,
 )
 def connector_indexing_proxy_task(
     self: Task,
