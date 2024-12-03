@@ -975,6 +975,19 @@ export function ChatPage({
   };
 
   useEffect(() => {
+    console.log("something hanged", selectedDocuments);
+    console.log(showDocSidebar);
+    console.log(filtersToggled);
+    if (
+      (!selectedDocuments || selectedDocuments.length === 0) &&
+      documentSidebarToggled &&
+      !filtersToggled
+    ) {
+      setDocumentSidebarToggled(false);
+    }
+  }, [selectedDocuments, filtersToggled]);
+
+  useEffect(() => {
     adjustDocumentSidebarWidth(); // Adjust the width on initial render
     window.addEventListener("resize", adjustDocumentSidebarWidth); // Add resize event listener
 
