@@ -58,8 +58,7 @@ type SourceMap = {
   [K in ValidSources]: PartialSourceMetadata;
 };
 
-// rkuo: feels like this and other data should be refactored into the backend
-const SOURCE_METADATA_MAP: SourceMap = {
+export const SOURCE_METADATA_MAP: SourceMap = {
   web: {
     icon: GlobeIcon,
     displayName: "Web",

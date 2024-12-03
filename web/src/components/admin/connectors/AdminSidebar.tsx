@@ -40,14 +40,7 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
       <nav className="space-y-2">
         <div className="w-full justify-center mb-4 flex">
           <div className="w-52">
-            <Link
-              className="flex flex-col"
-              href={
-                settings && settings.default_page === "chat"
-                  ? "/chat"
-                  : "/search"
-              }
-            >
+            <Link className="flex flex-col" href="/chat">
               <div className="max-w-[200px] w-full flex gap-x-1 my-auto">
                 <div className="flex-none mb-auto">
                   <Logo />
@@ -73,7 +66,7 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
           </div>
         </div>
         <div className="flex w-full justify-center">
-          <Link href={settings.default_page == "chat" ? "/chat" : "/search"}>
+          <Link href="/chat">
             <button className="text-sm flex items-center block w-52 py-2.5 flex px-2 text-left text-text-back-button bg-background-back-button hover:bg-opacity-80 cursor-pointer rounded">
               <BackIcon className="my-auto" size={18} />
               <p className="ml-1 break-words line-clamp-2 ellipsis leading-none">

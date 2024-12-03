@@ -42,7 +42,7 @@ from danswer.configs.constants import DEFAULT_BOOST
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
-from danswer.db.enums import AccessType
+from danswer.db.enums import AccessType, IndexingMode
 from danswer.configs.constants import NotificationType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.configs.constants import TokenRateLimitScope
@@ -126,6 +126,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     # if specified, controls the assistants that are shown to the user + their order
     # if not specified, all assistants are shown
+    auto_scroll: Mapped[bool] = mapped_column(Boolean, default=True)
     chosen_assistants: Mapped[list[int] | None] = mapped_column(
         postgresql.JSONB(), nullable=True, default=None
     )
@@ -437,6 +438,10 @@ class ConnectorCredentialPair(Base):
     )
 
     total_docs_indexed: Mapped[int] = mapped_column(Integer, default=0)
+
+    indexing_trigger: Mapped[IndexingMode | None] = mapped_column(
+        Enum(IndexingMode, native_enum=False), nullable=True
+    )
 
     connector: Mapped["Connector"] = relationship(
         "Connector", back_populates="credentials"
@@ -1480,6 +1485,7 @@ class ChannelConfig(TypedDict):
     # If None then no follow up
     # If empty list, follow up with no tags
     follow_up_tags: NotRequired[list[str]]
+    show_continue_in_web_ui: NotRequired[bool]  # defaults to False
 
 
 class SlackBotResponseType(str, PyEnum):

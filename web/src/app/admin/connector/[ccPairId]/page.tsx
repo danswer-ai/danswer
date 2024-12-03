@@ -25,6 +25,7 @@ import { ReIndexButton } from "./ReIndexButton";
 import { buildCCPairInfoUrl } from "./lib";
 import { CCPairFullInfo, ConnectorCredentialPairStatus } from "./types";
 import { EditableStringFieldDisplay } from "@/components/EditableStringFieldDisplay";
+import { Button } from "@/components/ui/button";
 
 // since the uploaded files are cleaned up after some period of time
 // re-indexing will not work for the file connector. Also, it would not

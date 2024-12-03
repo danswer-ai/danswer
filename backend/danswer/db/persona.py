@@ -113,6 +113,31 @@ def fetch_persona_by_id(
     return persona
 
 
+def get_best_persona_id_for_user(
+    db_session: Session, user: User | None, persona_id: int | None = None
+) -> int | None:
+    if persona_id is not None:
+        stmt = select(Persona).where(Persona.id == persona_id).distinct()
+        stmt = _add_user_filters(
+            stmt=stmt,
+            user=user,
+            # We don't want to filter by editable here, we just want to see if the
+            # persona is usable by the user
+            get_editable=False,
+        )
+        persona = db_session.scalars(stmt).one_or_none()
+        if persona:
+            return persona.id
+
+    # If the persona is not found, or the slack bot is using doc sets instead of personas,
+    # we need to find the best persona for the user
+    # This is the persona with the highest display priority that the user has access to
+    stmt = select(Persona).order_by(Persona.display_priority.desc()).distinct()
+    stmt = _add_user_filters(stmt=stmt, user=user, get_editable=True)
+    persona = db_session.scalars(stmt).one_or_none()
+    return persona.id if persona else None
+
+
 def _get_persona_by_name(
     persona_name: str, user: User | None, db_session: Session
 ) -> Persona | None:
@@ -160,7 +185,7 @@ def create_update_persona(
             "persona_id": persona_id,
             "user": user,
             "db_session": db_session,
-            **create_persona_request.dict(exclude={"users", "groups"}),
+            **create_persona_request.model_dump(exclude={"users", "groups"}),
         }
 
         persona = upsert_persona(**persona_data)
@@ -390,9 +415,6 @@ def upsert_prompt(
     return prompt
 
 
-# NOTE: This operation cannot update persona configuration options that
-# are core to the persona, such as its display priority and
-# whether or not the assistant is a built-in / default assistant
 def upsert_persona(
     user: User | None,
     name: str,
@@ -424,6 +446,12 @@ def upsert_persona(
     chunks_above: int = CONTEXT_CHUNKS_ABOVE,
     chunks_below: int = CONTEXT_CHUNKS_BELOW,
 ) -> Persona:
+    """
+    NOTE: This operation cannot update persona configuration options that
+    are core to the persona, such as its display priority and
+    whether or not the assistant is a built-in / default assistant
+    """
+
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
     else:
@@ -461,6 +489,8 @@ def upsert_persona(
         validate_persona_tools(tools)
 
     if persona:
+        # Built-in personas can only be updated through YAML configuration.
+        # This ensures that core system personas are not modified unintentionally.
         if persona.builtin_persona and not builtin_persona:
             raise ValueError("Cannot update builtin persona with non-builtin.")
 
@@ -469,6 +499,9 @@ def upsert_persona(
             db_session=db_session, persona_id=persona.id, user=user, get_editable=True
         )
 
+        # The following update excludes `default`, `built-in`, and display priority.
+        # Display priority is handled separately in the `display-priority` endpoint.
+        # `default` and `built-in` properties can only be set when creating a persona.
         persona.name = name
         persona.description = description
         persona.num_chunks = num_chunks
@@ -733,6 +766,8 @@ def get_prompt_by_name(
     if user and user.role != UserRole.ADMIN:
         stmt = stmt.where(Prompt.user_id == user.id)
 
+    # Order by ID to ensure consistent result when multiple prompts exist
+    stmt = stmt.order_by(Prompt.id).limit(1)
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 

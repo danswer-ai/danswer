@@ -295,7 +295,7 @@ def pptx_to_text(file: IO[Any]) -> str:
 
 
 def xlsx_to_text(file: IO[Any]) -> str:
-    workbook = openpyxl.load_workbook(file)
+    workbook = openpyxl.load_workbook(file, read_only=True)
     text_content = []
     for sheet in workbook.worksheets:
         sheet_string = "\n".join(

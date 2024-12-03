@@ -259,29 +259,8 @@ export async function updatePersona(
 ): Promise<[Response, Response | null]> {
   const { id, existingPromptId } = personaUpdateRequest;
 
-  let fileId = null;
-  if (personaUpdateRequest.uploaded_image) {
-    fileId = await uploadFile(personaUpdateRequest.uploaded_image);
-    if (!fileId) {
-      return [new Response(null, { status: 400 }), null];
-    }
-  }
-
-  const updatePersonaResponse = await fetch(`/api/persona/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(
-      buildPersonaAPIBody(personaUpdateRequest, existingPromptId ?? 0, fileId)
-    ),
-  });
-
-  if (!updatePersonaResponse.ok) {
-    return [updatePersonaResponse, null];
-  }
-
   let promptResponse;
+  let promptId: number | null = null;
   if (existingPromptId !== undefined) {
     promptResponse = await updatePrompt({
       promptId: existingPromptId,
@@ -290,6 +269,7 @@ export async function updatePersona(
       taskPrompt: personaUpdateRequest.task_prompt,
       includeCitations: personaUpdateRequest.include_citations,
     });
+    promptId = existingPromptId;
   } else {
     promptResponse = await createPrompt({
       personaName: personaUpdateRequest.name,
@@ -297,7 +277,30 @@ export async function updatePersona(
       taskPrompt: personaUpdateRequest.task_prompt,
       includeCitations: personaUpdateRequest.include_citations,
     });
+    promptId = promptResponse.ok
+      ? ((await promptResponse.json()).id as number)
+      : null;
   }
+  let fileId = null;
+  if (personaUpdateRequest.uploaded_image) {
+    fileId = await uploadFile(personaUpdateRequest.uploaded_image);
+    if (!fileId) {
+      return [promptResponse, null];
+    }
+  }
+
+  const updatePersonaResponse =
+    promptResponse.ok && promptId !== null
+      ? await fetch(`/api/persona/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(
+            buildPersonaAPIBody(personaUpdateRequest, promptId, fileId)
+          ),
+        })
+      : null;
 
   return [promptResponse, updatePersonaResponse];
 }

@@ -1,3 +1,4 @@
+import json
 import os
 
 # Applicable for OIDC Auth
@@ -19,3 +20,11 @@ STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE")
 OPENAI_DEFAULT_API_KEY = os.environ.get("OPENAI_DEFAULT_API_KEY")
 ANTHROPIC_DEFAULT_API_KEY = os.environ.get("ANTHROPIC_DEFAULT_API_KEY")
 COHERE_DEFAULT_API_KEY = os.environ.get("COHERE_DEFAULT_API_KEY")
+
+# JWT Public Key URL
+JWT_PUBLIC_KEY_URL: str | None = os.getenv("JWT_PUBLIC_KEY_URL", None)
+
+
+# Super Users
+SUPER_USERS = json.loads(os.environ.get("SUPER_USERS", '["pablo@danswer.ai"]'))
+SUPER_CLOUD_API_KEY = os.environ.get("SUPER_CLOUD_API_KEY", "api_key")

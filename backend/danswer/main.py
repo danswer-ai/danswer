@@ -26,6 +26,7 @@ from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
 from danswer.auth.users import BasicAuthenticationError
+from danswer.auth.users import create_danswer_oauth_router
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import APP_API_PREFIX
 from danswer.configs.app_configs import APP_HOST
@@ -44,6 +45,7 @@ from danswer.configs.constants import AuthType
 from danswer.configs.constants import POSTGRES_WEB_APP_NAME
 from danswer.db.engine import SqlEngine
 from danswer.db.engine import warm_up_connections
+from danswer.server.api_key.api import router as api_key_router
 from danswer.server.auth_check import check_router_auth
 from danswer.server.danswer_api.ingestion import router as danswer_api_router
 from danswer.server.documents.cc_pair import router as cc_pair_router
@@ -281,6 +283,7 @@ def get_application() -> FastAPI:
     )
     include_router_with_global_prefix_prepended(application, long_term_logs_router)
     include_router_with_global_prefix_prepended(application, oauth_router)
+    include_router_with_global_prefix_prepended(application, api_key_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
@@ -324,7 +327,7 @@ def get_application() -> FastAPI:
         oauth_client = GoogleOAuth2(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET)
         include_router_with_global_prefix_prepended(
             application,
-            fastapi_users.get_oauth_router(
+            create_danswer_oauth_router(
                 oauth_client,
                 auth_backend,
                 USER_AUTH_SECRET,

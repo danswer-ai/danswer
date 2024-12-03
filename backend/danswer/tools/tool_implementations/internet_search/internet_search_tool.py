@@ -77,6 +77,7 @@ def llm_doc_from_internet_search_result(result: InternetSearchResult) -> LlmDoc:
         updated_at=datetime.now(),
         link=result.link,
         source_links={0: result.link},
+        match_highlights=[],
     )
 
 

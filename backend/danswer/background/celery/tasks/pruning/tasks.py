@@ -20,6 +20,7 @@ from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DANSWER_REDIS_FUNCTION_LOCK_PREFIX
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
+from danswer.configs.constants import DanswerCeleryTask
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.connectors.factory import instantiate_connector
 from danswer.connectors.models import InputType
@@ -75,7 +76,7 @@ def _is_pruning_due(cc_pair: ConnectorCredentialPair) -> bool:
 
 
 @shared_task(
-    name="check_for_pruning",
+    name=DanswerCeleryTask.CHECK_FOR_PRUNING,
     soft_time_limit=JOB_TIMEOUT,
     bind=True,
 )
@@ -184,7 +185,7 @@ def try_creating_prune_generator_task(
         custom_task_id = f"{redis_connector.prune.generator_task_key}_{uuid4()}"
 
         celery_app.send_task(
-            "connector_pruning_generator_task",
+            DanswerCeleryTask.CONNECTOR_PRUNING_GENERATOR_TASK,
             kwargs=dict(
                 cc_pair_id=cc_pair.id,
                 connector_id=cc_pair.connector_id,
@@ -209,7 +210,7 @@ def try_creating_prune_generator_task(
 
 
 @shared_task(
-    name="connector_pruning_generator_task",
+    name=DanswerCeleryTask.CONNECTOR_PRUNING_GENERATOR_TASK,
     acks_late=False,
     soft_time_limit=JOB_TIMEOUT,
     track_started=True,

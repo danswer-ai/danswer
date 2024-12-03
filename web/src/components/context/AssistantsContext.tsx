@@ -11,6 +11,7 @@ import {
   classifyAssistants,
   orderAssistantsForUser,
   getUserCreatedAssistants,
+  filterAssistants,
 } from "@/lib/assistants/utils";
 import { useUser } from "../user/UserProvider";
 
@@ -145,22 +146,13 @@ export const AssistantsProvider: React.FC<{
       if (!response.ok) throw new Error("Failed to fetch assistants");
       let assistants: Persona[] = await response.json();
 
-      if (!hasImageCompatibleModel) {
-        assistants = assistants.filter(
-          (assistant) =>
-            !assistant.tools.some(
-              (tool) => tool.in_code_tool_id === "ImageGenerationTool"
-            )
-        );
-      }
+      let filteredAssistants = filterAssistants(
+        assistants,
+        hasAnyConnectors,
+        hasImageCompatibleModel
+      );
 
-      if (!hasAnyConnectors) {
-        assistants = assistants.filter(
-          (assistant) => assistant.num_chunks === 0
-        );
-      }
-
-      setAssistants(assistants);
+      setAssistants(filteredAssistants);
 
       // Fetch and update allAssistants for admins and curators
       await fetchPersonas();

@@ -45,6 +45,7 @@ class UserPreferences(BaseModel):
     visible_assistants: list[int] = []
     recent_assistants: list[int] | None = None
     default_model: str | None = None
+    auto_scroll: bool | None = None
 
 
 class UserInfo(BaseModel):
@@ -79,6 +80,7 @@ class UserInfo(BaseModel):
             role=user.role,
             preferences=(
                 UserPreferences(
+                    auto_scroll=user.auto_scroll,
                     chosen_assistants=user.chosen_assistants,
                     default_model=user.default_model,
                     hidden_assistants=user.hidden_assistants,
@@ -128,6 +130,10 @@ class HiddenUpdateRequest(BaseModel):
     hidden: bool
 
 
+class AutoScrollRequest(BaseModel):
+    auto_scroll: bool | None
+
+
 class SlackBotCreationRequest(BaseModel):
     name: str
     enabled: bool
@@ -156,6 +162,7 @@ class SlackChannelConfigCreationRequest(BaseModel):
     channel_name: str
     respond_tag_only: bool = False
     respond_to_bots: bool = False
+    show_continue_in_web_ui: bool = False
     enable_auto_filters: bool = False
     # If no team members, assume respond in the channel to everyone
     respond_member_group_list: list[str] = Field(default_factory=list)

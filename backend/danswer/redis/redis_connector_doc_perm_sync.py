@@ -12,10 +12,12 @@ from danswer.access.models import DocExternalAccess
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
+from danswer.configs.constants import DanswerCeleryTask
 
 
-class RedisConnectorPermissionSyncData(BaseModel):
+class RedisConnectorPermissionSyncPayload(BaseModel):
     started: datetime | None
+    celery_task_id: str | None
 
 
 class RedisConnectorPermissionSync:
@@ -78,14 +80,14 @@ class RedisConnectorPermissionSync:
         return False
 
     @property
-    def payload(self) -> RedisConnectorPermissionSyncData | None:
+    def payload(self) -> RedisConnectorPermissionSyncPayload | None:
         # read related data and evaluate/print task progress
         fence_bytes = cast(bytes, self.redis.get(self.fence_key))
         if fence_bytes is None:
             return None
 
         fence_str = fence_bytes.decode("utf-8")
-        payload = RedisConnectorPermissionSyncData.model_validate_json(
+        payload = RedisConnectorPermissionSyncPayload.model_validate_json(
             cast(str, fence_str)
         )
 
@@ -93,7 +95,7 @@ class RedisConnectorPermissionSync:
 
     def set_fence(
         self,
-        payload: RedisConnectorPermissionSyncData | None,
+        payload: RedisConnectorPermissionSyncPayload | None,
     ) -> None:
         if not payload:
             self.redis.delete(self.fence_key)
@@ -148,7 +150,7 @@ class RedisConnectorPermissionSync:
             self.redis.sadd(self.taskset_key, custom_task_id)
 
             result = celery_app.send_task(
-                "update_external_document_permissions_task",
+                DanswerCeleryTask.UPDATE_EXTERNAL_DOCUMENT_PERMISSIONS_TASK,
                 kwargs=dict(
                     tenant_id=self.tenant_id,
                     serialized_doc_external_access=doc_perm.to_dict(),
@@ -161,6 +163,12 @@ class RedisConnectorPermissionSync:
             async_results.append(result)
 
         return len(async_results)
+
+    def reset(self) -> None:
+        self.redis.delete(self.generator_progress_key)
+        self.redis.delete(self.generator_complete_key)
+        self.redis.delete(self.taskset_key)
+        self.redis.delete(self.fence_key)
 
     @staticmethod
     def remove_from_taskset(id: int, task_id: str, r: redis.Redis) -> None:

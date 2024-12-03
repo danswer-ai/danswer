@@ -62,6 +62,9 @@ export interface DanswerDocument {
   is_internet: boolean;
   validationState?: null | "good" | "bad";
 }
+export interface LoadedDanswerDocument extends DanswerDocument {
+  icon: React.FC<{ size?: number; className?: string }>;
+}
 
 export interface SearchDanswerDocument extends DanswerDocument {
   is_relevant: boolean;
