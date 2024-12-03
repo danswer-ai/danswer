@@ -54,9 +54,7 @@ const AssistantSelector = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { llmProviders } = useChatContext();
   const { user } = useUser();
-  const [temperature, setTemperature] = useState<number>(
-    llmOverrideManager.temperature || 0
-  );
+
   const [assistants, setAssistants] = useState<Persona[]>(finalAssistants);
   const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
 
@@ -76,10 +74,6 @@ const AssistantSelector = ({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-
-  useEffect(() => {
-    setTemperature(llmOverrideManager.temperature || 0);
-  }, [llmOverrideManager.temperature]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -238,20 +232,23 @@ const AssistantSelector = ({
                       min="0"
                       max="2"
                       step="0.01"
-                      value={temperature}
+                      value={llmOverrideManager.temperature?.toString() || "0"}
                     />
                     <div
                       className="absolute text-sm"
                       style={{
-                        left: `${(temperature || 0) * 50}%`,
+                        left: `${(llmOverrideManager.temperature || 0) * 50}%`,
                         transform: `translateX(-${Math.min(
-                          Math.max((temperature || 0) * 50, 10),
+                          Math.max(
+                            (llmOverrideManager.temperature || 0) * 50,
+                            10
+                          ),
                           90
                         )}%)`,
                         top: "-1.5rem",
                       }}
                     >
-                      {temperature}
+                      {llmOverrideManager.temperature}
                     </div>
                   </div>
                 </>

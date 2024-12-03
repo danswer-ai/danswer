@@ -90,10 +90,5 @@ export const getProviderIcon = (providerName: string, modelName?: string) => {
   }
 };
 
-export const isAnthropic = (provider: string, modelName: string) => {
-  console.log("Evaluation", provider, modelName);
-  const value =
-    provider === "anthropic" || modelName.toLowerCase().includes("claude");
-  console.log("Value", value);
-  return value;
-};
+export const isAnthropic = (provider: string, modelName: string) =>
+  provider === "anthropic" || modelName.toLowerCase().includes("claude");
