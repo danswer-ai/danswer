@@ -10,6 +10,7 @@ from fastapi import APIRouter
 from fastapi import Body
 from fastapi import Depends
 from fastapi import HTTPException
+from fastapi import Query
 from fastapi import Request
 from psycopg2.errors import UniqueViolation
 from pydantic import BaseModel
@@ -51,7 +52,7 @@ from danswer.db.users import get_user_by_email
 from danswer.db.users import list_users
 from danswer.db.users import validate_user_role_update
 from danswer.key_value_store.factory import get_kv_store
-from danswer.server.manage.models import AllUsersResponse
+from danswer.server.documents.models import PaginatedReturn
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
 from danswer.server.manage.models import UserPreferences
@@ -114,67 +115,67 @@ def set_user_role(
     db_session.commit()
 
 
-@router.get("/manage/users")
-def list_all_users(
+@router.get("/manage/users/accepted")
+def list_accepted_users(
     q: str | None = None,
-    accepted_page: int | None = None,
-    invited_page: int | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=1000),
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
-) -> AllUsersResponse:
+) -> PaginatedReturn[FullUserSnapshot]:
     if not q:
         q = ""
 
-    users = [
+    accepted_users = [
         user
         for user in list_users(db_session, email_filter_string=q)
         if not is_api_key_email_address(user.email)
     ]
-    accepted_emails = {user.email for user in users}
-    invited_emails = get_invited_users()
-    if q:
-        invited_emails = [
-            email for email in invited_emails if re.search(r"{}".format(q), email, re.I)
-        ]
 
-    accepted_count = len(accepted_emails)
-    invited_count = len(invited_emails)
+    total_count = len(accepted_users)
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
 
-    # If any of q, accepted_page, or invited_page is None, return all users
-    if accepted_page is None or invited_page is None:
-        return AllUsersResponse(
-            accepted=[
-                FullUserSnapshot(
-                    id=user.id,
-                    email=user.email,
-                    role=user.role,
-                    status=(
-                        UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED
-                    ),
-                )
-                for user in users
-            ],
-            invited=[InvitedUserSnapshot(email=email) for email in invited_emails],
-            accepted_pages=1,
-            invited_pages=1,
-        )
-
-    # Otherwise, return paginated results
-    return AllUsersResponse(
-        accepted=[
+    return PaginatedReturn(
+        items=[
             FullUserSnapshot(
                 id=user.id,
                 email=user.email,
                 role=user.role,
                 status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
             )
-            for user in users
-        ][accepted_page * USERS_PAGE_SIZE : (accepted_page + 1) * USERS_PAGE_SIZE],
-        invited=[InvitedUserSnapshot(email=email) for email in invited_emails][
-            invited_page * USERS_PAGE_SIZE : (invited_page + 1) * USERS_PAGE_SIZE
+            for user in accepted_users[start_idx:end_idx]
         ],
-        accepted_pages=accepted_count // USERS_PAGE_SIZE + 1,
-        invited_pages=invited_count // USERS_PAGE_SIZE + 1,
+        total_items=total_count,
+    )
+
+
+@router.get("/manage/users/invited")
+def list_invited_users(
+    q: str | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=1000),
+    user: User | None = Depends(current_curator_or_admin_user),
+) -> PaginatedReturn[InvitedUserSnapshot]:
+    if not q:
+        q = ""
+
+    invited_emails = get_invited_users()
+    if q:
+        invited_emails = [
+            email for email in invited_emails if re.search(r"{}".format(q), email, re.I)
+        ]
+
+    total_count = len(invited_emails)
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+
+    return PaginatedReturn(
+        items=[
+            InvitedUserSnapshot(email=email)
+            for email in invited_emails[start_idx:end_idx]
+        ],
+        total_items=total_count,
     )
 
 

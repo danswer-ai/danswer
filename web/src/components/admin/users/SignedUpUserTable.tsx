@@ -32,11 +32,13 @@ import { useState } from "react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { TableHeader } from "@/components/ui/table";
+import { usePaginatedData } from "@/hooks/usePaginatedData";
+import { LoadingAnimation } from "@/components/Loading";
+import { ErrorCallout } from "@/components/ErrorCallout";
 
 interface Props {
-  users: Array<User>;
   setPopup: (spec: PopupSpec) => void;
-  mutate: () => void;
+  q?: string;
 }
 
 const UserRoleDropdown = ({
@@ -237,14 +239,35 @@ const DeleteUserButton = ({
   );
 };
 
-const SignedUpUserTable = ({
-  users,
-  setPopup,
-  currentPage,
-  totalPages,
-  onPageChange,
-  mutate,
-}: Props & PageSelectorProps) => {
+const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
+  const {
+    currentPageData: users,
+    isLoading,
+    error,
+    currentPage,
+    totalPages,
+    goToPage,
+    refresh: mutate,
+  } = usePaginatedData<User>({
+    itemsPerPage: 10,
+    pagesPerBatch: 2,
+    endpoint: "/api/manage/users/accepted",
+    query: q,
+  });
+
+  if (isLoading) {
+    return <LoadingAnimation text="Loading" />;
+  }
+
+  if (error || !users) {
+    return (
+      <ErrorCallout
+        errorTitle="Error loading users"
+        errorMsg={error?.message}
+      />
+    );
+  }
+
   if (!users.length) return null;
 
   const handlePopup = (message: string, type: "success" | "error") => {
@@ -258,68 +281,65 @@ const SignedUpUserTable = ({
     handlePopup(`Unable to update user role - ${errorMsg}`, "error");
 
   return (
-    <HidableSection sectionTitle="Current Users">
-      <>
-        {totalPages > 1 ? (
-          <CenteredPageSelector
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-          />
-        ) : null}
-        <Table className="overflow-visible">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead className="text-center">Role</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead>
-                <div className="flex">
-                  <div className="ml-auto">Actions</div>
-                </div>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users
-              // Dont want to show external permissioned users because it's scary
-              .filter((user) => user.role !== UserRole.EXT_PERM_USER)
-              .map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell className="w-40 ">
-                    <UserRoleDropdown
+    <>
+      {totalPages > 1 ? (
+        <CenteredPageSelector
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+        />
+      ) : null}
+      <Table className="overflow-visible">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Email</TableHead>
+            <TableHead className="text-center">Role</TableHead>
+            <TableHead className="text-center">Status</TableHead>
+            <TableHead>
+              <div className="flex">
+                <div className="ml-auto">Actions</div>
+              </div>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users
+            .filter((user) => user.role !== UserRole.EXT_PERM_USER)
+            .map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.email}</TableCell>
+                <TableCell className="w-40 ">
+                  <UserRoleDropdown
+                    user={user}
+                    onSuccess={onRoleChangeSuccess}
+                    onError={onRoleChangeError}
+                  />
+                </TableCell>
+                <TableCell className="text-center">
+                  <i>{user.status === "live" ? "Active" : "Inactive"}</i>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-x-2">
+                    <DeactivaterButton
                       user={user}
-                      onSuccess={onRoleChangeSuccess}
-                      onError={onRoleChangeError}
+                      deactivate={user.status === UserStatus.live}
+                      setPopup={setPopup}
+                      mutate={mutate}
                     />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <i>{user.status === "live" ? "Active" : "Inactive"}</i>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end  gap-x-2">
-                      <DeactivaterButton
+                    {user.status == UserStatus.deactivated && (
+                      <DeleteUserButton
                         user={user}
-                        deactivate={user.status === UserStatus.live}
                         setPopup={setPopup}
                         mutate={mutate}
                       />
-                      {user.status == UserStatus.deactivated && (
-                        <DeleteUserButton
-                          user={user}
-                          setPopup={setPopup}
-                          mutate={mutate}
-                        />
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </>
-    </HidableSection>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+        </TableBody>
+      </Table>
+    </>
   );
 };
 

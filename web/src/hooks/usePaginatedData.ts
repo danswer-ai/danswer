@@ -1,18 +1,22 @@
-import { useCallback, useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+// TODO: check scroll behavior
+
+import { useCallback, useEffect, useState, useRef, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
+
+interface PaginatedApiResponse<T> {
+  items: T[];
+  total_items: number;
+}
 
 interface PaginationConfig<T> {
   itemsPerPage: number;
-  batchSize: number;
-  totalItems: number;
-  fetchBatchFn: (batchNum: number, batchSize: number) => Promise<T[]>;
+  pagesPerBatch: number;
+  endpoint: string;
+  query?: string;
   refreshInterval?: number;
-  baseUrl?: string;
-  initialPage?: number;
-  enableUrlSync?: boolean;
 }
 
-interface PaginatedDataState<T> {
+interface PaginatedHookReturnData<T> {
   currentPageData: T[] | null;
   isLoading: boolean;
   error: Error | null;
@@ -20,56 +24,93 @@ interface PaginatedDataState<T> {
   totalPages: number;
   goToPage: (page: number) => void;
   refresh: () => Promise<void>;
-  cachedBatches: { [key: number]: T[][] };
+  hasNoData: boolean;
 }
 
 export function usePaginatedData<T>({
   itemsPerPage,
-  batchSize,
-  totalItems,
-  fetchBatchFn,
+  pagesPerBatch,
+  endpoint,
+  query,
   refreshInterval = 5000,
-  baseUrl,
-  initialPage,
-  enableUrlSync = true,
-}: PaginationConfig<T>): PaginatedDataState<T> {
+}: PaginationConfig<T>): PaginatedHookReturnData<T> {
   const router = useRouter();
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   const [currentPage, setCurrentPage] = useState(() => {
-    if (initialPage) return initialPage;
-    if (enableUrlSync && typeof window !== "undefined") {
+    if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       return parseInt(urlParams.get("page") || "1", 10);
     }
     return 1;
   });
-
   const [currentPageData, setCurrentPageData] = useState<T[] | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [cachedBatches, setCachedBatches] = useState<{ [key: number]: T[][] }>(
     {}
   );
+  const [totalItems, setTotalItems] = useState<number>(0);
 
   const ongoingRequestsRef = useRef<Set<number>>(new Set());
+
+  const totalPages = useMemo(() => {
+    if (totalItems === 0) return 1;
+    return Math.ceil(totalItems / itemsPerPage);
+  }, [totalItems, itemsPerPage]);
+
+  const currentBatchInfo = useMemo(() => {
+    const batchNum = Math.floor((currentPage - 1) / pagesPerBatch);
+    const batchPageNum = (currentPage - 1) % pagesPerBatch;
+    return { batchNum, batchPageNum };
+  }, [currentPage, pagesPerBatch]);
+
+  const hasNoData = useMemo(() => {
+    return (
+      Object.keys(cachedBatches).length === 0 ||
+      Object.values(cachedBatches).every((batch) =>
+        batch.every((page) => page.length === 0)
+      )
+    );
+  }, [cachedBatches]);
+
+  const currentPath = usePathname();
 
   // Batch fetching logic
   const fetchBatchData = useCallback(
     async (batchNum: number) => {
-      if (ongoingRequestsRef.current.has(batchNum)) return;
+      console.log("fetchBatchData called with batchNum:", batchNum);
+
+      if (ongoingRequestsRef.current.has(batchNum)) {
+        console.log("Already fetching batch:", batchNum);
+        return;
+      }
       ongoingRequestsRef.current.add(batchNum);
 
       try {
-        const data = await fetchBatchFn(batchNum + 1, batchSize * itemsPerPage);
+        const params = {
+          page: (batchNum + 1).toString(),
+          page_size: (pagesPerBatch * itemsPerPage).toString(),
+        } as Record<string, string>;
 
-        const newBatchData: T[][] = [];
-        for (let i = 0; i < batchSize; i++) {
-          const startIndex = i * itemsPerPage;
-          const endIndex = startIndex + itemsPerPage;
-          const pageItems = data.slice(startIndex, endIndex);
-          newBatchData.push(pageItems);
+        if (query) params.q = query;
+
+        const queryString = new URLSearchParams(params).toString();
+
+        const response = await fetch(`${endpoint}?${queryString}`);
+        if (!response.ok) throw new Error("Failed to fetch data");
+        const responseData: PaginatedApiResponse<T> = await response.json();
+
+        const data = responseData.items;
+        const totalCount = responseData.total_items;
+
+        if (totalCount !== undefined) {
+          setTotalItems(totalCount);
         }
+
+        const newBatchData = Array.from({ length: pagesPerBatch }, (_, i) => {
+          const startIndex = i * itemsPerPage;
+          return data.slice(startIndex, startIndex + itemsPerPage);
+        });
 
         setCachedBatches((prev) => ({
           ...prev,
@@ -77,54 +118,69 @@ export function usePaginatedData<T>({
         }));
       } catch (error) {
         setError(
-          error instanceof Error
-            ? error
-            : new Error("An error occured while fetching batch data")
+          error instanceof Error ? error : new Error("Error fetching data")
         );
       } finally {
         ongoingRequestsRef.current.delete(batchNum);
       }
     },
-    [batchSize, itemsPerPage, fetchBatchFn]
+    [endpoint, pagesPerBatch, itemsPerPage, query]
   );
 
-  // Page navigation with URL sync
   const goToPage = useCallback(
     (newPage: number) => {
       setCurrentPage(newPage);
 
-      if (enableUrlSync && baseUrl) {
-        router.replace(`${baseUrl}?page=${newPage}`, { scroll: false });
+      if (currentPath) {
+        router.replace(`${currentPath}?page=${newPage}`, { scroll: false });
+        // remove if we dont want it to jump to top
+        // and check pageSelector component for the rest of page adjustment logic
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       }
     },
-    [enableUrlSync, baseUrl, router]
+    [currentPath, router]
   );
 
   // Loads current and adjacent batches
   useEffect(() => {
-    const batchNum = Math.floor((currentPage - 1) / batchSize);
+    const { batchNum } = currentBatchInfo;
+    console.log("--- Effect triggered ---");
+    console.log("currentPage:", currentPage);
+    console.log("pagesPerBatch:", pagesPerBatch);
+    console.log("Initial batchNum calculation:", batchNum);
 
     if (!cachedBatches[batchNum]) {
+      console.log("Fetching current batch:", batchNum);
       setIsLoading(true);
       fetchBatchData(batchNum);
     }
 
-    const nextBatchNum = Math.min(
-      batchNum + 1,
-      Math.ceil(totalPages / batchSize) - 1
-    );
-    const prevBatchNum = Math.max(batchNum - 1, 0);
+    const nextBatchNum = batchNum + 1;
+    console.log("nextBatchNum:", nextBatchNum);
 
-    if (!cachedBatches[nextBatchNum]) fetchBatchData(nextBatchNum);
-    if (!cachedBatches[prevBatchNum]) fetchBatchData(prevBatchNum);
-    if (!cachedBatches[0]) fetchBatchData(0);
-  }, [currentPage, cachedBatches, totalPages, batchSize, fetchBatchData]);
+    const prevBatchNum = Math.max(batchNum - 1, 0);
+    console.log("prevBatchNum:", prevBatchNum);
+
+    if (!cachedBatches[nextBatchNum]) {
+      console.log("Fetching next batch:", nextBatchNum);
+      fetchBatchData(nextBatchNum);
+    }
+    if (!cachedBatches[prevBatchNum]) {
+      console.log("Fetching prev batch:", prevBatchNum);
+      fetchBatchData(prevBatchNum);
+    }
+    if (!cachedBatches[1]) {
+      console.log("Fetching batch 1");
+      fetchBatchData(1);
+    }
+
+    console.log("Current cachedBatches:", cachedBatches);
+    console.log("--- Effect end ---");
+  }, [currentPage, cachedBatches, totalPages, pagesPerBatch, fetchBatchData]);
 
   // Updates current page data from cache
   useEffect(() => {
-    const batchNum = Math.floor((currentPage - 1) / batchSize);
-    const batchPageNum = (currentPage - 1) % batchSize;
+    const { batchNum, batchPageNum } = currentBatchInfo;
 
     if (cachedBatches[batchNum] && cachedBatches[batchNum][batchPageNum]) {
       setCurrentPageData(cachedBatches[batchNum][batchPageNum]);
@@ -132,34 +188,40 @@ export function usePaginatedData<T>({
     } else {
       setIsLoading(true);
     }
-  }, [currentPage, cachedBatches, batchSize]);
+  }, [currentPage, cachedBatches, pagesPerBatch]);
 
   // Manages periodic refresh
   useEffect(() => {
     if (!refreshInterval) return;
 
     const interval = setInterval(() => {
-      const batchNum = Math.floor((currentPage - 1) / batchSize);
+      const { batchNum } = currentBatchInfo;
       fetchBatchData(batchNum);
     }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [currentPage, batchSize, refreshInterval, fetchBatchData]);
+  }, [currentPage, pagesPerBatch, refreshInterval, fetchBatchData]);
 
   // Manaual refresh function
   const refresh = useCallback(async () => {
-    const batchNum = Math.floor((currentPage - 1) / batchSize);
+    const { batchNum } = currentBatchInfo;
     await fetchBatchData(batchNum);
-  }, [currentPage, batchSize, fetchBatchData]);
+  }, [currentPage, pagesPerBatch, fetchBatchData]);
+
+  // Reset state when path changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setCachedBatches({});
+  }, [currentPath]);
 
   return {
-    currentPageData,
-    isLoading,
-    error,
     currentPage,
+    currentPageData,
     totalPages,
     goToPage,
     refresh,
-    cachedBatches,
+    isLoading,
+    error,
+    hasNoData,
   };
 }

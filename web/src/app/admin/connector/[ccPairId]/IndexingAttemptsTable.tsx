@@ -31,25 +31,13 @@ import {
 } from "@/components/ui/tooltip";
 import { usePaginatedData } from "@/hooks/usePaginatedData";
 
-const NUM_IN_PAGE = 8;
-const BATCH_SIZE = 8;
+const ITEMS_PER_PAGE = 8;
+const PAGES_PER_BATCH = 8;
 
 export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   const [indexAttemptTracePopupId, setIndexAttemptTracePopupId] = useState<
     number | null
   >(null);
-
-  const fetchBatchFn = useCallback(
-    async (batchNum: number, batchSize: number) => {
-      const response = await fetch(
-        `${buildCCPairInfoUrl(ccPair.id)}/index-attempts?page=${batchNum}&page_size=${batchSize}`
-      );
-      if (!response.ok) throw new Error("Failed to fetch data");
-      const data = await response.json();
-      return data.index_attempts;
-    },
-    [ccPair.id]
-  );
 
   const {
     currentPageData,
@@ -58,14 +46,11 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     currentPage,
     totalPages,
     goToPage,
-    cachedBatches,
+    hasNoData,
   } = usePaginatedData<IndexAttemptSnapshot>({
-    itemsPerPage: NUM_IN_PAGE,
-    batchSize: BATCH_SIZE,
-    totalItems: ccPair.number_of_index_attempts,
-    fetchBatchFn,
-    baseUrl: `/admin/connector/${ccPair.id}`,
-    refreshInterval: 5000,
+    itemsPerPage: ITEMS_PER_PAGE,
+    pagesPerBatch: PAGES_PER_BATCH,
+    endpoint: `${buildCCPairInfoUrl(ccPair.id)}/index-attempts`,
   });
 
   if (isLoading || !currentPageData) {
@@ -81,12 +66,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     );
   }
 
-  if (
-    Object.keys(cachedBatches).length === 0 ||
-    Object.values(cachedBatches).every((batch) =>
-      batch.every((page) => page.length === 0)
-    )
-  ) {
+  if (hasNoData) {
     return (
       <Callout
         className="mt-4"

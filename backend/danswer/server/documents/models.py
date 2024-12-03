@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Any
+from typing import Generic
+from typing import TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -19,6 +21,8 @@ from danswer.db.models import IndexAttempt
 from danswer.db.models import IndexAttemptError as DbIndexAttemptError
 from danswer.db.models import IndexingStatus
 from danswer.db.models import TaskStatus
+from danswer.server.models import FullUserSnapshot
+from danswer.server.models import InvitedUserSnapshot
 from danswer.server.utils import mask_credential_dict
 
 
@@ -199,6 +203,16 @@ class IndexAttemptError(BaseModel):
             traceback=error.traceback,
             time_created=error.time_created.isoformat(),
         )
+
+
+snapshotT = TypeVar(
+    "snapshotT", IndexAttemptSnapshot, FullUserSnapshot, InvitedUserSnapshot
+)
+
+
+class PaginatedReturn(BaseModel, Generic[snapshotT]):
+    items: list[snapshotT]
+    total_items: int
 
 
 class PaginatedIndexAttempts(BaseModel):

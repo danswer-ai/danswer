@@ -7,19 +7,24 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
+import { TableHeader } from "@/components/ui/table";
 import CenteredPageSelector from "./CenteredPageSelector";
 import { type PageSelectorProps } from "@/components/PageSelector";
 
+import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import { type User } from "@/lib/types";
 import useSWRMutation from "swr/mutation";
-import { TableHeader } from "@/components/ui/table";
+import { LoadingAnimation } from "@/components/Loading";
+import { usePaginatedData } from "@/hooks/usePaginatedData";
+import { ErrorCallout } from "@/components/ErrorCallout";
 
 interface Props {
-  users: Array<User>;
   setPopup: (spec: PopupSpec) => void;
-  mutate: () => void;
+  q?: string;
 }
+
+const ITEMS_PER_PAGE = 10;
+const PAGES_PER_BATCH = 2;
 
 const RemoveUserButton = ({
   user,
@@ -42,15 +47,34 @@ const RemoveUserButton = ({
   );
 };
 
-const InvitedUserTable = ({
-  users,
-  setPopup,
-  currentPage,
-  totalPages,
-  onPageChange,
-  mutate,
-}: Props & PageSelectorProps) => {
-  if (!users.length) return null;
+const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
+  const {
+    currentPageData: users,
+    isLoading,
+    error,
+    currentPage,
+    totalPages,
+    goToPage,
+    refresh: mutate,
+  } = usePaginatedData<User>({
+    itemsPerPage: ITEMS_PER_PAGE,
+    pagesPerBatch: PAGES_PER_BATCH,
+    endpoint: "/api/manage/users/invited",
+    query: q,
+  });
+
+  if (isLoading) {
+    return <LoadingAnimation text="Loading" />;
+  }
+
+  if (error || !users) {
+    return (
+      <ErrorCallout
+        errorTitle="Error loading invited users"
+        errorMsg={error?.message}
+      />
+    );
+  }
 
   const onRemovalSuccess = () => {
     mutate();
@@ -59,6 +83,7 @@ const InvitedUserTable = ({
       type: "success",
     });
   };
+
   const onRemovalError = (errorMsg: string) => {
     setPopup({
       message: `Unable to uninvite user - ${errorMsg}`,
@@ -98,7 +123,7 @@ const InvitedUserTable = ({
         <CenteredPageSelector
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={onPageChange}
+          onPageChange={goToPage}
         />
       ) : null}
     </>
