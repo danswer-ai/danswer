@@ -8,6 +8,7 @@ from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
+from redis.lock import Lock as RedisLock
 
 from danswer.access.models import DocExternalAccess
 from danswer.background.celery.apps.app_base import task_logger
@@ -216,7 +217,7 @@ def connector_permission_sync_generator_task(
 
     r = get_redis_client(tenant_id=tenant_id)
 
-    lock = r.lock(
+    lock: RedisLock = r.lock(
         DanswerRedisLocks.CONNECTOR_DOC_PERMISSIONS_SYNC_LOCK_PREFIX
         + f"_{redis_connector.id}",
         timeout=CELERY_PERMISSIONS_SYNC_LOCK_TIMEOUT,

@@ -58,6 +58,7 @@ type SourceMap = {
   [K in ValidSources]: PartialSourceMetadata;
 };
 
+// rkuo: feels like this and other data should be refactored into the backend
 const SOURCE_METADATA_MAP: SourceMap = {
   web: {
     icon: GlobeIcon,
@@ -76,6 +77,7 @@ const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Slack",
     category: SourceCategory.Messaging,
     docs: "https://docs.danswer.dev/connectors/slack",
+    oauthSupported: true,
   },
   gmail: {
     icon: GmailIcon,
@@ -341,6 +343,7 @@ export function listSourceMetadata(): SourceMetadata[] {
 export function getSourceDocLink(sourceType: ValidSources): string | null {
   return SOURCE_METADATA_MAP[sourceType].docs || null;
 }
+
 export const isValidSource = (sourceType: string) => {
   return Object.keys(SOURCE_METADATA_MAP).includes(sourceType);
 };

@@ -1,6 +1,7 @@
 "use client";
 import {
   ConnectorIndexingStatus,
+  OAuthSlackCallbackResponse,
   DocumentBoostStatus,
   Tag,
   UserGroup,
@@ -71,7 +72,9 @@ export const useConnectorCredentialIndexingStatus = (
   getEditable = false
 ) => {
   const { mutate } = useSWRConfig();
-  const url = `${INDEXING_STATUS_URL}${getEditable ? "?get_editable=true" : ""}`;
+  const url = `${INDEXING_STATUS_URL}${
+    getEditable ? "?get_editable=true" : ""
+  }`;
   const swrResponse = useSWR<ConnectorIndexingStatus<any, any>[]>(
     url,
     errorHandlingFetcher,
@@ -81,6 +84,64 @@ export const useConnectorCredentialIndexingStatus = (
   return {
     ...swrResponse,
     refreshIndexingStatus: () => mutate(url),
+  };
+};
+
+// server side handler to process the oauth redirect callback
+// https://api.slack.com/authentication/oauth-v2#exchanging
+export const useConnectorOAuthCallback = (
+  connector: string,
+  code: string | null,
+  state: string | null
+) => {
+  if (connector === "slack") {
+    return useSlackConnectorOAuthCallback(code, state);
+  }
+
+  return {
+    data: undefined,
+    error: new Error(`No callback handler for ${connector}`),
+    isLoading: false,
+  };
+};
+
+export const useSlackConnectorOAuthCallback = (
+  code: string | null,
+  state: string | null
+) => {
+  if (!code || !state) {
+    return {
+      data: undefined,
+      error: new Error("Missing code or state for Slack OAuth callback"),
+      isLoading: false,
+    };
+  }
+
+  const url = `/api/oauth/connector/slack/callback?code=${encodeURIComponent(
+    code
+  )}&state=${encodeURIComponent(state)}`;
+
+  // Custom fetch function for POST request
+  const fetcher = async () => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ code, state }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to post OAuth callback: ${response.statusText}`);
+    }
+
+    return response.json();
+  };
+
+  const swrResponse = useSWR<OAuthSlackCallbackResponse>(url, fetcher);
+
+  return {
+    ...swrResponse,
   };
 };
 
