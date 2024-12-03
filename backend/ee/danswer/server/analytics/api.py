@@ -3,7 +3,6 @@ from collections import defaultdict
 
 from fastapi import APIRouter
 from fastapi import Depends
-from fastapi import Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -17,6 +16,9 @@ from ee.danswer.db.analytics import fetch_persona_unique_users
 from ee.danswer.db.analytics import fetch_query_analytics
 
 router = APIRouter(prefix="/analytics")
+
+
+_DEFAULT_LOOKBACK_DAYS = 30
 
 
 class QueryAnalyticsResponse(BaseModel):
@@ -36,7 +38,7 @@ def get_query_analytics(
     daily_query_usage_info = fetch_query_analytics(
         start=start
         or (
-            datetime.datetime.utcnow() - datetime.timedelta(days=30)
+            datetime.datetime.utcnow() - datetime.timedelta(days=_DEFAULT_LOOKBACK_DAYS)
         ),  # default is 30d lookback
         end=end or datetime.datetime.utcnow(),
         db_session=db_session,
@@ -67,7 +69,7 @@ def get_user_analytics(
     daily_query_usage_info_per_user = fetch_per_user_query_analytics(
         start=start
         or (
-            datetime.datetime.utcnow() - datetime.timedelta(days=30)
+            datetime.datetime.utcnow() - datetime.timedelta(days=_DEFAULT_LOOKBACK_DAYS)
         ),  # default is 30d lookback
         end=end or datetime.datetime.utcnow(),
         db_session=db_session,
@@ -101,7 +103,7 @@ def get_danswerbot_analytics(
     daily_danswerbot_info = fetch_danswerbot_analytics(
         start=start
         or (
-            datetime.datetime.utcnow() - datetime.timedelta(days=30)
+            datetime.datetime.utcnow() - datetime.timedelta(days=_DEFAULT_LOOKBACK_DAYS)
         ),  # default is 30d lookback
         end=end or datetime.datetime.utcnow(),
         db_session=db_session,
@@ -128,34 +130,32 @@ class PersonaMessageAnalyticsResponse(BaseModel):
 
 @router.get("/admin/persona/messages")
 def get_persona_messages(
-    persona_ids: str = Query(...),  # ... means this parameter is required
+    persona_id: int,
     start: datetime.datetime | None = None,
     end: datetime.datetime | None = None,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[PersonaMessageAnalyticsResponse]:
-    """Fetch daily message counts for multiple personas within the given time range."""
-    # Convert comma-separated string to list of integers
-    parsed_persona_ids = [
-        int(id.strip()) for id in persona_ids.split(",") if id.strip()
-    ]
-    persona_message_counts = []
-    start = start or (datetime.datetime.utcnow() - datetime.timedelta(days=30))
+    """Fetch daily message counts for a single persona within the given time range."""
+    start = start or (
+        datetime.datetime.utcnow() - datetime.timedelta(days=_DEFAULT_LOOKBACK_DAYS)
+    )
     end = end or datetime.datetime.utcnow()
-    for persona_id in parsed_persona_ids:
-        for count, date in fetch_persona_message_analytics(
-            db_session=db_session,
-            persona_id=int(persona_id),
-            start=start,
-            end=end,
-        ):
-            persona_message_counts.append(
-                PersonaMessageAnalyticsResponse(
-                    total_messages=count,
-                    date=date,
-                    persona_id=persona_id,
-                )
+
+    persona_message_counts = []
+    for count, date in fetch_persona_message_analytics(
+        db_session=db_session,
+        persona_id=persona_id,
+        start=start,
+        end=end,
+    ):
+        persona_message_counts.append(
+            PersonaMessageAnalyticsResponse(
+                total_messages=count,
+                date=date,
+                persona_id=persona_id,
             )
+        )
 
     return persona_message_counts
 
@@ -168,28 +168,26 @@ class PersonaUniqueUsersResponse(BaseModel):
 
 @router.get("/admin/persona/unique-users")
 def get_persona_unique_users(
-    persona_ids: str,
+    persona_id: int,
     start: datetime.datetime,
     end: datetime.datetime,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> list[PersonaUniqueUsersResponse]:
-    """Get unique users per day for each persona."""
-    persona_id_list = [int(pid) for pid in persona_ids.split(",")]
-    results = []
-    for persona_id in persona_id_list:
-        daily_counts = fetch_persona_unique_users(
-            db_session=db_session,
-            persona_id=persona_id,
-            start=start,
-            end=end,
-        )
-        for count, date in daily_counts:
-            results.append(
-                PersonaUniqueUsersResponse(
-                    unique_users=count,
-                    date=date,
-                    persona_id=persona_id,
-                )
+    """Get unique users per day for a single persona."""
+    unique_user_counts = []
+    daily_counts = fetch_persona_unique_users(
+        db_session=db_session,
+        persona_id=persona_id,
+        start=start,
+        end=end,
+    )
+    for count, date in daily_counts:
+        unique_user_counts.append(
+            PersonaUniqueUsersResponse(
+                unique_users=count,
+                date=date,
+                persona_id=persona_id,
             )
-    return results
+        )
+    return unique_user_counts

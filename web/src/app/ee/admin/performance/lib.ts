@@ -112,31 +112,18 @@ export interface PersonaSnapshot {
   is_public: boolean;
 }
 
-export const usePersonaList = () => {
-  const { data, error, isLoading } = useSWR<PersonaSnapshot[]>(
-    "/api/persona",
-    errorHandlingFetcher
-  );
-
-  return {
-    data,
-    error,
-    isLoading,
-  };
-};
-
 export const usePersonaMessages = (
-  personaIds: number[],
+  personaId: number | undefined,
   timeRange: DateRangePickerValue
 ) => {
   const url = buildApiPath(`/api/analytics/admin/persona/messages`, {
-    persona_ids: personaIds.join(","),
+    persona_id: personaId?.toString(),
     start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
     end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
   });
 
   const { data, error, isLoading } = useSWR<PersonaMessageAnalytics[]>(
-    personaIds.length > 0 ? url : null,
+    personaId !== undefined ? url : null,
     errorHandlingFetcher
   );
 
@@ -155,17 +142,17 @@ export interface PersonaUniqueUserAnalytics {
 }
 
 export const usePersonaUniqueUsers = (
-  personaIds: number[],
+  personaId: number | undefined,
   timeRange: DateRangePickerValue
 ) => {
   const url = buildApiPath(`/api/analytics/admin/persona/unique-users`, {
-    persona_ids: personaIds.join(","),
+    persona_id: personaId?.toString(),
     start: convertDateToStartOfDay(timeRange.from)?.toISOString(),
     end: convertDateToEndOfDay(timeRange.to)?.toISOString(),
   });
 
   const { data, error, isLoading } = useSWR<PersonaUniqueUserAnalytics[]>(
-    personaIds.length > 0 ? url : null,
+    personaId !== undefined ? url : null,
     errorHandlingFetcher
   );
 

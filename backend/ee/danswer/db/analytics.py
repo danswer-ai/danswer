@@ -201,7 +201,7 @@ def fetch_persona_message_analytics(
         .order_by(cast(ChatMessage.time_sent, Date))
     )
 
-    return list(db_session.execute(query).all())  # type: ignore
+    return [tuple(row) for row in db_session.execute(query).all()]
 
 
 def fetch_persona_unique_users(
@@ -233,4 +233,4 @@ def fetch_persona_unique_users(
         .order_by(cast(ChatMessage.time_sent, Date))
     )
 
-    return list(db_session.execute(query).all())  # type: ignore
+    return [tuple(row) for row in db_session.execute(query).all()]

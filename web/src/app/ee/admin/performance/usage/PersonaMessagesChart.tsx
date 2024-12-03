@@ -2,10 +2,10 @@ import { ThreeDotsLoader } from "@/components/Loading";
 import { X, Search } from "lucide-react";
 import {
   getDatesList,
-  usePersonaList,
   usePersonaMessages,
   usePersonaUniqueUsers,
 } from "../lib";
+import { useAssistants } from "@/components/context/AssistantsContext";
 import { DateRangePickerValue } from "@/app/ee/admin/performance/DateRangeSelector";
 import Text from "@/components/ui/text";
 import Title from "@/components/ui/title";
@@ -30,36 +30,22 @@ export function PersonaMessagesChart({
   >(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const {
-    data: personaList,
-    isLoading: isPersonaListLoading,
-    error: personaListError,
-  } = usePersonaList();
+  const { allAssistants: personaList } = useAssistants();
 
   const {
     data: personaMessagesData,
     isLoading: isPersonaMessagesLoading,
     error: personaMessagesError,
-  } = usePersonaMessages(
-    selectedPersonaId !== undefined ? [selectedPersonaId] : [],
-    timeRange
-  );
+  } = usePersonaMessages(selectedPersonaId, timeRange);
 
   const {
     data: personaUniqueUsersData,
     isLoading: isPersonaUniqueUsersLoading,
     error: personaUniqueUsersError,
-  } = usePersonaUniqueUsers(
-    selectedPersonaId !== undefined ? [selectedPersonaId] : [],
-    timeRange
-  );
+  } = usePersonaUniqueUsers(selectedPersonaId, timeRange);
 
-  const isLoading =
-    isPersonaListLoading ||
-    isPersonaMessagesLoading ||
-    isPersonaUniqueUsersLoading;
-  const hasError =
-    personaListError || personaMessagesError || personaUniqueUsersError;
+  const isLoading = isPersonaMessagesLoading || isPersonaUniqueUsersLoading;
+  const hasError = personaMessagesError || personaUniqueUsersError;
 
   const filteredPersonaList = useMemo(() => {
     if (!personaList) return [];
