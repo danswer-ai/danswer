@@ -21,26 +21,25 @@ def _get_project_permissions(
         "query": "*",
         "projectKey": jira_project_key,
         "maxResults": _PAGE_SIZE,
-        "startAt": 0,
     }
 
+    start_at = 0
     user_emails = set()
     while True:
+        query["startAt"] = start_at
         result = jira_client._get_json(path="/user/viewissue/search", params=query)
         for user in result:
             if email := user.get("emailAddress"):
                 user_emails.add(email)
         if len(result) < _PAGE_SIZE:
             break
-        query["startAt"] += _PAGE_SIZE
+        start_at += _PAGE_SIZE
 
-    # Group names are not given space permissions, so we these are empty per document
-    group_names = set()
-    is_externally_public = False
     return ExternalAccess(
         external_user_emails=user_emails,
-        external_user_group_ids=group_names,
-        is_public=is_externally_public,
+        # Group names are not given space permissions, so we these are empty per document
+        external_user_group_ids=set(),
+        is_public=False,
     )
 
 
