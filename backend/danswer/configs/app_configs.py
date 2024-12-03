@@ -322,7 +322,7 @@ CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD = int(
 # enter as a floating point offset from UTC in hours (-24 < val < 24)
 # this will be applied globally, so it probably makes sense to transition this to per
 # connector as some point.
-CONFLUENCE_TIMEZONE_OFFSET = float(os.environ.get("CONFLUENCE_TIMEZONE_OFFSET", 1.0))
+CONFLUENCE_TIMEZONE_OFFSET = float(os.environ.get("CONFLUENCE_TIMEZONE_OFFSET", 0.0))
 
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
     ignored_tag
