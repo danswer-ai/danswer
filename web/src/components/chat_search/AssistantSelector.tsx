@@ -46,7 +46,7 @@ const AssistantSelector = ({
   liveAssistant: Persona;
   onAssistantChange: (assistant: Persona) => void;
   chatSessionId?: string;
-  llmOverrideManager?: LlmOverrideManager;
+  llmOverrideManager: LlmOverrideManager;
   isMobile: boolean;
 }) => {
   const { finalAssistants } = useAssistants();
@@ -54,11 +54,9 @@ const AssistantSelector = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { llmProviders } = useChatContext();
   const { user } = useUser();
+
   const [assistants, setAssistants] = useState<Persona[]>(finalAssistants);
   const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
-  const [localTemperature, setLocalTemperature] = useState<number>(
-    llmOverrideManager?.temperature || 0
-  );
 
   // Initialize selectedTab from localStorage
   const [selectedTab, setSelectedTab] = useState<number>(() => {
@@ -92,21 +90,6 @@ const AssistantSelector = ({
     }
   };
 
-  const debouncedSetTemperature = useCallback(
-    (value: number) => {
-      const debouncedFunction = debounce((value: number) => {
-        llmOverrideManager?.setTemperature(value);
-      }, 300);
-      return debouncedFunction(value);
-    },
-    [llmOverrideManager]
-  );
-
-  const handleTemperatureChange = (value: number) => {
-    setLocalTemperature(value);
-    debouncedSetTemperature(value);
-  };
-
   // Handle tab change and update localStorage
   const handleTabChange = (index: number) => {
     setSelectedTab(index);
@@ -119,7 +102,7 @@ const AssistantSelector = ({
   const [_, currentLlm] = getFinalLLM(
     llmProviders,
     liveAssistant,
-    llmOverrideManager?.llmOverride ?? null
+    llmOverrideManager.llmOverride ?? null
   );
 
   const requiresImageGeneration =
@@ -204,11 +187,10 @@ const AssistantSelector = ({
               llmProviders={llmProviders}
               currentLlm={currentLlm}
               userDefault={userDefaultModel}
-              includeUserDefault={true}
               onSelect={(value: string | null) => {
                 if (value == null) return;
                 const { modelName, name, provider } = destructureValue(value);
-                llmOverrideManager?.setLlmOverride({
+                llmOverrideManager.setLlmOverride({
                   name,
                   provider,
                   modelName,
@@ -216,7 +198,6 @@ const AssistantSelector = ({
                 if (chatSessionId) {
                   updateModelOverrideForChatSession(chatSessionId, value);
                 }
-                setIsOpen(false);
               }}
             />
             <div className="mt-4">
@@ -243,26 +224,31 @@ const AssistantSelector = ({
                     <input
                       type="range"
                       onChange={(e) =>
-                        handleTemperatureChange(parseFloat(e.target.value))
+                        llmOverrideManager.updateTemperature(
+                          parseFloat(e.target.value)
+                        )
                       }
                       className="w-full p-2 border border-border rounded-md"
                       min="0"
                       max="2"
                       step="0.01"
-                      value={localTemperature}
+                      value={llmOverrideManager.temperature?.toString() || "0"}
                     />
                     <div
                       className="absolute text-sm"
                       style={{
-                        left: `${(localTemperature || 0) * 50}%`,
+                        left: `${(llmOverrideManager.temperature || 0) * 50}%`,
                         transform: `translateX(-${Math.min(
-                          Math.max((localTemperature || 0) * 50, 10),
+                          Math.max(
+                            (llmOverrideManager.temperature || 0) * 50,
+                            10
+                          ),
                           90
                         )}%)`,
                         top: "-1.5rem",
                       }}
                     >
-                      {localTemperature}
+                      {llmOverrideManager.temperature}
                     </div>
                   </div>
                 </>

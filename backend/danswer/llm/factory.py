@@ -71,6 +71,7 @@ def get_llms_for_persona(
             api_base=llm_provider.api_base,
             api_version=llm_provider.api_version,
             custom_config=llm_provider.custom_config,
+            temperature=temperature_override,
             additional_headers=additional_headers,
             long_term_logger=long_term_logger,
         )
@@ -128,11 +129,13 @@ def get_llm(
     api_base: str | None = None,
     api_version: str | None = None,
     custom_config: dict[str, str] | None = None,
-    temperature: float = GEN_AI_TEMPERATURE,
+    temperature: float | None = None,
     timeout: int = QA_TIMEOUT,
     additional_headers: dict[str, str] | None = None,
     long_term_logger: LongTermLogger | None = None,
 ) -> LLM:
+    if temperature is None:
+        temperature = GEN_AI_TEMPERATURE
     return DefaultMultiLLM(
         model_provider=provider,
         model_name=model,
