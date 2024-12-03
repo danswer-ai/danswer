@@ -19,10 +19,6 @@ export interface AnswerPiecePacket {
   answer_piece: string;
 }
 
-export interface ContextDocsPacket {
-  top_documents: DanswerDocument[];
-}
-
 export enum StreamStopReason {
   CONTEXT_LENGTH = "CONTEXT_LENGTH",
   CANCELLED = "CANCELLED",

@@ -69,8 +69,8 @@ import { AIMessage, HumanMessage } from "./message/Messages";
 import { StarterMessages } from "../../components/assistants/StarterMessage";
 import {
   AnswerPiecePacket,
-  ContextDocsPacket,
   DanswerDocument,
+  DocumentInfoPacket,
   StreamStopInfo,
   StreamStopReason,
 } from "@/lib/search/interfaces";
@@ -109,6 +109,7 @@ import AssistantBanner from "../../components/assistants/AssistantBanner";
 import TextView from "@/components/chat_search/TextView";
 import AssistantSelector from "@/components/chat_search/AssistantSelector";
 import { Modal } from "@/components/Modal";
+import { createPostponedAbortSignal } from "next/dist/server/app-render/dynamic-rendering";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1261,7 +1262,7 @@ export function ChatPage({
           if (!packet) {
             continue;
           }
-
+          console.log("packet", packet);
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
               console.error(
@@ -1336,7 +1337,7 @@ export function ChatPage({
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
             } else if (Object.hasOwn(packet, "top_documents")) {
-              documents = (packet as ContextDocsPacket).top_documents;
+              documents = (packet as DocumentInfoPacket).top_documents;
               retrievalType = RetrievalType.Search;
               if (documents && documents.length > 0) {
                 // point to the latest message (we don't know the messageId yet, which is why
