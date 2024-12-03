@@ -1262,7 +1262,6 @@ export function ChatPage({
           if (!packet) {
             continue;
           }
-          console.log("packet", packet);
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
               console.error(
