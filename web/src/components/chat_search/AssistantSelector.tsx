@@ -46,7 +46,7 @@ const AssistantSelector = ({
   liveAssistant: Persona;
   onAssistantChange: (assistant: Persona) => void;
   chatSessionId?: string;
-  llmOverrideManager?: LlmOverrideManager;
+  llmOverrideManager: LlmOverrideManager;
   isMobile: boolean;
 }) => {
   const { finalAssistants } = useAssistants();
@@ -55,13 +55,10 @@ const AssistantSelector = ({
   const { llmProviders } = useChatContext();
   const { user } = useUser();
   const [temperature, setTemperature] = useState<number>(
-    llmOverrideManager?.temperature || 0
+    llmOverrideManager.temperature || 0
   );
   const [assistants, setAssistants] = useState<Persona[]>(finalAssistants);
   const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
-  // const [temperature, settemperature] = useState<number>(
-  //   llmOverrideManager?.temperature || 0
-  // );
 
   // Initialize selectedTab from localStorage
   const [selectedTab, setSelectedTab] = useState<number>(() => {
@@ -81,8 +78,8 @@ const AssistantSelector = ({
   );
 
   useEffect(() => {
-    setTemperature(llmOverrideManager?.temperature || 0);
-  }, [llmOverrideManager?.temperature]);
+    setTemperature(llmOverrideManager.temperature || 0);
+  }, [llmOverrideManager.temperature]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -99,21 +96,6 @@ const AssistantSelector = ({
     }
   };
 
-  const debouncedSetTemperature = useCallback(
-    (value: number) => {
-      const debouncedFunction = debounce((value: number) => {
-        llmOverrideManager?.setTemperature(value);
-      }, 300);
-      return debouncedFunction(value);
-    },
-    [llmOverrideManager]
-  );
-
-  const handleTemperatureChange = (value: number) => {
-    // settemperature(value);
-    debouncedSetTemperature(value);
-  };
-
   // Handle tab change and update localStorage
   const handleTabChange = (index: number) => {
     setSelectedTab(index);
@@ -126,7 +108,7 @@ const AssistantSelector = ({
   const [_, currentLlm] = getFinalLLM(
     llmProviders,
     liveAssistant,
-    llmOverrideManager?.llmOverride ?? null
+    llmOverrideManager.llmOverride ?? null
   );
 
   const requiresImageGeneration =
@@ -211,11 +193,10 @@ const AssistantSelector = ({
               llmProviders={llmProviders}
               currentLlm={currentLlm}
               userDefault={userDefaultModel}
-              includeUserDefault={true}
               onSelect={(value: string | null) => {
                 if (value == null) return;
                 const { modelName, name, provider } = destructureValue(value);
-                llmOverrideManager?.setLlmOverride({
+                llmOverrideManager.setLlmOverride({
                   name,
                   provider,
                   modelName,
@@ -249,7 +230,9 @@ const AssistantSelector = ({
                     <input
                       type="range"
                       onChange={(e) =>
-                        handleTemperatureChange(parseFloat(e.target.value))
+                        llmOverrideManager.updateTemperature(
+                          parseFloat(e.target.value)
+                        )
                       }
                       className="w-full p-2 border border-border rounded-md"
                       min="0"

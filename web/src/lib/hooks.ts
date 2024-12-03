@@ -160,7 +160,7 @@ export interface LlmOverrideManager {
   globalDefault: LlmOverride;
   setGlobalDefault: React.Dispatch<React.SetStateAction<LlmOverride>>;
   temperature: number | null;
-  setTemperature: React.Dispatch<React.SetStateAction<number | null>>;
+  updateTemperature: (temperature: number | null) => void;
   updateModelOverrideForChatSession: (chatSession?: ChatSession) => void;
 }
 export function useLlmOverride(
@@ -216,11 +216,18 @@ export function useLlmOverride(
   }, [defaultTemperature]);
 
   useEffect(() => {
-    console.log("LLM OVERRIDE", llmOverride);
     if (isAnthropic(llmOverride.provider, llmOverride.modelName)) {
       setTemperature((prevTemp) => Math.min(prevTemp ?? 0, 1.0));
     }
   }, [llmOverride]);
+
+  const updateTemperature = (temperature: number | null) => {
+    if (isAnthropic(llmOverride.provider, llmOverride.modelName)) {
+      setTemperature((prevTemp) => Math.min(temperature ?? 0, 1.0));
+    } else {
+      setTemperature(temperature);
+    }
+  };
 
   return {
     updateModelOverrideForChatSession,
@@ -229,9 +236,10 @@ export function useLlmOverride(
     globalDefault,
     setGlobalDefault,
     temperature,
-    setTemperature,
+    updateTemperature,
   };
 }
+
 /* 
 EE Only APIs
 */

@@ -411,7 +411,7 @@ export function ChatPage({
 
       // reset LLM overrides (based on chat session!)
       llmOverrideManager.updateModelOverrideForChatSession(selectedChatSession);
-      llmOverrideManager.setTemperature(null);
+      llmOverrideManager.updateTemperature(null);
 
       // remove uploaded files
       setCurrentMessageFiles([]);

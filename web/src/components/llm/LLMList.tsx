@@ -19,7 +19,6 @@ interface LlmListProps {
   scrollable?: boolean;
   hideProviderIcon?: boolean;
   requiresImageGeneration?: boolean;
-  includeUserDefault?: boolean;
   currentAssistant?: Persona;
 }
 
@@ -31,7 +30,6 @@ export const LlmList: React.FC<LlmListProps> = ({
   userDefault,
   scrollable,
   requiresImageGeneration,
-  includeUserDefault = false,
 }) => {
   const llmOptionsByProvider: {
     [provider: string]: {

@@ -35,25 +35,9 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
       checkPersonaRequiresImageGeneration(currentAssistant);
 
     const { llmProviders } = useChatContext();
-    const { setLlmOverride, temperature, setTemperature } = llmOverrideManager;
+    const { setLlmOverride, temperature, updateTemperature } =
+      llmOverrideManager;
     const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
-    // const [temperature, settemperature] = useState<number>(
-    //   temperature || 0
-    // );
-    const debouncedSetTemperature = useCallback(
-      (value: number) => {
-        const debouncedFunction = debounce((value: number) => {
-          setTemperature(value);
-        }, 300);
-        return debouncedFunction(value);
-      },
-      [setTemperature]
-    );
-
-    const handleTemperatureChange = (value: number) => {
-      // settemperature(value);
-      debouncedSetTemperature(value);
-    };
 
     return (
       <div className="w-full">
@@ -108,7 +92,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
                 <input
                   type="range"
                   onChange={(e) =>
-                    handleTemperatureChange(parseFloat(e.target.value))
+                    updateTemperature(parseFloat(e.target.value))
                   }
                   className="w-full p-2 border border-border rounded-md"
                   min="0"
