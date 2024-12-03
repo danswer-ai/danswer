@@ -7,7 +7,7 @@ import {
   DanswerDocument,
   DocumentInfoPacket,
   ErrorMessagePacket,
-  FinalContextDocs,
+  ContextDocsPacket,
   Quote,
   QuotesInfoPacket,
   RelevanceChunk,
@@ -92,7 +92,7 @@ export const searchRequestStreamed = async ({
         | DocumentInfoPacket
         | LLMRelevanceFilterPacket
         | BackendMessage
-        | FinalContextDocs
+        | ContextDocsPacket
         | RelevanceChunk
       >(decoder.decode(value, { stream: true }), previousPartialChunk);
       if (!completedChunks.length && !partialChunk) {
