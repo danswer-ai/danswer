@@ -48,6 +48,7 @@ from danswer.document_index.vespa_constants import TITLE
 from danswer.document_index.vespa_constants import YQL_BASE
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -146,6 +147,7 @@ def _vespa_hit_to_inference_chunk(
     )
 
 
+@log_function_time(print_only=True)
 def _get_chunks_via_visit_api(
     chunk_request: VespaChunkRequest,
     index_name: str,
@@ -232,6 +234,7 @@ def _get_chunks_via_visit_api(
 
 
 @retry(tries=10, delay=1, backoff=2)
+@log_function_time(print_only=True)
 def get_all_vespa_ids_for_document_id(
     document_id: str,
     index_name: str,
@@ -248,6 +251,7 @@ def get_all_vespa_ids_for_document_id(
     return [chunk["id"].split("::", 1)[-1] for chunk in document_chunks]
 
 
+@log_function_time(print_only=True)
 def parallel_visit_api_retrieval(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
@@ -262,9 +266,12 @@ def parallel_visit_api_retrieval(
         for chunk_request in chunk_requests
     ]
 
+    start_time = datetime.now()
     parallel_results = run_functions_tuples_in_parallel(
         functions_with_args, allow_failures=True
     )
+    duration = datetime.now() - start_time
+    print(f"Parallel visit API retrieval took {duration.total_seconds():.2f} seconds")
 
     # Any failures to retrieve would give a None, drop the Nones and empty lists
     vespa_chunk_sets = [res for res in parallel_results if res]
@@ -282,9 +289,11 @@ def parallel_visit_api_retrieval(
 
 
 @retry(tries=3, delay=1, backoff=2)
+@log_function_time(print_only=True)
 def query_vespa(
     query_params: Mapping[str, str | int | float]
 ) -> list[InferenceChunkUncleaned]:
+    print(f"query_params: {query_params}")
     if "query" in query_params and not cast(str, query_params["query"]).strip():
         raise ValueError("No/empty query received")
 
@@ -340,6 +349,7 @@ def query_vespa(
     return inference_chunks
 
 
+@log_function_time(print_only=True)
 def _get_chunks_via_batch_search(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
@@ -374,6 +384,7 @@ def _get_chunks_via_batch_search(
     return inference_chunks
 
 
+@log_function_time(print_only=True)
 def batch_search_api_retrieval(
     index_name: str,
     chunk_requests: list[VespaChunkRequest],
