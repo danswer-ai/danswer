@@ -1,4 +1,4 @@
-// TODO: check scroll behavior
+// TODO: fix/standardize scroll behavior
 
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ interface PaginationConfig<T> {
   pagesPerBatch: number;
   endpoint: string;
   query?: string;
-  refreshInterval?: number;
+  refreshIntervalInMs?: number;
 }
 
 interface PaginatedHookReturnData<T> {
@@ -32,7 +32,7 @@ export function usePaginatedData<T>({
   pagesPerBatch,
   endpoint,
   query,
-  refreshInterval = 5000,
+  refreshIntervalInMs = 5000,
 }: PaginationConfig<T>): PaginatedHookReturnData<T> {
   const router = useRouter();
 
@@ -78,10 +78,7 @@ export function usePaginatedData<T>({
   // Batch fetching logic
   const fetchBatchData = useCallback(
     async (batchNum: number) => {
-      console.log("fetchBatchData called with batchNum:", batchNum);
-
       if (ongoingRequestsRef.current.has(batchNum)) {
-        console.log("Already fetching batch:", batchNum);
         return;
       }
       ongoingRequestsRef.current.add(batchNum);
@@ -141,66 +138,49 @@ export function usePaginatedData<T>({
     [currentPath, router]
   );
 
-  // Loads current and adjacent batches
+  // Effect to load current and adjacent batches
   useEffect(() => {
     const { batchNum } = currentBatchInfo;
-    console.log("--- Effect triggered ---");
-    console.log("currentPage:", currentPage);
-    console.log("pagesPerBatch:", pagesPerBatch);
-    console.log("Initial batchNum calculation:", batchNum);
+    const nextBatchNum = batchNum + 1;
+    const prevBatchNum = Math.max(batchNum - 1, 0);
 
     if (!cachedBatches[batchNum]) {
-      console.log("Fetching current batch:", batchNum);
       setIsLoading(true);
       fetchBatchData(batchNum);
     }
 
-    const nextBatchNum = batchNum + 1;
-    console.log("nextBatchNum:", nextBatchNum);
-
-    const prevBatchNum = Math.max(batchNum - 1, 0);
-    console.log("prevBatchNum:", prevBatchNum);
-
     if (!cachedBatches[nextBatchNum]) {
-      console.log("Fetching next batch:", nextBatchNum);
       fetchBatchData(nextBatchNum);
     }
     if (!cachedBatches[prevBatchNum]) {
-      console.log("Fetching prev batch:", prevBatchNum);
       fetchBatchData(prevBatchNum);
     }
-    if (!cachedBatches[1]) {
-      console.log("Fetching batch 1");
-      fetchBatchData(1);
+    if (!cachedBatches[0]) {
+      fetchBatchData(0);
     }
-
-    console.log("Current cachedBatches:", cachedBatches);
-    console.log("--- Effect end ---");
   }, [currentPage, cachedBatches, totalPages, pagesPerBatch, fetchBatchData]);
 
-  // Updates current page data from cache
+  // Effect to update current page data from cache
   useEffect(() => {
     const { batchNum, batchPageNum } = currentBatchInfo;
 
     if (cachedBatches[batchNum] && cachedBatches[batchNum][batchPageNum]) {
       setCurrentPageData(cachedBatches[batchNum][batchPageNum]);
       setIsLoading(false);
-    } else {
-      setIsLoading(true);
     }
   }, [currentPage, cachedBatches, pagesPerBatch]);
 
-  // Manages periodic refresh
+  // Effect for periodic refresh
   useEffect(() => {
-    if (!refreshInterval) return;
+    if (!refreshIntervalInMs) return;
 
     const interval = setInterval(() => {
       const { batchNum } = currentBatchInfo;
       fetchBatchData(batchNum);
-    }, refreshInterval);
+    }, refreshIntervalInMs);
 
     return () => clearInterval(interval);
-  }, [currentPage, pagesPerBatch, refreshInterval, fetchBatchData]);
+  }, [currentPage, pagesPerBatch, refreshIntervalInMs, fetchBatchData]);
 
   // Manaual refresh function
   const refresh = useCallback(async () => {

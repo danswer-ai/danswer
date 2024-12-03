@@ -61,9 +61,6 @@ const UsersTables = ({
 }) => {
   return (
     <>
-      <HidableSection sectionTitle="Invited Users">
-        <InvitedUserTable setPopup={setPopup} q={q} />
-      </HidableSection>
       <SignedUpUserTable setPopup={setPopup} q={q} />
     </>
   );
@@ -80,7 +77,7 @@ const SearchableTables = () => {
 
       <div className="flex flex-col gap-y-4">
         <div className="flex gap-x-4">
-          <AddUserButton setPopup={setPopup} />
+          <AddUserButton setPopup={setPopup} q={q} />
           <div className="flex-grow">
             <SearchBar
               query={query}
@@ -97,8 +94,10 @@ const SearchableTables = () => {
 
 const AddUserButton = ({
   setPopup,
+  q,
 }: {
   setPopup: (spec: PopupSpec) => void;
+  q: string;
 }) => {
   const [modal, setModal] = useState(false);
   const onSuccess = () => {
@@ -136,6 +135,9 @@ const AddUserButton = ({
               email address.
             </Text>
             <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
+            <HidableSection sectionTitle="Invited Users">
+              <InvitedUserTable setPopup={setPopup} q={q} />
+            </HidableSection>
           </div>
         </Modal>
       )}

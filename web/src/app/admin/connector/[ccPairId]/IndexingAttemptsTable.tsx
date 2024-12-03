@@ -40,7 +40,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
   >(null);
 
   const {
-    currentPageData,
+    currentPageData: pageOfIndexAttempts,
     isLoading,
     error,
     currentPage,
@@ -53,7 +53,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     endpoint: `${buildCCPairInfoUrl(ccPair.id)}/index-attempts`,
   });
 
-  if (isLoading || !currentPageData) {
+  if (isLoading || !pageOfIndexAttempts) {
     return <ThreeDotsLoader />;
   }
 
@@ -79,7 +79,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     );
   }
 
-  const indexAttemptToDisplayTraceFor = currentPageData?.find(
+  const indexAttemptToDisplayTraceFor = pageOfIndexAttempts?.find(
     (indexAttempt) => indexAttempt.id === indexAttemptTracePopupId
   );
 
@@ -120,7 +120,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentPageData.map((indexAttempt) => {
+          {pageOfIndexAttempts.map((indexAttempt) => {
             const docsPerMinute =
               getDocsProcessedPerMinute(indexAttempt)?.toFixed(2);
             return (

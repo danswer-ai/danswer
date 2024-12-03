@@ -49,13 +49,13 @@ const RemoveUserButton = ({
 
 const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
   const {
-    currentPageData: users,
+    currentPageData: pageOfUsers,
     isLoading,
     error,
     currentPage,
     totalPages,
     goToPage,
-    refresh: mutate,
+    refresh,
   } = usePaginatedData<User>({
     itemsPerPage: ITEMS_PER_PAGE,
     pagesPerBatch: PAGES_PER_BATCH,
@@ -67,7 +67,7 @@ const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (error || !users) {
+  if (error || !pageOfUsers) {
     return (
       <ErrorCallout
         errorTitle="Error loading invited users"
@@ -77,7 +77,7 @@ const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
   }
 
   const onRemovalSuccess = () => {
-    mutate();
+    refresh();
     setPopup({
       message: "User uninvited!",
       type: "success",
@@ -103,7 +103,7 @@ const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users.map((user) => (
+          {pageOfUsers.map((user) => (
             <TableRow key={user.email}>
               <TableCell>{user.email}</TableCell>
               <TableCell>

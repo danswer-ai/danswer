@@ -149,12 +149,12 @@ const DeactivaterButton = ({
   user,
   deactivate,
   setPopup,
-  mutate,
+  refresh,
 }: {
   user: User;
   deactivate: boolean;
   setPopup: (spec: PopupSpec) => void;
-  mutate: () => void;
+  refresh: () => void;
 }) => {
   const { trigger, isMutating } = useSWRMutation(
     deactivate
@@ -163,7 +163,7 @@ const DeactivaterButton = ({
     userMutationFetcher,
     {
       onSuccess: () => {
-        mutate();
+        refresh();
         setPopup({
           message: `User ${deactivate ? "deactivated" : "activated"}!`,
           type: "success",
@@ -188,18 +188,18 @@ const DeactivaterButton = ({
 const DeleteUserButton = ({
   user,
   setPopup,
-  mutate,
+  refresh,
 }: {
   user: User;
   setPopup: (spec: PopupSpec) => void;
-  mutate: () => void;
+  refresh: () => void;
 }) => {
   const { trigger, isMutating } = useSWRMutation(
     "/api/manage/admin/delete-user",
     userMutationFetcher,
     {
       onSuccess: () => {
-        mutate();
+        refresh();
         setPopup({
           message: "User deleted successfully!",
           type: "success",
@@ -241,13 +241,13 @@ const DeleteUserButton = ({
 
 const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
   const {
-    currentPageData: users,
+    currentPageData: pageOfUsers,
     isLoading,
     error,
     currentPage,
     totalPages,
     goToPage,
-    refresh: mutate,
+    refresh,
   } = usePaginatedData<User>({
     itemsPerPage: 10,
     pagesPerBatch: 2,
@@ -259,7 +259,7 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (error || !users) {
+  if (error || !pageOfUsers) {
     return (
       <ErrorCallout
         errorTitle="Error loading users"
@@ -268,10 +268,10 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
     );
   }
 
-  if (!users.length) return null;
+  if (!pageOfUsers.length) return null;
 
   const handlePopup = (message: string, type: "success" | "error") => {
-    if (type === "success") mutate();
+    if (type === "success") refresh();
     setPopup({ message, type });
   };
 
@@ -303,7 +303,7 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {users
+          {pageOfUsers
             .filter((user) => user.role !== UserRole.EXT_PERM_USER)
             .map((user) => (
               <TableRow key={user.id}>
@@ -324,13 +324,13 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
                       user={user}
                       deactivate={user.status === UserStatus.live}
                       setPopup={setPopup}
-                      mutate={mutate}
+                      refresh={refresh}
                     />
                     {user.status == UserStatus.deactivated && (
                       <DeleteUserButton
                         user={user}
                         setPopup={setPopup}
-                        mutate={mutate}
+                        refresh={refresh}
                       />
                     )}
                   </div>
