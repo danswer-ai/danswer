@@ -5,12 +5,14 @@ from uuid import UUID
 from pydantic import BaseModel
 from pydantic import model_validator
 
+from danswer.chat.models import PersonaOverrideConfig
 from danswer.chat.models import RetrievalDocs
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import SearchFeedbackType
 from danswer.context.search.models import BaseFilters
 from danswer.context.search.models import ChunkContext
+from danswer.context.search.models import RerankingDetails
 from danswer.context.search.models import RetrievalDetails
 from danswer.context.search.models import SearchDoc
 from danswer.context.search.models import Tag
@@ -87,6 +89,8 @@ class CreateChatMessageRequest(ChunkContext):
     # If search_doc_ids provided, then retrieval options are unused
     search_doc_ids: list[int] | None
     retrieval_options: RetrievalDetails | None
+    # Useable via the APIs but not recommended for most flows
+    rerank_settings: RerankingDetails | None = None
     # allows the caller to specify the exact search query they want to use
     # will disable Query Rewording if specified
     query_override: str | None = None
@@ -101,6 +105,10 @@ class CreateChatMessageRequest(ChunkContext):
 
     # allow user to specify an alternate assistnat
     alternate_assistant_id: int | None = None
+
+    # This takes the priority over the prompt_override
+    # This won't be a type that's passed in directly from the API
+    persona_override_config: PersonaOverrideConfig | None = None
 
     # used for seeded chats to kick off the generation of an AI answer
     use_existing_user_message: bool = False
@@ -145,7 +153,7 @@ class RenameChatSessionResponse(BaseModel):
 
 class ChatSessionDetails(BaseModel):
     id: UUID
-    name: str
+    name: str | None
     persona_id: int | None = None
     time_created: str
     shared_status: ChatSessionSharedStatus
@@ -198,14 +206,14 @@ class ChatMessageDetail(BaseModel):
 
 class SearchSessionDetailResponse(BaseModel):
     search_session_id: UUID
-    description: str
+    description: str | None
     documents: list[SearchDoc]
     messages: list[ChatMessageDetail]
 
 
 class ChatSessionDetailResponse(BaseModel):
     chat_session_id: UUID
-    description: str
+    description: str | None
     persona_id: int | None = None
     persona_name: str | None
     messages: list[ChatMessageDetail]

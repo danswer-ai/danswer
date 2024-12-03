@@ -522,3 +522,6 @@ API_KEY_HASH_ROUNDS = (
 
 POD_NAME = os.environ.get("POD_NAME")
 POD_NAMESPACE = os.environ.get("POD_NAMESPACE")
+
+
+DEV_MODE = os.environ.get("DEV_MODE", "").lower() == "true"

@@ -16,7 +16,7 @@ from slack_sdk.models.blocks import SectionBlock
 from slack_sdk.models.blocks.basic_components import MarkdownTextObject
 from slack_sdk.models.blocks.block_elements import ImageElement
 
-from danswer.chat.models import DanswerQuote
+from danswer.chat.models import ChatDanswerBotResponse
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import DocumentSource
@@ -40,10 +40,7 @@ from danswer.danswerbot.slack.utils import translate_vespa_highlight_to_slack
 from danswer.db.chat import get_chat_session_by_message_id
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.models import ChannelConfig
-from danswer.db.models import Persona
-from danswer.one_shot_answer.models import OneShotQAResponse
 from danswer.utils.text_processing import decode_escapes
-from danswer.utils.text_processing import replace_whitespaces_w_space
 
 _MAX_BLURB_LEN = 45
 
@@ -327,7 +324,7 @@ def _build_sources_blocks(
 
 
 def _priority_ordered_documents_blocks(
-    answer: OneShotQAResponse,
+    answer: ChatDanswerBotResponse,
 ) -> list[Block]:
     docs_response = answer.docs if answer.docs else None
     top_docs = docs_response.top_documents if docs_response else []
@@ -350,7 +347,7 @@ def _priority_ordered_documents_blocks(
 
 
 def _build_citations_blocks(
-    answer: OneShotQAResponse,
+    answer: ChatDanswerBotResponse,
 ) -> list[Block]:
     docs_response = answer.docs if answer.docs else None
     top_docs = docs_response.top_documents if docs_response else []
@@ -369,51 +366,8 @@ def _build_citations_blocks(
     return citations_block
 
 
-def _build_quotes_block(
-    quotes: list[DanswerQuote],
-) -> list[Block]:
-    quote_lines: list[str] = []
-    doc_to_quotes: dict[str, list[str]] = {}
-    doc_to_link: dict[str, str] = {}
-    doc_to_sem_id: dict[str, str] = {}
-    for q in quotes:
-        quote = q.quote
-        doc_id = q.document_id
-        doc_link = q.link
-        doc_name = q.semantic_identifier
-        if doc_link and doc_name and doc_id and quote:
-            if doc_id not in doc_to_quotes:
-                doc_to_quotes[doc_id] = [quote]
-                doc_to_link[doc_id] = doc_link
-                doc_to_sem_id[doc_id] = (
-                    doc_name
-                    if q.source_type != DocumentSource.SLACK.value
-                    else "#" + doc_name
-                )
-            else:
-                doc_to_quotes[doc_id].append(quote)
-
-    for doc_id, quote_strs in doc_to_quotes.items():
-        quotes_str_clean = [
-            replace_whitespaces_w_space(q_str).strip() for q_str in quote_strs
-        ]
-        longest_quotes = sorted(quotes_str_clean, key=len, reverse=True)[:5]
-        single_quote_str = "\n".join([f"```{q_str}```" for q_str in longest_quotes])
-        link = doc_to_link[doc_id]
-        sem_id = doc_to_sem_id[doc_id]
-        quote_lines.append(
-            f"<{link}|{sem_id}>:\n{remove_slack_text_interactions(single_quote_str)}"
-        )
-
-    if not doc_to_quotes:
-        return []
-
-    return [SectionBlock(text="*Relevant Snippets*\n" + "\n".join(quote_lines))]
-
-
 def _build_qa_response_blocks(
-    answer: OneShotQAResponse,
-    skip_quotes: bool = False,
+    answer: ChatDanswerBotResponse,
     process_message_for_citations: bool = False,
 ) -> list[Block]:
     retrieval_info = answer.docs
@@ -422,12 +376,9 @@ def _build_qa_response_blocks(
         raise RuntimeError("Failed to retrieve docs, cannot answer question.")
 
     formatted_answer = format_slack_message(answer.answer) if answer.answer else None
-    quotes = answer.quotes.quotes if answer.quotes else None
 
     if DISABLE_GENERATIVE_AI:
         return []
-
-    quotes_blocks: list[Block] = []
 
     filter_block: Block | None = None
     if (
@@ -471,16 +422,6 @@ def _build_qa_response_blocks(
         answer_blocks = [
             SectionBlock(text=text) for text in _split_text(answer_processed)
         ]
-        if quotes:
-            quotes_blocks = _build_quotes_block(quotes)
-
-        # if no quotes OR `_build_quotes_block()` did not give back any blocks
-        if not quotes_blocks:
-            quotes_blocks = [
-                SectionBlock(
-                    text="*Warning*: no sources were quoted for this answer, so it may be unreliable 😔"
-                )
-            ]
 
     response_blocks: list[Block] = []
 
@@ -488,9 +429,6 @@ def _build_qa_response_blocks(
         response_blocks.append(filter_block)
 
     response_blocks.extend(answer_blocks)
-
-    if not skip_quotes:
-        response_blocks.extend(quotes_blocks)
 
     return response_blocks
 
@@ -567,10 +505,9 @@ def build_follow_up_resolved_blocks(
 
 
 def build_slack_response_blocks(
+    answer: ChatDanswerBotResponse,
     tenant_id: str | None,
     message_info: SlackMessageInfo,
-    answer: OneShotQAResponse,
-    persona: Persona | None,
     channel_conf: ChannelConfig | None,
     use_citations: bool,
     feedback_reminder_id: str | None,
@@ -587,7 +524,6 @@ def build_slack_response_blocks(
 
     answer_blocks = _build_qa_response_blocks(
         answer=answer,
-        skip_quotes=persona is not None or use_citations,
         process_message_for_citations=use_citations,
     )
 
@@ -617,8 +553,7 @@ def build_slack_response_blocks(
 
     citations_blocks = []
     document_blocks = []
-    if use_citations:
-        # if citations are enabled, only show cited documents
+    if use_citations and answer.citations:
         citations_blocks = _build_citations_blocks(answer)
     else:
         document_blocks = _priority_ordered_documents_blocks(answer)
@@ -637,4 +572,5 @@ def build_slack_response_blocks(
         + web_follow_up_block
         + follow_up_block
     )
+
     return all_blocks

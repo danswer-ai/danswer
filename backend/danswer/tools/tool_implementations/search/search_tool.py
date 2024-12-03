@@ -19,6 +19,7 @@ from danswer.context.search.enums import QueryFlow
 from danswer.context.search.enums import SearchType
 from danswer.context.search.models import IndexFilters
 from danswer.context.search.models import InferenceSection
+from danswer.context.search.models import RerankingDetails
 from danswer.context.search.models import RetrievalDetails
 from danswer.context.search.models import SearchRequest
 from danswer.context.search.pipeline import SearchPipeline
@@ -103,6 +104,7 @@ class SearchTool(Tool):
         chunks_below: int | None = None,
         full_doc: bool = False,
         bypass_acl: bool = False,
+        rerank_settings: RerankingDetails | None = None,
     ) -> None:
         self.user = user
         self.persona = persona
@@ -117,6 +119,9 @@ class SearchTool(Tool):
         self.full_doc = full_doc
         self.bypass_acl = bypass_acl
         self.db_session = db_session
+
+        # Only used via API
+        self.rerank_settings = rerank_settings
 
         self.chunks_above = (
             chunks_above
@@ -292,6 +297,7 @@ class SearchTool(Tool):
                     self.retrieval_options.offset if self.retrieval_options else None
                 ),
                 limit=self.retrieval_options.limit if self.retrieval_options else None,
+                rerank_settings=self.rerank_settings,
                 chunks_above=self.chunks_above,
                 chunks_below=self.chunks_below,
                 full_doc=self.full_doc,

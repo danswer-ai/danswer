@@ -13,15 +13,12 @@ from langchain_core.messages import ToolCallChunk
 
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import DanswerQuote
-from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import StreamStopInfo
 from danswer.chat.models import StreamStopReason
 from danswer.llm.answering.answer import Answer
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import PromptConfig
-from danswer.llm.answering.models import QuotesConfig
 from danswer.llm.interfaces import LLM
 from danswer.tools.force import ForceUseTool
 from danswer.tools.models import ToolCallFinalResult
@@ -282,90 +279,6 @@ def test_answer_with_search_no_tool_calling(
 
     # Verify that the search tool's run method was called
     mock_search_tool.run.assert_called_once()
-
-
-def test_answer_with_search_call_quotes_enabled(
-    answer_instance: Answer,
-    mock_search_results: list[LlmDoc],
-    mock_search_tool: MagicMock,
-) -> None:
-    answer_instance.tools = [mock_search_tool]
-    answer_instance.force_use_tool = ForceUseTool(
-        force_use=False, tool_name="", args=None
-    )
-    answer_instance.answer_style_config.citation_config = None
-    answer_instance.answer_style_config.quotes_config = QuotesConfig()
-
-    # Set up the LLM mock to return search results and then an answer
-    mock_llm = cast(Mock, answer_instance.llm)
-
-    tool_call_chunk = AIMessageChunk(content="")
-    tool_call_chunk.tool_calls = [
-        ToolCall(
-            id="search",
-            name="search",
-            args=DEFAULT_SEARCH_ARGS,
-        )
-    ]
-    tool_call_chunk.tool_call_chunks = [
-        ToolCallChunk(
-            id="search",
-            name="search",
-            args=json.dumps(DEFAULT_SEARCH_ARGS),
-            index=0,
-        )
-    ]
-
-    # needs to be short due to the "anti-hallucination" check in QuotesProcessor
-    answer_content = "z"
-    quote_content = mock_search_results[0].content
-    mock_llm.stream.side_effect = [
-        [tool_call_chunk],
-        [
-            AIMessageChunk(
-                content=(
-                    '{"answer": "'
-                    + answer_content
-                    + '", "quotes": ["'
-                    + quote_content
-                    + '"]}'
-                )
-            ),
-        ],
-    ]
-
-    # Process the output
-    output = list(answer_instance.processed_streamed_output)
-
-    # Assertions
-    assert len(output) == 5
-    assert output[0] == ToolCallKickoff(
-        tool_name="search", tool_args=DEFAULT_SEARCH_ARGS
-    )
-    assert output[1] == ToolResponse(
-        id="final_context_documents",
-        response=mock_search_results,
-    )
-    assert output[2] == ToolCallFinalResult(
-        tool_name="search",
-        tool_args=DEFAULT_SEARCH_ARGS,
-        tool_result=[json.loads(doc.model_dump_json()) for doc in mock_search_results],
-    )
-    assert output[3] == DanswerAnswerPiece(answer_piece=answer_content)
-    assert output[4] == DanswerQuotes(
-        quotes=[
-            DanswerQuote(
-                quote=quote_content,
-                document_id=mock_search_results[0].document_id,
-                link=mock_search_results[0].link,
-                source_type=mock_search_results[0].source_type,
-                semantic_identifier=mock_search_results[0].semantic_identifier,
-                blurb=mock_search_results[0].blurb,
-            )
-        ]
-    )
-
-    assert answer_instance.llm_answer == answer_content
 
 
 def test_is_cancelled(answer_instance: Answer) -> None:
