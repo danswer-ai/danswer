@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { TableHeader } from "@/components/ui/table";
 import CenteredPageSelector from "./CenteredPageSelector";
-import { type PageSelectorProps } from "@/components/PageSelector";
 
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import { type User } from "@/lib/types";

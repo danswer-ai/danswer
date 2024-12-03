@@ -1,7 +1,5 @@
 from datetime import datetime
 from typing import Any
-from typing import Generic
-from typing import TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -205,13 +203,13 @@ class IndexAttemptError(BaseModel):
         )
 
 
-snapshotT = TypeVar(
-    "snapshotT", IndexAttemptSnapshot, FullUserSnapshot, InvitedUserSnapshot
-)
+# These are the types currently supported by the pagination hook
+# More api endpoints can be refactored and added here for use with the hook
+paginatedListTypes = IndexAttemptSnapshot | FullUserSnapshot | InvitedUserSnapshot
 
 
-class PaginatedReturn(BaseModel, Generic[snapshotT]):
-    items: list[snapshotT]
+class PaginatedReturn(BaseModel):
+    items: list[paginatedListTypes]
     total_items: int
 
 

@@ -8,16 +8,12 @@ import { Modal } from "@/components/Modal";
 
 import { Button } from "@/components/ui/button";
 import Text from "@/components/ui/text";
-import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
 import { UsersIcon } from "@/components/icons/icons";
-import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
-import { ErrorCallout } from "@/components/ErrorCallout";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import BulkAdd from "@/components/admin/users/BulkAdd";
-import { UsersResponse } from "@/lib/users/interfaces";
 
 const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   if (!validDomains.length) {

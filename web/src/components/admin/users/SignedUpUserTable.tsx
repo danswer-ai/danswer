@@ -41,6 +41,9 @@ interface Props {
   q?: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+const PAGES_PER_BATCH = 2;
+
 const UserRoleDropdown = ({
   user,
   onSuccess,
@@ -249,8 +252,8 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
     goToPage,
     refresh,
   } = usePaginatedData<User>({
-    itemsPerPage: 10,
-    pagesPerBatch: 2,
+    itemsPerPage: ITEMS_PER_PAGE,
+    pagesPerBatch: PAGES_PER_BATCH,
     endpoint: "/api/manage/users/accepted",
     query: q,
   });
