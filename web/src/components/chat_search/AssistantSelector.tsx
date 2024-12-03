@@ -223,7 +223,6 @@ const AssistantSelector = ({
                 if (chatSessionId) {
                   updateModelOverrideForChatSession(chatSessionId, value);
                 }
-                setIsOpen(false);
               }}
             />
             <div className="mt-4">
