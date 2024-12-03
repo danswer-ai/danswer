@@ -1,7 +1,7 @@
 """Combine Search and Chat
 
 Revision ID: 9f696734098f
-Revises: abe7378b8217
+Revises: a8c2065484e6
 Create Date: 2024-11-27 15:32:19.694972
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "9f696734098f"
-down_revision = "abe7378b8217"
+down_revision = "a8c2065484e6"
 branch_labels = None
 depends_on = None
 
