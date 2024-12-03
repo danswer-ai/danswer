@@ -1,5 +1,9 @@
-import { OAuthPrepareAuthorizationResponse } from "./types";
+import {
+  OAuthPrepareAuthorizationResponse,
+  OAuthSlackCallbackResponse,
+} from "./types";
 
+// server side handler to help initiate the oauth authorization request
 export async function prepareOAuthAuthorizationRequest(
   connector: string,
   finalRedirect: string | null // a redirect (not the oauth redirect) for the user to return to after oauth is complete)
@@ -32,5 +36,34 @@ export async function prepareOAuthAuthorizationRequest(
 
   // Parse the JSON response
   const data = (await response.json()) as OAuthPrepareAuthorizationResponse;
+  return data;
+}
+
+// server side handler to process the oauth redirect callback
+// https://api.slack.com/authentication/oauth-v2#exchanging
+export async function handleOAuthAuthorizationResponse(
+  code: string,
+  state: string
+): Promise<OAuthSlackCallbackResponse> {
+  const url = `/api/oauth/connector/slack/callback?code=${encodeURIComponent(
+    code
+  )}&state=${encodeURIComponent(state)}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ code, state }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to handle OAuth authorization response: ${response.status}`
+    );
+  }
+
+  // Parse the JSON response
+  const data = (await response.json()) as OAuthSlackCallbackResponse;
   return data;
 }

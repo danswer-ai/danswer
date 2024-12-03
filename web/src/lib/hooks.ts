@@ -88,64 +88,6 @@ export const useConnectorCredentialIndexingStatus = (
   };
 };
 
-// server side handler to process the oauth redirect callback
-// https://api.slack.com/authentication/oauth-v2#exchanging
-export const useConnectorOAuthCallback = (
-  connector: string,
-  code: string | null,
-  state: string | null
-) => {
-  if (connector === "slack") {
-    return useSlackConnectorOAuthCallback(code, state);
-  }
-
-  return {
-    data: undefined,
-    error: new Error(`No callback handler for ${connector}`),
-    isLoading: false,
-  };
-};
-
-export const useSlackConnectorOAuthCallback = (
-  code: string | null,
-  state: string | null
-) => {
-  if (!code || !state) {
-    return {
-      data: undefined,
-      error: new Error("Missing code or state for Slack OAuth callback"),
-      isLoading: false,
-    };
-  }
-
-  const url = `/api/oauth/connector/slack/callback?code=${encodeURIComponent(
-    code
-  )}&state=${encodeURIComponent(state)}`;
-
-  // Custom fetch function for POST request
-  const fetcher = async () => {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ code, state }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to post OAuth callback: ${response.statusText}`);
-    }
-
-    return response.json();
-  };
-
-  const swrResponse = useSWR<OAuthSlackCallbackResponse>(url, fetcher);
-
-  return {
-    ...swrResponse,
-  };
-};
-
 export const useCategories = () => {
   const { mutate } = useSWRConfig();
   const swrResponse = useSWR<PersonaCategory[]>(

@@ -122,8 +122,7 @@ export default function AddConnector({
     }
 
     const sourceMetadata = getSourceMetadata(connector);
-    // if(sourceMetadata?.oauthSupported == true && NEXT_PUBLIC_CLOUD_ENABLED) {
-    if (sourceMetadata?.oauthSupported == true) {
+    if (sourceMetadata?.oauthSupported == true && NEXT_PUBLIC_CLOUD_ENABLED) {
       setIsAuthorizeVisible(true);
     }
   }, []);
