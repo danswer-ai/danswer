@@ -53,7 +53,6 @@ from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
 from danswer.server.documents.document import router as document_router
 from danswer.server.documents.indexing import router as indexing_router
-from danswer.server.features.document_set.api import router as document_set_router
 from danswer.server.features.folder.api import router as folder_router
 from danswer.server.features.input_prompt.api import (
     admin_router as admin_input_prompt_router,
@@ -92,6 +91,7 @@ from danswer.server.settings.api import basic_router as settings_router
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
+from danswer.server.user_documents.api import router as user_documents_router
 from danswer.setup import setup_danswer
 from danswer.setup import setup_multitenant_danswer
 from danswer.utils.logger import setup_logger
@@ -252,7 +252,6 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, credential_router)
     include_router_with_global_prefix_prepended(application, cc_pair_router)
     include_router_with_global_prefix_prepended(application, folder_router)
-    include_router_with_global_prefix_prepended(application, document_set_router)
     include_router_with_global_prefix_prepended(application, search_settings_router)
     include_router_with_global_prefix_prepended(
         application, slack_bot_management_router
@@ -283,6 +282,8 @@ def get_application() -> FastAPI:
     )
     include_router_with_global_prefix_prepended(application, long_term_logs_router)
     include_router_with_global_prefix_prepended(application, api_key_router)
+    include_router_with_global_prefix_prepended(application, connector_router)
+    include_router_with_global_prefix_prepended(application, user_documents_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step

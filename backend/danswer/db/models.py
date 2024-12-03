@@ -178,6 +178,11 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         primaryjoin="User.id == foreign(ConnectorCredentialPair.creator_id)",
     )
 
+    folders: Mapped[list["UserFolder"]] = relationship(
+        "UserFolder", back_populates="user"
+    )
+    files: Mapped[list["UserFile"]] = relationship("UserFile", back_populates="user")
+
 
 class InputPrompt(Base):
     __tablename__ = "inputprompt"
@@ -1879,3 +1884,43 @@ class UserTenantMapping(Base):
 
     email: Mapped[str] = mapped_column(String, nullable=False, primary_key=True)
     tenant_id: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class UserFolder(Base):
+    __tablename__ = "user_folder"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("user_folder.id"), nullable=True
+    )
+    name: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.utcnow
+    )
+
+    user: Mapped["User"] = relationship(back_populates="folders")
+    parent: Mapped["UserFolder"] = relationship(
+        remote_side=[id], back_populates="children"
+    )
+    children: Mapped[list["UserFolder"]] = relationship(back_populates="parent")
+    files: Mapped[list["UserFile"]] = relationship(back_populates="folder")
+
+
+class UserFile(Base):
+    __tablename__ = "user_file"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    parent_folder_id: Mapped[int | None] = mapped_column(
+        ForeignKey("user_folder.id"), nullable=True
+    )
+    file_id: Mapped[str] = mapped_column(nullable=False)
+    document_id: Mapped[str] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.utcnow
+    )
+
+    user: Mapped["User"] = relationship(back_populates="files")
+    folder: Mapped["UserFolder"] = relationship(back_populates="files")
