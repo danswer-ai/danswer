@@ -178,6 +178,3 @@ def move_file(
     return FileResponse(
         id=file.id, name=file.name, parent_folder_id=file.parent_folder_id
     )
-
-
-# Add more endpoints for updating, deleting, and moving folders/files
