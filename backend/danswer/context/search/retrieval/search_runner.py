@@ -1,4 +1,5 @@
 import string
+import time
 from collections.abc import Callable
 
 import nltk  # type:ignore
@@ -85,6 +86,7 @@ def remove_stop_words_and_punctuation(keywords: list[str]) -> list[str]:
         return keywords
 
 
+@log_function_time(print_only=True)
 def combine_retrieval_results(
     chunk_sets: list[list[InferenceChunk]],
 ) -> list[InferenceChunk]:
@@ -256,7 +258,13 @@ def retrieve_chunks(
                     (q_copy, document_index, db_session),
                 )
             )
+
+        start_time = time.time()
         parallel_search_results = run_functions_tuples_in_parallel(run_queries)
+        end_time = time.time()
+        logger.info(
+            f"Parallel search execution took {end_time - start_time:.2f} seconds"
+        )
         top_chunks = combine_retrieval_results(parallel_search_results)
 
     if not top_chunks:

@@ -21,6 +21,7 @@ from danswer.natural_language_processing.utils import tokenizer_trim_content
 from danswer.prompts.prompt_utils import build_doc_context_str
 from danswer.tools.tool_implementations.search.search_utils import section_to_dict
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_function_time
 
 
 logger = setup_logger()
@@ -43,6 +44,7 @@ class ChunkRange(BaseModel):
     end: int
 
 
+@log_function_time(print_only=True)
 def merge_chunk_intervals(chunk_ranges: list[ChunkRange]) -> list[ChunkRange]:
     """
     This acts on a single document to merge the overlapping ranges of chunks
@@ -300,6 +302,7 @@ def prune_sections(
     )
 
 
+@log_function_time(print_only=True)
 def _merge_doc_chunks(chunks: list[InferenceChunk]) -> InferenceSection:
     # Assuming there are no duplicates by this point
     sorted_chunks = sorted(chunks, key=lambda x: x.chunk_id)
@@ -327,6 +330,7 @@ def _merge_doc_chunks(chunks: list[InferenceChunk]) -> InferenceSection:
     )
 
 
+@log_function_time(print_only=True)
 def _merge_sections(sections: list[InferenceSection]) -> list[InferenceSection]:
     docs_map: dict[str, dict[int, InferenceChunk]] = defaultdict(dict)
     doc_order: dict[str, int] = {}

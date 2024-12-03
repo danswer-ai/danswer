@@ -135,6 +135,7 @@ class SearchPipeline:
 
     """Retrieval and Postprocessing"""
 
+    @log_function_time(print_only=True)
     def _get_chunks(self) -> list[InferenceChunk]:
         if self._retrieved_chunks is not None:
             return self._retrieved_chunks
@@ -306,6 +307,7 @@ class SearchPipeline:
         return expanded_inference_sections
 
     @property
+    @log_function_time(print_only=True)
     def reranked_sections(self) -> list[InferenceSection]:
         """Reranking is always done at the chunk level since section merging could create arbitrarily
         long sections which could be:
@@ -331,6 +333,7 @@ class SearchPipeline:
         return self._reranked_sections
 
     @property
+    @log_function_time(print_only=True)
     def final_context_sections(self) -> list[InferenceSection]:
         if self._final_context_sections is not None:
             return self._final_context_sections
@@ -339,6 +342,7 @@ class SearchPipeline:
         return self._final_context_sections
 
     @property
+    @log_function_time(print_only=True)
     def section_relevance(self) -> list[SectionRelevancePiece] | None:
         if self._section_relevance is not None:
             return self._section_relevance
@@ -393,6 +397,7 @@ class SearchPipeline:
         return self._section_relevance
 
     @property
+    @log_function_time(print_only=True)
     def section_relevance_list(self) -> list[bool]:
         llm_indices = relevant_sections_to_indices(
             relevance_sections=self.section_relevance,

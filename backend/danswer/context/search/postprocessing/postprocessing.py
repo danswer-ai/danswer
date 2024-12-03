@@ -42,6 +42,7 @@ def _log_top_section_links(search_flow: str, sections: list[InferenceSection]) -
     logger.debug(f"Top links from {search_flow} search: {', '.join(top_links)}")
 
 
+@log_function_time(print_only=True)
 def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk]:
     def _remove_title(chunk: InferenceChunkUncleaned) -> str:
         if not chunk.title or not chunk.content:
@@ -244,6 +245,7 @@ def filter_sections(
     ]
 
 
+@log_function_time(print_only=True)
 def search_postprocessing(
     search_query: SearchQuery,
     retrieved_sections: list[InferenceSection],

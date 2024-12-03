@@ -15,6 +15,7 @@ from danswer.prompts.miscellaneous_prompts import LANGUAGE_REPHRASE_PROMPT
 from danswer.utils.logger import setup_logger
 from danswer.utils.text_processing import count_punctuation
 from danswer.utils.threadpool_concurrency import run_functions_tuples_in_parallel
+from danswer.utils.timing import log_function_time
 
 logger = setup_logger()
 
@@ -48,6 +49,7 @@ def llm_multilingual_query_expansion(query: str, language: str) -> str:
     return model_output
 
 
+@log_function_time(print_only=True)
 def multilingual_query_expansion(
     query: str,
     expansion_languages: list[str],

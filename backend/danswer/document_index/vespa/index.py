@@ -72,6 +72,7 @@ from danswer.indexing.models import DocMetadataAwareIndexChunk
 from danswer.key_value_store.factory import get_kv_store
 from danswer.utils.batching import batch_generator
 from danswer.utils.logger import setup_logger
+from danswer.utils.timing import log_function_time
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.model_server_models import Embedding
 
@@ -660,6 +661,7 @@ class VespaIndex(DocumentIndex):
 
         return total_chunks_deleted
 
+    @log_function_time(print_only=True)
     def id_based_retrieval(
         self,
         chunk_requests: list[VespaChunkRequest],
@@ -681,6 +683,7 @@ class VespaIndex(DocumentIndex):
             get_large_chunks=get_large_chunks,
         )
 
+    @log_function_time(print_only=True)
     def hybrid_retrieval(
         self,
         query: str,

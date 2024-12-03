@@ -8,6 +8,7 @@ from danswer.context.search.models import SavedSearchDoc
 from danswer.context.search.models import SavedSearchDocWithContent
 from danswer.context.search.models import SearchDoc
 from danswer.db.models import SearchDoc as DBSearchDoc
+from danswer.utils.timing import log_function_time
 
 
 T = TypeVar(
@@ -88,6 +89,7 @@ def drop_llm_indices(
     return [i for i, val in enumerate(llm_bools) if val]
 
 
+@log_function_time(print_only=True)
 def inference_section_from_chunks(
     center_chunk: InferenceChunk,
     chunks: list[InferenceChunk],
