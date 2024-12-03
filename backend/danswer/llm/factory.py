@@ -81,13 +81,10 @@ def get_llms_for_persona(
 
 def get_default_llms(
     timeout: int = QA_TIMEOUT,
-    temperature: float | None = None,
+    temperature: float = GEN_AI_TEMPERATURE,
     additional_headers: dict[str, str] | None = None,
     long_term_logger: LongTermLogger | None = None,
 ) -> tuple[LLM, LLM]:
-    if temperature is None:
-        temperature = GEN_AI_TEMPERATURE
-
     if DISABLE_GENERATIVE_AI:
         raise GenAIDisabledException()
 
@@ -132,11 +129,13 @@ def get_llm(
     api_base: str | None = None,
     api_version: str | None = None,
     custom_config: dict[str, str] | None = None,
-    temperature: float = GEN_AI_TEMPERATURE,
+    temperature: float | None = None,
     timeout: int = QA_TIMEOUT,
     additional_headers: dict[str, str] | None = None,
     long_term_logger: LongTermLogger | None = None,
 ) -> LLM:
+    if temperature is None:
+        temperature = GEN_AI_TEMPERATURE
     return DefaultMultiLLM(
         model_provider=provider,
         model_name=model,
