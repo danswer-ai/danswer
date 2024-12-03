@@ -54,11 +54,14 @@ const AssistantSelector = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { llmProviders } = useChatContext();
   const { user } = useUser();
-  const [assistants, setAssistants] = useState<Persona[]>(finalAssistants);
-  const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
-  const [localTemperature, setLocalTemperature] = useState<number>(
+  const [temperature, setTemperature] = useState<number>(
     llmOverrideManager?.temperature || 0
   );
+  const [assistants, setAssistants] = useState<Persona[]>(finalAssistants);
+  const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
+  // const [temperature, settemperature] = useState<number>(
+  //   llmOverrideManager?.temperature || 0
+  // );
 
   // Initialize selectedTab from localStorage
   const [selectedTab, setSelectedTab] = useState<number>(() => {
@@ -76,6 +79,10 @@ const AssistantSelector = ({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  useEffect(() => {
+    setTemperature(llmOverrideManager?.temperature || 0);
+  }, [llmOverrideManager?.temperature]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -103,7 +110,7 @@ const AssistantSelector = ({
   );
 
   const handleTemperatureChange = (value: number) => {
-    setLocalTemperature(value);
+    // settemperature(value);
     debouncedSetTemperature(value);
   };
 
@@ -249,20 +256,20 @@ const AssistantSelector = ({
                       min="0"
                       max="2"
                       step="0.01"
-                      value={localTemperature}
+                      value={temperature}
                     />
                     <div
                       className="absolute text-sm"
                       style={{
-                        left: `${(localTemperature || 0) * 50}%`,
+                        left: `${(temperature || 0) * 50}%`,
                         transform: `translateX(-${Math.min(
-                          Math.max((localTemperature || 0) * 50, 10),
+                          Math.max((temperature || 0) * 50, 10),
                           90
                         )}%)`,
                         top: "-1.5rem",
                       }}
                     >
-                      {localTemperature}
+                      {temperature}
                     </div>
                   </div>
                 </>

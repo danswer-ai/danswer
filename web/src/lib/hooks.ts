@@ -16,6 +16,7 @@ import { UsersResponse } from "./users/interfaces";
 import { Credential } from "./connectors/credentials";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { PersonaCategory } from "@/app/admin/assistants/interfaces";
+import { isAnthropic } from "@/app/admin/configuration/llm/interfaces";
 
 const CREDENTIAL_URL = "/api/manage/admin/credential";
 
@@ -71,7 +72,9 @@ export const useConnectorCredentialIndexingStatus = (
   getEditable = false
 ) => {
   const { mutate } = useSWRConfig();
-  const url = `${INDEXING_STATUS_URL}${getEditable ? "?get_editable=true" : ""}`;
+  const url = `${INDEXING_STATUS_URL}${
+    getEditable ? "?get_editable=true" : ""
+  }`;
   const swrResponse = useSWR<ConnectorIndexingStatus<any, any>[]>(
     url,
     errorHandlingFetcher,
@@ -211,6 +214,13 @@ export function useLlmOverride(
   useEffect(() => {
     setTemperature(defaultTemperature !== undefined ? defaultTemperature : 0);
   }, [defaultTemperature]);
+
+  useEffect(() => {
+    console.log("LLM OVERRIDE", llmOverride);
+    if (isAnthropic(llmOverride.provider, llmOverride.modelName)) {
+      setTemperature((prevTemp) => Math.min(prevTemp ?? 0, 1.0));
+    }
+  }, [llmOverride]);
 
   return {
     updateModelOverrideForChatSession,

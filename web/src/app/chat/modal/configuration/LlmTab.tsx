@@ -37,9 +37,9 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     const { llmProviders } = useChatContext();
     const { setLlmOverride, temperature, setTemperature } = llmOverrideManager;
     const [isTemperatureExpanded, setIsTemperatureExpanded] = useState(false);
-    const [localTemperature, setLocalTemperature] = useState<number>(
-      temperature || 0
-    );
+    // const [temperature, settemperature] = useState<number>(
+    //   temperature || 0
+    // );
     const debouncedSetTemperature = useCallback(
       (value: number) => {
         const debouncedFunction = debounce((value: number) => {
@@ -51,7 +51,7 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
     );
 
     const handleTemperatureChange = (value: number) => {
-      setLocalTemperature(value);
+      // settemperature(value);
       debouncedSetTemperature(value);
     };
 
@@ -114,20 +114,20 @@ export const LlmTab = forwardRef<HTMLDivElement, LlmTabProps>(
                   min="0"
                   max="2"
                   step="0.01"
-                  value={localTemperature}
+                  value={temperature || 0}
                 />
                 <div
                   className="absolute text-sm"
                   style={{
-                    left: `${(localTemperature || 0) * 50}%`,
+                    left: `${(temperature || 0) * 50}%`,
                     transform: `translateX(-${Math.min(
-                      Math.max((localTemperature || 0) * 50, 10),
+                      Math.max((temperature || 0) * 50, 10),
                       90
                     )}%)`,
                     top: "-1.5rem",
                   }}
                 >
-                  {localTemperature}
+                  {temperature}
                 </div>
               </div>
             </>
