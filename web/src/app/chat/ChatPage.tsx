@@ -69,8 +69,8 @@ import { AIMessage, HumanMessage } from "./message/Messages";
 import { StarterMessages } from "../../components/assistants/StarterMessage";
 import {
   AnswerPiecePacket,
+  ContextDocsPacket,
   DanswerDocument,
-  FinalContextDocs,
   StreamStopInfo,
   StreamStopReason,
 } from "@/lib/search/interfaces";
@@ -1265,6 +1265,7 @@ export function ChatPage({
           if (!packet) {
             continue;
           }
+          console.log("packet", packet);
 
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
@@ -1339,8 +1340,8 @@ export function ChatPage({
 
             if (Object.hasOwn(packet, "answer_piece")) {
               answer += (packet as AnswerPiecePacket).answer_piece;
-            } else if (Object.hasOwn(packet, "final_context_docs")) {
-              documents = (packet as FinalContextDocs).final_context_docs;
+            } else if (Object.hasOwn(packet, "top_documents")) {
+              documents = (packet as ContextDocsPacket).top_documents;
               retrievalType = RetrievalType.Search;
               if (documents && documents.length > 0) {
                 // point to the latest message (we don't know the messageId yet, which is why

@@ -19,8 +19,8 @@ export interface AnswerPiecePacket {
   answer_piece: string;
 }
 
-export interface FinalContextDocs {
-  final_context_docs: DanswerDocument[];
+export interface ContextDocsPacket {
+  top_documents: DanswerDocument[];
 }
 
 export enum StreamStopReason {
