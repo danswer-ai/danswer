@@ -8,6 +8,7 @@ from celery import shared_task
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 from redis import Redis
+from redis.lock import Lock as RedisLock
 from sqlalchemy.orm import Session
 
 from danswer.background.celery.apps.app_base import task_logger
@@ -239,9 +240,12 @@ def connector_pruning_generator_task(
 
     r = get_redis_client(tenant_id=tenant_id)
 
-    lock = r.lock(
+    # set thread_local=False since we don't control what thread the indexing/pruning
+    # might run our callback with
+    lock: RedisLock = r.lock(
         DanswerRedisLocks.PRUNING_LOCK_PREFIX + f"_{redis_connector.id}",
         timeout=CELERY_PRUNING_LOCK_TIMEOUT,
+        thread_local=False,
     )
 
     acquired = lock.acquire(blocking=False)
