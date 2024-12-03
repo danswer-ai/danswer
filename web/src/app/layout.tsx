@@ -23,12 +23,26 @@ import CardSection from "@/components/admin/CardSection";
 import { Suspense } from "react";
 import PostHogPageView from "./PostHogPageView";
 import Script from "next/script";
+import { Folder } from "lucide-react";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
+
+const navItems = [
+  {
+    name: "Home",
+    href: "/",
+    icon: Folder,
+  },
+  {
+    name: "My Documents",
+    href: "/my-documents",
+    icon: Folder,
+  },
+];
 
 export async function generateMetadata(): Promise<Metadata> {
   let logoLocation = buildClientUrl("/danswer.ico");

@@ -268,6 +268,8 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, danswer_api_router)
     include_router_with_global_prefix_prepended(application, gpts_router)
     include_router_with_global_prefix_prepended(application, settings_router)
+    include_router_with_global_prefix_prepended(application, user_documents_router)
+
     include_router_with_global_prefix_prepended(application, settings_admin_router)
     include_router_with_global_prefix_prepended(application, llm_admin_router)
     include_router_with_global_prefix_prepended(application, llm_router)
@@ -283,7 +285,6 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, long_term_logs_router)
     include_router_with_global_prefix_prepended(application, api_key_router)
     include_router_with_global_prefix_prepended(application, connector_router)
-    include_router_with_global_prefix_prepended(application, user_documents_router)
 
     if AUTH_TYPE == AuthType.DISABLED:
         # Server logs this during auth setup verification step
