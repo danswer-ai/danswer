@@ -304,6 +304,12 @@ export const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Not Applicable",
     category: SourceCategory.Other,
   },
+  egnyte: {
+    icon: FileIcon,
+    displayName: "Egnyte",
+    category: SourceCategory.Storage,
+    docs: "https://docs.danswer.dev/connectors/egnyte",
+  },
 } as SourceMap;
 
 function fillSourceMetadata(

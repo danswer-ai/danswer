@@ -132,6 +132,7 @@ class DocumentSource(str, Enum):
     NOT_APPLICABLE = "not_applicable"
     FRESHDESK = "freshdesk"
     FIREFLIES = "fireflies"
+    EGNYTE = "egnyte"
 
 
 DocumentSourceRequiringTenantContext: list[DocumentSource] = [DocumentSource.FILE]
