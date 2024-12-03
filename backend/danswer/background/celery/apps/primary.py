@@ -39,7 +39,6 @@ from danswer.redis.redis_usergroup import RedisUserGroup
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import MULTI_TENANT
 
-
 logger = setup_logger()
 
 celery_app = Celery(__name__)
@@ -117,9 +116,13 @@ def on_worker_init(sender: Any, **kwargs: Any) -> None:
     # it is planned to use this lock to enforce singleton behavior on the primary
     # worker, since the primary worker does redis cleanup on startup, but this isn't
     # implemented yet.
+
+    # set thread_local=False since we don't control what thread the periodic task might
+    # reacquire the lock with
     lock: RedisLock = r.lock(
         DanswerRedisLocks.PRIMARY_WORKER,
         timeout=CELERY_PRIMARY_WORKER_LOCK_TIMEOUT,
+        thread_local=False,
     )
 
     logger.info("Primary worker lock: Acquire starting.")
