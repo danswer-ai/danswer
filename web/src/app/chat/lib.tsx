@@ -2,7 +2,7 @@ import {
   AnswerPiecePacket,
   DanswerDocument,
   Filters,
-  FinalContextDocs,
+  ContextDocsPacket,
   StreamStopInfo,
 } from "@/lib/search/interfaces";
 import { handleSSEStream } from "@/lib/search/streamingUtils";
@@ -103,7 +103,7 @@ export type PacketType =
   | ToolCallMetadata
   | BackendMessage
   | AnswerPiecePacket
-  | FinalContextDocs
+  | ContextDocsPacket
   | DocumentsResponse
   | FileChatDisplay
   | StreamingError

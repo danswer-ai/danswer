@@ -921,7 +921,6 @@ export function ChatPage({
           setHasPerformedInitialScroll(true);
         }, 100);
       } else {
-        console.log("All messages are already rendered, scrolling immediately");
         // If all messages are already rendered, scroll immediately
         endDivRef.current.scrollIntoView({
           behavior: fast ? "auto" : "smooth",
@@ -975,9 +974,6 @@ export function ChatPage({
   };
 
   useEffect(() => {
-    console.log("something hanged", selectedDocuments);
-    console.log(showDocSidebar);
-    console.log(filtersToggled);
     if (
       (!selectedDocuments || selectedDocuments.length === 0) &&
       documentSidebarToggled &&
@@ -1265,7 +1261,6 @@ export function ChatPage({
           if (!packet) {
             continue;
           }
-          console.log("packet", packet);
 
           if (!initialFetchDetails) {
             if (!Object.hasOwn(packet, "user_message_id")) {
