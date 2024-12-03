@@ -580,39 +580,64 @@ def connector_indexing_proxy_task(
 
         if self.request.id and redis_connector_index.terminating(self.request.id):
             task_logger.warning(
-                "Indexing proxy - termination signal detected: "
+                "Indexing watchdog - termination signal detected: "
                 f"attempt={index_attempt_id} "
                 f"tenant={tenant_id} "
                 f"cc_pair={cc_pair_id} "
                 f"search_settings={search_settings_id}"
             )
 
-            with get_session_with_tenant(tenant_id) as db_session:
-                mark_attempt_canceled(
-                    index_attempt_id,
-                    db_session,
-                    "Connector termination signal detected",
+            try:
+                with get_session_with_tenant(tenant_id) as db_session:
+                    mark_attempt_canceled(
+                        index_attempt_id,
+                        db_session,
+                        "Connector termination signal detected",
+                    )
+            finally:
+                # if the DB exceptions, we'll just get an unfriendly failure message
+                # in the UI instead of the cancellation message
+                logger.exception(
+                    "Indexing watchdog - transient exception marking index attempt as canceled: "
+                    f"attempt={index_attempt_id} "
+                    f"tenant={tenant_id} "
+                    f"cc_pair={cc_pair_id} "
+                    f"search_settings={search_settings_id}"
                 )
 
-            job.cancel()
+                job.cancel()
+
             break
 
-        # do nothing for ongoing jobs that haven't been stopped
         if not job.done():
-            with get_session_with_tenant(tenant_id) as db_session:
-                index_attempt = get_index_attempt(
-                    db_session=db_session, index_attempt_id=index_attempt_id
+            # if the spawned task is still running, restart the check once again
+            # if the index attempt is not in a finished status
+            try:
+                with get_session_with_tenant(tenant_id) as db_session:
+                    index_attempt = get_index_attempt(
+                        db_session=db_session, index_attempt_id=index_attempt_id
+                    )
+
+                    if not index_attempt:
+                        continue
+
+                    if not index_attempt.is_finished():
+                        continue
+            except Exception:
+                # if the DB exceptioned, just restart the check.
+                # polling the index attempt status doesn't need to be strongly consistent
+                logger.exception(
+                    "Indexing watchdog - transient exception looking up index attempt: "
+                    f"attempt={index_attempt_id} "
+                    f"tenant={tenant_id} "
+                    f"cc_pair={cc_pair_id} "
+                    f"search_settings={search_settings_id}"
                 )
-
-                if not index_attempt:
-                    continue
-
-                if not index_attempt.is_finished():
-                    continue
+                continue
 
         if job.status == "error":
             task_logger.error(
-                f"Indexing watchdog - spawned task exceptioned: "
+                "Indexing watchdog - spawned task exceptioned: "
                 f"attempt={index_attempt_id} "
                 f"tenant={tenant_id} "
                 f"cc_pair={cc_pair_id} "
