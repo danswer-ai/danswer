@@ -308,6 +308,22 @@ CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD = int(
     os.environ.get("CONFLUENCE_CONNECTOR_ATTACHMENT_CHAR_COUNT_THRESHOLD", 200_000)
 )
 
+# Due to breakages in the confluence API, the timezone offset must be specified client side
+# to match the user's specified timezone.
+
+# The current state of affairs:
+# CQL queries are parsed in the user's timezone and cannot be specified in UTC
+# no API retrieves the user's timezone
+# All data is returned in UTC, so we can't derive the user's timezone from that
+
+# https://community.developer.atlassian.com/t/confluence-cloud-time-zone-get-via-rest-api/35954/16
+# https://jira.atlassian.com/browse/CONFCLOUD-69670
+
+# enter as a floating point offset from UTC in hours (-24 < val < 24)
+# this will be applied globally, so it probably makes sense to transition this to per
+# connector as some point.
+CONFLUENCE_TIMEZONE_OFFSET = float(os.environ.get("CONFLUENCE_TIMEZONE_OFFSET", 1.0))
+
 JIRA_CONNECTOR_LABELS_TO_SKIP = [
     ignored_tag
     for ignored_tag in os.environ.get("JIRA_CONNECTOR_LABELS_TO_SKIP", "").split(",")

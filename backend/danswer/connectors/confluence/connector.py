@@ -1,9 +1,11 @@
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 from typing import Any
 from urllib.parse import quote
 
 from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
+from danswer.configs.app_configs import CONFLUENCE_TIMEZONE_OFFSET
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -69,6 +71,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         # skip it. This is generally used to avoid indexing extra sensitive
         # pages.
         labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
+        timezone_offset: float = CONFLUENCE_TIMEZONE_OFFSET,
     ) -> None:
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
@@ -103,6 +106,8 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 f"'{quote(label)}'" for label in labels_to_skip
             )
             self.cql_label_filter = f" and label not in ({comma_separated_labels})"
+
+        self.timezone: timezone = timezone(offset=timedelta(hours=timezone_offset))
 
     @property
     def confluence_client(self) -> OnyxConfluence:
@@ -204,12 +209,14 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         confluence_page_ids: list[str] = []
 
         page_query = self.cql_page_query + self.cql_label_filter + self.cql_time_filter
+        logger.debug(f"page_query: {page_query}")
         # Fetch pages as Documents
         for page in self.confluence_client.paginated_cql_retrieval(
             cql=page_query,
             expand=",".join(_PAGE_EXPANSION_FIELDS),
             limit=self.batch_size,
         ):
+            logger.debug(f"_fetch_document_batches: {page['id']}")
             confluence_page_ids.append(page["id"])
             doc = self._convert_object_to_document(page)
             if doc is not None:
@@ -242,10 +249,10 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
     def poll_source(self, start: float, end: float) -> GenerateDocumentsOutput:
         # Add time filters
-        formatted_start_time = datetime.fromtimestamp(start, tz=timezone.utc).strftime(
+        formatted_start_time = datetime.fromtimestamp(start, tz=self.timezone).strftime(
             "%Y-%m-%d %H:%M"
         )
-        formatted_end_time = datetime.fromtimestamp(end, tz=timezone.utc).strftime(
+        formatted_end_time = datetime.fromtimestamp(end, tz=self.timezone).strftime(
             "%Y-%m-%d %H:%M"
         )
         self.cql_time_filter = f" and lastmodified >= '{formatted_start_time}'"
