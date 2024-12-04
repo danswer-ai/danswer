@@ -121,9 +121,11 @@ export default function AddConnector({
       setCurrentPageUrl(window.location.href);
     }
 
-    const sourceMetadata = getSourceMetadata(connector);
-    if (sourceMetadata?.oauthSupported == true && NEXT_PUBLIC_CLOUD_ENABLED) {
-      setIsAuthorizeVisible(true);
+    if (NEXT_PUBLIC_CLOUD_ENABLED) {
+      const sourceMetadata = getSourceMetadata(connector);
+      if (sourceMetadata?.oauthSupported == true) {
+        setIsAuthorizeVisible(true);
+      }
     }
   }, []);
 
@@ -154,7 +156,7 @@ export default function AddConnector({
   // Form context and popup management
   const {
     setFormStep,
-    setAlowCreate: setAllowCreate,
+    setAllowCreate: setAllowCreate,
     formStep,
     nextFormStep,
     prevFormStep,
@@ -227,6 +229,9 @@ export default function AddConnector({
   };
 
   const handleAuthorize = async () => {
+    // authorize button handler
+    // gets an auth url from the server and directs the user to it in a popup
+
     if (!currentPageUrl) return;
 
     setIsAuthorizing(true);
@@ -436,6 +441,7 @@ export default function AddConnector({
                     />
                     {!createConnectorToggle && (
                       <div className="mt-6 flex space-x-4">
+                        {/* Button to pop up a form to manually enter credentials */}
                         <button
                           className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded mr-4"
                           onClick={() =>
