@@ -10,7 +10,7 @@ router = APIRouter()
 class FolderResponse(BaseModel):
     id: int
     name: str
-    parent_id: int | None
+    parent_id: int | None = None
 
 
 class FolderDetailResponse(FolderResponse):
@@ -18,10 +18,14 @@ class FolderDetailResponse(FolderResponse):
     files: List[dict]
 
 
+class FolderFullDetailResponse(FolderDetailResponse):
+    parents: List[FolderResponse]
+
+
 class FileResponse(BaseModel):
     id: int
     name: str
-    parent_folder_id: int | None
+    parent_folder_id: int | None = None
 
 
 class MessageResponse(BaseModel):

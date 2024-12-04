@@ -17,7 +17,7 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade() -> None:
     # Create user_folder table
     op.create_table(
         "user_folder",
@@ -48,7 +48,7 @@ def upgrade():
     )
 
 
-def downgrade():
+def downgrade() -> None:
     # Drop user_file table
     op.drop_table("user_file")
 

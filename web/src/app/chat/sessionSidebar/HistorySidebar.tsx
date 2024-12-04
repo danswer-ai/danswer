@@ -1,6 +1,6 @@
 "use client";
 
-import { FiEdit, FiFolderPlus } from "react-icons/fi";
+import { FiBarChart, FiEdit, FiFolderPlus } from "react-icons/fi";
 import React, { ForwardedRef, forwardRef, useContext, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -132,6 +132,23 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
               >
                 <FiEdit className="flex-none text-text-history-sidebar-button" />
                 <p className="my-auto flex items-center text-sm">New Chat</p>
+              </Link>
+              <Link
+                className=" w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                href={`/my-documents`}
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey) {
+                    return;
+                  }
+                  if (handleNewChat) {
+                    handleNewChat();
+                  }
+                }}
+              >
+                <FiBarChart className="flex-none text-text-history-sidebar-button" />
+                <p className="my-auto flex items-center text-sm">
+                  My Documents
+                </p>
               </Link>
               <button
                 onClick={() =>

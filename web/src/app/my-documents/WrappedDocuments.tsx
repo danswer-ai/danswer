@@ -8,7 +8,7 @@ import { useInputPrompts } from "@/app/admin/prompt-library/hooks";
 import { PromptSection } from "@/app/admin/prompt-library/promptSection";
 import { AssistantsPageTitle } from "../assistants/AssistantsPageTitle";
 import SidebarWrapper from "../assistants/SidebarWrapper";
-import MyDocumentsPage from "./MyDocuments";
+import { MyDocuments } from "./MyDocuments";
 
 export default function WrappedUserDocuments({
   chatSessions,
@@ -39,7 +39,7 @@ export default function WrappedUserDocuments({
     >
       <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>My Documents</AssistantsPageTitle>
-        <MyDocumentsPage />
+        <MyDocuments />
       </div>
     </SidebarWrapper>
   );
