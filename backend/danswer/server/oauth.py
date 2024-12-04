@@ -279,7 +279,7 @@ def handle_slack_oauth_callback(
                 "client_id": SlackOAuth.CLIENT_ID,
                 "client_secret": SlackOAuth.CLIENT_SECRET,
                 "code": code,
-                "redirect_uri": SlackOAuth.DEV_REDIRECT_URI,
+                "redirect_uri": SlackOAuth.REDIRECT_URI,
             },
         )
 
