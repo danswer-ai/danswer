@@ -206,7 +206,7 @@ def log_http_error(_: Request, exc: Exception) -> JSONResponse:
 
     if isinstance(exc, BasicAuthenticationError):
         # For BasicAuthenticationError, just log a brief message without stack trace (almost always spam)
-        logger.error(f"Authentication failed: {str(exc)}")
+        logger.warning(f"Authentication failed: {str(exc)}")
 
     elif status_code >= 400:
         error_msg = f"{str(exc)}\n"

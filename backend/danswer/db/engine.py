@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
+from danswer.auth.users import BasicAuthenticationError
 from danswer.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from danswer.configs.app_configs import LOG_POSTGRES_LATENCY
 from danswer.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
@@ -426,7 +427,9 @@ def get_session() -> Generator[Session, None, None]:
     """Generate a database session with the appropriate tenant schema set."""
     tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
     if tenant_id == POSTGRES_DEFAULT_SCHEMA and MULTI_TENANT:
-        raise HTTPException(status_code=401, detail="User must authenticate")
+        raise BasicAuthenticationError(
+            detail="User must authenticate",
+        )
 
     engine = get_sqlalchemy_engine()
 
