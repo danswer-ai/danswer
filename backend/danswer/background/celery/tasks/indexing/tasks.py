@@ -789,9 +789,12 @@ def connector_indexing_task(
         )
         break
 
+    # set thread_local=False since we don't control what thread the indexing/pruning
+    # might run our callback with
     lock: RedisLock = r.lock(
         redis_connector_index.generator_lock_key,
         timeout=CELERY_INDEXING_LOCK_TIMEOUT,
+        thread_local=False,
     )
 
     acquired = lock.acquire(blocking=False)
