@@ -23,7 +23,6 @@ from danswer.chat.models import FinalUsedContextDocsResponse
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import MessageResponseIDInfo
 from danswer.chat.models import MessageSpecificCitations
-from danswer.chat.models import PreviousMessage
 from danswer.chat.models import PromptConfig
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
@@ -67,6 +66,7 @@ from danswer.file_store.utils import save_files_from_urls
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
+from danswer.llm.models import PreviousMessage
 from danswer.llm.utils import litellm_exception_to_error_msg
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.server.query_and_chat.models import ChatMessageDetail

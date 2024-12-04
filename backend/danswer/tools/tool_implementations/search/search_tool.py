@@ -14,7 +14,6 @@ from danswer.chat.models import DanswerContext
 from danswer.chat.models import DanswerContexts
 from danswer.chat.models import DocumentPruningConfig
 from danswer.chat.models import LlmDoc
-from danswer.chat.models import PreviousMessage
 from danswer.chat.models import PromptConfig
 from danswer.chat.models import SectionRelevancePiece
 from danswer.chat.prompt_builder.build import AnswerPromptBuilder
@@ -36,6 +35,7 @@ from danswer.context.search.pipeline import SearchPipeline
 from danswer.db.models import Persona
 from danswer.db.models import User
 from danswer.llm.interfaces import LLM
+from danswer.llm.models import PreviousMessage
 from danswer.secondary_llm_flows.choose_search import check_if_need_search
 from danswer.secondary_llm_flows.query_expansion import history_based_query_rephrase
 from danswer.tools.message import ToolCallSummary

@@ -3,8 +3,8 @@ from collections.abc import Generator
 from typing import Any
 from typing import TYPE_CHECKING
 
-from danswer.chat.models import PreviousMessage
 from danswer.llm.interfaces import LLM
+from danswer.llm.models import PreviousMessage
 from danswer.utils.special_types import JSON_ro
 
 

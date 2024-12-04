@@ -5,12 +5,12 @@ from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
 
-from danswer.chat.models import PreviousMessage
 from danswer.chat.models import PromptConfig
 from danswer.chat.prompt_builder.citations_prompt import compute_max_llm_input_tokens
 from danswer.chat.prompt_builder.utils import translate_history_to_basemessages
 from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.interfaces import LLMConfig
+from danswer.llm.models import PreviousMessage
 from danswer.llm.utils import build_content_with_imgs
 from danswer.llm.utils import check_message_tokens
 from danswer.llm.utils import message_to_prompt_and_imgs

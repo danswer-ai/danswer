@@ -2,10 +2,10 @@ from langchain.schema.messages import AIMessage
 from langchain.schema.messages import BaseMessage
 from langchain.schema.messages import HumanMessage
 
-from danswer.chat.models import PreviousMessage
 from danswer.configs.constants import MessageType
 from danswer.db.models import ChatMessage
 from danswer.file_store.models import InMemoryChatFile
+from danswer.llm.models import PreviousMessage
 from danswer.llm.utils import build_content_with_imgs
 from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT
 from danswer.prompts.direct_qa_prompts import PARAMATERIZED_PROMPT_WITHOUT_CONTEXT
