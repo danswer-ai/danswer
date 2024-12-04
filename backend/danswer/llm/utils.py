@@ -38,6 +38,8 @@ from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.interfaces import LLM
 from danswer.prompts.constants import CODE_BLOCK_PAT
+from danswer.utils.b64 import get_image_type
+from danswer.utils.b64 import get_image_type_from_bytes
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import LOG_LEVEL
 
@@ -182,7 +184,10 @@ def build_content_with_imgs(
             {
                 "type": "image_url",
                 "image_url": {
-                    "url": f"data:image/jpeg;base64,{file.to_base64()}",
+                    "url": (
+                        f"data:{get_image_type_from_bytes(file.content)};"
+                        f"base64,{file.to_base64()}"
+                    ),
                 },
             }
             for file in img_files
@@ -191,7 +196,7 @@ def build_content_with_imgs(
             {
                 "type": "image_url",
                 "image_url": {
-                    "url": f"data:image/jpeg;base64,{b64_img}",
+                    "url": f"data:{get_image_type(b64_img)};base64,{b64_img}",
                 },
             }
             for b64_img in b64_imgs

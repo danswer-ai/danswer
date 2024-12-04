@@ -1,9 +1,8 @@
 import base64
 
 
-def get_image_type(raw_b64_string: str) -> str:
-    binary_data = base64.b64decode(raw_b64_string)
-    magic_number = binary_data[:4]
+def get_image_type_from_bytes(raw_b64_bytes: bytes) -> str:
+    magic_number = raw_b64_bytes[:4]
 
     if magic_number.startswith(b"\x89PNG"):
         mime_type = "image/png"
@@ -11,7 +10,7 @@ def get_image_type(raw_b64_string: str) -> str:
         mime_type = "image/jpeg"
     elif magic_number.startswith(b"GIF8"):
         mime_type = "image/gif"
-    elif magic_number.startswith(b"RIFF") and binary_data[8:12] == b"WEBP":
+    elif magic_number.startswith(b"RIFF") and raw_b64_bytes[8:12] == b"WEBP":
         mime_type = "image/webp"
     else:
         raise ValueError(
@@ -20,3 +19,8 @@ def get_image_type(raw_b64_string: str) -> str:
         )
 
     return mime_type
+
+
+def get_image_type(raw_b64_string: str) -> str:
+    binary_data = base64.b64decode(raw_b64_string)
+    return get_image_type_from_bytes(binary_data)
