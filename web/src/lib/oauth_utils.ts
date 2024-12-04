@@ -58,9 +58,20 @@ export async function handleOAuthAuthorizationResponse(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to handle OAuth authorization response: ${response.status}`
-    );
+    let errorDetails = `Failed to handle OAuth authorization response: ${response.status}`;
+
+    try {
+      const responseBody = await response.text(); // Read the body as text
+      errorDetails += `\nResponse Body: ${responseBody}`;
+    } catch (err) {
+      if (err instanceof Error) {
+        errorDetails += `\nUnable to read response body: ${err.message}`;
+      } else {
+        errorDetails += `\nUnable to read response body: Unknown error type`;
+      }
+    }
+
+    throw new Error(errorDetails);
   }
 
   // Parse the JSON response
