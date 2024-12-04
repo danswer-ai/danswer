@@ -172,6 +172,26 @@ class ImageGenerationTool(Tool):
 
         return None
 
+    def build_tool_message_content(
+        self, *args: ToolResponse
+    ) -> str | list[str | dict[str, Any]]:
+        generation_response = args[0]
+        image_generations = cast(
+            list[ImageGenerationResponse], generation_response.response
+        )
+
+        return build_content_with_imgs(
+            message=json.dumps(
+                [
+                    {
+                        "revised_prompt": image_generation.revised_prompt,
+                        "url": image_generation.url,
+                    }
+                    for image_generation in image_generations
+                ]
+            ),
+        )
+
     def _generate_image(
         self, prompt: str, shape: ImageShape, format: ImageFormat
     ) -> ImageGenerationResponse:
@@ -201,9 +221,6 @@ class ImageGenerationTool(Tool):
             else:
                 url = None
                 image_data = response.data[0]["b64_json"]
-                # image_data = format_b64_string_for_img_display(
-                #     response.data[0]["b64_json"]
-                # )
 
             return ImageGenerationResponse(
                 revised_prompt=response.data[0]["revised_prompt"],
@@ -308,23 +325,3 @@ class ImageGenerationTool(Tool):
         )
 
         return prompt_builder
-
-    def build_tool_message_content(
-        self, *args: ToolResponse
-    ) -> str | list[str | dict[str, Any]]:
-        generation_response = args[0]
-        image_generations = cast(
-            list[ImageGenerationResponse], generation_response.response
-        )
-
-        return build_content_with_imgs(
-            message=json.dumps(
-                [
-                    {
-                        "revised_prompt": image_generation.revised_prompt,
-                        "url": image_generation.url,
-                    }
-                    for image_generation in image_generations
-                ]
-            ),
-        )
