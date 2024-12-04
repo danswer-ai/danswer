@@ -320,7 +320,7 @@ def update_external_document_permissions_task(
                 emails=list(external_access.external_user_emails),
             )
             # Then we upsert the document's external permissions in postgres
-            created_new_doc: bool = upsert_document_external_perms(
+            created_new_doc = upsert_document_external_perms(
                 db_session=db_session,
                 doc_id=doc_id,
                 external_access=external_access,
