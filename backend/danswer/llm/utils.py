@@ -151,6 +151,7 @@ def build_content_with_imgs(
     message: str,
     files: list[InMemoryChatFile] | None = None,
     img_urls: list[str] | None = None,
+    b64_imgs: list[str] | None = None,
     message_type: MessageType = MessageType.USER,
 ) -> str | list[str | dict[str, Any]]:  # matching Langchain's BaseMessage content type
     files = files or []
@@ -184,8 +185,16 @@ def build_content_with_imgs(
                     "url": f"data:image/jpeg;base64,{file.to_base64()}",
                 },
             }
-            for file in files
-            if file.file_type == "image"
+            for file in img_files
+        ]
+        + [
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{b64_img}",
+                },
+            }
+            for b64_img in b64_imgs
         ]
         + [
             {
