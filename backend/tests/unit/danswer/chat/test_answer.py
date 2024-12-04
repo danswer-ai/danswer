@@ -24,8 +24,8 @@ from danswer.tools.force import ForceUseTool
 from danswer.tools.models import ToolCallFinalResult
 from danswer.tools.models import ToolCallKickoff
 from danswer.tools.models import ToolResponse
-from tests.unit.danswer.llm.answering.conftest import DEFAULT_SEARCH_ARGS
-from tests.unit.danswer.llm.answering.conftest import QUERY
+from tests.unit.danswer.chat.conftest import DEFAULT_SEARCH_ARGS
+from tests.unit.danswer.chat.conftest import QUERY
 
 
 @pytest.fixture
