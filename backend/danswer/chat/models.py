@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import model_validator
+from pydantic.v1 import BaseModel as BaseModel__v1
 
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
@@ -333,7 +334,7 @@ ResponsePart = (
 )
 
 
-class LLMCall(BaseModel):
+class LLMCall(BaseModel__v1):
     prompt_builder: "AnswerPromptBuilder"
     tools: list[Tool]
     force_use_tool: ForceUseTool
