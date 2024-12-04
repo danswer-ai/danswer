@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -21,6 +22,9 @@ from danswer.file_store.models import FileDescriptor
 from danswer.llm.override_models import LLMOverride
 from danswer.llm.override_models import PromptOverride
 from danswer.tools.models import ToolCallFinalResult
+
+if TYPE_CHECKING:
+    pass
 
 
 class SourceTag(Tag):
