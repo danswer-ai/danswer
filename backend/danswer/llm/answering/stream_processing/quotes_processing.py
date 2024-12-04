@@ -1,3 +1,4 @@
+# THIS IS NO LONGER IN USE
 import math
 import re
 from collections.abc import Generator
@@ -5,11 +6,10 @@ from json import JSONDecodeError
 from typing import Optional
 
 import regex
+from pydantic import BaseModel
 
 from danswer.chat.models import DanswerAnswer
 from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import DanswerQuote
-from danswer.chat.models import DanswerQuotes
 from danswer.chat.models import LlmDoc
 from danswer.configs.chat_configs import QUOTE_ALLOWED_ERROR_PERCENT
 from danswer.context.search.models import InferenceChunk
@@ -24,6 +24,20 @@ from danswer.utils.text_processing import shared_precompare_cleanup
 
 logger = setup_logger()
 answer_pattern = re.compile(r'{\s*"answer"\s*:\s*"', re.IGNORECASE)
+
+
+class DanswerQuote(BaseModel):
+    # This is during inference so everything is a string by this point
+    quote: str
+    document_id: str
+    link: str | None
+    source_type: str
+    semantic_identifier: str
+    blurb: str
+
+
+class DanswerQuotes(BaseModel):
+    quotes: list[DanswerQuote]
 
 
 def _extract_answer_quotes_freeform(

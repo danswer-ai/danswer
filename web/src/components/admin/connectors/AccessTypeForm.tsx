@@ -27,7 +27,7 @@ export function AccessTypeForm({
 
   const isPaidEnterpriseEnabled = usePaidEnterpriseFeaturesEnabled();
   const isAutoSyncSupported = isValidAutoSyncSource(connector);
-  const { isLoadingUser, isAdmin } = useUser();
+  const { isAdmin } = useUser();
 
   useEffect(() => {
     if (!isPaidEnterpriseEnabled) {

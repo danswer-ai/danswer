@@ -157,7 +157,6 @@ def _seed_personas(db_session: Session, personas: list[CreatePersonaRequest]) ->
 def _seed_settings(settings: Settings) -> None:
     logger.notice("Seeding Settings")
     try:
-        settings.check_validity()
         store_base_settings(settings)
         logger.notice("Successfully seeded Settings")
     except ValueError as e:

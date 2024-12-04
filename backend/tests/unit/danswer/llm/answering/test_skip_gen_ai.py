@@ -6,9 +6,9 @@ import pytest
 from pytest_mock import MockerFixture
 
 from danswer.llm.answering.answer import Answer
+from danswer.llm.answering.answer import AnswerStream
 from danswer.llm.answering.models import AnswerStyleConfig
 from danswer.llm.answering.models import PromptConfig
-from danswer.one_shot_answer.answer_question import AnswerObjectIterator
 from danswer.tools.force import ForceUseTool
 from danswer.tools.tool_implementations.search.search_tool import SearchTool
 from tests.regression.answer_quality.run_qa import _process_and_write_query_results
@@ -60,7 +60,7 @@ def test_skip_gen_ai_answer_generation_flag(
         skip_gen_ai_answer_generation=skip_gen_ai_answer_generation,
     )
     count = 0
-    for _ in cast(AnswerObjectIterator, answer.processed_streamed_output):
+    for _ in cast(AnswerStream, answer.processed_streamed_output):
         count += 1
     assert count == 3 if skip_gen_ai_answer_generation else 4
     if not skip_gen_ai_answer_generation:

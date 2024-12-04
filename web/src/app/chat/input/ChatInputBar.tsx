@@ -1,13 +1,9 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { FiPlusCircle, FiPlus, FiInfo, FiX } from "react-icons/fi";
+import { FiPlusCircle, FiPlus, FiInfo, FiX, FiSearch } from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
-import {
-  FilterManager,
-  getDisplayNameForModel,
-  LlmOverrideManager,
-} from "@/lib/hooks";
+import { FilterManager, LlmOverrideManager } from "@/lib/hooks";
 import { SelectedFilterDisplay } from "./SelectedFilterDisplay";
 import { useChatContext } from "@/components/context/ChatContext";
 import { getFinalLLM } from "@/lib/llm/utils";
@@ -18,16 +14,11 @@ import {
 } from "../files/InputBarPreview";
 import {
   AssistantsIconSkeleton,
-  CpuIconSkeleton,
   FileIcon,
   SendIcon,
   StopGeneratingIcon,
 } from "@/components/icons/icons";
-import { IconType } from "react-icons";
-import Popup from "../../../components/popup/Popup";
-import { LlmTab } from "../modal/configuration/LlmTab";
-import { AssistantsTab } from "../modal/configuration/AssistantsTab";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import { DanswerDocument, SourceMetadata } from "@/lib/search/interfaces";
 import { AssistantIcon } from "@/components/assistants/AssistantIcon";
 import {
   Tooltip,
@@ -40,10 +31,50 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
 import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
 import { useAssistants } from "@/components/context/AssistantsContext";
+import AnimatedToggle from "@/components/search/SearchBar";
+import { Popup } from "@/components/admin/connectors/Popup";
+import { AssistantsTab } from "../modal/configuration/AssistantsTab";
+import { IconType } from "react-icons";
+import { LlmTab } from "../modal/configuration/LlmTab";
+import { XIcon } from "lucide-react";
+import { FilterPills } from "./FilterPills";
+import { Tag } from "@/lib/types";
+import FiltersDisplay from "./FilterDisplay";
 
 const MAX_INPUT_HEIGHT = 200;
 
+interface ChatInputBarProps {
+  removeFilters: () => void;
+  removeDocs: () => void;
+  openModelSettings: () => void;
+  showDocs: () => void;
+  showConfigureAPIKey: () => void;
+  selectedDocuments: DanswerDocument[];
+  message: string;
+  setMessage: (message: string) => void;
+  stopGenerating: () => void;
+  onSubmit: () => void;
+  filterManager: FilterManager;
+  llmOverrideManager: LlmOverrideManager;
+  chatState: ChatState;
+  alternativeAssistant: Persona | null;
+  inputPrompts: InputPrompt[];
+  // assistants
+  selectedAssistant: Persona;
+  setSelectedAssistant: (assistant: Persona) => void;
+  setAlternativeAssistant: (alternativeAssistant: Persona | null) => void;
+
+  files: FileDescriptor[];
+  setFiles: (files: FileDescriptor[]) => void;
+  handleFileUpload: (files: File[]) => void;
+  textAreaRef: React.RefObject<HTMLTextAreaElement>;
+  chatSessionId?: string;
+  toggleFilters?: () => void;
+}
+
 export function ChatInputBar({
+  removeFilters,
+  removeDocs,
   openModelSettings,
   showDocs,
   showConfigureAPIKey,
@@ -68,29 +99,8 @@ export function ChatInputBar({
   alternativeAssistant,
   chatSessionId,
   inputPrompts,
-}: {
-  showConfigureAPIKey: () => void;
-  openModelSettings: () => void;
-  chatState: ChatState;
-  stopGenerating: () => void;
-  showDocs: () => void;
-  selectedDocuments: DanswerDocument[];
-  setAlternativeAssistant: (alternativeAssistant: Persona | null) => void;
-  setSelectedAssistant: (assistant: Persona) => void;
-  inputPrompts: InputPrompt[];
-  message: string;
-  setMessage: (message: string) => void;
-  onSubmit: () => void;
-  filterManager: FilterManager;
-  llmOverrideManager: LlmOverrideManager;
-  selectedAssistant: Persona;
-  alternativeAssistant: Persona | null;
-  files: FileDescriptor[];
-  setFiles: (files: FileDescriptor[]) => void;
-  handleFileUpload: (files: File[]) => void;
-  textAreaRef: React.RefObject<HTMLTextAreaElement>;
-  chatSessionId?: string;
-}) {
+  toggleFilters,
+}: ChatInputBarProps) {
   useEffect(() => {
     const textarea = textAreaRef.current;
     if (textarea) {
@@ -337,23 +347,26 @@ export function ChatInputBar({
               className="text-sm absolute inset-x-0 top-0 w-full transform -translate-y-full"
             >
               <div className="rounded-lg py-1.5 bg-white border border-border-medium overflow-hidden shadow-lg mx-2 px-1.5 mt-2 rounded z-10">
-                {filteredPrompts.map((currentPrompt, index) => (
-                  <button
-                    key={index}
-                    className={`px-2 ${
-                      tabbingIconIndex == index && "bg-hover"
-                    } rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
-                    onClick={() => {
-                      updateInputPrompt(currentPrompt);
-                    }}
-                  >
-                    <p className="font-bold">{currentPrompt.prompt}:</p>
-                    <p className="text-left flex-grow mr-auto line-clamp-1">
-                      {currentPrompt.id == selectedAssistant.id && "(default) "}
-                      {currentPrompt.content?.trim()}
-                    </p>
-                  </button>
-                ))}
+                {filteredPrompts.map(
+                  (currentPrompt: InputPrompt, index: number) => (
+                    <button
+                      key={index}
+                      className={`px-2 ${
+                        tabbingIconIndex == index && "bg-hover"
+                      } rounded content-start flex gap-x-1 py-1.5 w-full  hover:bg-hover cursor-pointer`}
+                      onClick={() => {
+                        updateInputPrompt(currentPrompt);
+                      }}
+                    >
+                      <p className="font-bold">{currentPrompt.prompt}:</p>
+                      <p className="text-left flex-grow mr-auto line-clamp-1">
+                        {currentPrompt.id == selectedAssistant.id &&
+                          "(default) "}
+                        {currentPrompt.content?.trim()}
+                      </p>
+                    </button>
+                  )
+                )}
 
                 <a
                   key={filteredPrompts.length}
@@ -370,9 +383,9 @@ export function ChatInputBar({
             </div>
           )}
 
-          <div>
+          {/* <div>
             <SelectedFilterDisplay filterManager={filterManager} />
-          </div>
+          </div> */}
 
           <UnconfiguredProviderText showConfigureAPIKey={showConfigureAPIKey} />
 
@@ -427,18 +440,24 @@ export function ChatInputBar({
                 </div>
               </div>
             )}
+
             {(selectedDocuments.length > 0 || files.length > 0) && (
               <div className="flex gap-x-2 px-2 pt-2">
-                <div className="flex gap-x-1 px-2 overflow-y-auto overflow-x-scroll items-end miniscroll">
+                <div className="flex gap-x-1 px-2 overflow-visible overflow-x-scroll items-end miniscroll">
                   {selectedDocuments.length > 0 && (
                     <button
                       onClick={showDocs}
-                      className="flex-none flex cursor-pointer hover:bg-background-200 transition-colors duration-300 h-10 p-1 items-center gap-x-1 rounded-lg bg-background-150 max-w-[100px]"
+                      className="flex-none relative overflow-visible flex items-center gap-x-2 h-10 px-3 rounded-lg bg-background-150 hover:bg-background-200 transition-colors duration-300 cursor-pointer max-w-[150px]"
                     >
-                      <FileIcon size={24} />
-                      <p className="text-xs">
+                      <FileIcon size={20} />
+                      <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                         {selectedDocuments.length} selected
-                      </p>
+                      </span>
+                      <XIcon
+                        onClick={removeDocs}
+                        size={16}
+                        className="text-text-400 hover:text-text-600 ml-auto"
+                      />
                     </button>
                   )}
                   {files.map((file) => (
@@ -529,72 +548,6 @@ export function ChatInputBar({
               suppressContentEditableWarning={true}
             />
             <div className="flex items-center space-x-3 mr-12 px-4 pb-2">
-              <Popup
-                removePadding
-                content={(close) => (
-                  <AssistantsTab
-                    llmProviders={llmProviders}
-                    selectedAssistant={selectedAssistant}
-                    onSelect={(assistant) => {
-                      setSelectedAssistant(assistant);
-                      close();
-                    }}
-                  />
-                )}
-                flexPriority="shrink"
-                position="top"
-                mobilePosition="top-right"
-              >
-                <ChatInputOption
-                  toggle
-                  flexPriority="shrink"
-                  name={
-                    selectedAssistant ? selectedAssistant.name : "Assistants"
-                  }
-                  Icon={AssistantsIconSkeleton as IconType}
-                />
-              </Popup>
-              <Popup
-                tab
-                content={(close, ref) => (
-                  <LlmTab
-                    currentAssistant={alternativeAssistant || selectedAssistant}
-                    openModelSettings={openModelSettings}
-                    currentLlm={
-                      llmOverrideManager.llmOverride.modelName ||
-                      (selectedAssistant
-                        ? selectedAssistant.llm_model_version_override ||
-                          llmOverrideManager.globalDefault.modelName ||
-                          llmName
-                        : llmName)
-                    }
-                    close={close}
-                    ref={ref}
-                    llmOverrideManager={llmOverrideManager}
-                    chatSessionId={chatSessionId}
-                  />
-                )}
-                position="top"
-              >
-                <ChatInputOption
-                  flexPriority="second"
-                  toggle
-                  name={
-                    settings?.isMobile
-                      ? undefined
-                      : getDisplayNameForModel(
-                          llmOverrideManager.llmOverride.modelName ||
-                            (selectedAssistant
-                              ? selectedAssistant.llm_model_version_override ||
-                                llmOverrideManager.globalDefault.modelName ||
-                                llmName
-                              : llmName)
-                        )
-                  }
-                  Icon={CpuIconSkeleton}
-                />
-              </Popup>
-
               <ChatInputOption
                 flexPriority="stiff"
                 name="File"
@@ -614,6 +567,24 @@ export function ChatInputBar({
                   input.click();
                 }}
               />
+              {toggleFilters && (
+                <ChatInputOption
+                  flexPriority="stiff"
+                  name="Filters"
+                  Icon={FiSearch}
+                  onClick={toggleFilters}
+                />
+              )}
+              {(filterManager.selectedSources.length > 0 ||
+                filterManager.selectedDocumentSets.length > 0 ||
+                filterManager.selectedTags.length > 0 ||
+                filterManager.timeRange) &&
+                toggleFilters && (
+                  <FiltersDisplay
+                    filterManager={filterManager}
+                    toggleFilters={toggleFilters}
+                  />
+                )}
             </div>
 
             <div className="absolute bottom-2.5 mobile:right-4 desktop:right-10">

@@ -145,15 +145,9 @@ def get_chat_sessions_by_user(
     user_id: UUID | None,
     deleted: bool | None,
     db_session: Session,
-    only_one_shot: bool = False,
     limit: int = 50,
 ) -> list[ChatSession]:
     stmt = select(ChatSession).where(ChatSession.user_id == user_id)
-
-    if only_one_shot:
-        stmt = stmt.where(ChatSession.one_shot.is_(True))
-    else:
-        stmt = stmt.where(ChatSession.one_shot.is_(False))
 
     stmt = stmt.order_by(desc(ChatSession.time_created))
 
@@ -226,12 +220,11 @@ def delete_messages_and_files_from_chat_session(
 
 def create_chat_session(
     db_session: Session,
-    description: str,
+    description: str | None,
     user_id: UUID | None,
     persona_id: int | None,  # Can be none if temporary persona is used
     llm_override: LLMOverride | None = None,
     prompt_override: PromptOverride | None = None,
-    one_shot: bool = False,
     danswerbot_flow: bool = False,
     slack_thread_id: str | None = None,
 ) -> ChatSession:
@@ -241,7 +234,6 @@ def create_chat_session(
         description=description,
         llm_override=llm_override,
         prompt_override=prompt_override,
-        one_shot=one_shot,
         danswerbot_flow=danswerbot_flow,
         slack_thread_id=slack_thread_id,
     )
@@ -287,8 +279,6 @@ def duplicate_chat_session_for_user_from_slack(
         description="",
         llm_override=chat_session.llm_override,
         prompt_override=chat_session.prompt_override,
-        # Chat sessions from Slack should put people in the chat UI, not the search
-        one_shot=False,
         # Chat is in UI now so this is false
         danswerbot_flow=False,
         # Maybe we want this in the future to track if it was created from Slack

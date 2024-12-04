@@ -87,6 +87,7 @@ from danswer.db.models import AccessToken
 from danswer.db.models import OAuthAccount
 from danswer.db.models import User
 from danswer.db.users import get_user_by_email
+from danswer.server.utils import BasicAuthenticationError
 from danswer.utils.logger import setup_logger
 from danswer.utils.telemetry import optional_telemetry
 from danswer.utils.telemetry import RecordType
@@ -97,11 +98,6 @@ from shared_configs.configs import MULTI_TENANT
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
-
-
-class BasicAuthenticationError(HTTPException):
-    def __init__(self, detail: str):
-        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
 
 def is_user_admin(user: User | None) -> bool:
