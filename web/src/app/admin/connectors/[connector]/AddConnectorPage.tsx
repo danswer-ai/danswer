@@ -437,7 +437,7 @@ export default function AddConnector({
                     {!createConnectorToggle && (
                       <div className="mt-6 flex space-x-4">
                         <button
-                          className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded"
+                          className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded mr-4"
                           onClick={() =>
                             setCreateConnectorToggle(
                               (createConnectorToggle) => !createConnectorToggle
@@ -446,6 +446,7 @@ export default function AddConnector({
                         >
                           Create New
                         </button>
+
                         {/* Button to sign in via OAuth */}
                         <button
                           onClick={handleAuthorize}
