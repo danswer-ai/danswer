@@ -2,7 +2,7 @@ from collections.abc import Callable
 from collections.abc import Generator
 from typing import Any
 
-from danswer.llm.answering.models import PreviousMessage
+from danswer.chat.models import PreviousMessage
 from danswer.llm.interfaces import LLM
 from danswer.tools.models import ToolCallFinalResult
 from danswer.tools.models import ToolCallKickoff

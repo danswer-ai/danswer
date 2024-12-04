@@ -5,11 +5,9 @@ import pytest
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
+from danswer.chat.stream_processing.citation_processing import CitationProcessor
+from danswer.chat.stream_processing.utils import DocumentIdOrderMapping
 from danswer.configs.constants import DocumentSource
-from danswer.llm.answering.stream_processing.citation_processing import (
-    CitationProcessor,
-)
-from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 
 
 """

@@ -10,6 +10,7 @@ from danswer.auth.users import is_user_admin
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import LlmDoc
 from danswer.chat.models import PersonaOverrideConfig
+from danswer.chat.models import PreviousMessage
 from danswer.chat.models import ThreadMessage
 from danswer.configs.constants import DEFAULT_PERSONA_ID
 from danswer.configs.constants import MessageType
@@ -26,7 +27,6 @@ from danswer.db.models import Prompt
 from danswer.db.models import Tool
 from danswer.db.models import User
 from danswer.db.persona import get_prompts_by_ids
-from danswer.llm.answering.models import PreviousMessage
 from danswer.natural_language_processing.utils import BaseTokenizer
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.tools.tool_implementations.custom.custom_tool import (

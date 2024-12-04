@@ -23,6 +23,9 @@ from danswer.auth.users import current_user
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.chat_utils import extract_headers
 from danswer.chat.process_message import stream_chat_message
+from danswer.chat.prompt_builder.citations_prompt import (
+    compute_max_document_tokens_for_persona,
+)
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import FileOrigin
 from danswer.configs.constants import MessageType
@@ -51,9 +54,6 @@ from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import FileDescriptor
-from danswer.llm.answering.prompts.citations_prompt import (
-    compute_max_document_tokens_for_persona,
-)
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llms
 from danswer.llm.factory import get_llms_for_persona

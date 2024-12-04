@@ -1,10 +1,10 @@
 from collections.abc import Callable
 
 from danswer.chat.chat_utils import combine_message_chain
+from danswer.chat.models import PreviousMessage
 from danswer.configs.chat_configs import DISABLE_LLM_QUERY_REPHRASE
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
 from danswer.db.models import ChatMessage
-from danswer.llm.answering.models import PreviousMessage
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_default_llms
 from danswer.llm.interfaces import LLM
