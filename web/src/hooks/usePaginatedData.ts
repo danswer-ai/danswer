@@ -1,5 +1,3 @@
-// TODO: fix/standardize scroll behavior
-
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
