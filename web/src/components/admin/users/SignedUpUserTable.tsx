@@ -5,9 +5,7 @@ import {
   USER_ROLE_LABELS,
   INVALID_ROLE_HOVER_TEXT,
 } from "@/lib/types";
-import CenteredPageSelector from "./CenteredPageSelector";
-import { type PageSelectorProps } from "@/components/PageSelector";
-import { HidableSection } from "@/app/admin/assistants/HidableSection";
+import CenteredPageSelector from "./UserPagination";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import useSWRMutation from "swr/mutation";
@@ -35,6 +33,7 @@ import { TableHeader } from "@/components/ui/table";
 import { usePaginatedData } from "@/hooks/usePaginatedData";
 import { LoadingAnimation } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
+import UserPagination from "@/components/admin/users/UserPagination";
 
 interface Props {
   setPopup: (spec: PopupSpec) => void;
@@ -285,13 +284,11 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
 
   return (
     <>
-      {totalPages > 1 ? (
-        <CenteredPageSelector
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={goToPage}
-        />
-      ) : null}
+      <UserPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        goToPage={goToPage}
+      />
       <Table className="overflow-visible">
         <TableHeader>
           <TableRow>

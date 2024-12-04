@@ -1,4 +1,10 @@
+import ValidDomainsDisplay from "@/components/admin/users/ValidDomains";
+import UserPagination from "@/components/admin/users/UserPagination";
+import { ErrorCallout } from "@/components/ErrorCallout";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
+import { Button } from "@/components/ui/button";
+import { TableHeader } from "@/components/ui/table";
+import { LoadingAnimation } from "@/components/Loading";
 import {
   Table,
   TableHead,
@@ -6,16 +12,11 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { TableHeader } from "@/components/ui/table";
-import CenteredPageSelector from "./CenteredPageSelector";
 
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
-import { type User } from "@/lib/types";
 import useSWRMutation from "swr/mutation";
-import { LoadingAnimation } from "@/components/Loading";
+import { type User } from "@/lib/types";
 import { usePaginatedData } from "@/hooks/usePaginatedData";
-import { ErrorCallout } from "@/components/ErrorCallout";
 
 interface Props {
   setPopup: (spec: PopupSpec) => void;
@@ -55,6 +56,7 @@ const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
     totalPages,
     goToPage,
     refresh,
+    hasNoData: noInvitedUsers,
   } = usePaginatedData<User>({
     itemsPerPage: ITEMS_PER_PAGE,
     pagesPerBatch: PAGES_PER_BATCH,
@@ -90,7 +92,9 @@ const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
     });
   };
 
-  return (
+  return noInvitedUsers ? (
+    <ValidDomainsDisplay />
+  ) : (
     <>
       <Table className="overflow-visible">
         <TableHeader>
@@ -119,10 +123,10 @@ const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
         </TableBody>
       </Table>
       {totalPages > 1 ? (
-        <CenteredPageSelector
+        <UserPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={goToPage}
+          goToPage={goToPage}
         />
       ) : null}
     </>
