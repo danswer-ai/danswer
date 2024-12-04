@@ -48,6 +48,11 @@ GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncFuncType] = {
 }
 
 
+GROUP_PERMISSIONS_IS_CC_PAIR_AGNOSTIC: set[DocumentSource] = {
+    DocumentSource.CONFLUENCE,
+}
+
+
 # If nothing is specified here, we run the doc_sync every time the celery beat runs
 DOC_PERMISSION_SYNC_PERIODS: dict[DocumentSource, int] = {
     # Polling is not supported so we fetch all doc permissions every 5 minutes
@@ -57,9 +62,9 @@ DOC_PERMISSION_SYNC_PERIODS: dict[DocumentSource, int] = {
 
 # If nothing is specified here, we run the doc_sync every time the celery beat runs
 EXTERNAL_GROUP_SYNC_PERIODS: dict[DocumentSource, int] = {
-    # Polling is not supported so we fetch all group permissions every 5 minutes
+    # Polling is not supported so we fetch all group permissions every 30 minutes
     DocumentSource.GOOGLE_DRIVE: 5 * 60,
-    DocumentSource.CONFLUENCE: 5 * 60,
+    DocumentSource.CONFLUENCE: 30 * 60,
 }
 
 
