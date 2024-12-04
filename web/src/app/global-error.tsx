@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import NextError from "next/error";
+import { redirect } from "next/navigation";
 import { useEffect } from "react";
 
 // This global error page is necessary to capture errors that occur in the app.
