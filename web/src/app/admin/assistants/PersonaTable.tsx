@@ -41,7 +41,7 @@ function PersonaTypeDisplay({ persona }: { persona: Persona }) {
 export function PersonasTable() {
   const router = useRouter();
   const { popup, setPopup } = usePopup();
-  const { refreshUser, isLoadingUser, isAdmin } = useUser();
+  const { refreshUser, isAdmin } = useUser();
   const {
     allAssistants: assistants,
     refreshAssistants,
@@ -97,10 +97,6 @@ export function PersonasTable() {
     await refreshAssistants();
     await refreshUser();
   };
-
-  if (isLoadingUser) {
-    return <></>;
-  }
 
   return (
     <div>

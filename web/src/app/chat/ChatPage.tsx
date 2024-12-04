@@ -189,7 +189,7 @@ export function ChatPage({
     !shouldShowWelcomeModal
   );
 
-  const { user, isAdmin, isLoadingUser } = useUser();
+  const { user, isAdmin } = useUser();
   const slackChatId = searchParams.get("slackChatId");
   const existingChatIdRaw = searchParams.get("chatId");
   const [sendOnLoad, setSendOnLoad] = useState<string | null>(
@@ -2199,9 +2199,7 @@ export function ChatPage({
                 />
               )}
 
-              {documentSidebarInitialWidth !== undefined &&
-              isReady &&
-              !isLoadingUser ? (
+              {documentSidebarInitialWidth !== undefined && isReady ? (
                 <Dropzone onDrop={handleImageUpload} noClick>
                   {({ getRootProps }) => (
                     <div className="flex h-full w-full">

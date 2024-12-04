@@ -7,7 +7,6 @@ import { usePostHog } from "posthog-js/react";
 
 interface UserContextType {
   user: User | null;
-  isLoadingUser: boolean;
   isAdmin: boolean;
   isCurator: boolean;
   refreshUser: () => Promise<void>;
@@ -25,7 +24,6 @@ export function UserProvider({
   user: User | null;
 }) {
   const [upToDateUser, setUpToDateUser] = useState<User | null>(user);
-  const [isLoadingUser, setIsLoadingUser] = useState(false);
 
   const posthog = usePostHog();
 
@@ -47,13 +45,10 @@ export function UserProvider({
 
   const fetchUser = async () => {
     try {
-      setIsLoadingUser(true);
       const currentUser = await getCurrentUser();
       setUpToDateUser(currentUser);
     } catch (error) {
       console.error("Error fetching current user:", error);
-    } finally {
-      setIsLoadingUser(false);
     }
   };
   const updateUserAutoScroll = async (autoScroll: boolean | null) => {
@@ -95,7 +90,6 @@ export function UserProvider({
     <UserContext.Provider
       value={{
         user: upToDateUser,
-        isLoadingUser,
         refreshUser,
         updateUserAutoScroll,
         isAdmin: upToDateUser?.role === UserRole.ADMIN,

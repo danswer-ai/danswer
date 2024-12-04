@@ -34,7 +34,7 @@ export function AccessTypeGroupSelector({
   connector: ConfigurableSources;
 }) {
   const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
-  const { isAdmin, user, isLoadingUser, isCurator } = useUser();
+  const { isAdmin, user, isCurator } = useUser();
   const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
   const [shouldHideContent, setShouldHideContent] = useState(false);
   const isAutoSyncSupported = isValidAutoSyncSource(connector);
@@ -77,7 +77,7 @@ export function AccessTypeGroupSelector({
     isPaidEnterpriseFeaturesEnabled,
   ]);
 
-  if (isLoadingUser || userGroupsIsLoading) {
+  if (userGroupsIsLoading) {
     return <div>Loading...</div>;
   }
   if (!isPaidEnterpriseFeaturesEnabled) {
