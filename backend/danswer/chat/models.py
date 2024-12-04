@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import model_validator
-from pydantic.v1 import BaseModel as BaseModel__v1
 
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
@@ -17,18 +16,14 @@ from danswer.context.search.enums import QueryFlow
 from danswer.context.search.enums import RecencyBiasSetting
 from danswer.context.search.enums import SearchType
 from danswer.context.search.models import RetrievalDocs
-from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.override_models import PromptOverride
-from danswer.tools.force import ForceUseTool
 from danswer.tools.models import ToolCallFinalResult
 from danswer.tools.models import ToolCallKickoff
 from danswer.tools.models import ToolResponse
-from danswer.tools.tool import Tool
 from danswer.tools.tool_implementations.custom.base_tool_types import ToolResultType
 
 if TYPE_CHECKING:
     from danswer.db.models import Prompt
-    from danswer.chat.prompt_builder.build import AnswerPromptBuilder
 
 
 class LlmDoc(BaseModel):
@@ -332,15 +327,3 @@ ResponsePart = (
     | ToolCallFinalResult
     | StreamStopInfo
 )
-
-
-class LLMCall(BaseModel__v1):
-    prompt_builder: "AnswerPromptBuilder"
-    tools: list[Tool]
-    force_use_tool: ForceUseTool
-    files: list[InMemoryChatFile]
-    tool_call_info: list[ToolCallKickoff | ToolResponse | ToolCallFinalResult]
-    using_tool_calling_llm: bool
-
-    class Config:
-        arbitrary_types_allowed = True

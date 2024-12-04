@@ -11,11 +11,11 @@ from danswer.chat.models import AnswerQuestionPossibleReturn
 from danswer.chat.models import AnswerStyleConfig
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
-from danswer.chat.models import LLMCall
 from danswer.chat.models import PromptConfig
 from danswer.chat.prompt_builder.build import AnswerPromptBuilder
 from danswer.chat.prompt_builder.build import default_build_system_message
 from danswer.chat.prompt_builder.build import default_build_user_message
+from danswer.chat.prompt_builder.build import LLMCall
 from danswer.chat.stream_processing.answer_response_handler import (
     CitationResponseHandler,
 )
