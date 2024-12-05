@@ -1,4 +1,6 @@
 import os
+import subprocess
+import tempfile
 import uuid
 from typing import cast
 
@@ -391,8 +393,53 @@ def upload_files(
                 content=file.file,
                 display_name=file.filename,
                 file_origin=FileOrigin.CONNECTOR,
-                file_type=file.content_type or "text/plain",
+                file_type=file.content_type or "application/octet-stream",
             )
+
+            # Convert .docx files to PDF
+            if file.filename.endswith(".docx"):
+                # Create temporary files for input and output
+                with tempfile.NamedTemporaryFile(
+                    suffix=".docx", delete=False
+                ) as tmp_input_file:
+                    tmp_input_file.write(file.file.read())
+                    tmp_input_file.flush()
+                    tmp_output_file_path = tmp_input_file.name.replace(".docx", ".pdf")
+
+                    # Run LibreOffice to perform the conversion
+                    subprocess.run(
+                        [
+                            "libreoffice",
+                            "--headless",
+                            "--convert-to",
+                            "pdf",
+                            "--outdir",
+                            os.path.dirname(tmp_input_file.name),
+                            tmp_input_file.name,
+                        ],
+                        check=True,
+                    )
+
+                    # Read the converted PDF content
+                    with open(tmp_output_file_path, "rb") as pdf_file:
+                        pdf_content = pdf_file.read()
+                        pdf_file_name = file.filename.rsplit(".", 1)[0] + ".pdf"
+                        pdf_file_path = os.path.join(str(uuid.uuid4()), pdf_file_name)
+                        # Save the converted PDF file
+                        file_store.save_file(
+                            file_name=pdf_file_path,
+                            content=pdf_content,
+                            display_name=pdf_file_name,
+                            file_origin=FileOrigin.CONNECTOR,
+                            file_type="application/pdf",
+                        )
+
+                    # Clean up temporary files
+                    os.remove(tmp_input_file.name)
+                    os.remove(tmp_output_file_path)
+
+            # ... handle other file types if necessary ...
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return FileUploadResponse(file_paths=deduped_file_paths)

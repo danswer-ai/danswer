@@ -1,6 +1,7 @@
 import asyncio
 import io
 import json
+import os
 import uuid
 from collections.abc import Callable
 from collections.abc import Generator
@@ -717,6 +718,16 @@ def fetch_chat_file(
     file_record = file_store.read_file_record(file_id)
     if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
+
+    # Check if a converted PDF exists for .docx files
+    original_file_name = file_record.display_name
+    if original_file_name.endswith(".docx"):
+        pdf_file_name = original_file_name.rsplit(".", 1)[0] + ".pdf"
+        pdf_file_id = os.path.join(os.path.dirname(file_id), pdf_file_name)
+        pdf_file_record = file_store.read_file_record(pdf_file_id)
+        if pdf_file_record:
+            file_record = pdf_file_record
+            file_id = pdf_file_id
 
     media_type = file_record.file_type
     file_io = file_store.read_file(file_id, mode="b")
