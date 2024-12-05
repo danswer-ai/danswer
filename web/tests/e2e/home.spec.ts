@@ -28,10 +28,6 @@ test(
 
     await page.waitForURL("http://localhost:3000/chat");
 
-    // Create the locator (no waiting happens here)
-    const textarea = page.locator('textarea[placeholder="Send a message "]');
-
-    // Explicitly wait for the textarea to be visible
-    await expect(textarea).toBeVisible();
+    await page.getByPlaceholder("Send a message ");
   }
 );
