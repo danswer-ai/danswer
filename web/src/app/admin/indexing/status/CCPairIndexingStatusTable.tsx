@@ -384,7 +384,7 @@ export function CCPairIndexingStatusTable({
             last_status: "success",
             connector: {
               name: "Sample File Connector",
-              source: "file",
+              source: ValidSources.File,
               input_type: "poll",
               connector_specific_config: {
                 file_locations: ["/path/to/sample/file.txt"],
@@ -401,7 +401,7 @@ export function CCPairIndexingStatusTable({
             credential: {
               id: 1,
               name: "Sample Credential",
-              source: "file",
+              source: ValidSources.File,
               user_id: "1",
               time_created: "2023-07-01T12:00:00Z",
               time_updated: "2023-07-01T12:00:00Z",

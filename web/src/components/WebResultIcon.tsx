@@ -1,3 +1,4 @@
+import { ValidSources } from "@/lib/types";
 import { SourceIcon } from "./SourceIcon";
 
 export function WebResultIcon({ url }: { url: string }) {
@@ -11,6 +12,6 @@ export function WebResultIcon({ url }: { url: string }) {
       width={18}
     />
   ) : (
-    <SourceIcon sourceType="web" iconSize={18} />
+    <SourceIcon sourceType={ValidSources.Web} iconSize={18} />
   );
 }

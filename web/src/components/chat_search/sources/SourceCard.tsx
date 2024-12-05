@@ -2,15 +2,28 @@ import { WebResultIcon } from "@/components/WebResultIcon";
 import { SourceIcon } from "@/components/SourceIcon";
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { truncateString } from "@/lib/utils";
+import { SetStateAction } from "react";
+import { Dispatch } from "react";
+import { ValidSources } from "@/lib/types";
 
-export default function SourceCard({ doc }: { doc: DanswerDocument }) {
+export default function SourceCard({
+  doc,
+  setPresentingDocument,
+}: {
+  doc: DanswerDocument;
+  setPresentingDocument?: (document: DanswerDocument) => void;
+}) {
   return (
-    <a
+    <div
       key={doc.document_id}
-      href={doc.link || undefined}
-      target="_blank"
-      rel="noopener"
-      className="flex flex-col gap-0.5 rounded-sm px-3 py-2.5 hover:bg-background-125 bg-background-100 w-[200px]"
+      onClick={() => {
+        if (doc.source_type == ValidSources.File && setPresentingDocument) {
+          setPresentingDocument(doc);
+        } else if (doc.link) {
+          window.open(doc.link, "_blank");
+        }
+      }}
+      className="cursor-pointer text-left overflow-hidden flex flex-col gap-0.5 rounded-sm px-3 py-2.5 hover:bg-background-125 bg-background-100 w-[200px]"
     >
       <div className="line-clamp-1 font-semibold text-ellipsis  text-text-900  flex h-6 items-center gap-2 text-sm">
         {doc.is_internet || doc.source_type === "web" ? (
@@ -24,7 +37,7 @@ export default function SourceCard({ doc }: { doc: DanswerDocument }) {
       <div className="line-clamp-2 text-sm font-normal leading-snug text-text-700">
         {doc.blurb}
       </div>
-    </a>
+    </div>
   );
 }
 

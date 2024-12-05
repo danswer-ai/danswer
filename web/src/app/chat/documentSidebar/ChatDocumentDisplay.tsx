@@ -7,6 +7,7 @@ import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBad
 import { MetadataBadge } from "@/components/MetadataBadge";
 import { WebResultIcon } from "@/components/WebResultIcon";
 import { Dispatch, SetStateAction } from "react";
+import { ValidSources } from "@/lib/types";
 
 interface DocumentDisplayProps {
   closeSidebar: () => void;
@@ -73,19 +74,15 @@ export function ChatDocumentDisplay({
   }
 
   const handleViewFile = async () => {
-    if (document.link) {
+    if (document.source_type == ValidSources.File && setPresentingDocument) {
+      setPresentingDocument(document);
+    } else if (document.link) {
       window.open(document.link, "_blank");
-    } else {
-      closeSidebar();
-
-      setTimeout(async () => {
-        setPresentingDocument(document);
-      }, 100);
     }
   };
 
   return (
-    <div className={`opacity-100   ${modal ? "w-[90vw]" : "w-full"}`}>
+    <div className={`opacity-100 ${modal ? "w-[90vw]" : "w-full"}`}>
       <div
         className={`flex relative flex-col gap-0.5  rounded-xl mx-2 my-1 ${
           isSelected ? "bg-gray-200" : "hover:bg-background-125"
