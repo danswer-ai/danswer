@@ -297,9 +297,9 @@ class Answer:
     @property
     def citations(self) -> list[CitationInfo]:
         citations: list[CitationInfo] = []
-        # for packet in self.llm_answer:
-        #     if isinstance(packet, CitationInfo):
-        #         citations.append(packet)
+        for packet in self.llm_answer:
+            if isinstance(packet, CitationInfo):
+                citations.append(packet)
 
         return citations
 

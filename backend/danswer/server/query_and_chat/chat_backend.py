@@ -723,21 +723,14 @@ def fetch_chat_file(
     if file_record.file_type.startswith(
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ):
-        # Create a text file
-        # txt_file_name = file.filename.rsplit(".", 1)[0] + ".txt"
-        # txt_file_path = os.path.join(str(uuid.uuid4()), txt_file_name)
-        # print("TXT FILE PATH IS", txt_file_path)
-        # file_store.save_file(
-
         # Check if a converted text file exists for .docx files
         txt_file_name = original_file_name.rsplit(".", 1)[0] + ".txt"
-        print("seaching for", txt_file_name)
         txt_file_id = os.path.join(os.path.dirname(file_id), txt_file_name)
         txt_file_record = file_store.read_file_record(txt_file_id)
         if txt_file_record:
             file_record = txt_file_record
             file_id = txt_file_id
-    print("FINAL FILE ID", file_id)
+
     media_type = file_record.file_type
     file_io = file_store.read_file(file_id, mode="b")
 
