@@ -5,10 +5,10 @@ from unittest.mock import Mock
 import pytest
 from pytest_mock import MockerFixture
 
-from danswer.llm.answering.answer import Answer
-from danswer.llm.answering.answer import AnswerStream
-from danswer.llm.answering.models import AnswerStyleConfig
-from danswer.llm.answering.models import PromptConfig
+from danswer.chat.answer import Answer
+from danswer.chat.answer import AnswerStream
+from danswer.chat.models import AnswerStyleConfig
+from danswer.chat.models import PromptConfig
 from danswer.tools.force import ForceUseTool
 from danswer.tools.tool_implementations.search.search_tool import SearchTool
 from tests.regression.answer_quality.run_qa import _process_and_write_query_results

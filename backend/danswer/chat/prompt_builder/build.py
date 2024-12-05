@@ -4,20 +4,26 @@ from typing import cast
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import SystemMessage
+from pydantic.v1 import BaseModel as BaseModel__v1
 
+from danswer.chat.models import PromptConfig
+from danswer.chat.prompt_builder.citations_prompt import compute_max_llm_input_tokens
+from danswer.chat.prompt_builder.utils import translate_history_to_basemessages
 from danswer.file_store.models import InMemoryChatFile
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.answering.models import PromptConfig
-from danswer.llm.answering.prompts.citations_prompt import compute_max_llm_input_tokens
 from danswer.llm.interfaces import LLMConfig
+from danswer.llm.models import PreviousMessage
 from danswer.llm.utils import build_content_with_imgs
 from danswer.llm.utils import check_message_tokens
 from danswer.llm.utils import message_to_prompt_and_imgs
-from danswer.llm.utils import translate_history_to_basemessages
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.prompts.chat_prompts import CHAT_USER_CONTEXT_FREE_PROMPT
 from danswer.prompts.prompt_utils import add_date_time_to_prompt
 from danswer.prompts.prompt_utils import drop_messages_history_overflow
+from danswer.tools.force import ForceUseTool
+from danswer.tools.models import ToolCallFinalResult
+from danswer.tools.models import ToolCallKickoff
+from danswer.tools.models import ToolResponse
+from danswer.tools.tool import Tool
 
 
 def default_build_system_message(
@@ -139,3 +145,15 @@ class AnswerPromptBuilder:
         return drop_messages_history_overflow(
             final_messages_with_tokens, self.max_tokens
         )
+
+
+class LLMCall(BaseModel__v1):
+    prompt_builder: AnswerPromptBuilder
+    tools: list[Tool]
+    force_use_tool: ForceUseTool
+    files: list[InMemoryChatFile]
+    tool_call_info: list[ToolCallKickoff | ToolResponse | ToolCallFinalResult]
+    using_tool_calling_llm: bool
+
+    class Config:
+        arbitrary_types_allowed = True

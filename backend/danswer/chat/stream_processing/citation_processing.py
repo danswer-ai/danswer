@@ -4,8 +4,8 @@ from collections.abc import Generator
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import LlmDoc
+from danswer.chat.stream_processing.utils import DocumentIdOrderMapping
 from danswer.configs.chat_configs import STOP_STREAM_PAT
-from danswer.llm.answering.stream_processing.utils import DocumentIdOrderMapping
 from danswer.prompts.constants import TRIPLE_BACKTICK
 from danswer.utils.logger import setup_logger
 

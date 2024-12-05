@@ -2,12 +2,12 @@ from langchain.schema.messages import HumanMessage
 from langchain.schema.messages import SystemMessage
 
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import PromptConfig
 from danswer.configs.model_configs import GEN_AI_SINGLE_USER_MESSAGE_EXPECTED_MAX_TOKENS
 from danswer.context.search.models import InferenceChunk
 from danswer.db.models import Persona
 from danswer.db.persona import get_default_prompt__read_only
 from danswer.db.search_settings import get_multilingual_expansion
-from danswer.llm.answering.models import PromptConfig
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
 from danswer.llm.interfaces import LLMConfig

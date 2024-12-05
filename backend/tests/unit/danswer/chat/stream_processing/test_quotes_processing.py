@@ -2,14 +2,10 @@ import textwrap
 
 import pytest
 
+from danswer.chat.stream_processing.quotes_processing import match_quotes_to_docs
+from danswer.chat.stream_processing.quotes_processing import separate_answer_quotes
 from danswer.configs.constants import DocumentSource
 from danswer.context.search.models import InferenceChunk
-from danswer.llm.answering.stream_processing.quotes_processing import (
-    match_quotes_to_docs,
-)
-from danswer.llm.answering.stream_processing.quotes_processing import (
-    separate_answer_quotes,
-)
 
 
 def test_passed_in_quotes() -> None:

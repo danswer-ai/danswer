@@ -6,19 +6,24 @@ from typing import cast
 
 from sqlalchemy.orm import Session
 
+from danswer.chat.answer import Answer
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.chat.chat_utils import create_temporary_persona
 from danswer.chat.models import AllCitations
+from danswer.chat.models import AnswerStyleConfig
 from danswer.chat.models import ChatDanswerBotResponse
+from danswer.chat.models import CitationConfig
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
 from danswer.chat.models import DanswerContexts
+from danswer.chat.models import DocumentPruningConfig
 from danswer.chat.models import FileChatDisplay
 from danswer.chat.models import FinalUsedContextDocsResponse
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import MessageResponseIDInfo
 from danswer.chat.models import MessageSpecificCitations
+from danswer.chat.models import PromptConfig
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
 from danswer.chat.models import StreamStopInfo
@@ -57,16 +62,11 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import FileDescriptor
 from danswer.file_store.utils import load_all_chat_files
-from danswer.file_store.utils import save_files_from_urls
-from danswer.llm.answering.answer import Answer
-from danswer.llm.answering.models import AnswerStyleConfig
-from danswer.llm.answering.models import CitationConfig
-from danswer.llm.answering.models import DocumentPruningConfig
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.answering.models import PromptConfig
+from danswer.file_store.utils import save_files
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_llms_for_persona
 from danswer.llm.factory import get_main_llm_from_tuple
+from danswer.llm.models import PreviousMessage
 from danswer.llm.utils import litellm_exception_to_error_msg
 from danswer.natural_language_processing.utils import get_tokenizer
 from danswer.server.query_and_chat.models import ChatMessageDetail
@@ -119,6 +119,7 @@ from danswer.utils.logger import setup_logger
 from danswer.utils.long_term_log import LongTermLogger
 from danswer.utils.timing import log_function_time
 from danswer.utils.timing import log_generator_function_time
+from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 
 logger = setup_logger()
@@ -302,6 +303,7 @@ def stream_chat_message_objects(
     3. [always] A set of streamed LLM tokens or an error anywhere along the line if something fails
     4. [always] Details on the final AI response message that is created
     """
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
     use_existing_user_message = new_msg_req.use_existing_user_message
     existing_assistant_message_id = new_msg_req.existing_assistant_message_id
 
@@ -678,7 +680,8 @@ def stream_chat_message_objects(
 
         reference_db_search_docs = None
         qa_docs_response = None
-        ai_message_files = None  # any files to associate with the AI message e.g. dall-e generated images
+        # any files to associate with the AI message e.g. dall-e generated images
+        ai_message_files = []
         dropped_indices = None
         tool_result = None
 
@@ -733,8 +736,14 @@ def stream_chat_message_objects(
                         list[ImageGenerationResponse], packet.response
                     )
 
-                    file_ids = save_files_from_urls(
-                        [img.url for img in img_generation_response]
+                    file_ids = save_files(
+                        urls=[img.url for img in img_generation_response if img.url],
+                        base64_files=[
+                            img.image_data
+                            for img in img_generation_response
+                            if img.image_data
+                        ],
+                        tenant_id=tenant_id,
                     )
                     ai_message_files = [
                         FileDescriptor(id=str(file_id), type=ChatFileType.IMAGE)
@@ -760,15 +769,19 @@ def stream_chat_message_objects(
                         or custom_tool_response.response_type == "csv"
                     ):
                         file_ids = custom_tool_response.tool_result.file_ids
-                        ai_message_files = [
-                            FileDescriptor(
-                                id=str(file_id),
-                                type=ChatFileType.IMAGE
-                                if custom_tool_response.response_type == "image"
-                                else ChatFileType.CSV,
-                            )
-                            for file_id in file_ids
-                        ]
+                        ai_message_files.extend(
+                            [
+                                FileDescriptor(
+                                    id=str(file_id),
+                                    type=(
+                                        ChatFileType.IMAGE
+                                        if custom_tool_response.response_type == "image"
+                                        else ChatFileType.CSV
+                                    ),
+                                )
+                                for file_id in file_ids
+                            ]
+                        )
                         yield FileChatDisplay(
                             file_ids=[str(file_id) for file_id in file_ids]
                         )
