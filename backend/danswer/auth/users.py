@@ -56,6 +56,7 @@ from danswer.auth.invited_users import get_invited_users
 from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserUpdate
+from danswer.configs.app_configs import ALLOW_ANONYMOUS_ACCESS
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.configs.app_configs import DISABLE_AUTH
 from danswer.configs.app_configs import DISABLE_VERIFICATION
@@ -633,32 +634,37 @@ async def optional_user(
 
 async def double_check_user(
     user: User | None,
-    optional: bool = DISABLE_AUTH,
     include_expired: bool = False,
+    allow_anonymous: bool = False,
 ) -> User | None:
-    if optional:
+    if DISABLE_AUTH:
         return None
 
-    if user is None:
-        raise BasicAuthenticationError(
-            detail="Access denied. User is not authenticated.",
-        )
+    if user is not None:
+        # If user attempted to authenticate, verify them, do not default
+        # to anonymous access if it fails.
+        if user_needs_to_be_verified() and not user.is_verified:
+            raise BasicAuthenticationError(
+                detail="Access denied. User is not verified.",
+            )
 
-    if user_needs_to_be_verified() and not user.is_verified:
-        raise BasicAuthenticationError(
-            detail="Access denied. User is not verified.",
-        )
+        if (
+            user.oidc_expiry
+            and user.oidc_expiry < datetime.now(timezone.utc)
+            and not include_expired
+        ):
+            raise BasicAuthenticationError(
+                detail="Access denied. User's OIDC token has expired.",
+            )
 
-    if (
-        user.oidc_expiry
-        and user.oidc_expiry < datetime.now(timezone.utc)
-        and not include_expired
-    ):
-        raise BasicAuthenticationError(
-            detail="Access denied. User's OIDC token has expired.",
-        )
+        return user
 
-    return user
+    if allow_anonymous and ALLOW_ANONYMOUS_ACCESS:
+        return None
+
+    raise BasicAuthenticationError(
+        detail="Access denied. User is not authenticated.",
+    )
 
 
 async def current_user_with_expired_token(
@@ -670,7 +676,9 @@ async def current_user_with_expired_token(
 async def current_limited_user(
     user: User | None = Depends(optional_user),
 ) -> User | None:
-    return await double_check_user(user)
+    # Currently all of the endpoints that accept the limited API key
+    # are also those that allow anonymous access
+    return await double_check_user(user, allow_anonymous=True)
 
 
 async def current_user(

@@ -43,6 +43,9 @@ WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or AuthType.DISABLED.value).lower())
 DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 
+# For select endpoints, allow users to access without being authenticated
+ALLOW_ANONYMOUS_ACCESS = os.environ.get("ALLOW_ANONYMOUS_ACCESS", "").lower() == "true"
+
 # Necessary for cloud integration tests
 DISABLE_VERIFICATION = os.environ.get("DISABLE_VERIFICATION", "").lower() == "true"
 
