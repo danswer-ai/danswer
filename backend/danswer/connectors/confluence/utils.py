@@ -230,7 +230,7 @@ def attachment_to_content(
                 download_link,
             )
             return None
-
+    
     logger.info(f"_attachment_to_content - _session.get: link={download_link}")
     response = confluence_client._session.get(download_link)
     if response.status_code != 200:
