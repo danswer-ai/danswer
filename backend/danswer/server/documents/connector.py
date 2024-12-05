@@ -1014,7 +1014,7 @@ class BasicCCPairInfo(BaseModel):
     source: DocumentSource
 
 
-@router.get("/indexing-status")
+@router.get("/connector-status")
 def get_basic_connector_indexing_status(
     _: User = Depends(current_user),
     db_session: Session = Depends(get_session),
