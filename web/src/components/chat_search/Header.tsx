@@ -119,7 +119,6 @@ export default function FunctionalHeader({
               <FiShare2 size="18" />
             </div>
           )}
-
           <div className="mobile:hidden flex my-auto">
             <UserDropdown page={page} toggleUserSettings={toggleUserSettings} />
           </div>
@@ -137,11 +136,12 @@ export default function FunctionalHeader({
               <NewChatIcon size={20} />
             </div>
           </Link>
-          <div
-            style={{ transition: "width 0.30s ease-out" }}
-            className={`
-            mobile:hidden
-            flex-none 
+        </div>
+        <div
+          style={{ transition: "width 0.30s ease-out" }}
+          className={`
+            hidden
+            md:flex 
             mx-auto
             overflow-y-hidden 
             transition-all 
@@ -150,8 +150,7 @@ export default function FunctionalHeader({
             h-full
             ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
             `}
-          />
-        </div>
+        />
 
         {page != "assistants" && (
           <div

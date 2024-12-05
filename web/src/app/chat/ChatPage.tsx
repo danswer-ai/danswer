@@ -982,7 +982,7 @@ export function ChatPage({
     ) {
       setDocumentSidebarToggled(false);
     }
-  }, [selectedDocuments, filtersToggled]);
+  }, [chatSessionIdRef.current]);
 
   useEffect(() => {
     adjustDocumentSidebarWidth(); // Adjust the width on initial render
@@ -1610,14 +1610,14 @@ export function ChatPage({
       }
     });
   };
-  const [showDocSidebar, setShowDocSidebar] = useState(false); // State to track if sidebar is open
+  const [showHistorySidebar, setShowHistorySidebar] = useState(false); // State to track if sidebar is open
 
   // Used to maintain a "time out" for history sidebar so our existing refs can have time to process change
   const [untoggled, setUntoggled] = useState(false);
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
   const explicitlyUntoggle = () => {
-    setShowDocSidebar(false);
+    setShowHistorySidebar(false);
 
     setUntoggled(true);
     setTimeout(() => {
@@ -1636,7 +1636,7 @@ export function ChatPage({
     toggle();
   };
   const removeToggle = () => {
-    setShowDocSidebar(false);
+    setShowHistorySidebar(false);
     toggle(false);
   };
 
@@ -1646,8 +1646,8 @@ export function ChatPage({
   useSidebarVisibility({
     toggledSidebar,
     sidebarElementRef,
-    showDocSidebar,
-    setShowDocSidebar,
+    showDocSidebar: showHistorySidebar,
+    setShowDocSidebar: setShowHistorySidebar,
     setToggled: removeToggle,
     mobile: settings?.isMobile,
   });
@@ -2098,7 +2098,7 @@ export function ChatPage({
                 duration-300
                 ease-in-out
                 ${
-                  !untoggled && (showDocSidebar || toggledSidebar)
+                  !untoggled && (showHistorySidebar || toggledSidebar)
                     ? "opacity-100 w-[250px] translate-x-0"
                     : "opacity-0 w-[200px] pointer-events-none -translate-x-10"
                 }`}
@@ -2112,7 +2112,7 @@ export function ChatPage({
                   ref={innerSidebarElementRef}
                   toggleSidebar={toggleSidebar}
                   toggled={toggledSidebar && !settings?.isMobile}
-                  backgroundToggled={toggledSidebar || showDocSidebar}
+                  backgroundToggled={toggledSidebar || showHistorySidebar}
                   existingChats={chatSessions}
                   currentChatSession={selectedChatSession}
                   folders={folders}
@@ -2171,7 +2171,7 @@ export function ChatPage({
           )}
 
           <BlurBackground
-            visible={!untoggled && (showDocSidebar || toggledSidebar)}
+            visible={!untoggled && (showHistorySidebar || toggledSidebar)}
           />
 
           <div
@@ -2831,7 +2831,7 @@ export function ChatPage({
               )}
             </div>
           </div>
-          <FixedLogo backgroundToggled={toggledSidebar || showDocSidebar} />
+          <FixedLogo backgroundToggled={toggledSidebar || showHistorySidebar} />
         </div>
         {/* Right Sidebar - DocumentSidebar */}
       </div>
