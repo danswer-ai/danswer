@@ -44,7 +44,7 @@ import NavigationRow from "./NavigationRow";
 import { useRouter } from "next/navigation";
 import CardSection from "@/components/admin/CardSection";
 import { prepareOAuthAuthorizationRequest } from "@/lib/oauth_utils";
-import { NEXT_PUBLIC_CLOUD_ENABLED } from "@/lib/constants";
+import { EE_ENABLED, NEXT_PUBLIC_CLOUD_ENABLED } from "@/lib/constants";
 export interface AdvancedConfig {
   refreshFreq: number;
   pruneFreq: number;
@@ -121,7 +121,7 @@ export default function AddConnector({
       setCurrentPageUrl(window.location.href);
     }
 
-    if (NEXT_PUBLIC_CLOUD_ENABLED) {
+    if (EE_ENABLED && NEXT_PUBLIC_CLOUD_ENABLED) {
       const sourceMetadata = getSourceMetadata(connector);
       if (sourceMetadata?.oauthSupported == true) {
         setIsAuthorizeVisible(true);
