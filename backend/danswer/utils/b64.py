@@ -14,8 +14,7 @@ def get_image_type_from_bytes(raw_b64_bytes: bytes) -> str:
         mime_type = "image/webp"
     else:
         raise ValueError(
-            f"Unsupported image format - only PNG, JPEG, "
-            f"GIF, and WEBP are supported. Found '{magic_number}'"
+            "Unsupported image format - only PNG, JPEG, " "GIF, and WEBP are supported."
         )
 
     return mime_type

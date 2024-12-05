@@ -166,6 +166,7 @@ def build_content_with_imgs(
     )
 
     img_urls = img_urls or []
+    b64_imgs = b64_imgs or []
 
     message_main_content = _build_content(message, files)
 
