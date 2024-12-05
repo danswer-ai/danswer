@@ -1,10 +1,10 @@
 from langchain.schema.messages import HumanMessage
 
 from danswer.chat.models import LlmDoc
+from danswer.chat.models import PromptConfig
 from danswer.configs.chat_configs import LANGUAGE_HINT
 from danswer.context.search.models import InferenceChunk
 from danswer.db.search_settings import get_multilingual_expansion
-from danswer.llm.answering.models import PromptConfig
 from danswer.llm.utils import message_to_prompt_and_imgs
 from danswer.prompts.direct_qa_prompts import CONTEXT_BLOCK
 from danswer.prompts.direct_qa_prompts import HISTORY_BLOCK

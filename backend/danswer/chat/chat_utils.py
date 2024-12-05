@@ -26,7 +26,7 @@ from danswer.db.models import Prompt
 from danswer.db.models import Tool
 from danswer.db.models import User
 from danswer.db.persona import get_prompts_by_ids
-from danswer.llm.answering.models import PreviousMessage
+from danswer.llm.models import PreviousMessage
 from danswer.natural_language_processing.utils import BaseTokenizer
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.tools.tool_implementations.custom.custom_tool import (

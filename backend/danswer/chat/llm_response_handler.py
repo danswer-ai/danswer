@@ -1,58 +1,22 @@
 from collections.abc import Callable
 from collections.abc import Generator
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
 
 from langchain_core.messages import BaseMessage
-from pydantic.v1 import BaseModel as BaseModel__v1
 
-from danswer.chat.models import CitationInfo
-from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import ResponsePart
 from danswer.chat.models import StreamStopInfo
 from danswer.chat.models import StreamStopReason
-from danswer.file_store.models import InMemoryChatFile
-from danswer.llm.answering.prompts.build import AnswerPromptBuilder
-from danswer.tools.force import ForceUseTool
-from danswer.tools.models import ToolCallFinalResult
-from danswer.tools.models import ToolCallKickoff
-from danswer.tools.models import ToolResponse
-from danswer.tools.tool import Tool
-
-
-if TYPE_CHECKING:
-    from danswer.llm.answering.stream_processing.answer_response_handler import (
-        AnswerResponseHandler,
-    )
-    from danswer.llm.answering.tool.tool_response_handler import ToolResponseHandler
-
-
-ResponsePart = (
-    DanswerAnswerPiece
-    | CitationInfo
-    | ToolCallKickoff
-    | ToolResponse
-    | ToolCallFinalResult
-    | StreamStopInfo
-)
-
-
-class LLMCall(BaseModel__v1):
-    prompt_builder: AnswerPromptBuilder
-    tools: list[Tool]
-    force_use_tool: ForceUseTool
-    files: list[InMemoryChatFile]
-    tool_call_info: list[ToolCallKickoff | ToolResponse | ToolCallFinalResult]
-    using_tool_calling_llm: bool
-
-    class Config:
-        arbitrary_types_allowed = True
+from danswer.chat.prompt_builder.build import LLMCall
+from danswer.chat.stream_processing.answer_response_handler import AnswerResponseHandler
+from danswer.chat.tool_handling.tool_response_handler import ToolResponseHandler
 
 
 class LLMResponseHandlerManager:
     def __init__(
         self,
-        tool_handler: "ToolResponseHandler",
-        answer_handler: "AnswerResponseHandler",
+        tool_handler: ToolResponseHandler,
+        answer_handler: AnswerResponseHandler,
         is_cancelled: Callable[[], bool],
     ):
         self.tool_handler = tool_handler

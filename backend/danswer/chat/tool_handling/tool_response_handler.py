@@ -4,8 +4,8 @@ from langchain_core.messages import AIMessageChunk
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import ToolCall
 
-from danswer.llm.answering.llm_response_handler import LLMCall
-from danswer.llm.answering.llm_response_handler import ResponsePart
+from danswer.chat.models import ResponsePart
+from danswer.chat.prompt_builder.build import LLMCall
 from danswer.llm.interfaces import LLM
 from danswer.tools.force import ForceUseTool
 from danswer.tools.message import build_tool_message

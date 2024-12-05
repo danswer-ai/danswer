@@ -8,10 +8,10 @@ from litellm import image_generation  # type: ignore
 from pydantic import BaseModel
 
 from danswer.chat.chat_utils import combine_message_chain
+from danswer.chat.prompt_builder.build import AnswerPromptBuilder
 from danswer.configs.model_configs import GEN_AI_HISTORY_CUTOFF
-from danswer.llm.answering.models import PreviousMessage
-from danswer.llm.answering.prompts.build import AnswerPromptBuilder
 from danswer.llm.interfaces import LLM
+from danswer.llm.models import PreviousMessage
 from danswer.llm.utils import build_content_with_imgs
 from danswer.llm.utils import message_to_string
 from danswer.prompts.constants import GENERAL_SEP_PAT
