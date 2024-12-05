@@ -1,6 +1,12 @@
 "use client";
 
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { MinimalUserSnapshot, User } from "@/lib/types";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button } from "@/components/ui/button";
@@ -59,6 +65,7 @@ import { MakePublicAssistantModal } from "@/app/chat/modal/MakePublicAssistantMo
 import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import { useUser } from "@/components/user/UserProvider";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 function DraggableAssistantListItem({ ...props }: any) {
   const {
@@ -80,11 +87,19 @@ function DraggableAssistantListItem({ ...props }: any) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="flex mt-2 items-center">
-      <div {...attributes} {...listeners} className="mr-2 cursor-grab">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="max-w-full flex mt-2 items-center"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="mobile:hidden mr-2 cursor-grab"
+      >
         <DragHandle />
       </div>
-      <div className="flex-grow">
+      <div className="max-w-full flex-grow">
         <AssistantListItem isDragging={isDragging} {...props} />
       </div>
     </div>
@@ -138,7 +153,7 @@ function AssistantListItem({
         <div className="flex justify-between items-center">
           <AssistantIcon assistant={assistant} />
 
-          <h2 className="ml-6 w-fit flex-grow space-y-3 text-start flex text-xl font-semibold line-clamp-2 text-gray-800">
+          <h2 className="ml-6 flex-grow w-fit space-y-3 text-start flex text-xl font-semibold mobile:min-w-20 desktop:line-clamp-2 text-gray-800">
             {assistant.name}
           </h2>
 
@@ -304,6 +319,7 @@ export function AssistantsList() {
   const allAssistantIds = assistants.map((assistant) =>
     assistant.id.toString()
   );
+  const isMobile = useContext(SettingsContext)?.isMobile;
 
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [makePublicPersona, setMakePublicPersona] = useState<Persona | null>(
@@ -388,26 +404,29 @@ export function AssistantsList() {
         />
       )}
 
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+      <div className="px-2 mx-auto desktop:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>Your Assistants</AssistantsPageTitle>
 
         <div className="grid grid-cols-2 gap-4 mt-4 mb-8">
           <Button
             variant="default"
-            className="p-6 text-base"
+            className="p-2 desktop:p-6 text-base"
             onClick={() => router.push("/assistants/new")}
             icon={FiPlus}
           >
-            Create New Assistant
+            <span className="mobile:hidden">Create </span>{" "}
+            <span className="desktop:inline">New</span>{" "}
+            <span className="mobile:hidden">Assistant</span>
           </Button>
 
           <Button
             onClick={() => router.push("/assistants/gallery")}
             variant="outline"
-            className="text-base py-6"
+            className="text-base p-2 desktop:p-6"
             icon={FiList}
           >
-            Assistant Gallery
+            <span className="mobile:hidden">Assistant </span>{" "}
+            <span className="desktop:inline">Gallery</span>
           </Button>
         </div>
 
