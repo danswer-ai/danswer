@@ -396,7 +396,7 @@ def upload_files(
                 file_type=file.content_type or "application/octet-stream",
             )
 
-            if file.content_type.startswith(
+            if file.content_type and file.content_type.startswith(
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             ):
                 # Read the .docx file content
