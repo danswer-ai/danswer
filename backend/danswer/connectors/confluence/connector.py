@@ -16,7 +16,6 @@ from danswer.connectors.confluence.utils import attachment_to_content
 from danswer.connectors.confluence.utils import build_confluence_document_id
 from danswer.connectors.confluence.utils import datetime_from_string
 from danswer.connectors.confluence.utils import extract_text_from_confluence_html
-from danswer.connectors.confluence.utils import ImageSummarization
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -159,11 +158,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         return comment_string
 
-    def _convert_object_to_document(
-        self,
-        confluence_object: dict[str, Any],
-        confluence_xml: str = None,
-    ) -> Document | None:
+    def _convert_page_to_document(self, page: dict[str, Any]) -> Document | None:
         """
         Takes in a confluence object, extracts all metadata, and converts it into a document.
         If it's a page, it extracts the text, adds the comments for the document text.
@@ -173,90 +168,49 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         """
         # The url and the id are the same
         object_url = build_confluence_document_id(
-            self.wiki_base, confluence_object["_links"]["webui"], self.is_cloud
+            self.wiki_base, page["_links"]["webui"], self.is_cloud
         )
         logger.notice(f"processing page: {object_url}")
 
         # Get space name
         doc_metadata: dict[str, str | list[str]] = {
-            "Wiki Space Name": confluence_object["space"]["name"]
+            "Wiki Space Name": page["space"]["name"]
         }
 
         # Get labels
-        label_dicts = confluence_object["metadata"]["labels"]["results"]
+        label_dicts = page["metadata"]["labels"]["results"]
         page_labels = [label["name"] for label in label_dicts]
         if page_labels:
             doc_metadata["labels"] = page_labels
 
         # Get last modified and author email
-        last_modified = datetime_from_string(confluence_object["version"]["when"])
-        author_email = confluence_object["version"].get("by", {}).get("email")
+        last_modified = datetime_from_string(page["version"]["when"])
+        author_email = page["version"].get("by", {}).get("email")
 
         # Extract text from page
-        if confluence_object["type"] == "page":
-            object_text = extract_text_from_confluence_html(
-                confluence_client=self.confluence_client,
-                confluence_object=confluence_object,
-                fetched_titles={confluence_object.get("title", "")},
-            )
-            # Add comments to text
-            object_text += self._get_comment_string_for_page_id(confluence_object["id"])
+        object_text = extract_text_from_confluence_html(
+            confluence_client=self.confluence_client,
+            confluence_object=page,
+            fetched_titles={page.get("title", "")},
+        )
+        # Add comments to text
+        object_text += self._get_comment_string_for_page_id(page["id"])
 
-            if object_text is None:
-                # This only happens for attachments that are not parsable
-                return None
+        if object_text is None:
+            # This only happens for attachments that are not parsable
+            return None
 
-            return Document(
-                id=object_url,
-                sections=[Section(link=object_url, text=object_text)],
-                source=DocumentSource.CONFLUENCE,
-                semantic_identifier=confluence_object["title"],
-                doc_updated_at=last_modified,
-                primary_owners=(
-                    [BasicExpertInfo(email=author_email)] if author_email else None
-                ),
-                metadata=doc_metadata,
-            )
-
-        # Extract content from attachment
-        elif confluence_object["type"] == "attachment":
-            content = attachment_to_content(
-                confluence_client=self.confluence_client,
-                attachment=confluence_object,
-                page_context=confluence_xml,
-                llm=self.llm,
-            )
-            if isinstance(content, str):
-                return Document(
-                    id=object_url,
-                    sections=[Section(link=object_url, text=content)],
-                    source=DocumentSource.CONFLUENCE,
-                    semantic_identifier=confluence_object["title"],
-                    doc_updated_at=last_modified,
-                    primary_owners=(
-                        [BasicExpertInfo(email=author_email)] if author_email else None
-                    ),
-                    metadata=doc_metadata,
-                )
-
-            elif isinstance(content, ImageSummarization):
-                # if attachment of a page contains any images: add summary of each image as document
-                doc_metadata["is_image_summary"] = "True"
-
-                return Document(
-                    id=content.url,
-                    sections=[Section(link=object_url, text=content.summary or "")],
-                    source=DocumentSource.CONFLUENCE,
-                    semantic_identifier=content.title,
-                    doc_updated_at=last_modified,
-                    primary_owners=(
-                        [BasicExpertInfo(email=author_email)] if author_email else None
-                    ),
-                    metadata=doc_metadata,
-                )
-
-            else:
-                return None
+        return Document(
+            id=object_url,
+            sections=[Section(link=object_url, text=object_text)],
+            source=DocumentSource.CONFLUENCE,
+            semantic_identifier=page["title"],
+            doc_updated_at=last_modified,
+            primary_owners=(
+                [BasicExpertInfo(email=author_email)] if author_email else None
+            ),
+            metadata=doc_metadata,
+        )
 
     def _fetch_document_batches(self) -> GenerateDocumentsOutput:
         doc_batch: list[Document] = []
@@ -268,7 +222,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             expand=",".join(_PAGE_EXPANSION_FIELDS),
             limit=self.batch_size,
         ):
-            doc = self._convert_object_to_document(page)
+            doc = self._convert_page_to_document(page)
 
             if doc is not None:
                 doc_batch.append(doc)
@@ -289,13 +243,17 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 cql=attachment_cql,
                 expand=",".join(_ATTACHMENT_EXPANSION_FIELDS),
             ):
-                attachment_doc = self._convert_object_to_document(
-                    attachment, confluence_xml
+                content = attachment_to_content(
+                    confluence_client=self.confluence_client,
+                    attachment=attachment,
+                    page_context=confluence_xml,
+                    llm=self.llm,
                 )
 
-                if attachment_doc is not None:
-                    # add doc of page/attachment to the doc batch
-                    doc_batch.append(attachment_doc)
+                if content:
+                    page_section = doc.sections[0]
+                    text = f"## Text representation of attachment {attachment['title']}:\n{content}"
+                    doc.sections.append(Section(text=text, link=page_section.link))
 
             if len(doc_batch) >= self.batch_size:
                 yield doc_batch

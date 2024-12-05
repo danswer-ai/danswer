@@ -9,7 +9,6 @@ from openai import RateLimitError
 from PIL import Image
 
 from danswer.connectors.confluence.utils import attachment_to_content
-from danswer.connectors.confluence.utils import ImageSummarization
 from danswer.file_processing.image_summarization import _encode_image
 from danswer.file_processing.image_summarization import _resize_image_if_needed
 from danswer.file_processing.image_summarization import _summarize_image
@@ -216,11 +215,7 @@ def test_summarize_page_images(sample_page_image, confluence_xml):
                 )
                 print(result)
 
-    assert len(result) == 1
-    assert isinstance(result[0], ImageSummarization)
-    assert result[0].title == sample_page_image["title"]
-    assert result[0].summary == "This is a summary of the image."
-    assert result[0].media_type == sample_page_image["metadata"]["mediaType"]
+    assert result == "This is a summary of the image."
 
 
 # def test_attachment_to_content_with_valid_image(sample_page_image, confluence_xml):
