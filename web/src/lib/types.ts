@@ -139,11 +139,23 @@ export interface OAuthPrepareAuthorizationResponse {
   url: string;
 }
 
+export interface OAuthBaseCallbackResponse {
+  success: boolean;
+  message: string;
+  redirect_on_success: string;
+}
+
 export interface OAuthSlackCallbackResponse {
   success: boolean;
   message: string;
   team_id: string;
   authed_user_id: string;
+  redirect_on_success: string;
+}
+
+export interface OAuthGoogleDriveCallbackResponse {
+  success: boolean;
+  message: string;
   redirect_on_success: string;
 }
 

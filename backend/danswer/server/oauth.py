@@ -1,5 +1,7 @@
 import base64
+import json
 import uuid
+from typing import Any
 from typing import cast
 
 import requests
@@ -13,10 +15,20 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_user
 from danswer.configs.app_configs import OAUTH_CONFLUENCE_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CONFLUENCE_CLIENT_SECRET
+from danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_ID
+from danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
 from danswer.configs.app_configs import OAUTH_SLACK_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_SLACK_CLIENT_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import DocumentSource
+from danswer.connectors.google_utils.google_auth import get_google_oauth_creds
+from danswer.connectors.google_utils.google_auth import sanitize_oauth_credentials
+from danswer.connectors.google_utils.shared_constants import (
+    DB_CREDENTIALS_DICT_TOKEN_KEY,
+)
+from danswer.connectors.google_utils.shared_constants import (
+    DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
+)
 from danswer.db.credentials import create_credential
 from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
@@ -64,14 +76,7 @@ class SlackOAuth:
 
     @classmethod
     def generate_oauth_url(cls, state: str) -> str:
-        url = (
-            f"https://slack.com/oauth/v2/authorize"
-            f"?client_id={cls.CLIENT_ID}"
-            f"&redirect_uri={cls.REDIRECT_URI}"
-            f"&scope={cls.BOT_SCOPE}"
-            f"&state={state}"
-        )
-        return url
+        return cls._generate_oauth_url_helper(cls.REDIRECT_URI, state)
 
     @classmethod
     def generate_dev_oauth_url(cls, state: str) -> str:
@@ -79,10 +84,14 @@ class SlackOAuth:
         - https://www.nango.dev/blog/oauth-redirects-on-localhost-with-https
         """
 
+        return cls._generate_oauth_url_helper(cls.DEV_REDIRECT_URI, state)
+
+    @classmethod
+    def _generate_oauth_url_helper(cls, redirect_uri: str, state: str) -> str:
         url = (
             f"https://slack.com/oauth/v2/authorize"
             f"?client_id={cls.CLIENT_ID}"
-            f"&redirect_uri={cls.DEV_REDIRECT_URI}"
+            f"&redirect_uri={redirect_uri}"
             f"&scope={cls.BOT_SCOPE}"
             f"&state={state}"
         )
@@ -181,6 +190,75 @@ class ConfluenceCloudOAuth:
         return session
 
 
+class GoogleDriveOAuth:
+    # https://developers.google.com/identity/protocols/oauth2
+    # https://developers.google.com/identity/protocols/oauth2/web-server
+
+    class OAuthSession(BaseModel):
+        """Stored in redis to be looked up on callback"""
+
+        email: str
+        redirect_on_success: str | None  # Where to send the user if OAuth flow succeeds
+
+    CLIENT_ID = OAUTH_GOOGLE_DRIVE_CLIENT_ID
+    CLIENT_SECRET = OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
+
+    TOKEN_URL = "https://oauth2.googleapis.com/token"
+
+    # SCOPE is per https://docs.danswer.dev/connectors/google-drive
+    SCOPE = (
+        "https://www.googleapis.com/auth/drive.readonly%20"
+        "https://www.googleapis.com/auth/drive.metadata.readonly%20"
+        "https://www.googleapis.com/auth/admin.directory.user.readonly%20"
+        "https://www.googleapis.com/auth/admin.directory.group.readonly"
+    )
+
+    REDIRECT_URI = f"{WEB_DOMAIN}/admin/connectors/google-drive/oauth/callback"
+    DEV_REDIRECT_URI = f"https://redirectmeto.com/{REDIRECT_URI}"
+
+    @classmethod
+    def generate_oauth_url(cls, state: str) -> str:
+        return cls._generate_oauth_url_helper(cls.REDIRECT_URI, state)
+
+    @classmethod
+    def generate_dev_oauth_url(cls, state: str) -> str:
+        """dev mode workaround for localhost testing
+        - https://www.nango.dev/blog/oauth-redirects-on-localhost-with-https
+        """
+
+        return cls._generate_oauth_url_helper(cls.DEV_REDIRECT_URI, state)
+
+    @classmethod
+    def _generate_oauth_url_helper(cls, redirect_uri: str, state: str) -> str:
+        # without prompt=consent, a refresh token is only issued the first time the user approves
+        url = (
+            f"https://accounts.google.com/o/oauth2/v2/auth"
+            f"?client_id={cls.CLIENT_ID}"
+            f"&redirect_uri={redirect_uri}"
+            "&response_type=code"
+            f"&scope={cls.SCOPE}"
+            "&access_type=offline"
+            f"&state={state}"
+            "&prompt=consent"
+        )
+        return url
+
+    @classmethod
+    def session_dump_json(cls, email: str, redirect_on_success: str | None) -> str:
+        """Temporary state to store in redis. to be looked up on auth response.
+        Returns a json string.
+        """
+        session = GoogleDriveOAuth.OAuthSession(
+            email=email, redirect_on_success=redirect_on_success
+        )
+        return session.model_dump_json()
+
+    @classmethod
+    def parse_session(cls, session_json: str) -> OAuthSession:
+        session = GoogleDriveOAuth.OAuthSession.model_validate_json(session_json)
+        return session
+
+
 @router.post("/prepare-authorization-request")
 def prepare_authorization_request(
     connector: DocumentSource,
@@ -193,8 +271,11 @@ def prepare_authorization_request(
     Example: https://www.oauth.com/oauth2-servers/authorization/the-authorization-request/
     """
 
+    # create random oauth state param for security and to retrieve user data later
     oauth_uuid = uuid.uuid4()
     oauth_uuid_str = str(oauth_uuid)
+
+    # urlsafe b64 encode the uuid for the oauth url
     oauth_state = (
         base64.urlsafe_b64encode(oauth_uuid.bytes).rstrip(b"=").decode("utf-8")
     )
@@ -204,15 +285,18 @@ def prepare_authorization_request(
         session = SlackOAuth.session_dump_json(
             email=user.email, redirect_on_success=redirect_on_success
         )
-    elif connector == DocumentSource.CONFLUENCE:
-        oauth_url = ConfluenceCloudOAuth.generate_oauth_url(oauth_state)
-        session = ConfluenceCloudOAuth.session_dump_json(
-            email=user.email, redirect_on_success=redirect_on_success
-        )
+    # elif connector == DocumentSource.CONFLUENCE:
+    #     oauth_url = ConfluenceCloudOAuth.generate_oauth_url(oauth_state)
+    #     session = ConfluenceCloudOAuth.session_dump_json(
+    #         email=user.email, redirect_on_success=redirect_on_success
+    #     )
     # elif connector == DocumentSource.JIRA:
     #     oauth_url = JiraCloudOAuth.generate_dev_oauth_url(oauth_state)
-    # elif connector == DocumentSource.GOOGLE_DRIVE:
-    #     oauth_url = GoogleDriveOAuth.generate_dev_oauth_url(oauth_state)
+    elif connector == DocumentSource.GOOGLE_DRIVE:
+        oauth_url = GoogleDriveOAuth.generate_dev_oauth_url(oauth_state)
+        session = GoogleDriveOAuth.session_dump_json(
+            email=user.email, redirect_on_success=redirect_on_success
+        )
     else:
         oauth_url = None
 
@@ -224,6 +308,7 @@ def prepare_authorization_request(
 
     r = get_redis_client(tenant_id=tenant_id)
 
+    # store important session state to retrieve when the user is redirected back
     # 10 min is the max we want an oauth flow to be valid
     r.set(f"da_oauth:{oauth_uuid_str}", session, ex=600)
 
@@ -422,3 +507,112 @@ def handle_slack_oauth_callback(
 #             "redirect_on_success": session.redirect_on_success,
 #         }
 #     )
+
+
+@router.post("/connector/google-drive/callback")
+def handle_google_drive_oauth_callback(
+    code: str,
+    state: str,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+    tenant_id: str | None = Depends(get_current_tenant_id),
+) -> JSONResponse:
+    if not GoogleDriveOAuth.CLIENT_ID or not GoogleDriveOAuth.CLIENT_SECRET:
+        raise HTTPException(
+            status_code=500,
+            detail="Google Drive client ID or client secret is not configured.",
+        )
+
+    r = get_redis_client(tenant_id=tenant_id)
+
+    # recover the state
+    padded_state = state + "=" * (
+        -len(state) % 4
+    )  # Add padding back (Base64 decoding requires padding)
+    uuid_bytes = base64.urlsafe_b64decode(
+        padded_state
+    )  # Decode the Base64 string back to bytes
+
+    # Convert bytes back to a UUID
+    oauth_uuid = uuid.UUID(bytes=uuid_bytes)
+    oauth_uuid_str = str(oauth_uuid)
+
+    r_key = f"da_oauth:{oauth_uuid_str}"
+
+    session_json_bytes = cast(bytes, r.get(r_key))
+    if not session_json_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Google Drive OAuth failed - OAuth state key not found: key={r_key}",
+        )
+
+    session_json = session_json_bytes.decode("utf-8")
+    try:
+        session = GoogleDriveOAuth.parse_session(session_json)
+
+        # Exchange the authorization code for an access token
+        response = requests.post(
+            GoogleDriveOAuth.TOKEN_URL,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={
+                "client_id": GoogleDriveOAuth.CLIENT_ID,
+                "client_secret": GoogleDriveOAuth.CLIENT_SECRET,
+                "code": code,
+                "redirect_uri": GoogleDriveOAuth.DEV_REDIRECT_URI,
+                "grant_type": "authorization_code",
+            },
+        )
+
+        response.raise_for_status()
+
+        authorization_response: dict[str, Any] = response.json()
+
+        # the connector wants us to store the json in its authorized_user_info format
+        # returned from OAuthCredentials.get_authorized_user_info().
+        # So refresh immediately via get_google_oauth_creds with the params filled in
+        # from fields in authorization_response to get the json we need
+        authorized_user_info = {}
+        authorized_user_info["client_id"] = OAUTH_GOOGLE_DRIVE_CLIENT_ID
+        authorized_user_info["client_secret"] = OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
+        authorized_user_info["refresh_token"] = authorization_response["refresh_token"]
+
+        token_json_str = json.dumps(authorized_user_info)
+        oauth_creds = get_google_oauth_creds(
+            token_json_str=token_json_str, source=DocumentSource.GOOGLE_DRIVE
+        )
+        if not oauth_creds:
+            raise RuntimeError("get_google_oauth_creds returned None.")
+
+        # save off the credentials
+        oauth_creds_sanitized_json_str = sanitize_oauth_credentials(oauth_creds)
+
+        credential_dict: dict[str, str] = {}
+        credential_dict[DB_CREDENTIALS_DICT_TOKEN_KEY] = oauth_creds_sanitized_json_str
+        credential_dict[DB_CREDENTIALS_PRIMARY_ADMIN_KEY] = session.email
+        credential_info = CredentialBase(
+            credential_json=credential_dict,
+            admin_public=True,
+            source=DocumentSource.GOOGLE_DRIVE,
+            name="Google Drive OAuth",
+        )
+
+        create_credential(credential_info, user, db_session)
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "message": f"An error occurred during Google Drive OAuth: {str(e)}",
+            },
+        )
+    finally:
+        r.delete(r_key)
+
+    # return the result
+    return JSONResponse(
+        content={
+            "success": True,
+            "message": "Google Drive OAuth completed successfully.",
+            "redirect_on_success": session.redirect_on_success,
+        }
+    )

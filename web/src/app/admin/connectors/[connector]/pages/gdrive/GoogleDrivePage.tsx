@@ -47,6 +47,7 @@ const GDriveMain = ({}: {}) => {
     isLoading: isConnectorIndexingStatusesLoading,
     error: connectorIndexingStatusesError,
   } = useConnectorCredentialIndexingStatus();
+
   const {
     data: credentialsData,
     isLoading: isCredentialsLoading,

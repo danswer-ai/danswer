@@ -46,13 +46,15 @@ def mask_string(sensitive_str: str) -> str:
 def mask_credential_dict(credential_dict: dict[str, Any]) -> dict[str, str]:
     masked_creds = {}
     for key, val in credential_dict.items():
-        if not isinstance(val, str):
-            raise ValueError(
-                f"Unable to mask credentials of type other than string, cannot process request."
-                f"Recieved type: {type(val)}"
-            )
+        if isinstance(val, str):
+            masked_creds[key] = mask_string(val)
+            continue
 
-        masked_creds[key] = mask_string(val)
+        raise ValueError(
+            f"Unable to mask credentials of type other than string, cannot process request."
+            f"Recieved type: {type(val)}"
+        )
+
     return masked_creds
 
 

@@ -419,9 +419,7 @@ export default function AddConnector({
               <CardSection>
                 <Title className="mb-2 text-lg">Select a credential</Title>
 
-                {connector == "google_drive" ? (
-                  <GDriveMain />
-                ) : connector == "gmail" ? (
+                {connector == "gmail" ? (
                   <GmailMain />
                 ) : (
                   <>
