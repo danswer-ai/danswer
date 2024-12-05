@@ -38,6 +38,8 @@ from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import InMemoryChatFile
 from danswer.llm.interfaces import LLM
 from danswer.prompts.constants import CODE_BLOCK_PAT
+from danswer.utils.b64 import get_image_type
+from danswer.utils.b64 import get_image_type_from_bytes
 from danswer.utils.logger import setup_logger
 from shared_configs.configs import LOG_LEVEL
 
@@ -151,6 +153,7 @@ def build_content_with_imgs(
     message: str,
     files: list[InMemoryChatFile] | None = None,
     img_urls: list[str] | None = None,
+    b64_imgs: list[str] | None = None,
     message_type: MessageType = MessageType.USER,
 ) -> str | list[str | dict[str, Any]]:  # matching Langchain's BaseMessage content type
     files = files or []
@@ -163,6 +166,7 @@ def build_content_with_imgs(
     )
 
     img_urls = img_urls or []
+    b64_imgs = b64_imgs or []
 
     message_main_content = _build_content(message, files)
 
@@ -181,11 +185,22 @@ def build_content_with_imgs(
             {
                 "type": "image_url",
                 "image_url": {
-                    "url": f"data:image/jpeg;base64,{file.to_base64()}",
+                    "url": (
+                        f"data:{get_image_type_from_bytes(file.content)};"
+                        f"base64,{file.to_base64()}"
+                    ),
                 },
             }
-            for file in files
-            if file.file_type == "image"
+            for file in img_files
+        ]
+        + [
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{get_image_type(b64_img)};base64,{b64_img}",
+                },
+            }
+            for b64_img in b64_imgs
         ]
         + [
             {
