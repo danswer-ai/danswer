@@ -62,7 +62,6 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.file_store.models import ChatFileType
 from danswer.file_store.models import FileDescriptor
 from danswer.file_store.utils import load_all_chat_files
-
 from danswer.file_store.utils import save_files
 from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.factory import get_llms_for_persona
