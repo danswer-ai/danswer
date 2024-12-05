@@ -27,5 +27,11 @@ test(
     await page.click('button[type="submit"]');
 
     await page.waitForURL("http://localhost:3000/chat");
+
+    await page.getByPlaceholder("Send a message ");
+
+    await expect(page.locator("body")).not.toContainText(
+      "Initializing Danswer"
+    );
   }
 );
