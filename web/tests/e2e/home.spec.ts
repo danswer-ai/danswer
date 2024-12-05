@@ -28,7 +28,7 @@ test(
 
     await page.waitForURL("http://localhost:3000/chat");
 
-    await page.getByPlaceholder("Send a message ");
+    await page.getByPlaceholder("Send a message or try using @ or /");
 
     await expect(page.locator("body")).not.toContainText(
       "Initializing Danswer"
