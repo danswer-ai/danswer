@@ -1,4 +1,10 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useContext,
+} from "react";
 import { useAssistants } from "@/components/context/AssistantsContext";
 import { useChatContext } from "@/components/context/ChatContext";
 import { useUser } from "@/components/user/UserProvider";
@@ -35,6 +41,7 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../ui/drawer";
 import { truncateString } from "@/lib/utils";
+import { SettingsContext } from "../settings/SettingsProvider";
 
 const AssistantSelector = ({
   liveAssistant,
@@ -95,6 +102,8 @@ const AssistantSelector = ({
     setSelectedTab(index);
     localStorage.setItem("assistantSelectorSelectedTab", index.toString());
   };
+
+  const settings = useContext(SettingsContext);
 
   // Get the user's default model
   const userDefaultModel = user?.preferences.default_model;
@@ -280,7 +289,13 @@ const AssistantSelector = ({
 
   return (
     <div className="pointer-events-auto relative" ref={dropdownRef}>
-      <div className="flex justify-center">
+      <div
+        className={
+          (settings?.enterpriseSettings?.two_lines_for_chat_header
+            ? "mt-20 "
+            : "mt-8") + " flex justify-center"
+        }
+      >
         <div
           onClick={() => {
             setIsOpen(!isOpen);
