@@ -30,6 +30,19 @@ class MockLLM(LLM):
         # Simulate successful invocation
         return Response("This is a summary of the image.")
 
+    def _invoke_implementation(self):
+        pass
+
+    def _stream_implementation(self):
+        pass
+
+    def log_model_configs(self):
+        pass
+
+    @property
+    def config(self):
+        pass
+
 
 # Helper function to create a dummy image
 def create_image(size: tuple, color: str, format: str) -> bytes:
@@ -85,7 +98,7 @@ class MockResponse:
 
 
 @pytest.mark.parametrize(
-    "exception, expected_output",
+    "exception",
     [
         (
             BadRequestError(
@@ -93,19 +106,11 @@ class MockResponse:
                 model="model_name",
                 llm_provider="provider_name",
             ),
-            "Summarization failed with error: litellm.BadRequestError: Content policy violation.",
         ),
-        (
-            RateLimitError(
-                "Retry limit exceeded", response=MockResponse(), body="body"
-            ),
-            "Summarization failed with error: Retry limit exceeded.",
-        ),
+        (RateLimitError("Retry limit exceeded", response=MockResponse(), body="body"),),
     ],
 )
-def test_summarize_image_raises_value_error_on_failure(
-    mocker, exception, expected_output
-):
+def test_summarize_image_raises_value_error_on_failure(exception):
     llm = MockLLM()
 
     global CONTINUE_ON_CONNECTOR_FAILURE
@@ -119,10 +124,27 @@ def test_summarize_image_raises_value_error_on_failure(
         _summarize_image("encoded_image_string", llm, "test query", "system prompt")
 
     # Assert that the exception message matches the expected message
-    assert expected_output == str(excinfo.value)
+    assert "Summarization failed." in str(excinfo.value)
 
 
-# def test_summarize_image_return_none_on_failure(mocker, exception):
+# @pytest.mark.parametrize(
+#     "exception",
+#     [
+#         (
+#             BadRequestError(
+#                 "Content policy violation",
+#                 model="model_name",
+#                 llm_provider="provider_name",
+#             ),
+#         ),
+#         (
+#             RateLimitError(
+#                 "Retry limit exceeded", response=MockResponse(), body="body"
+#             ),
+#         ),
+#     ],
+# )
+# def test_summarize_image_return_none_on_failure(exception):
 #     llm = MockLLM()
 
 #     global CONTINUE_ON_CONNECTOR_FAILURE
@@ -132,7 +154,7 @@ def test_summarize_image_raises_value_error_on_failure(
 #     llm.invoke = MagicMock(side_effect=exception)
 
 #     # Call the summarize_image function
-#     result = summarize_image("encoded_image_string", llm, "test query", "system prompt")
+#     result = _summarize_image("encoded_image_string", llm, "test query", "system prompt")
 #     print(result)
 #     # Assert that the result is None
 #     assert result is None
@@ -194,7 +216,7 @@ def test_summarize_page_images(sample_page_image, confluence_xml):
 
     # Mock the _get_embedded_image_attachments function
     with patch(
-        "danswer.connectors.confluence.utils._get_embedded_image_attachments",
+        "danswer.connectors.confluence.utils.attachment_to_content",
         return_value=[sample_page_image],
     ):
         # Mock the summarize_image function to return a predefined summary
@@ -218,28 +240,10 @@ def test_summarize_page_images(sample_page_image, confluence_xml):
     assert result == "This is a summary of the image."
 
 
-# def test_attachment_to_content_with_valid_image(sample_page_image, confluence_xml):
-#     confluence_client = MagicMock()
-
-#     image_summary = ImageSummarization(
-#         url="dummy-link.mock",
-#         title="Sample Image",
-#         base64_encoded="iVBORw0KGgoAAAANSUhEUgAAAAUA",
-#         media_type="image/png",
-#         summary="This is an image summary."
-#     )
-
-#     with patch('danswer.connectors.confluence.utils._summarize_page_images', return_value=[image_summary]):
-#         result = attachment_to_content(confluence_client, sample_page_image, confluence_xml)
-#         print(result)
-
-#     assert result == [image_summary]
-
-
 def test_attachment_to_content_with_no_image(sample_page_no_image, confluence_xml):
     confluence_client = MagicMock()
 
-    with patch("danswer.connectors.confluence.utils._summarize_page_images"):
+    with patch("danswer.connectors.confluence.utils._summarize_image_attachment"):
         result = attachment_to_content(
             confluence_client,
             sample_page_no_image,

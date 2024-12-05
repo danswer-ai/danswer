@@ -251,9 +251,13 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 )
 
                 if content:
-                    page_section = doc.sections[0]
+                    # get link to attachment in webui
+                    webui_link = _attachment_to_webui_link(
+                        self.confluence_client, attachment
+                    )
+                    # add prefix to text to mark attachments as such
                     text = f"## Text representation of attachment {attachment['title']}:\n{content}"
-                    doc.sections.append(Section(text=text, link=page_section.link))
+                    doc.sections.append(Section(text=text, link=webui_link))
 
             if len(doc_batch) >= self.batch_size:
                 yield doc_batch
@@ -328,3 +332,10 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 )
             yield doc_metadata_list
             doc_metadata_list = []
+
+
+def _attachment_to_webui_link(
+    confluence_client: OnyxConfluence, attachment: dict[str, Any]
+) -> str:
+    """Extracts the webui link to images."""
+    return confluence_client.url + attachment["_links"]["webui"]

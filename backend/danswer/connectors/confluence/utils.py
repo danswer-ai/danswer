@@ -196,9 +196,7 @@ def attachment_to_content(
 
     if media_type.startswith("video/") or media_type == "application/gliffy+json":
         logger.warning(
-            "Cannot convert attachment %s with unsupported media type to text: %s.",
-            download_link,
-            media_type,
+            f"Cannot convert attachment {download_link} with unsupported media type to text: {media_type}."
         )
         return None
 
@@ -230,7 +228,7 @@ def attachment_to_content(
                 download_link,
             )
             return None
-    
+
     logger.info(f"_attachment_to_content - _session.get: link={download_link}")
     response = confluence_client._session.get(download_link)
     if response.status_code != 200:
