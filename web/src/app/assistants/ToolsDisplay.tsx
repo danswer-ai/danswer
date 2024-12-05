@@ -13,7 +13,9 @@ export function AssistantTools({
   return (
     <div className="relative text-xs overflow-x-hidden flex text-subtle">
       <span
-        className={`${assistant.tools.length > 0 && "py-1"}  ${!list ? "font-semibold" : "text-subtle text-sm"}`}
+        className={`${assistant.tools.length > 0 && "py-1"}  ${
+          !list ? "font-semibold" : "text-subtle text-sm"
+        }`}
       >
         Tools:
       </span>{" "}
@@ -62,7 +64,8 @@ export function AssistantTools({
                       key={ind}
                       className="ml-1 my-auto h-3 w-3 my-auto"
                     />
-                    Image Generation
+                    <span className="mobile:hidden">Image </span>
+                    <span className="desktop:hidden">Generation</span>
                   </div>
                 </div>
               );
@@ -79,7 +82,13 @@ export function AssistantTools({
                   w-fit 
                   flex
                   items-center
-                  ${hovered ? "bg-background-300" : list ? "bg-background-125" : "bg-background-100"}`}
+                  ${
+                    hovered
+                      ? "bg-background-300"
+                      : list
+                        ? "bg-background-125"
+                        : "bg-background-100"
+                  }`}
                 >
                   <div className="flex gap-x-1">{tool.name}</div>
                 </div>

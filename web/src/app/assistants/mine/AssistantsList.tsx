@@ -319,7 +319,6 @@ export function AssistantsList() {
   const allAssistantIds = assistants.map((assistant) =>
     assistant.id.toString()
   );
-  const isMobile = useContext(SettingsContext)?.isMobile;
 
   const [deletingPersona, setDeletingPersona] = useState<Persona | null>(null);
   const [makePublicPersona, setMakePublicPersona] = useState<Persona | null>(
@@ -404,7 +403,7 @@ export function AssistantsList() {
         />
       )}
 
-      <div className="px-2 mx-auto desktop:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+      <div className="px-2 w-full mx-auto desktop:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>Your Assistants</AssistantsPageTitle>
 
         <div className="grid grid-cols-2 gap-4 mt-4 mb-8">
