@@ -37,7 +37,7 @@ def create_folder(
     db_session: Session = Depends(get_session),
 ) -> FolderDetailResponse:
     new_folder = UserFolder(
-        user_id=user.id,
+        user_id=user.id if user else None,
         parent_id=None if request.parent_id == -1 else request.parent_id,
         name=request.name,
     )
@@ -57,7 +57,8 @@ def get_folders(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> List[FolderResponse]:
-    folders = db_session.query(UserFolder).filter(UserFolder.user_id == user.id).all()
+    user_id = user.id if user else None
+    folders = db_session.query(UserFolder).filter(UserFolder.user_id == user_id).all()
     return [
         FolderResponse(id=folder.id, name=folder.name, parent_id=folder.parent_id)
         for folder in folders
@@ -67,35 +68,41 @@ def get_folders(
 @router.get("/user/folder/{folder_id}", response_model=FolderFullDetailResponse)
 def get_folder(
     folder_id: int,
-    user: User = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> FolderFullDetailResponse:
+    user_id = user.id if user else None
     if folder_id == -1:
         children = (
             db_session.query(UserFolder)
-            .filter(UserFolder.user_id == user.id, UserFolder.parent_id.is_(None))
+            .filter(UserFolder.user_id == user_id, UserFolder.parent_id.is_(None))
             .all()
         )
         files = (
             db_session.query(UserFile)
-            .filter(UserFile.user_id == user.id, UserFile.parent_folder_id.is_(None))
+            .filter(UserFile.user_id == user_id, UserFile.parent_folder_id.is_(None))
             .all()
         )
         return FolderFullDetailResponse(
-            id=-1,
             name="Default Folder",
             parent_id=None,
+            id=-1,
             children=[
                 FolderResponse(id=child.id, name=child.name, parent_id=child.parent_id)
                 for child in children
             ],
-            files=[FileResponse(id=file.id, name=file.name).dict() for file in files],
+            files=[
+                FileResponse(
+                    id=file.id, name=file.name, document_id=file.document_id
+                ).dict()
+                for file in files
+            ],
             parents=[],
         )
     else:
         folder = (
             db_session.query(UserFolder)
-            .filter(UserFolder.id == folder_id, UserFolder.user_id == user.id)
+            .filter(UserFolder.id == folder_id, UserFolder.user_id == user_id)
             .first()
         )
         if not folder:
@@ -119,17 +126,19 @@ def get_folder(
                 current_folder = parent
             else:
                 break
-
         return FolderFullDetailResponse(
-            id=folder.id,
             name=folder.name,
             parent_id=folder.parent_id,
+            id=folder.id,
             children=[
                 FolderResponse(id=child.id, name=child.name, parent_id=child.parent_id)
                 for child in folder.children
             ],
             files=[
-                FileResponse(id=file.id, name=file.name).dict() for file in folder.files
+                FileResponse(
+                    id=file.id, name=file.name, document_id=file.document_id
+                ).dict()
+                for file in folder.files
             ],
             parents=parents,
         )
@@ -145,7 +154,7 @@ def upload_user_files(
     upload_response = upload_files(files, db_session)
     for file_path, file in zip(upload_response.file_paths, files):
         new_file = UserFile(
-            user_id=user.id,
+            user_id=user.id if user else None,
             parent_folder_id=folder_id,
             file_id=file_path,
             document_id=file_path,  # We'll use the same ID for now
@@ -161,12 +170,13 @@ def upload_user_files(
 def update_folder(
     folder_id: int,
     name: str,
-    user: User = Depends(current_user),
+    user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> FolderDetailResponse:
+    user_id = user.id if user else None
     folder = (
         db_session.query(UserFolder)
-        .filter(UserFolder.id == folder_id, UserFolder.user_id == user.id)
+        .filter(UserFolder.id == folder_id, UserFolder.user_id == user_id)
         .first()
     )
     if not folder:
@@ -182,7 +192,10 @@ def update_folder(
             for child in folder.children
         ],
         files=[
-            FileResponse(id=file.id, name=file.name).dict() for file in folder.files
+            FileResponse(
+                id=file.id, name=file.name, document_id=file.document_id
+            ).dict()
+            for file in folder.files
         ],
     )
 
@@ -193,9 +206,10 @@ def delete_folder(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> MessageResponse:
+    user_id = user.id if user else None
     folder = (
         db_session.query(UserFolder)
-        .filter(UserFolder.id == folder_id, UserFolder.user_id == user.id)
+        .filter(UserFolder.id == folder_id, UserFolder.user_id == user_id)
         .first()
     )
     if not folder:
@@ -212,9 +226,10 @@ def move_folder(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> FolderResponse:
+    user_id = user.id if user else None
     folder = (
         db_session.query(UserFolder)
-        .filter(UserFolder.id == folder_id, UserFolder.user_id == user.id)
+        .filter(UserFolder.id == folder_id, UserFolder.user_id == user_id)
         .first()
     )
     if not folder:
@@ -230,9 +245,10 @@ def delete_file(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> MessageResponse:
+    user_id = user.id if user else None
     file = (
         db_session.query(UserFile)
-        .filter(UserFile.id == file_id, UserFile.user_id == user.id)
+        .filter(UserFile.id == file_id, UserFile.user_id == user_id)
         .first()
     )
     if not file:
@@ -249,9 +265,10 @@ def move_file(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> FileResponse:
+    user_id = user.id if user else None
     file = (
         db_session.query(UserFile)
-        .filter(UserFile.id == file_id, UserFile.user_id == user.id)
+        .filter(UserFile.id == file_id, UserFile.user_id == user_id)
         .first()
     )
     if not file:
@@ -259,5 +276,8 @@ def move_file(
     file.parent_folder_id = new_folder_id
     db_session.commit()
     return FileResponse(
-        id=file.id, name=file.name, parent_folder_id=file.parent_folder_id
+        id=file.id,
+        name=file.name,
+        parent_folder_id=file.parent_folder_id,
+        document_id=file.document_id,
     )

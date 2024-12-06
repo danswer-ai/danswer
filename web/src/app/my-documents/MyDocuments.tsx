@@ -11,8 +11,11 @@ import { FolderContents } from "./FolderContents";
 
 interface FolderResponse {
   children: { name: string; id: number }[];
-  files: { name: string; id: number }[];
+  files: { name: string; id: number; document_id: string }[];
   parents: { name: string; id: number }[];
+  name: string;
+  id: number;
+  document_id: string;
 }
 
 export function MyDocuments() {
@@ -138,14 +141,49 @@ export function MyDocuments() {
       });
     }
   };
-  console.log("folderContents");
-  console.log(folderContents);
+
+  const handleDownloadItem = async (documentId: string) => {
+    try {
+      const response = await fetch(
+        `/api/chat/file/${encodeURIComponent(documentId)}`,
+        {
+          method: "GET",
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch file");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const fileName =
+        response.headers.get("Content-Disposition")?.split("filename=")[1] ||
+        "document";
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      setPopup({
+        message: "Failed to download file",
+        type: "error",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
       {popup}
       <FolderBreadcrumb
-        currentFolder={{ name: "Current Folder", id: currentFolder }}
+        currentFolder={{
+          name: folderContents ? folderContents.name : "",
+          id: currentFolder,
+        }}
         parents={folderContents?.parents || []}
         onBreadcrumbClick={handleBreadcrumbClick}
       />
@@ -153,7 +191,6 @@ export function MyDocuments() {
         <CardHeader>
           <CardTitle>Folder Contents</CardTitle>
           <FolderActions
-            currentFolder={currentFolder}
             onRefresh={() => fetchFolderContents(currentFolder)}
             onCreateFolder={handleCreateFolder}
             onUploadFiles={handleUploadFiles}
@@ -166,6 +203,7 @@ export function MyDocuments() {
               onFolderClick={handleFolderClick}
               currentFolder={currentFolder}
               onDeleteItem={handleDeleteItem}
+              onDownloadItem={handleDownloadItem}
             />
           ) : (
             <p>Loading...</p>

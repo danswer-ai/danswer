@@ -5,10 +5,11 @@ import { cn } from "@/lib/utils";
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   isEditing?: boolean;
+  width?: string;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, isEditing = true, style, ...props }, ref) => {
+  ({ className, type, isEditing = true, style, width, ...props }, ref) => {
     const textClassName = "text-2xl text-strong dark:text-neutral-50";
     if (!isEditing) {
       return (
@@ -27,7 +28,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           className
         )}
         style={{
-          width: `${Math.max(1, String(props.value || props.defaultValue || "").length)}ch`,
+          width:
+            width ||
+            `${Math.max(
+              1,
+              String(props.value || props.defaultValue || "").length
+            )}ch`,
           ...style,
         }}
         ref={ref}

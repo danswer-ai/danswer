@@ -25,6 +25,7 @@ class FolderFullDetailResponse(FolderDetailResponse):
 class FileResponse(BaseModel):
     id: int
     name: str
+    document_id: str
     parent_folder_id: int | None = None
 
 

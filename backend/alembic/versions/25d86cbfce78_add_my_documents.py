@@ -22,7 +22,7 @@ def upgrade() -> None:
     op.create_table(
         "user_folder",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("user_id", sa.UUID(), sa.ForeignKey("user.id"), nullable=False),
+        sa.Column("user_id", sa.UUID(), sa.ForeignKey("user.id"), nullable=True),
         sa.Column(
             "parent_id", sa.Integer(), sa.ForeignKey("user_folder.id"), nullable=True
         ),
@@ -34,7 +34,7 @@ def upgrade() -> None:
     op.create_table(
         "user_file",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("user_id", sa.UUID(), sa.ForeignKey("user.id"), nullable=False),
+        sa.Column("user_id", sa.UUID(), sa.ForeignKey("user.id"), nullable=True),
         sa.Column(
             "parent_folder_id",
             sa.Integer(),
