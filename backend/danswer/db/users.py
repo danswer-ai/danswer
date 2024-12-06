@@ -97,7 +97,9 @@ def list_users(
 ) -> AcceptedUsersReturn:
     users_stmt = select(User)
 
-    where_clause = [not_(User.email.endswith(DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN))]
+    where_clause = []
+
+    where_clause.append(not_(User.email.endswith(DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN)))
 
     if not include_external:
         where_clause.append(User.role != UserRole.EXT_PERM_USER)
