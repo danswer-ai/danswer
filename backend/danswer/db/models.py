@@ -1490,7 +1490,9 @@ class SlackChannelConfig(Base):
     __tablename__ = "slack_channel_config"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    slack_bot_id: Mapped[int] = mapped_column(ForeignKey("slack_bot.id"), nullable=True)
+    slack_bot_id: Mapped[int] = mapped_column(
+        ForeignKey("slack_bot.id"), nullable=False
+    )
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True
     )
