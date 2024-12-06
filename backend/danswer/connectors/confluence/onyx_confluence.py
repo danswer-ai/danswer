@@ -351,12 +351,14 @@ def build_confluence_client(
     credentials: dict[str, Any],
     is_cloud: bool,
     wiki_base: str,
+    should_validate: bool = True,
 ) -> OnyxConfluence:
-    _validate_connector_configuration(
-        credentials=credentials,
-        is_cloud=is_cloud,
-        wiki_base=wiki_base,
-    )
+    if should_validate:
+        _validate_connector_configuration(
+            credentials=credentials,
+            is_cloud=is_cloud,
+            wiki_base=wiki_base,
+        )
     return OnyxConfluence(
         api_version="cloud" if is_cloud else "latest",
         # Remove trailing slash from wiki_base if present

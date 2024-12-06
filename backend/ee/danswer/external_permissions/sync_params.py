@@ -9,6 +9,7 @@ from ee.danswer.external_permissions.confluence.group_sync import confluence_gro
 from ee.danswer.external_permissions.gmail.doc_sync import gmail_doc_sync
 from ee.danswer.external_permissions.google_drive.doc_sync import gdrive_doc_sync
 from ee.danswer.external_permissions.google_drive.group_sync import gdrive_group_sync
+from ee.danswer.external_permissions.jira.doc_sync import jira_doc_sync
 from ee.danswer.external_permissions.slack.doc_sync import slack_doc_sync
 
 # Defining the input/output types for the sync functions
@@ -36,6 +37,7 @@ DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
     DocumentSource.CONFLUENCE: confluence_doc_sync,
     DocumentSource.SLACK: slack_doc_sync,
     DocumentSource.GMAIL: gmail_doc_sync,
+    DocumentSource.JIRA: jira_doc_sync,
 }
 
 # These functions update:
@@ -45,6 +47,7 @@ DOC_PERMISSIONS_FUNC_MAP: dict[DocumentSource, DocSyncFuncType] = {
 GROUP_PERMISSIONS_FUNC_MAP: dict[DocumentSource, GroupSyncFuncType] = {
     DocumentSource.GOOGLE_DRIVE: gdrive_group_sync,
     DocumentSource.CONFLUENCE: confluence_group_sync,
+    DocumentSource.JIRA: confluence_group_sync,
 }
 
 

@@ -9,7 +9,7 @@ from ee.danswer.db.external_perm import ExternalUserGroup
 logger = setup_logger()
 
 
-def _build_group_member_email_map(
+def build_group_member_email_map(
     confluence_client: OnyxConfluence,
 ) -> dict[str, set[str]]:
     group_member_emails: dict[str, set[str]] = {}
@@ -49,7 +49,7 @@ def confluence_group_sync(
         wiki_base=cc_pair.connector.connector_specific_config["wiki_base"],
     )
 
-    group_member_email_map = _build_group_member_email_map(
+    group_member_email_map = build_group_member_email_map(
         confluence_client=confluence_client,
     )
     danswer_groups: list[ExternalUserGroup] = []

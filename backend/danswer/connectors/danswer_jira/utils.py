@@ -39,13 +39,37 @@ def best_effort_basic_expert_info(obj: Any) -> BasicExpertInfo | None:
 
 
 def best_effort_get_field_from_issue(jira_issue: Issue, field: str) -> Any:
-    if hasattr(jira_issue.fields, field):
-        return getattr(jira_issue.fields, field)
+    """
+    Try to get a field from the issue in the following order:
+    1. jira_issue.fields.field
+    2. jira_issue.raw["fields"][field]
+    3. jira_issue.field
+    4. jira_issue.raw[field]
+
+    """
+    try:
+        if hasattr(jira_issue.fields, field):
+            return getattr(jira_issue.fields, field)
+    except Exception:
+        pass
 
     try:
         return jira_issue.raw["fields"][field]
     except Exception:
-        return None
+        pass
+
+    try:
+        if hasattr(jira_issue, field):
+            return getattr(jira_issue, field)
+    except Exception:
+        pass
+
+    try:
+        return jira_issue.raw[field]
+    except Exception:
+        pass
+
+    return None
 
 
 def extract_text_from_adf(adf: dict | None) -> str:

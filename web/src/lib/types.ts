@@ -312,5 +312,6 @@ export const validAutoSyncSources = [
   "google_drive",
   "gmail",
   "slack",
+  "jira",
 ] as const;
 export type ValidAutoSyncSources = (typeof validAutoSyncSources)[number];
