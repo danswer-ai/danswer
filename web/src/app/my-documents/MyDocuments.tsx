@@ -8,6 +8,8 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { FolderActions } from "./FolderActions";
 import { FolderBreadcrumb } from "./FolderBreadcrumb";
 import { FolderContents } from "./FolderContents";
+import TextView from "@/components/chat_search/TextView";
+import { MinimalDanswerDocument } from "@/lib/search/interfaces";
 
 interface FolderResponse {
   children: { name: string; id: number }[];
@@ -26,6 +28,9 @@ export function MyDocuments() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { popup, setPopup } = usePopup();
+
+  const [presentingDocument, setPresentingDocument] =
+    useState<MinimalDanswerDocument | null>(null);
 
   useEffect(() => {
     const folderId = parseInt(searchParams.get("path") || "-1", 10);
@@ -117,7 +122,10 @@ export function MyDocuments() {
     for (let i = 0; i < files.length; i++) {
       formData.append("files", files[i]);
     }
-    formData.append("folder_id", currentFolder.toString());
+    formData.append(
+      "folder_id",
+      currentFolder.toString() === "-1" ? "" : currentFolder.toString()
+    );
 
     try {
       const response = await fetch("/api/user/file/upload", {
@@ -175,9 +183,14 @@ export function MyDocuments() {
       });
     }
   };
-
   return (
     <div className="container mx-auto p-4">
+      {presentingDocument && (
+        <TextView
+          presentingDocument={presentingDocument}
+          onClose={() => setPresentingDocument(null)}
+        />
+      )}
       {popup}
       <FolderBreadcrumb
         currentFolder={{
@@ -199,6 +212,10 @@ export function MyDocuments() {
         <CardContent>
           {folderContents ? (
             <FolderContents
+              setPresentingDocument={(
+                document_id: string,
+                semantic_identifier: string
+              ) => setPresentingDocument({ document_id, semantic_identifier })}
               contents={folderContents}
               onFolderClick={handleFolderClick}
               currentFolder={currentFolder}

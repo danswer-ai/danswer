@@ -9,11 +9,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Download, XIcon, ZoomIn, ZoomOut } from "lucide-react";
-import { DanswerDocument } from "@/lib/search/interfaces";
+import {
+  DanswerDocument,
+  MinimalDanswerDocument,
+} from "@/lib/search/interfaces";
 import { MinimalMarkdown } from "./MinimalMarkdown";
 
 interface TextViewProps {
-  presentingDocument: DanswerDocument;
+  presentingDocument: MinimalDanswerDocument;
   onClose: () => void;
 }
 export default function TextView({

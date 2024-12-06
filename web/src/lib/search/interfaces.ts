@@ -45,12 +45,15 @@ export interface QuotesInfoPacket {
   quotes: Quote[];
 }
 
-export interface DanswerDocument {
+export interface MinimalDanswerDocument {
   document_id: string;
+  semantic_identifier: string | null;
+}
+
+export interface DanswerDocument extends MinimalDanswerDocument {
   link: string;
   source_type: ValidSources;
   blurb: string;
-  semantic_identifier: string | null;
   boost: number;
   hidden: boolean;
   score: number;
