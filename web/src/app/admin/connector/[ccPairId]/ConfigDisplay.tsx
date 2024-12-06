@@ -25,13 +25,13 @@ function buildConfigEntries(
   obj: any,
   sourceType: ValidSources
 ): { [key: string]: string } {
-  if (sourceType === "file") {
+  if (sourceType === ValidSources.File) {
     return obj.file_locations
       ? {
           file_names: obj.file_locations.map(getNameFromPath),
         }
       : {};
-  } else if (sourceType === "google_sites") {
+  } else if (sourceType === ValidSources.GoogleSites) {
     return {
       base_url: obj.base_url,
     };

@@ -1923,6 +1923,7 @@ export function ChatPage({
   interface RegenerationRequest {
     messageId: number;
     parentMessage: Message;
+    forceSearch?: boolean;
   }
 
   function createRegenerator(regenerationRequest: RegenerationRequest) {
@@ -1932,6 +1933,7 @@ export function ChatPage({
         modelOverRide,
         messageIdToResend: regenerationRequest.parentMessage.messageId,
         regenerationRequest,
+        forceSearch: regenerationRequest.forceSearch,
       });
     };
   }
@@ -2592,13 +2594,11 @@ export function ChatPage({
                                           previousMessage &&
                                           previousMessage.messageId
                                         ) {
-                                          onSubmit({
-                                            messageIdToResend:
-                                              previousMessage.messageId,
+                                          createRegenerator({
+                                            messageId: message.messageId,
+                                            parentMessage: parentMessage!,
                                             forceSearch: true,
-                                            alternativeAssistantOverride:
-                                              currentAlternativeAssistant,
-                                          });
+                                          })(llmOverrideManager.llmOverride);
                                         } else {
                                           setPopup({
                                             type: "error",
