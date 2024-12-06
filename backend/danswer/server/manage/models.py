@@ -37,6 +37,7 @@ class AuthTypeResponse(BaseModel):
     # specifies whether the current auth setup requires
     # users to have verified emails
     requires_verification: bool
+    anonymous_user_enabled: bool | None = None
 
 
 class UserPreferences(BaseModel):

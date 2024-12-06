@@ -28,13 +28,16 @@ def load_no_auth_user_preferences(store: KeyValueStore) -> UserPreferences:
         )
 
 
-def fetch_no_auth_user(store: KeyValueStore) -> UserInfo:
+def fetch_no_auth_user(
+    store: KeyValueStore, *, anonymous_user_enabled: bool | None = None
+) -> UserInfo:
     return UserInfo(
         id="__no_auth_user__",
         email="anonymous@danswer.ai",
         is_active=True,
         is_superuser=False,
         is_verified=True,
-        role=UserRole.ADMIN,
+        role=UserRole.ADMIN if anonymous_user_enabled else UserRole.BASIC,
         preferences=load_no_auth_user_preferences(store),
+        is_anonymous_user=anonymous_user_enabled,
     )

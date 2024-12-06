@@ -7,7 +7,7 @@ from fastapi import Query
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_admin_user
-from danswer.auth.users import current_user
+from danswer.auth.users import current_second_level_limited_user
 from danswer.db.engine import get_session
 from danswer.db.llm import fetch_existing_llm_providers
 from danswer.db.llm import fetch_provider
@@ -190,7 +190,7 @@ def set_provider_as_default(
 
 @basic_router.get("/provider")
 def list_llm_provider_basics(
-    user: User | None = Depends(current_user),
+    user: User | None = Depends(current_second_level_limited_user),
     db_session: Session = Depends(get_session),
 ) -> list[LLMProviderDescriptor]:
     return [

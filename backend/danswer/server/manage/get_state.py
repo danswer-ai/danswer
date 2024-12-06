@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from danswer import __version__
+from danswer.auth.users import anonymous_user_enabled
 from danswer.auth.users import user_needs_to_be_verified
 from danswer.configs.app_configs import AUTH_TYPE
 from danswer.server.manage.models import AuthTypeResponse
@@ -18,7 +19,9 @@ def healthcheck() -> StatusResponse:
 @router.get("/auth/type")
 def get_auth_type() -> AuthTypeResponse:
     return AuthTypeResponse(
-        auth_type=AUTH_TYPE, requires_verification=user_needs_to_be_verified()
+        auth_type=AUTH_TYPE,
+        requires_verification=user_needs_to_be_verified(),
+        anonymous_user_enabled=anonymous_user_enabled(),
     )
 
 

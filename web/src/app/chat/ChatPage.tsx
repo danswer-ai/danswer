@@ -184,6 +184,8 @@ export function ChatPage({
   const [userSettingsToggled, setUserSettingsToggled] = useState(false);
 
   const { assistants: availableAssistants, finalAssistants } = useAssistants();
+  console.log(availableAssistants);
+  console.log(finalAssistants);
 
   const [showApiKeyModal, setShowApiKeyModal] = useState(
     !shouldShowWelcomeModal
@@ -2196,6 +2198,7 @@ export function ChatPage({
                   currentChatSession={selectedChatSession}
                   documentSidebarToggled={documentSidebarToggled}
                   llmOverrideManager={llmOverrideManager}
+                  hideUserDropdown={user?.is_anonymous_user}
                 />
               )}
 

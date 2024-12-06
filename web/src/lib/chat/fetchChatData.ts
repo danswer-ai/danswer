@@ -90,7 +90,10 @@ export async function fetchChatData(searchParams: {
   const userInputPromptsResponse = results[8] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
-  if (!authDisabled && !user) {
+
+  console.log(authTypeMetadata);
+  // TODO Validate need
+  if (!authDisabled && !user && !authTypeMetadata?.anonymousUserEnabled) {
     const headersList = await headers();
     const fullUrl = headersList.get("x-url") || "/chat";
     const searchParamsString = new URLSearchParams(
@@ -99,10 +102,14 @@ export async function fetchChatData(searchParams: {
     const redirectUrl = searchParamsString
       ? `${fullUrl}?${searchParamsString}`
       : fullUrl;
+
+    console.log("HISSE 1S");
+
     return redirect(`/auth/login?next=${encodeURIComponent(redirectUrl)}`);
   }
 
   if (user && !user.is_verified && authTypeMetadata?.requiresVerification) {
+    console.log("HISSES 2");
     return { redirect: "/auth/waiting-on-verification" };
   }
 

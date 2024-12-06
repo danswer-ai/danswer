@@ -251,6 +251,7 @@ class DanswerRedisLocks:
 
     SLACK_BOT_LOCK = "da_lock:slack_bot"
     SLACK_BOT_HEARTBEAT_PREFIX = "da_heartbeat:slack_bot"
+    ANONYMOUS_USER_ENABLED = "anonymous_user_enabled"
 
 
 class DanswerCeleryPriority(int, Enum):
