@@ -9,6 +9,7 @@ from danswer.connectors.confluence.connector import ConfluenceConnector
 def confluence_connector() -> ConfluenceConnector:
     connector = ConfluenceConnector(
         wiki_base="https://danswerai.atlassian.net",
+        is_cloud=True,
     )
     connector.load_credentials(
         {
