@@ -11,6 +11,14 @@ SAML_CONF_DIR = os.environ.get("SAML_CONF_DIR") or "/app/ee/danswer/configs/saml
 #####
 # Auto Permission Sync
 #####
+# In seconds, default is 5 minutes
+CONFLUENCE_PERMISSION_GROUP_SYNC_FREQUENCY = int(
+    os.environ.get("CONFLUENCE_PERMISSION_GROUP_SYNC_FREQUENCY") or 5 * 60
+)
+# In seconds, default is 5 minutes
+CONFLUENCE_PERMISSION_DOC_SYNC_FREQUENCY = int(
+    os.environ.get("CONFLUENCE_PERMISSION_DOC_SYNC_FREQUENCY") or 5 * 60
+)
 NUM_PERMISSION_WORKERS = int(os.environ.get("NUM_PERMISSION_WORKERS") or 2)
 
 
