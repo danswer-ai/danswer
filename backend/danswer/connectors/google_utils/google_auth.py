@@ -9,6 +9,9 @@ from danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.google_utils.shared_constants import (
+    DB_CREDENTIALS_AUTHENTICATION_METHOD,
+)
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
 from danswer.connectors.google_utils.shared_constants import (
@@ -19,6 +22,9 @@ from danswer.connectors.google_utils.shared_constants import (
 )
 from danswer.connectors.google_utils.shared_constants import (
     GOOGLE_SCOPES,
+)
+from danswer.connectors.google_utils.shared_constants import (
+    GoogleOAuthAuthenticationMethod,
 )
 from danswer.utils.logger import setup_logger
 
@@ -113,11 +119,16 @@ def get_google_creds(
         if oauth_creds:
             if oauth_creds.refresh_token != authorized_user_info["refresh_token"]:
                 oauth_creds_sanitized_json_str = sanitize_oauth_credentials(oauth_creds)
+                authentication_method = credentials.get(
+                    DB_CREDENTIALS_AUTHENTICATION_METHOD,
+                    GoogleOAuthAuthenticationMethod.UPLOADED.value,
+                )
                 new_creds_dict = {
                     DB_CREDENTIALS_DICT_TOKEN_KEY: oauth_creds_sanitized_json_str,
                     DB_CREDENTIALS_PRIMARY_ADMIN_KEY: credentials[
                         DB_CREDENTIALS_PRIMARY_ADMIN_KEY
                     ],
+                    DB_CREDENTIALS_AUTHENTICATION_METHOD: authentication_method,
                 }
     elif DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY in credentials:
         # SERVICE ACCOUNT

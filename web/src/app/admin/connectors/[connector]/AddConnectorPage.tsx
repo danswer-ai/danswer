@@ -437,6 +437,7 @@ export default function AddConnector({
                         <button
                           className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded mr-4"
                           onClick={() =>
+                            // toggles the Modal below
                             setCreateConnectorToggle(
                               (createConnectorToggle) => !createConnectorToggle
                             )
@@ -459,30 +460,27 @@ export default function AddConnector({
                       </div>
                     )}
 
-                    {/* NOTE: connector will never be google_drive, since the ternary above will 
-                    prevent that, but still keeping this here for safety in case the above changes. */}
-                    {(connector as ValidSources) !== "google_drive" &&
-                      createConnectorToggle && (
-                        <Modal
-                          className="max-w-3xl rounded-lg"
-                          onOutsideClick={() => setCreateConnectorToggle(false)}
-                        >
-                          <>
-                            <Title className="mb-2 text-lg">
-                              Create a {getSourceDisplayName(connector)}{" "}
-                              credential
-                            </Title>
-                            <CreateCredential
-                              close
-                              refresh={refresh}
-                              sourceType={connector}
-                              setPopup={setPopup}
-                              onSwitch={onSwap}
-                              onClose={() => setCreateConnectorToggle(false)}
-                            />
-                          </>
-                        </Modal>
-                      )}
+                    {createConnectorToggle && (
+                      <Modal
+                        className="max-w-3xl rounded-lg"
+                        onOutsideClick={() => setCreateConnectorToggle(false)}
+                      >
+                        <>
+                          <Title className="mb-2 text-lg">
+                            Create a {getSourceDisplayName(connector)}{" "}
+                            credential
+                          </Title>
+                          <CreateCredential
+                            close
+                            refresh={refresh}
+                            sourceType={connector}
+                            setPopup={setPopup}
+                            onSwitch={onSwap}
+                            onClose={() => setCreateConnectorToggle(false)}
+                          />
+                        </>
+                      </Modal>
+                    )}
                   </>
                 )}
               </CardSection>

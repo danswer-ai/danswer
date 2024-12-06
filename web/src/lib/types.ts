@@ -69,7 +69,11 @@ export interface MinimalUserSnapshot {
   email: string;
 }
 
-export type ValidInputTypes = "load_state" | "poll" | "event";
+export type ValidInputTypes =
+  | "load_state"
+  | "poll"
+  | "event"
+  | "slim_retrieval";
 export type ValidStatuses =
   | "success"
   | "completed_with_errors"

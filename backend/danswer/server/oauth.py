@@ -24,10 +24,16 @@ from danswer.configs.constants import DocumentSource
 from danswer.connectors.google_utils.google_auth import get_google_oauth_creds
 from danswer.connectors.google_utils.google_auth import sanitize_oauth_credentials
 from danswer.connectors.google_utils.shared_constants import (
+    DB_CREDENTIALS_AUTHENTICATION_METHOD,
+)
+from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_TOKEN_KEY,
 )
 from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
+)
+from danswer.connectors.google_utils.shared_constants import (
+    GoogleOAuthAuthenticationMethod,
 )
 from danswer.db.credentials import create_credential
 from danswer.db.engine import get_current_tenant_id
@@ -589,11 +595,15 @@ def handle_google_drive_oauth_callback(
         credential_dict: dict[str, str] = {}
         credential_dict[DB_CREDENTIALS_DICT_TOKEN_KEY] = oauth_creds_sanitized_json_str
         credential_dict[DB_CREDENTIALS_PRIMARY_ADMIN_KEY] = session.email
+        credential_dict[
+            DB_CREDENTIALS_AUTHENTICATION_METHOD
+        ] = GoogleOAuthAuthenticationMethod.OAUTH_INTERACTIVE.value
+
         credential_info = CredentialBase(
             credential_json=credential_dict,
             admin_public=True,
             source=DocumentSource.GOOGLE_DRIVE,
-            name="Google Drive OAuth",
+            name="OAuth (interactive)",
         )
 
         create_credential(credential_info, user, db_session)
