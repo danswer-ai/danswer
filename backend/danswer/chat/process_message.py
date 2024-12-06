@@ -832,7 +832,8 @@ def stream_chat_message_objects(
                 db_docs=reference_db_search_docs,
             )
             if not answer.is_cancelled():
-                yield AllCitations(citations=[])
+                yield AllCitations(citations=answer.citations)
+
         # Saving Gen AI answer and responding with message info
         tool_name_to_tool_id: dict[str, int] = {}
         for tool_id, tool_list in tool_dict.items():

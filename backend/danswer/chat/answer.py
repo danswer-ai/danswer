@@ -297,7 +297,7 @@ class Answer:
     @property
     def citations(self) -> list[CitationInfo]:
         citations: list[CitationInfo] = []
-        for packet in self.llm_answer:
+        for packet in self.processed_streamed_output:
             if isinstance(packet, CitationInfo):
                 citations.append(packet)
 
