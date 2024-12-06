@@ -1,4 +1,4 @@
-import ValidDomainsDisplay from "@/components/admin/users/ValidDomains";
+import UserInviteInfo from "@/components/admin/users/UserInviteInfo";
 import { PageSelector } from "@/components/PageSelector";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
@@ -93,7 +93,7 @@ const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
   };
 
   return noInvitedUsers ? (
-    <ValidDomainsDisplay />
+    <UserInviteInfo />
   ) : (
     <>
       <Table className="overflow-visible">

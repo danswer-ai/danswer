@@ -47,7 +47,7 @@ from danswer.db.models import Persona__User
 from danswer.db.models import SamlAccount
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
-from danswer.db.users import get_filtered_user_page
+from danswer.db.users import get_page_of_filtered_users
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_all_users
 from danswer.db.users import validate_user_role_update
@@ -128,7 +128,7 @@ def list_accepted_users(
     if not q:
         q = ""
 
-    filtered_users_data = get_filtered_user_page(
+    filtered_users_data = get_page_of_filtered_users(
         db_session=db_session,
         page_size=page_size,
         page=page,

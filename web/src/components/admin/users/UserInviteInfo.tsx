@@ -2,7 +2,11 @@ import useSWR from "swr";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 
-const ValidDomainsDisplay = () => {
+/**
+ * Displays when there are no invited users.
+ * Tells the admin how to invite users or set the valid domains.
+ */
+const UserInviteInfo = () => {
   const { data: validDomains, error: domainsError } = useSWR<string[]>(
     "/api/manage/admin/valid-domains",
     errorHandlingFetcher
@@ -48,4 +52,4 @@ const ValidDomainsDisplay = () => {
   );
 };
 
-export default ValidDomainsDisplay;
+export default UserInviteInfo;

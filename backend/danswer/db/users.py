@@ -106,7 +106,7 @@ def list_all_users(
     return db_session.scalars(stmt).unique().all()
 
 
-def get_filtered_and_accepted_user_page(
+def get_page_of_filtered_users(
     db_session: Session,
     page_size: int,
     page: int,
@@ -114,7 +114,7 @@ def get_filtered_and_accepted_user_page(
     status_filter: UserStatus | None = None,
     roles_filter: list[UserRole] = [],
     include_external: bool = False,
-) -> dict[str, any]:
+) -> dict[str, list[User] | int]:
     users_stmt = select(User)
 
     # Init where clause and remove any
