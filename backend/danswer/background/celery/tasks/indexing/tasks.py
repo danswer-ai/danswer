@@ -23,6 +23,7 @@ from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DANSWER_REDIS_FUNCTION_LOCK_PREFIX
 from danswer.configs.constants import DanswerCeleryPriority
 from danswer.configs.constants import DanswerCeleryQueues
+from danswer.configs.constants import DanswerCeleryTask
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import DocumentSource
 from danswer.db.connector import mark_ccpair_with_indexing_trigger
@@ -156,7 +157,7 @@ def get_unfenced_index_attempt_ids(db_session: Session, r: redis.Redis) -> list[
 
 
 @shared_task(
-    name="check_for_indexing",
+    name=DanswerCeleryTask.CHECK_FOR_INDEXING,
     soft_time_limit=300,
     bind=True,
 )
@@ -486,7 +487,7 @@ def try_creating_indexing_task(
         # when the task is sent, we have yet to finish setting up the fence
         # therefore, the task must contain code that blocks until the fence is ready
         result = celery_app.send_task(
-            "connector_indexing_proxy_task",
+            DanswerCeleryTask.CONNECTOR_INDEXING_PROXY_TASK,
             kwargs=dict(
                 index_attempt_id=index_attempt_id,
                 cc_pair_id=cc_pair.id,
@@ -524,7 +525,10 @@ def try_creating_indexing_task(
 
 
 @shared_task(
-    name="connector_indexing_proxy_task", bind=True, acks_late=False, track_started=True
+    name=DanswerCeleryTask.CONNECTOR_INDEXING_PROXY_TASK,
+    bind=True,
+    acks_late=False,
+    track_started=True,
 )
 def connector_indexing_proxy_task(
     self: Task,
@@ -580,39 +584,64 @@ def connector_indexing_proxy_task(
 
         if self.request.id and redis_connector_index.terminating(self.request.id):
             task_logger.warning(
-                "Indexing proxy - termination signal detected: "
+                "Indexing watchdog - termination signal detected: "
                 f"attempt={index_attempt_id} "
                 f"tenant={tenant_id} "
                 f"cc_pair={cc_pair_id} "
                 f"search_settings={search_settings_id}"
             )
 
-            with get_session_with_tenant(tenant_id) as db_session:
-                mark_attempt_canceled(
-                    index_attempt_id,
-                    db_session,
-                    "Connector termination signal detected",
+            try:
+                with get_session_with_tenant(tenant_id) as db_session:
+                    mark_attempt_canceled(
+                        index_attempt_id,
+                        db_session,
+                        "Connector termination signal detected",
+                    )
+            finally:
+                # if the DB exceptions, we'll just get an unfriendly failure message
+                # in the UI instead of the cancellation message
+                logger.exception(
+                    "Indexing watchdog - transient exception marking index attempt as canceled: "
+                    f"attempt={index_attempt_id} "
+                    f"tenant={tenant_id} "
+                    f"cc_pair={cc_pair_id} "
+                    f"search_settings={search_settings_id}"
                 )
 
-            job.cancel()
+                job.cancel()
+
             break
 
-        # do nothing for ongoing jobs that haven't been stopped
         if not job.done():
-            with get_session_with_tenant(tenant_id) as db_session:
-                index_attempt = get_index_attempt(
-                    db_session=db_session, index_attempt_id=index_attempt_id
+            # if the spawned task is still running, restart the check once again
+            # if the index attempt is not in a finished status
+            try:
+                with get_session_with_tenant(tenant_id) as db_session:
+                    index_attempt = get_index_attempt(
+                        db_session=db_session, index_attempt_id=index_attempt_id
+                    )
+
+                    if not index_attempt:
+                        continue
+
+                    if not index_attempt.is_finished():
+                        continue
+            except Exception:
+                # if the DB exceptioned, just restart the check.
+                # polling the index attempt status doesn't need to be strongly consistent
+                logger.exception(
+                    "Indexing watchdog - transient exception looking up index attempt: "
+                    f"attempt={index_attempt_id} "
+                    f"tenant={tenant_id} "
+                    f"cc_pair={cc_pair_id} "
+                    f"search_settings={search_settings_id}"
                 )
-
-                if not index_attempt:
-                    continue
-
-                if not index_attempt.is_finished():
-                    continue
+                continue
 
         if job.status == "error":
             task_logger.error(
-                f"Indexing watchdog - spawned task exceptioned: "
+                "Indexing watchdog - spawned task exceptioned: "
                 f"attempt={index_attempt_id} "
                 f"tenant={tenant_id} "
                 f"cc_pair={cc_pair_id} "
@@ -760,9 +789,12 @@ def connector_indexing_task(
         )
         break
 
+    # set thread_local=False since we don't control what thread the indexing/pruning
+    # might run our callback with
     lock: RedisLock = r.lock(
         redis_connector_index.generator_lock_key,
         timeout=CELERY_INDEXING_LOCK_TIMEOUT,
+        thread_local=False,
     )
 
     acquired = lock.acquire(blocking=False)

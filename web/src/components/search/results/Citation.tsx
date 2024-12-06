@@ -1,55 +1,85 @@
-import { CustomTooltip } from "@/components/tooltip/CustomTooltip";
 import { ReactNode } from "react";
+import { CompactDocumentCard } from "../DocumentDisplay";
+import { LoadedDanswerDocument } from "@/lib/search/interfaces";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-// NOTE: This is the preivous version of the citations which works just fine
 export function Citation({
   children,
   link,
+  document,
   index,
+  updatePresentingDocument,
+  icon,
+  url,
 }: {
   link?: string;
   children?: JSX.Element | string | null | ReactNode;
   index?: number;
+  updatePresentingDocument: (documentIndex: LoadedDanswerDocument) => void;
+  document: LoadedDanswerDocument;
+  icon?: React.ReactNode;
+  url?: string;
 }) {
   const innerText = children
     ? children?.toString().split("[")[1].split("]")[0]
     : index;
 
-  if (link != "") {
+  if (link) {
     return (
-      <CustomTooltip
-        citation
-        content={<div className="inline-block p-0 m-0 truncate">{link}</div>}
-      >
-        <a
-          onMouseDown={() => (link ? window.open(link, "_blank") : undefined)}
-          className="cursor-pointer inline ml-1 align-middle"
-        >
-          <span className="group relative -top-1 text-sm text-gray-500 dark:text-gray-400 selection:bg-indigo-300 selection:text-black dark:selection:bg-indigo-900 dark:selection:text-white">
-            <span
-              className="inline-flex bg-background-200 group-hover:bg-background-300 items-center justify-center h-3.5 min-w-3.5 px-1 text-center text-xs rounded-full border-1 border-gray-400 ring-1 ring-gray-400 divide-gray-300 dark:divide-gray-700 dark:ring-gray-700 dark:border-gray-700 transition duration-150"
-              data-number="3"
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              onMouseDown={() => {
+                if (!link) {
+                  updatePresentingDocument(document);
+                } else {
+                  window.open(link, "_blank");
+                }
+              }}
+              className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"
             >
-              {innerText}
-            </span>
-          </span>
-        </a>
-      </CustomTooltip>
+              <span className="relative min-w-[1.4rem] text-center no-underline -top-0.5 px-1.5 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 hover:text-gray-900 shadow-sm no-underline">
+                {innerText}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent width="mb-2 max-w-lg" className="bg-background">
+            <CompactDocumentCard url={url} icon={icon} document={document} />
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   } else {
     return (
-      <CustomTooltip content={<div>This doc doesn&apos;t have a link!</div>}>
-        <div className="inline-block cursor-help leading-none inline ml-1 align-middle">
-          <span className="group relative -top-1 text-gray-500 dark:text-gray-400 selection:bg-indigo-300 selection:text-black dark:selection:bg-indigo-900 dark:selection:text-white">
-            <span
-              className="inline-flex bg-background-200 group-hover:bg-background-300 items-center justify-center h-3.5 min-w-3.5 flex-none px-1 text-center text-xs rounded-full border-1 border-gray-400 ring-1 ring-gray-400 divide-gray-300 dark:divide-gray-700 dark:ring-gray-700 dark:border-gray-700 transition duration-150"
-              data-number="3"
+      <TooltipProvider delayDuration={0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              onMouseDown={() => {
+                if (!link) {
+                  updatePresentingDocument(document);
+                } else {
+                  window.open(link, "_blank");
+                }
+              }}
+              className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"
             >
-              {innerText}
-            </span>
-          </span>
-        </div>
-      </CustomTooltip>
+              <span className="relative min-w-[1.4rem]  pchatno-underline -top-0.5 px-1.5 py-0.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-full border border-gray-300 hover:bg-gray-200 hover:text-gray-900 shadow-sm no-underline">
+                {innerText}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent width="mb-2 max-w-lg" backgroundColor="bg-background">
+            <CompactDocumentCard url={url} icon={icon} document={document} />
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 }

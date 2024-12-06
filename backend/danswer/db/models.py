@@ -1,6 +1,5 @@
 import datetime
 import json
-from enum import Enum as PyEnum
 from typing import Any
 from typing import Literal
 from typing import NotRequired
@@ -126,6 +125,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     # if specified, controls the assistants that are shown to the user + their order
     # if not specified, all assistants are shown
+    auto_scroll: Mapped[bool] = mapped_column(Boolean, default=True)
     chosen_assistants: Mapped[list[int] | None] = mapped_column(
         postgresql.JSONB(), nullable=True, default=None
     )
@@ -963,9 +963,8 @@ class ChatSession(Base):
     persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("persona.id"), nullable=True
     )
-    description: Mapped[str] = mapped_column(Text)
-    # One-shot direct answering, currently the two types of chats are not mixed
-    one_shot: Mapped[bool] = mapped_column(Boolean, default=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # This chat created by DanswerBot
     danswerbot_flow: Mapped[bool] = mapped_column(Boolean, default=False)
     # Only ever set to True if system is set to not hard-delete chats
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -1487,11 +1486,6 @@ class ChannelConfig(TypedDict):
     show_continue_in_web_ui: NotRequired[bool]  # defaults to False
 
 
-class SlackBotResponseType(str, PyEnum):
-    QUOTES = "quotes"
-    CITATIONS = "citations"
-
-
 class SlackChannelConfig(Base):
     __tablename__ = "slack_channel_config"
 
@@ -1503,9 +1497,6 @@ class SlackChannelConfig(Base):
     # JSON for flexibility. Contains things like: channel name, team members, etc.
     channel_config: Mapped[ChannelConfig] = mapped_column(
         postgresql.JSONB(), nullable=False
-    )
-    response_type: Mapped[SlackBotResponseType] = mapped_column(
-        Enum(SlackBotResponseType, native_enum=False), nullable=False
     )
 
     enable_auto_filters: Mapped[bool] = mapped_column(

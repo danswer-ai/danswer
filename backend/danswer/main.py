@@ -25,7 +25,6 @@ from danswer.auth.schemas import UserCreate
 from danswer.auth.schemas import UserRead
 from danswer.auth.schemas import UserUpdate
 from danswer.auth.users import auth_backend
-from danswer.auth.users import BasicAuthenticationError
 from danswer.auth.users import create_danswer_oauth_router
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import APP_API_PREFIX
@@ -92,6 +91,7 @@ from danswer.server.settings.api import basic_router as settings_router
 from danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
+from danswer.server.utils import BasicAuthenticationError
 from danswer.setup import setup_danswer
 from danswer.setup import setup_multitenant_danswer
 from danswer.utils.logger import setup_logger
@@ -206,7 +206,7 @@ def log_http_error(_: Request, exc: Exception) -> JSONResponse:
 
     if isinstance(exc, BasicAuthenticationError):
         # For BasicAuthenticationError, just log a brief message without stack trace (almost always spam)
-        logger.error(f"Authentication failed: {str(exc)}")
+        logger.warning(f"Authentication failed: {str(exc)}")
 
     elif status_code >= 400:
         error_msg = f"{str(exc)}\n"

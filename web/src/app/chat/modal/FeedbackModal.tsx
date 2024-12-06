@@ -53,7 +53,7 @@ export const FeedbackModal = ({
       : predefinedNegativeFeedbackOptions;
 
   return (
-    <Modal onOutsideClick={onClose} width="max-w-3xl">
+    <Modal onOutsideClick={onClose} width="w-full max-w-3xl">
       <>
         <h2 className="text-2xl text-emphasis font-bold mb-4 flex">
           <div className="mr-1 my-auto">

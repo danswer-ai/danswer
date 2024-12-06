@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 from typing import Any
 from urllib.parse import quote
@@ -7,6 +8,7 @@ from danswer.configs.app_configs import CONFLUENCE_CONNECTOR_LABELS_TO_SKIP
 from danswer.configs.app_configs import (
     CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED,
 )
+from danswer.configs.app_configs import CONFLUENCE_TIMEZONE_OFFSET
 from danswer.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
@@ -75,6 +77,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         # skip it. This is generally used to avoid indexing extra sensitive
         # pages.
         labels_to_skip: list[str] = CONFLUENCE_CONNECTOR_LABELS_TO_SKIP,
+        timezone_offset: float = CONFLUENCE_TIMEZONE_OFFSET,
     ) -> None:
         self.batch_size = batch_size
         self.continue_on_failure = continue_on_failure
@@ -110,6 +113,8 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             )
             self.cql_label_filter = f" and label not in ({comma_separated_labels})"
 
+        self.timezone: timezone = timezone(offset=timedelta(hours=timezone_offset))
+
         # If image summarization is enabled, but not supported by the default LLM, raise an error.
         if CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED:
             llm, _ = get_default_llms(timeout=5)
@@ -121,6 +126,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             self.llm = llm
         else:
             self.llm = None
+
 
     @property
     def confluence_client(self) -> OnyxConfluence:
@@ -216,12 +222,14 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         doc_batch: list[Document] = []
 
         page_query = self.cql_page_query + self.cql_label_filter + self.cql_time_filter
+        logger.debug(f"page_query: {page_query}")
         # Fetch pages as Documents
         for page in self.confluence_client.paginated_cql_retrieval(
             cql=page_query,
             expand=",".join(_PAGE_EXPANSION_FIELDS),
             limit=self.batch_size,
         ):
+            logger.debug(f"_fetch_document_batches: {page['id']}")
             doc = self._convert_page_to_document(page)
 
             if doc is not None:
@@ -271,10 +279,10 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
     def poll_source(self, start: float, end: float) -> GenerateDocumentsOutput:
         # Add time filters
-        formatted_start_time = datetime.fromtimestamp(start, tz=timezone.utc).strftime(
+        formatted_start_time = datetime.fromtimestamp(start, tz=self.timezone).strftime(
             "%Y-%m-%d %H:%M"
         )
-        formatted_end_time = datetime.fromtimestamp(end, tz=timezone.utc).strftime(
+        formatted_end_time = datetime.fromtimestamp(end, tz=self.timezone).strftime(
             "%Y-%m-%d %H:%M"
         )
         self.cql_time_filter = f" and lastmodified >= '{formatted_start_time}'"

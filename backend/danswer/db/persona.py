@@ -185,7 +185,7 @@ def create_update_persona(
             "persona_id": persona_id,
             "user": user,
             "db_session": db_session,
-            **create_persona_request.dict(exclude={"users", "groups"}),
+            **create_persona_request.model_dump(exclude={"users", "groups"}),
         }
 
         persona = upsert_persona(**persona_data)
@@ -415,9 +415,6 @@ def upsert_prompt(
     return prompt
 
 
-# NOTE: This operation cannot update persona configuration options that
-# are core to the persona, such as its display priority and
-# whether or not the assistant is a built-in / default assistant
 def upsert_persona(
     user: User | None,
     name: str,
@@ -449,6 +446,12 @@ def upsert_persona(
     chunks_above: int = CONTEXT_CHUNKS_ABOVE,
     chunks_below: int = CONTEXT_CHUNKS_BELOW,
 ) -> Persona:
+    """
+    NOTE: This operation cannot update persona configuration options that
+    are core to the persona, such as its display priority and
+    whether or not the assistant is a built-in / default assistant
+    """
+
     if persona_id is not None:
         persona = db_session.query(Persona).filter_by(id=persona_id).first()
     else:
@@ -486,6 +489,8 @@ def upsert_persona(
         validate_persona_tools(tools)
 
     if persona:
+        # Built-in personas can only be updated through YAML configuration.
+        # This ensures that core system personas are not modified unintentionally.
         if persona.builtin_persona and not builtin_persona:
             raise ValueError("Cannot update builtin persona with non-builtin.")
 
@@ -494,6 +499,9 @@ def upsert_persona(
             db_session=db_session, persona_id=persona.id, user=user, get_editable=True
         )
 
+        # The following update excludes `default`, `built-in`, and display priority.
+        # Display priority is handled separately in the `display-priority` endpoint.
+        # `default` and `built-in` properties can only be set when creating a persona.
         persona.name = name
         persona.description = description
         persona.num_chunks = num_chunks
@@ -758,6 +766,8 @@ def get_prompt_by_name(
     if user and user.role != UserRole.ADMIN:
         stmt = stmt.where(Prompt.user_id == user.id)
 
+    # Order by ID to ensure consistent result when multiple prompts exist
+    stmt = stmt.order_by(Prompt.id).limit(1)
     result = db_session.execute(stmt).scalar_one_or_none()
     return result
 
