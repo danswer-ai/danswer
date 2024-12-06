@@ -36,6 +36,7 @@ import {
   GoogleStorageIcon,
   ColorSlackIcon,
   XenforoIcon,
+  ColorDiscordIcon,
   FreshdeskIcon,
   FirefliesIcon,
 } from "@/components/icons/icons";
@@ -74,6 +75,12 @@ export const SOURCE_METADATA_MAP: SourceMap = {
   slack: {
     icon: ColorSlackIcon,
     displayName: "Slack",
+    category: SourceCategory.Messaging,
+    docs: "https://docs.danswer.dev/connectors/slack",
+  },
+  discord: {
+    icon: ColorDiscordIcon,
+    displayName: "Discord",
     category: SourceCategory.Messaging,
     docs: "https://docs.danswer.dev/connectors/slack",
   },

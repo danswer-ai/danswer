@@ -295,6 +295,7 @@ const validSources = [
   "oci_storage",
   "not_applicable",
   "ingestion_api",
+  "discord",
   "freshdesk",
   "fireflies",
 ] as const;

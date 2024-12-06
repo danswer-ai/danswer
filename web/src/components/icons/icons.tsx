@@ -63,6 +63,7 @@ import googleSitesIcon from "../../../public/GoogleSites.png";
 import zendeskIcon from "../../../public/Zendesk.svg";
 import dropboxIcon from "../../../public/Dropbox.png";
 import slackIcon from "../../../public/Slack.png";
+import discordIcon from "../../../public/discord.png";
 
 import s3Icon from "../../../public/S3.png";
 import r2Icon from "../../../public/r2.png";
@@ -247,6 +248,20 @@ export const ColorSlackIcon = ({
       className={`w-[${size}px] h-[${size}px] ` + className}
     >
       <Image src={slackIcon} alt="Logo" width="96" height="96" />
+    </div>
+  );
+};
+
+export const ColorDiscordIcon = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => {
+  return (
+    <div
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className={`w-[${size}px] h-[${size}px] ` + className}
+    >
+      <Image src={discordIcon} alt="Logo" width="96" height="96" />
     </div>
   );
 };
