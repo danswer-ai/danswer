@@ -1,9 +1,7 @@
 import os
 import uuid
-from io import BytesIO
 from typing import cast
 
-from docx import Document
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -110,6 +108,7 @@ from danswer.server.documents.models import IndexAttemptSnapshot
 from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.documents.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
+from danswer.server.utils import convert_docx_to_txt
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 
@@ -393,33 +392,13 @@ def upload_files(
                 content=file.file,
                 display_name=file.filename,
                 file_origin=FileOrigin.CONNECTOR,
-                file_type=file.content_type or "application/octet-stream",
+                file_type=file.content_type or "text/plain",
             )
 
             if file.content_type and file.content_type.startswith(
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             ):
-                # Read the .docx file content
-                file.file.seek(0)
-                docx_content = file.file.read()
-                doc = Document(BytesIO(docx_content))
-
-                # Extract text from the document
-                full_text = []
-                for para in doc.paragraphs:
-                    full_text.append(para.text)
-
-                # Join the extracted text
-                text_content = "\n".join(full_text)
-
-                txt_file_path = file_path.rsplit(".", 1)[0] + ".txt"
-                file_store.save_file(
-                    file_name=txt_file_path,
-                    content=BytesIO(text_content.encode("utf-8")),
-                    display_name=file.filename,
-                    file_origin=FileOrigin.CONNECTOR,
-                    file_type="text/plain",
-                )
+                convert_docx_to_txt(file, file_store, file_path)
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

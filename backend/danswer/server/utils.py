@@ -3,18 +3,23 @@ import smtplib
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from io import BytesIO
 from textwrap import dedent
 from typing import Any
 
+from docx import Document
 from fastapi import HTTPException
 from fastapi import status
+from fastapi import UploadFile
 
 from danswer.configs.app_configs import SMTP_PASS
 from danswer.configs.app_configs import SMTP_PORT
 from danswer.configs.app_configs import SMTP_SERVER
 from danswer.configs.app_configs import SMTP_USER
 from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.configs.constants import FileOrigin
 from danswer.db.models import User
+from danswer.file_store.file_store import FileStore
 
 
 class BasicAuthenticationError(HTTPException):
@@ -90,3 +95,33 @@ def send_user_email_invite(user_email: str, current_user: User) -> None:
         smtp_server.starttls()
         smtp_server.login(SMTP_USER, SMTP_PASS)
         smtp_server.send_message(msg)
+
+
+def convert_docx_to_txt(file: UploadFile, file_store: FileStore, file_path: str) -> str:
+    file.file.seek(0)
+    docx_content = file.file.read()
+    doc = Document(BytesIO(docx_content))
+
+    # Extract text from the document
+    full_text = []
+    for para in doc.paragraphs:
+        full_text.append(para.text)
+
+    # Join the extracted text
+    text_content = "\n".join(full_text)
+
+    txt_file_path = docx_to_txt_filename(file_path)
+    file_store.save_file(
+        file_name=txt_file_path,
+        content=BytesIO(text_content.encode("utf-8")),
+        display_name=file.filename,
+        file_origin=FileOrigin.CONNECTOR,
+        file_type="text/plain",
+    )
+
+
+def docx_to_txt_filename(file_path: str) -> str:
+    """
+    Convert a .docx file path to its corresponding .txt file path.
+    """
+    return file_path.rsplit(".", 1)[0] + ".txt"

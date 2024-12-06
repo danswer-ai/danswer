@@ -78,6 +78,7 @@ from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
+from danswer.server.utils import docx_to_txt_filename
 from danswer.utils.headers import get_custom_tool_additional_request_headers
 from danswer.utils.logger import setup_logger
 
@@ -724,7 +725,7 @@ def fetch_chat_file(
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ):
         # Check if a converted text file exists for .docx files
-        txt_file_name = original_file_name.rsplit(".", 1)[0] + ".txt"
+        txt_file_name = docx_to_txt_filename(original_file_name)
         txt_file_id = os.path.join(os.path.dirname(file_id), txt_file_name)
         txt_file_record = file_store.read_file_record(txt_file_id)
         if txt_file_record:
