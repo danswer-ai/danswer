@@ -646,6 +646,7 @@ def connector_indexing_proxy_task(
                 f"tenant={tenant_id} "
                 f"cc_pair={cc_pair_id} "
                 f"search_settings={search_settings_id} "
+                f"exit_code={job.process.exitcode} "
                 f"error={job.exception()}"
             )
 
