@@ -11,8 +11,6 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
-from danswer.configs.app_configs import OAUTH_SLACK_CLIENT_ID
-from danswer.configs.app_configs import OAUTH_SLACK_CLIENT_SECRET
 from danswer.configs.app_configs import WEB_DOMAIN
 from danswer.configs.constants import DocumentSource
 from danswer.db.credentials import create_credential
@@ -22,6 +20,8 @@ from danswer.db.models import User
 from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import CredentialBase
 from danswer.utils.logger import setup_logger
+from ee.danswer.configs.app_configs import OAUTH_SLACK_CLIENT_ID
+from ee.danswer.configs.app_configs import OAUTH_SLACK_CLIENT_SECRET
 
 
 logger = setup_logger()

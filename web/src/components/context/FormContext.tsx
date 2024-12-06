@@ -88,7 +88,7 @@ export const FormProvider: React.FC<{
     allowAdvanced,
     setAllowAdvanced,
     allowCreate,
-    setAllowCreate: setAllowCreate,
+    setAllowCreate,
   };
 
   return (
