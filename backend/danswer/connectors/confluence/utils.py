@@ -177,8 +177,8 @@ def extract_text_from_confluence_html(
     return format_document_soup(soup)
 
 
-def check_attachment_filetype(attachment: dict[str, Any]) -> bool:
-    return attachment["metadata"]["mediaType"] in [
+def validate_attachment_filetype(attachment: dict[str, Any]) -> bool:
+    return attachment["metadata"]["mediaType"] not in [
         "image/jpeg",
         "image/png",
         "image/gif",
@@ -193,7 +193,7 @@ def attachment_to_content(
     attachment: dict[str, Any],
 ) -> str | None:
     """If it returns None, assume that we should skip this attachment."""
-    if not check_attachment_filetype(attachment):
+    if not validate_attachment_filetype(attachment):
         return None
 
     download_link = confluence_client.url + attachment["_links"]["download"]

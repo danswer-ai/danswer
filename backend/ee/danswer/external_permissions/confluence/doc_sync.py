@@ -95,6 +95,7 @@ def _get_cloud_space_permissions(
 
 def _get_space_permissions(
     confluence_client: OnyxConfluence,
+    is_cloud: bool,
 ) -> dict[str, ExternalAccess]:
     logger.debug("Getting space permissions")
     # Gets all the spaces in the Confluence instance
@@ -116,7 +117,7 @@ def _get_space_permissions(
     logger.debug(f"Got {len(all_space_keys)} spaces from confluence")
     space_permissions_by_space_key: dict[str, ExternalAccess] = {}
     for space_key in all_space_keys:
-        if confluence_client.cloud:
+        if is_cloud:
             space_permissions = _get_cloud_space_permissions(
                 confluence_client=confluence_client, space_key=space_key
             )
@@ -264,8 +265,11 @@ def confluence_doc_sync(
     )
     confluence_connector.load_credentials(cc_pair.credential.credential_json)
 
+    is_cloud = cc_pair.connector.connector_specific_config.get("is_cloud", False)
+
     space_permissions_by_space_key = _get_space_permissions(
-        confluence_client=confluence_connector.confluence_client
+        confluence_client=confluence_connector.confluence_client,
+        is_cloud=is_cloud,
     )
 
     slim_docs = []
