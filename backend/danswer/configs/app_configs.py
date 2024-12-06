@@ -43,9 +43,6 @@ WEB_DOMAIN = os.environ.get("WEB_DOMAIN") or "http://localhost:3000"
 AUTH_TYPE = AuthType((os.environ.get("AUTH_TYPE") or AuthType.DISABLED.value).lower())
 DISABLE_AUTH = AUTH_TYPE == AuthType.DISABLED
 
-# Necessary for cloud integration tests
-DISABLE_VERIFICATION = os.environ.get("DISABLE_VERIFICATION", "").lower() == "true"
-
 # Encryption key secret is used to encrypt connector credentials, api keys, and other sensitive
 # information. This provides an extra layer of security on top of Postgres access controls
 # and is available in Danswer EE
