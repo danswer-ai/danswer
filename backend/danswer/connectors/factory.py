@@ -30,6 +30,7 @@ from danswer.connectors.interfaces import BaseConnector
 from danswer.connectors.interfaces import EventConnector
 from danswer.connectors.interfaces import LoadConnector
 from danswer.connectors.interfaces import PollConnector
+from danswer.connectors.jira_service_management.connector import JSMConnector
 from danswer.connectors.linear.connector import LinearConnector
 from danswer.connectors.loopio.connector import LoopioConnector
 from danswer.connectors.mediawiki.wiki import MediaWikiConnector
@@ -102,6 +103,7 @@ def identify_connector_class(
         DocumentSource.OCI_STORAGE: BlobStorageConnector,
         DocumentSource.XENFORO: XenforoConnector,
         DocumentSource.FRESHDESK: FreshdeskConnector,
+        DocumentSource.JIRA_SERVICE_MANAGEMENT: JSMConnector,
         DocumentSource.FIREFLIES: FirefliesConnector,
     }
     connector_by_source = connector_map.get(source, {})

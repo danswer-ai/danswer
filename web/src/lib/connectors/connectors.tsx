@@ -1045,6 +1045,29 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     values: [],
     advanced_values: [],
   },
+  jira_service_management: {
+    description: "Configure Jira Service Management(JSM) connector",
+    subtext: `Specify any project ID / key  of you Jira Service Management Workspace below and click "Index" to Index. Based on the provided ID/Key, we will index the ENTIRE PROJECT. For example, entering PROJECT KEY InformationTechnology and clicking the Index button will index the whole InformationTechnology project.`,
+    values: [
+      {
+        type: "text",
+        query: "Enter the Jira Service Management project ID / Key:",
+        label: "Jira Service Management Project ID / Key",
+        name: "jsm_project_id",
+        optional: false,
+      },
+      {
+        type: "list",
+        query: "Enter list of labels to be skipped from indexing:",
+        label: "Labels to be skipped",
+        name: "issue_label_blacklist",
+        description:
+          "This is generally useful to ignore any business sensitive data. Add labels which issues should NOT be indexed.",
+        optional: true,
+      },
+    ],
+    advanced_values: [],
+  },
   fireflies: {
     description: "Configure Fireflies connector",
     values: [],
@@ -1308,6 +1331,11 @@ export interface AsanaConfig {
 }
 
 export interface FreshdeskConfig {}
+
+export interface JiraServiceManagementConfig {
+  jsm_project_id: string;
+  issue_label_blacklist?: string[];
+}
 
 export interface FirefliesConfig {}
 

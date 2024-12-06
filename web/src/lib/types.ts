@@ -296,6 +296,7 @@ const validSources = [
   "not_applicable",
   "ingestion_api",
   "freshdesk",
+  "jira_service_management",
   "fireflies",
 ] as const;
 
