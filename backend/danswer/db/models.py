@@ -35,6 +35,7 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
+from sqlalchemy import CheckConstraint
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
@@ -104,6 +105,49 @@ class EncryptedJson(TypeDecorator):
 """
 Auth/Authz (users, permissions, access) Tables
 """
+
+
+class UserFolder(Base):
+    __tablename__ = "user_folder"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("user_folder.id"), nullable=True
+    )
+    name: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.utcnow
+    )
+
+    user: Mapped["User"] = relationship(back_populates="folders")
+    parent: Mapped["UserFolder"] = relationship(
+        remote_side=[id], back_populates="children"
+    )
+    children: Mapped[list["UserFolder"]] = relationship(back_populates="parent")
+    files: Mapped[list["UserFile"]] = relationship(back_populates="folder")
+
+
+class UserFile(Base):
+    __tablename__ = "user_file"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    parent_folder_id: Mapped[int | None] = mapped_column(
+        ForeignKey("user_folder.id"), nullable=True
+    )
+    file_id: Mapped[str] = mapped_column(nullable=False)
+    document_id: Mapped[str] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.utcnow
+    )
+
+    user: Mapped["User"] = relationship(back_populates="files")
+    folder: Mapped["UserFolder"] = relationship(back_populates="files")
+    index_attempts: Mapped[list["IndexAttempt"]] = relationship(
+        "IndexAttempt", back_populates="user_file"
+    )
 
 
 class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
@@ -739,9 +783,13 @@ class IndexAttempt(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    connector_credential_pair_id: Mapped[int] = mapped_column(
+    connector_credential_pair_id: Mapped[int | None] = mapped_column(
         ForeignKey("connector_credential_pair.id"),
-        nullable=False,
+        nullable=True,
+    )
+    user_file_id: Mapped[int | None] = mapped_column(
+        ForeignKey("user_file.id"),
+        nullable=True,
     )
 
     # Some index attempts that run from beginning will still have this as False
@@ -780,8 +828,11 @@ class IndexAttempt(Base):
         onupdate=func.now(),
     )
 
-    connector_credential_pair: Mapped[ConnectorCredentialPair] = relationship(
+    connector_credential_pair: Mapped[ConnectorCredentialPair | None] = relationship(
         "ConnectorCredentialPair", back_populates="index_attempts"
+    )
+    user_file: Mapped[UserFile | None] = relationship(
+        "UserFile", back_populates="index_attempts"
     )
 
     search_settings: Mapped[SearchSettings | None] = relationship(
@@ -799,6 +850,15 @@ class IndexAttempt(Base):
             "ix_index_attempt_latest_for_connector_credential_pair",
             "connector_credential_pair_id",
             "time_created",
+        ),
+        Index(
+            "ix_index_attempt_latest_for_user_file",
+            "user_file_id",
+            "time_created",
+        ),
+        CheckConstraint(
+            "(connector_credential_pair_id IS NULL) != (user_file_id IS NULL)",
+            name="check_exactly_one_source",
         ),
     )
 
@@ -1884,43 +1944,3 @@ class UserTenantMapping(Base):
 
     email: Mapped[str] = mapped_column(String, nullable=False, primary_key=True)
     tenant_id: Mapped[str] = mapped_column(String, nullable=False)
-
-
-class UserFolder(Base):
-    __tablename__ = "user_folder"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
-    parent_id: Mapped[int | None] = mapped_column(
-        ForeignKey("user_folder.id"), nullable=True
-    )
-    name: Mapped[str] = mapped_column(nullable=False)
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        default=datetime.datetime.utcnow
-    )
-
-    user: Mapped["User"] = relationship(back_populates="folders")
-    parent: Mapped["UserFolder"] = relationship(
-        remote_side=[id], back_populates="children"
-    )
-    children: Mapped[list["UserFolder"]] = relationship(back_populates="parent")
-    files: Mapped[list["UserFile"]] = relationship(back_populates="folder")
-
-
-class UserFile(Base):
-    __tablename__ = "user_file"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
-    parent_folder_id: Mapped[int | None] = mapped_column(
-        ForeignKey("user_folder.id"), nullable=True
-    )
-    file_id: Mapped[str] = mapped_column(nullable=False)
-    document_id: Mapped[str] = mapped_column(nullable=False)
-    name: Mapped[str] = mapped_column(nullable=False)
-    created_at: Mapped[datetime.datetime] = mapped_column(
-        default=datetime.datetime.utcnow
-    )
-
-    user: Mapped["User"] = relationship(back_populates="files")
-    folder: Mapped["UserFolder"] = relationship(back_populates="files")

@@ -1,4 +1,4 @@
-"""add my documents
+"""add my documents and update index_attempt
 
 Revision ID: 25d86cbfce78
 Revises: a8c2065484e6
@@ -47,8 +47,49 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(), default=datetime.datetime.utcnow),
     )
 
+    # Update index_attempt table
+    with op.batch_alter_table("index_attempt") as batch_op:
+        # Make connector_credential_pair_id nullable
+        batch_op.alter_column("connector_credential_pair_id", nullable=True)
+
+        # Add user_file_id column
+        batch_op.add_column(sa.Column("user_file_id", sa.Integer(), nullable=True))
+        batch_op.create_foreign_key(
+            "fk_index_attempt_user_file",
+            "user_file",
+            ["user_file_id"],
+            ["id"],
+        )
+
+        # Add check constraint
+        batch_op.create_check_constraint(
+            "check_exactly_one_source",
+            "(connector_credential_pair_id IS NULL) != (user_file_id IS NULL)",
+        )
+
+        # Add index for user_file_id and time_created
+        batch_op.create_index(
+            "ix_index_attempt_latest_for_user_file",
+            ["user_file_id", "time_created"],
+        )
+
 
 def downgrade() -> None:
+    # Revert changes to index_attempt table
+    with op.batch_alter_table("index_attempt") as batch_op:
+        # Remove index for user_file_id and time_created
+        batch_op.drop_index("ix_index_attempt_latest_for_user_file")
+
+        # Remove check constraint
+        batch_op.drop_constraint("check_exactly_one_source")
+
+        # Remove user_file_id column and its foreign key
+        batch_op.drop_constraint("fk_index_attempt_user_file", type_="foreignkey")
+        batch_op.drop_column("user_file_id")
+
+        # Make connector_credential_pair_id non-nullable again
+        batch_op.alter_column("connector_credential_pair_id", nullable=False)
+
     # Drop user_file table
     op.drop_table("user_file")
 
