@@ -86,6 +86,7 @@ from danswer.db.models import SearchSettings
 from danswer.db.models import User
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
+from danswer.file_processing.extract_file_text import convert_docx_to_txt
 from danswer.file_store.file_store import get_default_file_store
 from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.redis.redis_connector import RedisConnector
@@ -108,7 +109,6 @@ from danswer.server.documents.models import IndexAttemptSnapshot
 from danswer.server.documents.models import ObjectCreationIdResponse
 from danswer.server.documents.models import RunConnectorRequest
 from danswer.server.models import StatusResponse
-from danswer.server.utils import convert_docx_to_txt
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
 

@@ -51,6 +51,7 @@ from danswer.db.models import User
 from danswer.db.persona import get_persona_by_id
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
+from danswer.file_processing.extract_file_text import docx_to_txt_filename
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
@@ -78,7 +79,6 @@ from danswer.server.query_and_chat.models import RenameChatSessionResponse
 from danswer.server.query_and_chat.models import SearchFeedbackRequest
 from danswer.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from danswer.server.query_and_chat.token_limit import check_token_rate_limits
-from danswer.server.utils import docx_to_txt_filename
 from danswer.utils.headers import get_custom_tool_additional_request_headers
 from danswer.utils.logger import setup_logger
 

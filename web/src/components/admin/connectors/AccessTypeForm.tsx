@@ -1,7 +1,7 @@
 import { DefaultDropdown } from "@/components/Dropdown";
 import {
   AccessType,
-  ValidAutoSyncSources,
+  ValidAutoSyncSource,
   ConfigurableSources,
   validAutoSyncSources,
 } from "@/lib/types";
@@ -13,8 +13,8 @@ import { useEffect } from "react";
 
 function isValidAutoSyncSource(
   value: ConfigurableSources
-): value is ValidAutoSyncSources {
-  return validAutoSyncSources.includes(value as ValidAutoSyncSources);
+): value is ValidAutoSyncSource {
+  return validAutoSyncSources.includes(value as ValidAutoSyncSource);
 }
 
 export function AccessTypeForm({
@@ -92,9 +92,7 @@ export function AccessTypeForm({
           />
 
           {access_type.value === "sync" && isAutoSyncSupported && (
-            <AutoSyncOptions
-              connectorType={connector as ValidAutoSyncSources}
-            />
+            <AutoSyncOptions connectorType={connector as ValidAutoSyncSource} />
           )}
         </>
       )}

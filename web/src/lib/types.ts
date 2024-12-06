@@ -299,15 +299,17 @@ export enum ValidSources {
   Fireflies = "fireflies",
 }
 
-export type ConfigurableSources = Exclude<
-  ValidSources,
-  ValidSources.NotApplicable | ValidSources.IngestionApi
->;
-
 export const validAutoSyncSources = [
   ValidSources.Confluence,
   ValidSources.GoogleDrive,
   ValidSources.Gmail,
   ValidSources.Slack,
 ] as const;
-export type ValidAutoSyncSources = (typeof validAutoSyncSources)[number];
+
+// Create a type from the array elements
+export type ValidAutoSyncSource = (typeof validAutoSyncSources)[number];
+
+export type ConfigurableSources = Exclude<
+  ValidSources,
+  ValidSources.NotApplicable | ValidSources.IngestionApi
+>;
