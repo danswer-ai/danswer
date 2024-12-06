@@ -3,114 +3,101 @@ from langgraph.graph import START
 from langgraph.graph import StateGraph
 
 from danswer.agent_search.primary_graph.edges import continue_to_answer_sub_questions
-from danswer.agent_search.primary_graph.edges import continue_to_retrieval
-from danswer.agent_search.primary_graph.edges import continue_to_verifier
-from danswer.agent_search.primary_graph.nodes import base_check
+from danswer.agent_search.primary_graph.edges import continue_to_deep_answer
+from danswer.agent_search.primary_graph.edges import continue_to_initial_sub_questions
+from danswer.agent_search.primary_graph.nodes import base_wait
 from danswer.agent_search.primary_graph.nodes import combine_retrieved_docs
-from danswer.agent_search.primary_graph.nodes import consolidate_sub_qa
 from danswer.agent_search.primary_graph.nodes import custom_retrieve
-from danswer.agent_search.primary_graph.nodes import decompose
-from danswer.agent_search.primary_graph.nodes import deep_answer_generation
+from danswer.agent_search.primary_graph.nodes import entity_term_extraction
 from danswer.agent_search.primary_graph.nodes import final_stuff
-from danswer.agent_search.primary_graph.nodes import generate
+from danswer.agent_search.primary_graph.nodes import generate_initial
+from danswer.agent_search.primary_graph.nodes import main_decomp_base
 from danswer.agent_search.primary_graph.nodes import rewrite
 from danswer.agent_search.primary_graph.nodes import verifier
 from danswer.agent_search.primary_graph.states import QAState
-from danswer.agent_search.subgraph.graph_builder import build_subgraph
 
 
 def build_core_graph() -> StateGraph:
     # Define the nodes we will cycle between
-    coreAnswerGraph = StateGraph(QAState)
+    core_answer_graph = StateGraph(QAState)
+
+    ### Add Nodes ###
 
     # Re-writing the question
-    coreAnswerGraph.add_node(node="rewrite", action=rewrite)
+    core_answer_graph.add_node(node="rewrite", action=rewrite)
 
     # The retrieval step
-    coreAnswerGraph.add_node(node="custom_retrieve", action=custom_retrieve)
+    core_answer_graph.add_node(node="custom_retrieve", action=custom_retrieve)
 
     # Combine and dedupe retrieved docs.
-    coreAnswerGraph.add_node(
+    core_answer_graph.add_node(
         node="combine_retrieved_docs", action=combine_retrieved_docs
     )
 
+    # Extract entities, terms and relationships
+    core_answer_graph.add_node(
+        node="entity_term_extraction", action=entity_term_extraction
+    )
+
     # Verifying that a retrieved doc is relevant
-    coreAnswerGraph.add_node(node="verifier", action=verifier)
+    core_answer_graph.add_node(node="verifier", action=verifier)
 
-    sub_answers_graph = build_subgraph()
-    # Answering a sub-question
-    coreAnswerGraph.add_node(node="sub_answers_graph", action=sub_answers_graph)
-
-    # A final clean-up step
-    coreAnswerGraph.add_node(node="final_stuff", action=final_stuff)
-
-    # Decomposing the question into sub-questions
-    coreAnswerGraph.add_node(node="decompose", action=decompose)
+    # Initial question decomposition
+    core_answer_graph.add_node(node="main_decomp_base", action=main_decomp_base)
 
     # Checking whether the initial answer is in the ballpark
-    coreAnswerGraph.add_node(node="base_check", action=base_check)
+    core_answer_graph.add_node(node="base_wait", action=base_wait)
+
+    # A final clean-up step
+    core_answer_graph.add_node(node="final_stuff", action=final_stuff)
 
     # Generating a response after we know the documents are relevant
-    coreAnswerGraph.add_node(node="generate", action=generate)
+    core_answer_graph.add_node(node="generate_initial", action=generate_initial)
 
-    # Consolidating the sub-questions and answers
-    coreAnswerGraph.add_node(node="consolidate_sub_qa", action=consolidate_sub_qa)
+    ### Add Edges ###
 
-    # Generating a deep answer
-    coreAnswerGraph.add_node(
-        node="deep_answer_generation", action=deep_answer_generation
+    # start the initial sub-question decomposition
+    core_answer_graph.add_edge(start_key=START, end_key="main_decomp_base")
+    core_answer_graph.add_conditional_edges(
+        source="main_decomp_base",
+        path=continue_to_initial_sub_questions,
+        path_map={"sub_answers_graph_initial": "sub_answers_graph_initial"},
     )
 
-    ### Edges ###
+    # use the retrieved information to generate the answer
+    core_answer_graph.add_edge(
+        start_key=["verifier", "sub_answers_graph_initial"], end_key="generate_initial"
+    )
+    core_answer_graph.add_edge(start_key="generate_initial", end_key="base_wait")
 
-    # start by rewriting the prompt
-    coreAnswerGraph.add_edge(start_key=START, end_key="rewrite")
-
-    # Kick off another flow to decompose the question into sub-questions
-    coreAnswerGraph.add_edge(start_key=START, end_key="decompose")
-
-    coreAnswerGraph.add_conditional_edges(
-        source="rewrite",
-        path=continue_to_retrieval,
-        path_map={"custom_retrieve": "custom_retrieve"},
+    core_answer_graph.add_conditional_edges(
+        source="base_wait",
+        path=continue_to_deep_answer,
+        path_map={"decompose": "entity_term_extraction", "end": "final_stuff"},
     )
 
-    # check whether answer addresses the question
-    coreAnswerGraph.add_edge(
-        start_key="custom_retrieve", end_key="combine_retrieved_docs"
-    )
+    core_answer_graph.add_edge(start_key="entity_term_extraction", end_key="decompose")
 
-    coreAnswerGraph.add_conditional_edges(
-        source="combine_retrieved_docs",
-        path=continue_to_verifier,
-        path_map={"verifier": "verifier"},
-    )
-
-    coreAnswerGraph.add_conditional_edges(
-        source="decompose",
+    core_answer_graph.add_edge(start_key="decompose", end_key="sub_qa_manager")
+    core_answer_graph.add_conditional_edges(
+        source="sub_qa_manager",
         path=continue_to_answer_sub_questions,
         path_map={"sub_answers_graph": "sub_answers_graph"},
     )
 
-    # use the retrieved information to generate the answer
-    coreAnswerGraph.add_edge(start_key="verifier", end_key="generate")
-
-    # check whether answer addresses the question
-    coreAnswerGraph.add_edge(start_key="generate", end_key="base_check")
-
-    coreAnswerGraph.add_edge(
-        start_key="sub_answers_graph", end_key="consolidate_sub_qa"
+    core_answer_graph.add_edge(
+        start_key="sub_answers_graph", end_key="sub_qa_level_aggregator"
     )
 
-    coreAnswerGraph.add_edge(
-        start_key="consolidate_sub_qa", end_key="deep_answer_generation"
+    core_answer_graph.add_edge(
+        start_key="sub_qa_level_aggregator", end_key="deep_answer_generation"
     )
 
-    coreAnswerGraph.add_edge(
-        start_key=["base_check", "deep_answer_generation"], end_key="final_stuff"
+    core_answer_graph.add_edge(
+        start_key="deep_answer_generation", end_key="final_stuff"
     )
 
-    coreAnswerGraph.add_edge(start_key="final_stuff", end_key=END)
-    coreAnswerGraph.compile()
+    core_answer_graph.add_edge(start_key="final_stuff", end_key=END)
+    core_answer_graph.compile()
 
-    return coreAnswerGraph
+    return core_answer_graph

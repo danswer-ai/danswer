@@ -1,5 +1,7 @@
-import datetime
 import json
+import re
+from collections.abc import Sequence
+from datetime import datetime
 from typing import Any
 from typing import Dict
 from typing import Literal
@@ -10,17 +12,20 @@ from pydantic import BaseModel
 from danswer.agent_search.primary_graph.states import QAState
 from danswer.agent_search.primary_graph.states import RetrieverState
 from danswer.agent_search.primary_graph.states import VerifierState
-from danswer.agent_search.shared_graph_utils.prompts import BASE_CHECK_PROMPT
 from danswer.agent_search.shared_graph_utils.prompts import BASE_RAG_PROMPT
-from danswer.agent_search.shared_graph_utils.prompts import COMBINED_CONTEXT
-from danswer.agent_search.shared_graph_utils.prompts import DECOMPOSE_PROMPT
-from danswer.agent_search.shared_graph_utils.prompts import MODIFIED_RAG_PROMPT
+from danswer.agent_search.shared_graph_utils.prompts import ENTITY_TERM_PROMPT
+from danswer.agent_search.shared_graph_utils.prompts import INITIAL_DECOMPOSITION_PROMPT
+from danswer.agent_search.shared_graph_utils.prompts import INITIAL_RAG_PROMPT
 from danswer.agent_search.shared_graph_utils.prompts import REWRITE_PROMPT_MULTI
 from danswer.agent_search.shared_graph_utils.prompts import VERIFIER_PROMPT
+from danswer.agent_search.shared_graph_utils.utils import clean_and_parse_list_string
 from danswer.agent_search.shared_graph_utils.utils import format_docs
-from danswer.agent_search.shared_graph_utils.utils import normalize_whitespace
+from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 from danswer.chat.models import DanswerContext
 from danswer.llm.interfaces import LLM
+
+# Maybe try Partial[QAState]
+# from typing import Partial
 
 
 # Pydantic models for structured outputs
@@ -37,7 +42,7 @@ class SubQuestions(BaseModel):
 
 
 # Transform the initial question into more suitable search queries.
-def rewrite(qa_state: QAState) -> Dict[str, Any]:
+def rewrite(state: QAState) -> Dict[str, Any]:
     """
     Transform the initial question into more suitable search queries.
 
@@ -47,12 +52,13 @@ def rewrite(qa_state: QAState) -> Dict[str, Any]:
     Returns:
         dict: The updated state with re-phrased question
     """
+    print("---STARTING GRAPH---")
+    graph_start_time = datetime.now()
 
     print("---TRANSFORM QUERY---")
+    node_start_time = datetime.now()
 
-    start_time = datetime.datetime.now()
-
-    question = qa_state["original_question"]
+    question = state["original_question"]
 
     msg = [
         HumanMessage(
@@ -61,26 +67,27 @@ def rewrite(qa_state: QAState) -> Dict[str, Any]:
     ]
 
     # Get the rewritten queries in a defined format
-    llm: LLM = qa_state["llm"]
-    tools: list[dict] = qa_state["tools"]
-    response = list(
-        llm.stream(
+    fast_llm: LLM = state["fast_llm"]
+    llm_response = list(
+        fast_llm.stream(
             prompt=msg,
-            tools=tools,
             structured_response_format=RewrittenQueries.model_json_schema(),
         )
     )
 
-    formatted_response: RewrittenQueries = json.loads(response[0].content)
+    formatted_response: RewrittenQueries = json.loads(llm_response[0].content)
 
-    end_time = datetime.datetime.now()
     return {
         "rewritten_queries": formatted_response.rewritten_queries,
-        "log_messages": f"{str(start_time)} - {str(end_time)}: core - rewrite",
+        "log_messages": generate_log_message(
+            message="core - rewrite",
+            node_start_time=node_start_time,
+            graph_start_time=graph_start_time,
+        ),
     }
 
 
-def custom_retrieve(retriever_state: RetrieverState) -> Dict[str, Any]:
+def custom_retrieve(state: RetrieverState) -> Dict[str, Any]:
     """
     Retrieve documents
 
@@ -92,41 +99,49 @@ def custom_retrieve(retriever_state: RetrieverState) -> Dict[str, Any]:
     """
     print("---RETRIEVE---")
 
-    start_time = datetime.datetime.now()
+    node_start_time = datetime.now()
 
-    retriever_state["rewritten_query"]
+    # query = state["rewritten_query"]
 
     # Retrieval
     # TODO: add the actual retrieval, probably from search_tool.run()
     documents: list[DanswerContext] = []
 
-    end_time = datetime.datetime.now()
     return {
         "base_retrieval_docs": documents,
-        "log_messages": f"{str(start_time)} - {str(end_time)}: core - custom_retrieve",
+        "log_messages": generate_log_message(
+            message="core - custom_retrieve",
+            node_start_time=node_start_time,
+            graph_start_time=state["graph_start_time"],
+        ),
     }
 
 
-def combine_retrieved_docs(qa_state: QAState) -> Dict[str, Any]:
+def combine_retrieved_docs(state: QAState) -> Dict[str, Any]:
     """
     Dedupe the retrieved docs.
     """
-    start_time = datetime.datetime.now()
+    node_start_time = datetime.now()
 
-    base_retrieval_docs = qa_state["base_retrieval_docs"]
+    base_retrieval_docs: Sequence[DanswerContext] = state["base_retrieval_docs"]
 
     print(f"Number of docs from steps: {len(base_retrieval_docs)}")
-    dedupe_docs = []
+    dedupe_docs: list[DanswerContext] = []
     for base_retrieval_doc in base_retrieval_docs:
-        if base_retrieval_doc not in dedupe_docs:
+        if not any(
+            base_retrieval_doc.document_id == doc.document_id for doc in dedupe_docs
+        ):
             dedupe_docs.append(base_retrieval_doc)
 
     print(f"Number of deduped docs: {len(dedupe_docs)}")
 
-    end_time = datetime.datetime.now()
     return {
         "deduped_retrieval_docs": dedupe_docs,
-        "log_messages": f"{str(start_time)} - {str(end_time)}: core - combine_retrieved_docs (dedupe)",
+        "log_messages": generate_log_message(
+            message="core - combine_retrieved_docs (dedupe)",
+            node_start_time=node_start_time,
+            graph_start_time=state["graph_start_time"],
+        ),
     }
 
 
@@ -142,7 +157,7 @@ def verifier(state: VerifierState) -> Dict[str, Any]:
     """
 
     print("---VERIFY QUTPUT---")
-    start_time = datetime.datetime.now()
+    node_start_time = datetime.now()
 
     question = state["original_question"]
     document_content = state["document"].content
@@ -156,56 +171,45 @@ def verifier(state: VerifierState) -> Dict[str, Any]:
     ]
 
     # Grader
-    llm: LLM = state["llm"]
-    tools: list[dict] = state["tools"]
+    llm: LLM = state["fast_llm"]
     response = list(
         llm.stream(
             prompt=msg,
-            tools=tools,
             structured_response_format=BinaryDecision.model_json_schema(),
         )
     )
 
     formatted_response: BinaryDecision = response[0].content
 
-    end_time = datetime.datetime.now()
-    if formatted_response.decision == "yes":
-        end_time = datetime.datetime.now()
-        return {
-            "deduped_retrieval_docs": [state["document"]],
-            "log_messages": f"{str(start_time)} - {str(end_time)}: core - verifier: yes",
-        }
-    else:
-        end_time = datetime.datetime.now()
-        return {
-            "deduped_retrieval_docs": [],
-            "log_messages": f"{str(start_time)} - {str(end_time)}: core - verifier: no",
-        }
+    return {
+        "deduped_retrieval_docs": [state["document"]]
+        if formatted_response.decision == "yes"
+        else [],
+        "log_messages": generate_log_message(
+            message=f"core - verifier: {formatted_response.decision}",
+            node_start_time=node_start_time,
+            graph_start_time=state["graph_start_time"],
+        ),
+    }
 
 
-def generate(qa_state: QAState) -> Dict[str, Any]:
+def generate(state: QAState) -> Dict[str, Any]:
     """
     Generate answer
 
     Args:
-        qa_state (messages): The current state
+        state (messages): The current state
 
     Returns:
          dict: The updated state with re-phrased question
     """
     print("---GENERATE---")
-    start_time = datetime.datetime.now()
+    node_start_time = datetime.now()
 
-    question = qa_state["original_question"]
-    docs = qa_state["deduped_retrieval_docs"]
+    question = state["original_question"]
+    docs = state["deduped_retrieval_docs"]
 
-    print(f"Number of verified retrieval docs: {docs}")
-
-    # LLM
-    llm: LLM = qa_state["llm"]
-
-    # Chain
-    # rag_chain = BASE_RAG_PROMPT | llm | StrOutputParser()
+    print(f"Number of verified retrieval docs: {len(docs)}")
 
     msg = [
         HumanMessage(
@@ -214,12 +218,10 @@ def generate(qa_state: QAState) -> Dict[str, Any]:
     ]
 
     # Grader
-    llm: LLM = qa_state["llm"]
-    tools: list[dict] = qa_state["tools"]
+    llm: LLM = state["fast_llm"]
     response = list(
         llm.stream(
             prompt=msg,
-            tools=tools,
             structured_response_format=None,
         )
     )
@@ -228,94 +230,78 @@ def generate(qa_state: QAState) -> Dict[str, Any]:
     # response = rag_chain.invoke({"context": docs,
     #                             "question": question})
 
-    end_time = datetime.datetime.now()
     return {
         "base_answer": response[0].content,
-        "log_messages": f"{str(start_time)} - {str(end_time)}: core - generate",
+        "log_messages": generate_log_message(
+            message="core - generate",
+            node_start_time=node_start_time,
+            graph_start_time=state["graph_start_time"],
+        ),
     }
 
 
-def base_check(qa_state: QAState) -> Dict[str, Any]:
-    """
-    Check whether the final output satisfies the original user question
-
-    Args:
-        qa_state (messages): The current state
-
-    Returns:
-        dict: ict: The updated state with the final decision
-    """
-
-    print("---CHECK QUTPUT---")
-    start_time = datetime.datetime.now()
-
-    # time.sleep(5)
-
-    initial_base_answer = qa_state["initial_base_answer"]
-
-    question = qa_state["original_question"]
-
-    BASE_CHECK_MESSAGE = [
-        HumanMessage(
-            content=BASE_CHECK_PROMPT.format(
-                question=question, base_answer=initial_base_answer
-            )
-        )
-    ]
-
-    llm: LLM = qa_state["llm"]
-    tools: list[dict] = qa_state["tools"]
-    response = list(
-        llm.stream(
-            prompt=BASE_CHECK_MESSAGE,
-            tools=tools,
-            structured_response_format=None,
-        )
-    )
-
-    print(f"Verdict: {response[0].content}")
-
-    end_time = datetime.datetime.now()
-    return {
-        "base_answer": initial_base_answer,
-        "log_messages": f"{str(start_time)} - {str(end_time)}: core - base_check",
-    }
-
-
-def final_stuff(qa_state: QAState) -> Dict[str, Any]:
+def final_stuff(state: QAState) -> Dict[str, Any]:
     """
     Invokes the agent model to generate a response based on the current state. Given
     the question, it will decide to retrieve using the retriever tool, or simply end.
 
     Args:
-        qa_state (messages): The current state
+        state (messages): The current state
 
     Returns:
         dict: The updated state with the agent response appended to messages
     """
     print("---FINAL---")
-    start_time = datetime.datetime.now()
+    node_start_time = datetime.now()
 
-    messages = qa_state["log_messages"]
+    messages = state["log_messages"]
     time_ordered_messages = [x.content for x in messages]
     time_ordered_messages.sort()
 
     print("Message Log:")
     print("\n".join(time_ordered_messages))
 
-    end_time = datetime.datetime.now()
-    print(f"{str(start_time)} - {str(end_time)}: all  - final_stuff")
+    initial_sub_qas = state["initial_sub_qas"]
+    initial_sub_qa_list = []
+    for initial_sub_qa in initial_sub_qas:
+        if initial_sub_qa["sub_answer_check"] == "yes":
+            initial_sub_qa_list.append(
+                f'  Question:\n  {initial_sub_qa["sub_question"]}\n  --\n  Answer:\n  {initial_sub_qa["sub_answer"]}\n  -----'
+            )
 
+    initial_sub_qa_context = "\n".join(initial_sub_qa_list)
+
+    log_message = generate_log_message(
+        message="all - final_stuff",
+        node_start_time=node_start_time,
+        graph_start_time=state["graph_start_time"],
+    )
+
+    print(log_message)
     print("--------------------------------")
 
-    base_answer = qa_state["base_answer"]
-    deep_answer = qa_state["deep_answer"]
-    sub_qas = qa_state["checked_sub_qas"]
+    base_answer = state["base_answer"]
+
+    print(f"Final Base Answer:\n{base_answer}")
+    print("--------------------------------")
+    print(f"Initial Answered Sub Questions:\n{initial_sub_qa_context}")
+    print("--------------------------------")
+
+    if not state.get("deep_answer"):
+        print("No Deep Answer was required")
+        return {
+            "log_messages": log_message,
+        }
+
+    deep_answer = state["deep_answer"]
+    sub_qas = state["sub_qas"]
     sub_qa_list = []
     for sub_qa in sub_qas:
-        sub_qa_list.append(
-            f'  Question:\n  {sub_qa["sub_question"]}\n  --\n  Answer:\n  {sub_qa["sub_answer"]}\n  -----'
-        )
+        if sub_qa["sub_answer_check"] == "yes":
+            sub_qa_list.append(
+                f'  Question:\n  {sub_qa["sub_question"]}\n  --\n  Answer:\n  {sub_qa["sub_answer"]}\n  -----'
+            )
+
     sub_qa_context = "\n".join(sub_qa_list)
 
     print(f"Final Base Answer:\n{base_answer}")
@@ -326,137 +312,194 @@ def final_stuff(qa_state: QAState) -> Dict[str, Any]:
     print(sub_qa_context)
 
     return {
-        "log_messages": f"{str(start_time)} - {str(end_time)}: all - final_stuff",
+        "log_messages": generate_log_message(
+            message="all - final_stuff",
+            node_start_time=node_start_time,
+            graph_start_time=state["graph_start_time"],
+        ),
     }
 
 
-# nodes
-
-
-def decompose(qa_state: QAState) -> Dict[str, Any]:
+def base_wait(state: QAState) -> Dict[str, Any]:
     """
-    Decompose a complex question into simpler sub-questions.
+    Ensures that all required steps are completed before proceeding to the next step
 
     Args:
-        qa_state: The current QA state containing the original question and LLM
+        state (messages): The current state
 
     Returns:
-        Dict containing sub_questions and log messages
+        dict: {} (no operation, just logging)
     """
 
-    start_time = datetime.datetime.now()
+    print("---Base Wait ---")
+    node_start_time = datetime.now()
+    return {
+        "log_messages": generate_log_message(
+            message="core - base_wait",
+            node_start_time=node_start_time,
+            graph_start_time=state["graph_start_time"],
+        ),
+    }
 
-    question = qa_state["original_question"]
+
+def entity_term_extraction(state: QAState) -> Dict[str, Any]:
+    """ """
+
+    node_start_time = datetime.now()
+
+    question = state["original_question"]
+    docs = state["deduped_retrieval_docs"]
+
+    doc_context = format_docs(docs)
 
     msg = [
         HumanMessage(
-            content=DECOMPOSE_PROMPT.format(question=question),
+            content=ENTITY_TERM_PROMPT.format(question=question, context=doc_context),
         )
     ]
 
     # Grader
-    llm: LLM = qa_state["llm"]
-    tools: list[dict] = qa_state["tools"]
-    response = list(
-        llm.stream(
-            prompt=msg,
-            tools=tools,
-            structured_response_format=SubQuestions.model_json_schema(),
-        )
-    )
+    model = state["fast_llm"]
+    response = model.invoke(msg)
 
-    formatted_response: SubQuestions = response[0].content
+    cleaned_response = re.sub(r"```json\n|\n```", "", response.content)
+    parsed_response = json.loads(cleaned_response)
 
-    end_time = datetime.datetime.now()
     return {
-        "sub_questions": formatted_response.sub_questions,
-        "log_messages": f"{str(start_time)} - {str(end_time)}: deep - decompose",
+        "retrieved_entities_relationships": parsed_response,
+        "log_messages": generate_log_message(
+            message="deep - entity term extraction",
+            node_start_time=node_start_time,
+            graph_start_time=state["graph_start_time"],
+        ),
     }
 
 
-# aggregate sub questions and answers
-def consolidate_sub_qa(qa_state: QAState) -> Dict[str, Any]:
-    """
-    Consolidate sub-questions and their answers.
-
-    Args:
-        qa_state: The current QA state containing sub QAs
-
-    Returns:
-        Dict containing dynamic context, checked sub QAs and log messages
-    """
-    sub_qas = qa_state["sub_qas"]
-
-    start_time = datetime.datetime.now()
-
-    dynamic_context_list = [
-        "Below you will find useful information to answer the original question:"
-    ]
-    checked_sub_qas = []
-
-    for sub_qa in sub_qas:
-        question = sub_qa["sub_question"]
-        answer = sub_qa["sub_answer"]
-        verified = sub_qa["sub_answer_check"]
-
-        if verified == "yes":
-            dynamic_context_list.append(
-                f"Question:\n{question}\n\nAnswer:\n{answer}\n\n---\n\n"
-            )
-            checked_sub_qas.append({"sub_question": question, "sub_answer": answer})
-    dynamic_context = "\n".join(dynamic_context_list)
-
-    end_time = datetime.datetime.now()
-    return {
-        "dynamic_context": dynamic_context,
-        "checked_sub_qas": checked_sub_qas,
-        "log_messages": f"{str(start_time)} - {str(end_time)}: deep - consolidate_sub_qa",
-    }
-
-
-# aggregate sub questions and answers
-def deep_answer_generation(qa_state: QAState) -> Dict[str, Any]:
+def generate_initial(state: QAState) -> Dict[str, Any]:
     """
     Generate answer
 
     Args:
-        qa_state (messages): The current state
+        state (messages): The current state
 
     Returns:
          dict: The updated state with re-phrased question
     """
-    print("---GENERATE---")
-    start_time = datetime.datetime.now()
+    print("---GENERATE INITIAL---")
+    node_start_time = datetime.now()
 
-    question = qa_state["original_question"]
-    docs = qa_state["deduped_retrieval_docs"]
+    question = state["original_question"]
+    docs = state["deduped_retrieval_docs"]
+    print(f"Number of verified retrieval docs - base: {len(docs)}")
 
-    deep_answer_context = qa_state["dynamic_context"]
+    sub_question_answers = state["initial_sub_qas"]
 
-    print(f"Number of verified retrieval docs: {docs}")
+    sub_question_answers_list = []
 
-    combined_context = normalize_whitespace(
-        COMBINED_CONTEXT.format(
-            deep_answer_context=deep_answer_context, formated_docs=format_docs(docs)
-        )
-    )
+    _SUB_QUESTION_ANSWER_TEMPLATE = """
+    Sub-Question:\n  - {sub_question}\n  --\nAnswer:\n  - {sub_answer}\n\n
+    """
+    for sub_question_answer_dict in sub_question_answers:
+        if (
+            sub_question_answer_dict["sub_answer_check"] == "yes"
+            and len(sub_question_answer_dict["sub_answer"]) > 0
+            and sub_question_answer_dict["sub_answer"] != "I don't know"
+        ):
+            sub_question_answers_list.append(
+                _SUB_QUESTION_ANSWER_TEMPLATE.format(
+                    sub_question=sub_question_answer_dict["sub_question"],
+                    sub_answer=sub_question_answer_dict["sub_answer"],
+                )
+            )
+
+    sub_question_answer_str = "\n\n------\n\n".join(sub_question_answers_list)
 
     msg = [
         HumanMessage(
-            content=MODIFIED_RAG_PROMPT.format(
-                question=question, combined_context=combined_context
+            content=INITIAL_RAG_PROMPT.format(
+                question=question,
+                context=format_docs(docs),
+                answered_sub_questions=sub_question_answer_str,
             )
         )
     ]
 
     # Grader
-    # LLM
-    model: LLM = qa_state["llm"]
+    model = state["fast_llm"]
     response = model.invoke(msg)
 
-    end_time = datetime.datetime.now()
+    # Run
+    # response = rag_chain.invoke({"context": docs,
+    #                             "question": question})
+
     return {
-        "final_deep_answer": response.content,
-        "log_messages": f"{str(start_time)} - {str(end_time)}: deep - deep_answer_generation",
+        "base_answer": response.content,
+        "log_messages": generate_log_message(
+            message="core - generate initial",
+            node_start_time=node_start_time,
+            graph_start_time=state["graph_start_time"],
+        ),
     }
-    # return {"log_messages": [response]}
+
+
+def main_decomp_base(state: QAState) -> Dict[str, Any]:
+    """
+    Perform an initial question decomposition, incl. one search term
+
+    Args:
+        state (messages): The current state
+
+    Returns:
+        dict: The updated state with initial decomposition
+    """
+
+    print("---INITIAL DECOMP---")
+    node_start_time = datetime.now()
+
+    question = state["original_question"]
+
+    msg = [
+        HumanMessage(
+            content=INITIAL_DECOMPOSITION_PROMPT.format(question=question),
+        )
+    ]
+    """
+    msg = [
+        HumanMessage(
+            content=INITIAL_DECOMPOSITION_PROMPT_BASIC.format(question=question),
+        )
+    ]
+    """
+
+    # Get the rewritten queries in a defined format
+    model = state["fast_llm"]
+    response = model.invoke(msg)
+
+    content = response.content
+    list_of_subquestions = clean_and_parse_list_string(content)
+    # response = model.invoke(msg)
+
+    decomp_list = []
+
+    for sub_question_nr, sub_question in enumerate(list_of_subquestions):
+        sub_question_str = sub_question["sub_question"].strip()
+        # temporarily
+        sub_question_search_queries = [sub_question["search_term"]]
+
+        decomp_list.append(
+            {
+                "sub_question_str": sub_question_str,
+                "sub_question_search_queries": sub_question_search_queries,
+                "sub_question_nr": sub_question_nr,
+            }
+        )
+
+    return {
+        "initial_sub_questions": decomp_list,
+        "start_time_temp": node_start_time,
+        "log_messages": generate_log_message(
+            message="core - initial decomp",
+            node_start_time=node_start_time,
+            graph_start_time=state["graph_start_time"],
+        ),
+    }

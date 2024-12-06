@@ -17,5 +17,6 @@ def run_graph(
         "tools": tools,
         "llm": llm,
     }
-    output = graph.invoke(input=inputs)
+    compiled_graph = graph.compile()
+    output = compiled_graph.invoke(input=inputs)
     yield from output
