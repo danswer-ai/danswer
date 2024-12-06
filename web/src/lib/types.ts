@@ -135,6 +135,18 @@ export interface ConnectorIndexingStatus<
   in_progress: boolean;
 }
 
+export interface OAuthPrepareAuthorizationResponse {
+  url: string;
+}
+
+export interface OAuthSlackCallbackResponse {
+  success: boolean;
+  message: string;
+  team_id: string;
+  authed_user_id: string;
+  redirect_on_success: string;
+}
+
 export interface CCPairBasicInfo {
   has_successful_run: boolean;
   source: ValidSources;

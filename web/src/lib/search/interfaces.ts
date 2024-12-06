@@ -124,6 +124,7 @@ export interface SourceMetadata {
   shortDescription?: string;
   internalName: ValidSources;
   adminUrl: string;
+  oauthSupported?: boolean;
 }
 
 export interface SearchDefaultOverrides {

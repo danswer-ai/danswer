@@ -1,6 +1,7 @@
 "use client";
 import {
   ConnectorIndexingStatus,
+  OAuthSlackCallbackResponse,
   DocumentBoostStatus,
   Tag,
   UserGroup,

@@ -105,7 +105,6 @@ from shared_configs.configs import CORS_ALLOWED_ORIGIN
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import SENTRY_DSN
 
-
 logger = setup_logger()
 
 

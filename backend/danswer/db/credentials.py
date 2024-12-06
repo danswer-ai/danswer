@@ -248,7 +248,6 @@ def create_credential(
     )
 
     db_session.commit()
-
     return credential
 
 
