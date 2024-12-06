@@ -47,8 +47,9 @@ from danswer.db.models import Persona__User
 from danswer.db.models import SamlAccount
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
+from danswer.db.users import get_filtered_user_page
 from danswer.db.users import get_user_by_email
-from danswer.db.users import list_users
+from danswer.db.users import list_all_users
 from danswer.db.users import validate_user_role_update
 from danswer.key_value_store.factory import get_kv_store
 from danswer.server.documents.models import PaginatedReturn
@@ -117,22 +118,20 @@ def set_user_role(
 @router.get("/manage/users/accepted")
 def list_accepted_users(
     q: str | None = None,
-    status: UserStatus | None = None,
-    roles: list[UserRole] = [],
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=1000),
+    status: UserStatus | None = None,
+    roles: list[UserRole] = [],
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> PaginatedReturn[FullUserSnapshot]:
     if not q:
         q = ""
 
-    offset = (page - 1) * page_size
-
-    query_result = list_users(
-        db_session,
-        limit=page_size,
-        offset=offset,
+    filtered_users_data = get_filtered_user_page(
+        db_session=db_session,
+        page_size=page_size,
+        page=page,
         email_filter_string=q,
         status_filter=status,
         roles_filter=roles,
@@ -140,15 +139,10 @@ def list_accepted_users(
 
     return PaginatedReturn(
         items=[
-            FullUserSnapshot(
-                id=user.id,
-                email=user.email,
-                role=user.role,
-                status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
-            )
-            for user in query_result["users"]
+            FullUserSnapshot.from_user_model(user)
+            for user in filtered_users_data["users"]
         ],
-        total_items=query_result["total_count"],
+        total_items=filtered_users_data["total_count"],
     )
 
 
@@ -418,7 +412,7 @@ def list_all_users_basic_info(
     _: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> list[MinimalUserSnapshot]:
-    users = list_users(db_session)
+    users = list_all_users(db_session)
     return [MinimalUserSnapshot(id=user.id, email=user.email) for user in users]
 
 

@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserStatus
 from danswer.configs.constants import FileOrigin
-from danswer.db.users import list_users
+from danswer.db.users import list_all_users
 from danswer.file_store.constants import MAX_IN_MEMORY_SIZE
 from danswer.file_store.file_store import FileStore
 from danswer.file_store.file_store import get_default_file_store
@@ -86,7 +86,7 @@ def generate_user_report(
         csvwriter = csv.writer(temp_file, delimiter=",")
         csvwriter.writerow(["user_id", "status"])
 
-        users = list_users(db_session)
+        users = list_all_users(db_session)
         for user in users:
             user_skeleton = UserSkeleton(
                 user_id=str(user.id),
