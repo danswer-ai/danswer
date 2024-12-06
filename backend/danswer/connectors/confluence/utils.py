@@ -177,19 +177,23 @@ def extract_text_from_confluence_html(
     return format_document_soup(soup)
 
 
-def attachment_to_content(
-    confluence_client: OnyxConfluence,
-    attachment: dict[str, Any],
-) -> str | None:
-    """If it returns None, assume that we should skip this attachment."""
-    if attachment["metadata"]["mediaType"] in [
+def check_attachment_filetype(attachment: dict[str, Any]) -> bool:
+    return attachment["metadata"]["mediaType"] in [
         "image/jpeg",
         "image/png",
         "image/gif",
         "image/svg+xml",
         "video/mp4",
         "video/quicktime",
-    ]:
+    ]
+
+
+def attachment_to_content(
+    confluence_client: OnyxConfluence,
+    attachment: dict[str, Any],
+) -> str | None:
+    """If it returns None, assume that we should skip this attachment."""
+    if not check_attachment_filetype(attachment):
         return None
 
     download_link = confluence_client.url + attachment["_links"]["download"]
@@ -245,7 +249,7 @@ def build_confluence_document_id(
     return f"{base_url}{content_url}"
 
 
-def extract_referenced_attachment_names(page_text: str) -> list[str]:
+def _extract_referenced_attachment_names(page_text: str) -> list[str]:
     """Parse a Confluence html page to generate a list of current
         attachments in use
 

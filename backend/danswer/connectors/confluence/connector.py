@@ -13,6 +13,7 @@ from danswer.connectors.confluence.onyx_confluence import build_confluence_clien
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
 from danswer.connectors.confluence.utils import attachment_to_content
 from danswer.connectors.confluence.utils import build_confluence_document_id
+from danswer.connectors.confluence.utils import check_attachment_filetype
 from danswer.connectors.confluence.utils import datetime_from_string
 from danswer.connectors.confluence.utils import extract_text_from_confluence_html
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -298,6 +299,8 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 expand=restrictions_expand,
                 limit=_SLIM_DOC_BATCH_SIZE,
             ):
+                if not check_attachment_filetype(attachment):
+                    continue
                 doc_metadata_list.append(
                     SlimDocument(
                         id=build_confluence_document_id(
