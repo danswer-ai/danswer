@@ -5,7 +5,6 @@ import {
   USER_ROLE_LABELS,
   INVALID_ROLE_HOVER_TEXT,
 } from "@/lib/types";
-import CenteredPageSelector from "./UserPagination";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import useSWRMutation from "swr/mutation";
@@ -33,7 +32,8 @@ import { TableHeader } from "@/components/ui/table";
 import { usePaginatedData } from "@/hooks/usePaginatedData";
 import { LoadingAnimation } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import UserPagination from "@/components/admin/users/UserPagination";
+import { PageSelector } from "@/components/PageSelector";
+// import UserPagination from "@/components/admin/users/UserPagination";
 
 interface Props {
   setPopup: (spec: PopupSpec) => void;
@@ -284,10 +284,10 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
 
   return (
     <>
-      <UserPagination
-        currentPage={currentPage}
+      <PageSelector
         totalPages={totalPages}
-        goToPage={goToPage}
+        currentPage={currentPage}
+        onPageChange={goToPage}
       />
       <Table className="overflow-visible">
         <TableHeader>

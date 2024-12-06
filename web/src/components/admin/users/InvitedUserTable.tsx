@@ -1,5 +1,5 @@
 import ValidDomainsDisplay from "@/components/admin/users/ValidDomains";
-import UserPagination from "@/components/admin/users/UserPagination";
+import { PageSelector } from "@/components/PageSelector";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Button } from "@/components/ui/button";
@@ -123,10 +123,10 @@ const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
         </TableBody>
       </Table>
       {totalPages > 1 ? (
-        <UserPagination
+        <PageSelector
           currentPage={currentPage}
           totalPages={totalPages}
-          goToPage={goToPage}
+          onPageChange={goToPage}
         />
       ) : null}
     </>

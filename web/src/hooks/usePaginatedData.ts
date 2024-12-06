@@ -11,6 +11,7 @@ interface PaginationConfig<T> {
   pagesPerBatch: number;
   endpoint: string;
   query?: string;
+  filter?: Record<string, string | boolean | number | string[]>;
   refreshIntervalInMs?: number;
 }
 
@@ -30,6 +31,7 @@ export function usePaginatedData<T>({
   pagesPerBatch,
   endpoint,
   query,
+  filter,
   refreshIntervalInMs = 5000,
 }: PaginationConfig<T>): PaginatedHookReturnData<T> {
   const router = useRouter();
@@ -82,16 +84,24 @@ export function usePaginatedData<T>({
       ongoingRequestsRef.current.add(batchNum);
 
       try {
-        const params = {
+        const params = new URLSearchParams({
           page: (batchNum + 1).toString(),
           page_size: (pagesPerBatch * itemsPerPage).toString(),
-        } as Record<string, string>;
+        });
 
-        if (query) params.q = query;
+        if (query) params.set("q", query);
 
-        const queryString = new URLSearchParams(params).toString();
+        if (filter) {
+          for (const [key, value] of Object.entries(filter)) {
+            if (Array.isArray(value)) {
+              value.forEach((str) => params.append(key, str));
+            } else {
+              params.set(key, value.toString());
+            }
+          }
+        }
 
-        const response = await fetch(`${endpoint}?${queryString}`);
+        const response = await fetch(`${endpoint}?${params.toString()}`);
         if (!response.ok) throw new Error("Failed to fetch data");
         const responseData: PaginatedApiResponse<T> = await response.json();
 
@@ -119,7 +129,7 @@ export function usePaginatedData<T>({
         ongoingRequestsRef.current.delete(batchNum);
       }
     },
-    [endpoint, pagesPerBatch, itemsPerPage, query]
+    [endpoint, pagesPerBatch, itemsPerPage, query, filter]
   );
 
   const updatePageUrl = useCallback(
@@ -190,12 +200,12 @@ export function usePaginatedData<T>({
     await fetchBatchData(batchNum);
   }, [currentPage, pagesPerBatch, fetchBatchData]);
 
-  // Reset state when path or query changes
+  // Cache invalidation
   useEffect(() => {
     setCachedBatches({});
     setTotalItems(0);
     goToPage(1);
-  }, [currentPath, query]);
+  }, [currentPath, query, filter]);
 
   return {
     currentPage,
