@@ -195,6 +195,7 @@ def _fetch_all_page_restrictions_for_space(
     confluence_client: OnyxConfluence,
     slim_docs: list[SlimDocument],
     space_permissions_by_space_key: dict[str, ExternalAccess],
+    is_cloud: bool,
 ) -> list[DocExternalAccess]:
     """
     For all pages, if a page has restrictions, then use those restrictions.
@@ -222,29 +223,50 @@ def _fetch_all_page_restrictions_for_space(
             continue
 
         space_key = slim_doc.perm_sync_data.get("space_key")
-        if space_permissions := space_permissions_by_space_key.get(space_key):
-            # If there are no restrictions, then use the space's restrictions
-            document_restrictions.append(
-                DocExternalAccess(
-                    doc_id=slim_doc.id,
-                    external_access=space_permissions,
-                )
+        if not (space_permissions := space_permissions_by_space_key.get(space_key)):
+            logger.debug(
+                f"Individually fetching space permissions for space {space_key}"
             )
-            if (
-                not space_permissions.is_public
-                and not space_permissions.external_user_emails
-                and not space_permissions.external_user_group_ids
-            ):
+            try:
+                # If the space permissions are not in the cache, then fetch them
+                if is_cloud:
+                    retrieved_space_permissions = _get_cloud_space_permissions(
+                        confluence_client=confluence_client, space_key=space_key
+                    )
+                else:
+                    retrieved_space_permissions = _get_server_space_permissions(
+                        confluence_client=confluence_client, space_key=space_key
+                    )
+                space_permissions_by_space_key[space_key] = retrieved_space_permissions
+                space_permissions = retrieved_space_permissions
+            except Exception as e:
                 logger.warning(
-                    f"Permissions are empty for document: {slim_doc.id}\n"
-                    "This means space permissions are may be wrong for"
-                    f" Space key: {space_key}"
+                    f"Error fetching space permissions for space {space_key}: {e}"
                 )
+
+        if not space_permissions:
+            logger.warning(
+                f"No permissions found for document {slim_doc.id} in space {space_key}"
+            )
             continue
 
-        logger.warning(
-            f"No permissions found for document {slim_doc.id} in space {space_key}"
+        # If there are no restrictions, then use the space's restrictions
+        document_restrictions.append(
+            DocExternalAccess(
+                doc_id=slim_doc.id,
+                external_access=space_permissions,
+            )
         )
+        if (
+            not space_permissions.is_public
+            and not space_permissions.external_user_emails
+            and not space_permissions.external_user_group_ids
+        ):
+            logger.warning(
+                f"Permissions are empty for document: {slim_doc.id}\n"
+                "This means space permissions are may be wrong for"
+                f" Space key: {space_key}"
+            )
 
     logger.debug("Finished fetching all page restrictions for space")
     return document_restrictions
@@ -283,4 +305,5 @@ def confluence_doc_sync(
         confluence_client=confluence_connector.confluence_client,
         slim_docs=slim_docs,
         space_permissions_by_space_key=space_permissions_by_space_key,
+        is_cloud=is_cloud,
     )
