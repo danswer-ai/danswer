@@ -1,5 +1,7 @@
+from collections.abc import Sequence
 from typing import Generic
 from typing import Optional
+from typing import TypedDict
 from typing import TypeVar
 from uuid import UUID
 
@@ -50,6 +52,11 @@ class FullUserSnapshot(BaseModel):
 
 class InvitedUserSnapshot(BaseModel):
     email: str
+
+
+class AcceptedUsersReturn(TypedDict):
+    users: Sequence[User]
+    total_count: int
 
 
 class DisplayPriorityRequest(BaseModel):

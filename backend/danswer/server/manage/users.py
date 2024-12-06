@@ -38,7 +38,6 @@ from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
-from danswer.db.api_key import is_api_key_email_address
 from danswer.db.auth import get_total_users_count
 from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_session
@@ -118,6 +117,8 @@ def set_user_role(
 @router.get("/manage/users/accepted")
 def list_accepted_users(
     q: str | None = None,
+    status: UserStatus | None = None,
+    roles: list[UserRole] = [],
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=1000),
     user: User | None = Depends(current_curator_or_admin_user),
@@ -126,15 +127,16 @@ def list_accepted_users(
     if not q:
         q = ""
 
-    accepted_users = [
-        user
-        for user in list_users(db_session, email_filter_string=q)
-        if not is_api_key_email_address(user.email)
-    ]
+    offset = (page - 1) * page_size
 
-    total_count = len(accepted_users)
-    start_idx = (page - 1) * page_size
-    end_idx = start_idx + page_size
+    query_result = list_users(
+        db_session,
+        limit=page_size,
+        offset=offset,
+        email_filter_string=q,
+        status_filter=status,
+        roles_filter=roles,
+    )
 
     return PaginatedReturn(
         items=[
@@ -144,9 +146,9 @@ def list_accepted_users(
                 role=user.role,
                 status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
             )
-            for user in accepted_users[start_idx:end_idx]
+            for user in query_result["users"]
         ],
-        total_items=total_count,
+        total_items=query_result["total_count"],
     )
 
 

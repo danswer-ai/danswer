@@ -1,14 +1,17 @@
-from collections.abc import Sequence
 from uuid import UUID
 
 from fastapi import HTTPException
 from fastapi_users.password import PasswordHelper
 from sqlalchemy import func
+from sqlalchemy import not_
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from danswer.auth.schemas import UserRole
+from danswer.auth.schemas import UserStatus
+from danswer.db.api_key import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
 from danswer.db.models import User
+from danswer.server.models import AcceptedUsersReturn
 
 
 def validate_user_role_update(requested_role: UserRole, current_role: UserRole) -> None:
@@ -84,13 +87,19 @@ def validate_user_role_update(requested_role: UserRole, current_role: UserRole) 
 
 
 def list_users(
-    db_session: Session, email_filter_string: str = "", include_external: bool = False
-) -> Sequence[User]:
-    """List all users. No pagination as of now, as the # of users
-    is assumed to be relatively small (<< 1 million)"""
-    stmt = select(User)
+    db_session: Session,
+    limit: int,
+    offset: int,
+    email_filter_string: str = "",
+    status_filter: UserStatus | None = None,
+    roles_filter: list[UserRole] = [],
+    include_external: bool = False,
+) -> AcceptedUsersReturn:
+    users_stmt = select(User)
 
     where_clause = []
+
+    where_clause.append(not_(User.email.endswith(DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN)))
 
     if not include_external:
         where_clause.append(User.role != UserRole.EXT_PERM_USER)
@@ -98,9 +107,19 @@ def list_users(
     if email_filter_string:
         where_clause.append(User.email.ilike(f"%{email_filter_string}%"))  # type: ignore
 
-    stmt = stmt.where(*where_clause)
+    if roles_filter:
+        where_clause.append(User.role.in_(roles_filter))
 
-    return db_session.scalars(stmt).unique().all()
+    if status_filter:
+        where_clause.append(User.is_active == (status_filter == UserStatus.LIVE))
+
+    users_stmt = users_stmt.where(*where_clause).limit(limit).offset(offset)
+    users = db_session.scalars(users_stmt).unique().all()
+
+    total_count_stmt = select(func.count()).select_from(User).where(*where_clause)
+    total_count = db_session.scalar(total_count_stmt)
+
+    return {"users": users, "total_count": total_count}
 
 
 def get_users_by_emails(
