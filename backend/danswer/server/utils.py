@@ -97,7 +97,9 @@ def send_user_email_invite(user_email: str, current_user: User) -> None:
         smtp_server.send_message(msg)
 
 
-def convert_docx_to_txt(file: UploadFile, file_store: FileStore, file_path: str) -> str:
+def convert_docx_to_txt(
+    file: UploadFile, file_store: FileStore, file_path: str
+) -> None:
     file.file.seek(0)
     docx_content = file.file.read()
     doc = Document(BytesIO(docx_content))
