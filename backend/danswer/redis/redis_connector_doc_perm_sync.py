@@ -133,6 +133,8 @@ class RedisConnectorPermissionSync:
         lock: RedisLock | None,
         new_permissions: list[DocExternalAccess],
         source_string: str,
+        connector_id: int,
+        credential_id: int,
     ) -> int | None:
         last_lock_time = time.monotonic()
         async_results = []
@@ -155,6 +157,8 @@ class RedisConnectorPermissionSync:
                     tenant_id=self.tenant_id,
                     serialized_doc_external_access=doc_perm.to_dict(),
                     source_string=source_string,
+                    connector_id=connector_id,
+                    credential_id=credential_id,
                 ),
                 queue=DanswerCeleryQueues.DOC_PERMISSIONS_UPSERT,
                 task_id=custom_task_id,

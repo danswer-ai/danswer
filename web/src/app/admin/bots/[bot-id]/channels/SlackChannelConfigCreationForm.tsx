@@ -276,13 +276,7 @@ export const SlackChannelConfigCreationForm = ({
 
                 {showAdvancedOptions && (
                   <div className="mt-4">
-                    <BooleanFormField
-                      name="show_continue_in_web_ui"
-                      removeIndent
-                      label="Show Continue in Web UI button"
-                      tooltip="If set, will show a button at the bottom of the response that allows the user to continue the conversation in the Danswer Web UI"
-                    />
-                    <div className="w-64 mb-4 mt-4">
+                    <div className="w-64 mb-4">
                       <SelectorFormField
                         name="response_type"
                         label="Answer Type"
@@ -294,6 +288,12 @@ export const SlackChannelConfigCreationForm = ({
                       />
                     </div>
 
+                    <BooleanFormField
+                      name="show_continue_in_web_ui"
+                      removeIndent
+                      label="Show Continue in Web UI button"
+                      tooltip="If set, will show a button at the bottom of the response that allows the user to continue the conversation in the Danswer Web UI"
+                    />
                     <div className="flex flex-col space-y-3 mt-2">
                       <BooleanFormField
                         name="still_need_help_enabled"
@@ -325,8 +325,8 @@ export const SlackChannelConfigCreationForm = ({
                       <BooleanFormField
                         name="answer_validity_check_enabled"
                         removeIndent
-                        label="Hide Non-Answers"
-                        tooltip="If set, will only answer questions that the model determines it can answer"
+                        label="Only respond if citations found"
+                        tooltip="If set, will only answer questions where the model successfully produces citations"
                       />
                       <BooleanFormField
                         name="questionmark_prefilter_enabled"

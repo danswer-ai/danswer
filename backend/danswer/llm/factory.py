@@ -1,5 +1,6 @@
 from typing import Any
 
+from danswer.chat.models import PersonaOverrideConfig
 from danswer.configs.app_configs import DISABLE_GENERATIVE_AI
 from danswer.configs.chat_configs import QA_TIMEOUT
 from danswer.configs.model_configs import GEN_AI_MODEL_FALLBACK_MAX_TOKENS
@@ -13,7 +14,10 @@ from danswer.llm.exceptions import GenAIDisabledException
 from danswer.llm.interfaces import LLM
 from danswer.llm.override_models import LLMOverride
 from danswer.utils.headers import build_llm_extra_headers
+from danswer.utils.logger import setup_logger
 from danswer.utils.long_term_log import LongTermLogger
+
+logger = setup_logger()
 
 
 def _build_extra_model_kwargs(provider: str) -> dict[str, Any]:
@@ -32,11 +36,15 @@ def get_main_llm_from_tuple(
 
 
 def get_llms_for_persona(
-    persona: Persona,
+    persona: Persona | PersonaOverrideConfig | None,
     llm_override: LLMOverride | None = None,
     additional_headers: dict[str, str] | None = None,
     long_term_logger: LongTermLogger | None = None,
 ) -> tuple[LLM, LLM]:
+    if persona is None:
+        logger.warning("No persona provided, using default LLMs")
+        return get_default_llms()
+
     model_provider_override = llm_override.model_provider if llm_override else None
     model_version_override = llm_override.model_version if llm_override else None
     temperature_override = llm_override.temperature if llm_override else None

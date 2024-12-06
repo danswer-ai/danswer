@@ -109,7 +109,7 @@ export function ToolTipDetails({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger type="button">
           <FiInfo size={12} />
         </TooltipTrigger>
         <TooltipContent side="top" align="center">

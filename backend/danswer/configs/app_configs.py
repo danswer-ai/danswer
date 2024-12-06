@@ -124,6 +124,8 @@ VESPA_HOST = os.environ.get("VESPA_HOST") or "localhost"
 VESPA_CONFIG_SERVER_HOST = os.environ.get("VESPA_CONFIG_SERVER_HOST") or VESPA_HOST
 VESPA_PORT = os.environ.get("VESPA_PORT") or "8081"
 VESPA_TENANT_PORT = os.environ.get("VESPA_TENANT_PORT") or "19071"
+# the number of times to try and connect to vespa on startup before giving up
+VESPA_NUM_ATTEMPTS_ON_STARTUP = int(os.environ.get("NUM_RETRIES_ON_STARTUP") or 10)
 
 VESPA_CLOUD_URL = os.environ.get("VESPA_CLOUD_URL", "")
 
@@ -528,3 +530,6 @@ API_KEY_HASH_ROUNDS = (
 
 POD_NAME = os.environ.get("POD_NAME")
 POD_NAMESPACE = os.environ.get("POD_NAMESPACE")
+
+
+DEV_MODE = os.environ.get("DEV_MODE", "").lower() == "true"

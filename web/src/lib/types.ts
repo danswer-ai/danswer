@@ -148,7 +148,6 @@ export interface OAuthSlackCallbackResponse {
 }
 
 export interface CCPairBasicInfo {
-  docs_indexed: number;
   has_successful_run: boolean;
   source: ValidSources;
 }

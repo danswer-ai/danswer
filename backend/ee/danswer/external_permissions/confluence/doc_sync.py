@@ -242,7 +242,9 @@ def _fetch_all_page_restrictions_for_space(
                 )
             continue
 
-        logger.warning(f"No permissions found for document {slim_doc.id}")
+        logger.warning(
+            f"No permissions found for document {slim_doc.id} in space {space_key}"
+        )
 
     logger.debug("Finished fetching all page restrictions for space")
     return document_restrictions

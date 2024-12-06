@@ -22,6 +22,7 @@ from danswer.configs.constants import DanswerCeleryTask
 from danswer.configs.constants import DanswerRedisLocks
 from danswer.configs.constants import DocumentSource
 from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
+from danswer.db.document import upsert_document_by_connector_credential_pair
 from danswer.db.engine import get_session_with_tenant
 from danswer.db.enums import AccessType
 from danswer.db.enums import ConnectorCredentialPairStatus
@@ -262,7 +263,12 @@ def connector_permission_sync_generator_task(
                 f"RedisConnector.permissions.generate_tasks starting. cc_pair={cc_pair_id}"
             )
             tasks_generated = redis_connector.permissions.generate_tasks(
-                self.app, lock, document_external_accesses, source_type
+                celery_app=self.app,
+                lock=lock,
+                new_permissions=document_external_accesses,
+                source_string=source_type,
+                connector_id=cc_pair.connector.id,
+                credential_id=cc_pair.credential.id,
             )
             if tasks_generated is None:
                 return None
@@ -298,6 +304,8 @@ def update_external_document_permissions_task(
     tenant_id: str | None,
     serialized_doc_external_access: dict,
     source_string: str,
+    connector_id: int,
+    credential_id: int,
 ) -> bool:
     document_external_access = DocExternalAccess.from_dict(
         serialized_doc_external_access
@@ -306,17 +314,27 @@ def update_external_document_permissions_task(
     external_access = document_external_access.external_access
     try:
         with get_session_with_tenant(tenant_id) as db_session:
-            # Then we build the update requests to update vespa
+            # Add the users to the DB if they don't exist
             batch_add_ext_perm_user_if_not_exists(
                 db_session=db_session,
                 emails=list(external_access.external_user_emails),
             )
-            upsert_document_external_perms(
+            # Then we upsert the document's external permissions in postgres
+            created_new_doc = upsert_document_external_perms(
                 db_session=db_session,
                 doc_id=doc_id,
                 external_access=external_access,
                 source_type=DocumentSource(source_string),
             )
+
+            if created_new_doc:
+                # If a new document was created, we associate it with the cc_pair
+                upsert_document_by_connector_credential_pair(
+                    db_session=db_session,
+                    connector_id=connector_id,
+                    credential_id=credential_id,
+                    document_ids=[doc_id],
+                )
 
             logger.debug(
                 f"Successfully synced postgres document permissions for {doc_id}"
