@@ -1,6 +1,7 @@
 import json
 import re
 from typing import Any
+from typing import cast
 from typing import Dict
 from typing import List
 
@@ -9,6 +10,12 @@ from sqlalchemy.orm import Session
 
 from danswer.configs.chat_configs import NUM_PERSONA_PROMPT_GENERATION_CHUNKS
 from danswer.configs.chat_configs import NUM_PERSONA_PROMPTS
+from danswer.context.search.models import IndexFilters
+from danswer.context.search.models import InferenceChunk
+from danswer.context.search.postprocessing.postprocessing import cleanup_chunks
+from danswer.context.search.preprocessing.access_filters import (
+    build_access_filters_for_user,
+)
 from danswer.db.document_set import get_document_sets_by_ids
 from danswer.db.models import StarterMessageModel as StarterMessage
 from danswer.db.models import User
@@ -17,10 +24,6 @@ from danswer.document_index.factory import get_default_document_index
 from danswer.llm.factory import get_default_llms
 from danswer.prompts.starter_messages import PERSONA_CATEGORY_GENERATION_PROMPT
 from danswer.prompts.starter_messages import PERSONA_STARTER_MESSAGE_CREATION_PROMPT
-from danswer.search.models import IndexFilters
-from danswer.search.models import InferenceChunk
-from danswer.search.postprocessing.postprocessing import cleanup_chunks
-from danswer.search.preprocessing.access_filters import build_access_filters_for_user
 from danswer.utils.logger import setup_logger
 from danswer.utils.threadpool_concurrency import FunctionCall
 from danswer.utils.threadpool_concurrency import run_functions_in_parallel
@@ -218,7 +221,7 @@ def generate_starter_messages(
     )
 
     category_response = fast_llm.invoke(category_generation_prompt)
-    categories = parse_categories(category_response.content)
+    categories = parse_categories(cast(str, category_response.content))
 
     if not categories:
         logger.error("No categories were generated.")
