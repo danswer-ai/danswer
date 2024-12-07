@@ -574,14 +574,14 @@ export function ChatInputBar({
                   input.click();
                 }}
               />
+
               <ChatInputOption
                 flexPriority="stiff"
-                name="My Documents"
+                name="Documents"
                 Icon={FiFolder}
-                onClick={() => {
-                  toggleMyDocuments();
-                }}
+                onClick={toggleMyDocuments}
               />
+
               {toggleFilters && (
                 <ChatInputOption
                   flexPriority="stiff"

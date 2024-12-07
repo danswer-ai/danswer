@@ -249,9 +249,6 @@ export function MyDocuments() {
           )}
         </CardContent>
       </Card>
-      <Button onClick={() => setIsFilePickerOpen(true)}>
-        Open File Picker
-      </Button>
     </div>
   );
 }
