@@ -93,7 +93,7 @@ MODIFIED_RAG_PROMPT = """You are an assistant for question-answering tasks. Use 
 
     Answer:"""
 
-_ORIG_DEEP_DECOMPOSE_PROMPT = """ \n
+ORIG_DEEP_DECOMPOSE_PROMPT = """ \n
     An initial user question needs to be answered. An initial answer has been provided but it wasn't quite
     good enough. Also, some sub-questions had been answered and this information has been used to provide
     the initial answer. Some other subquestions may have been suggested based on little knowledge, but they
@@ -170,7 +170,7 @@ _ORIG_DEEP_DECOMPOSE_PROMPT = """ \n
         "search_term": <rewrite the sub-question using as a search phrase for the document store>}},
         ...]}} """
 
-_DEEP_DECOMPOSE_PROMPT = """ \n
+DEEP_DECOMPOSE_PROMPT = """ \n
     An initial user question needs to be answered. An initial answer has been provided but it wasn't quite
     good enough. Also, some sub-questions had been answered and this information has been used to provide
     the initial answer. Some other subquestions may have been suggested based on little knowledge, but they
@@ -242,7 +242,7 @@ _DEEP_DECOMPOSE_PROMPT = """ \n
         "search_term": <rewrite the sub-question using as a search phrase for the document store>}},
         ...]}} """
 
-_DECOMPOSE_PROMPT = """ \n
+DECOMPOSE_PROMPT = """ \n
     For an initial user question, please generate at 5-10 individual sub-questions whose answers would help
     \n to answer the initial question. The individual questions should be answerable by a good RAG system.
     So a good idea would be to \n use the sub-questions to resolve ambiguities and/or to separate the
@@ -290,7 +290,7 @@ _DECOMPOSE_PROMPT = """ \n
         ...]}} """
 
 #### Consolidations
-_COMBINED_CONTEXT = """-------
+COMBINED_CONTEXT = """-------
     Below you will find useful information to answer the original question. First, you see a number of
     sub-questions with their answers. This information should be considered to be more focussed and
     somewhat more specific to the original question as it tries to contextualized facts.
@@ -303,7 +303,7 @@ _COMBINED_CONTEXT = """-------
     ----------------
     """
 
-_SUB_QUESTION_EXPLANATION_RANKER_PROMPT = """-------
+SUB_QUESTION_EXPLANATION_RANKER_PROMPT = """-------
     Below you will find a question that we ultimately want to answer (the original question) and a list of
     motivations in arbitrary order for generated sub-questions that are supposed to help us answering the
     original question. The motivations are formatted as <motivation number>:  <motivation explanation>.

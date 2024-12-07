@@ -4,9 +4,9 @@ from typing import Union
 from langchain_core.messages import HumanMessage
 from langgraph.types import Send
 
-from danswer.agent_search.base_qa_sub_graph.states import BaseQAState
+from danswer.agent_search.core_qa_graph.states import BaseQAState
+from danswer.agent_search.deep_qa_graph.states import ResearchQAState
 from danswer.agent_search.primary_graph.states import QAState
-from danswer.agent_search.research_qa_sub_graph.states import ResearchQAState
 from danswer.agent_search.shared_graph_utils.prompts import BASE_CHECK_PROMPT
 
 

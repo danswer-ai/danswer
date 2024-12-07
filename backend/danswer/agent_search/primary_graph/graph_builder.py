@@ -2,18 +2,33 @@ from langgraph.graph import END
 from langgraph.graph import START
 from langgraph.graph import StateGraph
 
+from danswer.agent_search.core_qa_graph.graph_builder import build_core_qa_graph
+from danswer.agent_search.deep_qa_graph.graph_builder import build_deep_qa_graph
 from danswer.agent_search.primary_graph.edges import continue_to_answer_sub_questions
 from danswer.agent_search.primary_graph.edges import continue_to_deep_answer
 from danswer.agent_search.primary_graph.edges import continue_to_initial_sub_questions
-from danswer.agent_search.primary_graph.nodes import base_wait
-from danswer.agent_search.primary_graph.nodes import combine_retrieved_docs
-from danswer.agent_search.primary_graph.nodes import custom_retrieve
-from danswer.agent_search.primary_graph.nodes import entity_term_extraction
-from danswer.agent_search.primary_graph.nodes import final_stuff
-from danswer.agent_search.primary_graph.nodes import generate_initial
-from danswer.agent_search.primary_graph.nodes import main_decomp_base
-from danswer.agent_search.primary_graph.nodes import rewrite
-from danswer.agent_search.primary_graph.nodes import verifier
+from danswer.agent_search.primary_graph.nodes.base_wait import base_wait
+from danswer.agent_search.primary_graph.nodes.combine_retrieved_docs import (
+    combine_retrieved_docs,
+)
+from danswer.agent_search.primary_graph.nodes.custom_retrieve import custom_retrieve
+from danswer.agent_search.primary_graph.nodes.decompose import decompose
+from danswer.agent_search.primary_graph.nodes.deep_answer_generation import (
+    deep_answer_generation,
+)
+from danswer.agent_search.primary_graph.nodes.dummy_start import dummy_start
+from danswer.agent_search.primary_graph.nodes.entity_term_extraction import (
+    entity_term_extraction,
+)
+from danswer.agent_search.primary_graph.nodes.final_stuff import final_stuff
+from danswer.agent_search.primary_graph.nodes.generate_initial import generate_initial
+from danswer.agent_search.primary_graph.nodes.main_decomp_base import main_decomp_base
+from danswer.agent_search.primary_graph.nodes.rewrite import rewrite
+from danswer.agent_search.primary_graph.nodes.sub_qa_level_aggregator import (
+    sub_qa_level_aggregator,
+)
+from danswer.agent_search.primary_graph.nodes.sub_qa_manager import sub_qa_manager
+from danswer.agent_search.primary_graph.nodes.verifier import verifier
 from danswer.agent_search.primary_graph.states import QAState
 
 
@@ -22,6 +37,7 @@ def build_core_graph() -> StateGraph:
     core_answer_graph = StateGraph(state_schema=QAState)
 
     ### Add Nodes ###
+    core_answer_graph.add_node(node="dummy_start", action=dummy_start)
 
     # Re-writing the question
     core_answer_graph.add_node(node="rewrite", action=rewrite)
@@ -45,8 +61,36 @@ def build_core_graph() -> StateGraph:
     # Initial question decomposition
     core_answer_graph.add_node(node="main_decomp_base", action=main_decomp_base)
 
+    # Build the base QA sub-graph and compile it
+    compiled_core_qa_graph = build_core_qa_graph().compile()
+    # Add the compiled base QA sub-graph as a node to the core graph
+    core_answer_graph.add_node(
+        node="sub_answers_graph_initial", action=compiled_core_qa_graph
+    )
+
     # Checking whether the initial answer is in the ballpark
     core_answer_graph.add_node(node="base_wait", action=base_wait)
+
+    # Decompose the question into sub-questions
+    core_answer_graph.add_node(node="decompose", action=decompose)
+
+    # Manage the sub-questions
+    core_answer_graph.add_node(node="sub_qa_manager", action=sub_qa_manager)
+
+    # Build the research QA sub-graph and compile it
+    compiled_deep_qa_graph = build_deep_qa_graph().compile()
+    # Add the compiled research QA sub-graph as a node to the core graph
+    core_answer_graph.add_node(node="sub_answers_graph", action=compiled_deep_qa_graph)
+
+    # Aggregate the sub-questions
+    core_answer_graph.add_node(
+        node="sub_qa_level_aggregator", action=sub_qa_level_aggregator
+    )
+
+    # aggregate sub questions and answers
+    core_answer_graph.add_node(
+        node="deep_answer_generation", action=deep_answer_generation
+    )
 
     # A final clean-up step
     core_answer_graph.add_node(node="final_stuff", action=final_stuff)
@@ -61,7 +105,6 @@ def build_core_graph() -> StateGraph:
     core_answer_graph.add_conditional_edges(
         source="main_decomp_base",
         path=continue_to_initial_sub_questions,
-        path_map={"sub_answers_graph_initial": "sub_answers_graph_initial"},
     )
 
     # use the retrieved information to generate the answer
@@ -82,7 +125,6 @@ def build_core_graph() -> StateGraph:
     core_answer_graph.add_conditional_edges(
         source="sub_qa_manager",
         path=continue_to_answer_sub_questions,
-        path_map={"sub_answers_graph": "sub_answers_graph"},
     )
 
     core_answer_graph.add_edge(

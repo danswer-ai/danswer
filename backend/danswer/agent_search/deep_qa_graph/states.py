@@ -7,7 +7,7 @@ from typing import TypedDict
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
-from danswer.chat.models import DanswerContext
+from danswer.context.search.models import InferenceSection
 from danswer.llm.interfaces import LLM
 
 
@@ -18,15 +18,17 @@ class ResearchQAState(TypedDict):
     sub_question_rewritten_queries: list[str]
     sub_question: str
     sub_question_nr: int
-    sub_question_base_retrieval_docs: Annotated[Sequence[DanswerContext], operator.add]
+    sub_question_base_retrieval_docs: Annotated[
+        Sequence[InferenceSection], operator.add
+    ]
     sub_question_deduped_retrieval_docs: Annotated[
-        Sequence[DanswerContext], operator.add
+        Sequence[InferenceSection], operator.add
     ]
     sub_question_verified_retrieval_docs: Annotated[
-        Sequence[DanswerContext], operator.add
+        Sequence[InferenceSection], operator.add
     ]
     sub_question_reranked_retrieval_docs: Annotated[
-        Sequence[DanswerContext], operator.add
+        Sequence[InferenceSection], operator.add
     ]
     sub_question_top_chunks: Annotated[Sequence[dict], operator.add]
     sub_question_answer: str
@@ -44,15 +46,17 @@ class ResearchQAOutputState(TypedDict):
     sub_question_nr: int
     # Answers sent back to core
     sub_qas: Annotated[Sequence[dict], operator.add]
-    sub_question_base_retrieval_docs: Annotated[Sequence[DanswerContext], operator.add]
+    sub_question_base_retrieval_docs: Annotated[
+        Sequence[InferenceSection], operator.add
+    ]
     sub_question_deduped_retrieval_docs: Annotated[
-        Sequence[DanswerContext], operator.add
+        Sequence[InferenceSection], operator.add
     ]
     sub_question_verified_retrieval_docs: Annotated[
-        Sequence[DanswerContext], operator.add
+        Sequence[InferenceSection], operator.add
     ]
     sub_question_reranked_retrieval_docs: Annotated[
-        Sequence[DanswerContext], operator.add
+        Sequence[InferenceSection], operator.add
     ]
     sub_question_top_chunks: Annotated[Sequence[dict], operator.add]
     sub_question_answer: str

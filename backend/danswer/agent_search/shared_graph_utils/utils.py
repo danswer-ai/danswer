@@ -6,7 +6,7 @@ from datetime import datetime
 from datetime import timedelta
 from typing import Any
 
-from danswer.chat.models import DanswerContext
+from danswer.context.search.models import InferenceSection
 
 
 def normalize_whitespace(text: str) -> str:
@@ -17,8 +17,8 @@ def normalize_whitespace(text: str) -> str:
 
 
 # Post-processing
-def format_docs(docs: Sequence[DanswerContext]) -> str:
-    return "\n\n".join(doc.content for doc in docs)
+def format_docs(docs: Sequence[InferenceSection]) -> str:
+    return "\n\n".join(doc.combined_content for doc in docs)
 
 
 def clean_and_parse_list_string(json_string: str) -> list[dict]:

@@ -3,9 +3,9 @@ from typing import Union
 
 from langgraph.types import Send
 
+from danswer.agent_search.deep_qa_graph.states import ResearchQAState
 from danswer.agent_search.primary_graph.states import RetrieverState
 from danswer.agent_search.primary_graph.states import VerifierState
-from danswer.agent_search.research_qa_sub_graph.states import ResearchQAState
 
 
 def sub_continue_to_verifier(state: ResearchQAState) -> Union[Hashable, list[Hashable]]:
