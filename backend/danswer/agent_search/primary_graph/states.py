@@ -15,7 +15,8 @@ class QAState(TypedDict):
     # The 'main' state of the answer graph
     original_question: str
     graph_start_time: datetime
-    sub_query_start_time: datetime  # start time for parallel initial sub-questionn thread
+    # start time for parallel initial sub-questionn thread
+    sub_query_start_time: datetime
     log_messages: Annotated[Sequence[BaseMessage], add_messages]
     rewritten_queries: list[str]
     sub_questions: list[dict]
@@ -72,7 +73,7 @@ class RetrieverState(TypedDict):
 class VerifierState(TypedDict):
     # The state for the parallel verification step.  Each node execution need to see only one question/doc pair
     document: DanswerContext
-    original_question: str
+    question: str
     primary_llm: LLM
     fast_llm: LLM
     graph_start_time: datetime

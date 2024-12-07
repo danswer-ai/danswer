@@ -8,28 +8,49 @@ REWRITE_PROMPT_MULTI = """ \n
 
     Formulate the query: """
 
-INITIAL_DECOMPOSITION_PROMPT = """ \n
-    Please decompose an initial user question into not more than 4 appropriate sub-questions that help to
-    answer the original question. The purpose for this decomposition is to isolate individulal entities
-    (i.e., 'compare sales of company A and company B' -> 'what are sales for company A' + 'what are sales
-    for company B'), split ambiguous terms (i.e., 'what is our success with company A' -> 'what are our
-    sales with company A' + 'what is our market share with company A' + 'is company A a reference customer
-    for us'), etc. Each sub-question should be realistically be answerable by a good RAG system. \n
+BASE_RAG_PROMPT = """ \n
+    You are an assistant for question-answering tasks. Use the context provided below - and only the
+    provided context - to answer the question. If you don't know the answer or if the provided context is
+    empty, just say "I don't know". Do not use your internal knowledge!
 
-    For each sub-question, please also create one search term that can be used to retrieve relevant
-    documents from a document store.
+    Again, only use the provided context and do not use your internal knowledge! If you cannot answer the
+    question based on the context, say "I don't know". It is a matter of life and death that you do NOT
+    use your internal knowledge, just the provided information!
 
+    Use three sentences maximum and keep the answer concise.
+    answer concise.\nQuestion:\n {question} \nContext:\n {context} \n\n
+    \n\n
+    Answer:"""
+
+BASE_CHECK_PROMPT = """ \n
+    Please check whether 1) the suggested answer seems to fully address the original question AND 2)the
+    original question requests a simple, factual answer, and there are no ambiguities, judgements,
+    aggregations, or any other complications that may require extra context. (I.e., if the question is
+    somewhat addressed, but the answer would benefit from more context, then answer with 'no'.)
+
+    Please only answer with 'yes' or 'no' \n
     Here is the initial question:
     \n ------- \n
     {question}
     \n ------- \n
+    Here is the proposed answer:
+    \n ------- \n
+    {base_answer}
+    \n ------- \n
+    Please answer with yes or no:"""
 
-    Please formulate your answer as a list of json objects with the following format:
-
-   [{{"sub_question": <sub-question>, "search_term": <search term>}}, ...]
-
-    Answer:
-    """
+VERIFIER_PROMPT = """ \n
+    Please check whether the document seems to be relevant for the answer of the original question. Please
+    only answer with 'yes' or 'no' \n
+    Here is the initial question:
+    \n ------- \n
+    {question}
+    \n ------- \n
+    Here is the document text:
+    \n ------- \n
+    {document_content}
+    \n ------- \n
+    Please answer with yes or no:"""
 
 INITIAL_DECOMPOSITION_PROMPT_BASIC = """ \n
     Please decompose an initial user question into not more than 4 appropriate sub-questions that help to
@@ -59,48 +80,6 @@ REWRITE_PROMPT_SINGLE = """ \n
 
     Formulate the query: """
 
-BASE_RAG_PROMPT = """ \n
-    You are an assistant for question-answering tasks. Use the context provided below - and only the
-    provided context - to answer the question. If you don't know the answer or if the provided context is
-    empty, just say "I don't know". Do not use your internal knowledge!
-
-    Again, only use the provided context and do not use your internal knowledge! If you cannot answer the
-    question based on the context, say "I don't know". It is a matter of life and death that you do NOT
-    use your internal knowledge, just the provided information!
-
-    Use three sentences maximum and keep the answer concise.
-    answer concise.\nQuestion:\n {question} \nContext:\n {context} \n\n
-    \n\n
-    Answer:"""
-
-INITIAL_RAG_PROMPT = """ \n
-    You are an assistant for question-answering tasks. Use the information provided below - and only the
-    provided information - to answer the provided question.
-
-    The information provided below consists of:
-     1) a number of answered sub-questions - these are very important(!) and definitely should be
-     considered to answer the question.
-     2) a number of documents that were also deemed relevant for the question.
-
-    If you don't know the answer or if the provided information is empty or insufficient, just say
-    "I don't know". Do not use your internal knowledge!
-
-    Again, only use the provided informationand do not use your internal knowledge! It is a matter of life
-    and death that you do NOT use your internal knowledge, just the provided information!
-
-    Try to keep your answer concise.
-
-    And here is the question and the provided information:
-    \n
-    \nQuestion:\n {question}
-
-    \nAnswered Sub-questions:\n {answered_sub_questions}
-
-    \nContext:\n {context} \n\n
-    \n\n
-
-    Answer:"""
-
 MODIFIED_RAG_PROMPT = """You are an assistant for question-answering tasks. Use the context provided below
     - and only this context - to answer the question. If you don't know the answer, just say "I don't know".
     Use three sentences maximum and keep the answer concise.
@@ -114,87 +93,7 @@ MODIFIED_RAG_PROMPT = """You are an assistant for question-answering tasks. Use 
 
     Answer:"""
 
-BASE_CHECK_PROMPT = """ \n
-    Please check whether 1) the suggested answer seems to fully address the original question AND 2)the
-    original question requests a simple, factual answer, and there are no ambiguities, judgements,
-    aggregations, or any other complications that may require extra context. (I.e., if the question is
-    somewhat addressed, but the answer would benefit from more context, then answer with 'no'.)
-
-    Please only answer with 'yes' or 'no' \n
-    Here is the initial question:
-    \n ------- \n
-    {question}
-    \n ------- \n
-    Here is the proposed answer:
-    \n ------- \n
-    {base_answer}
-    \n ------- \n
-    Please answer with yes or no:"""
-
-SUB_CHECK_PROMPT = """ \n
-    Please check whether the suggested answer seems to address the original question.
-
-    Please only answer with 'yes' or 'no' \n
-    Here is the initial question:
-    \n ------- \n
-    {question}
-    \n ------- \n
-    Here is the proposed answer:
-    \n ------- \n
-    {base_answer}
-    \n ------- \n
-    Please answer with yes or no:"""
-
-VERIFIER_PROMPT = """ \n
-    Please check whether the document seems to be relevant for the answer of the original question. Please
-    only answer with 'yes' or 'no' \n
-    Here is the initial question:
-    \n ------- \n
-    {question}
-    \n ------- \n
-    Here is the document text:
-    \n ------- \n
-    {document_content}
-    \n ------- \n
-    Please answer with yes or no:"""
-
-ENTITY_TERM_PROMPT = """ \n
-    Based on the original question and the context retieved from a dataset, please generate a list of
-    entities (e.g. companies, organizations, industries, products, locations, etc.), terms and concepts
-    (e.g. sales, revenue, etc.) that are relevant for the question, plus their relations to each other.
-
-    \n\n
-    Here is the original question:
-    \n ------- \n
-    {question}
-    \n ------- \n
-   And here is the context retrieved:
-    \n ------- \n
-    {context}
-    \n ------- \n
-
-    Please format your answer as a json object in the following format:
-
-    {{"retrieved_entities_relationships": {{
-        "entities": [{{
-            "entity_name": <assign a name for the entity>,
-            "entity_type": <specify a short type name for the entity, such as 'company', 'location',...>
-        }}],
-        "relationships": [{{
-            "name": <assign a name for the relationship>,
-            "type": <specify a short type name for the relationship, such as 'sales_to', 'is_location_of',...>,
-            "entities": [<related entity name 1>, <related entity name 2>]
-        }}],
-        "terms": [{{
-            "term_name": <assign a name for the term>,
-            "term_type": <specify a short type name for the term, such as 'revenue', 'market_share',...>,
-            "similar_to": <list terms that are similar to this term>
-        }}]
-    }}
-    }}
-   """
-
-ORIG_DEEP_DECOMPOSE_PROMPT = """ \n
+_ORIG_DEEP_DECOMPOSE_PROMPT = """ \n
     An initial user question needs to be answered. An initial answer has been provided but it wasn't quite
     good enough. Also, some sub-questions had been answered and this information has been used to provide
     the initial answer. Some other subquestions may have been suggested based on little knowledge, but they
@@ -271,7 +170,7 @@ ORIG_DEEP_DECOMPOSE_PROMPT = """ \n
         "search_term": <rewrite the sub-question using as a search phrase for the document store>}},
         ...]}} """
 
-DEEP_DECOMPOSE_PROMPT = """ \n
+_DEEP_DECOMPOSE_PROMPT = """ \n
     An initial user question needs to be answered. An initial answer has been provided but it wasn't quite
     good enough. Also, some sub-questions had been answered and this information has been used to provide
     the initial answer. Some other subquestions may have been suggested based on little knowledge, but they
@@ -343,7 +242,7 @@ DEEP_DECOMPOSE_PROMPT = """ \n
         "search_term": <rewrite the sub-question using as a search phrase for the document store>}},
         ...]}} """
 
-DECOMPOSE_PROMPT = """ \n
+_DECOMPOSE_PROMPT = """ \n
     For an initial user question, please generate at 5-10 individual sub-questions whose answers would help
     \n to answer the initial question. The individual questions should be answerable by a good RAG system.
     So a good idea would be to \n use the sub-questions to resolve ambiguities and/or to separate the
@@ -391,7 +290,7 @@ DECOMPOSE_PROMPT = """ \n
         ...]}} """
 
 #### Consolidations
-COMBINED_CONTEXT = """-------
+_COMBINED_CONTEXT = """-------
     Below you will find useful information to answer the original question. First, you see a number of
     sub-questions with their answers. This information should be considered to be more focussed and
     somewhat more specific to the original question as it tries to contextualized facts.
@@ -404,7 +303,7 @@ COMBINED_CONTEXT = """-------
     ----------------
     """
 
-SUB_QUESTION_EXPLANATION_RANKER_PROMPT = """-------
+_SUB_QUESTION_EXPLANATION_RANKER_PROMPT = """-------
     Below you will find a question that we ultimately want to answer (the original question) and a list of
     motivations in arbitrary order for generated sub-questions that are supposed to help us answering the
     original question. The motivations are formatted as <motivation number>:  <motivation explanation>.

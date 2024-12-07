@@ -3,15 +3,14 @@ import re
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
-from typing import Dict
-from typing import Literal
 
 from langchain_core.messages import HumanMessage
-from pydantic import BaseModel
 
 from danswer.agent_search.primary_graph.states import QAState
 from danswer.agent_search.primary_graph.states import RetrieverState
 from danswer.agent_search.primary_graph.states import VerifierState
+from danswer.agent_search.shared_graph_utils.models import BinaryDecision
+from danswer.agent_search.shared_graph_utils.models import RewrittenQueries
 from danswer.agent_search.shared_graph_utils.prompts import BASE_RAG_PROMPT
 from danswer.agent_search.shared_graph_utils.prompts import ENTITY_TERM_PROMPT
 from danswer.agent_search.shared_graph_utils.prompts import INITIAL_DECOMPOSITION_PROMPT
@@ -28,21 +27,8 @@ from danswer.llm.interfaces import LLM
 # from typing import Partial
 
 
-# Pydantic models for structured outputs
-class RewrittenQueries(BaseModel):
-    rewritten_queries: list[str]
-
-
-class BinaryDecision(BaseModel):
-    decision: Literal["yes", "no"]
-
-
-class SubQuestions(BaseModel):
-    sub_questions: list[str]
-
-
 # Transform the initial question into more suitable search queries.
-def rewrite(state: QAState) -> Dict[str, Any]:
+def rewrite(state: QAState) -> dict[str, Any]:
     """
     Transform the initial question into more suitable search queries.
 
@@ -75,7 +61,7 @@ def rewrite(state: QAState) -> Dict[str, Any]:
         )
     )
 
-    formatted_response: RewrittenQueries = json.loads(llm_response[0].content)
+    formatted_response: RewrittenQueries = json.loads(llm_response[0].pretty_repr())
 
     return {
         "rewritten_queries": formatted_response.rewritten_queries,
@@ -87,7 +73,7 @@ def rewrite(state: QAState) -> Dict[str, Any]:
     }
 
 
-def custom_retrieve(state: RetrieverState) -> Dict[str, Any]:
+def custom_retrieve(state: RetrieverState) -> dict[str, Any]:
     """
     Retrieve documents
 
@@ -117,7 +103,7 @@ def custom_retrieve(state: RetrieverState) -> Dict[str, Any]:
     }
 
 
-def combine_retrieved_docs(state: QAState) -> Dict[str, Any]:
+def combine_retrieved_docs(state: QAState) -> dict[str, Any]:
     """
     Dedupe the retrieved docs.
     """
@@ -145,7 +131,7 @@ def combine_retrieved_docs(state: QAState) -> Dict[str, Any]:
     }
 
 
-def verifier(state: VerifierState) -> Dict[str, Any]:
+def verifier(state: VerifierState) -> dict[str, Any]:
     """
     Check whether the document is relevant for the original user question
 
@@ -159,7 +145,7 @@ def verifier(state: VerifierState) -> Dict[str, Any]:
     print("---VERIFY QUTPUT---")
     node_start_time = datetime.now()
 
-    question = state["original_question"]
+    question = state["question"]
     document_content = state["document"].content
 
     msg = [
@@ -179,7 +165,8 @@ def verifier(state: VerifierState) -> Dict[str, Any]:
         )
     )
 
-    formatted_response: BinaryDecision = response[0].content
+    raw_response = json.loads(response[0].pretty_repr())
+    formatted_response = BinaryDecision.model_validate(raw_response)
 
     return {
         "deduped_retrieval_docs": [state["document"]]
@@ -193,7 +180,7 @@ def verifier(state: VerifierState) -> Dict[str, Any]:
     }
 
 
-def generate(state: QAState) -> Dict[str, Any]:
+def generate(state: QAState) -> dict[str, Any]:
     """
     Generate answer
 
@@ -231,7 +218,7 @@ def generate(state: QAState) -> Dict[str, Any]:
     #                             "question": question})
 
     return {
-        "base_answer": response[0].content,
+        "base_answer": response[0].pretty_repr(),
         "log_messages": generate_log_message(
             message="core - generate",
             node_start_time=node_start_time,
@@ -240,7 +227,7 @@ def generate(state: QAState) -> Dict[str, Any]:
     }
 
 
-def final_stuff(state: QAState) -> Dict[str, Any]:
+def final_stuff(state: QAState) -> dict[str, Any]:
     """
     Invokes the agent model to generate a response based on the current state. Given
     the question, it will decide to retrieve using the retriever tool, or simply end.
@@ -255,7 +242,7 @@ def final_stuff(state: QAState) -> Dict[str, Any]:
     node_start_time = datetime.now()
 
     messages = state["log_messages"]
-    time_ordered_messages = [x.content for x in messages]
+    time_ordered_messages = [x.pretty_repr() for x in messages]
     time_ordered_messages.sort()
 
     print("Message Log:")
@@ -320,7 +307,7 @@ def final_stuff(state: QAState) -> Dict[str, Any]:
     }
 
 
-def base_wait(state: QAState) -> Dict[str, Any]:
+def base_wait(state: QAState) -> dict[str, Any]:
     """
     Ensures that all required steps are completed before proceeding to the next step
 
@@ -342,7 +329,7 @@ def base_wait(state: QAState) -> Dict[str, Any]:
     }
 
 
-def entity_term_extraction(state: QAState) -> Dict[str, Any]:
+def entity_term_extraction(state: QAState) -> dict[str, Any]:
     """ """
 
     node_start_time = datetime.now()
@@ -362,7 +349,7 @@ def entity_term_extraction(state: QAState) -> Dict[str, Any]:
     model = state["fast_llm"]
     response = model.invoke(msg)
 
-    cleaned_response = re.sub(r"```json\n|\n```", "", response.content)
+    cleaned_response = re.sub(r"```json\n|\n```", "", response.pretty_repr())
     parsed_response = json.loads(cleaned_response)
 
     return {
@@ -375,7 +362,7 @@ def entity_term_extraction(state: QAState) -> Dict[str, Any]:
     }
 
 
-def generate_initial(state: QAState) -> Dict[str, Any]:
+def generate_initial(state: QAState) -> dict[str, Any]:
     """
     Generate answer
 
@@ -433,7 +420,7 @@ def generate_initial(state: QAState) -> Dict[str, Any]:
     #                             "question": question})
 
     return {
-        "base_answer": response.content,
+        "base_answer": response.pretty_repr(),
         "log_messages": generate_log_message(
             message="core - generate initial",
             node_start_time=node_start_time,
@@ -442,7 +429,7 @@ def generate_initial(state: QAState) -> Dict[str, Any]:
     }
 
 
-def main_decomp_base(state: QAState) -> Dict[str, Any]:
+def main_decomp_base(state: QAState) -> dict[str, Any]:
     """
     Perform an initial question decomposition, incl. one search term
 
@@ -475,7 +462,7 @@ def main_decomp_base(state: QAState) -> Dict[str, Any]:
     model = state["fast_llm"]
     response = model.invoke(msg)
 
-    content = response.content
+    content = response.pretty_repr()
     list_of_subquestions = clean_and_parse_list_string(content)
     # response = model.invoke(msg)
 
@@ -496,7 +483,7 @@ def main_decomp_base(state: QAState) -> Dict[str, Any]:
 
     return {
         "initial_sub_questions": decomp_list,
-        "start_time_temp": node_start_time,
+        "sub_query_start_time": node_start_time,
         "log_messages": generate_log_message(
             message="core - initial decomp",
             node_start_time=node_start_time,

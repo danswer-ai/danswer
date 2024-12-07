@@ -19,7 +19,7 @@ from danswer.agent_search.primary_graph.states import QAState
 
 def build_core_graph() -> StateGraph:
     # Define the nodes we will cycle between
-    core_answer_graph = StateGraph(QAState)
+    core_answer_graph = StateGraph(state_schema=QAState)
 
     ### Add Nodes ###
 
