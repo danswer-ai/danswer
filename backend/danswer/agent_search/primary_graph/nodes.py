@@ -6,15 +6,15 @@ from typing import Any
 
 from langchain_core.messages import HumanMessage
 
+from danswer.agent_search.primary_graph.prompts import ENTITY_TERM_PROMPT
+from danswer.agent_search.primary_graph.prompts import INITIAL_DECOMPOSITION_PROMPT
+from danswer.agent_search.primary_graph.prompts import INITIAL_RAG_PROMPT
 from danswer.agent_search.primary_graph.states import QAState
 from danswer.agent_search.primary_graph.states import RetrieverState
 from danswer.agent_search.primary_graph.states import VerifierState
 from danswer.agent_search.shared_graph_utils.models import BinaryDecision
 from danswer.agent_search.shared_graph_utils.models import RewrittenQueries
 from danswer.agent_search.shared_graph_utils.prompts import BASE_RAG_PROMPT
-from danswer.agent_search.shared_graph_utils.prompts import ENTITY_TERM_PROMPT
-from danswer.agent_search.shared_graph_utils.prompts import INITIAL_DECOMPOSITION_PROMPT
-from danswer.agent_search.shared_graph_utils.prompts import INITIAL_RAG_PROMPT
 from danswer.agent_search.shared_graph_utils.prompts import REWRITE_PROMPT_MULTI
 from danswer.agent_search.shared_graph_utils.prompts import VERIFIER_PROMPT
 from danswer.agent_search.shared_graph_utils.utils import clean_and_parse_list_string

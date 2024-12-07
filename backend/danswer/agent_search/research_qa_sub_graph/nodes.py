@@ -7,12 +7,12 @@ from langchain_core.messages import HumanMessage
 from danswer.agent_search.base_qa_sub_graph.states import BaseQAState
 from danswer.agent_search.primary_graph.states import RetrieverState
 from danswer.agent_search.primary_graph.states import VerifierState
+from danswer.agent_search.research_qa_sub_graph.prompts import SUB_CHECK_PROMPT
 from danswer.agent_search.research_qa_sub_graph.states import ResearchQAState
 from danswer.agent_search.shared_graph_utils.models import BinaryDecision
 from danswer.agent_search.shared_graph_utils.models import RewrittenQueries
 from danswer.agent_search.shared_graph_utils.prompts import BASE_RAG_PROMPT
 from danswer.agent_search.shared_graph_utils.prompts import REWRITE_PROMPT_MULTI
-from danswer.agent_search.shared_graph_utils.prompts import SUB_CHECK_PROMPT
 from danswer.agent_search.shared_graph_utils.prompts import VERIFIER_PROMPT
 from danswer.agent_search.shared_graph_utils.utils import format_docs
 from danswer.agent_search.shared_graph_utils.utils import generate_log_message
