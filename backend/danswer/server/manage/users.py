@@ -26,7 +26,6 @@ from danswer.auth.noauth_user import fetch_no_auth_user
 from danswer.auth.noauth_user import set_no_auth_user_preferences
 from danswer.auth.schemas import UserRole
 from danswer.auth.schemas import UserStatus
-from danswer.auth.users import BasicAuthenticationError
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
@@ -60,6 +59,7 @@ from danswer.server.manage.models import UserRoleUpdateRequest
 from danswer.server.models import FullUserSnapshot
 from danswer.server.models import InvitedUserSnapshot
 from danswer.server.models import MinimalUserSnapshot
+from danswer.server.utils import BasicAuthenticationError
 from danswer.server.utils import send_user_email_invite
 from danswer.utils.logger import setup_logger
 from danswer.utils.variable_functionality import fetch_ee_implementation_or_noop
@@ -194,11 +194,11 @@ def bulk_invite_users(
         )
 
     tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-    normalized_emails = []
+    new_invited_emails = []
     try:
         for email in emails:
             email_info = validate_email(email)
-            normalized_emails.append(email_info.normalized)  # type: ignore
+            new_invited_emails.append(email_info.normalized)
 
     except (EmailUndeliverableError, EmailNotValidError) as e:
         raise HTTPException(
@@ -210,7 +210,7 @@ def bulk_invite_users(
         try:
             fetch_ee_implementation_or_noop(
                 "danswer.server.tenants.provisioning", "add_users_to_tenant", None
-            )(normalized_emails, tenant_id)
+            )(new_invited_emails, tenant_id)
 
         except IntegrityError as e:
             if isinstance(e.orig, UniqueViolation):
@@ -224,7 +224,7 @@ def bulk_invite_users(
 
     initial_invited_users = get_invited_users()
 
-    all_emails = list(set(normalized_emails) | set(initial_invited_users))
+    all_emails = list(set(new_invited_emails) | set(initial_invited_users))
     number_of_invited_users = write_invited_users(all_emails)
 
     if not MULTI_TENANT:
@@ -236,7 +236,7 @@ def bulk_invite_users(
         )(CURRENT_TENANT_ID_CONTEXTVAR.get(), get_total_users_count(db_session))
         if ENABLE_EMAIL_INVITES:
             try:
-                for email in all_emails:
+                for email in new_invited_emails:
                     send_user_email_invite(email, current_user)
             except Exception as e:
                 logger.error(f"Error sending email invite to invited users: {e}")
@@ -250,7 +250,7 @@ def bulk_invite_users(
         write_invited_users(initial_invited_users)  # Reset to original state
         fetch_ee_implementation_or_noop(
             "danswer.server.tenants.user_mapping", "remove_users_from_tenant", None
-        )(normalized_emails, tenant_id)
+        )(new_invited_emails, tenant_id)
         raise e
 
 

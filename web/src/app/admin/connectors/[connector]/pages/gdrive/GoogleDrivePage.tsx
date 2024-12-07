@@ -40,7 +40,7 @@ const useConnectorsByCredentialId = (credential_id: number | null) => {
 };
 
 const GDriveMain = ({}: {}) => {
-  const { isLoadingUser, isAdmin, user } = useUser();
+  const { isAdmin, user } = useUser();
 
   // tries getting the uploaded credential json
   const {
@@ -113,12 +113,6 @@ const GDriveMain = ({}: {}) => {
     serviceAccountKeyData ||
     (isServiceAccountKeyError && isServiceAccountKeyError.status === 404);
 
-  // blank placeholder if still loading
-  if (isLoadingUser) {
-    return <></>;
-  }
-
-  // loading animation
   if (
     (!appCredentialSuccessfullyFetched && isAppCredentialLoading) ||
     (!serviceAccountKeySuccessfullyFetched && isServiceAccountKeyLoading) ||

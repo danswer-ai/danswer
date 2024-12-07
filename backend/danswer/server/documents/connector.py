@@ -89,6 +89,7 @@ from danswer.db.models import SearchSettings
 from danswer.db.models import User
 from danswer.db.search_settings import get_current_search_settings
 from danswer.db.search_settings import get_secondary_search_settings
+from danswer.file_processing.extract_file_text import convert_docx_to_txt
 from danswer.file_store.file_store import get_default_file_store
 from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.redis.redis_connector import RedisConnector
@@ -399,6 +400,12 @@ def upload_files(
                 file_origin=FileOrigin.CONNECTOR,
                 file_type=file.content_type or "text/plain",
             )
+
+            if file.content_type and file.content_type.startswith(
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ):
+                convert_docx_to_txt(file, file_store, file_path)
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return FileUploadResponse(file_paths=deduped_file_paths)
@@ -1058,37 +1065,18 @@ def get_connector_by_id(
 
 
 class BasicCCPairInfo(BaseModel):
-    docs_indexed: int
     has_successful_run: bool
     source: DocumentSource
 
 
-@router.get("/indexing-status")
+@router.get("/connector-status")
 def get_basic_connector_indexing_status(
     _: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> list[BasicCCPairInfo]:
     cc_pairs = get_connector_credential_pairs(db_session)
-    cc_pair_identifiers = [
-        ConnectorCredentialPairIdentifier(
-            connector_id=cc_pair.connector_id, credential_id=cc_pair.credential_id
-        )
-        for cc_pair in cc_pairs
-    ]
-    document_count_info = get_document_counts_for_cc_pairs(
-        db_session=db_session,
-        cc_pair_identifiers=cc_pair_identifiers,
-    )
-    cc_pair_to_document_cnt = {
-        (connector_id, credential_id): cnt
-        for connector_id, credential_id, cnt in document_count_info
-    }
     return [
         BasicCCPairInfo(
-            docs_indexed=cc_pair_to_document_cnt.get(
-                (cc_pair.connector_id, cc_pair.credential_id)
-            )
-            or 0,
             has_successful_run=cc_pair.last_successful_index_time is not None,
             source=cc_pair.connector.source,
         )

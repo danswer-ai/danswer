@@ -640,12 +640,16 @@ def connector_indexing_proxy_task(
                 continue
 
         if job.status == "error":
+            exit_code: int | None = None
+            if job.process:
+                exit_code = job.process.exitcode
             task_logger.error(
                 "Indexing watchdog - spawned task exceptioned: "
                 f"attempt={index_attempt_id} "
                 f"tenant={tenant_id} "
                 f"cc_pair={cc_pair_id} "
                 f"search_settings={search_settings_id} "
+                f"exit_code={exit_code} "
                 f"error={job.exception()}"
             )
 
@@ -789,9 +793,12 @@ def connector_indexing_task(
         )
         break
 
+    # set thread_local=False since we don't control what thread the indexing/pruning
+    # might run our callback with
     lock: RedisLock = r.lock(
         redis_connector_index.generator_lock_key,
         timeout=CELERY_INDEXING_LOCK_TIMEOUT,
+        thread_local=False,
     )
 
     acquired = lock.acquire(blocking=False)

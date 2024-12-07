@@ -5,8 +5,6 @@ from google.auth.transport.requests import Request  # type: ignore
 from google.oauth2.credentials import Credentials as OAuthCredentials  # type: ignore
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials  # type: ignore
 
-from danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_ID
-from danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_AUTHENTICATION_METHOD,
@@ -27,6 +25,8 @@ from danswer.connectors.google_utils.shared_constants import (
     GoogleOAuthAuthenticationMethod,
 )
 from danswer.utils.logger import setup_logger
+from ee.danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_ID
+from ee.danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
 
 logger = setup_logger()
 

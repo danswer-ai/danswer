@@ -32,10 +32,14 @@ from danswer.redis.redis_connector_ext_group_sync import (
 from danswer.redis.redis_pool import get_redis_client
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.connector_credential_pair import get_all_auto_sync_cc_pairs
+from ee.danswer.db.connector_credential_pair import get_cc_pairs_by_source
 from ee.danswer.db.external_perm import ExternalUserGroup
 from ee.danswer.db.external_perm import replace_user__ext_group_for_cc_pair
 from ee.danswer.external_permissions.sync_params import EXTERNAL_GROUP_SYNC_PERIODS
 from ee.danswer.external_permissions.sync_params import GROUP_PERMISSIONS_FUNC_MAP
+from ee.danswer.external_permissions.sync_params import (
+    GROUP_PERMISSIONS_IS_CC_PAIR_AGNOSTIC,
+)
 
 logger = setup_logger()
 
@@ -106,6 +110,22 @@ def check_for_external_group_sync(self: Task, *, tenant_id: str | None) -> None:
         cc_pair_ids_to_sync: list[int] = []
         with get_session_with_tenant(tenant_id) as db_session:
             cc_pairs = get_all_auto_sync_cc_pairs(db_session)
+
+            # We only want to sync one cc_pair per source type in
+            # GROUP_PERMISSIONS_IS_CC_PAIR_AGNOSTIC
+            for source in GROUP_PERMISSIONS_IS_CC_PAIR_AGNOSTIC:
+                # These are ordered by cc_pair id so the first one is the one we want
+                cc_pairs_to_dedupe = get_cc_pairs_by_source(
+                    db_session, source, only_sync=True
+                )
+                # We only want to sync one cc_pair per source type
+                # in GROUP_PERMISSIONS_IS_CC_PAIR_AGNOSTIC so we dedupe here
+                for cc_pair_to_remove in cc_pairs_to_dedupe[1:]:
+                    cc_pairs = [
+                        cc_pair
+                        for cc_pair in cc_pairs
+                        if cc_pair.id != cc_pair_to_remove.id
+                    ]
 
             for cc_pair in cc_pairs:
                 if _is_external_group_sync_due(cc_pair):
