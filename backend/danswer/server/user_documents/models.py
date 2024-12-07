@@ -15,11 +15,8 @@ class FolderResponse(BaseModel):
     name: str
     parent_id: int | None = None
 
-    def dict(self):
-        return self.model_dump()
-
     @classmethod
-    def from_model(cls, model: UserFolder):
+    def from_model(cls, model: UserFolder) -> "FolderResponse":
         return cls(id=model.id, name=model.name, parent_id=model.parent_id)
 
 
@@ -38,11 +35,8 @@ class FileResponse(BaseModel):
     document_id: str
     parent_folder_id: int | None = None
 
-    def dict(self):
-        return self.model_dump()
-
     @classmethod
-    def from_model(cls, model: UserFile):
+    def from_model(cls, model: UserFile) -> "FileResponse":
         return cls(
             id=model.id,
             name=model.name,
