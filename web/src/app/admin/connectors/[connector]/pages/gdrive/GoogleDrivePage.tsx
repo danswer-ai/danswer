@@ -6,7 +6,7 @@ import { FetchError, errorHandlingFetcher } from "@/lib/fetcher";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { LoadingAnimation } from "@/components/Loading";
 import { usePopup } from "@/components/admin/connectors/Popup";
-import { ConnectorIndexingStatus } from "@/lib/types";
+import { ConnectorIndexingStatus, ValidSources } from "@/lib/types";
 import {
   usePublicCredentials,
   useConnectorCredentialIndexingStatus,
@@ -76,7 +76,7 @@ const GDriveMain = ({}: {}) => {
     isLoading: isGoogleDriveCredentialsLoading,
     error: googleDriveCredentialsError,
   } = useSWR<Credential<any>[]>(
-    buildSimilarCredentialInfoURL("google_drive"),
+    buildSimilarCredentialInfoURL(ValidSources.GoogleDrive),
     errorHandlingFetcher,
     { refreshInterval: 5000 }
   );
