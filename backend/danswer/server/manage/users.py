@@ -117,11 +117,11 @@ def set_user_role(
 
 @router.get("/manage/users/accepted")
 def list_accepted_users(
-    q: str | None = None,
+    q: str | None = Query(default=None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=1000),
-    status: UserStatus | None = None,
-    roles: list[UserRole] = [],
+    roles: list[UserRole] = Query(default=[]),
+    status: UserStatus | None = Query(default=None),
     user: User | None = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
 ) -> PaginatedReturn[FullUserSnapshot]:
@@ -140,9 +140,9 @@ def list_accepted_users(
     return PaginatedReturn(
         items=[
             FullUserSnapshot.from_user_model(user)
-            for user in filtered_users_data["users"]
+            for user in filtered_users_data["items"]
         ],
-        total_items=filtered_users_data["total_count"],
+        total_items=filtered_users_data["total_items"],
     )
 
 

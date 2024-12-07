@@ -33,7 +33,6 @@ import { usePaginatedData } from "@/hooks/usePaginatedData";
 import { LoadingAnimation } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PageSelector } from "@/components/PageSelector";
-// import UserPagination from "@/components/admin/users/UserPagination";
 
 interface Props {
   setPopup: (spec: PopupSpec) => void;
@@ -43,6 +42,7 @@ interface Props {
 const ITEMS_PER_PAGE = 10;
 const PAGES_PER_BATCH = 2;
 
+// Creates a dropdown for changing the role of a user
 const UserRoleDropdown = ({
   user,
   onSuccess,
@@ -147,7 +147,7 @@ const UserRoleDropdown = ({
   );
 };
 
-const DeactivaterButton = ({
+const DeactivateUserButton = ({
   user,
   deactivate,
   setPopup,
@@ -242,6 +242,14 @@ const DeleteUserButton = ({
 };
 
 const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
+  const [filters, setFilters] = useState<{
+    status?: UserStatus.live | UserStatus.deactivated;
+    roles?: UserRole[];
+  }>({});
+
+  console.log("status", filters.status);
+  console.log("roles", filters.roles);
+
   const {
     currentPageData: pageOfUsers,
     isLoading,
@@ -255,6 +263,7 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
     pagesPerBatch: PAGES_PER_BATCH,
     endpoint: "/api/manage/users/accepted",
     query: q,
+    filter: filters,
   });
 
   if (isLoading) {
@@ -289,6 +298,81 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
         currentPage={currentPage}
         onPageChange={goToPage}
       />
+      <div className="flex items-center gap-4 py-4">
+        <Select
+          value={filters.status || "all"}
+          onValueChange={(value) =>
+            setFilters((prev) => {
+              if (value === "all") {
+                const { status, ...rest } = prev;
+                return rest;
+              }
+              return {
+                ...prev,
+                status: value as UserStatus.live | UserStatus.deactivated,
+              };
+            })
+          }
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="live">Active</SelectItem>
+            <SelectItem value="deactivated">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value="roles" // Static value since this is just a container for checkboxes
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue>
+              {filters.roles?.length
+                ? `${filters.roles.length} role(s) selected`
+                : "All Roles"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(USER_ROLE_LABELS)
+              .filter(([role]) => role !== UserRole.EXT_PERM_USER)
+              .map(([role, label]) => (
+                <div
+                  key={role}
+                  className="flex items-center space-x-2 px-2 py-1.5"
+                >
+                  <input
+                    type="checkbox"
+                    checked={filters.roles?.includes(role as UserRole) || false}
+                    onChange={() => {
+                      setFilters((prev) => {
+                        const roleEnum = role as UserRole;
+                        const currentRoles = prev.roles || [];
+
+                        if (currentRoles.includes(roleEnum)) {
+                          // Remove role if already selected
+                          return {
+                            ...prev,
+                            roles: currentRoles.filter((r) => r !== roleEnum),
+                          };
+                        } else {
+                          // Add role if not selected
+                          return {
+                            ...prev,
+                            roles: [...currentRoles, roleEnum],
+                          };
+                        }
+                      });
+                    }}
+                  />
+                  <label className="text-sm font-normal">{label}</label>
+                </div>
+              ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <Table className="overflow-visible">
         <TableHeader>
           <TableRow>
@@ -320,7 +404,7 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-x-2">
-                    <DeactivaterButton
+                    <DeactivateUserButton
                       user={user}
                       deactivate={user.status === UserStatus.live}
                       setPopup={setPopup}

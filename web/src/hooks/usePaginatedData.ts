@@ -92,14 +92,20 @@ export function usePaginatedData<T>({
         if (query) params.set("q", query);
 
         if (filter) {
+          console.log("filter in usePaginatedData", filter);
           for (const [key, value] of Object.entries(filter)) {
             if (Array.isArray(value)) {
+              console.log("value in roles array in usePaginatedData", value);
               value.forEach((str) => params.append(key, str));
             } else {
               params.set(key, value.toString());
             }
           }
         }
+        // Log the full URL that will be fetched
+        console.log("Fetching URL:", `${endpoint}?${params.toString()}`);
+        // Or log just the params
+        console.log("URL Parameters:", Object.fromEntries(params.entries()));
 
         const response = await fetch(`${endpoint}?${params.toString()}`);
         if (!response.ok) throw new Error("Failed to fetch data");
@@ -161,12 +167,23 @@ export function usePaginatedData<T>({
       fetchBatchData(batchNum);
     }
 
-    if (!cachedBatches[nextBatchNum]) {
+    // Possible total number of items including the next batch
+    const totalItemsIncludingNextBatch =
+      nextBatchNum * pagesPerBatch * itemsPerPage;
+    // Preload next batch if we're not on the last batch
+    if (
+      totalItemsIncludingNextBatch <= totalItems &&
+      !cachedBatches[nextBatchNum]
+    ) {
       fetchBatchData(nextBatchNum);
     }
+
+    // Load previous batch if missing
     if (!cachedBatches[prevBatchNum]) {
       fetchBatchData(prevBatchNum);
     }
+
+    // Ensure first batch is always loaded
     if (!cachedBatches[0]) {
       fetchBatchData(0);
     }
