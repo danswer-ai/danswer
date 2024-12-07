@@ -274,22 +274,7 @@ function FileItem({
                   onClick={startEditing}
                   setIsPopoverOpen={setIsPopoverOpen}
                 />
-                <PopoverItem
-                  icon={<ClipboardPenLine />}
-                  text="Make a copy"
-                  onClick={() => {
-                    /* Implement copy logic */
-                  }}
-                  setIsPopoverOpen={setIsPopoverOpen}
-                />
-                <PopoverItem
-                  icon={<ShareIcon />}
-                  text="Share"
-                  onClick={() => {
-                    /* Implement share logic */
-                  }}
-                  setIsPopoverOpen={setIsPopoverOpen}
-                />
+
                 <PopoverItem
                   icon={<FolderIcon />}
                   text="Organize"
@@ -306,7 +291,7 @@ function FileItem({
                 />
                 <PopoverItem
                   icon={<TrashIcon />}
-                  text="Move to trash"
+                  text="Delete"
                   onClick={() => onDeleteItem(file.id, false)}
                   setIsPopoverOpen={setIsPopoverOpen}
                 />

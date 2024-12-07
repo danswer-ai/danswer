@@ -35,7 +35,6 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import LargeBinary
 from sqlalchemy.types import TypeDecorator
-from sqlalchemy import CheckConstraint
 
 from danswer.auth.schemas import UserRole
 from danswer.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
@@ -126,6 +125,7 @@ class UserFolder(Base):
     )
     children: Mapped[list["UserFolder"]] = relationship(back_populates="parent")
     files: Mapped[list["UserFile"]] = relationship(back_populates="folder")
+    chat_sessions: Mapped[list["ChatSession"]] = relationship(back_populates="folder")
 
 
 class UserFile(Base):
@@ -821,9 +821,6 @@ class IndexAttempt(Base):
     connector_credential_pair: Mapped[ConnectorCredentialPair] = relationship(
         "ConnectorCredentialPair", back_populates="index_attempts"
     )
-    user_file: Mapped[UserFile | None] = relationship(
-        "UserFile", back_populates="index_attempts"
-    )
 
     search_settings: Mapped[SearchSettings | None] = relationship(
         "SearchSettings", back_populates="index_attempts"
@@ -840,15 +837,6 @@ class IndexAttempt(Base):
             "ix_index_attempt_latest_for_connector_credential_pair",
             "connector_credential_pair_id",
             "time_created",
-        ),
-        Index(
-            "ix_index_attempt_latest_for_user_file",
-            "user_file_id",
-            "time_created",
-        ),
-        CheckConstraint(
-            "(connector_credential_pair_id IS NULL) != (user_file_id IS NULL)",
-            name="check_exactly_one_source",
         ),
     )
 

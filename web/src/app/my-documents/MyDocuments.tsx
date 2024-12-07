@@ -10,6 +10,8 @@ import { FolderBreadcrumb } from "./FolderBreadcrumb";
 import { FolderContents } from "./FolderContents";
 import TextView from "@/components/chat_search/TextView";
 import { MinimalDanswerDocument } from "@/lib/search/interfaces";
+import { FilePicker } from "./FilePicker";
+import { Button } from "@/components/ui/button";
 
 interface FolderResponse {
   children: { name: string; id: number }[];
@@ -31,6 +33,7 @@ export function MyDocuments() {
 
   const [presentingDocument, setPresentingDocument] =
     useState<MinimalDanswerDocument | null>(null);
+  const [isFilePickerOpen, setIsFilePickerOpen] = useState(false);
 
   useEffect(() => {
     const folderId = parseInt(searchParams.get("path") || "-1", 10);
@@ -190,6 +193,17 @@ export function MyDocuments() {
       });
     }
   };
+
+  const handleSaveContext = (selectedItems: string[]) => {
+    // Handle saving the selected items
+    console.log("Saving context for:", selectedItems);
+  };
+
+  const handleDelete = (selectedItems: string[]) => {
+    // Handle deleting the selected items
+    console.log("Deleting:", selectedItems);
+  };
+
   return (
     <div className="container mx-auto p-4">
       {presentingDocument && (
@@ -235,6 +249,15 @@ export function MyDocuments() {
           )}
         </CardContent>
       </Card>
+      <Button onClick={() => setIsFilePickerOpen(true)}>
+        Open File Picker
+      </Button>
+      <FilePicker
+        isOpen={isFilePickerOpen}
+        onClose={() => setIsFilePickerOpen(false)}
+        onSave={handleSaveContext}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }

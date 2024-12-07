@@ -59,10 +59,7 @@ def get_folders(
 ) -> List[FolderResponse]:
     user_id = user.id if user else None
     folders = db_session.query(UserFolder).filter(UserFolder.user_id == user_id).all()
-    return [
-        FolderResponse(id=folder.id, name=folder.name, parent_id=folder.parent_id)
-        for folder in folders
-    ]
+    return [FolderResponse.from_model(folder) for folder in folders]
 
 
 @router.get("/user/folder/{folder_id}", response_model=FolderFullDetailResponse)
@@ -87,16 +84,8 @@ def get_folder(
             name="Default Folder",
             parent_id=None,
             id=-1,
-            children=[
-                FolderResponse(id=child.id, name=child.name, parent_id=child.parent_id)
-                for child in children
-            ],
-            files=[
-                FileResponse(
-                    id=file.id, name=file.name, document_id=file.document_id
-                ).dict()
-                for file in files
-            ],
+            children=[FolderResponse.from_model(child).dict() for child in children],
+            files=[FileResponse.from_model(file).dict() for file in files],
             parents=[],
         )
     else:
@@ -119,9 +108,7 @@ def get_folder(
             if parent:
                 parents.insert(
                     0,
-                    FolderResponse(
-                        id=parent.id, name=parent.name, parent_id=parent.parent_id
-                    ),
+                    FolderResponse.from_model(parent).dict(),
                 )
                 current_folder = parent
             else:
@@ -131,15 +118,9 @@ def get_folder(
             parent_id=folder.parent_id,
             id=folder.id,
             children=[
-                FolderResponse(id=child.id, name=child.name, parent_id=child.parent_id)
-                for child in folder.children
+                FolderResponse.from_model(child).dict() for child in folder.children
             ],
-            files=[
-                FileResponse(
-                    id=file.id, name=file.name, document_id=file.document_id
-                ).dict()
-                for file in folder.files
-            ],
+            files=[FileResponse.from_model(file).dict() for file in folder.files],
             parents=parents,
         )
 
@@ -187,16 +168,8 @@ def update_folder(
         id=folder.id,
         name=folder.name,
         parent_id=folder.parent_id,
-        children=[
-            FolderResponse(id=child.id, name=child.name, parent_id=child.parent_id)
-            for child in folder.children
-        ],
-        files=[
-            FileResponse(
-                id=file.id, name=file.name, document_id=file.document_id
-            ).dict()
-            for file in folder.files
-        ],
+        children=[FolderResponse.from_model(child) for child in folder.children],
+        files=[FileResponse.from_model(file) for file in folder.files],
     )
 
 
@@ -236,7 +209,7 @@ def move_folder(
         raise HTTPException(status_code=404, detail="Folder not found")
     folder.parent_id = new_parent_id
     db_session.commit()
-    return FolderResponse(id=folder.id, name=folder.name, parent_id=folder.parent_id)
+    return FolderResponse.from_model(folder)
 
 
 @router.delete("/user/file/{file_id}", response_model=MessageResponse)
@@ -275,9 +248,23 @@ def move_file(
         raise HTTPException(status_code=404, detail="File not found")
     file.parent_folder_id = new_folder_id
     db_session.commit()
-    return FileResponse(
-        id=file.id,
-        name=file.name,
-        parent_folder_id=file.parent_folder_id,
-        document_id=file.document_id,
+    return FileResponse.from_model(file)
+
+
+class FileSystemResponse(BaseModel):
+    folders: list[FolderResponse]
+    files: list[FileResponse]
+
+
+@router.get("/user/file-system")
+def get_file_system(
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> FileSystemResponse:
+    user_id = user.id if user else None
+    folders = db_session.query(UserFolder).filter(UserFolder.user_id == user_id).all()
+    files = db_session.query(UserFile).filter(UserFile.user_id == user_id).all()
+    return FileSystemResponse(
+        folders=[FolderResponse.from_model(folder) for folder in folders],
+        files=[FileResponse.from_model(file) for file in files],
     )
