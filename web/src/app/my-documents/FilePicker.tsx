@@ -60,8 +60,6 @@ export const FilePicker: React.FC<FilePickerProps> = ({
     // for (const dir of currentPath) {
     //   current = current.find((item) => item.name === dir)?.children || [];
     // }
-    // console.log("current");
-    // console.log(current);
     return current || [];
   };
 

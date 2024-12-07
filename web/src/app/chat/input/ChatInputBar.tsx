@@ -1,5 +1,12 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { FiPlusCircle, FiPlus, FiInfo, FiX, FiSearch } from "react-icons/fi";
+import {
+  FiPlusCircle,
+  FiPlus,
+  FiInfo,
+  FiX,
+  FiSearch,
+  FiFolder,
+} from "react-icons/fi";
 import { ChatInputOption } from "./ChatInputOption";
 import { Persona } from "@/app/admin/assistants/interfaces";
 import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
@@ -37,8 +44,6 @@ import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 import { IconType } from "react-icons";
 import { LlmTab } from "../modal/configuration/LlmTab";
 import { XIcon } from "lucide-react";
-import { FilterPills } from "./FilterPills";
-import { Tag } from "@/lib/types";
 import FiltersDisplay from "./FilterDisplay";
 
 const MAX_INPUT_HEIGHT = 200;
@@ -70,6 +75,7 @@ interface ChatInputBarProps {
   textAreaRef: React.RefObject<HTMLTextAreaElement>;
   chatSessionId?: string;
   toggleFilters?: () => void;
+  toggleMyDocuments: () => void;
 }
 
 export function ChatInputBar({
@@ -100,6 +106,7 @@ export function ChatInputBar({
   chatSessionId,
   inputPrompts,
   toggleFilters,
+  toggleMyDocuments,
 }: ChatInputBarProps) {
   useEffect(() => {
     const textarea = textAreaRef.current;
@@ -565,6 +572,14 @@ export function ChatInputBar({
                     }
                   };
                   input.click();
+                }}
+              />
+              <ChatInputOption
+                flexPriority="stiff"
+                name="My Documents"
+                Icon={FiFolder}
+                onClick={() => {
+                  toggleMyDocuments();
                 }}
               />
               {toggleFilters && (

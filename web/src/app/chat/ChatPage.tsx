@@ -109,6 +109,7 @@ import AssistantBanner from "../../components/assistants/AssistantBanner";
 import TextView from "@/components/chat_search/TextView";
 import AssistantSelector from "@/components/chat_search/AssistantSelector";
 import { Modal } from "@/components/Modal";
+import { FilePicker } from "../my-documents/FilePicker";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -197,6 +198,11 @@ export function ChatPage({
     SEARCH_PARAM_NAMES.STRUCTURED_MODEL
   );
 
+  const [myDocumentsToggled, setMyDocumentsToggled] = useState(false);
+
+  const toggleMyDocuments = () => {
+    setMyDocumentsToggled(!myDocumentsToggled);
+  };
   // Effect to handle sendOnLoad
   useEffect(() => {
     if (sendOnLoad) {
@@ -1956,6 +1962,14 @@ export function ChatPage({
       {popup}
 
       <ChatPopup />
+      {myDocumentsToggled && (
+        <FilePicker
+          isOpen={myDocumentsToggled}
+          onClose={() => setMyDocumentsToggled(false)}
+          onSave={() => {}}
+          onDelete={() => {}}
+        />
+      )}
 
       {currentFeedback && (
         <FeedbackModal
@@ -2724,6 +2738,7 @@ export function ChatPage({
                               </div>
                             )}
                             <ChatInputBar
+                              toggleMyDocuments={toggleMyDocuments}
                               removeDocs={() => {
                                 clearSelectedDocuments();
                               }}

@@ -252,12 +252,6 @@ export function MyDocuments() {
       <Button onClick={() => setIsFilePickerOpen(true)}>
         Open File Picker
       </Button>
-      <FilePicker
-        isOpen={isFilePickerOpen}
-        onClose={() => setIsFilePickerOpen(false)}
-        onSave={handleSaveContext}
-        onDelete={handleDelete}
-      />
     </div>
   );
 }
