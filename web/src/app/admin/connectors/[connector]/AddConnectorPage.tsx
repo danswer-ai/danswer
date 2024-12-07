@@ -19,7 +19,11 @@ import AdvancedFormPage from "./pages/Advanced";
 import DynamicConnectionForm from "./pages/DynamicConnectorCreationForm";
 import CreateCredential from "@/components/credentials/actions/CreateCredential";
 import ModifyCredential from "@/components/credentials/actions/ModifyCredential";
-import { ConfigurableSources, ValidSources } from "@/lib/types";
+import {
+  ConfigurableSources,
+  oauthSupportedSources,
+  ValidSources,
+} from "@/lib/types";
 import { Credential, credentialTemplates } from "@/lib/connectors/credentials";
 import {
   ConnectionConfiguration,
@@ -154,13 +158,7 @@ export default function AddConnector({
   const configuration: ConnectionConfiguration = connectorConfigs[connector];
 
   // Form context and popup management
-  const {
-    setFormStep,
-    setAllowCreate: setAllowCreate,
-    formStep,
-    nextFormStep,
-    prevFormStep,
-  } = useFormContext();
+  const { setFormStep, setAllowCreate, formStep } = useFormContext();
   const { popup, setPopup } = usePopup();
 
   // Hooks for Google Drive and Gmail credentials
@@ -452,18 +450,22 @@ export default function AddConnector({
                         >
                           Create New
                         </button>
-
                         {/* Button to sign in via OAuth */}
-                        <button
-                          onClick={handleAuthorize}
-                          className="mt-6 text-sm bg-blue-500 px-2 py-1.5 flex text-text-200 flex-none rounded"
-                          disabled={isAuthorizing}
-                          hidden={!isAuthorizeVisible}
-                        >
-                          {isAuthorizing
-                            ? "Authorizing..."
-                            : `Authorize with ${getSourceDisplayName(connector)}`}
-                        </button>
+                        {oauthSupportedSources.includes(connector) &&
+                          NEXT_PUBLIC_CLOUD_ENABLED && (
+                            <button
+                              onClick={handleAuthorize}
+                              className="mt-6 text-sm bg-blue-500 px-2 py-1.5 flex text-text-200 flex-none rounded"
+                              disabled={isAuthorizing}
+                              hidden={!isAuthorizeVisible}
+                            >
+                              {isAuthorizing
+                                ? "Authorizing..."
+                                : `Authorize with ${getSourceDisplayName(
+                                    connector
+                                  )}`}
+                            </button>
+                          )}
                       </div>
                     )}
 
