@@ -419,9 +419,9 @@ INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
 # exception without aborting the attempt.
 INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
 
-# The primary worker will terminate any outstanding indexing attempts
-# that have run for longer than this timeout (in seconds). 0 disables.
-INDEXING_MONITORING_HARD_TIMEOUT = 0
+# The primary worker will signal termination on (and eventually reset in Redis) any
+# outstanding indexing attempts that have run for longer than this timeout. 0 disables.
+INDEXING_MONITORING_HARD_TIMEOUT = 0  # in seconds
 
 #####
 # Miscellaneous
