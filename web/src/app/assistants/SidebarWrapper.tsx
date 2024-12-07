@@ -2,8 +2,6 @@
 
 import { HistorySidebar } from "@/app/chat/sessionSidebar/HistorySidebar";
 import { ChatSession } from "@/app/chat/interfaces";
-import { Folder } from "@/app/chat/folders/interfaces";
-import { User } from "@/lib/types";
 import Cookies from "js-cookie";
 import { SIDEBAR_TOGGLED_COOKIE_NAME } from "@/components/resizable/constants";
 import {
@@ -23,9 +21,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 interface SidebarWrapperProps<T extends object> {
   chatSessions?: ChatSession[];
-  folders?: Folder[];
   initiallyToggled: boolean;
-  openedFolders?: { [key: number]: boolean };
   page: pageType;
   size?: "sm" | "lg";
   children: ReactNode;
@@ -34,8 +30,7 @@ interface SidebarWrapperProps<T extends object> {
 export default function SidebarWrapper<T extends object>({
   chatSessions,
   initiallyToggled,
-  folders,
-  openedFolders,
+
   page,
   size = "sm",
   children,
@@ -126,8 +121,6 @@ export default function SidebarWrapper<T extends object>({
             toggled={toggledSidebar}
             existingChats={chatSessions}
             currentChatSession={null}
-            folders={folders}
-            openedFolders={openedFolders}
           />
         </div>
       </div>

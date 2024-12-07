@@ -19,14 +19,7 @@ export default async function GalleryPage(props: {
     redirect(data.redirect);
   }
 
-  const {
-    user,
-    chatSessions,
-    folders,
-    openedFolders,
-    toggleSidebar,
-    shouldShowWelcomeModal,
-  } = data;
+  const { user, chatSessions, toggleSidebar, shouldShowWelcomeModal } = data;
 
   return (
     <>
@@ -39,8 +32,6 @@ export default async function GalleryPage(props: {
       <WrappedAssistantsGallery
         initiallyToggled={toggleSidebar}
         chatSessions={chatSessions}
-        folders={folders}
-        openedFolders={openedFolders}
       />
     </>
   );

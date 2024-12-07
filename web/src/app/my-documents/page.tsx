@@ -14,14 +14,12 @@ export default async function GalleryPage(props: {
     redirect(data.redirect);
   }
 
-  const { chatSessions, folders, openedFolders, toggleSidebar } = data;
+  const { chatSessions, toggleSidebar } = data;
 
   return (
     <WrappedDocuments
       initiallyToggled={toggleSidebar}
       chatSessions={chatSessions}
-      folders={folders}
-      openedFolders={openedFolders}
     />
   );
 }

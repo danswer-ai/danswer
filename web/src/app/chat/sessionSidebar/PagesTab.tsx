@@ -1,10 +1,6 @@
 import { ChatSession } from "../interfaces";
 import { groupSessionsByDateRange } from "../lib";
 import { ChatSessionDisplay } from "./ChatSessionDisplay";
-import { removeChatFromFolder } from "../folders/FolderManagement";
-import { FolderList } from "../folders/FolderList";
-import { Folder } from "../folders/interfaces";
-import { CHAT_SESSION_ID_KEY, FOLDER_ID_KEY } from "@/lib/drag/constants";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

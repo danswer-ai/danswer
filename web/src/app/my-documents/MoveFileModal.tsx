@@ -44,7 +44,9 @@ export function MoveFileModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div className="bg-white rounded-lg p-6 w-96">
-        <h2 className="text-xl font-semibold mb-4">Move "{fileName}"</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          Move &quot;{fileName}&quot;
+        </h2>
         <div className="mb-4">
           <p className="text-sm text-gray-600">Current location:</p>
           <p className="font-medium">{currentLocation.name}</p>
