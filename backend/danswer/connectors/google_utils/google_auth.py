@@ -116,6 +116,9 @@ def get_google_creds(
         ):
             authorized_user_info["client_id"] = OAUTH_GOOGLE_DRIVE_CLIENT_ID
             authorized_user_info["client_secret"] = OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
+        else:
+            authorized_user_info["client_id"] = credentials_dict["client_id"]
+            authorized_user_info["client_secret"] = credentials_dict["client_secret"]
 
         authorized_user_info["refresh_token"] = credentials_dict["refresh_token"]
 
