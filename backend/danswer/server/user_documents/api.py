@@ -17,6 +17,7 @@ from danswer.db.models import UserFolder
 from danswer.server.documents.connector import upload_files
 from danswer.server.documents.models import FileUploadResponse
 from danswer.server.user_documents.models import FileResponse
+from danswer.server.user_documents.models import FileSystemResponse
 from danswer.server.user_documents.models import FolderDetailResponse
 from danswer.server.user_documents.models import FolderFullDetailResponse
 from danswer.server.user_documents.models import FolderResponse
@@ -52,7 +53,9 @@ def create_folder(
     )
 
 
-@router.get("/user/folder", response_model=List[FolderResponse])
+@router.get(
+    "/user/folder",
+)
 def get_folders(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
@@ -62,7 +65,7 @@ def get_folders(
     return [FolderResponse.from_model(folder) for folder in folders]
 
 
-@router.get("/user/folder/{folder_id}", response_model=FolderFullDetailResponse)
+@router.get("/user/folder/{folder_id}")
 def get_folder(
     folder_id: int,
     user: User | None = Depends(current_user),
@@ -147,7 +150,7 @@ def upload_user_files(
     return upload_response
 
 
-@router.put("/user/folder/{folder_id}", response_model=FolderDetailResponse)
+@router.put("/user/folder/{folder_id}")
 def update_folder(
     folder_id: int,
     name: str,
@@ -173,7 +176,7 @@ def update_folder(
     )
 
 
-@router.delete("/user/folder/{folder_id}", response_model=MessageResponse)
+@router.delete("/user/folder/{folder_id}")
 def delete_folder(
     folder_id: int,
     user: User = Depends(current_user),
@@ -192,7 +195,7 @@ def delete_folder(
     return MessageResponse(message="Folder deleted successfully")
 
 
-@router.put("/user/folder/{folder_id}/move", response_model=FolderResponse)
+@router.put("/user/folder/{folder_id}/move")
 def move_folder(
     folder_id: int,
     new_parent_id: int | None,
@@ -212,7 +215,7 @@ def move_folder(
     return FolderResponse.from_model(folder)
 
 
-@router.delete("/user/file/{file_id}", response_model=MessageResponse)
+@router.delete("/user/file/{file_id}")
 def delete_file(
     file_id: int,
     user: User = Depends(current_user),
@@ -231,7 +234,7 @@ def delete_file(
     return MessageResponse(message="File deleted successfully")
 
 
-@router.put("/user/file/{file_id}/move", response_model=FileResponse)
+@router.put("/user/file/{file_id}/move")
 def move_file(
     file_id: int,
     new_folder_id: int | None,
@@ -249,11 +252,6 @@ def move_file(
     file.parent_folder_id = new_folder_id
     db_session.commit()
     return FileResponse.from_model(file)
-
-
-class FileSystemResponse(BaseModel):
-    folders: list[FolderResponse]
-    files: list[FileResponse]
 
 
 @router.get("/user/file-system")

@@ -47,3 +47,8 @@ class FileResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+
+
+class FileSystemResponse(BaseModel):
+    folders: list[FolderResponse]
+    files: list[FileResponse]
