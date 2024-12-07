@@ -106,18 +106,13 @@ def list_all_users(
     return db_session.scalars(stmt).unique().all()
 
 
-def get_page_of_filtered_users(
-    db_session: Session,
-    page_size: int,
-    page: int,
+def _get_accepted_user_where_clause(
     email_filter_string: str = "",
     status_filter: UserStatus | None = None,
     roles_filter: list[UserRole] = [],
     include_external: bool = False,
-) -> dict[str, list[User] | int]:
-    users_stmt = select(User)
-
-    # Init where clause and remove any
+) -> list:
+    # Init where clause and remove any users with API email domains
     where_clause = [not_(User.email.endswith(DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN))]
 
     if not include_external:
@@ -130,24 +125,57 @@ def get_page_of_filtered_users(
         where_clause.append(User.role.in_(roles_filter))
 
     if status_filter:
-        # status_filter is either "live" or "deactivated" and User.Status.LIVE = "live"
-        # User.is_active is either True or False, which represent "live" and "deactivated" respectively
-        # So when status_filter is "live" the inner condition evaluates True, if status_filter is "deactivated" we get false.
-        # This leaves us with User.is_active equality check against a boolean, if true only retrive active or "live" users,
-        # if false only retrive inactive or "deactivated" users.
+        # When status_filter is "live" the inner condition evaluates True, if status_filter is "deactivated" we get false.
+        # So when status_filter = "live" we select only active users
+        # and when status_filter = "deactivated" we select only inactive users
         where_clause.append(User.is_active == (status_filter == UserStatus.LIVE))
 
+    return where_clause
+
+
+def get_page_of_filtered_users(
+    db_session: Session,
+    page_size: int,
+    page: int,
+    email_filter_string: str = "",
+    status_filter: UserStatus | None = None,
+    roles_filter: list[UserRole] = [],
+    include_external: bool = False,
+) -> Sequence[User]:
+    users_stmt = select(User)
+
+    where_clause = _get_accepted_user_where_clause(
+        email_filter_string=email_filter_string,
+        status_filter=status_filter,
+        roles_filter=roles_filter,
+        include_external=include_external,
+    )
     # Apply pagination
     users_stmt = users_stmt.offset((page - 1) * page_size).limit(page_size)
-
+    # Apply filtering
     users_stmt = users_stmt.where(*where_clause)
-    users = db_session.scalars(users_stmt).unique().all()
 
-    # Get total count of filtered users
-    total_count_stmt = select(func.count()).select_from(User).where(*where_clause)
-    total_count = db_session.scalar(total_count_stmt)
+    return db_session.scalars(users_stmt).unique().all()
 
-    return {"items": users, "total_items": total_count}
+
+def get_total_filtered_users_count(
+    db_session: Session,
+    email_filter_string: str = "",
+    status_filter: UserStatus | None = None,
+    roles_filter: list[UserRole] = [],
+    include_external: bool = False,
+) -> int:
+    where_clause = _get_accepted_user_where_clause(
+        email_filter_string=email_filter_string,
+        status_filter=status_filter,
+        roles_filter=roles_filter,
+        include_external=include_external,
+    )
+    total_count_stmt = select(func.count()).select_from(User)
+    # Apply filtering
+    total_count_stmt = total_count_stmt.where(*where_clause)
+
+    return db_session.scalar(total_count_stmt)
 
 
 def get_users_by_emails(

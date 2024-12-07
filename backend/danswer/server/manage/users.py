@@ -48,6 +48,7 @@ from danswer.db.models import SamlAccount
 from danswer.db.models import User
 from danswer.db.models import User__UserGroup
 from danswer.db.users import get_page_of_filtered_users
+from danswer.db.users import get_total_filtered_users_count
 from danswer.db.users import get_user_by_email
 from danswer.db.users import list_all_users
 from danswer.db.users import validate_user_role_update
@@ -128,7 +129,7 @@ def list_accepted_users(
     if not q:
         q = ""
 
-    filtered_users_data = get_page_of_filtered_users(
+    filtered_accepted_users = get_page_of_filtered_users(
         db_session=db_session,
         page_size=page_size,
         page=page,
@@ -137,12 +138,18 @@ def list_accepted_users(
         roles_filter=roles,
     )
 
+    total_accepted_users_count = get_total_filtered_users_count(
+        db_session=db_session,
+        email_filter_string=q,
+        status_filter=status,
+        roles_filter=roles,
+    )
+
     return PaginatedReturn(
         items=[
-            FullUserSnapshot.from_user_model(user)
-            for user in filtered_users_data["items"]
+            FullUserSnapshot.from_user_model(user) for user in filtered_accepted_users
         ],
-        total_items=filtered_users_data["total_items"],
+        total_items=total_accepted_users_count,
     )
 
 
