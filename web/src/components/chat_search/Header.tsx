@@ -133,7 +133,7 @@ export default function FunctionalHeader({
             }
           >
             <div className="cursor-pointer mr-4 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
-              {/* <NewChatIcon size={20} /> */}
+              <NewChatIcon size={20} />
             </div>
           </Link>
         </div>
