@@ -15,7 +15,6 @@ import { AdminPageTitle } from "@/components/admin/Title";
 import { Button } from "@/components/ui/button";
 
 import { useUser } from "@/components/user/UserProvider";
-import { Separator } from "@/components/ui/separator";
 
 const Main = () => {
   const { popup, setPopup } = usePopup();
@@ -30,7 +29,7 @@ const Main = () => {
   } = useConnectorCredentialIndexingStatus();
 
   const {
-    data: users,
+    data: { items: accepted_users } = { items: [] },
     isLoading: userIsLoading,
     error: usersError,
   } = useUsers();
@@ -52,7 +51,7 @@ const Main = () => {
     return <div className="text-red-600">Error loading connectors</div>;
   }
 
-  if (usersError || !users) {
+  if (usersError || !accepted_users) {
     return <div className="text-red-600">Error loading users</div>;
   }
 
@@ -86,7 +85,7 @@ const Main = () => {
             setShowForm(false);
           }}
           setPopup={setPopup}
-          users={users.accepted}
+          users={accepted_users}
           ccPairs={ccPairs}
         />
       )}

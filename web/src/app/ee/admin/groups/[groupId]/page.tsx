@@ -21,7 +21,7 @@ const Page = (props: { params: Promise<{ groupId: string }> }) => {
     refreshUserGroup,
   } = useSpecificUserGroup(params.groupId);
   const {
-    data: users,
+    data: { items: accepted_users } = { items: [] },
     isLoading: userIsLoading,
     error: usersError,
   } = useUsers();
@@ -44,7 +44,7 @@ const Page = (props: { params: Promise<{ groupId: string }> }) => {
   if (!userGroup || userGroupError) {
     return <div>Error loading user group</div>;
   }
-  if (!users || usersError) {
+  if (!accepted_users || usersError) {
     return <div>Error loading users</div>;
   }
   if (!ccPairs || ccPairsError) {
@@ -62,7 +62,7 @@ const Page = (props: { params: Promise<{ groupId: string }> }) => {
 
       {userGroup ? (
         <GroupDisplay
-          users={users.accepted}
+          users={accepted_users}
           ccPairs={ccPairs}
           userGroup={userGroup}
           refreshUserGroup={refreshUserGroup}
