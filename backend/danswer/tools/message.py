@@ -25,6 +25,9 @@ class ToolCallSummary(BaseModel__v1):
     tool_call_request: AIMessage
     tool_call_result: ToolMessage
 
+    class Config:
+        arbitrary_types_allowed = True
+
 
 def tool_call_tokens(
     tool_call_summary: ToolCallSummary, llm_tokenizer: BaseTokenizer
