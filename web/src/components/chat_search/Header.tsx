@@ -75,7 +75,7 @@ export default function FunctionalHeader({
   };
   return (
     <div className="left-0  sticky top-0 z-20 w-full relative flex">
-      <div className="mt-2 cursor-pointer text-text-700 relative flex w-full">
+      <div className="h-12  items-end flex  cursor-pointer text-text-700 relative flex w-full">
         <LogoType
           assistantId={currentChatSession?.persona_id}
           page={page}
@@ -110,7 +110,7 @@ export default function FunctionalHeader({
           />
         </div>
 
-        <div className="absolute right-0 top-0 flex gap-x-2">
+        <div className="absolute right-0 top-0 h-12 items-end flex gap-x-2">
           {setSharingModalVisible && (
             <div
               onClick={() => setSharingModalVisible(true)}
@@ -133,7 +133,7 @@ export default function FunctionalHeader({
             }
           >
             <div className="cursor-pointer mr-4 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
-              <NewChatIcon size={20} />
+              {/* <NewChatIcon size={20} /> */}
             </div>
           </Link>
         </div>
