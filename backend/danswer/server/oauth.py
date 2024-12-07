@@ -212,6 +212,7 @@ class GoogleDriveOAuth:
     TOKEN_URL = "https://oauth2.googleapis.com/token"
 
     # SCOPE is per https://docs.danswer.dev/connectors/google-drive
+    # TODO: Merge with or use google_utils.GOOGLE_SCOPES
     SCOPE = (
         "https://www.googleapis.com/auth/drive.readonly%20"
         "https://www.googleapis.com/auth/drive.metadata.readonly%20"
@@ -299,7 +300,7 @@ def prepare_authorization_request(
     # elif connector == DocumentSource.JIRA:
     #     oauth_url = JiraCloudOAuth.generate_dev_oauth_url(oauth_state)
     elif connector == DocumentSource.GOOGLE_DRIVE:
-        oauth_url = GoogleDriveOAuth.generate_dev_oauth_url(oauth_state)
+        oauth_url = GoogleDriveOAuth.generate_oauth_url(oauth_state)
         session = GoogleDriveOAuth.session_dump_json(
             email=user.email, redirect_on_success=redirect_on_success
         )
@@ -564,7 +565,7 @@ def handle_google_drive_oauth_callback(
                 "client_id": GoogleDriveOAuth.CLIENT_ID,
                 "client_secret": GoogleDriveOAuth.CLIENT_SECRET,
                 "code": code,
-                "redirect_uri": GoogleDriveOAuth.DEV_REDIRECT_URI,
+                "redirect_uri": GoogleDriveOAuth.REDIRECT_URI,
                 "grant_type": "authorization_code",
             },
         )
