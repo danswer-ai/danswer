@@ -145,9 +145,6 @@ class UserFile(Base):
 
     user: Mapped["User"] = relationship(back_populates="files")
     folder: Mapped["UserFolder"] = relationship(back_populates="files")
-    index_attempts: Mapped[list["IndexAttempt"]] = relationship(
-        "IndexAttempt", back_populates="user_file"
-    )
 
 
 class OAuthAccount(SQLAlchemyBaseOAuthAccountTableUUID, Base):
@@ -198,9 +195,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
     chat_sessions: Mapped[list["ChatSession"]] = relationship(
         "ChatSession", back_populates="user"
-    )
-    chat_folders: Mapped[list["ChatFolder"]] = relationship(
-        "ChatFolder", back_populates="user"
     )
 
     prompts: Mapped[list["Prompt"]] = relationship("Prompt", back_populates="user")
@@ -783,13 +777,9 @@ class IndexAttempt(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    connector_credential_pair_id: Mapped[int | None] = mapped_column(
+    connector_credential_pair_id: Mapped[int] = mapped_column(
         ForeignKey("connector_credential_pair.id"),
-        nullable=True,
-    )
-    user_file_id: Mapped[int | None] = mapped_column(
-        ForeignKey("user_file.id"),
-        nullable=True,
+        nullable=False,
     )
 
     # Some index attempts that run from beginning will still have this as False
@@ -828,7 +818,7 @@ class IndexAttempt(Base):
         onupdate=func.now(),
     )
 
-    connector_credential_pair: Mapped[ConnectorCredentialPair | None] = relationship(
+    connector_credential_pair: Mapped[ConnectorCredentialPair] = relationship(
         "ConnectorCredentialPair", back_populates="index_attempts"
     )
     user_file: Mapped[UserFile | None] = relationship(
@@ -1041,7 +1031,7 @@ class ChatSession(Base):
         default=ChatSessionSharedStatus.PRIVATE,
     )
     folder_id: Mapped[int | None] = mapped_column(
-        ForeignKey("chat_folder.id"), nullable=True
+        ForeignKey("user_folder.id", ondelete="SET NULL"), nullable=True
     )
 
     current_alternate_model: Mapped[str | None] = mapped_column(String, default=None)
@@ -1071,8 +1061,8 @@ class ChatSession(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     user: Mapped[User] = relationship("User", back_populates="chat_sessions")
-    folder: Mapped["ChatFolder"] = relationship(
-        "ChatFolder", back_populates="chat_sessions"
+    folder: Mapped["UserFolder"] = relationship(
+        "UserFolder", back_populates="chat_sessions"
     )
     messages: Mapped[list["ChatMessage"]] = relationship(
         "ChatMessage", back_populates="chat_session"
@@ -1156,33 +1146,6 @@ class ChatMessage(Base):
         secondary=ChatMessage__StandardAnswer.__table__,
         back_populates="chat_messages",
     )
-
-
-class ChatFolder(Base):
-    """For organizing chat sessions"""
-
-    __tablename__ = "chat_folder"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    # Only null if auth is off
-    user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
-    )
-    name: Mapped[str | None] = mapped_column(String, nullable=True)
-    display_priority: Mapped[int] = mapped_column(Integer, nullable=True, default=0)
-
-    user: Mapped[User] = relationship("User", back_populates="chat_folders")
-    chat_sessions: Mapped[list["ChatSession"]] = relationship(
-        "ChatSession", back_populates="folder"
-    )
-
-    def __lt__(self, other: Any) -> bool:
-        if not isinstance(other, ChatFolder):
-            return NotImplemented
-        if self.display_priority == other.display_priority:
-            # Bigger ID (created later) show earlier
-            return self.id > other.id
-        return self.display_priority < other.display_priority
 
 
 """

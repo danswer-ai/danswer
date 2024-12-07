@@ -150,6 +150,13 @@ export function MyDocuments() {
     }
   };
 
+  const handleMoveItem = async (
+    itemId: number,
+    destinationFolderId: number
+  ) => {
+    console.log("Moving item", itemId, "to folder", destinationFolderId);
+  };
+
   const handleDownloadItem = async (documentId: string) => {
     try {
       const response = await fetch(
@@ -221,6 +228,7 @@ export function MyDocuments() {
               currentFolder={currentFolder}
               onDeleteItem={handleDeleteItem}
               onDownloadItem={handleDownloadItem}
+              onMoveItem={handleMoveItem}
             />
           ) : (
             <p>Loading...</p>

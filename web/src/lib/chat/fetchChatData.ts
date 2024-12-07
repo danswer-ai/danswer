@@ -18,7 +18,6 @@ import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
 import { LLMProviderDescriptor } from "@/app/admin/configuration/llm/interfaces";
-import { Folder } from "@/app/chat/folders/interfaces";
 import { cookies, headers } from "next/headers";
 import {
   SIDEBAR_TOGGLED_COOKIE_NAME,
@@ -36,8 +35,6 @@ interface FetchChatDataResult {
   documentSets: DocumentSet[];
   tags: Tag[];
   llmProviders: LLMProviderDescriptor[];
-  folders: Folder[];
-  openedFolders: Record<string, boolean>;
   defaultAssistantId?: number;
   toggleSidebar: boolean;
   finalDocumentSidebarInitialWidth?: number;
@@ -57,7 +54,6 @@ export async function fetchChatData(searchParams: {
     fetchSS("/chat/get-user-chat-sessions"),
     fetchSS("/query/valid-tags"),
     fetchLLMProvidersSS(),
-    fetchSS("/folder"),
     fetchSS("/input_prompt?include_public=true"),
   ];
 
@@ -86,8 +82,7 @@ export async function fetchChatData(searchParams: {
 
   const tagsResponse = results[5] as Response | null;
   const llmProviders = (results[6] || []) as LLMProviderDescriptor[];
-  const foldersResponse = results[7] as Response | null;
-  const userInputPromptsResponse = results[8] as Response | null;
+  const userInputPromptsResponse = results[7] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -186,18 +181,6 @@ export async function fetchChatData(searchParams: {
   // if no connectors are setup, only show personas that are pure
   // passthrough and don't do any retrieval
 
-  let folders: Folder[] = [];
-  if (foldersResponse?.ok) {
-    folders = (await foldersResponse.json()).folders as Folder[];
-  } else {
-    console.log(`Failed to fetch folders - ${foldersResponse?.status}`);
-  }
-
-  const openedFoldersCookie = requestCookies.get("openedFolders");
-  const openedFolders = openedFoldersCookie
-    ? JSON.parse(openedFoldersCookie.value)
-    : {};
-
   return {
     user,
     chatSessions,
@@ -206,8 +189,6 @@ export async function fetchChatData(searchParams: {
     documentSets,
     tags,
     llmProviders,
-    folders,
-    openedFolders,
     defaultAssistantId,
     finalDocumentSidebarInitialWidth,
     toggleSidebar,

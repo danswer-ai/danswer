@@ -52,8 +52,6 @@ from danswer.server.documents.cc_pair import router as cc_pair_router
 from danswer.server.documents.connector import router as connector_router
 from danswer.server.documents.credential import router as credential_router
 from danswer.server.documents.document import router as document_router
-from danswer.server.documents.indexing import router as indexing_router
-from danswer.server.features.folder.api import router as folder_router
 from danswer.server.features.input_prompt.api import (
     admin_router as admin_input_prompt_router,
 )
@@ -251,7 +249,6 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, connector_router)
     include_router_with_global_prefix_prepended(application, credential_router)
     include_router_with_global_prefix_prepended(application, cc_pair_router)
-    include_router_with_global_prefix_prepended(application, folder_router)
     include_router_with_global_prefix_prepended(application, search_settings_router)
     include_router_with_global_prefix_prepended(
         application, slack_bot_management_router
@@ -278,7 +275,6 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(
         application, token_rate_limit_settings_router
     )
-    include_router_with_global_prefix_prepended(application, indexing_router)
     include_router_with_global_prefix_prepended(
         application, get_full_openai_assistants_api_router()
     )

@@ -109,7 +109,6 @@ import AssistantBanner from "../../components/assistants/AssistantBanner";
 import TextView from "@/components/chat_search/TextView";
 import AssistantSelector from "@/components/chat_search/AssistantSelector";
 import { Modal } from "@/components/Modal";
-import { createPostponedAbortSignal } from "next/dist/server/app-render/dynamic-rendering";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -133,8 +132,6 @@ export function ChatPage({
     tags,
     documentSets,
     llmProviders,
-    folders,
-    openedFolders,
     userInputPrompts,
     defaultAssistantId,
     shouldShowWelcomeModal,
@@ -2106,17 +2103,13 @@ export function ChatPage({
               <div className="w-full relative">
                 <HistorySidebar
                   explicitlyUntoggle={explicitlyUntoggle}
-                  stopGenerating={stopGenerating}
                   reset={() => setMessage("")}
                   page="chat"
                   ref={innerSidebarElementRef}
                   toggleSidebar={toggleSidebar}
                   toggled={toggledSidebar && !settings?.isMobile}
-                  backgroundToggled={toggledSidebar || showDocSidebar}
                   existingChats={chatSessions}
                   currentChatSession={selectedChatSession}
-                  folders={folders}
-                  openedFolders={openedFolders}
                   removeToggle={removeToggle}
                   showShareModal={showShareModal}
                   showDeleteModal={showDeleteModal}
