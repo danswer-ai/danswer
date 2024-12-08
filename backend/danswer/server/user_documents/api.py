@@ -14,7 +14,7 @@ from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.models import UserFile
 from danswer.db.models import UserFolder
-from danswer.server.documents.connector import upload_files
+from danswer.db.my_documents import create_user_files
 from danswer.server.documents.models import FileUploadResponse
 from danswer.server.user_documents.models import FileResponse
 from danswer.server.user_documents.models import FileSystemResponse
@@ -135,19 +135,7 @@ def upload_user_files(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> FileUploadResponse:
-    upload_response = upload_files(files, db_session)
-    for file_path, file in zip(upload_response.file_paths, files):
-        new_file = UserFile(
-            user_id=user.id if user else None,
-            parent_folder_id=folder_id,
-            file_id=file_path,
-            document_id=file_path,  # We'll use the same ID for now
-            name=file.filename,
-        )
-        db_session.add(new_file)
-
-    db_session.commit()
-    return upload_response
+    return create_user_files(files, folder_id, user, db_session)
 
 
 @router.put("/user/folder/{folder_id}")

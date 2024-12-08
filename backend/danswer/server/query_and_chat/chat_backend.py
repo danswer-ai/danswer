@@ -44,6 +44,8 @@ from danswer.db.engine import get_session
 from danswer.db.feedback import create_chat_message_feedback
 from danswer.db.feedback import create_doc_retrieval_feedback
 from danswer.db.models import User
+from danswer.db.my_documents import create_user_files
+from danswer.db.my_documents import RECENT_DOCUMENTS_FOLDER_ID
 from danswer.db.persona import get_persona_by_id
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
@@ -588,7 +590,7 @@ def convert_to_jpeg(file: UploadFile) -> Tuple[io.BytesIO, str]:
 def upload_files_for_chat(
     files: list[UploadFile],
     db_session: Session = Depends(get_session),
-    _: User | None = Depends(current_user),
+    user: User | None = Depends(current_user),
 ) -> dict[str, list[FileDescriptor]]:
     image_content_types = {"image/jpeg", "image/png", "image/webp"}
     csv_content_types = {"text/csv"}
@@ -645,6 +647,9 @@ def upload_files_for_chat(
                 status_code=400,
                 detail="File size must be less than 20MB",
             )
+
+    # Create the user files in the recent documents folder
+    create_user_files(files, RECENT_DOCUMENTS_FOLDER_ID, user, db_session)
 
     file_store = get_default_file_store(db_session)
 

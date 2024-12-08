@@ -128,14 +128,22 @@ class UserFolder(Base):
     chat_sessions: Mapped[list["ChatSession"]] = relationship(back_populates="folder")
 
 
+class UserDocument(str, Enum):
+    CHAT = "chat"
+    RECENT = "recent"
+    FILE = "file"
+
+
 class UserFile(Base):
     __tablename__ = "user_file"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("user.id"), nullable=False)
     parent_folder_id: Mapped[int | None] = mapped_column(
         ForeignKey("user_folder.id"), nullable=True
     )
+    # file_type: Mapped[UserDocument] = mapped_column(Enum(UserDocument), native_enum=False, nullable=False)
+
     file_id: Mapped[str] = mapped_column(nullable=False)
     document_id: Mapped[str] = mapped_column(nullable=False)
     name: Mapped[str] = mapped_column(nullable=False)
