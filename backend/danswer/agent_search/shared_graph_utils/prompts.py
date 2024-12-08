@@ -1,4 +1,5 @@
-REWRITE_PROMPT_MULTI = """ \n
+
+REWRITE_PROMPT_MULTI_ORIGINAL = """ \n
     Please convert an initial user question into a 2-3 more appropriate search queries for retrievel from a
     document store. \n
     Here is the initial question:
@@ -7,6 +8,16 @@ REWRITE_PROMPT_MULTI = """ \n
     \n ------- \n
 
     Formulate the query: """
+
+
+REWRITE_PROMPT_MULTI = """ \n
+    Please create a list of 2-3 sample documents that could answer an original question. Each document should be about as long as the original question. \n
+    Here is the initial question:
+    \n ------- \n
+    {question}
+    \n ------- \n
+
+    Formulate the sample documents separated by '--' (Do not say 'Document 1: ...', just write the text): """
 
 BASE_RAG_PROMPT = """ \n
     You are an assistant for question-answering tasks. Use the context provided below - and only the

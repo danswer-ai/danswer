@@ -46,7 +46,7 @@ def sub_rewrite(state: BaseQAState) -> dict[str, Any]:
 
     print(f"llm_response: {llm_response}")
 
-    rewritten_queries = llm_response.split("\n")
+    rewritten_queries = llm_response.split("--")
     #rewritten_queries = [llm_response.split("\n")[0]]
 
     print(f"rewritten_queries: {rewritten_queries}")

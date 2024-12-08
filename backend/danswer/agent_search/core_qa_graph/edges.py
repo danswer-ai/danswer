@@ -28,7 +28,7 @@ def sub_continue_to_verifier(state: BaseQAState) -> Union[Hashable, list[Hashabl
 def sub_continue_to_retrieval(state: BaseQAState) -> Union[Hashable, list[Hashable]]:
     # Routes re-written queries to the (parallel) retrieval steps
     # Notice the 'Send()' API that takes care of the parallelization
-    rewritten_queries = state["sub_question_search_queries"].rewritten_queries
+    rewritten_queries = state["sub_question_search_queries"].rewritten_queries + [state["sub_question_str"]]
     return [
         Send(
             "sub_custom_retrieve",

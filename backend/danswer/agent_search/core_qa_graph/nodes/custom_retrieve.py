@@ -39,12 +39,22 @@ def sub_custom_retrieve(state: RetrieverState) -> dict[str, Any]:
             llm=llm,
             fast_llm=fast_llm,
             db_session=db_session,
-        ).reranked_sections
+        )
+        
+        reranked_docs = documents.reranked_sections
+
+        # initial metric to measure fit TODO: implement metric properly
+
+        top_1_score = reranked_docs[0].center_chunk.score
+        top_5_score = sum([doc.center_chunk.score for doc in reranked_docs[:5]]) / 5
+        top_10_score = sum([doc.center_chunk.score for doc in reranked_docs[:10]]) / 10
+
+        fit_score = 1/3 * (top_1_score + top_5_score + top_10_score)
 
     return {
-        "sub_question_base_retrieval_docs": documents,
+        "sub_question_base_retrieval_docs": reranked_docs,
         "log_messages": generate_log_message(
-            message="sub - custom_retrieve",
+            message=f"sub - custom_retrieve, fit_score: {fit_score}",
             node_start_time=node_start_time,
             graph_start_time=state["graph_start_time"],
         ),
