@@ -29,7 +29,7 @@ import { useState } from "react";
 import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { TableHeader } from "@/components/ui/table";
-import { usePaginatedData } from "@/hooks/usePaginatedData";
+import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
 import { LoadingAnimation } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PageSelector } from "@/components/PageSelector";
@@ -247,9 +247,6 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
     roles?: UserRole[];
   }>({});
 
-  console.log("status", filters.status);
-  console.log("roles", filters.roles);
-
   const {
     currentPageData: pageOfUsers,
     isLoading,
@@ -258,7 +255,7 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
     totalPages,
     goToPage,
     refresh,
-  } = usePaginatedData<User>({
+  } = usePaginatedFetch<User>({
     itemsPerPage: ITEMS_PER_PAGE,
     pagesPerBatch: PAGES_PER_BATCH,
     endpoint: "/api/manage/users/accepted",

@@ -3,7 +3,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 interface PaginatedApiResponse<T> {
   items: T[];
-  total_items: number;
+  totalItems: number;
 }
 
 interface PaginationConfig<T> {
@@ -26,7 +26,7 @@ interface PaginatedHookReturnData<T> {
   hasNoData: boolean;
 }
 
-export function usePaginatedData<T>({
+export function usePaginatedFetch<T>({
   itemsPerPage,
   pagesPerBatch,
   endpoint,
@@ -36,6 +36,7 @@ export function usePaginatedData<T>({
 }: PaginationConfig<T>): PaginatedHookReturnData<T> {
   const router = useRouter();
 
+  // State to initialize and hold the current page number
   const [currentPage, setCurrentPage] = useState(() => {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
@@ -51,6 +52,7 @@ export function usePaginatedData<T>({
   );
   const [totalItems, setTotalItems] = useState<number>(0);
 
+  // Tracks ongoing requests to avoid duplicate requests, uses ref to persist across renders
   const ongoingRequestsRef = useRef<Set<number>>(new Set());
 
   const totalPages = useMemo(() => {
@@ -58,13 +60,16 @@ export function usePaginatedData<T>({
     return Math.ceil(totalItems / itemsPerPage);
   }, [totalItems, itemsPerPage]);
 
-  const currentBatchInfo = useMemo(() => {
+  // Calculates which batch we're in, and which page within that batch
+  const batchAndPageIndices = useMemo(() => {
     const batchNum = Math.floor((currentPage - 1) / pagesPerBatch);
     const batchPageNum = (currentPage - 1) % pagesPerBatch;
     return { batchNum, batchPageNum };
   }, [currentPage, pagesPerBatch]);
 
+  // Checks if the cache is empty and that we're not loading data
   const hasNoData = useMemo(() => {
+    if (isLoading) return false;
     return (
       Object.keys(cachedBatches).length === 0 ||
       Object.values(cachedBatches).every((batch) =>
@@ -75,15 +80,17 @@ export function usePaginatedData<T>({
 
   const currentPath = usePathname();
 
-  // Batch fetching logic
+  // Fetches a batch of data and stores it in the cache
   const fetchBatchData = useCallback(
     async (batchNum: number) => {
+      // Prevents duplicate requests
       if (ongoingRequestsRef.current.has(batchNum)) {
         return;
       }
       ongoingRequestsRef.current.add(batchNum);
 
       try {
+        // Builds the query params, including pagination and filtering
         const params = new URLSearchParams({
           page: (batchNum + 1).toString(),
           page_size: (pagesPerBatch * itemsPerPage).toString(),
@@ -92,40 +99,33 @@ export function usePaginatedData<T>({
         if (query) params.set("q", query);
 
         if (filter) {
-          console.log("filter in usePaginatedData", filter);
           for (const [key, value] of Object.entries(filter)) {
             if (Array.isArray(value)) {
-              console.log("value in roles array in usePaginatedData", value);
               value.forEach((str) => params.append(key, str));
             } else {
               params.set(key, value.toString());
             }
           }
         }
-        // Log the full URL that will be fetched
-        console.log("Fetching URL:", `${endpoint}?${params.toString()}`);
-        // Or log just the params
-        console.log("URL Parameters:", Object.fromEntries(params.entries()));
 
         const response = await fetch(`${endpoint}?${params.toString()}`);
         if (!response.ok) throw new Error("Failed to fetch data");
         const responseData: PaginatedApiResponse<T> = await response.json();
 
-        const data = responseData.items;
-        const totalCount = responseData.total_items;
+        const { items, totalItems } = responseData;
 
-        if (totalCount !== undefined) {
-          setTotalItems(totalCount);
+        if (totalItems !== undefined) {
+          setTotalItems(totalItems);
         }
-
-        const newBatchData = Array.from({ length: pagesPerBatch }, (_, i) => {
+        // Splits a batch into pages
+        const pagesInBatch = Array.from({ length: pagesPerBatch }, (_, i) => {
           const startIndex = i * itemsPerPage;
-          return data.slice(startIndex, startIndex + itemsPerPage);
+          return items.slice(startIndex, startIndex + itemsPerPage);
         });
 
         setCachedBatches((prev) => ({
           ...prev,
-          [batchNum]: newBatchData,
+          [batchNum]: pagesInBatch,
         }));
       } catch (error) {
         setError(
@@ -138,16 +138,17 @@ export function usePaginatedData<T>({
     [endpoint, pagesPerBatch, itemsPerPage, query, filter]
   );
 
+  // Updates the URL with the current page number
   const updatePageUrl = useCallback(
     (page: number) => {
       if (currentPath) {
         router.replace(`${currentPath}?page=${page}`, { scroll: false });
-        window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       }
     },
     [currentPath, router]
   );
 
+  // Updates the current page
   const goToPage = useCallback(
     (newPage: number) => {
       setCurrentPage(newPage);
@@ -156,9 +157,9 @@ export function usePaginatedData<T>({
     [updatePageUrl]
   );
 
-  // Effect to load current and adjacent batches
+  // Loads the current and adjacent batches
   useEffect(() => {
-    const { batchNum } = currentBatchInfo;
+    const { batchNum } = batchAndPageIndices;
     const nextBatchNum = batchNum + 1;
     const prevBatchNum = Math.max(batchNum - 1, 0);
 
@@ -189,9 +190,9 @@ export function usePaginatedData<T>({
     }
   }, [currentPage, cachedBatches, totalPages, pagesPerBatch, fetchBatchData]);
 
-  // Effect to update current page data from cache
+  // Updates current page data from the cache
   useEffect(() => {
-    const { batchNum, batchPageNum } = currentBatchInfo;
+    const { batchNum, batchPageNum } = batchAndPageIndices;
 
     if (cachedBatches[batchNum] && cachedBatches[batchNum][batchPageNum]) {
       setCurrentPageData(cachedBatches[batchNum][batchPageNum]);
@@ -199,21 +200,21 @@ export function usePaginatedData<T>({
     }
   }, [currentPage, cachedBatches, pagesPerBatch]);
 
-  // Effect for periodic refresh
+  // Implements periodic refresh
   useEffect(() => {
     if (!refreshIntervalInMs) return;
 
     const interval = setInterval(() => {
-      const { batchNum } = currentBatchInfo;
+      const { batchNum } = batchAndPageIndices;
       fetchBatchData(batchNum);
     }, refreshIntervalInMs);
 
     return () => clearInterval(interval);
   }, [currentPage, pagesPerBatch, refreshIntervalInMs, fetchBatchData]);
 
-  // Manaual refresh function
+  // Manually refreshes the current batch
   const refresh = useCallback(async () => {
-    const { batchNum } = currentBatchInfo;
+    const { batchNum } = batchAndPageIndices;
     await fetchBatchData(batchNum);
   }, [currentPage, pagesPerBatch, fetchBatchData]);
 

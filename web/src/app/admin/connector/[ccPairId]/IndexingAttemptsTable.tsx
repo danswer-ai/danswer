@@ -29,7 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { usePaginatedData } from "@/hooks/usePaginatedData";
+import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
 
 const ITEMS_PER_PAGE = 8;
 const PAGES_PER_BATCH = 8;
@@ -47,7 +47,7 @@ export function IndexingAttemptsTable({ ccPair }: { ccPair: CCPairFullInfo }) {
     totalPages,
     goToPage,
     hasNoData,
-  } = usePaginatedData<IndexAttemptSnapshot>({
+  } = usePaginatedFetch<IndexAttemptSnapshot>({
     itemsPerPage: ITEMS_PER_PAGE,
     pagesPerBatch: PAGES_PER_BATCH,
     endpoint: `${buildCCPairInfoUrl(ccPair.id)}/index-attempts`,

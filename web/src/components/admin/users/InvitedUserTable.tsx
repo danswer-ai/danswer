@@ -16,7 +16,7 @@ import {
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import useSWRMutation from "swr/mutation";
 import { type User } from "@/lib/types";
-import { usePaginatedData } from "@/hooks/usePaginatedData";
+import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
 
 interface Props {
   setPopup: (spec: PopupSpec) => void;
@@ -56,7 +56,7 @@ const InvitedUserTable = ({ setPopup }: Props) => {
     goToPage,
     refresh,
     hasNoData: noInvitedUsers,
-  } = usePaginatedData<User>({
+  } = usePaginatedFetch<User>({
     itemsPerPage: ITEMS_PER_PAGE,
     pagesPerBatch: PAGES_PER_BATCH,
     endpoint: "/api/manage/users/invited",

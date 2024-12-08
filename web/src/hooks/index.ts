@@ -1,2 +1,2 @@
-export { usePaginatedData } from "./usePaginatedData";
+export { usePaginatedFetch } from "./usePaginatedFetch";
 export { useDebounce } from "./useDebounce";
