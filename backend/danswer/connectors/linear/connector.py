@@ -132,7 +132,6 @@ class LinearConnector(LoadConnector, PollConnector):
                             branchName
                             customerTicketCount
                             description
-                            descriptionData
                             comments {
                                 nodes {
                                     url
