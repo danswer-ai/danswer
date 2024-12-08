@@ -18,7 +18,7 @@ def sub_combine_retrieved_docs(state: BaseQAState) -> dict[str, Any]:
     dedupe_docs: list[InferenceSection] = []
     for base_retrieval_doc in sub_question_base_retrieval_docs:
         if not any(
-            base_retrieval_doc.center_chunk.document_id == doc.center_chunk.document_id
+            base_retrieval_doc.center_chunk.chunk_id == doc.center_chunk.chunk_id
             for doc in dedupe_docs
         ):
             dedupe_docs.append(base_retrieval_doc)

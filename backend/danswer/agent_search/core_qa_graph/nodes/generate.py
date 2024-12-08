@@ -24,14 +24,18 @@ def sub_generate(state: BaseQAState) -> dict[str, Any]:
     print("---GENERATE---")
     node_start_time = datetime.now()
 
-    question = state["original_question"]
+    question = state["sub_question_str"]
     docs = state["sub_question_verified_retrieval_docs"]
 
     print(f"Number of verified retrieval docs: {len(docs)}")
+    
+    # Only take the top 10 docs. 
+    # TODO: Make this dynamic or use config param?
+    top_10_docs = docs[:10]
 
     msg = [
         HumanMessage(
-            content=BASE_RAG_PROMPT.format(question=question, context=format_docs(docs))
+            content=BASE_RAG_PROMPT.format(question=question, context=format_docs(top_10_docs))
         )
     ]
 

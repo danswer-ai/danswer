@@ -102,8 +102,10 @@ def build_core_qa_graph() -> StateGraph:
 
 if __name__ == "__main__":
     inputs = CoreQAInputState(
-        original_question="Whose music is kind of hard to easily enjoy?",
-        sub_question_str="Whose music is kind of hard to easily enjoy?",
+        #original_question="Whose music is kind of hard to easily enjoy?",
+        #sub_question_str="Whose music is kind of hard to easily enjoy?",
+        original_question="What is voice leading?",
+        sub_question_str="What is voice leading?",
     )
     sub_answers_graph = build_core_qa_graph()
     compiled_sub_answers = sub_answers_graph.compile()

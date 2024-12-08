@@ -21,7 +21,7 @@ def sub_continue_to_verifier(state: BaseQAState) -> Union[Hashable, list[Hashabl
                 graph_start_time=state["graph_start_time"],
             ),
         )
-        for doc in state["sub_question_base_retrieval_docs"]
+        for doc in state["sub_question_deduped_retrieval_docs"]
     ]
 
 

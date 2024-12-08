@@ -22,7 +22,7 @@ def sub_verifier(state: VerifierState) -> dict[str, Any]:
         dict: ict: The updated state with the final decision
     """
 
-    print("---VERIFY QUTPUT---")
+    #print("---VERIFY QUTPUT---")
     node_start_time = datetime.datetime.now()
 
     question = state["question"]
