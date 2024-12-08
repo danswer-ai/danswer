@@ -122,7 +122,6 @@ def parse_unstructured_output(output: str) -> Dict[str, str]:
     """
     Parses the assistant's unstructured output into a dictionary with keys:
     - 'name' (Title)
-    - 'description' (Description)
     - 'message' (Message)
     """
 
@@ -131,7 +130,6 @@ def parse_unstructured_output(output: str) -> Dict[str, str]:
 
     # Patterns to match
     title_pattern = r"(?i)^\**Title\**\s*:\s*(.+)"
-    description_pattern = r"(?i)^\**Description\**\s*:\s*(.+)"
     message_pattern = r"(?i)^\**Message\**\s*:\s*(.+)"
 
     # Initialize the response dictionary
@@ -156,16 +154,6 @@ def parse_unstructured_output(output: str) -> Dict[str, str]:
             current_value_lines.append(title_match.group(1).strip())
             continue
 
-        # Check for description
-        description_match = re.match(description_pattern, line.strip())
-        if description_match:
-            if current_key and current_value_lines:
-                response_dict[current_key] = " ".join(current_value_lines).strip()
-                current_value_lines = []
-            current_key = "description"
-            current_value_lines.append(description_match.group(1).strip())
-            continue
-
         # Check for message
         message_match = re.match(message_pattern, line.strip())
         if message_match:
@@ -185,7 +173,7 @@ def parse_unstructured_output(output: str) -> Dict[str, str]:
         response_dict[current_key] = " ".join(current_value_lines).strip()
 
     # Validate that the necessary keys are present
-    if not all(k in response_dict for k in ["name", "description", "message"]):
+    if not all(k in response_dict for k in ["name", "message"]):
         raise ValueError("Failed to parse the assistant's response.")
 
     return response_dict
@@ -272,7 +260,6 @@ def generate_starter_messages(
                 response_dict = parse_unstructured_output(response.content)
             starter_message = StarterMessage(
                 name=response_dict["name"],
-                description=response_dict["description"],
                 message=response_dict["message"],
             )
             prompts.append(starter_message)

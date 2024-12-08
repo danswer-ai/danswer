@@ -1348,7 +1348,6 @@ class StarterMessage(TypedDict):
 
 class StarterMessageModel(BaseModel):
     name: str
-    description: str
     message: str
 
 
