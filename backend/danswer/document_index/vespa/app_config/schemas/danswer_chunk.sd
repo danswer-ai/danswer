@@ -218,4 +218,10 @@ schema DANSWER_CHUNK_NAME {
             expression: bm25(content) + (5 * bm25(title))
         }
     }
+
+    rank-profile random_ {
+        first-phase {
+            expression: random.match
+        }
+    }
 }
