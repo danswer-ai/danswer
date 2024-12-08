@@ -207,26 +207,28 @@ export function AssistantsGallery() {
   return (
     <>
       {popup}
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+      <div className="px-2 mx-auto desktop:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>Assistant Gallery</AssistantsPageTitle>
-
-        <div className="grid grid-cols-2 gap-4 mt-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mt-4 mb-8">
           <Button
-            onClick={() => router.push("/assistants/new")}
             variant="default"
-            className="p-6 text-base"
+            className="p-2 desktop:p-6 text-base"
+            onClick={() => router.push("/assistants/new")}
             icon={FiPlus}
           >
-            Create New Assistant
+            <span className="mobile:hidden">Create </span>{" "}
+            <span className="desktop:inline">New</span>{" "}
+            <span className="mobile:hidden">Assistant</span>
           </Button>
 
           <Button
             onClick={() => router.push("/assistants/mine")}
             variant="outline"
-            className="text-base py-6"
+            className="text-base p-2 desktop:p-6"
             icon={FiList}
           >
-            Your Assistants
+            <span className="mobile:hidden">Your </span>{" "}
+            <span className="desktop:inline">Yours</span>
           </Button>
         </div>
 
