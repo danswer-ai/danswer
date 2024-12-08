@@ -22,7 +22,7 @@ const Page = () => {
         {popup}
         <div className="flex flex-col gap-y-4">
           <div className="flex gap-x-4">
-            <InviteUsersModal setPopup={setPopup} q={debouncedQuery} />
+            <InviteUsersModal setPopup={setPopup} />
             <div className="flex-grow">
               <SearchBar
                 query={searchQuery}

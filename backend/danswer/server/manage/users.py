@@ -1,4 +1,3 @@
-import re
 from datetime import datetime
 from datetime import timezone
 
@@ -155,19 +154,11 @@ def list_accepted_users(
 
 @router.get("/manage/users/invited")
 def list_invited_users(
-    q: str | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=1000),
     user: User | None = Depends(current_curator_or_admin_user),
 ) -> PaginatedReturn[InvitedUserSnapshot]:
-    if not q:
-        q = ""
-
     invited_emails = get_invited_users()
-    if q:
-        invited_emails = [
-            email for email in invited_emails if re.search(r"{}".format(q), email, re.I)
-        ]
 
     total_count = len(invited_emails)
     start_idx = (page - 1) * page_size

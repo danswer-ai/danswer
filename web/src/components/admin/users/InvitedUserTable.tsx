@@ -20,7 +20,6 @@ import { usePaginatedData } from "@/hooks/usePaginatedData";
 
 interface Props {
   setPopup: (spec: PopupSpec) => void;
-  q?: string;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -47,7 +46,7 @@ const RemoveUserButton = ({
   );
 };
 
-const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
+const InvitedUserTable = ({ setPopup }: Props) => {
   const {
     currentPageData: pageOfUsers,
     isLoading,
@@ -61,7 +60,6 @@ const InvitedUserTable = ({ setPopup, q = "" }: Props) => {
     itemsPerPage: ITEMS_PER_PAGE,
     pagesPerBatch: PAGES_PER_BATCH,
     endpoint: "/api/manage/users/invited",
-    query: q,
   });
 
   if (isLoading) {

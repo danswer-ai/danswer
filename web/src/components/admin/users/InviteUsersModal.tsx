@@ -12,10 +12,8 @@ import { mutate } from "swr";
 
 const InviteUsersModal = ({
   setPopup,
-  q,
 }: {
   setPopup: (spec: PopupSpec) => void;
-  q: string;
 }) => {
   const [modal, setModal] = useState(false);
   const onSuccess = () => {
@@ -39,7 +37,7 @@ const InviteUsersModal = ({
     <>
       <Button
         className="my-auto w-fit"
-        variant="submit"
+        variant="update"
         onClick={() => setModal(true)}
       >
         <div className="flex">
@@ -57,7 +55,7 @@ const InviteUsersModal = ({
               email address.
             </Text>
             <BulkAdd onSuccess={onSuccess} onFailure={onFailure} />
-            <InvitedUserTable setPopup={setPopup} q={q} />
+            <InvitedUserTable setPopup={setPopup} />
           </div>
         </Modal>
       )}
