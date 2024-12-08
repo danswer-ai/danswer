@@ -335,3 +335,10 @@ export type ConfigurableSources = Exclude<
   ValidSources,
   ValidSources.NotApplicable | ValidSources.IngestionApi
 >;
+
+export const oauthSupportedSources: ConfigurableSources[] = [
+  ValidSources.Slack,
+  ValidSources.GoogleDrive,
+];
+
+export type OAuthSupportedSource = (typeof oauthSupportedSources)[number];
