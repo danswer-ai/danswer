@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useDocuments } from "./useDocuments";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -49,7 +50,12 @@ function buildTree(
   return roots;
 }
 
-export function MyDocuments() {
+export default function MyDocuments() {
+  const { documents, isLoading, error, loadDocuments, handleDeleteDocument } =
+    useDocuments();
+  const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(
+    null
+  );
   const [currentFolder, setCurrentFolder] = useState<number>(-1);
   const [folderContents, setFolderContents] = useState<FolderResponse | null>(
     null
@@ -69,7 +75,6 @@ export function MyDocuments() {
     useState<MinimalDanswerDocument | null>(null);
   const [isFilePickerOpen, setIsFilePickerOpen] = useState(false);
   const [folderTree, setFolderTree] = useState<FolderTreeNode[]>([]);
-  const [cache, setCache] = useState<{ [key: string]: FolderResponse }>({});
 
   const folderIdFromParams = parseInt(searchParams.get("path") || "-1", 10);
 
@@ -99,13 +104,6 @@ export function MyDocuments() {
         return;
       }
 
-      const cacheKey = `${folderId}:${page}:${sortBy}`;
-      if (cache[cacheKey]) {
-        setFolderContents(cache[cacheKey]);
-        setSearchResults(null);
-        return;
-      }
-
       try {
         const response = await fetch(
           `/api/user/folder/${folderId}?page=${page}&limit=${pageLimit}&sort=${sortBy}`
@@ -116,7 +114,6 @@ export function MyDocuments() {
         const data = await response.json();
         setFolderContents(data);
         setSearchResults(null);
-        setCache((prev) => ({ ...prev, [cacheKey]: data }));
       } catch (error) {
         console.error("Error fetching folder contents:", error);
         setPopup({
@@ -125,13 +122,17 @@ export function MyDocuments() {
         });
       }
     },
-    [setFolderContents, setPopup, page, sortBy, pageLimit, cache]
+    [setFolderContents, setPopup, page, sortBy, pageLimit]
   );
 
   useEffect(() => {
     setCurrentFolder(folderIdFromParams);
     fetchFolderContents(folderIdFromParams, searchQuery);
   }, [searchParams, fetchFolderContents, folderIdFromParams, searchQuery]);
+
+  const refreshFolderContents = useCallback(() => {
+    fetchFolderContents(currentFolder, searchQuery);
+  }, [fetchFolderContents, currentFolder, searchQuery]);
 
   useEffect(() => {
     const loadFileSystem = async () => {
@@ -151,11 +152,13 @@ export function MyDocuments() {
   const handleFolderClick = (id: number) => {
     router.push(`/my-documents?path=${id}`);
     setPage(1);
+    // refreshFolderContents();
   };
 
   const handleBreadcrumbClick = (folderId: number) => {
     router.push(`/my-documents?path=${folderId}`);
     setPage(1);
+    // refreshFolderContents();
   };
 
   const handleCreateFolder = async (folderName: string) => {
@@ -166,7 +169,7 @@ export function MyDocuments() {
         body: JSON.stringify({ name: folderName, parent_id: currentFolder }),
       });
       if (response.ok) {
-        fetchFolderContents(currentFolder);
+        refreshFolderContents();
         setPopup({
           message: "Folder created successfully",
           type: "success",
@@ -207,6 +210,7 @@ export function MyDocuments() {
         type: "error",
       });
     }
+    refreshFolderContents();
   };
 
   const handleUploadFiles = async (files: FileList) => {
@@ -240,6 +244,7 @@ export function MyDocuments() {
         type: "error",
       });
     }
+    refreshFolderContents();
   };
 
   const handleMoveItem = async (
@@ -274,8 +279,8 @@ export function MyDocuments() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          new_folder_id: destinationFolderId,
-          file_id: itemId,
+          new_parent_id: destinationFolderId,
+          [isFolder ? "folder_id" : "file_id"]: itemId,
         }),
       });
       if (response.ok) {
@@ -294,6 +299,7 @@ export function MyDocuments() {
         type: "error",
       });
     }
+    refreshFolderContents();
   };
 
   const handleDownloadItem = async (documentId: string) => {
@@ -369,6 +375,17 @@ export function MyDocuments() {
         type: "error",
       });
     }
+  };
+
+  const handleDelete = async () => {
+    if (selectedDocumentId !== null) {
+      await handleDeleteDocument(selectedDocumentId);
+      setSelectedDocumentId(null);
+    }
+  };
+
+  const handleRefresh = () => {
+    loadDocuments();
   };
 
   return (
@@ -496,12 +513,23 @@ export function MyDocuments() {
           </Card>
         </div>
       </div>
-      {/* <FilePicker
-        isOpen={isFilePickerOpen}
-        onClose={() => setIsFilePickerOpen(false)}
-        onSave={handleSaveContext}
-        onDelete={handleDeleteSelected}
-      /> */}
+
+      {error && <div className="error-message">{error}</div>}
+
+      {isLoading ? (
+        <div>Loading documents...</div>
+      ) : (
+        <ul>
+          {documents.map((doc) => (
+            <li key={doc.id}>
+              {doc.document_id}
+              <button onClick={() => handleDeleteDocument(doc.id)}>
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

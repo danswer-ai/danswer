@@ -185,22 +185,26 @@ def delete_folder(
     return MessageResponse(message="Folder deleted successfully")
 
 
+class FolderMoveRequest(BaseModel):
+    folder_id: int
+    new_parent_id: int | None
+
+
 @router.put("/user/folder/{folder_id}/move")
 def move_folder(
-    folder_id: int,
-    new_parent_id: int | None,
+    request: FolderMoveRequest,
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> FolderResponse:
     user_id = user.id if user else None
     folder = (
         db_session.query(UserFolder)
-        .filter(UserFolder.id == folder_id, UserFolder.user_id == user_id)
+        .filter(UserFolder.id == request.folder_id, UserFolder.user_id == user_id)
         .first()
     )
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
-    folder.parent_id = new_parent_id
+    folder.parent_id = request.new_parent_id
     db_session.commit()
     return FolderResponse.from_model(folder)
 
@@ -226,7 +230,7 @@ def delete_file(
 
 class FileMoveRequest(BaseModel):
     file_id: int
-    new_folder_id: int | None
+    new_parent_id: int | None
 
 
 @router.put("/user/file/{file_id}/move")
@@ -243,7 +247,7 @@ def move_file(
     )
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
-    file.parent_folder_id = request.new_folder_id
+    file.parent_folder_id = request.new_parent_id
     db_session.commit()
     return FileResponse.from_model(file)
 

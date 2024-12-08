@@ -109,7 +109,7 @@ import AssistantBanner from "../../components/assistants/AssistantBanner";
 import TextView from "@/components/chat_search/TextView";
 import AssistantSelector from "@/components/chat_search/AssistantSelector";
 import { Modal } from "@/components/Modal";
-import { FilePicker } from "../my-documents/FilePicker";
+import { FilePicker, UserFolder } from "../my-documents/FilePicker";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -1923,6 +1923,29 @@ export function ChatPage({
     }
   };
 
+  const [allFolders, setAllFolders] = useState<UserFolder[]>([]);
+
+  useEffect(() => {
+    const loadFileSystem = async () => {
+      const res = await fetch("/api/user/file-system");
+      const data = await res.json();
+      const folders = data.folders.map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        parent_id: f.parent_id,
+      }));
+
+      setAllFolders(folders);
+    };
+    loadFileSystem();
+  }, []);
+
+  const [folders, setFolders] = useState<UserFolder[]>([]);
+
+  const removeFolder = (folderId: number) => {
+    setFolders((prev) => prev.filter((f) => f.id !== folderId));
+  };
+
   interface RegenerationRequest {
     messageId: number;
     parentMessage: Message;
@@ -1964,10 +1987,11 @@ export function ChatPage({
       <ChatPopup />
       {myDocumentsToggled && (
         <FilePicker
+          allFolders={allFolders}
+          setSelectedFolders={(folders) => setFolders(folders)}
           isOpen={myDocumentsToggled}
           onClose={() => setMyDocumentsToggled(false)}
           onSave={() => {}}
-          onDelete={() => {}}
         />
       )}
 
@@ -2737,7 +2761,10 @@ export function ChatPage({
                                 </button>
                               </div>
                             )}
+
                             <ChatInputBar
+                              folders={folders}
+                              removeFolder={removeFolder}
                               toggleMyDocuments={toggleMyDocuments}
                               removeDocs={() => {
                                 clearSelectedDocuments();

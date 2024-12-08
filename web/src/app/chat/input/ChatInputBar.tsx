@@ -43,12 +43,15 @@ import { Popup } from "@/components/admin/connectors/Popup";
 import { AssistantsTab } from "../modal/configuration/AssistantsTab";
 import { IconType } from "react-icons";
 import { LlmTab } from "../modal/configuration/LlmTab";
-import { XIcon } from "lucide-react";
+import { FolderIcon, XIcon } from "lucide-react";
 import FiltersDisplay from "./FilterDisplay";
+import { UserFolder } from "@/app/my-documents/FilePicker";
 
 const MAX_INPUT_HEIGHT = 200;
 
 interface ChatInputBarProps {
+  folders: UserFolder[];
+  removeFolder: (folderId: number) => void;
   removeFilters: () => void;
   removeDocs: () => void;
   openModelSettings: () => void;
@@ -79,8 +82,10 @@ interface ChatInputBarProps {
 }
 
 export function ChatInputBar({
+  folders,
   removeFilters,
   removeDocs,
+  removeFolder,
   openModelSettings,
   showDocs,
   showConfigureAPIKey,
@@ -448,9 +453,35 @@ export function ChatInputBar({
               </div>
             )}
 
-            {(selectedDocuments.length > 0 || files.length > 0) && (
+            {(selectedDocuments.length > 0 ||
+              files.length > 0 ||
+              folders.length > 0) && (
               <div className="flex gap-x-2 px-2 pt-2">
                 <div className="flex gap-x-1 px-2 overflow-visible overflow-x-scroll items-end miniscroll">
+                  {folders.map((folder) => (
+                    <button
+                      key={folder.id}
+                      onClick={() =>
+                        window.open(`/my-documents?path=${folder.id}`, "_blank")
+                      }
+                      className="flex-none relative overflow-visible flex items-center gap-x-2 h-10 px-3 rounded-lg bg-background-150 hover:bg-background-200 transition-colors duration-300 cursor-pointer max-w-[150px]"
+                    >
+                      <FolderIcon size={20} />
+                      <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                        {folder.name}
+                      </span>
+                      <XIcon
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFolder(folder.id);
+                          // Remove this folder
+                        }}
+                        size={16}
+                        className="text-text-400 hover:text-text-600 ml-auto"
+                      />
+                    </button>
+                  ))}
+
                   {selectedDocuments.length > 0 && (
                     <button
                       onClick={showDocs}

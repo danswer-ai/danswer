@@ -1,125 +1,220 @@
 import React, { useState, useEffect } from "react";
-
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-// import { fetchFileSystem } from "../lib/file_system";
 import { Modal } from "@/components/Modal";
-// import { Modal } from "@/components/ui/modal";
+import {
+  Folder as FolderIcon,
+  File as FileIcon,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 
-interface UserFolder {
+export interface UserFolder {
   id: number;
   name: string;
   parent_id: number | null;
 }
-interface UserFile {
+
+export interface UserFile {
   id: number;
   name: string;
   parent_folder_id: number | null;
 }
-interface FileSystem {
-  folders: UserFolder[];
+
+interface FolderNode extends UserFolder {
+  children: FolderNode[];
   files: UserFile[];
 }
 
 interface FilePickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (selectedItems: string[]) => void;
-  onDelete: (selectedItems: string[]) => void;
+  allFolders: UserFolder[];
+  setSelectedFolders: (folders: UserFolder[]) => void;
+  onSave: (selectedItems: { files: number[]; folders: number[] }) => void;
 }
+
+function buildTree(folders: UserFolder[], files: UserFile[]): FolderNode[] {
+  const folderMap: { [key: number]: FolderNode } = {};
+  folders.forEach((folder) => {
+    folderMap[folder.id] = { ...folder, children: [], files: [] };
+  });
+
+  files.forEach((file) => {
+    if (file.parent_folder_id !== null && folderMap[file.parent_folder_id]) {
+      folderMap[file.parent_folder_id].files.push(file);
+    }
+  });
+
+  const roots: FolderNode[] = [];
+
+  Object.values(folderMap).forEach((folder) => {
+    if (folder.parent_id === null) {
+      roots.push(folder);
+    } else if (folderMap[folder.parent_id]) {
+      folderMap[folder.parent_id].children.push(folder);
+    }
+  });
+
+  return roots;
+}
+
+const FolderTreeItem: React.FC<{
+  node: FolderNode;
+  selectedItems: { files: number[]; folders: number[] };
+  setSelectedItems: React.Dispatch<
+    React.SetStateAction<{ files: number[]; folders: number[] }>
+  >;
+}> = ({ node, selectedItems, setSelectedItems }) => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  const toggleFolder = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const isFolderSelected = selectedItems.folders.includes(node.id);
+
+  const handleFolderSelect = () => {
+    setSelectedItems((prev) => {
+      if (isFolderSelected) {
+        return {
+          ...prev,
+          folders: prev.folders.filter((id) => id !== node.id),
+        };
+      } else {
+        return { ...prev, folders: [...prev.folders, node.id] };
+      }
+    });
+  };
+
+  return (
+    <li className="my-1">
+      <div className="flex items-center">
+        {node.children.length > 0 || node.files.length > 0 ? (
+          <button onClick={toggleFolder} className="mr-1">
+            {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+        ) : (
+          <div className="mr-4" />
+        )}
+        <Checkbox
+          checked={isFolderSelected}
+          onCheckedChange={handleFolderSelect}
+        />
+        <FolderIcon className="ml-2 mr-1 h-5 w-5 text-gray-600" />
+        <span className="ml-1">{node.name}</span>
+      </div>
+      {isOpen && (
+        <ul className="ml-6">
+          {node.children.map((child) => (
+            <FolderTreeItem
+              key={child.id}
+              node={child}
+              selectedItems={selectedItems}
+              setSelectedItems={setSelectedItems}
+            />
+          ))}
+          {node.files.map((file) => (
+            <li key={file.id} className="my-1">
+              <div className="flex items-center">
+                <Checkbox
+                  checked={selectedItems.files.includes(file.id)}
+                  onCheckedChange={() => {
+                    setSelectedItems((prev) => {
+                      if (prev.files.includes(file.id)) {
+                        return {
+                          ...prev,
+                          files: prev.files.filter((id) => id !== file.id),
+                        };
+                      } else {
+                        return { ...prev, files: [...prev.files, file.id] };
+                      }
+                    });
+                  }}
+                />
+                <FileIcon className="ml-2 mr-1 h-5 w-5 text-gray-600" />
+                <span className="ml-1">{file.name}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+};
 
 export const FilePicker: React.FC<FilePickerProps> = ({
   isOpen,
+  setSelectedFolders,
+  allFolders,
   onClose,
   onSave,
-  onDelete,
 }) => {
-  const [fileSystem, setFileSystem] = useState<FileSystem>({
-    folders: [],
+  const [fileSystem, setFileSystem] = useState<FolderNode[]>([]);
+  const [selectedItems, setSelectedItems] = useState<{
+    files: number[];
+    folders: number[];
+  }>({
     files: [],
+    folders: [],
   });
-  const [currentPath, setCurrentPath] = useState<string[]>([]);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
-  const fetchFileSystem = async () => {
-    const response = await fetch("/api/user/file-system");
-    const data = await response.json();
-    return data;
-  };
+  //   useEffect(() => {
+  //     console.log(selectedItems.folders);
+  //     console.log(allFolders);
+  //     setSelectedFolders(
+  //       allFolders.filter((folder) => selectedItems.folders.includes(folder.id))
+  //     );
+  //     console.log("SELECTED FOLDRS");
+  //     console.log(
+  //       allFolders.filter((folder) => selectedItems.folders.includes(folder.id))
+  //     );
+  //   }, [selectedItems.folders]);
 
   useEffect(() => {
     if (isOpen) {
       const loadFileSystem = async () => {
-        const data = await fetchFileSystem();
-        setFileSystem(data);
+        const response = await fetch("/api/user/file-system");
+        const data = await response.json();
+        const tree = buildTree(data.folders, data.files);
+        setFileSystem(tree);
       };
       loadFileSystem();
     }
   }, [isOpen]);
 
-  const getCurrentDirectory = (): (UserFolder | UserFile)[] => {
-    // This is a simplified view just listing all files and folders
-    // In a real scenario, you'd navigate directories properly.
-    return [
-      ...fileSystem.folders.filter((f) => f.parent_id === null),
-      ...fileSystem.files.filter((f) => f.parent_folder_id === null),
-    ];
-  };
-
-  const handleItemSelect = (item: UserFolder | UserFile) => {
-    const path = [...currentPath, item.name].join("/");
-    setSelectedItems((prev) =>
-      prev.includes(path) ? prev.filter((i) => i !== path) : [...prev, path]
-    );
-  };
-
   const handleSave = () => {
+    setSelectedFolders(
+      allFolders.filter((folder) => selectedItems.folders.includes(folder.id))
+    );
     onSave(selectedItems);
     onClose();
   };
 
-  const handleDeleteSelected = () => {
-    onDelete(selectedItems);
-    onClose();
-  };
-
   return (
-    <Modal onOutsideClick={onClose} title="File Picker">
-      <div className="p-4">
-        <div className="mb-4 flex items-center">
-          <Button
-            onClick={() => setCurrentPath(currentPath.slice(0, -1))}
-            disabled={currentPath.length === 0}
-          >
-            Back
-          </Button>
-          <span className="ml-2">{currentPath.join(" / ") || "Root"}</span>
-        </div>
-        <div className="max-h-96 overflow-y-auto">
-          {getCurrentDirectory().map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center p-2 hover:bg-gray-100"
-            >
-              <Checkbox
-                checked={selectedItems.includes(
-                  [...currentPath, item.name].join("/")
-                )}
-                onChange={() => handleItemSelect(item)}
+    <Modal
+      onOutsideClick={onClose}
+      className="max-w-md"
+      title="Select Files and Folders"
+    >
+      <div className="p-4 max-w-md mx-auto">
+        <div className="max-h-96 overflow-y-auto border rounded p-2">
+          <ul className="list-none">
+            {fileSystem.map((node) => (
+              <FolderTreeItem
+                key={node.id}
+                node={node}
+                selectedItems={selectedItems}
+                setSelectedItems={setSelectedItems}
               />
-              <span className="ml-2 cursor-pointer">
-                {"parent_id" in item && item.parent_id === null ? "📁 " : "📄 "}
-                {item.name}
-              </span>
-            </div>
-          ))}
+            ))}
+          </ul>
         </div>
         <div className="mt-4 flex justify-end space-x-2">
-          <Button onClick={handleDeleteSelected} variant="destructive">
-            Delete Selected
+          <Button onClick={onClose} variant="outline">
+            Cancel
           </Button>
           <Button onClick={handleSave} variant="default">
-            Save Context
+            Select
           </Button>
         </div>
       </div>

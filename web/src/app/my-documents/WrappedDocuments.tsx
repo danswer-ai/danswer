@@ -3,7 +3,7 @@
 import { ChatSession } from "@/app/chat/interfaces";
 import { AssistantsPageTitle } from "../assistants/AssistantsPageTitle";
 import SidebarWrapper from "../assistants/SidebarWrapper";
-import { MyDocuments } from "./MyDocuments";
+import MyDocuments from "./MyDocuments";
 
 export default function WrappedUserDocuments({
   chatSessions,
