@@ -1,5 +1,7 @@
 import os
 
+GUARANTEED_FRESH_SETUP = os.getenv("GUARANTEED_FRESH_SETUP") == "true"
+
 API_SERVER_PROTOCOL = os.getenv("API_SERVER_PROTOCOL") or "http"
 API_SERVER_HOST = os.getenv("API_SERVER_HOST") or "localhost"
 API_SERVER_PORT = os.getenv("API_SERVER_PORT") or "8080"

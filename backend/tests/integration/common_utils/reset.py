@@ -24,6 +24,7 @@ from danswer.indexing.models import IndexingSetting
 from danswer.setup import setup_postgres
 from danswer.setup import setup_vespa
 from danswer.utils.logger import setup_logger
+from tests.integration.common_utils.constants import GUARANTEED_FRESH_SETUP
 
 logger = setup_logger()
 
@@ -266,6 +267,11 @@ def reset_vespa_multitenant() -> None:
 
 
 def reset_all() -> None:
+    # if we're guaranteed a fresh setup, we don't need to reset
+    # this happens when running the tests w/ the parallelized setup
+    if GUARANTEED_FRESH_SETUP:
+        return None
+
     logger.info("Resetting Postgres...")
     reset_postgres()
     logger.info("Resetting Vespa...")

@@ -5,10 +5,10 @@ concurrency:
 
 on:
   merge_group:
-  pull_request:
-    branches:
-      - main
-      - 'release/**'
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - 'release/**'
 
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

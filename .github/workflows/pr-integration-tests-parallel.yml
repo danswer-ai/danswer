@@ -1,0 +1,98 @@
+name: Run Integration Tests v3
+concurrency:
+  group: Run-Integration-Tests-Parallel-${{ github.workflow }}-${{ github.head_ref || github.event.workflow_run.head_branch || github.run_id }}
+  cancel-in-progress: true
+
+on:
+  merge_group:
+  pull_request:
+    branches:
+      - main
+      - "release/**"
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+  CONFLUENCE_TEST_SPACE_URL: ${{ secrets.CONFLUENCE_TEST_SPACE_URL }}
+  CONFLUENCE_USER_NAME: ${{ secrets.CONFLUENCE_USER_NAME }}
+  CONFLUENCE_ACCESS_TOKEN: ${{ secrets.CONFLUENCE_ACCESS_TOKEN }}
+
+jobs:
+  integration-tests:
+    # See https://runs-on.com/runners/linux/
+    runs-on:
+      [runs-on, runner=32cpu-linux-x64, ram=64, "run-id=${{ github.run_id }}"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build integration test Docker image
+        uses: ./.github/actions/custom-build-and-push
+        with:
+          context: ./backend
+          file: ./backend/tests/integration/Dockerfile
+          platforms: linux/amd64
+          tags: danswer/danswer-integration:test
+          push: false
+          load: true
+          cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
+          cache-to: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }},mode=max
+
+      - name: Run Standard Integration Tests
+        run: |
+          # Print a message indicating that tests are starting
+          echo "Running integration tests..."
+          
+          # Run the integration tests in a Docker container
+          # Mount the Docker socket to allow Docker-in-Docker (DinD)
+          # Use host network for easier communication with other services
+          docker run \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            --network host \
+            danswer/danswer-integration:test \
+            python /app/tests/integration/run.py
+        continue-on-error: true
+        id: run_tests
+
+      - name: Check test results
+        run: |
+          if [ ${{ steps.run_tests.outcome }} == 'failure' ]; then
+            echo "Integration tests failed. Exiting with error."
+            exit 1
+          else
+            echo "All integration tests passed successfully."
+          fi
+
+      # save before stopping the containers so the logs can be captured
+      # - name: Save Docker logs
+      #   if: success() || failure()
+      #   run: |
+      #     cd deployment/docker_compose
+      #     docker compose -f docker-compose.dev.yml -p danswer-stack logs > docker-compose.log
+      #     mv docker-compose.log ${{ github.workspace }}/docker-compose.log
+
+      # - name: Stop Docker containers
+      #   run: |
+      #     cd deployment/docker_compose
+      #     docker compose -f docker-compose.dev.yml -p danswer-stack down -v
+
+      # - name: Upload logs
+      #   if: success() || failure()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: docker-logs
+      #     path: ${{ github.workspace }}/docker-compose.log
+
+      # - name: Stop Docker containers
+      #   run: |
+      #     cd deployment/docker_compose
+      #     docker compose -f docker-compose.dev.yml -p danswer-stack down -v
