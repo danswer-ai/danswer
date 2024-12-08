@@ -63,7 +63,7 @@ def upgrade() -> None:
             sa.ForeignKey("user_folder.id"),
             nullable=True,
         ),
-        sa.Column("file_type", sa.String(), nullable=False),
+        sa.Column("file_type", sa.String(), nullable=True),
         sa.Column("file_id", sa.String(length=255), nullable=False),
         sa.Column("document_id", sa.String(length=255), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),

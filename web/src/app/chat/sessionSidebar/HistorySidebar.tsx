@@ -1,6 +1,6 @@
 "use client";
 
-import { FiBarChart, FiEdit } from "react-icons/fi";
+import { FiBarChart, FiBook, FiEdit } from "react-icons/fi";
 import React, { ForwardedRef, forwardRef, useContext, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,7 +47,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
     ref: ForwardedRef<HTMLDivElement>
   ) => {
     const router = useRouter();
-    const { popup, setPopup } = usePopup();
 
     const currentChatId = currentChatSession?.id;
 
@@ -74,7 +73,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
 
     return (
       <>
-        {popup}
         <div
           ref={ref}
           className={`
@@ -132,7 +130,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                   }
                 }}
               >
-                <FiBarChart className="flex-none text-text-history-sidebar-button" />
+                <FiBook className="flex-none text-text-history-sidebar-button" />
                 <p className="my-auto flex items-center text-sm">
                   My Documents
                 </p>
@@ -145,15 +143,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 <AssistantsIconSkeleton className="h-4 w-4 my-auto text-text-history-sidebar-button" />
                 <p className="my-auto flex items-center text-sm">
                   Manage Assistants
-                </p>
-              </Link>
-              <Link
-                href="/prompts"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-history-sidebar-button-hover cursor-pointer transition-all duration-150 flex gap-x-2"
-              >
-                <ClosedBookIcon className="h-4 w-4 my-auto text-text-history-sidebar-button" />
-                <p className="my-auto flex items-center text-sm ">
-                  Manage Prompts
                 </p>
               </Link>
             </div>

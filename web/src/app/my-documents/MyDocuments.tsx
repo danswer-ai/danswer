@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -12,14 +12,41 @@ import TextView from "@/components/chat_search/TextView";
 import { MinimalDanswerDocument } from "@/lib/search/interfaces";
 import { FilePicker } from "./FilePicker";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FolderTree } from "./FolderTree";
 
 interface FolderResponse {
   children: { name: string; id: number }[];
-  files: { name: string; id: number; document_id: string }[];
+  files: { name: string; document_id: string; id: number }[];
   parents: { name: string; id: number }[];
   name: string;
   id: number;
   document_id: string;
+}
+
+interface FolderTreeNode {
+  id: number;
+  name: string;
+  parent_id: number | null;
+  children?: FolderTreeNode[];
+}
+
+function buildTree(
+  folders: { id: number; name: string; parent_id: number | null }[]
+): FolderTreeNode[] {
+  const map: { [key: number]: FolderTreeNode } = {};
+  folders.forEach((f) => {
+    map[f.id] = { ...f, children: [] };
+  });
+  const roots: FolderTreeNode[] = [];
+  folders.forEach((f) => {
+    if (f.parent_id === null) {
+      roots.push(map[f.id]);
+    } else {
+      map[f.parent_id].children?.push(map[f.id]);
+    }
+  });
+  return roots;
 }
 
 export function MyDocuments() {
@@ -27,6 +54,13 @@ export function MyDocuments() {
   const [folderContents, setFolderContents] = useState<FolderResponse | null>(
     null
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<FolderResponse | null>(
+    null
+  );
+  const [sortBy, setSortBy] = useState<"name" | "date">("name");
+  const [page, setPage] = useState<number>(1);
+  const [pageLimit] = useState<number>(20);
   const searchParams = useSearchParams();
   const router = useRouter();
   const { popup, setPopup } = usePopup();
@@ -34,39 +68,94 @@ export function MyDocuments() {
   const [presentingDocument, setPresentingDocument] =
     useState<MinimalDanswerDocument | null>(null);
   const [isFilePickerOpen, setIsFilePickerOpen] = useState(false);
+  const [folderTree, setFolderTree] = useState<FolderTreeNode[]>([]);
+  const [cache, setCache] = useState<{ [key: string]: FolderResponse }>({});
+
+  const folderIdFromParams = parseInt(searchParams.get("path") || "-1", 10);
+
+  const fetchFolderContents = useCallback(
+    async (folderId: number, query?: string) => {
+      if (query && query.trim().length > 0) {
+        // Searching
+        const res = await fetch(
+          `/api/user/search?query=${encodeURIComponent(query)}`
+        );
+        const data = await res.json();
+        // Mocking a folder response for search:
+        const response: FolderResponse = {
+          name: "Search Results",
+          id: -999,
+          document_id: "",
+          children: data.folders.map((f: any) => ({ name: f.name, id: f.id })),
+          files: data.files.map((fi: any) => ({
+            name: fi.name,
+            id: fi.id,
+            document_id: fi.document_id,
+          })),
+          parents: [],
+        };
+        setSearchResults(response);
+        setFolderContents(null);
+        return;
+      }
+
+      const cacheKey = `${folderId}:${page}:${sortBy}`;
+      if (cache[cacheKey]) {
+        setFolderContents(cache[cacheKey]);
+        setSearchResults(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/user/folder/${folderId}?page=${page}&limit=${pageLimit}&sort=${sortBy}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch folder contents");
+        }
+        const data = await response.json();
+        setFolderContents(data);
+        setSearchResults(null);
+        setCache((prev) => ({ ...prev, [cacheKey]: data }));
+      } catch (error) {
+        console.error("Error fetching folder contents:", error);
+        setPopup({
+          message: "Failed to fetch folder contents",
+          type: "error",
+        });
+      }
+    },
+    [setFolderContents, setPopup, page, sortBy, pageLimit, cache]
+  );
 
   useEffect(() => {
-    const folderId = parseInt(searchParams.get("path") || "-1", 10);
-    setCurrentFolder(folderId);
-    fetchFolderContents(folderId);
-  }, [searchParams]);
+    setCurrentFolder(folderIdFromParams);
+    fetchFolderContents(folderIdFromParams, searchQuery);
+  }, [searchParams, fetchFolderContents, folderIdFromParams, searchQuery]);
 
-  const fetchFolderContents = async (folderId: number) => {
-    try {
-      const response = await fetch(`/api/user/folder/${folderId ?? -1}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch folder contents");
-      }
-      const data = await response.json();
-      console.log("data");
-      console.log(data);
-      setFolderContents(data);
-    } catch (error) {
-      console.error("Error fetching folder contents:", error);
-      setPopup({
-        message: "Failed to fetch folder contents",
-        type: "error",
-      });
-      3;
-    }
-  };
+  useEffect(() => {
+    const loadFileSystem = async () => {
+      const res = await fetch("/api/user/file-system");
+      const data = await res.json();
+      const folders = data.folders.map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        parent_id: f.parent_id,
+      }));
+      const tree = buildTree(folders);
+      setFolderTree(tree);
+    };
+    loadFileSystem();
+  }, []);
 
   const handleFolderClick = (id: number) => {
     router.push(`/my-documents?path=${id}`);
+    setPage(1);
   };
 
   const handleBreadcrumbClick = (folderId: number) => {
     router.push(`/my-documents?path=${folderId}`);
+    setPage(1);
   };
 
   const handleCreateFolder = async (folderName: string) => {
@@ -103,7 +192,7 @@ export function MyDocuments() {
         method: "DELETE",
       });
       if (response.ok) {
-        fetchFolderContents(currentFolder);
+        fetchFolderContents(currentFolder, searchQuery);
         setPopup({
           message: `${isFolder ? "Folder" : "File"} deleted successfully`,
           type: "success",
@@ -136,7 +225,7 @@ export function MyDocuments() {
         body: formData,
       });
       if (response.ok) {
-        fetchFolderContents(currentFolder);
+        fetchFolderContents(currentFolder, searchQuery);
         setPopup({
           message: "Files uploaded successfully",
           type: "success",
@@ -155,9 +244,56 @@ export function MyDocuments() {
 
   const handleMoveItem = async (
     itemId: number,
-    destinationFolderId: number
+    destinationFolderId: number,
+    isFolder: boolean
   ) => {
-    console.log("Moving item", itemId, "to folder", destinationFolderId);
+    // @router.put("/user/folder/{folder_id}/move")
+    // def move_folder(
+    //     folder_id: int,
+    //     new_parent_id: int | None,
+    //     user: User = Depends(current_user),
+    //     db_session: Session = Depends(get_session),
+    // ) -> FolderResponse:
+    //     user_id = us
+
+    // @router.put("/user/file/{file_id}/move")
+    // def move_file(
+    //     file_id: int,
+    //     new_folder_id: int | None,
+    //     user: User = Depends(current_user),
+    //     db_session: Session
+
+    console.log("Moving item:", itemId, "to folder:", destinationFolderId);
+    console.log("isFolder:", isFolder);
+    // i;
+    const endpoint = isFolder
+      ? `/api/user/folder/${itemId}/move`
+      : `/api/user/file/${itemId}/move`;
+    try {
+      const response = await fetch(endpoint, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          new_folder_id: destinationFolderId,
+          file_id: itemId,
+        }),
+      });
+      if (response.ok) {
+        fetchFolderContents(currentFolder, searchQuery);
+        setPopup({
+          message: `${isFolder ? "Folder" : "File"} moved successfully`,
+          type: "success",
+        });
+      } else {
+        throw new Error("Failed to move item");
+      }
+    } catch (error) {
+      console.error("Error moving item:", error);
+      setPopup({
+        message: "Failed to move item",
+        type: "error",
+      });
+    }
   };
 
   const handleDownloadItem = async (documentId: string) => {
@@ -173,13 +309,14 @@ export function MyDocuments() {
       }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const fileName =
-        response.headers.get("Content-Disposition")?.split("filename=")[1] ||
-        "document";
+      const contentDisposition = response.headers.get("Content-Disposition");
+      const fileName = contentDisposition
+        ? contentDisposition.split("filename=")[1]
+        : "document";
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = fileName;
+      link.download = fileName || "document";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -195,13 +332,43 @@ export function MyDocuments() {
   };
 
   const handleSaveContext = (selectedItems: string[]) => {
-    // Handle saving the selected items
     console.log("Saving context for:", selectedItems);
+    // Implement logic if needed
   };
 
-  const handleDelete = (selectedItems: string[]) => {
-    // Handle deleting the selected items
+  const handleDeleteSelected = (selectedItems: string[]) => {
     console.log("Deleting:", selectedItems);
+    // Implement logic if needed
+  };
+
+  const onRenameItem = async (
+    itemId: number,
+    newName: string,
+    isFolder: boolean
+  ) => {
+    const endpoint = isFolder
+      ? `/api/user/folder/${itemId}?name=${encodeURIComponent(newName)}`
+      : `/api/user/file/${itemId}/rename?name=${encodeURIComponent(newName)}`;
+    try {
+      const response = await fetch(endpoint, {
+        method: "PUT",
+      });
+      if (response.ok) {
+        fetchFolderContents(currentFolder, searchQuery);
+        setPopup({
+          message: `${isFolder ? "Folder" : "File"} renamed successfully`,
+          type: "success",
+        });
+      } else {
+        throw new Error("Failed to rename item");
+      }
+    } catch (error) {
+      console.error("Error renaming item:", error);
+      setPopup({
+        message: `Failed to rename ${isFolder ? "folder" : "file"}`,
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -213,42 +380,128 @@ export function MyDocuments() {
         />
       )}
       {popup}
-      <FolderBreadcrumb
-        currentFolder={{
-          name: folderContents ? folderContents.name : "",
-          id: currentFolder,
-        }}
-        parents={folderContents?.parents || []}
-        onBreadcrumbClick={handleBreadcrumbClick}
-      />
-      <Card>
-        <CardHeader>
-          <CardTitle>Folder Contents</CardTitle>
-          <FolderActions
-            onRefresh={() => fetchFolderContents(currentFolder)}
-            onCreateFolder={handleCreateFolder}
-            onUploadFiles={handleUploadFiles}
-          />
-        </CardHeader>
-        <CardContent>
-          {folderContents ? (
-            <FolderContents
-              setPresentingDocument={(
-                document_id: string,
-                semantic_identifier: string
-              ) => setPresentingDocument({ document_id, semantic_identifier })}
-              contents={folderContents}
-              onFolderClick={handleFolderClick}
-              currentFolder={currentFolder}
-              onDeleteItem={handleDeleteItem}
-              onDownloadItem={handleDownloadItem}
-              onMoveItem={handleMoveItem}
+      <div className="flex flex-col md:flex-row">
+        <FolderTree treeData={folderTree} onFolderClick={handleFolderClick} />
+        <div className="flex-grow md:ml-4">
+          <div className="flex items-center mb-2 space-x-2">
+            {/* <Input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-xs"
             />
-          ) : (
-            <p>Loading...</p>
-          )}
-        </CardContent>
-      </Card>
+            <Button
+              onClick={() => fetchFolderContents(currentFolder, searchQuery)}
+            >
+              Search
+            </Button> */}
+            <div className="flex items-center space-x-2 ml-auto">
+              <select
+                className="border border-gray-300 rounded p-1 text-sm"
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value as "name" | "date");
+                  fetchFolderContents(currentFolder, searchQuery);
+                }}
+              >
+                <option value="name">Sort by Name</option>
+                <option value="date">Sort by Date</option>
+              </select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setPage((prev) => Math.max(prev - 1, 1));
+                  fetchFolderContents(currentFolder, searchQuery);
+                }}
+              >
+                Prev
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setPage((prev) => prev + 1);
+                  fetchFolderContents(currentFolder, searchQuery);
+                }}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+
+          <FolderBreadcrumb
+            currentFolder={{
+              name: searchResults
+                ? "Search Results"
+                : folderContents
+                  ? folderContents.name
+                  : "",
+              id: searchResults ? -999 : currentFolder,
+            }}
+            parents={searchResults ? [] : folderContents?.parents || []}
+            onBreadcrumbClick={handleBreadcrumbClick}
+          />
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {searchResults ? "Search Results" : "Folder Contents"}
+              </CardTitle>
+              <FolderActions
+                onRefresh={() =>
+                  fetchFolderContents(currentFolder, searchQuery)
+                }
+                onCreateFolder={handleCreateFolder}
+                onUploadFiles={handleUploadFiles}
+              />
+            </CardHeader>
+            <CardContent>
+              {searchResults ? (
+                <FolderContents
+                  setPresentingDocument={(
+                    document_id: string,
+                    semantic_identifier: string
+                  ) =>
+                    setPresentingDocument({ document_id, semantic_identifier })
+                  }
+                  contents={searchResults}
+                  onFolderClick={handleFolderClick}
+                  currentFolder={currentFolder}
+                  onDeleteItem={handleDeleteItem}
+                  onDownloadItem={handleDownloadItem}
+                  onMoveItem={handleMoveItem}
+                  onRenameItem={onRenameItem}
+                />
+              ) : folderContents ? (
+                <FolderContents
+                  setPresentingDocument={(
+                    document_id: string,
+                    semantic_identifier: string
+                  ) =>
+                    setPresentingDocument({ document_id, semantic_identifier })
+                  }
+                  contents={folderContents}
+                  onFolderClick={handleFolderClick}
+                  currentFolder={currentFolder}
+                  onDeleteItem={handleDeleteItem}
+                  onDownloadItem={handleDownloadItem}
+                  onMoveItem={handleMoveItem}
+                  onRenameItem={onRenameItem}
+                />
+              ) : (
+                <p>Loading...</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      {/* <FilePicker
+        isOpen={isFilePickerOpen}
+        onClose={() => setIsFilePickerOpen(false)}
+        onSave={handleSaveContext}
+        onDelete={handleDeleteSelected}
+      /> */}
     </div>
   );
 }

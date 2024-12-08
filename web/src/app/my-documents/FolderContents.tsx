@@ -5,8 +5,6 @@ import {
   DownloadIcon,
   TrashIcon,
   PencilIcon,
-  ClipboardPenLine,
-  ShareIcon,
   InfoIcon,
   CheckIcon,
   XIcon,
@@ -23,11 +21,16 @@ interface FolderContentsProps {
   currentFolder: number;
   onDeleteItem: (itemId: number, isFolder: boolean) => void;
   onDownloadItem: (documentId: string) => void;
-  onMoveItem: (itemId: number, destinationFolderId: number) => void;
+  onMoveItem: (
+    itemId: number,
+    destinationFolderId: number,
+    isFolder: boolean
+  ) => void;
   setPresentingDocument: (
     document_id: string,
     semantic_identifier: string
   ) => void;
+  onRenameItem: (itemId: number, newName: string, isFolder: boolean) => void;
 }
 
 export function FolderContents({
@@ -38,40 +41,70 @@ export function FolderContents({
   onDeleteItem,
   onDownloadItem,
   onMoveItem,
+  onRenameItem,
 }: FolderContentsProps) {
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
-  const [fileToMove, setFileToMove] = useState<{
+  const [itemToMove, setItemToMove] = useState<{
     id: number;
     name: string;
+    isFolder: boolean;
   } | null>(null);
-  const [editingFile, setEditingFile] = useState<{
+
+  const [editingItem, setEditingItem] = useState<{
     id: number;
     name: string;
+    isFolder: boolean;
   } | null>(null);
 
   const handleMove = (destinationFolderId: number) => {
-    if (fileToMove) {
-      onMoveItem(fileToMove.id, destinationFolderId);
+    if (itemToMove) {
+      onMoveItem(itemToMove.id, destinationFolderId, itemToMove.isFolder);
       setIsMoveModalOpen(false);
-      setFileToMove(null);
+      setItemToMove(null);
     }
   };
 
-  const handleRename = (fileId: number, newName: string) => {
-    // Implement the rename logic here
-    console.log(`Renaming file ${fileId} to ${newName}`);
-    // You should update the file name in your state or make an API call here
-    setEditingFile(null);
+  const handleRename = (itemId: number, newName: string, isFolder: boolean) => {
+    onRenameItem(itemId, newName, isFolder);
+    setEditingItem(null);
+  };
+
+  const handleDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    item: { id: number; isFolder: boolean; name: string }
+  ) => {
+    e.dataTransfer.setData("application/json", JSON.stringify(item));
+  };
+
+  const handleDrop = (
+    e: React.DragEvent<HTMLDivElement>,
+    targetFolderId: number
+  ) => {
+    e.preventDefault();
+    const item = JSON.parse(e.dataTransfer.getData("application/json"));
+    if (item && typeof item.id === "number") {
+      // Move the dragged item to the target folder
+      onMoveItem(item.id, targetFolderId, item.isFolder);
+    }
   };
 
   return (
-    <div>
+    <div className="flex-grow" onDragOver={(e) => e.preventDefault()}>
       {contents.children.map((folder) => (
         <FolderItem
           key={folder.id}
           folder={folder}
           onFolderClick={onFolderClick}
           onDeleteItem={onDeleteItem}
+          onMoveItem={(id) => {
+            setItemToMove({ id, name: folder.name, isFolder: true });
+            setIsMoveModalOpen(true);
+          }}
+          editingItem={editingItem}
+          setEditingItem={setEditingItem}
+          handleRename={handleRename}
+          onDragStart={handleDragStart}
+          onDrop={handleDrop}
         />
       ))}
       {contents.files.map((file) => (
@@ -81,20 +114,23 @@ export function FolderContents({
           file={file}
           onDeleteItem={onDeleteItem}
           onDownloadItem={onDownloadItem}
-          setFileToMove={setFileToMove}
-          setIsMoveModalOpen={setIsMoveModalOpen}
-          editingFile={editingFile}
-          setEditingFile={setEditingFile}
+          onMoveItem={(id) => {
+            setItemToMove({ id, name: file.name, isFolder: false });
+            setIsMoveModalOpen(true);
+          }}
+          editingItem={editingItem}
+          setEditingItem={setEditingItem}
           handleRename={handleRename}
+          onDragStart={handleDragStart}
         />
       ))}
-      {fileToMove && (
+      {itemToMove && (
         <MoveFileModal
           isOpen={isMoveModalOpen}
           onClose={() => setIsMoveModalOpen(false)}
           onMove={handleMove}
           currentLocation={{ id: currentFolder, name: "Current Folder" }}
-          fileName={fileToMove.name}
+          fileName={itemToMove.name}
         />
       )}
     </div>
@@ -105,27 +141,135 @@ interface FolderItemProps {
   folder: { name: string; id: number };
   onFolderClick: (folderId: number) => void;
   onDeleteItem: (itemId: number, isFolder: boolean) => void;
+  onMoveItem: (folderId: number) => void;
+  editingItem: { id: number; name: string; isFolder: boolean } | null;
+  setEditingItem: React.Dispatch<
+    React.SetStateAction<{ id: number; name: string; isFolder: boolean } | null>
+  >;
+  handleRename: (id: number, newName: string, isFolder: boolean) => void;
+  onDragStart: (
+    e: React.DragEvent<HTMLDivElement>,
+    item: { id: number; isFolder: boolean; name: string }
+  ) => void;
+  onDrop: (e: React.DragEvent<HTMLDivElement>, targetFolderId: number) => void;
 }
 
-function FolderItem({ folder, onFolderClick, onDeleteItem }: FolderItemProps) {
+function FolderItem({
+  folder,
+  onFolderClick,
+  onDeleteItem,
+  onMoveItem,
+  editingItem,
+  setEditingItem,
+  handleRename,
+  onDragStart,
+  onDrop,
+}: FolderItemProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const [newName, setNewName] = useState(folder.name);
+
+  const isEditing =
+    editingItem && editingItem.id === folder.id && editingItem.isFolder;
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setShowMenu(!showMenu);
+  };
+
+  const startEditing = () => {
+    setEditingItem({ id: folder.id, name: folder.name, isFolder: true });
+    setNewName(folder.name);
+    setShowMenu(false);
+  };
+
+  const submitRename = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleRename(folder.id, newName, true);
+  };
+
+  const cancelEditing = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingItem(null);
+    setNewName(folder.name);
+  };
+
   return (
     <div
       className="flex items-center justify-between p-2 hover:bg-gray-100 cursor-pointer"
-      onClick={() => onFolderClick(folder.id)}
+      onClick={() => !isEditing && onFolderClick(folder.id)}
+      onContextMenu={handleContextMenu}
+      draggable={!isEditing}
+      onDragStart={(e) =>
+        onDragStart(e, { id: folder.id, isFolder: true, name: folder.name })
+      }
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => onDrop(e, folder.id)}
     >
       <div className="flex items-center">
         <FolderIcon className="mr-2" />
-        <span>{folder.name}</span>
+        {isEditing ? (
+          <div className="flex items-center">
+            <input
+              onClick={(e) => e.stopPropagation()}
+              type="text"
+              value={newName}
+              onChange={(e) => {
+                e.stopPropagation();
+                setNewName(e.target.value);
+              }}
+              className="border rounded px-2 py-1 mr-2"
+              autoFocus
+            />
+            <button
+              onClick={submitRename}
+              className="text-green-500 hover:text-green-700 mr-2"
+            >
+              <CheckIcon className="h-4 w-4" />
+            </button>
+            <button
+              onClick={cancelEditing}
+              className="text-red-500 hover:text-red-700"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <span>{folder.name}</span>
+        )}
       </div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDeleteItem(folder.id, true);
-        }}
-        className="text-red-500 hover:text-red-700"
-      >
-        <TrashIcon className="h-4 w-4" />
-      </button>
+      {showMenu && !isEditing && (
+        <div className="absolute bg-white border rounded shadow py-1 right-10 z-50">
+          <button
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              startEditing();
+            }}
+          >
+            Rename
+          </button>
+          <button
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveItem(folder.id);
+              setShowMenu(false);
+            }}
+          >
+            Move
+          </button>
+          <button
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-red-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteItem(folder.id, true);
+              setShowMenu(false);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -134,19 +278,20 @@ interface FileItemProps {
   file: { name: string; id: number; document_id: string };
   onDeleteItem: (itemId: number, isFolder: boolean) => void;
   onDownloadItem: (documentId: string) => void;
-  setFileToMove: React.Dispatch<
-    React.SetStateAction<{ id: number; name: string } | null>
-  >;
-  setIsMoveModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  editingFile: { id: number; name: string } | null;
-  setEditingFile: React.Dispatch<
-    React.SetStateAction<{ id: number; name: string } | null>
+  onMoveItem: (fileId: number) => void;
+  editingItem: { id: number; name: string; isFolder: boolean } | null;
+  setEditingItem: React.Dispatch<
+    React.SetStateAction<{ id: number; name: string; isFolder: boolean } | null>
   >;
   setPresentingDocument: (
     document_id: string,
     semantic_identifier: string
   ) => void;
-  handleRename: (fileId: number, newName: string) => void;
+  handleRename: (fileId: number, newName: string, isFolder: boolean) => void;
+  onDragStart: (
+    e: React.DragEvent<HTMLDivElement>,
+    item: { id: number; isFolder: boolean; name: string }
+  ) => void;
 }
 
 function FileItem({
@@ -154,72 +299,56 @@ function FileItem({
   file,
   onDeleteItem,
   onDownloadItem,
-  setFileToMove,
-  setIsMoveModalOpen,
-  editingFile,
-  setEditingFile,
+  onMoveItem,
+  editingItem,
+  setEditingItem,
   handleRename,
+  onDragStart,
 }: FileItemProps) {
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [newFileName, setNewFileName] = useState(file.name);
-  const popoverRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(event.target as Node)
-      ) {
-        setIsPopoverOpen(false);
-      }
-    };
+  const isEditing =
+    editingItem && editingItem.id === file.id && !editingItem.isFolder;
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const handleDoubleClick = (e: React.MouseEvent) => {
+  const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsPopoverOpen(true);
-  };
-
-  const handleMoveFile = () => {
-    setFileToMove({ id: file.id, name: file.name });
-    setIsMoveModalOpen(true);
-    setIsPopoverOpen(false);
+    setShowMenu(!showMenu);
   };
 
   const startEditing = () => {
-    setEditingFile({ id: file.id, name: file.name });
+    setEditingItem({ id: file.id, name: file.name, isFolder: false });
     setNewFileName(file.name);
-    setIsPopoverOpen(false);
-  };
-
-  const cancelEditing = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingFile(null);
-    setNewFileName(file.name);
+    setShowMenu(false);
   };
 
   const submitRename = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handleRename(file.id, newFileName);
+    handleRename(file.id, newFileName, false);
+  };
+
+  const cancelEditing = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingItem(null);
+    setNewFileName(file.name);
   };
 
   return (
     <div
       key={file.id}
-      className="flex items-center w-full justify-between p-2 hover:bg-gray-100"
-      onContextMenu={handleDoubleClick}
+      className="flex items-center w-full justify-between p-2 hover:bg-gray-100 cursor-pointer"
+      onContextMenu={handleContextMenu}
+      draggable={!isEditing}
+      onDragStart={(e) =>
+        onDragStart(e, { id: file.id, isFolder: false, name: file.name })
+      }
     >
       <button
         onClick={() => setPresentingDocument(file.document_id, file.name)}
         className="flex items-center flex-grow"
       >
         <FileIcon className="mr-2" />
-        {editingFile && editingFile.id === file.id ? (
+        {isEditing ? (
           <div className="flex items-center">
             <input
               onClick={(e) => e.stopPropagation()}
@@ -246,73 +375,52 @@ function FileItem({
             </button>
           </div>
         ) : (
-          <span>{file.name}</span>
+          <p className="flex text-wrap text-left line-clamp-2">{file.name}</p>
         )}
       </button>
-
-      <Popover ref={popoverRef} className="relative">
-        {({ open }) => (
-          <>
-            <Popover.Button className="hidden">Open menu</Popover.Button>
-
-            <Popover.Panel
-              static
-              className={`${
-                isPopoverOpen ? "block" : "hidden"
-              } absolute right-0 z-10 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none`}
-            >
-              <div className="py-1">
-                <PopoverItem
-                  icon={<DownloadIcon />}
-                  text="Download"
-                  onClick={() => onDownloadItem(file.document_id)}
-                  setIsPopoverOpen={setIsPopoverOpen}
-                />
-                <PopoverItem
-                  icon={<PencilIcon />}
-                  text="Rename"
-                  onClick={startEditing}
-                  setIsPopoverOpen={setIsPopoverOpen}
-                />
-
-                <PopoverItem
-                  icon={<FolderIcon />}
-                  text="Organize"
-                  onClick={handleMoveFile}
-                  setIsPopoverOpen={setIsPopoverOpen}
-                />
-                <PopoverItem
-                  icon={<InfoIcon />}
-                  text="File information"
-                  onClick={() => {
-                    /* Implement file info logic */
-                  }}
-                  setIsPopoverOpen={setIsPopoverOpen}
-                />
-                <PopoverItem
-                  icon={<TrashIcon />}
-                  text="Delete"
-                  onClick={() => onDeleteItem(file.id, false)}
-                  setIsPopoverOpen={setIsPopoverOpen}
-                />
-              </div>
-            </Popover.Panel>
-          </>
-        )}
-      </Popover>
+      {showMenu && !isEditing && (
+        <div className="absolute bg-white border rounded shadow py-1 right-10 z-50">
+          <button
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownloadItem(file.document_id);
+              setShowMenu(false);
+            }}
+          >
+            Download
+          </button>
+          <button
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              startEditing();
+            }}
+          >
+            Rename
+          </button>
+          <button
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMoveItem(file.id);
+              setShowMenu(false);
+            }}
+          >
+            Move
+          </button>
+          <button
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-red-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteItem(file.id, false);
+              setShowMenu(false);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
     </div>
   );
 }
-
-const PopoverItem = ({ icon, text, onClick, setIsPopoverOpen }: any) => (
-  <button
-    className="flex select-none items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-    onClick={() => {
-      onClick();
-      setIsPopoverOpen(false);
-    }}
-  >
-    {icon && <span className="mr-3 h-5 w-5">{icon}</span>}
-    {text}
-  </button>
-);

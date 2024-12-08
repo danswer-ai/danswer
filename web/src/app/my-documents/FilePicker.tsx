@@ -48,30 +48,22 @@ export const FilePicker: React.FC<FilePickerProps> = ({
   };
 
   useEffect(() => {
-    const loadFileSystem = async () => {
-      const data = await fetchFileSystem();
-      setFileSystem(data);
-    };
-    loadFileSystem();
-  }, []);
+    if (isOpen) {
+      const loadFileSystem = async () => {
+        const data = await fetchFileSystem();
+        setFileSystem(data);
+      };
+      loadFileSystem();
+    }
+  }, [isOpen]);
 
-  const getCurrentDirectory = (): UserFolder[] => {
-    let current = fileSystem.folders;
-    // for (const dir of currentPath) {
-    //   current = current.find((item) => item.name === dir)?.children || [];
-    // }
-    return current || [];
-  };
-
-  const handleItemClick = (item: UserFolder | UserFile) => {
-    // if (item.parent_id === null) {
-    //   setCurrentPath([...currentPath, item.name]);
-    // }
-    console.log(item);
-  };
-
-  const handleBackClick = () => {
-    setCurrentPath(currentPath.slice(0, -1));
+  const getCurrentDirectory = (): (UserFolder | UserFile)[] => {
+    // This is a simplified view just listing all files and folders
+    // In a real scenario, you'd navigate directories properly.
+    return [
+      ...fileSystem.folders.filter((f) => f.parent_id === null),
+      ...fileSystem.files.filter((f) => f.parent_folder_id === null),
+    ];
   };
 
   const handleItemSelect = (item: UserFolder | UserFile) => {
@@ -86,7 +78,7 @@ export const FilePicker: React.FC<FilePickerProps> = ({
     onClose();
   };
 
-  const handleDelete = () => {
+  const handleDeleteSelected = () => {
     onDelete(selectedItems);
     onClose();
   };
@@ -94,8 +86,11 @@ export const FilePicker: React.FC<FilePickerProps> = ({
   return (
     <Modal onOutsideClick={onClose} title="File Picker">
       <div className="p-4">
-        <div className="mb-4">
-          <Button onClick={handleBackClick} disabled={currentPath.length === 0}>
+        <div className="mb-4 flex items-center">
+          <Button
+            onClick={() => setCurrentPath(currentPath.slice(0, -1))}
+            disabled={currentPath.length === 0}
+          >
             Back
           </Button>
           <span className="ml-2">{currentPath.join(" / ") || "Root"}</span>
@@ -103,7 +98,7 @@ export const FilePicker: React.FC<FilePickerProps> = ({
         <div className="max-h-96 overflow-y-auto">
           {getCurrentDirectory().map((item) => (
             <div
-              key={item.name}
+              key={item.id}
               className="flex items-center p-2 hover:bg-gray-100"
             >
               <Checkbox
@@ -112,18 +107,15 @@ export const FilePicker: React.FC<FilePickerProps> = ({
                 )}
                 onChange={() => handleItemSelect(item)}
               />
-              <span
-                className="ml-2 cursor-pointer"
-                onClick={() => handleItemClick(item)}
-              >
-                {item.parent_id === null ? "📁 " : "📄 "}
+              <span className="ml-2 cursor-pointer">
+                {"parent_id" in item && item.parent_id === null ? "📁 " : "📄 "}
                 {item.name}
               </span>
             </div>
           ))}
         </div>
         <div className="mt-4 flex justify-end space-x-2">
-          <Button onClick={handleDelete} variant="destructive">
+          <Button onClick={handleDeleteSelected} variant="destructive">
             Delete Selected
           </Button>
           <Button onClick={handleSave} variant="default">

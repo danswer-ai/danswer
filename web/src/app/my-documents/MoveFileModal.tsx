@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ChevronRight, Folder } from "lucide-react";
+import { Folder } from "lucide-react";
 
 interface Folder {
   id: number;
@@ -25,24 +25,20 @@ export function MoveFileModal({
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
 
   useEffect(() => {
-    // TODO: Implement fetching folders from the backend
-    // This is a placeholder for demonstration
-    setFolders([
-      { id: 1, name: "Guides" },
-      { id: 2, name: "Obsidian notes" },
-      { id: 3, name: "Sheet" },
-      { id: 4, name: "My Drive" },
-      { id: 5, name: "hosting" },
-      { id: 6, name: "Multi-tenant Cloud" },
-      { id: 7, name: "Storage" },
-      { id: 8, name: "backend" },
-    ]);
-  }, []);
+    if (isOpen) {
+      const loadFolders = async () => {
+        const res = await fetch("/api/user/folder");
+        const data = await res.json();
+        setFolders(data);
+      };
+      loadFolders();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-96">
         <h2 className="text-xl font-semibold mb-4">
           Move &quot;{fileName}&quot;
@@ -52,10 +48,8 @@ export function MoveFileModal({
           <p className="font-medium">{currentLocation.name}</p>
         </div>
         <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-medium">Suggested</span>
-          </div>
-          <div className="max-h-60 overflow-y-auto">
+          <span className="font-medium">Choose a folder:</span>
+          <div className="max-h-60 overflow-y-auto mt-2 border rounded">
             {folders.map((folder) => (
               <div
                 key={folder.id}

@@ -6,8 +6,6 @@ export default async function GalleryPage(props: {
   searchParams: Promise<{ [key: string]: string }>;
 }) {
   const searchParams = await props.searchParams;
-  //   noStore();
-
   const data = await fetchChatData(searchParams);
 
   if ("redirect" in data) {

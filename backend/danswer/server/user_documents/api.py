@@ -135,7 +135,9 @@ def upload_user_files(
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> FileUploadResponse:
-    return create_user_files(files, folder_id, user, db_session)
+    return FileUploadResponse(
+        file_paths=create_user_files(files, folder_id, user, db_session).file_paths
+    )
 
 
 @router.put("/user/folder/{folder_id}")
@@ -222,22 +224,26 @@ def delete_file(
     return MessageResponse(message="File deleted successfully")
 
 
+class FileMoveRequest(BaseModel):
+    file_id: int
+    new_folder_id: int | None
+
+
 @router.put("/user/file/{file_id}/move")
 def move_file(
-    file_id: int,
-    new_folder_id: int | None,
+    request: FileMoveRequest,
     user: User = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> FileResponse:
     user_id = user.id if user else None
     file = (
         db_session.query(UserFile)
-        .filter(UserFile.id == file_id, UserFile.user_id == user_id)
+        .filter(UserFile.id == request.file_id, UserFile.user_id == user_id)
         .first()
     )
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
-    file.parent_folder_id = new_folder_id
+    file.parent_folder_id = request.new_folder_id
     db_session.commit()
     return FileResponse.from_model(file)
 
@@ -254,3 +260,23 @@ def get_file_system(
         folders=[FolderResponse.from_model(folder) for folder in folders],
         files=[FileResponse.from_model(file) for file in files],
     )
+
+
+@router.put("/user/file/{file_id}/rename")
+def rename_file(
+    file_id: int,
+    name: str,
+    user: User = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> FileResponse:
+    user_id = user.id if user else None
+    file = (
+        db_session.query(UserFile)
+        .filter(UserFile.id == file_id, UserFile.user_id == user_id)
+        .first()
+    )
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+    file.name = name
+    db_session.commit()
+    return FileResponse.from_model(file)

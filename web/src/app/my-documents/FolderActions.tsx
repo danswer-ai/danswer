@@ -47,13 +47,11 @@ export function FolderActions({
       >
         <RefreshCw className="h-4 w-4 text-gray-600" />
       </Button>
-      <Popover>
+      <Popover open={isCreatingFolder} onOpenChange={setIsCreatingFolder}>
         <PopoverTrigger asChild>
           <Button
-            onClick={() => setIsCreatingFolder(true)}
             variant="outline"
             size="sm"
-            disabled={false}
             className="border-gray-300 hover:bg-gray-100"
           >
             <Plus className="h-4 w-4 text-gray-600" />
@@ -63,7 +61,6 @@ export function FolderActions({
           <PopoverContent className="w-56 p-3 bg-white shadow-md rounded-md">
             <div className="space-y-2 flex flex-col">
               <Input
-                width="full"
                 type="text"
                 placeholder="New folder name"
                 value={newFolderName}

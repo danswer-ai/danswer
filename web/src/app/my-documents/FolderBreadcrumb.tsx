@@ -12,10 +12,8 @@ export function FolderBreadcrumb({
   onBreadcrumbClick,
   currentFolder,
 }: FolderBreadcrumbProps) {
-  // const pathParts = parents.map((parent) => parent.name).filter(Boolean);
-
   return (
-    <div className="flex items-center space-x-2 text-sm text-gray-500">
+    <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
       <span
         className="cursor-pointer hover:text-gray-700"
         onClick={() => onBreadcrumbClick(-1)}
@@ -34,10 +32,10 @@ export function FolderBreadcrumb({
         </React.Fragment>
       ))}
       {currentFolder && currentFolder.id !== -1 && (
-        <React.Fragment>
+        <>
           <ChevronRight className="h-4 w-4" />
           <span className="text-gray-700">{currentFolder.name}</span>
-        </React.Fragment>
+        </>
       )}
     </div>
   );
