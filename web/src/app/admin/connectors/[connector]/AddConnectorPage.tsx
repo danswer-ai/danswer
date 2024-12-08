@@ -125,7 +125,7 @@ export default function AddConnector({
       setCurrentPageUrl(window.location.href);
     }
 
-    if (EE_ENABLED) {
+    if (EE_ENABLED && NEXT_PUBLIC_CLOUD_ENABLED) {
       const sourceMetadata = getSourceMetadata(connector);
       if (sourceMetadata?.oauthSupported == true) {
         setIsAuthorizeVisible(true);
@@ -449,20 +449,21 @@ export default function AddConnector({
                           Create New
                         </button>
                         {/* Button to sign in via OAuth */}
-                        {oauthSupportedSources.includes(connector) && (
-                          <button
-                            onClick={handleAuthorize}
-                            className="mt-6 text-sm bg-blue-500 px-2 py-1.5 flex text-text-200 flex-none rounded"
-                            disabled={isAuthorizing}
-                            hidden={!isAuthorizeVisible}
-                          >
-                            {isAuthorizing
-                              ? "Authorizing..."
-                              : `Authorize with ${getSourceDisplayName(
-                                  connector
-                                )}`}
-                          </button>
-                        )}
+                        {oauthSupportedSources.includes(connector) &&
+                          NEXT_PUBLIC_CLOUD_ENABLED && (
+                            <button
+                              onClick={handleAuthorize}
+                              className="mt-6 text-sm bg-blue-500 px-2 py-1.5 flex text-text-200 flex-none rounded"
+                              disabled={isAuthorizing}
+                              hidden={!isAuthorizeVisible}
+                            >
+                              {isAuthorizing
+                                ? "Authorizing..."
+                                : `Authorize with ${getSourceDisplayName(
+                                    connector
+                                  )}`}
+                            </button>
+                          )}
                       </div>
                     )}
 
