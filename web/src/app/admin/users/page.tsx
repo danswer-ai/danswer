@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,26 +43,45 @@ const UsersTables = ({
   const [acceptedPage, setAcceptedPage] = useState(1);
   const [slackUsersPage, setSlackUsersPage] = useState(1);
 
-  const { data, error, isValidating, mutate } = useSWR<UsersResponse>(
+  const [usersData, setUsersData] = useState<UsersResponse | undefined>(
+    undefined
+  );
+  const [domainsData, setDomainsData] = useState<string[] | undefined>(
+    undefined
+  );
+
+  const { data, error, mutate } = useSWR<UsersResponse>(
     `/api/manage/users?q=${encodeURIComponent(q)}&accepted_page=${
       acceptedPage - 1
     }&invited_page=${invitedPage - 1}&slack_users_page=${slackUsersPage - 1}`,
     errorHandlingFetcher
   );
 
-  const {
-    data: validDomains,
-    error: domainsError,
-    isValidating: isValidatingDomains,
-  } = useSWR<string[]>("/api/manage/admin/valid-domains", errorHandlingFetcher);
+  const { data: validDomains, error: domainsError } = useSWR<string[]>(
+    "/api/manage/admin/valid-domains",
+    errorHandlingFetcher
+  );
+
+  useEffect(() => {
+    if (data) {
+      setUsersData(data);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (validDomains) {
+      setDomainsData(validDomains);
+    }
+  }, [validDomains]);
+
+  const activeData = data ?? usersData;
+  const activeDomains = validDomains ?? domainsData;
 
   // Show loading animation only during the initial data fetch
-  if (!data) {
-    // console.log(!)
+  if (!activeData || !activeDomains) {
     return <LoadingAnimation text="Loading" />;
   }
 
-  // Handle errors
   if (error) {
     return (
       <ErrorCallout
@@ -81,7 +100,6 @@ const UsersTables = ({
     );
   }
 
-  // Extract data
   const {
     accepted,
     invited,
@@ -89,9 +107,8 @@ const UsersTables = ({
     invited_pages,
     slack_users,
     slack_users_pages,
-  } = data;
+  } = activeData;
 
-  // Remove users that are already accepted
   const finalInvited = invited.filter(
     (user) => !accepted.some((u) => u.email === user.email)
   );
@@ -107,21 +124,21 @@ const UsersTables = ({
       <TabsContent value="invited">
         <Card>
           <CardHeader>
-            <CardTitle>
-              Invited Users{" "}
-              {isValidating && <LoadingAnimation text="Loading" />}
-            </CardTitle>
+            <CardTitle>Invited Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <InvitedUserTable
-              users={finalInvited}
-              setPopup={setPopup}
-              currentPage={invitedPage}
-              onPageChange={setInvitedPage}
-              totalPages={invited_pages}
-              mutate={mutate}
-              isLoading={isValidating}
-            />
+            {finalInvited.length > 0 ? (
+              <InvitedUserTable
+                users={finalInvited}
+                setPopup={setPopup}
+                currentPage={invitedPage}
+                onPageChange={setInvitedPage}
+                totalPages={invited_pages}
+                mutate={mutate}
+              />
+            ) : (
+              <p>Users that have been invited will show up here</p>
+            )}
           </CardContent>
         </Card>
       </TabsContent>
