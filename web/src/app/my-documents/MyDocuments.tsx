@@ -122,16 +122,16 @@ export default function MyDocuments() {
         });
       }
     },
-    [setFolderContents, setPopup, page, sortBy, pageLimit]
+    []
   );
 
   useEffect(() => {
     setCurrentFolder(folderIdFromParams);
     fetchFolderContents(folderIdFromParams, searchQuery);
-  }, [searchParams, fetchFolderContents, folderIdFromParams, searchQuery]);
+  }, []);
 
   const refreshFolderContents = useCallback(() => {
-    fetchFolderContents(currentFolder, searchQuery);
+    // fetchFolderContents(currentFolder, searchQuery);
   }, [fetchFolderContents, currentFolder, searchQuery]);
 
   useEffect(() => {
@@ -397,9 +397,9 @@ export default function MyDocuments() {
         />
       )}
       {popup}
-      <div className="flex flex-col md:flex-row">
-        <FolderTree treeData={folderTree} onFolderClick={handleFolderClick} />
-        <div className="flex-grow md:ml-4">
+      <div className="flex flex-col lg:flex-row">
+        {/* <FolderTree treeData={folderTree} onFolderClick={handleFolderClick} /> */}
+        <div className="flex-grow lg:ml-4">
           <div className="flex items-center mb-2 space-x-2">
             {/* <Input
               type="text"

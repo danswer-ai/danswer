@@ -35,9 +35,9 @@ export const useDocuments = () => {
       const fetchedDocuments = await fetchDocuments();
       setDocuments(fetchedDocuments);
     } catch (err) {
-      //   console.error("Error loading documents:", err);
-      //   console.error(err);
-      //   setError("Failed to load documents");
+      console.error("Error loading documents:", err);
+      console.error(err);
+      setError("Failed to load documents");
     } finally {
       setIsLoading(false);
     }

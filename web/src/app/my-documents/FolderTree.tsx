@@ -39,7 +39,7 @@ function renderTree(
 
 export function FolderTree({ treeData, onFolderClick }: FolderTreeProps) {
   return (
-    <div className="w-64 border-r border-gray-300 p-2 overflow-y-auto hidden md:block">
+    <div className="w-64 border-r border-gray-300 p-2 overflow-y-auto hidden lg:block">
       <h2 className="font-bold text-sm mb-2">Folders</h2>
       {renderTree(treeData, onFolderClick)}
     </div>
