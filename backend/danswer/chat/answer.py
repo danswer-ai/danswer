@@ -138,6 +138,8 @@ class Answer:
     ) -> AnswerStream:
         current_llm_call = llm_calls[-1]
 
+        logger.info("Decided on tool call")
+
         # make a dummy tool handler
         tool_handler = ToolResponseHandler([tool])
 

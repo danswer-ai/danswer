@@ -280,6 +280,7 @@ class SearchTool(Tool):
 
     def run(self, **kwargs: str) -> Generator[ToolResponse, None, None]:
         query = cast(str, kwargs["query"])
+        logger.info(f"Running search tool with query: {query}")
 
         if self.selected_sections:
             yield from self._build_response_for_specified_sections(query)
@@ -315,6 +316,7 @@ class SearchTool(Tool):
             prompt_config=self.prompt_config,
         )
 
+        logger.info("Yielding initial search response")
         yield ToolResponse(
             id=SEARCH_RESPONSE_SUMMARY_ID,
             response=SearchResponseSummary(
@@ -326,6 +328,7 @@ class SearchTool(Tool):
                 recency_bias_multiplier=search_pipeline.search_query.recency_bias_multiplier,
             ),
         )
+        logger.info("Yielding search doc content")
 
         yield ToolResponse(
             id=SEARCH_DOC_CONTENT_ID,

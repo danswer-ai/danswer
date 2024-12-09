@@ -138,8 +138,10 @@ class ToolResponseHandler:
         logger.info(f"Selected tool: {selected_tool.name}")
         logger.debug(f"Selected tool call request: {selected_tool_call_request}")
         self.tool_runner = ToolRunner(selected_tool, selected_tool_call_request["args"])
+        logger.info("Kicking off tool")
         self.tool_kickoff = self.tool_runner.kickoff()
         yield self.tool_kickoff
+        logger.info("Yielded tool kickoff")
 
         for response in self.tool_runner.tool_responses():
             self.tool_responses.append(response)

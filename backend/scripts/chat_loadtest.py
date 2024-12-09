@@ -36,6 +36,7 @@ class ChatMetrics:
     total_time: float
     first_doc_time: float
     first_answer_time: float
+    tool_selection_time: float
     tokens_per_second: float
     total_tokens: int
     request_number: int
@@ -92,6 +93,7 @@ class ChatLoadTester:
         start_time = time.time()
         first_doc_time = None
         first_answer_time = None
+        tool_selection_time = None
         token_count = 0
 
         async with session.post(
@@ -113,6 +115,9 @@ class ChatLoadTester:
             response.raise_for_status()
 
             async for chunk in self.process_stream(response, chat_session_id):
+                if '"tool_name"' in chunk and tool_selection_time is None:
+                    tool_selection_time = time.time() - start_time
+
                 if '{"top_documents"' in chunk:
                     if first_doc_time is None:
                         first_doc_time = time.time() - start_time
@@ -130,6 +135,7 @@ class ChatLoadTester:
                 total_time=total_time,
                 first_doc_time=first_doc_time or 0,
                 first_answer_time=first_answer_time or 0,
+                tool_selection_time=tool_selection_time or 0,
                 tokens_per_second=tokens_per_second,
                 total_tokens=token_count,
                 request_number=request_number,
@@ -184,11 +190,17 @@ class ChatLoadTester:
             avg_first_answer = statistics.mean(
                 m.first_answer_time for m in self.metrics
             )
+            avg_tool_selection = statistics.mean(
+                m.tool_selection_time for m in self.metrics
+            )
             avg_tokens_per_sec = statistics.mean(
                 m.tokens_per_second for m in self.metrics
             )
 
             logger.info(f"\nAverage Response Time: {avg_response_time:.2f} seconds")
+            logger.info(
+                f"Average Time to Tool Selection: {avg_tool_selection:.2f} seconds"
+            )
             logger.info(f"Average Time to Documents: {avg_first_doc:.2f} seconds")
             logger.info(f"Average Time to First Answer: {avg_first_answer:.2f} seconds")
             logger.info(f"Average Tokens/Second: {avg_tokens_per_sec:.2f}")
@@ -202,6 +214,7 @@ class ChatLoadTester:
                     f"Session {m.session_id} - Request {m.request_number} - "
                     f"Message: '{m.message[:30]}...' - "
                     f"Total Time: {m.total_time:.2f}s, "
+                    f"Tool Selection: {m.tool_selection_time:.2f}s, "
                     f"Doc Time: {m.first_doc_time:.2f}s, "
                     f"First Answer: {m.first_answer_time:.2f}s"
                 )

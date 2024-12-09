@@ -1,3 +1,4 @@
+import time
 import traceback
 from collections.abc import Callable
 from collections.abc import Iterator
@@ -314,6 +315,8 @@ def stream_chat_message_objects(
 
     try:
         user_id = user.id if user is not None else None
+
+        start = time.monotonic()
 
         chat_session = get_chat_session_by_id(
             chat_session_id=new_msg_req.chat_session_id,
@@ -651,6 +654,9 @@ def stream_chat_message_objects(
         tools: list[Tool] = []
         for tool_list in tool_dict.values():
             tools.extend(tool_list)
+
+        enter_answer = time.monotonic()
+        logger.debug(f"Enter answer: {enter_answer - start}")
 
         # LLM prompt building, response capturing, etc.
         answer = Answer(
