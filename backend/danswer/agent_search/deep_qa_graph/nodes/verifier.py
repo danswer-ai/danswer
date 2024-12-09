@@ -10,7 +10,7 @@ from danswer.agent_search.shared_graph_utils.prompts import VERIFIER_PROMPT
 from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 
 
-def sub_verifier(state: VerifierState) -> dict[str, Any]:
+def verifier(state: VerifierState) -> dict[str, Any]:
     """
     Check whether the document is relevant for the original user question
 

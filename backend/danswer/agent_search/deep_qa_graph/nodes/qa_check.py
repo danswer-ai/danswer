@@ -10,7 +10,7 @@ from danswer.agent_search.shared_graph_utils.models import BinaryDecision
 from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 
 
-def sub_qa_check(state: ResearchQAState) -> dict[str, Any]:
+def qa_check(state: ResearchQAState) -> dict[str, Any]:
     """
     Check whether the final output satisfies the original user question
 

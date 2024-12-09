@@ -5,7 +5,7 @@ from danswer.agent_search.core_qa_graph.states import BaseQAState
 from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 
 
-def sub_dummy(state: BaseQAState) -> dict[str, Any]:
+def dummy(state: BaseQAState) -> dict[str, Any]:
     """
     Dummy step
     """

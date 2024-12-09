@@ -5,7 +5,7 @@ from danswer.agent_search.deep_qa_graph.states import ResearchQAState
 from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 
 
-def sub_final_format(state: ResearchQAState) -> dict[str, Any]:
+def final_format(state: ResearchQAState) -> dict[str, Any]:
     """
     Create the final output for the QA subgraph
     """

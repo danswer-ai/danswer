@@ -6,7 +6,7 @@ from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 from danswer.context.search.models import InferenceSection
 
 
-def sub_custom_retrieve(state: RetrieverState) -> dict[str, Any]:
+def custom_retrieve(state: RetrieverState) -> dict[str, Any]:
     """
     Retrieve documents
 

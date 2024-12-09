@@ -10,7 +10,7 @@ from danswer.agent_search.shared_graph_utils.utils import format_docs
 from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 
 
-def sub_generate(state: ResearchQAState) -> dict[str, Any]:
+def generate(state: ResearchQAState) -> dict[str, Any]:
     """
     Generate answer
 

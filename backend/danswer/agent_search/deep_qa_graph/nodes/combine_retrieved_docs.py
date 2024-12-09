@@ -5,7 +5,7 @@ from danswer.agent_search.deep_qa_graph.states import ResearchQAState
 from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 
 
-def sub_combine_retrieved_docs(state: ResearchQAState) -> dict[str, Any]:
+def combine_retrieved_docs(state: ResearchQAState) -> dict[str, Any]:
     """
     Dedupe the retrieved docs.
     """

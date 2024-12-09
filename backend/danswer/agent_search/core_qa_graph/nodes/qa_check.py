@@ -10,7 +10,7 @@ from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 from danswer.llm.factory import get_default_llms
 
 
-def sub_qa_check(state: BaseQAState) -> dict[str, Any]:
+def qa_check(state: BaseQAState) -> dict[str, Any]:
     """
     Check if the sub-question answer is satisfactory.
 

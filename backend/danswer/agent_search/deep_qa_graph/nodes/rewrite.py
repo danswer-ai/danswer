@@ -11,7 +11,7 @@ from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 from danswer.llm.interfaces import LLM
 
 
-def sub_rewrite(state: ResearchQAState) -> dict[str, Any]:
+def rewrite(state: ResearchQAState) -> dict[str, Any]:
     """
     Transform the initial question into more suitable search queries.
 
