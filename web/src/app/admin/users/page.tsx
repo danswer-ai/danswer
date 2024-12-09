@@ -18,6 +18,8 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import BulkAdd from "@/components/admin/users/BulkAdd";
 import { UsersResponse } from "@/lib/users/interfaces";
+import { UserRole } from "@/lib/types";
+import SlackUserTable from "@/components/admin/users/SlackUserTable";
 
 const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
   if (!validDomains.length) {
@@ -101,6 +103,9 @@ const UsersTables = ({
   const finalInvited = invited.filter(
     (user) => !accepted.map((u) => u.email).includes(user.email)
   );
+  const slackUsers = accepted.filter(
+    (user) => user.role === UserRole.SLACK_USER
+  );
 
   return (
     <>
@@ -123,6 +128,17 @@ const UsersTables = ({
           )
         ) : (
           <ValidDomainsDisplay validDomains={validDomains} />
+        )}
+      </HidableSection>
+
+      <HidableSection sectionTitle="Slack Users">
+        {slackUsers.length > 0 ? (
+          <SlackUserTable users={slackUsers} />
+        ) : (
+          <div className="text-sm">
+            To invite additional teammates, use the <b>Invite Users</b> button
+            above!
+          </div>
         )}
       </HidableSection>
       <SignedUpUserTable
