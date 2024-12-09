@@ -157,7 +157,7 @@ def get_standard_formatter() -> ColoredFormatter:
     """Returns a standard colored logging formatter."""
     return ColoredFormatter(
         "%(asctime)s %(filename)30s %(lineno)4s: %(message)s",
-        datefmt="%m/%d/%Y %I:%M:%S %p",
+        # datefmt="%m/%d/%Y %I:%M:%S %p",
     )
 
 

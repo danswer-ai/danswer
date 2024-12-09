@@ -38,6 +38,8 @@ class ChatMetrics:
     first_answer_time: float
     tokens_per_second: float
     total_tokens: int
+    request_number: int
+    message: str
 
 
 class ChatLoadTester:
@@ -47,11 +49,13 @@ class ChatLoadTester:
         api_key: str | None,
         num_concurrent: int,
         messages_per_session: int,
+        persona_id: int = 0,
     ):
         self.base_url = base_url
         self.headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
         self.num_concurrent = num_concurrent
         self.messages_per_session = messages_per_session
+        self.persona_id = persona_id
         self.metrics: list[ChatMetrics] = []
 
     async def create_chat_session(self, session: aiohttp.ClientSession) -> str:
@@ -59,18 +63,21 @@ class ChatLoadTester:
         async with session.post(
             f"{self.base_url}/chat/create-chat-session",
             headers=self.headers,
-            json={"persona_id": 0, "description": "Load Test"},
+            json={"persona_id": self.persona_id, "description": "Load Test"},
         ) as response:
             response.raise_for_status()
             data = await response.json()
             return data["chat_session_id"]
 
     async def process_stream(
-        self, response: aiohttp.ClientResponse
+        self,
+        response: aiohttp.ClientResponse,
+        chat_session_id: str,
     ) -> AsyncGenerator[str, None]:
         """Process the SSE stream from the chat response"""
         async for chunk in response.content:
             chunk_str = chunk.decode()
+            logger.info(f"Session {chat_session_id}: {chunk_str}")
             yield chunk_str
 
     async def send_message(
@@ -78,6 +85,7 @@ class ChatLoadTester:
         session: aiohttp.ClientSession,
         chat_session_id: str,
         message: str,
+        request_number: int,
         parent_message_id: int | None = None,
     ) -> ChatMetrics:
         """Send a message and measure performance metrics"""
@@ -104,8 +112,8 @@ class ChatLoadTester:
         ) as response:
             response.raise_for_status()
 
-            async for chunk in self.process_stream(response):
-                if "tool_name" in chunk and "run_search" in chunk:
+            async for chunk in self.process_stream(response, chat_session_id):
+                if '{"top_documents"' in chunk:
                     if first_doc_time is None:
                         first_doc_time = time.time() - start_time
 
@@ -124,6 +132,8 @@ class ChatLoadTester:
                 first_answer_time=first_answer_time or 0,
                 tokens_per_second=tokens_per_second,
                 total_tokens=token_count,
+                request_number=request_number,
+                message=message,
             )
 
     async def run_chat_session(self) -> None:
@@ -143,10 +153,10 @@ class ChatLoadTester:
                 for i in range(self.messages_per_session):
                     message = messages[i % len(messages)]
                     metrics = await self.send_message(
-                        session, chat_session_id, message, parent_message_id
+                        session, chat_session_id, message, i + 1, parent_message_id
                     )
                     self.metrics.append(metrics)
-                    parent_message_id = metrics.total_tokens  # Simplified for example
+                    parent_message_id = metrics.total_tokens
 
             except Exception as e:
                 logger.error(f"Error in chat session: {e}")
@@ -183,6 +193,19 @@ class ChatLoadTester:
             logger.info(f"Average Time to First Answer: {avg_first_answer:.2f} seconds")
             logger.info(f"Average Tokens/Second: {avg_tokens_per_sec:.2f}")
 
+            logger.info("\nIndividual Request Times:")
+            sorted_metrics = sorted(
+                self.metrics, key=lambda m: (m.session_id, m.request_number)
+            )
+            for m in sorted_metrics:
+                logger.info(
+                    f"Session {m.session_id} - Request {m.request_number} - "
+                    f"Message: '{m.message[:30]}...' - "
+                    f"Total Time: {m.total_time:.2f}s, "
+                    f"Doc Time: {m.first_doc_time:.2f}s, "
+                    f"First Answer: {m.first_answer_time:.2f}s"
+                )
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Chat Load Testing Tool")
@@ -209,6 +232,12 @@ def main() -> None:
         default=1,
         help="Number of messages per chat session",
     )
+    parser.add_argument(
+        "--persona-id",
+        type=int,
+        default=0,
+        help="Persona ID to use for chat sessions",
+    )
 
     args = parser.parse_args()
 
@@ -217,6 +246,7 @@ def main() -> None:
         api_key=args.api_key,
         num_concurrent=args.concurrent,
         messages_per_session=args.messages,
+        persona_id=args.persona_id,
     )
 
     asyncio.run(load_tester.run_load_test())

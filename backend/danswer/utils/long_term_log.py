@@ -42,7 +42,7 @@ class LongTermLogger:
             # Delete oldest files that exceed the limit
             for file in files[self.max_files_per_category :]:
                 try:
-                    file.unlink()
+                    file.unlink(missing_ok=True)
                 except Exception as e:
                     logger.error(f"Error deleting old log file {file}: {e}")
         except Exception as e:
