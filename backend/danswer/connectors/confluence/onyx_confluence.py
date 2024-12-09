@@ -368,4 +368,5 @@ def build_confluence_client(
         backoff_and_retry=True,
         max_backoff_retries=10,
         max_backoff_seconds=60,
+        cloud=is_cloud,
     )
