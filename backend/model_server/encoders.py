@@ -12,7 +12,7 @@ from cohere import AsyncClient as CohereAsyncClient
 from fastapi import APIRouter
 from fastapi import HTTPException
 from google.oauth2 import service_account  # type: ignore
-from litellm import embedding
+from litellm import aembedding
 from litellm.exceptions import RateLimitError
 from retry import retry
 from sentence_transformers import CrossEncoder  # type: ignore
@@ -30,7 +30,6 @@ from model_server.constants import EmbeddingProvider
 from model_server.utils import simple_log_function_time
 from shared_configs.configs import API_BASED_EMBEDDING_TIMEOUT
 from shared_configs.configs import INDEXING_ONLY
-from shared_configs.configs import OPENAI_EMBEDDING_TIMEOUT
 from shared_configs.enums import EmbedTextType
 from shared_configs.enums import RerankerProvider
 from shared_configs.model_server_models import Embedding
@@ -65,12 +64,14 @@ class CloudEmbedding:
         provider: EmbeddingProvider,
         api_url: str | None = None,
         api_version: str | None = None,
+        timeout: int = API_BASED_EMBEDDING_TIMEOUT,
     ) -> None:
         self.provider = provider
         self.api_key = api_key
         self.api_url = api_url
         self.api_version = api_version
-        self.http_client = httpx.AsyncClient(timeout=API_BASED_EMBEDDING_TIMEOUT)
+        self.timeout = timeout
+        self.http_client = httpx.AsyncClient(timeout=timeout)
 
     async def _embed_openai(
         self, texts: list[str], model: str | None
@@ -78,9 +79,7 @@ class CloudEmbedding:
         if not model:
             model = DEFAULT_OPENAI_MODEL
 
-        client = openai.AsyncOpenAI(
-            api_key=self.api_key, timeout=OPENAI_EMBEDDING_TIMEOUT
-        )
+        client = openai.AsyncOpenAI(api_key=self.api_key, timeout=self.timeout)
 
         final_embeddings: list[Embedding] = []
         try:
@@ -110,6 +109,8 @@ class CloudEmbedding:
 
         final_embeddings: list[Embedding] = []
         for text_batch in batch_list(texts, _COHERE_MAX_INPUT_LEN):
+            # Does not use the same tokenizer as the Danswer API server but it's approximately the same
+            # empirically it's only off by a very few tokens so it's not a big deal
             response = await client.embed(
                 texts=text_batch,
                 model=model,
@@ -125,36 +126,29 @@ class CloudEmbedding:
         if not model:
             model = DEFAULT_VOYAGE_MODEL
 
-        client = voyageai.Client(
+        client = voyageai.AsyncClient(
             api_key=self.api_key, timeout=API_BASED_EMBEDDING_TIMEOUT
         )
 
-        # Note: Voyage doesn't have an async client yet, we'll need to run this in a thread pool
-        response = await asyncio.get_event_loop().run_in_executor(
-            None,
-            lambda: client.embed(
-                texts,
-                model=model,
-                input_type=embedding_type,
-                truncation=True,
-            ),
+        response = await client.embed(
+            texts=texts,
+            model=model,
+            input_type=embedding_type,
+            truncation=True,
         )
+
         return response.embeddings
 
     async def _embed_azure(
         self, texts: list[str], model: str | None
     ) -> list[Embedding]:
-        # Note: litellm doesn't have async support yet, we'll need to run this in a thread pool
-        response = await asyncio.get_event_loop().run_in_executor(
-            None,
-            lambda: embedding(
-                model=model,
-                input=texts,
-                timeout=API_BASED_EMBEDDING_TIMEOUT,
-                api_key=self.api_key,
-                api_base=self.api_url,
-                api_version=self.api_version,
-            ),
+        response = await aembedding(
+            model=f"azure/{model}",
+            input=texts,
+            timeout=API_BASED_EMBEDDING_TIMEOUT,
+            api_key=self.api_key,
+            api_base=self.api_url,
+            api_version=self.api_version,
         )
         embeddings = [embedding["embedding"] for embedding in response.data]
         return embeddings
@@ -172,19 +166,15 @@ class CloudEmbedding:
         vertexai.init(project=project_id, credentials=credentials)
         client = TextEmbeddingModel.from_pretrained(model)
 
-        # Note: Vertex AI doesn't have async client yet, we'll need to run this in a thread pool
-        embeddings = await asyncio.get_event_loop().run_in_executor(
-            None,
-            lambda: client.get_embeddings(
-                [
-                    TextEmbeddingInput(
-                        text,
-                        embedding_type,
-                    )
-                    for text in texts
-                ],
-                auto_truncate=True,
-            ),
+        embeddings = await client.get_embeddings_async(
+            [
+                TextEmbeddingInput(
+                    text,
+                    embedding_type,
+                )
+                for text in texts
+            ],
+            auto_truncate=True,
         )
         return [embedding.values for embedding in embeddings]
 
