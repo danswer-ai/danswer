@@ -51,8 +51,13 @@ def sub_custom_retrieve(state: RetrieverState) -> dict[str, Any]:
 
         fit_score = 1/3 * (top_1_score + top_5_score + top_10_score)
 
+        chunk_ids = {'query': rewritten_query, 
+                     'chunk_ids': [doc.center_chunk.chunk_id for doc in reranked_docs]}
+
+
     return {
         "sub_question_base_retrieval_docs": reranked_docs,
+        "sub_chunk_ids": [chunk_ids],
         "log_messages": generate_log_message(
             message=f"sub - custom_retrieve, fit_score: {fit_score}",
             node_start_time=node_start_time,

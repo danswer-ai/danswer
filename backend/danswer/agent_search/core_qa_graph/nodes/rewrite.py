@@ -6,7 +6,7 @@ from langchain_core.messages import merge_message_runs
 
 from danswer.agent_search.core_qa_graph.states import BaseQAState
 from danswer.agent_search.shared_graph_utils.models import RewrittenQueries
-from danswer.agent_search.shared_graph_utils.prompts import REWRITE_PROMPT_MULTI
+from danswer.agent_search.shared_graph_utils.prompts import REWRITE_PROMPT_MULTI, REWRITE_PROMPT_MULTI_ORIGINAL
 from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 from danswer.llm.factory import get_default_llms
 
@@ -29,11 +29,21 @@ def sub_rewrite(state: BaseQAState) -> dict[str, Any]:
     # messages = state["base_answer_messages"]
     question = state["sub_question_str"]
 
+    """
+    msg = [
+        HumanMessage(
+            content=REWRITE_PROMPT_MULTI_ORIGINAL.format(question=question),
+        )
+    ]
+
+    """
     msg = [
         HumanMessage(
             content=REWRITE_PROMPT_MULTI.format(question=question),
         )
     ]
+    
+
     _, fast_llm = get_default_llms()
     llm_response_list = list(
         fast_llm.stream(

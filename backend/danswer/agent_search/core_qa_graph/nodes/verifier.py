@@ -50,7 +50,8 @@ def sub_verifier(state: VerifierState) -> dict[str, Any]:
     decision_dict = {"decision": response_string.lower()}
     formatted_response = BinaryDecision.model_validate(decision_dict)
 
-    print(f"Verdict: {formatted_response.decision}")
+    if formatted_response.decision == "yes":
+        print(f"D: {document_content[:100]}\n\n")
 
     return {
         "sub_question_verified_retrieval_docs": [state["document"]]

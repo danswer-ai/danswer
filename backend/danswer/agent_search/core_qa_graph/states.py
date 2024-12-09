@@ -38,6 +38,7 @@ class BaseQAState(TypedDict):
     sub_question_str: str
     sub_question_search_queries: RewrittenQueries
     sub_question_nr: int
+    sub_chunk_ids: Annotated[Sequence[dict], operator.add]
     sub_question_base_retrieval_docs: Annotated[
         Sequence[InferenceSection], operator.add
     ]

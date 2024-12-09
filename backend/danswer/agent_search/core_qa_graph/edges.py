@@ -17,6 +17,7 @@ def sub_continue_to_verifier(state: BaseQAState) -> Union[Hashable, list[Hashabl
             "sub_verifier",
             VerifierState(
                 document=doc,
+                #question=state["original_question"],
                 question=state["sub_question_str"],
                 graph_start_time=state["graph_start_time"],
             ),

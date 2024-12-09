@@ -24,6 +24,7 @@ def sub_combine_retrieved_docs(state: BaseQAState) -> dict[str, Any]:
             dedupe_docs.append(base_retrieval_doc)
 
     print(f"Number of deduped docs: {len(dedupe_docs)}")
+    
 
     return {
         "sub_question_deduped_retrieval_docs": dedupe_docs,

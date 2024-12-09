@@ -37,71 +37,89 @@ def build_core_graph() -> StateGraph:
     core_answer_graph = StateGraph(state_schema=QAState)
 
     ### Add Nodes ###
-    core_answer_graph.add_node(node="dummy_start", action=dummy_start)
+    core_answer_graph.add_node(node="dummy_start", 
+                               action=dummy_start)
 
     # Re-writing the question
-    core_answer_graph.add_node(node="rewrite", action=rewrite)
+    core_answer_graph.add_node(node="rewrite", 
+                               action=rewrite)
 
     # The retrieval step
-    core_answer_graph.add_node(node="custom_retrieve", action=custom_retrieve)
+    core_answer_graph.add_node(node="custom_retrieve", 
+                               action=custom_retrieve)
 
     # Combine and dedupe retrieved docs.
     core_answer_graph.add_node(
-        node="combine_retrieved_docs", action=combine_retrieved_docs
+        node="combine_retrieved_docs", 
+        action=combine_retrieved_docs
     )
 
     # Extract entities, terms and relationships
     core_answer_graph.add_node(
-        node="entity_term_extraction", action=entity_term_extraction
+        node="entity_term_extraction", 
+        action=entity_term_extraction
     )
 
     # Verifying that a retrieved doc is relevant
-    core_answer_graph.add_node(node="verifier", action=verifier)
+    core_answer_graph.add_node(node="verifier", 
+                               action=verifier)
 
     # Initial question decomposition
-    core_answer_graph.add_node(node="main_decomp_base", action=main_decomp_base)
+    core_answer_graph.add_node(node="main_decomp_base", 
+                               action=main_decomp_base)
 
     # Build the base QA sub-graph and compile it
     compiled_core_qa_graph = build_core_qa_graph().compile()
     # Add the compiled base QA sub-graph as a node to the core graph
     core_answer_graph.add_node(
-        node="sub_answers_graph_initial", action=compiled_core_qa_graph
+        node="sub_answers_graph_initial", 
+        action=compiled_core_qa_graph
     )
 
     # Checking whether the initial answer is in the ballpark
-    core_answer_graph.add_node(node="base_wait", action=base_wait)
+    core_answer_graph.add_node(node="base_wait", 
+                               action=base_wait)
 
     # Decompose the question into sub-questions
-    core_answer_graph.add_node(node="decompose", action=decompose)
+    core_answer_graph.add_node(node="decompose", 
+                               action=decompose)
 
     # Manage the sub-questions
-    core_answer_graph.add_node(node="sub_qa_manager", action=sub_qa_manager)
+    core_answer_graph.add_node(node="sub_qa_manager", 
+                               action=sub_qa_manager)
 
     # Build the research QA sub-graph and compile it
     compiled_deep_qa_graph = build_deep_qa_graph().compile()
     # Add the compiled research QA sub-graph as a node to the core graph
-    core_answer_graph.add_node(node="sub_answers_graph", action=compiled_deep_qa_graph)
+    core_answer_graph.add_node(node="sub_answers_graph", 
+                               action=compiled_deep_qa_graph)
 
     # Aggregate the sub-questions
     core_answer_graph.add_node(
-        node="sub_qa_level_aggregator", action=sub_qa_level_aggregator
+        node="sub_qa_level_aggregator", 
+        action=sub_qa_level_aggregator
     )
 
     # aggregate sub questions and answers
     core_answer_graph.add_node(
-        node="deep_answer_generation", action=deep_answer_generation
+        node="deep_answer_generation", 
+        action=deep_answer_generation
     )
 
     # A final clean-up step
-    core_answer_graph.add_node(node="final_stuff", action=final_stuff)
+    core_answer_graph.add_node(node="final_stuff", 
+                               action=final_stuff)
 
     # Generating a response after we know the documents are relevant
-    core_answer_graph.add_node(node="generate_initial", action=generate_initial)
+    core_answer_graph.add_node(node="generate_initial", 
+                               action=generate_initial)
 
     ### Add Edges ###
 
     # start the initial sub-question decomposition
-    core_answer_graph.add_edge(start_key=START, end_key="main_decomp_base")
+    core_answer_graph.add_edge(start_key=START, 
+                               end_key="main_decomp_base")
+
     core_answer_graph.add_conditional_edges(
         source="main_decomp_base",
         path=continue_to_initial_sub_questions,
@@ -109,9 +127,11 @@ def build_core_graph() -> StateGraph:
 
     # use the retrieved information to generate the answer
     core_answer_graph.add_edge(
-        start_key=["verifier", "sub_answers_graph_initial"], end_key="generate_initial"
+        start_key=["verifier", "sub_answers_graph_initial"], 
+        end_key="generate_initial"
     )
-    core_answer_graph.add_edge(start_key="generate_initial", end_key="base_wait")
+    core_answer_graph.add_edge(start_key="generate_initial", 
+                               end_key="base_wait")
 
     core_answer_graph.add_conditional_edges(
         source="base_wait",
@@ -121,25 +141,31 @@ def build_core_graph() -> StateGraph:
 
     core_answer_graph.add_edge(start_key="entity_term_extraction", end_key="decompose")
 
-    core_answer_graph.add_edge(start_key="decompose", end_key="sub_qa_manager")
+    core_answer_graph.add_edge(start_key="decompose", 
+                               end_key="sub_qa_manager")
     core_answer_graph.add_conditional_edges(
         source="sub_qa_manager",
         path=continue_to_answer_sub_questions,
     )
 
     core_answer_graph.add_edge(
-        start_key="sub_answers_graph", end_key="sub_qa_level_aggregator"
+        start_key="sub_answers_graph",
+          end_key="sub_qa_level_aggregator"
     )
 
     core_answer_graph.add_edge(
-        start_key="sub_qa_level_aggregator", end_key="deep_answer_generation"
+        start_key="sub_qa_level_aggregator", 
+        end_key="deep_answer_generation"
     )
 
     core_answer_graph.add_edge(
-        start_key="deep_answer_generation", end_key="final_stuff"
+        start_key="deep_answer_generation", 
+        end_key="final_stuff"
     )
 
-    core_answer_graph.add_edge(start_key="final_stuff", end_key=END)
+    core_answer_graph.add_edge(start_key="final_stuff", 
+                               end_key=END)
+    
     core_answer_graph.compile()
 
     return core_answer_graph

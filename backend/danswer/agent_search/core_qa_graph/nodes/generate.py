@@ -22,6 +22,38 @@ def sub_generate(state: BaseQAState) -> dict[str, Any]:
          dict: The updated state with re-phrased question
     """
     print("---GENERATE---")
+    
+    # Create sub-query results
+
+    verified_chunks = [chunk.center_chunk.chunk_id for chunk in state["sub_question_verified_retrieval_docs"]]
+    result_dict = {}
+
+    chunk_id_dicts = state["sub_chunk_ids"]
+    expanded_chunks = []
+    original_chunks = []
+    
+    for chunk_id_dict in chunk_id_dicts:
+        sub_question = chunk_id_dict['query']
+        verified_sq_chunks = [chunk_id for chunk_id in chunk_id_dict['chunk_ids'] if chunk_id in verified_chunks]
+
+        if sub_question != state["original_question"]:
+            expanded_chunks += verified_sq_chunks
+        else:
+            result_dict['ORIGINAL'] = len(verified_sq_chunks)
+            original_chunks += verified_sq_chunks
+        result_dict[sub_question[:30]] = len(verified_sq_chunks)
+    
+    expansion_chunks = set(expanded_chunks)
+    num_expansion_chunks = sum([1 for chunk_id in expansion_chunks if chunk_id in verified_chunks])
+    num_original_relevant_chunks = len(original_chunks)
+    num_missed_relevant_chunks = sum([1 for chunk_id in original_chunks if chunk_id not in expansion_chunks])
+    num_gained_relevant_chunks = sum([1 for chunk_id in expansion_chunks if chunk_id not in original_chunks])
+    result_dict['expansion_chunks'] = num_expansion_chunks
+
+
+        
+    print(result_dict)
+
     node_start_time = datetime.now()
 
     question = state["sub_question_str"]
@@ -31,7 +63,7 @@ def sub_generate(state: BaseQAState) -> dict[str, Any]:
     
     # Only take the top 10 docs. 
     # TODO: Make this dynamic or use config param?
-    top_10_docs = docs[:10]
+    top_10_docs = docs[-10:]
 
     msg = [
         HumanMessage(
