@@ -3,7 +3,7 @@ from typing import Any
 from danswer.agent_search.core_qa_graph.states import BaseQAState
 
 
-def sub_final_format(state: BaseQAState) -> dict[str, Any]:
+def final_format(state: BaseQAState) -> dict[str, Any]:
     """
     Create the final output for the QA subgraph
     """

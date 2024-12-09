@@ -11,7 +11,7 @@ from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 from danswer.llm.factory import get_default_llms
 
 
-def sub_verifier(state: VerifierState) -> dict[str, Any]:
+def verifier(state: VerifierState) -> dict[str, Any]:
     """
     Check whether the document is relevant for the original user question
 

@@ -6,7 +6,7 @@ from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 from danswer.context.search.models import InferenceSection
 
 
-def sub_combine_retrieved_docs(state: BaseQAState) -> dict[str, Any]:
+def combine_retrieved_docs(state: BaseQAState) -> dict[str, Any]:
     """
     Dedupe the retrieved docs.
     """

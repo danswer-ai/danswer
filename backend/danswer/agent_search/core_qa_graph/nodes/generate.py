@@ -11,7 +11,7 @@ from danswer.agent_search.shared_graph_utils.utils import generate_log_message
 from danswer.llm.factory import get_default_llms
 
 
-def sub_generate(state: BaseQAState) -> dict[str, Any]:
+def generate(state: BaseQAState) -> dict[str, Any]:
     """
     Generate answer
 
