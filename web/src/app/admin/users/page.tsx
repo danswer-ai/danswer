@@ -1,13 +1,23 @@
 "use client";
+import { Suspense, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { UserPlus } from "lucide-react";
 import InvitedUserTable from "@/components/admin/users/InvitedUserTable";
 import SignedUpUserTable from "@/components/admin/users/SignedUpUserTable";
 import { SearchBar } from "@/components/search/SearchBar";
-import { useState } from "react";
 import { FiPlusSquare } from "react-icons/fi";
 import { Modal } from "@/components/Modal";
-
-import { Button } from "@/components/ui/button";
-import Text from "@/components/ui/text";
 import { LoadingAnimation } from "@/components/Loading";
 import { AdminPageTitle } from "@/components/admin/Title";
 import { usePopup, PopupSpec } from "@/components/admin/connectors/Popup";
@@ -20,39 +30,7 @@ import BulkAdd from "@/components/admin/users/BulkAdd";
 import { UsersResponse } from "@/lib/users/interfaces";
 import { UserRole } from "@/lib/types";
 import SlackUserTable from "@/components/admin/users/SlackUserTable";
-
-const ValidDomainsDisplay = ({ validDomains }: { validDomains: string[] }) => {
-  if (!validDomains.length) {
-    return (
-      <div className="text-sm">
-        No invited users. Anyone can sign up with a valid email address. To
-        restrict access you can:
-        <div className="flex flex-wrap ml-2 mt-1">
-          (1) Invite users above. Once a user has been invited, only emails that
-          have explicitly been invited will be able to sign-up.
-        </div>
-        <div className="mt-1 ml-2">
-          (2) Set the{" "}
-          <b className="font-mono w-fit h-fit">VALID_EMAIL_DOMAINS</b>{" "}
-          environment variable to a comma separated list of email domains. This
-          will restrict access to users with email addresses from these domains.
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="text-sm">
-      No invited users. Anyone with an email address with any of the following
-      domains can sign up: <i>{validDomains.join(", ")}</i>.
-      <div className="mt-2">
-        To further restrict access you can invite users above. Once a user has
-        been invited, only emails that have explicitly been invited will be able
-        to sign-up.
-      </div>
-    </div>
-  );
-};
+import Text from "@/components/ui/text";
 
 const UsersTables = ({
   q,
@@ -63,23 +41,29 @@ const UsersTables = ({
 }) => {
   const [invitedPage, setInvitedPage] = useState(1);
   const [acceptedPage, setAcceptedPage] = useState(1);
-  const { data, isLoading, mutate, error } = useSWR<UsersResponse>(
-    `/api/manage/users?q=${encodeURI(q)}&accepted_page=${
+  const [slackUsersPage, setSlackUsersPage] = useState(1);
+
+  const { data, error, isValidating, mutate } = useSWR<UsersResponse>(
+    `/api/manage/users?q=${encodeURIComponent(q)}&accepted_page=${
       acceptedPage - 1
-    }&invited_page=${invitedPage - 1}`,
+    }&invited_page=${invitedPage - 1}&slack_users_page=${slackUsersPage - 1}`,
     errorHandlingFetcher
   );
+
   const {
     data: validDomains,
-    isLoading: isLoadingDomains,
     error: domainsError,
+    isValidating: isValidatingDomains,
   } = useSWR<string[]>("/api/manage/admin/valid-domains", errorHandlingFetcher);
 
-  if (isLoading || isLoadingDomains) {
+  // Show loading animation only during the initial data fetch
+  if (!data) {
+    // console.log(!)
     return <LoadingAnimation text="Loading" />;
   }
 
-  if (error || !data) {
+  // Handle errors
+  if (error) {
     return (
       <ErrorCallout
         errorTitle="Error loading users"
@@ -88,7 +72,7 @@ const UsersTables = ({
     );
   }
 
-  if (domainsError || !validDomains) {
+  if (domainsError) {
     return (
       <ErrorCallout
         errorTitle="Error loading valid domains"
@@ -97,21 +81,38 @@ const UsersTables = ({
     );
   }
 
-  const { accepted, invited, accepted_pages, invited_pages } = data;
+  // Extract data
+  const {
+    accepted,
+    invited,
+    accepted_pages,
+    invited_pages,
+    slack_users,
+    slack_users_pages,
+  } = data;
 
-  // remove users that are already accepted
+  // Remove users that are already accepted
   const finalInvited = invited.filter(
-    (user) => !accepted.map((u) => u.email).includes(user.email)
-  );
-  const slackUsers = accepted.filter(
-    (user) => user.role === UserRole.SLACK_USER
+    (user) => !accepted.some((u) => u.email === user.email)
   );
 
   return (
-    <>
-      <HidableSection sectionTitle="Invited Users">
-        {invited.length > 0 ? (
-          finalInvited.length > 0 ? (
+    <Tabs defaultValue="invited">
+      <TabsList>
+        <TabsTrigger value="invited">Invited Users</TabsTrigger>
+        <TabsTrigger value="current">Current Users</TabsTrigger>
+        <TabsTrigger value="danswerbot">DanswerBot Users</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="invited">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Invited Users{" "}
+              {isValidating && <LoadingAnimation text="Loading" />}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <InvitedUserTable
               users={finalInvited}
               setPopup={setPopup}
@@ -119,37 +120,56 @@ const UsersTables = ({
               onPageChange={setInvitedPage}
               totalPages={invited_pages}
               mutate={mutate}
+              isLoading={isValidating}
             />
-          ) : (
-            <div className="text-sm">
-              To invite additional teammates, use the <b>Invite Users</b> button
-              above!
-            </div>
-          )
-        ) : (
-          <ValidDomainsDisplay validDomains={validDomains} />
-        )}
-      </HidableSection>
+          </CardContent>
+        </Card>
+      </TabsContent>
 
-      <HidableSection sectionTitle="Slack Users">
-        {slackUsers.length > 0 ? (
-          <SlackUserTable users={slackUsers} />
-        ) : (
-          <div className="text-sm">
-            To invite additional teammates, use the <b>Invite Users</b> button
-            above!
-          </div>
-        )}
-      </HidableSection>
-      <SignedUpUserTable
-        users={accepted}
-        setPopup={setPopup}
-        currentPage={acceptedPage}
-        onPageChange={setAcceptedPage}
-        totalPages={accepted_pages}
-        mutate={mutate}
-      />
-    </>
+      <TabsContent value="current">
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {accepted.length > 0 ? (
+              <SignedUpUserTable
+                users={accepted}
+                setPopup={setPopup}
+                currentPage={acceptedPage}
+                onPageChange={setAcceptedPage}
+                totalPages={accepted_pages}
+                mutate={mutate}
+              />
+            ) : (
+              <p>Users that have an account will show up here</p>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="danswerbot">
+        <Card>
+          <CardHeader>
+            <CardTitle>DanswerBot Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {slack_users.length > 0 ? (
+              <SlackUserTable
+                currentPage={slackUsersPage}
+                onPageChange={setSlackUsersPage}
+                totalPages={slack_users_pages}
+                invitedUsers={finalInvited}
+                slackusers={slack_users}
+                mutate={mutate}
+              />
+            ) : (
+              <p>Slack-only users will show up here</p>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 };
 
@@ -231,6 +251,7 @@ const Page = () => {
   return (
     <div className="mx-auto container">
       <AdminPageTitle title="Manage Users" icon={<UsersIcon size={32} />} />
+
       <SearchableTables />
     </div>
   );

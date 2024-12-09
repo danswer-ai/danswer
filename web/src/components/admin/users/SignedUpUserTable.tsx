@@ -237,6 +237,118 @@ const DeleteUserButton = ({
   );
 };
 
+export const InviteUserButton = ({
+  user,
+  invited,
+  setPopup,
+  mutate,
+}: {
+  user: User;
+  invited: boolean;
+  setPopup: (spec: PopupSpec) => void;
+  mutate: () => void;
+}) => {
+  const { trigger: inviteTrigger, isMutating: isInviting } = useSWRMutation(
+    "/api/manage/admin/users",
+    async (url, { arg }: { arg: { emails: string[] } }) => {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(arg),
+      });
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    },
+    {
+      onSuccess: () => {
+        setShowInviteModal(false);
+        mutate();
+        setPopup({
+          message: "User invited successfully!",
+          type: "success",
+        });
+      },
+      onError: (errorMsg) =>
+        setPopup({
+          message: `Unable to invite user - ${errorMsg}`,
+          type: "error",
+        }),
+    }
+  );
+
+  const { trigger: uninviteTrigger, isMutating: isUninviting } = useSWRMutation(
+    "/api/manage/admin/remove-invited-user",
+    async (url, { arg }: { arg: { user_email: string } }) => {
+      const response = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(arg),
+      });
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    },
+    {
+      onSuccess: () => {
+        setShowInviteModal(false);
+        mutate();
+        setPopup({
+          message: "User uninvited successfully!",
+          type: "success",
+        });
+      },
+      onError: (errorMsg) =>
+        setPopup({
+          message: `Unable to uninvite user - ${errorMsg}`,
+          type: "error",
+        }),
+    }
+  );
+
+  const [showInviteModal, setShowInviteModal] = useState(false);
+
+  const handleConfirm = () => {
+    if (invited) {
+      uninviteTrigger({ user_email: user.email });
+    } else {
+      inviteTrigger({ emails: [user.email] });
+    }
+  };
+
+  const isMutating = isInviting || isUninviting;
+
+  return (
+    <>
+      {showInviteModal && (
+        <GenericConfirmModal
+          title={`${invited ? "Uninvite" : "Invite"} User`}
+          message={`Are you sure you want to ${
+            invited ? "uninvite" : "invite"
+          } ${user.email}?`}
+          onClose={() => setShowInviteModal(false)}
+          onConfirm={handleConfirm}
+        />
+      )}
+
+      <Button
+        className="w-min"
+        onClick={() => setShowInviteModal(true)}
+        disabled={isMutating}
+        size="sm"
+      >
+        {invited ? "Uninvite" : "Invite"}
+      </Button>
+    </>
+  );
+};
+
 const SignedUpUserTable = ({
   users,
   setPopup,
@@ -258,68 +370,66 @@ const SignedUpUserTable = ({
     handlePopup(`Unable to update user role - ${errorMsg}`, "error");
 
   return (
-    <HidableSection sectionTitle="Current Users">
-      <>
-        {totalPages > 1 ? (
-          <CenteredPageSelector
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-          />
-        ) : null}
-        <Table className="overflow-visible">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead className="text-center">Role</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead>
-                <div className="flex">
-                  <div className="ml-auto">Actions</div>
-                </div>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users
-              // Dont want to show external permissioned users because it's scary
-              .filter((user) => user.role !== UserRole.EXT_PERM_USER)
-              .map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell className="w-40 ">
-                    <UserRoleDropdown
+    <>
+      {totalPages > 1 ? (
+        <CenteredPageSelector
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+      ) : null}
+      <Table className="overflow-visible">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Email</TableHead>
+            <TableHead className="text-center">Role</TableHead>
+            <TableHead className="text-center">Status</TableHead>
+            <TableHead>
+              <div className="flex">
+                <div className="ml-auto">Actions</div>
+              </div>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users
+            // Dont want to show external permissioned users because it's scary
+            .filter((user) => user.role !== UserRole.EXT_PERM_USER)
+            .map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.email}</TableCell>
+                <TableCell className="w-40 ">
+                  <UserRoleDropdown
+                    user={user}
+                    onSuccess={onRoleChangeSuccess}
+                    onError={onRoleChangeError}
+                  />
+                </TableCell>
+                <TableCell className="text-center">
+                  <i>{user.status === "live" ? "Active" : "Inactive"}</i>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end  gap-x-2">
+                    <DeactivaterButton
                       user={user}
-                      onSuccess={onRoleChangeSuccess}
-                      onError={onRoleChangeError}
+                      deactivate={user.status === UserStatus.live}
+                      setPopup={setPopup}
+                      mutate={mutate}
                     />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <i>{user.status === "live" ? "Active" : "Inactive"}</i>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end  gap-x-2">
-                      <DeactivaterButton
+                    {user.status == UserStatus.deactivated && (
+                      <DeleteUserButton
                         user={user}
-                        deactivate={user.status === UserStatus.live}
                         setPopup={setPopup}
                         mutate={mutate}
                       />
-                      {user.status == UserStatus.deactivated && (
-                        <DeleteUserButton
-                          user={user}
-                          setPopup={setPopup}
-                          mutate={mutate}
-                        />
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </>
-    </HidableSection>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+        </TableBody>
+      </Table>
+    </>
   );
 };
 
