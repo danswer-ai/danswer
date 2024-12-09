@@ -23,7 +23,7 @@
 </a>
 </p>
 
-<strong>[Onyx](https://www.onyx.app/)</strong> (Formerly Danswer)is the AI Assistant connected to your company's docs, apps, and people. 
+<strong>[Onyx](https://www.onyx.app/)</strong> (Formerly Danswer) is the AI Assistant connected to your company's docs, apps, and people. 
 Onyx provides a Chat interface and plugs into any LLM of your choice. Onyx can be deployed anywhere and for any 
 scale - on a laptop, on-premise, or to cloud. Since you own the deployment, your user data and chats are fully in your 
 own control. Onyx is dual Licensed with most of it under MIT license and designed to be modular and easily extensible. The system also comes fully ready 
