@@ -29,7 +29,7 @@ const Main = () => {
   } = useConnectorCredentialIndexingStatus();
 
   const {
-    data: { items: accepted_users } = { items: [] },
+    data: users,
     isLoading: userIsLoading,
     error: usersError,
   } = useUsers();
@@ -51,7 +51,7 @@ const Main = () => {
     return <div className="text-red-600">Error loading connectors</div>;
   }
 
-  if (usersError || !accepted_users) {
+  if (usersError || !users) {
     return <div className="text-red-600">Error loading users</div>;
   }
 
@@ -85,7 +85,7 @@ const Main = () => {
             setShowForm(false);
           }}
           setPopup={setPopup}
-          users={accepted_users}
+          users={users.accepted}
           ccPairs={ccPairs}
         />
       )}

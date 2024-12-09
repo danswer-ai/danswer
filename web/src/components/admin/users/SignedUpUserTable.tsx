@@ -15,7 +15,6 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-
 import {
   Select,
   SelectContent,
@@ -30,9 +29,9 @@ import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidE
 import { DeleteEntityModal } from "@/components/modals/DeleteEntityModal";
 import { TableHeader } from "@/components/ui/table";
 import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
-import { LoadingAnimation } from "@/components/Loading";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PageSelector } from "@/components/PageSelector";
+import { ThreeDotsLoader } from "@/components/Loading";
 
 interface Props {
   setPopup: (spec: PopupSpec) => void;
@@ -255,6 +254,7 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
     totalPages,
     goToPage,
     refresh,
+    hasNoData,
   } = usePaginatedFetch<User>({
     itemsPerPage: ITEMS_PER_PAGE,
     pagesPerBatch: PAGES_PER_BATCH,
@@ -262,10 +262,6 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
     query: q,
     filter: filters,
   });
-
-  if (isLoading) {
-    return <LoadingAnimation text="Loading" />;
-  }
 
   if (error || !pageOfUsers) {
     return (
@@ -275,8 +271,6 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
       />
     );
   }
-
-  if (!pageOfUsers.length) return null;
 
   const handlePopup = (message: string, type: "success" | "error") => {
     if (type === "success") refresh();
@@ -290,11 +284,6 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
 
   return (
     <>
-      <PageSelector
-        totalPages={totalPages}
-        currentPage={currentPage}
-        onPageChange={goToPage}
-      />
       <div className="flex items-center gap-4 py-4">
         <Select
           value={filters.status || "all"}
@@ -384,42 +373,75 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {pageOfUsers
-            .filter((user) => user.role !== UserRole.EXT_PERM_USER)
-            .map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.email}</TableCell>
-                <TableCell className="w-40 ">
-                  <UserRoleDropdown
-                    user={user}
-                    onSuccess={onRoleChangeSuccess}
-                    onError={onRoleChangeError}
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <i>{user.status === "live" ? "Active" : "Inactive"}</i>
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-x-2">
-                    <DeactivateUserButton
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={4} className="h-24 text-center">
+                <ThreeDotsLoader />
+              </TableCell>
+            </TableRow>
+          ) : hasNoData ? (
+            <TableRow>
+              <TableCell
+                colSpan={4}
+                className="h-24 text-center text-muted-foreground"
+              >
+                {q ? (
+                  <>No users found matching &quot;{q}&quot;</>
+                ) : (
+                  <>No users found</>
+                )}
+              </TableCell>
+            </TableRow>
+          ) : (
+            pageOfUsers
+              .filter((user) => user.role !== UserRole.EXT_PERM_USER)
+              .map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="w-40 ">
+                    <UserRoleDropdown
                       user={user}
-                      deactivate={user.status === UserStatus.live}
-                      setPopup={setPopup}
-                      refresh={refresh}
+                      onSuccess={onRoleChangeSuccess}
+                      onError={onRoleChangeError}
                     />
-                    {user.status == UserStatus.deactivated && (
-                      <DeleteUserButton
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <i>{user.status === "live" ? "Active" : "Inactive"}</i>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-x-2">
+                      <DeactivateUserButton
                         user={user}
+                        deactivate={user.status === UserStatus.live}
                         setPopup={setPopup}
                         refresh={refresh}
                       />
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                      {user.status == UserStatus.deactivated && (
+                        <DeleteUserButton
+                          user={user}
+                          setPopup={setPopup}
+                          refresh={refresh}
+                        />
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+          )}
         </TableBody>
       </Table>
+
+      {totalPages > 1 && (
+        <div className="mt-3 flex">
+          <div className="mx-auto">
+            <PageSelector
+              totalPages={totalPages}
+              currentPage={currentPage}
+              onPageChange={goToPage}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };

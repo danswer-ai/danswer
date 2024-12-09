@@ -1,6 +1,13 @@
 import { User } from "../types";
 
+export interface AllUsersResponse {
+  accepted: User[];
+  invited: User[];
+  accepted_pages: number;
+  invited_pages: number;
+}
+
 export interface AcceptedUsersResponse {
-  items: User[];
-  total_items: number;
+  accepted: User[];
+  accepted_pages: number;
 }

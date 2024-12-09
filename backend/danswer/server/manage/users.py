@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from datetime import timezone
 
@@ -37,6 +38,7 @@ from danswer.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from danswer.configs.app_configs import SUPER_USERS
 from danswer.configs.app_configs import VALID_EMAIL_DOMAINS
 from danswer.configs.constants import AuthType
+from danswer.db.api_key import is_api_key_email_address
 from danswer.db.auth import get_total_users_count
 from danswer.db.engine import CURRENT_TENANT_ID_CONTEXTVAR
 from danswer.db.engine import get_session
@@ -53,6 +55,7 @@ from danswer.db.users import list_all_users
 from danswer.db.users import validate_user_role_update
 from danswer.key_value_store.factory import get_kv_store
 from danswer.server.documents.models import PaginatedReturn
+from danswer.server.manage.models import AllUsersResponse
 from danswer.server.manage.models import UserByEmail
 from danswer.server.manage.models import UserInfo
 from danswer.server.manage.models import UserPreferences
@@ -170,6 +173,70 @@ def list_invited_users(
             for email in invited_emails[start_idx:end_idx]
         ],
         total_items=total_count,
+    )
+
+
+@router.get("/manage/users")
+def list_users(
+    q: str | None = None,
+    accepted_page: int | None = None,
+    invited_page: int | None = None,
+    user: User | None = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+) -> AllUsersResponse:
+    if not q:
+        q = ""
+
+    users = [
+        user
+        for user in list_all_users(db_session, email_filter_string=q)
+        if not is_api_key_email_address(user.email)
+    ]
+    accepted_emails = {user.email for user in users}
+    invited_emails = get_invited_users()
+    if q:
+        invited_emails = [
+            email for email in invited_emails if re.search(r"{}".format(q), email, re.I)
+        ]
+
+    accepted_count = len(accepted_emails)
+    invited_count = len(invited_emails)
+
+    # If any of q, accepted_page, or invited_page is None, return all users
+    if accepted_page is None or invited_page is None:
+        return AllUsersResponse(
+            accepted=[
+                FullUserSnapshot(
+                    id=user.id,
+                    email=user.email,
+                    role=user.role,
+                    status=(
+                        UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED
+                    ),
+                )
+                for user in users
+            ],
+            invited=[InvitedUserSnapshot(email=email) for email in invited_emails],
+            accepted_pages=1,
+            invited_pages=1,
+        )
+
+    # Otherwise, return paginated results
+    return AllUsersResponse(
+        accepted=[
+            FullUserSnapshot(
+                id=user.id,
+                email=user.email,
+                role=user.role,
+                status=UserStatus.LIVE if user.is_active else UserStatus.DEACTIVATED,
+            )
+            for user in users
+        ][accepted_page * USERS_PAGE_SIZE : (accepted_page + 1) * USERS_PAGE_SIZE],
+        invited=[InvitedUserSnapshot(email=email) for email in invited_emails][
+            invited_page * USERS_PAGE_SIZE : (invited_page + 1) * USERS_PAGE_SIZE
+        ],
+        accepted_pages=accepted_count // USERS_PAGE_SIZE + 1,
+        invited_pages=invited_count // USERS_PAGE_SIZE + 1,
     )
 
 

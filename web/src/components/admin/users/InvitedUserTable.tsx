@@ -4,7 +4,7 @@ import { ErrorCallout } from "@/components/ErrorCallout";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Button } from "@/components/ui/button";
 import { TableHeader } from "@/components/ui/table";
-import { LoadingAnimation } from "@/components/Loading";
+import { ThreeDotsLoader } from "@/components/Loading";
 import {
   Table,
   TableHead,
@@ -16,14 +16,18 @@ import {
 import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
 import useSWRMutation from "swr/mutation";
 import { type User } from "@/lib/types";
-import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
 
 interface Props {
+  pageOfUsers: User[];
+  isLoading: boolean;
+  error: Error | null;
+  currentPage: number;
+  totalPages: number;
+  goToPage: (page: number) => void;
+  refresh: () => void;
+  hasNoData: boolean;
   setPopup: (spec: PopupSpec) => void;
 }
-
-const ITEMS_PER_PAGE = 10;
-const PAGES_PER_BATCH = 2;
 
 const RemoveUserButton = ({
   user,
@@ -46,24 +50,19 @@ const RemoveUserButton = ({
   );
 };
 
-const InvitedUserTable = ({ setPopup }: Props) => {
-  const {
-    currentPageData: pageOfUsers,
-    isLoading,
-    error,
-    currentPage,
-    totalPages,
-    goToPage,
-    refresh,
-    hasNoData: noInvitedUsers,
-  } = usePaginatedFetch<User>({
-    itemsPerPage: ITEMS_PER_PAGE,
-    pagesPerBatch: PAGES_PER_BATCH,
-    endpoint: "/api/manage/users/invited",
-  });
-
+const InvitedUserTable = ({
+  pageOfUsers,
+  isLoading,
+  error,
+  currentPage,
+  totalPages,
+  goToPage,
+  refresh,
+  hasNoData: noInvitedUsers,
+  setPopup,
+}: Props) => {
   if (isLoading) {
-    return <LoadingAnimation text="Loading" />;
+    return <ThreeDotsLoader />;
   }
 
   if (error || !pageOfUsers) {
@@ -93,41 +92,32 @@ const InvitedUserTable = ({ setPopup }: Props) => {
   return noInvitedUsers ? (
     <UserInviteInfo />
   ) : (
-    <>
-      <Table className="overflow-visible">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Email</TableHead>
-            <TableHead>
-              <div className="flex justify-end">Actions</div>
-            </TableHead>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Email</TableHead>
+          <TableHead>
+            <div className="flex justify-end">Actions</div>
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {pageOfUsers.map((user) => (
+          <TableRow key={user.email}>
+            <TableCell>{user.email}</TableCell>
+            <TableCell>
+              <div className="flex justify-end">
+                <RemoveUserButton
+                  user={user}
+                  onSuccess={onRemovalSuccess}
+                  onError={onRemovalError}
+                />
+              </div>
+            </TableCell>
           </TableRow>
-        </TableHeader>
-        <TableBody>
-          {pageOfUsers.map((user) => (
-            <TableRow key={user.email}>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <div className="flex justify-end">
-                  <RemoveUserButton
-                    user={user}
-                    onSuccess={onRemovalSuccess}
-                    onError={onRemovalError}
-                  />
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      {totalPages > 1 ? (
-        <PageSelector
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={goToPage}
-        />
-      ) : null}
-    </>
+        ))}
+      </TableBody>
+    </Table>
   );
 };
 

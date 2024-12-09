@@ -3,7 +3,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 interface PaginatedApiResponse<T> {
   items: T[];
-  totalItems: number;
+  total_items: number;
 }
 
 interface PaginationConfig<T> {
@@ -76,7 +76,7 @@ export function usePaginatedFetch<T>({
         batch.every((page) => page.length === 0)
       )
     );
-  }, [cachedBatches]);
+  }, [cachedBatches, isLoading]);
 
   const currentPath = usePathname();
 
@@ -112,10 +112,10 @@ export function usePaginatedFetch<T>({
         if (!response.ok) throw new Error("Failed to fetch data");
         const responseData: PaginatedApiResponse<T> = await response.json();
 
-        const { items, totalItems } = responseData;
+        const { items, total_items } = responseData;
 
-        if (totalItems !== undefined) {
-          setTotalItems(totalItems);
+        if (total_items !== undefined) {
+          setTotalItems(total_items);
         }
         // Splits a batch into pages
         const pagesInBatch = Array.from({ length: pagesPerBatch }, (_, i) => {
