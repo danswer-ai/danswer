@@ -169,18 +169,6 @@ export function ClientLayout({
                           ),
                           link: "/admin/tools",
                         },
-                        {
-                          name: (
-                            <div className="flex">
-                              <ClosedBookIcon
-                                className="text-icon-settings-sidebar"
-                                size={18}
-                              />
-                              <div className="ml-1">Prompt Library</div>
-                            </div>
-                          ),
-                          link: "/admin/prompt-library",
-                        },
                       ]
                     : []),
                   ...(enableEnterprise

@@ -13,7 +13,6 @@ import {
 } from "@/lib/types";
 import { ChatSession } from "@/app/chat/interfaces";
 import { Persona } from "@/app/admin/assistants/interfaces";
-import { InputPrompt } from "@/app/admin/prompt-library/interfaces";
 import { FullEmbeddingModelResponse } from "@/components/embedding/interfaces";
 import { Settings } from "@/app/admin/settings/interfaces";
 import { fetchLLMProvidersSS } from "@/lib/llm/fetchLLMs";
@@ -42,7 +41,6 @@ interface FetchChatDataResult {
   toggleSidebar: boolean;
   finalDocumentSidebarInitialWidth?: number;
   shouldShowWelcomeModal: boolean;
-  userInputPrompts: InputPrompt[];
 }
 
 export async function fetchChatData(searchParams: {
@@ -87,7 +85,6 @@ export async function fetchChatData(searchParams: {
   const tagsResponse = results[5] as Response | null;
   const llmProviders = (results[6] || []) as LLMProviderDescriptor[];
   const foldersResponse = results[7] as Response | null;
-  const userInputPromptsResponse = results[8] as Response | null;
 
   const authDisabled = authTypeMetadata?.authType === "disabled";
   if (!authDisabled && !user) {
@@ -139,15 +136,6 @@ export async function fetchChatData(searchParams: {
   } else {
     console.log(
       `Failed to fetch document sets - ${documentSetsResponse?.status}`
-    );
-  }
-
-  let userInputPrompts: InputPrompt[] = [];
-  if (userInputPromptsResponse?.ok) {
-    userInputPrompts = await userInputPromptsResponse.json();
-  } else {
-    console.log(
-      `Failed to fetch user input prompts - ${userInputPromptsResponse?.status}`
     );
   }
 
@@ -212,6 +200,5 @@ export async function fetchChatData(searchParams: {
     finalDocumentSidebarInitialWidth,
     toggleSidebar,
     shouldShowWelcomeModal,
-    userInputPrompts,
   };
 }
