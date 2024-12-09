@@ -119,7 +119,7 @@ There are two editions of Danswer:
     * Whitelabeling
     * API key authentication
     * Encryption of secrets
-    * Any many more! Checkout [our website](https://www.danswer.ai/) for the latest.
+    * And many more! Checkout [our website](https://www.danswer.ai/) for the latest.
 
 To try the Danswer Enterprise Edition: 
 
