@@ -1,6 +1,7 @@
 import asyncio
 import io
 import json
+import os
 import uuid
 from collections.abc import Callable
 from collections.abc import Generator
@@ -50,6 +51,7 @@ from danswer.db.models import User
 from danswer.db.persona import get_persona_by_id
 from danswer.document_index.document_index_utils import get_both_index_names
 from danswer.document_index.factory import get_default_document_index
+from danswer.file_processing.extract_file_text import docx_to_txt_filename
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_store.file_store import get_default_file_store
 from danswer.file_store.models import ChatFileType
@@ -717,6 +719,18 @@ def fetch_chat_file(
     file_record = file_store.read_file_record(file_id)
     if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
+
+    original_file_name = file_record.display_name
+    if file_record.file_type.startswith(
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ):
+        # Check if a converted text file exists for .docx files
+        txt_file_name = docx_to_txt_filename(original_file_name)
+        txt_file_id = os.path.join(os.path.dirname(file_id), txt_file_name)
+        txt_file_record = file_store.read_file_record(txt_file_id)
+        if txt_file_record:
+            file_record = txt_file_record
+            file_id = txt_file_id
 
     media_type = file_record.file_type
     file_io = file_store.read_file(file_id, mode="b")

@@ -18,6 +18,7 @@ from danswer.connectors.confluence.utils import attachment_to_content
 from danswer.connectors.confluence.utils import build_confluence_document_id
 from danswer.connectors.confluence.utils import datetime_from_string
 from danswer.connectors.confluence.utils import extract_text_from_confluence_html
+from danswer.connectors.confluence.utils import validate_attachment_filetype
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import GenerateSlimDocumentOutput
 from danswer.connectors.interfaces import LoadConnector
@@ -306,9 +307,11 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
         ):
             # If the page has restrictions, add them to the perm_sync_data
             # These will be used by doc_sync.py to sync permissions
-            perm_sync_data = {
-                "restrictions": page.get("restrictions", {}),
-                "space_key": page.get("space", {}).get("key"),
+            page_restrictions = page.get("restrictions")
+            page_space_key = page.get("space", {}).get("key")
+            page_perm_sync_data = {
+                "restrictions": page_restrictions or {},
+                "space_key": page_space_key,
             }
 
             doc_metadata_list.append(
@@ -318,7 +321,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                         page["_links"]["webui"],
                         self.is_cloud,
                     ),
-                    perm_sync_data=perm_sync_data,
+                    perm_sync_data=page_perm_sync_data,
                 )
             )
             attachment_cql = f"type=attachment and container='{page['id']}'"
@@ -328,6 +331,21 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 expand=restrictions_expand,
                 limit=_SLIM_DOC_BATCH_SIZE,
             ):
+                if not validate_attachment_filetype(attachment):
+                    continue
+                attachment_restrictions = attachment.get("restrictions")
+                if not attachment_restrictions:
+                    attachment_restrictions = page_restrictions
+
+                attachment_space_key = attachment.get("space", {}).get("key")
+                if not attachment_space_key:
+                    attachment_space_key = page_space_key
+
+                attachment_perm_sync_data = {
+                    "restrictions": attachment_restrictions or {},
+                    "space_key": attachment_space_key,
+                }
+
                 doc_metadata_list.append(
                     SlimDocument(
                         id=build_confluence_document_id(
@@ -335,7 +353,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                             attachment["_links"]["webui"],
                             self.is_cloud,
                         ),
-                        perm_sync_data=perm_sync_data,
+                        perm_sync_data=attachment_perm_sync_data,
                     )
                 )
             yield doc_metadata_list

@@ -3,6 +3,8 @@ from collections.abc import Callable
 from danswer.access.models import DocExternalAccess
 from danswer.configs.constants import DocumentSource
 from danswer.db.models import ConnectorCredentialPair
+from ee.danswer.configs.app_configs import CONFLUENCE_PERMISSION_DOC_SYNC_FREQUENCY
+from ee.danswer.configs.app_configs import CONFLUENCE_PERMISSION_GROUP_SYNC_FREQUENCY
 from ee.danswer.db.external_perm import ExternalUserGroup
 from ee.danswer.external_permissions.confluence.doc_sync import confluence_doc_sync
 from ee.danswer.external_permissions.confluence.group_sync import confluence_group_sync
@@ -56,7 +58,7 @@ GROUP_PERMISSIONS_IS_CC_PAIR_AGNOSTIC: set[DocumentSource] = {
 # If nothing is specified here, we run the doc_sync every time the celery beat runs
 DOC_PERMISSION_SYNC_PERIODS: dict[DocumentSource, int] = {
     # Polling is not supported so we fetch all doc permissions every 5 minutes
-    DocumentSource.CONFLUENCE: 5 * 60,
+    DocumentSource.CONFLUENCE: CONFLUENCE_PERMISSION_DOC_SYNC_FREQUENCY,
     DocumentSource.SLACK: 5 * 60,
 }
 
@@ -64,7 +66,7 @@ DOC_PERMISSION_SYNC_PERIODS: dict[DocumentSource, int] = {
 EXTERNAL_GROUP_SYNC_PERIODS: dict[DocumentSource, int] = {
     # Polling is not supported so we fetch all group permissions every 30 minutes
     DocumentSource.GOOGLE_DRIVE: 5 * 60,
-    DocumentSource.CONFLUENCE: 30 * 60,
+    DocumentSource.CONFLUENCE: CONFLUENCE_PERMISSION_GROUP_SYNC_FREQUENCY,
 }
 
 

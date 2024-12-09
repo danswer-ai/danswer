@@ -26,6 +26,7 @@ from ee.danswer.server.enterprise_settings.api import (
 )
 from ee.danswer.server.manage.standard_answer import router as standard_answer_router
 from ee.danswer.server.middleware.tenant_tracking import add_tenant_id_middleware
+from ee.danswer.server.oauth import router as oauth_router
 from ee.danswer.server.query_and_chat.chat_backend import (
     router as chat_router,
 )
@@ -119,6 +120,8 @@ def get_application() -> FastAPI:
     include_router_with_global_prefix_prepended(application, query_router)
     include_router_with_global_prefix_prepended(application, chat_router)
     include_router_with_global_prefix_prepended(application, standard_answer_router)
+    include_router_with_global_prefix_prepended(application, oauth_router)
+
     # Enterprise-only global settings
     include_router_with_global_prefix_prepended(
         application, enterprise_settings_admin_router

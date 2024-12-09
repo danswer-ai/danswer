@@ -187,6 +187,11 @@ def extract_text_from_confluence_html(
     return format_document_soup(soup)
 
 
+def validate_attachment_filetype(media_type: str) -> bool:
+    if media_type.startswith("video/") or media_type == "application/gliffy+json":
+        return True
+
+
 def attachment_to_content(
     confluence_client: OnyxConfluence,
     attachment: dict[str, Any],
@@ -198,7 +203,7 @@ def attachment_to_content(
 
     media_type = attachment["metadata"]["mediaType"]
 
-    if media_type.startswith("video/") or media_type == "application/gliffy+json":
+    if not validate_attachment_filetype(media_type):
         logger.warning(
             f"Cannot convert attachment {download_link} with unsupported media type to text: {media_type}."
         )
@@ -283,7 +288,7 @@ def build_confluence_document_id(
     return f"{base_url}{content_url}"
 
 
-def extract_referenced_attachment_names(page_text: str) -> list[str]:
+def _extract_referenced_attachment_names(page_text: str) -> list[str]:
     """Parse a Confluence html page to generate a list of current
         attachments in use
 

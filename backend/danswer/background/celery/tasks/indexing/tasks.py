@@ -640,12 +640,16 @@ def connector_indexing_proxy_task(
                 continue
 
         if job.status == "error":
+            exit_code: int | None = None
+            if job.process:
+                exit_code = job.process.exitcode
             task_logger.error(
                 "Indexing watchdog - spawned task exceptioned: "
                 f"attempt={index_attempt_id} "
                 f"tenant={tenant_id} "
                 f"cc_pair={cc_pair_id} "
                 f"search_settings={search_settings_id} "
+                f"exit_code={exit_code} "
                 f"error={job.exception()}"
             )
 

@@ -7,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ValidSources } from "@/lib/types";
 
 export function Citation({
   children,
@@ -36,7 +37,7 @@ export function Citation({
           <TooltipTrigger asChild>
             <div
               onMouseDown={() => {
-                if (!link) {
+                if (document.source_type == ValidSources.File) {
                   updatePresentingDocument(document);
                 } else {
                   window.open(link, "_blank");
@@ -62,10 +63,10 @@ export function Citation({
           <TooltipTrigger asChild>
             <div
               onMouseDown={() => {
-                if (!link) {
+                if (document.source_type == ValidSources.File) {
                   updatePresentingDocument(document);
                 } else {
-                  window.open(link, "_blank");
+                  window.open(document.link, "_blank");
                 }
               }}
               className="inline-flex items-center ml-1 cursor-pointer transition-all duration-200 ease-in-out"

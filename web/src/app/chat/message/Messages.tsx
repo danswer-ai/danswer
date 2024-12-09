@@ -468,7 +468,13 @@ export const AIMessage = ({
                               docs
                                 .slice(0, 2)
                                 .map((doc, ind) => (
-                                  <SourceCard doc={doc} key={ind} />
+                                  <SourceCard
+                                    doc={doc}
+                                    key={ind}
+                                    setPresentingDocument={
+                                      setPresentingDocument
+                                    }
+                                  />
                                 ))}
                             <SeeMoreBlock
                               documentSelectionToggled={
