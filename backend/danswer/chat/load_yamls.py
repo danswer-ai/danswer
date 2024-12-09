@@ -79,6 +79,9 @@ def load_personas_from_yaml(
             if prompts:
                 prompt_ids = [prompt.id for prompt in prompts if prompt is not None]
 
+        if not prompt_ids:
+            raise ValueError("Invalid Persona config, no prompts exist")
+
         p_id = persona.get("id")
         tool_ids = []
         if persona.get("image_generation"):
@@ -122,12 +125,16 @@ def load_personas_from_yaml(
             tool_ids=tool_ids,
             builtin_persona=True,
             is_public=True,
-            display_priority=existing_persona.display_priority
-            if existing_persona is not None
-            else persona.get("display_priority"),
-            is_visible=existing_persona.is_visible
-            if existing_persona is not None
-            else persona.get("is_visible"),
+            display_priority=(
+                existing_persona.display_priority
+                if existing_persona is not None
+                else persona.get("display_priority")
+            ),
+            is_visible=(
+                existing_persona.is_visible
+                if existing_persona is not None
+                else persona.get("is_visible")
+            ),
             db_session=db_session,
         )
 
