@@ -67,6 +67,9 @@ def remove_slack_bot(
         db_session=db_session,
         slack_bot_id=slack_bot_id,
     )
+    slack_bot_configs = slack_bot.slack_channel_configs
+    for config in slack_bot_configs:
+        db_session.delete(config)
 
     db_session.delete(slack_bot)
     db_session.commit()
