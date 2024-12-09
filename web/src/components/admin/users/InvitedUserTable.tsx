@@ -12,7 +12,7 @@ import { type PageSelectorProps } from "@/components/PageSelector";
 
 import { type User } from "@/lib/types";
 import { TableHeader } from "@/components/ui/table";
-import { InviteUserButton } from "./SignedUpUserTable";
+import { InviteUserButton } from "./buttons/InviteUserButton";
 
 interface Props {
   users: Array<User>;

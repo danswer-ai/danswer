@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { User } from "@/lib/types";
 import {
   Table,
@@ -9,11 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PopupSpec } from "../connectors/Popup";
-import useSWRMutation from "swr/dist/mutation";
-import { Button } from "@/components/ui/button";
-import userMutationFetcher from "@/lib/admin/users/userMutationFetcher";
-import { useSWRConfig } from "swr";
-import { InviteUserButton } from "./SignedUpUserTable";
+import { InviteUserButton } from "./buttons/InviteUserButton";
 import { PageSelectorProps } from "@/components/PageSelector";
 import CenteredPageSelector from "./CenteredPageSelector";
 
@@ -21,6 +17,7 @@ interface SlackUserTableProps {
   invitedUsers: User[];
   slackusers: User[];
   mutate: () => void;
+  setPopup: (spec: PopupSpec) => void;
 }
 
 const SlackUserTable: React.FC<SlackUserTableProps & PageSelectorProps> = ({
@@ -30,9 +27,8 @@ const SlackUserTable: React.FC<SlackUserTableProps & PageSelectorProps> = ({
   currentPage,
   totalPages,
   onPageChange,
+  setPopup,
 }) => {
-  const [popup, setPopup] = useState<PopupSpec | null>(null);
-
   return (
     <>
       {totalPages > 1 ? (

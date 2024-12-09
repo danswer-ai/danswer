@@ -218,7 +218,6 @@ def bulk_invite_users(
     current_user: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> int:
-    print("INVITING USERS", emails)
     """emails are string validated. If any email fails validation, no emails are
     invited and an exception is raised."""
 

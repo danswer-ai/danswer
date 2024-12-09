@@ -1,18 +1,8 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { UserPlus } from "lucide-react";
 import InvitedUserTable from "@/components/admin/users/InvitedUserTable";
 import SignedUpUserTable from "@/components/admin/users/SignedUpUserTable";
 import { SearchBar } from "@/components/search/SearchBar";
@@ -25,10 +15,8 @@ import { UsersIcon } from "@/components/icons/icons";
 import { errorHandlingFetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { ErrorCallout } from "@/components/ErrorCallout";
-import { HidableSection } from "@/app/admin/assistants/HidableSection";
 import BulkAdd from "@/components/admin/users/BulkAdd";
 import { UsersResponse } from "@/lib/users/interfaces";
-import { UserRole } from "@/lib/types";
 import SlackUserTable from "@/components/admin/users/SlackUserTable";
 import Text from "@/components/ui/text";
 
@@ -173,6 +161,7 @@ const UsersTables = ({
           <CardContent>
             {slack_users.length > 0 ? (
               <SlackUserTable
+                setPopup={setPopup}
                 currentPage={slackUsersPage}
                 onPageChange={setSlackUsersPage}
                 totalPages={slack_users_pages}
