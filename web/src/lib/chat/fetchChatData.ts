@@ -56,7 +56,6 @@ export async function fetchChatData(searchParams: {
     fetchSS("/query/valid-tags"),
     fetchLLMProvidersSS(),
     fetchSS("/folder"),
-    fetchSS("/input_prompt?include_public=true"),
   ];
 
   let results: (
