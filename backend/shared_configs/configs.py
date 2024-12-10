@@ -270,3 +270,10 @@ SUPPORTED_EMBEDDING_MODELS = [
         index_name="danswer_chunk_intfloat_multilingual_e5_small",
     ),
 ]
+
+"""
+INTEGRATION TEST ONLY SETTINGS
+"""
+VECTOR_DB_INDEX_NAME_PREFIX__INTEGRATION_TEST_ONLY = os.getenv(
+    "VECTOR_DB_INDEX_NAME_PREFIX__INTEGRATION_TEST_ONLY"
+)
