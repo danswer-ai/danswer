@@ -11,6 +11,10 @@ from typing import IO
 import requests
 from retry import retry
 
+from danswer.configs.app_configs import EGNYTE_BASE_DOMAIN
+from danswer.configs.app_configs import EGNYTE_CLIENT_ID
+from danswer.configs.app_configs import EGNYTE_CLIENT_SECRET
+from danswer.configs.app_configs import EGNYTE_LOCALHOST_OVERRIDE
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import GenerateDocumentsOutput
@@ -32,11 +36,6 @@ from danswer.utils.logger import setup_logger
 
 
 logger = setup_logger()
-
-_EGNYTE_LOCALHOST_OVERRIDE = os.getenv("EGNYTE_LOCALHOST_OVERRIDE")
-_EGNYTE_BASE_DOMAIN = os.getenv("EGNYTE_DOMAIN")
-_EGNYTE_CLIENT_ID = os.getenv("EGNYTE_CLIENT_ID")
-_EGNYTE_CLIENT_SECRET = os.getenv("EGNYTE_CLIENT_SECRET")
 
 _EGNYTE_API_BASE = "https://{domain}.egnyte.com/pubapi/v1"
 _EGNYTE_APP_BASE = "https://{domain}.egnyte.com"
@@ -172,18 +171,18 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
 
     @classmethod
     def redirect_uri(cls, base_domain: str, state: str) -> str:
-        if not _EGNYTE_CLIENT_ID:
+        if not EGNYTE_CLIENT_ID:
             raise ValueError("EGNYTE_CLIENT_ID environment variable must be set")
-        if not _EGNYTE_BASE_DOMAIN:
+        if not EGNYTE_BASE_DOMAIN:
             raise ValueError("EGNYTE_DOMAIN environment variable must be set")
 
-        if _EGNYTE_LOCALHOST_OVERRIDE:
-            base_domain = _EGNYTE_LOCALHOST_OVERRIDE
+        if EGNYTE_LOCALHOST_OVERRIDE:
+            base_domain = EGNYTE_LOCALHOST_OVERRIDE
 
         callback_uri = f"{base_domain.strip('/')}/connector/oauth/callback/egnyte"
         return (
-            f"https://{_EGNYTE_BASE_DOMAIN}.egnyte.com/puboauth/token"
-            f"?client_id={_EGNYTE_CLIENT_ID}"
+            f"https://{EGNYTE_BASE_DOMAIN}.egnyte.com/puboauth/token"
+            f"?client_id={EGNYTE_CLIENT_ID}"
             f"&redirect_uri={callback_uri}"
             f"&scope=Egnyte.filesystem"
             f"&state={state}"
@@ -192,21 +191,21 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
 
     @classmethod
     def code_to_token(cls, code: str) -> dict[str, Any]:
-        if not _EGNYTE_CLIENT_ID:
+        if not EGNYTE_CLIENT_ID:
             raise ValueError("EGNYTE_CLIENT_ID environment variable must be set")
-        if not _EGNYTE_CLIENT_SECRET:
+        if not EGNYTE_CLIENT_SECRET:
             raise ValueError("EGNYTE_CLIENT_SECRET environment variable must be set")
-        if not _EGNYTE_BASE_DOMAIN:
+        if not EGNYTE_BASE_DOMAIN:
             raise ValueError("EGNYTE_DOMAIN environment variable must be set")
 
         # Exchange code for token
-        url = f"https://{_EGNYTE_BASE_DOMAIN}.egnyte.com/puboauth/token"
+        url = f"https://{EGNYTE_BASE_DOMAIN}.egnyte.com/puboauth/token"
         data = {
-            "client_id": _EGNYTE_CLIENT_ID,
-            "client_secret": _EGNYTE_CLIENT_SECRET,
+            "client_id": EGNYTE_CLIENT_ID,
+            "client_secret": EGNYTE_CLIENT_SECRET,
             "code": code,
             "grant_type": "authorization_code",
-            "redirect_uri": f"{_EGNYTE_LOCALHOST_OVERRIDE or ''}/connector/oauth/callback/egnyte",
+            "redirect_uri": f"{EGNYTE_LOCALHOST_OVERRIDE or ''}/connector/oauth/callback/egnyte",
             "scope": "Egnyte.filesystem",
         }
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -225,7 +224,7 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
 
         token_data = response.json()
         return {
-            "domain": _EGNYTE_BASE_DOMAIN,
+            "domain": EGNYTE_BASE_DOMAIN,
             "access_token": token_data["access_token"],
         }
 
