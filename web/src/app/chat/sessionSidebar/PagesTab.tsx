@@ -34,7 +34,6 @@ export function PagesTab({
   const groupedChatSessions = existingChats
     ? groupSessionsByDateRange(existingChats)
     : [];
-
   const { setPopup } = usePopup();
   const router = useRouter();
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
@@ -43,14 +42,14 @@ export function PagesTab({
     event: React.DragEvent<HTMLDivElement>
   ) => {
     event.preventDefault();
-    setIsDragOver(false); // Reset drag over state on drop
+    setIsDragOver(false);
     const chatSessionId = event.dataTransfer.getData(CHAT_SESSION_ID_KEY);
     const folderId = event.dataTransfer.getData(FOLDER_ID_KEY);
 
     if (folderId) {
       try {
         await removeChatFromFolder(parseInt(folderId, 10), chatSessionId);
-        router.refresh(); // Refresh the page to reflect the changes
+        router.refresh();
       } catch (error) {
         setPopup({
           message: "Failed to remove chat from folder",
@@ -63,10 +62,13 @@ export function PagesTab({
   const isHistoryEmpty = !existingChats || existingChats.length === 0;
 
   return (
-    <div className="mb-1 text-text-sidebar ml-3 relative miniscroll mobile:pb-40 overflow-y-auto h-full">
+    <div
+      className="mb-1 ml-3 relative overflow-y-auto h-full pr-3 font-['KH Teka TRIAL'] text-black"
+      style={{ scrollbarGutter: "stable" }}
+    >
       {folders && folders.length > 0 && (
-        <div className="py-2 border-b border-border">
-          <div className="text-xs text-subtle flex pb-0.5 mb-1.5 mt-2 font-bold">
+        <div className="py-2 border-b border-[#dcdad4]">
+          <div className="text-xs text-[#6c6c6c] font-medium mb-1.5 mt-2">
             Chat Folders
           </div>
           <FolderList
@@ -79,6 +81,7 @@ export function PagesTab({
           />
         </div>
       )}
+
       <div
         onDragOver={(event) => {
           event.preventDefault();
@@ -86,19 +89,17 @@ export function PagesTab({
         }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDropToRemoveFromFolder}
-        className={`pt-1 transition duration-300 ease-in-out mr-3 ${
-          isDragOver ? "bg-hover" : ""
-        } rounded-md`}
+        className={`pt-3 pb-40 transition duration-300 ease-in-out ${
+          isDragOver ? "bg-[#e6e3dd] rounded-md" : ""
+        }`}
       >
-        {(page == "chat" || page == "search") && (
-          <p className="my-2 text-xs text-sidebar-subtle flex font-bold">
-            {page == "chat" && "Chat "}
-            {page == "search" && "Search "}
-            History
+        {(page === "chat" || page === "search") && (
+          <p className="my-2 text-xs text-[#6c6c6c] font-medium">
+            {page === "chat" ? "Chat History" : "Search History"}
           </p>
         )}
         {isHistoryEmpty ? (
-          <p className="text-sm mt-2 w-[250px]">
+          <p className="text-sm mt-2 w-[250px] text-[#6c6c6c] font-normal">
             {page === "search"
               ? "Try running a search! Your search history will appear here."
               : "Try sending a message! Your chat history will appear here."}
@@ -106,34 +107,31 @@ export function PagesTab({
         ) : (
           Object.entries(groupedChatSessions).map(
             ([dateRange, chatSessions], ind) => {
-              if (chatSessions.length > 0) {
+              const filteredSessions = chatSessions.filter(
+                (chat) => chat.folder_id === null
+              );
+              if (filteredSessions.length > 0) {
                 return (
-                  <div key={dateRange}>
-                    <div
-                      className={`text-xs text-text-sidebar-subtle ${
-                        ind != 0 && "mt-5"
-                      } flex pb-0.5 mb-1.5 font-medium`}
-                    >
+                  <div key={dateRange} className={`${ind !== 0 ? "mt-5" : ""}`}>
+                    <div className="text-xs text-[#6c6c6c] font-medium mb-1.5">
                       {dateRange}
                     </div>
-                    {chatSessions
-                      .filter((chat) => chat.folder_id === null)
-                      .map((chat) => {
-                        const isSelected = currentChatId === chat.id;
-                        return (
-                          <div key={`${chat.id}-${chat.name}`}>
-                            <ChatSessionDisplay
-                              showDeleteModal={showDeleteModal}
-                              showShareModal={showShareModal}
-                              closeSidebar={closeSidebar}
-                              search={page == "search"}
-                              chatSession={chat}
-                              isSelected={isSelected}
-                              skipGradient={isDragOver}
-                            />
-                          </div>
-                        );
-                      })}
+                    {filteredSessions.map((chat) => {
+                      const isSelected = currentChatId === chat.id;
+                      return (
+                        <div key={`${chat.id}-${chat.name}`}>
+                          <ChatSessionDisplay
+                            showDeleteModal={showDeleteModal}
+                            showShareModal={showShareModal}
+                            closeSidebar={closeSidebar}
+                            search={page === "search"}
+                            chatSession={chat}
+                            isSelected={isSelected}
+                            skipGradient={isDragOver}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               }

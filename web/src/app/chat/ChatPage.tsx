@@ -2361,7 +2361,8 @@ export function ChatPage({
                                     id={`message-${message.messageId}`}
                                     key={messageReactComponentKey}
                                   >
-                                    <HumanMessage
+                                    <AIMessage humanText={message.message} />
+                                    {/* <HumanMessage
                                       stopGenerating={stopGenerating}
                                       content={message.message}
                                       files={message.files}
@@ -2406,7 +2407,7 @@ export function ChatPage({
                                         // and so it sticks around on page reload
                                         setMessageAsLatest(messageId);
                                       }}
-                                    />
+                                    /> */}
                                   </div>
                                 );
                               } else if (message.type === "assistant") {
@@ -2446,7 +2447,8 @@ export function ChatPage({
                                         : null
                                     }
                                   >
-                                    <AIMessage
+                                    {/* <AIMessage
+                                      humanText={message.message}
                                       setPresentingDocument={
                                         setPresentingDocument
                                       }
@@ -2614,13 +2616,13 @@ export function ChatPage({
                                             )
                                           : !retrievalEnabled
                                       }
-                                    />
+                                    /> */}
                                   </div>
                                 );
                               } else {
                                 return (
                                   <div key={messageReactComponentKey}>
-                                    <AIMessage
+                                    {/* <AIMessage
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
                                       content={
@@ -2640,13 +2642,13 @@ export function ChatPage({
                                           )}
                                         </p>
                                       }
-                                    />
+                                    /> */}
                                   </div>
                                 );
                               }
                             })}
 
-                            {(currentSessionChatState == "loading" ||
+                            {/* {(currentSessionChatState == "loading" ||
                               (loadingError &&
                                 !currentSessionRegenerationState?.regenerating &&
                                 messageHistory[messageHistory.length - 1]
@@ -2656,13 +2658,13 @@ export function ChatPage({
                                 messageId={-1}
                                 content={submittedMessage}
                               />
-                            )}
+                            )} */}
 
                             {currentSessionChatState == "loading" && (
                               <div
                                 key={`${messageHistory.length}-${chatSessionIdRef.current}`}
                               >
-                                <AIMessage
+                                {/* <AIMessage
                                   key={-3}
                                   currentPersona={liveAssistant}
                                   alternativeAssistant={
@@ -2680,13 +2682,13 @@ export function ChatPage({
                                       </span>
                                     </div>
                                   }
-                                />
+                                /> */}
                               </div>
                             )}
 
                             {loadingError && (
                               <div key={-1}>
-                                <AIMessage
+                                {/* <AIMessage
                                   currentPersona={liveAssistant}
                                   messageId={-1}
                                   content={
@@ -2694,7 +2696,7 @@ export function ChatPage({
                                       {loadingError}
                                     </p>
                                   }
-                                />
+                                /> */}
                               </div>
                             )}
                             {messageHistory.length > 0 && (
