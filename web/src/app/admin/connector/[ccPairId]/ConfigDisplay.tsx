@@ -51,9 +51,12 @@ function ConfigItem({ label, value }: { label: string; value: any }) {
     if (Array.isArray(value)) {
       const displayedItems = isExpanded ? value : value.slice(0, 5);
       return (
-        <ul className="list-disc pl-4 mt-2">
+        <ul className="list-disc max-w-full pl-4 mt-2 overflow-x-auto">
           {displayedItems.map((item, index) => (
-            <li key={index} className="mb-1">
+            <li
+              key={index}
+              className="mb-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+            >
               {convertObjectToString(item)}
             </li>
           ))}
@@ -61,7 +64,7 @@ function ConfigItem({ label, value }: { label: string; value: any }) {
       );
     } else if (typeof value === "object" && value !== null) {
       return (
-        <div className="mt-2">
+        <div className="mt-2 overflow-x-auto">
           {Object.entries(value).map(([key, val]) => (
             <div key={key} className="mb-1">
               <span className="font-semibold">{key}:</span>{" "}
@@ -76,14 +79,15 @@ function ConfigItem({ label, value }: { label: string; value: any }) {
 
   return (
     <li className="w-full py-2">
-      <div className="flex justify-between items-center">
-        <span className="font-medium">{label}</span>
-        <div className="mt-2">
+      <div className="flex items-center justify-between w-full">
+        <span className="mb-2">{label}</span>
+        <div className="mt-2 overflow-x-auto w-fit">
           {renderValue()}
+
           {isExpandable && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="mt-2 text-neutral-600 hover:text-neutral-800 flex items-center"
+              className="mt-2 text-text-600 hover:text-text-800 flex items-center"
             >
               {isExpanded ? (
                 <>
@@ -140,7 +144,7 @@ export function AdvancedConfigDisplay({
     <>
       <Title className="mt-8 mb-2">Advanced Configuration</Title>
       <CardSection>
-        <ul className="w-full text-sm divide-y divide-neutral-200 dark:divide-neutral-700">
+        <ul className="w-full text-sm divide-y divide-background-200 dark:divide-background-700">
           {pruneFreq && (
             <li
               key={0}
@@ -192,7 +196,7 @@ export function ConfigDisplay({
     <>
       <Title className="mb-2">Configuration</Title>
       <CardSection>
-        <ul className="w-full text-sm divide-y divide-neutral-200 dark:divide-neutral-700">
+        <ul className="w-full text-sm divide-y divide-background-200 dark:divide-background-700">
           {configEntries.map(([key, value]) => (
             <ConfigItem key={key} label={key} value={value} />
           ))}
