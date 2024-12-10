@@ -30,6 +30,7 @@ from model_server.constants import EmbeddingProvider
 from model_server.utils import simple_log_function_time
 from shared_configs.configs import API_BASED_EMBEDDING_TIMEOUT
 from shared_configs.configs import INDEXING_ONLY
+from shared_configs.configs import OPENAI_EMBEDDING_TIMEOUT
 from shared_configs.enums import EmbedTextType
 from shared_configs.enums import RerankerProvider
 from shared_configs.model_server_models import Embedding
@@ -72,6 +73,7 @@ class CloudEmbedding:
         self.api_version = api_version
         self.timeout = timeout
         self.http_client = httpx.AsyncClient(timeout=timeout)
+        self._closed = False
 
     async def _embed_openai(
         self, texts: list[str], model: str | None
@@ -79,7 +81,10 @@ class CloudEmbedding:
         if not model:
             model = DEFAULT_OPENAI_MODEL
 
-        client = openai.AsyncOpenAI(api_key=self.api_key, timeout=self.timeout)
+        # Use the OpenAI specific timeout for this one
+        client = openai.AsyncOpenAI(
+            api_key=self.api_key, timeout=OPENAI_EMBEDDING_TIMEOUT
+        )
 
         final_embeddings: list[Embedding] = []
         try:
@@ -143,7 +148,7 @@ class CloudEmbedding:
         self, texts: list[str], model: str | None
     ) -> list[Embedding]:
         response = await aembedding(
-            model=f"azure/{model}",
+            model=model,
             input=texts,
             timeout=API_BASED_EMBEDDING_TIMEOUT,
             api_key=self.api_key,
@@ -174,7 +179,7 @@ class CloudEmbedding:
                 )
                 for text in texts
             ],
-            auto_truncate=True,
+            auto_truncate=True,  # This is the default
         )
         return [embedding.values for embedding in embeddings]
 
@@ -239,6 +244,12 @@ class CloudEmbedding:
         logger.debug(f"Creating Embedding instance for provider: {provider}")
         return CloudEmbedding(api_key, provider, api_url, api_version)
 
+    async def aclose(self) -> None:
+        """Explicitly close the client."""
+        if not self._closed:
+            await self.http_client.aclose()
+            self._closed = True
+
     async def __aenter__(self) -> "CloudEmbedding":
         return self
 
@@ -248,7 +259,14 @@ class CloudEmbedding:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        await self.http_client.aclose()
+        await self.aclose()
+
+    def __del__(self) -> None:
+        """Finalizer to warn about unclosed clients."""
+        if not self._closed:
+            logger.warning(
+                "CloudEmbedding was not properly closed. Use 'async with' or call aclose()"
+            )
 
 
 def get_embedding_model(
