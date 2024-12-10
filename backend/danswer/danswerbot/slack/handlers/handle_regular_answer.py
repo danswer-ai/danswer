@@ -81,6 +81,7 @@ def handle_regular_answer(
     messages = message_info.thread_messages
 
     message_ts_to_respond_to = message_info.msg_to_respond
+    user_id = message_info.sender
     is_bot_msg = message_info.is_bot_msg
     user = None
     if message_info.is_bot_dm:
@@ -370,16 +371,46 @@ def handle_regular_answer(
     )
 
     try:
-        respond_in_thread(
-            client=client,
-            channel=channel,
-            receiver_ids=receiver_ids,
-            text="Hello! Danswer has some results for you!",
-            blocks=all_blocks,
-            thread_ts=message_ts_to_respond_to,
-            # don't unfurl, since otherwise we will have 5+ previews which makes the message very long
-            unfurl=False,
-        )
+        if message_info.force_ephemeral:
+            # Send ephemeral message (only visible to the user)
+            if not user_id:
+                logger.error("Cannot send ephemeral message - no sender ID provided")
+                return True
+
+            if not user_id.startswith("U"):
+                logger.error(
+                    f"Cannot send ephemeral message - invalid sender ID format: {user_id}. "
+                    f"Expected user ID starting with 'U'"
+                )
+                # Fall back to regular message
+                respond_in_thread(
+                    client=client,
+                    channel=channel,
+                    receiver_ids=receiver_ids,
+                    text="Hello! Danswer has some results for you!",
+                    blocks=all_blocks,
+                    thread_ts=message_ts_to_respond_to,
+                    unfurl=False,
+                )
+                return False
+
+            client.chat_postEphemeral(
+                channel=channel,
+                user=user_id,
+                text="Hello! Danswer has some results for you!",
+                blocks=all_blocks,
+            )
+        else:
+            # Send regular message (visible to everyone)
+            respond_in_thread(
+                client=client,
+                channel=channel,
+                receiver_ids=receiver_ids,
+                text="Hello! Danswer has some results for you!",
+                blocks=all_blocks,
+                thread_ts=message_ts_to_respond_to,
+                unfurl=False,
+            )
 
         # For DM (ephemeral message), we need to create a thread via a normal message so the user can see
         # the ephemeral message. This also will give the user a notification which ephemeral message does not.
