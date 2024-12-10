@@ -40,7 +40,6 @@ from danswer.connectors.salesforce.connector import SalesforceConnector
 from danswer.connectors.sharepoint.connector import SharepointConnector
 from danswer.connectors.slab.connector import SlabConnector
 from danswer.connectors.slack.connector import SlackPollConnector
-from danswer.connectors.slack.load_connector import SlackLoadConnector
 from danswer.connectors.teams.connector import TeamsConnector
 from danswer.connectors.web.connector import WebConnector
 from danswer.connectors.wikipedia.connector import WikipediaConnector
@@ -63,7 +62,6 @@ def identify_connector_class(
         DocumentSource.WEB: WebConnector,
         DocumentSource.FILE: LocalFileConnector,
         DocumentSource.SLACK: {
-            InputType.LOAD_STATE: SlackLoadConnector,
             InputType.POLL: SlackPollConnector,
             InputType.SLIM_RETRIEVAL: SlackPollConnector,
         },
