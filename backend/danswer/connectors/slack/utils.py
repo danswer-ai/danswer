@@ -32,16 +32,11 @@ def get_base_url(token: str) -> str:
 def get_message_link(
     event: dict[str, Any], client: WebClient, channel_id: str | None = None
 ) -> str:
-    channel_id = channel_id or cast(
-        str, event["channel"]
-    )  # channel must either be present in the event or passed in
-    message_ts = cast(str, event["ts"])
-    message_ts_without_dot = message_ts.replace(".", "")
-    thread_ts = cast(str | None, event.get("thread_ts"))
-    base_url = get_base_url(client.token)
-    return f"{base_url}/archives/{channel_id}/p{message_ts_without_dot}" + (
-        f"?thread_ts={thread_ts}" if thread_ts else ""
-    )
+    channel_id = channel_id or event["channel"]
+    message_ts = event["ts"]
+    response = client.chat_getPermalink(channel=channel_id, message_ts=message_ts)
+    permalink = response["permalink"]
+    return permalink
 
 
 def _make_slack_api_call_logged(
