@@ -432,12 +432,19 @@ export function CompactDocumentCard({
 }) {
   return (
     <div className="max-w-[250px]  pb-0 pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
-      <h3 className="text-sm font-semibold flex  items-center gap-x-1 text-text-900 pt-0 mt-0 truncate w-full">
+      <div
+        onClick={() => {
+          if (document.link) {
+            window.open(document.link, "_blank");
+          }
+        }}
+        className="cursor-pointer text-sm font-semibold flex  items-center gap-x-1 text-text-900 pt-0 mt-0 truncate w-full"
+      >
         {icon}
         {(document.semantic_identifier || document.document_id).slice(0, 40)}
         {(document.semantic_identifier || document.document_id).length > 40 &&
           "..."}
-      </h3>
+      </div>
       {document.blurb && (
         <p className="text-xs  mb-0 text-gray-600 line-clamp-2">
           {document.blurb}
