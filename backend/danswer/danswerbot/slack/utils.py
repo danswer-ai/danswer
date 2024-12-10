@@ -196,8 +196,8 @@ def respond_in_thread(
 
     message_ids: list[str] = []
     if not receiver_ids:
+        slack_call = make_slack_api_rate_limited(client.chat_postMessage)
         try:
-            slack_call = make_slack_api_rate_limited(client.chat_postMessage)
             response = slack_call(
                 channel=channel,
                 text=text,
@@ -207,14 +207,16 @@ def respond_in_thread(
                 unfurl_links=unfurl,
                 unfurl_media=unfurl,
             )
-            message_ids.append(response["message_ts"])
         except Exception as e:
             logger.warning(f"Failed to post message: {e} \n blocks: {blocks}")
             logger.warning("Trying again without blocks that have urls")
+
             blocks_without_urls = [
                 block for block in blocks if not _check_for_url_in_block(block)
             ]
             blocks_without_urls.append(_build_error_block(str(e)))
+
+            # Try again wtihout blocks containing url
             response = slack_call(
                 channel=channel,
                 text=text,
@@ -224,22 +226,43 @@ def respond_in_thread(
                 unfurl_links=unfurl,
                 unfurl_media=unfurl,
             )
-            message_ids.append(response["message_ts"])
+
+        message_ids.append(response["message_ts"])
     else:
         slack_call = make_slack_api_rate_limited(client.chat_postEphemeral)
         for receiver in receiver_ids:
-            response = slack_call(
-                channel=channel,
-                user=receiver,
-                text=text,
-                blocks=blocks,
-                thread_ts=thread_ts,
-                metadata=metadata,
-                unfurl_links=unfurl,
-                unfurl_media=unfurl,
-            )
-            if not response.get("ok"):
-                raise RuntimeError(f"Failed to post message: {response}")
+            try:
+                response = slack_call(
+                    channel=channel,
+                    user=receiver,
+                    text=text,
+                    blocks=blocks,
+                    thread_ts=thread_ts,
+                    metadata=metadata,
+                    unfurl_links=unfurl,
+                    unfurl_media=unfurl,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to post message: {e} \n blocks: {blocks}")
+                logger.warning("Trying again without blocks that have urls")
+
+                blocks_without_urls = [
+                    block for block in blocks if not _check_for_url_in_block(block)
+                ]
+                blocks_without_urls.append(_build_error_block(str(e)))
+
+                # Try again wtihout blocks containing url
+                response = slack_call(
+                    channel=channel,
+                    user=receiver,
+                    text=text,
+                    blocks=blocks,
+                    thread_ts=thread_ts,
+                    metadata=metadata,
+                    unfurl_links=unfurl,
+                    unfurl_media=unfurl,
+                )
+
             message_ids.append(response["message_ts"])
 
     return message_ids
