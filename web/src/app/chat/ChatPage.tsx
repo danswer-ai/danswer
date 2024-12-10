@@ -135,7 +135,6 @@ export function ChatPage({
     llmProviders,
     folders,
     openedFolders,
-    userInputPrompts,
     defaultAssistantId,
     shouldShowWelcomeModal,
     refreshChatSessions,
@@ -2744,7 +2743,6 @@ export function ChatPage({
                               chatState={currentSessionChatState}
                               stopGenerating={stopGenerating}
                               openModelSettings={() => setSettingsToggled(true)}
-                              inputPrompts={userInputPrompts}
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}
                               // assistant stuff
