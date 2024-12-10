@@ -44,13 +44,11 @@ const EditPropertyModal = ({
             </h2>
 
             <div className="space-y-4">
-              <div>
-                <TextFormField
-                  label={propertyDetails || ""}
-                  name="propertyValue"
-                  placeholder="Property value"
-                />
-              </div>
+              <TextFormField
+                label={propertyDetails || ""}
+                name="propertyValue"
+                placeholder="Property value"
+              />
             </div>
 
             <div className="mt-6">
