@@ -204,7 +204,8 @@ def _build_documents_blocks(
             continue
         seen_docs_identifiers.add(d.document_id)
 
-        doc_sem_id = d.semantic_identifier
+        # Strip newlines from the semantic identifier for Slackbot formatting
+        doc_sem_id = d.semantic_identifier.replace("\n", " ")
         if d.source_type == DocumentSource.SLACK.value:
             doc_sem_id = "#" + doc_sem_id
 

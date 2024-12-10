@@ -360,7 +360,7 @@ def translate_vespa_highlight_to_slack(match_strs: list[str], used_chars: int) -
         for match_str in match_strs
         if match_str
     ]
-    combined = "... ".join(final_matches)
+    combined = " ".join(final_matches)
 
     # Slack introduces "Show More" after 300 on desktop which is ugly
     # But don't trim the message if there is still a highlight after 300 chars
