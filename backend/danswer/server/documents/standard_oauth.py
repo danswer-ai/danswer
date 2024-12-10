@@ -86,7 +86,9 @@ def oauth_authorize(
         ex=_OAUTH_STATE_EXPIRATION_SECONDS,
     )
 
-    return AuthorizeResponse(redirect_url=connector_cls.redirect_uri(base_url, state))
+    return AuthorizeResponse(
+        redirect_url=connector_cls.oauth_authorization_url(base_url, state)
+    )
 
 
 class CallbackResponse(BaseModel):
@@ -119,7 +121,7 @@ def oauth_callback(
         raise HTTPException(status_code=400, detail="Invalid OAuth state")
     original_url = original_url_bytes.decode("utf-8")
 
-    token_info = connector_cls.code_to_token(code)
+    token_info = connector_cls.oauth_code_to_token(code)
 
     # Create a new credential with the token info
     credential_data = CredentialBase(

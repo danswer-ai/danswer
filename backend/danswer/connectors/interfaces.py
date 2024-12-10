@@ -73,12 +73,12 @@ class OAuthConnector(BaseConnector):
 
     @classmethod
     @abc.abstractmethod
-    def redirect_uri(cls, base_domain: str, state: str) -> str:
+    def oauth_authorization_url(cls, base_domain: str, state: str) -> str:
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def code_to_token(cls, code: str) -> dict[str, Any]:
+    def oauth_code_to_token(cls, code: str) -> dict[str, Any]:
         raise NotImplementedError
 
 

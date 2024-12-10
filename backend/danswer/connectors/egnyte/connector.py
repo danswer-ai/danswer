@@ -26,11 +26,11 @@ from danswer.connectors.models import BasicExpertInfo
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.connectors.models import Section
-from danswer.file_processing.extract_file_text import check_file_ext_is_valid
 from danswer.file_processing.extract_file_text import detect_encoding
 from danswer.file_processing.extract_file_text import extract_file_text
 from danswer.file_processing.extract_file_text import get_file_ext
 from danswer.file_processing.extract_file_text import is_text_file_extension
+from danswer.file_processing.extract_file_text import is_valid_file_ext
 from danswer.file_processing.extract_file_text import read_text_file
 from danswer.utils.logger import setup_logger
 
@@ -99,7 +99,7 @@ def _process_egnyte_file(
 
     file_name = file_metadata["name"]
     extension = get_file_ext(file_name)
-    if not check_file_ext_is_valid(extension):
+    if not is_valid_file_ext(extension):
         logger.warning(f"Skipping file '{file_name}' with extension '{extension}'")
         return None
 
@@ -170,7 +170,7 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
         return DocumentSource.EGNYTE
 
     @classmethod
-    def redirect_uri(cls, base_domain: str, state: str) -> str:
+    def oauth_authorization_url(cls, base_domain: str, state: str) -> str:
         if not EGNYTE_CLIENT_ID:
             raise ValueError("EGNYTE_CLIENT_ID environment variable must be set")
         if not EGNYTE_BASE_DOMAIN:
@@ -190,7 +190,7 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
         )
 
     @classmethod
-    def code_to_token(cls, code: str) -> dict[str, Any]:
+    def oauth_code_to_token(cls, code: str) -> dict[str, Any]:
         if not EGNYTE_CLIENT_ID:
             raise ValueError("EGNYTE_CLIENT_ID environment variable must be set")
         if not EGNYTE_CLIENT_SECRET:
@@ -342,8 +342,8 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
                         yield current_batch
                         current_batch = []
 
-            except Exception as e:
-                logger.error(f"Failed to process file {file['path']}: {str(e)}")
+            except Exception:
+                logger.exception(f"Failed to process file {file['path']}")
                 continue
 
         if current_batch:
