@@ -327,13 +327,17 @@ def update_cc_pair_property(
             status_code=400, detail="CC Pair not found for current user's permissions"
         )
 
+    # Can we centralize logic for updating connector properties
+    # so that we don't need to manually validate everywhere?
     if update_request.name == "refresh_frequency":
         cc_pair.connector.refresh_freq = int(update_request.value)
+        cc_pair.connector.validate_refresh_freq()
         db_session.commit()
 
         msg = "Refresh frequency updated successfully"
     elif update_request.name == "pruning_frequency":
         cc_pair.connector.prune_freq = int(update_request.value)
+        cc_pair.connector.validate_prune_freq()
         db_session.commit()
 
         msg = "Pruning frequency updated successfully"
