@@ -373,9 +373,7 @@ def handle_regular_answer(
         respond_in_thread(
             client=client,
             channel=channel,
-            receiver_ids=[message_info.sender]
-            if message_info.is_bot_msg and message_info.sender
-            else receiver_ids,
+            receiver_ids=receiver_ids,
             text="Hello! Danswer has some results for you!",
             blocks=all_blocks,
             thread_ts=message_ts_to_respond_to,
