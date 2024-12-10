@@ -118,7 +118,7 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
 
         # If image summarization is enabled, but not supported by the default LLM, raise an error.
         if CONFLUENCE_IMAGE_SUMMARIZATION_ENABLED:
-            llm, _ = get_default_llms(timeout=5)
+            llm, _ = get_default_llms()
             if not llm.vision_support():
                 raise ValueError(
                     "The configured default LLM doesn't seem to have vision support for image summarization."
@@ -127,7 +127,6 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
             self.llm = llm
         else:
             self.llm = None
-
 
     @property
     def confluence_client(self) -> OnyxConfluence:
