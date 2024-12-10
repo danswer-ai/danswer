@@ -31,7 +31,6 @@ class SlackLoadConnector(LoadConnector):
     # WARNING: DEPRECATED, DO NOT USE
     def __init__(
         self,
-        workspace: str,
         export_path_str: str,
         channels: list[str] | None = None,
         # if specified, will treat the specified channel strings as
@@ -39,7 +38,6 @@ class SlackLoadConnector(LoadConnector):
         channel_regex_enabled: bool = False,
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
-        self.workspace = workspace
         self.channels = channels
         self.channel_regex_enabled = channel_regex_enabled
         self.export_path_str = export_path_str
@@ -69,7 +67,6 @@ class SlackLoadConnector(LoadConnector):
                         Section(
                             link=get_message_link(
                                 event=slack_event,
-                                workspace=workspace,
                                 channel_id=channel["id"],
                             ),
                             text=slack_event["text"],
@@ -88,7 +85,6 @@ class SlackLoadConnector(LoadConnector):
                     Section(
                         link=get_message_link(
                             event=slack_event,
-                            workspace=workspace,
                             channel_id=channel["id"],
                         ),
                         text=slack_event["text"],
@@ -130,7 +126,6 @@ class SlackLoadConnector(LoadConnector):
                         matching_doc=document_batch.get(
                             slack_event.get("thread_ts", "")
                         ),
-                        workspace=self.workspace,
                     )
                     if doc:
                         document_batch[doc.id] = doc
