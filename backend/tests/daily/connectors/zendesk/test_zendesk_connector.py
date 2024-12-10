@@ -30,7 +30,7 @@ def zendesk_ticket_connector() -> ZendeskConnector:
     return connector
 
 
-def get_credentials():
+def get_credentials() -> dict[str, str]:
     return {
         "zendesk_subdomain": os.environ["ZENDESK_SUBDOMAIN"],
         "zendesk_email": os.environ["ZENDESK_EMAIL"],
@@ -41,7 +41,9 @@ def get_credentials():
 @pytest.mark.parametrize(
     "connector_fixture", ["zendesk_article_connector", "zendesk_ticket_connector"]
 )
-def test_zendesk_connector_basic(request, connector_fixture):
+def test_zendesk_connector_basic(
+    request: pytest.FixtureRequest, connector_fixture: str
+) -> None:
     connector = request.getfixturevalue(connector_fixture)
     test_data = load_test_data()
     all_docs: list[Document] = []
@@ -77,7 +79,7 @@ def test_zendesk_connector_basic(request, connector_fixture):
         ), "Ticket ID does not match"
 
 
-def test_zendesk_connector_slim(zendesk_article_connector: ZendeskConnector):
+def test_zendesk_connector_slim(zendesk_article_connector: ZendeskConnector) -> None:
     # Get full doc IDs
     all_full_doc_ids = set()
     for doc_batch in zendesk_article_connector.load_from_state():
