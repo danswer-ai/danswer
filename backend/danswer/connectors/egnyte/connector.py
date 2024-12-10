@@ -3,7 +3,9 @@ import os
 from collections.abc import Generator
 from datetime import datetime
 from datetime import timezone
+from logging import Logger
 from typing import Any
+from typing import cast
 from typing import IO
 
 import requests
@@ -27,7 +29,6 @@ from danswer.file_processing.extract_file_text import get_file_ext
 from danswer.file_processing.extract_file_text import is_text_file_extension
 from danswer.file_processing.extract_file_text import read_text_file
 from danswer.utils.logger import setup_logger
-from danswer.utils.special_types import JSON_ro
 
 
 logger = setup_logger()
@@ -45,32 +46,26 @@ _TIMEOUT = 60
 def _request_with_retries(
     method: str,
     url: str,
+    data: dict[str, Any] | None = None,
     headers: dict[str, Any] | None = None,
     params: dict[str, Any] | None = None,
     timeout: int = _TIMEOUT,
     stream: bool = False,
+    tries: int = 8,
+    delay: float = 1,
+    backoff: float = 2,
 ) -> requests.Response:
-    @retry(tries=8, delay=1, backoff=2, logger=logger)
+    @retry(tries=tries, delay=delay, backoff=backoff, logger=cast(Logger, logger))
     def _make_request() -> requests.Response:
-        if method == "GET":
-            response = requests.get(
-                url, headers=headers, params=params, timeout=timeout, stream=stream
-            )
-        elif method == "POST":
-            response = requests.post(
-                url, headers=headers, json=params, timeout=timeout, stream=stream
-            )
-        elif method == "PUT":
-            response = requests.put(
-                url, headers=headers, json=params, timeout=timeout, stream=stream
-            )
-        elif method == "DELETE":
-            response = requests.delete(
-                url, headers=headers, params=params, timeout=timeout, stream=stream
-            )
-        else:
-            raise ValueError(f"Unsupported HTTP method: {method}")
-
+        response = requests.request(
+            method,
+            url,
+            data=data,
+            headers=headers,
+            params=params,
+            timeout=timeout,
+            stream=stream,
+        )
         response.raise_for_status()
         return response
 
@@ -80,6 +75,83 @@ def _request_with_retries(
 def _parse_last_modified(last_modified: str) -> datetime:
     return datetime.strptime(last_modified, "%a, %d %b %Y %H:%M:%S %Z").replace(
         tzinfo=timezone.utc
+    )
+
+
+def _process_egnyte_file(
+    file_metadata: dict[str, Any],
+    file_content: IO,
+    base_url: str,
+    folder_path: str | None = None,
+) -> Document | None:
+    """Process an Egnyte file into a Document object
+
+    Args:
+        file_data: The file data from Egnyte API
+        file_content: The raw content of the file in bytes
+        base_url: The base URL for the Egnyte instance
+        folder_path: Optional folder path to filter results
+    """
+    # Skip if file path doesn't match folder path filter
+    if folder_path and not file_metadata["path"].startswith(folder_path):
+        raise ValueError(
+            f"File path {file_metadata['path']} does not match folder path {folder_path}"
+        )
+
+    file_name = file_metadata["name"]
+    extension = get_file_ext(file_name)
+    if not check_file_ext_is_valid(extension):
+        logger.warning(f"Skipping file '{file_name}' with extension '{extension}'")
+        return None
+
+    # Extract text content based on file type
+    if is_text_file_extension(file_name):
+        encoding = detect_encoding(file_content)
+        file_content_raw, file_metadata = read_text_file(
+            file_content, encoding=encoding, ignore_danswer_metadata=False
+        )
+    else:
+        file_content_raw = extract_file_text(
+            file=file_content,
+            file_name=file_name,
+            break_on_unprocessable=True,
+        )
+
+    # Build the web URL for the file
+    web_url = f"{base_url}/navigate/file/{file_metadata['group_id']}"
+
+    # Create document metadata
+    metadata: dict[str, str | list[str]] = {
+        "file_path": file_metadata["path"],
+        "last_modified": file_metadata.get("last_modified", ""),
+    }
+
+    # Add lock info if present
+    if lock_info := file_metadata.get("lock_info"):
+        metadata[
+            "lock_owner"
+        ] = f"{lock_info.get('first_name', '')} {lock_info.get('last_name', '')}"
+
+    # Create the document owners
+    primary_owner = None
+    if uploaded_by := file_metadata.get("uploaded_by"):
+        primary_owner = BasicExpertInfo(
+            email=uploaded_by,  # Using username as email since that's what we have
+        )
+
+    # Create the document
+    return Document(
+        id=f"egnyte-{file_metadata['entry_id']}",
+        sections=[Section(text=file_content_raw.strip(), link=web_url)],
+        source=DocumentSource.EGNYTE,
+        semantic_identifier=file_name,
+        metadata=metadata,
+        doc_updated_at=(
+            _parse_last_modified(file_metadata["last_modified"])
+            if "last_modified" in file_metadata
+            else None
+        ),
+        primary_owners=[primary_owner] if primary_owner else None,
     )
 
 
@@ -96,10 +168,10 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
 
     @classmethod
     def oauth_id(cls) -> DocumentSource:
-        return "egnyte"
+        return DocumentSource.EGNYTE
 
     @classmethod
-    def redirect_uri(cls, base_domain: str) -> str:
+    def redirect_uri(cls, base_domain: str, state: str) -> str:
         if not _EGNYTE_CLIENT_ID:
             raise ValueError("EGNYTE_CLIENT_ID environment variable must be set")
         if not _EGNYTE_BASE_DOMAIN:
@@ -114,13 +186,12 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
             f"?client_id={_EGNYTE_CLIENT_ID}"
             f"&redirect_uri={callback_uri}"
             f"&scope=Egnyte.filesystem"
-            # TODO: Add state support
-            # f"&state=danswer"
+            f"&state={state}"
             f"&response_type=code"
         )
 
     @classmethod
-    def code_to_token(cls, code: str) -> JSON_ro:
+    def code_to_token(cls, code: str) -> dict[str, Any]:
         if not _EGNYTE_CLIENT_ID:
             raise ValueError("EGNYTE_CLIENT_ID environment variable must be set")
         if not _EGNYTE_CLIENT_SECRET:
@@ -141,7 +212,13 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         response = _request_with_retries(
-            method="POST", url=url, data=data, headers=headers
+            method="POST",
+            url=url,
+            data=data,
+            headers=headers,
+            # try a lot faster since this is a realtime flow
+            backoff=0,
+            delay=0.1,
         )
         if not response.ok:
             raise RuntimeError(f"Failed to exchange code for token: {response.text}")
@@ -252,7 +329,7 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
                 buffer.seek(0)
 
                 # Process the streamed file content
-                doc = process_egnyte_file(
+                doc = _process_egnyte_file(
                     file_metadata=file,
                     file_content=buffer,
                     base_url=_EGNYTE_APP_BASE.format(domain=self.domain),
@@ -283,83 +360,6 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
         end_time = datetime.fromtimestamp(end, tz=timezone.utc)
 
         yield from self._process_files(start_time=start_time, end_time=end_time)
-
-
-def process_egnyte_file(
-    file_metadata: dict[str, Any],
-    file_content: IO,
-    base_url: str,
-    folder_path: str | None = None,
-) -> Document | None:
-    """Process an Egnyte file into a Document object
-
-    Args:
-        file_data: The file data from Egnyte API
-        file_content: The raw content of the file in bytes
-        base_url: The base URL for the Egnyte instance
-        folder_path: Optional folder path to filter results
-    """
-    # Skip if file path doesn't match folder path filter
-    if folder_path and not file_metadata["path"].startswith(folder_path):
-        raise ValueError(
-            f"File path {file_metadata['path']} does not match folder path {folder_path}"
-        )
-
-    file_name = file_metadata["name"]
-    extension = get_file_ext(file_name)
-    if not check_file_ext_is_valid(extension):
-        logger.warning(f"Skipping file '{file_name}' with extension '{extension}'")
-        return None
-
-    # Extract text content based on file type
-    if is_text_file_extension(file_name):
-        encoding = detect_encoding(file_content)
-        file_content_raw, file_metadata = read_text_file(
-            file_content, encoding=encoding, ignore_danswer_metadata=False
-        )
-    else:
-        file_content_raw = extract_file_text(
-            file=file_content,
-            file_name=file_name,
-            break_on_unprocessable=True,
-        )
-
-    # Build the web URL for the file
-    web_url = f"{base_url}/navigate/file/{file_metadata['group_id']}"
-
-    # Create document metadata
-    metadata: dict[str, str | list[str]] = {
-        "file_path": file_metadata["path"],
-        "last_modified": file_metadata.get("last_modified", ""),
-    }
-
-    # Add lock info if present
-    if lock_info := file_metadata.get("lock_info"):
-        metadata[
-            "lock_owner"
-        ] = f"{lock_info.get('first_name', '')} {lock_info.get('last_name', '')}"
-
-    # Create the document owners
-    primary_owner = None
-    if uploaded_by := file_metadata.get("uploaded_by"):
-        primary_owner = BasicExpertInfo(
-            email=uploaded_by,  # Using username as email since that's what we have
-        )
-
-    # Create the document
-    return Document(
-        id=f"egnyte-{file_metadata['entry_id']}",
-        sections=[Section(text=file_content_raw.strip(), link=web_url)],
-        source=DocumentSource.EGNYTE,
-        semantic_identifier=file_name,
-        metadata=metadata,
-        doc_updated_at=(
-            _parse_last_modified(file_metadata["last_modified"])
-            if "last_modified" in file_metadata
-            else None
-        ),
-        primary_owners=[primary_owner] if primary_owner else None,
-    )
 
 
 if __name__ == "__main__":

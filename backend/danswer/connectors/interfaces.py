@@ -5,7 +5,6 @@ from typing import Any
 from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import SlimDocument
-from danswer.utils.special_types import JSON_ro
 
 
 SecondsSinceUnixEpoch = float
@@ -74,12 +73,12 @@ class OAuthConnector(BaseConnector):
 
     @classmethod
     @abc.abstractmethod
-    def redirect_uri(cls, base_domain: str) -> str:
+    def redirect_uri(cls, base_domain: str, state: str) -> str:
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def code_to_token(cls, code: str) -> JSON_ro:
+    def code_to_token(cls, code: str) -> dict[str, Any]:
         raise NotImplementedError
 
 

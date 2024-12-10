@@ -3,7 +3,11 @@ import { ValidSources } from "../types";
 export async function getConnectorOauthRedirectUrl(
   connector: ValidSources
 ): Promise<string | null> {
-  const response = await fetch(`/api/connector/oauth/authorize/${connector}`);
+  const response = await fetch(
+    `/api/connector/oauth/authorize/${connector}?desired_return_url=${encodeURIComponent(
+      window.location.href
+    )}`
+  );
 
   if (!response.ok) {
     console.error(`Failed to fetch OAuth redirect URL for ${connector}`);
@@ -12,12 +16,4 @@ export async function getConnectorOauthRedirectUrl(
 
   const data = await response.json();
   return data.redirect_url as string;
-}
-
-export async function getSourceHasStandardOAuthSupport(
-  source: ValidSources
-): Promise<boolean> {
-  const response = await fetch("/api/connector/oauth/available-sources");
-  const sources = (await response.json()) as ValidSources[];
-  return sources.includes(source);
 }

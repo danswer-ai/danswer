@@ -446,11 +446,15 @@ export default function AddConnector({
                           onClick={async () => {
                             const redirectUrl =
                               await getConnectorOauthRedirectUrl(connector);
-                            window.location.href = redirectUrl;
-
-                            // setCreateConnectorToggle(
-                            //   (createConnectorToggle) => !createConnectorToggle
-                            // )
+                            // if redirect is supported, just use it
+                            if (redirectUrl) {
+                              window.location.href = redirectUrl;
+                            } else {
+                              setCreateConnectorToggle(
+                                (createConnectorToggle) =>
+                                  !createConnectorToggle
+                              );
+                            }
                           }}
                         >
                           Create New
