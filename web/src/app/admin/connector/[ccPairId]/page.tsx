@@ -52,7 +52,7 @@ const PruneFrequencySchema = Yup.object().shape({
   propertyValue: Yup.number()
     .typeError("Property value must be a valid number")
     .integer("Property value must be an integer")
-    .min(60, "Property value must be greater than or equal to 86400")
+    .min(86400, "Property value must be greater than or equal to 86400")
     .required("Property value is required"),
 });
 
