@@ -3,6 +3,10 @@ import { getNameFromPath } from "@/lib/fileUtils";
 import { ValidSources } from "@/lib/types";
 import Title from "@/components/ui/title";
 
+import { useState } from "react";
+import { ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon } from "@/components/icons/icons";
+
 function convertObjectToString(obj: any): string | any {
   // Check if obj is an object and not an array or null
   if (typeof obj === "object" && obj !== null) {
@@ -37,6 +41,67 @@ function buildConfigEntries(
     };
   }
   return obj;
+}
+
+function ConfigItem({ label, value }: { label: string; value: any }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isExpandable = Array.isArray(value) && value.length > 5;
+
+  const renderValue = () => {
+    if (Array.isArray(value)) {
+      const displayedItems = isExpanded ? value : value.slice(0, 5);
+      return (
+        <ul className="list-disc pl-4 mt-2">
+          {displayedItems.map((item, index) => (
+            <li key={index} className="mb-1">
+              {convertObjectToString(item)}
+            </li>
+          ))}
+        </ul>
+      );
+    } else if (typeof value === "object" && value !== null) {
+      return (
+        <div className="mt-2">
+          {Object.entries(value).map(([key, val]) => (
+            <div key={key} className="mb-1">
+              <span className="font-semibold">{key}:</span>{" "}
+              {convertObjectToString(val)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return convertObjectToString(value) || "-";
+  };
+
+  return (
+    <li className="w-full py-2">
+      <div className="flex justify-between items-center">
+        <span className="font-medium">{label}</span>
+        <div className="mt-2">
+          {renderValue()}
+          {isExpandable && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="mt-2 text-neutral-600 hover:text-neutral-800 flex items-center"
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUpIcon className="h-4 w-4 mr-1" />
+                  Show less
+                </>
+              ) : (
+                <>
+                  <ChevronDownIcon className="h-4 w-4 mr-1" />
+                  Show all ({value.length} items)
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </li>
+  );
 }
 
 export function AdvancedConfigDisplay({
@@ -129,13 +194,7 @@ export function ConfigDisplay({
       <CardSection>
         <ul className="w-full text-sm divide-y divide-neutral-200 dark:divide-neutral-700">
           {configEntries.map(([key, value]) => (
-            <li
-              key={key}
-              className="w-full flex justify-between items-center py-2"
-            >
-              <span>{key}</span>
-              <span>{convertObjectToString(value) || "-"}</span>
-            </li>
+            <ConfigItem key={key} label={key} value={value} />
           ))}
         </ul>
       </CardSection>
