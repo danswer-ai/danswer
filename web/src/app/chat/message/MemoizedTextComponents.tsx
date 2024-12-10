@@ -1,7 +1,7 @@
 import { Citation } from "@/components/search/results/Citation";
 import { WebResultIcon } from "@/components/WebResultIcon";
 import { LoadedDanswerDocument } from "@/lib/search/interfaces";
-import { getSourceMetadata } from "@/lib/sources";
+import { getSourceMetadata, SOURCE_METADATA_MAP } from "@/lib/sources";
 import { ValidSources } from "@/lib/types";
 import React, { memo } from "react";
 import isEqual from "lodash/isEqual";
@@ -27,10 +27,12 @@ export const MemoizedAnchor = memo(
           associatedDoc?.source_type === "web" ? (
             <WebResultIcon url={associatedDoc.link} />
           ) : (
-            getIcon(
-              associatedDoc?.source_type || "web",
-              associatedDoc?.link || ""
-            )
+            SOURCE_METADATA_MAP[
+              (associatedDoc?.source_type ||
+                "web") as keyof typeof SOURCE_METADATA_MAP
+            ].icon({
+              size: 18,
+            })
           );
 
         return (
