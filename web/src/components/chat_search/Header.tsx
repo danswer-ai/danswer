@@ -82,7 +82,7 @@ export default function FunctionalHeader({
           toggleSidebar={toggleSidebar}
           handleNewChat={handleNewChat}
         />
-        <div className="mt-2 h-8">
+        <div className="mt-2 flex w-full h-8">
           <div
             style={{ transition: "width 0.30s ease-out" }}
             className={`

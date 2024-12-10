@@ -294,8 +294,8 @@ const AssistantSelector = ({
           ${
             settings?.enterpriseSettings?.custom_header_content &&
             (settings?.enterpriseSettings?.two_lines_for_chat_header
-              ? "mt-20 "
-              : "mt-8")
+              ? "mt-16 "
+              : "mt-10")
           }
         `}
       >
