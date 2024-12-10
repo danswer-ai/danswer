@@ -73,7 +73,7 @@ import firefliesIcon from "../../../public/Fireflies.png";
 import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
 import mediawikiIcon from "../../../public/MediaWiki.svg";
-import wikipediaIcon from "../../../public/Wikipedia.svg";
+import wikipediaIcon from "../../../public/Wikipedia.png";
 import discourseIcon from "../../../public/Discourse.png";
 import clickupIcon from "../../../public/Clickup.svg";
 import cohereIcon from "../../../public/Cohere.svg";
