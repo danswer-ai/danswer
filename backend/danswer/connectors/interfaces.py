@@ -2,6 +2,7 @@ import abc
 from collections.abc import Iterator
 from typing import Any
 
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.models import Document
 from danswer.connectors.models import SlimDocument
 from danswer.utils.special_types import JSON_ro
@@ -68,7 +69,7 @@ class SlimConnector(BaseConnector):
 class OAuthConnector(BaseConnector):
     @classmethod
     @abc.abstractmethod
-    def oauth_id(cls) -> str:
+    def oauth_id(cls) -> DocumentSource:
         raise NotImplementedError
 
     @classmethod

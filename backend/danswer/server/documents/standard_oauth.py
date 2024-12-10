@@ -8,6 +8,8 @@ from fastapi import Request
 from sqlalchemy.orm import Session
 
 from danswer.auth.users import current_user
+from danswer.configs.app_configs import WEB_DOMAIN
+from danswer.configs.constants import DocumentSource
 from danswer.connectors.interfaces import OAuthConnector
 from danswer.db.credentials import create_credential
 from danswer.db.engine import get_session
@@ -21,7 +23,7 @@ logger = setup_logger()
 router = APIRouter(prefix="/connector/oauth")
 
 # Cache for OAuth connectors, populated at module load time
-_OAUTH_CONNECTORS: dict[str, type[OAuthConnector]] = {}
+_OAUTH_CONNECTORS: dict[DocumentSource, type[OAuthConnector]] = {}
 
 
 def _discover_oauth_connectors() -> dict[str, type[OAuthConnector]]:
@@ -93,9 +95,12 @@ async def oauth_callback(
         )
 
         return {
-            "credential_id": credential.id,
-            "token_info": token_info,
-            "message": "Successfully authenticated and created credential",
+            "redirect_url": f"{WEB_DOMAIN}/admin/connectors/{source}?step=0&credentialId={credential.id}"
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/available-sources")
+def available_sources() -> list[DocumentSource]:
+    return list(_discover_oauth_connectors().keys())

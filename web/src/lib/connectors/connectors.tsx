@@ -1055,15 +1055,6 @@ For example, specifying .*-support.* as a "channel" will cause the connector to 
     values: [
       {
         type: "text",
-        query: "Enter your Egnyte domain:",
-        label: "Domain",
-        name: "domain",
-        optional: false,
-        description:
-          "Your Egnyte domain (e.g., if your Egnyte URL is 'company.egnyte.com', enter 'company')",
-      },
-      {
-        type: "text",
         query: "Enter folder path to index:",
         label: "Folder Path",
         name: "folder_path",
