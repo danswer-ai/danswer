@@ -8,20 +8,27 @@ import requests
 from danswer.configs.app_configs import INDEX_BATCH_SIZE
 from danswer.connectors.interfaces import GenerateDocumentsOutput
 from danswer.connectors.interfaces import LoadConnector
+from danswer.connectors.interfaces import OAuthConnector
 from danswer.connectors.interfaces import PollConnector
 from danswer.connectors.interfaces import SecondsSinceUnixEpoch
 from danswer.connectors.models import ConnectorMissingCredentialError
 from danswer.connectors.models import Document
 from danswer.utils.logger import setup_logger
+from danswer.utils.special_types import JSON_ro
 
 
 logger = setup_logger()
+
+_EGNYTE_LOCALHOST_OVERRIDE = os.getenv("EGNYTE_LOCALHOST_OVERRIDE")
+_EGNYTE_DOMAIN = os.getenv("EGNYTE_DOMAIN")
+_EGNYTE_CLIENT_ID = os.getenv("EGNYTE_CLIENT_ID")
+_EGNYTE_CLIENT_SECRET = os.getenv("EGNYTE_CLIENT_SECRET")
 
 _EGNYTE_API_BASE = "https://{domain}.egnyte.com/pubapi/v1"
 _TIMEOUT = 60
 
 
-class EgnyteConnector(LoadConnector, PollConnector):
+class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
     def __init__(
         self,
         domain: str | None = None,
@@ -32,6 +39,34 @@ class EgnyteConnector(LoadConnector, PollConnector):
         self.folder_path = folder_path or "/"  # Root folder if not specified
         self.batch_size = batch_size
         self.access_token: str | None = None
+
+    @classmethod
+    def oauth_id(cls) -> str:
+        return "egnyte"
+
+    @classmethod
+    def redirect_uri(cls, base_domain: str) -> str:
+        if not _EGNYTE_CLIENT_ID:
+            raise ValueError("EGNYTE_CLIENT_ID environment variable must be set")
+        if not _EGNYTE_DOMAIN:
+            raise ValueError("EGNYTE_DOMAIN environment variable must be set")
+
+        if _EGNYTE_LOCALHOST_OVERRIDE:
+            base_domain = _EGNYTE_LOCALHOST_OVERRIDE
+
+        callback_uri = f"{base_domain.strip('/')}/connector/oauth/callback/egnyte"
+        return (
+            f"https://{_EGNYTE_DOMAIN}.egnyte.com/puboauth/token"
+            f"?client_id={_EGNYTE_CLIENT_ID}"
+            f"&redirect_uri={callback_uri}"
+            f"&scope=Egnyte.filesystem"
+            # f"&state=danswer"
+            f"&response_type=code"
+        )
+
+    @classmethod
+    def code_to_token(cls, code: str) -> JSON_ro:
+        pass
 
     def load_credentials(self, credentials: dict[str, Any]) -> dict[str, Any] | None:
         self.domain = credentials["domain"]
