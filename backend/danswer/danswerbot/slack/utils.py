@@ -211,6 +211,9 @@ def respond_in_thread(
             logger.warning(f"Failed to post message: {e} \n blocks: {blocks}")
             logger.warning("Trying again without blocks that have urls")
 
+            if not blocks:
+                raise e
+
             blocks_without_urls = [
                 block for block in blocks if not _check_for_url_in_block(block)
             ]
@@ -246,6 +249,9 @@ def respond_in_thread(
                 logger.warning(f"Failed to post message: {e} \n blocks: {blocks}")
                 logger.warning("Trying again without blocks that have urls")
 
+                if not blocks:
+                    raise e
+
                 blocks_without_urls = [
                     block for block in blocks if not _check_for_url_in_block(block)
                 ]
@@ -256,7 +262,7 @@ def respond_in_thread(
                     channel=channel,
                     user=receiver,
                     text=text,
-                    blocks=blocks,
+                    blocks=blocks_without_urls,
                     thread_ts=thread_ts,
                     metadata=metadata,
                     unfurl_links=unfurl,
