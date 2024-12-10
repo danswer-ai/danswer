@@ -35,7 +35,7 @@ export default function WrappedPrompts({
       folders={folders}
       openedFolders={openedFolders}
     >
-      <div className="mx-auto w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
+      <div className="mx-auto desktop:w-searchbar-xs 2xl:w-searchbar-sm 3xl:w-searchbar">
         <AssistantsPageTitle>Prompt Gallery</AssistantsPageTitle>
         <PromptSection
           promptLibrary={promptLibrary || []}

@@ -149,7 +149,7 @@ export default function SidebarWrapper<T extends object>({
                       bg-opacity-80
                       duration-300 
                       ease-in-out
-                      ${toggledSidebar ? "w-[250px]" : "w-[0px]"}`}
+                      ${toggledSidebar ? "desktop:w-[250px]" : "w-[0px]"}`}
           />
 
           <div

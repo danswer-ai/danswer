@@ -19,7 +19,7 @@ export default async function Page() {
   } else {
     body = (
       <div className="w-full my-16">
-        <div className="px-32">
+        <div className="mobile:px-4 desktop:px-32">
           <div className="mx-auto container">
             <CardSection>
               <AssistantEditor
