@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import { Modal } from "@/components/Modal";
 import { Button } from "@/components/ui/button";
 import { TextFormField } from "../admin/connectors/Field";
+import { EditIcon } from "../icons/icons";
 
 const EditPropertyModal = ({
   propertyTitle, // A friendly title to be displayed for the property
@@ -38,13 +39,7 @@ const EditPropertyModal = ({
         {({ isSubmitting, isValid, values }) => (
           <Form className="items-stretch">
             <h2 className="text-2xl text-emphasis font-bold mb-3 flex items-center">
-              <svg
-                className="w-6 h-6 mr-2"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-              </svg>
+              <EditIcon size={20} className="mr-2" />
               Edit {propertyTitle}
             </h2>
 
