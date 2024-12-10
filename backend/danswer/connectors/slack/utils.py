@@ -22,7 +22,7 @@ _SLACK_LIMIT = 900
 
 
 def get_message_link(
-    event: dict[str, Any], workspace: str, channel_id: str | None = None
+    event: dict[str, Any], client: WebClient, channel_id: str | None = None
 ) -> str:
     channel_id = channel_id or cast(
         str, event["channel"]
@@ -30,9 +30,9 @@ def get_message_link(
     message_ts = cast(str, event["ts"])
     message_ts_without_dot = message_ts.replace(".", "")
     thread_ts = cast(str | None, event.get("thread_ts"))
-    return (
-        f"https://{workspace}.slack.com/archives/{channel_id}/p{message_ts_without_dot}"
-        + (f"?thread_ts={thread_ts}" if thread_ts else "")
+    base_url = client.auth_test()["url"]
+    return f"{base_url}/archives/{channel_id}/p{message_ts_without_dot}" + (
+        f"?thread_ts={thread_ts}" if thread_ts else ""
     )
 
 
