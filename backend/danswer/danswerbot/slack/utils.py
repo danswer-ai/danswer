@@ -11,6 +11,7 @@ from retry import retry
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from slack_sdk.models.blocks import Block
+from slack_sdk.models.blocks import SectionBlock
 from slack_sdk.models.metadata import Metadata
 from slack_sdk.socket_mode import SocketModeClient
 
@@ -140,6 +141,40 @@ def remove_danswer_bot_tag(message_str: str, client: WebClient) -> str:
     return re.sub(rf"<@{bot_tag_id}>\s", "", message_str)
 
 
+def _check_for_url_in_block(block: Block) -> bool:
+    """
+    Check if the block has a key that contains "url" in it
+    """
+    block_dict = block.to_dict()
+
+    def check_dict_for_url(d: dict) -> bool:
+        for key, value in d.items():
+            if "url" in key.lower():
+                return True
+            if isinstance(value, dict):
+                if check_dict_for_url(value):
+                    return True
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict) and check_dict_for_url(item):
+                        return True
+        return False
+
+    return check_dict_for_url(block_dict)
+
+
+def _build_error_block(error_message: str) -> Block:
+    """
+    Build an error block to display in slack so that the user can see
+    the error without completely breaking
+    """
+    display_text = (
+        "There was an error displaying all of the Onyx answers."
+        f" Please let an admin or an onyx developer know. Error: {error_message}"
+    )
+    return SectionBlock(text=display_text)
+
+
 @retry(
     tries=DANSWER_BOT_NUM_RETRIES,
     delay=0.25,
@@ -177,12 +212,9 @@ def respond_in_thread(
             logger.warning(f"Failed to post message: {e} \n blocks: {blocks}")
             logger.warning("Trying again without blocks that have urls")
             blocks_without_urls = [
-                block
-                for block in blocks
-                if not any(
-                    hasattr(block, attr) for attr in dir(block) if "url" in attr.lower()
-                )
+                block for block in blocks if not _check_for_url_in_block(block)
             ]
+            blocks_without_urls.append(_build_error_block(str(e)))
             response = slack_call(
                 channel=channel,
                 text=text,
