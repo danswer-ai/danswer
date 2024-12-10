@@ -76,7 +76,7 @@ def replace_user__ext_group_for_cc_pair(
     new_external_permissions = []
     for external_group in group_defs:
         for user_email in external_group.user_emails:
-            user_id = email_id_map.get(user_email)
+            user_id = email_id_map.get(user_email.lower())
             if user_id is None:
                 logger.warning(
                     f"User in group {external_group.id}"
