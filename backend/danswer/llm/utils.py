@@ -103,6 +103,8 @@ def _build_content(
     files: list[InMemoryChatFile] | None = None,
 ) -> str:
     """Applies all non-image files."""
+    if not files:
+        return message
 
     text_files = [
         file
