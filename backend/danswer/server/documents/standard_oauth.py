@@ -28,6 +28,7 @@ logger = setup_logger()
 router = APIRouter(prefix="/connector/oauth")
 
 _OAUTH_STATE_KEY_FMT = "oauth_state:{state}"
+_OAUTH_STATE_EXPIRATION_SECONDS = 10 * 60  # 10 minutes
 
 # Cache for OAuth connectors, populated at module load time
 _OAUTH_CONNECTORS: dict[DocumentSource, type[OAuthConnector]] = {}
@@ -79,7 +80,11 @@ def oauth_authorize(
         desired_return_url = f"{WEB_DOMAIN}/admin/connectors/{source}?step=0"
     redis_client = get_redis_client(tenant_id=tenant_id)
     state = str(uuid.uuid4())
-    redis_client.set(_OAUTH_STATE_KEY_FMT.format(state=state), desired_return_url)
+    redis_client.set(
+        _OAUTH_STATE_KEY_FMT.format(state=state),
+        desired_return_url,
+        ex=_OAUTH_STATE_EXPIRATION_SECONDS,
+    )
 
     return AuthorizeResponse(redirect_url=connector_cls.redirect_uri(base_url, state))
 
@@ -89,7 +94,7 @@ class CallbackResponse(BaseModel):
 
 
 @router.get("/callback/{source}")
-async def oauth_callback(
+def oauth_callback(
     source: DocumentSource,
     code: Annotated[str, Query()],
     state: Annotated[str, Query()],
