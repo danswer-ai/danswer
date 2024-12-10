@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from datetime import timezone
 from http import HTTPStatus
@@ -560,7 +561,7 @@ def connector_indexing_proxy_task(
         pure=False,
     )
 
-    if not job:
+    if not job or not job.process:
         task_logger.info(
             f"Indexing watchdog - spawn failed: attempt={index_attempt_id} "
             f"tenant={tenant_id} "
@@ -569,11 +570,30 @@ def connector_indexing_proxy_task(
         )
         return
 
+    # help deterministic behavior by ensuring the process has moved out of the starting state
+    num_waits = 0
+    while True:
+        if num_waits > 15:
+            task_logger.warning(
+                f"Indexing watchdog - spawn wait timed out: attempt={index_attempt_id} "
+                f"tenant={tenant_id} "
+                f"cc_pair={cc_pair_id} "
+                f"search_settings={search_settings_id}"
+            )
+            break
+
+        if job.process.is_alive() or job.process.exitcode is not None:
+            break
+
+        sleep(1)
+        num_waits += 1
+
     task_logger.info(
         f"Indexing watchdog - spawn succeeded: attempt={index_attempt_id} "
         f"tenant={tenant_id} "
         f"cc_pair={cc_pair_id} "
-        f"search_settings={search_settings_id}"
+        f"search_settings={search_settings_id} "
+        f"pid={job.process.pid}"
     )
 
     redis_connector = RedisConnector(tenant_id, cc_pair_id)
@@ -598,7 +618,7 @@ def connector_indexing_proxy_task(
                         db_session,
                         "Connector termination signal detected",
                     )
-            finally:
+            except Exception:
                 # if the DB exceptions, we'll just get an unfriendly failure message
                 # in the UI instead of the cancellation message
                 logger.exception(
@@ -608,7 +628,7 @@ def connector_indexing_proxy_task(
                     f"cc_pair={cc_pair_id} "
                     f"search_settings={search_settings_id}"
                 )
-
+            finally:
                 job.cancel()
 
             break
@@ -684,7 +704,7 @@ def connector_indexing_task_wrapper(
             tenant_id,
             is_ee,
         )
-    except:
+    except Exception:
         logger.exception(
             f"connector_indexing_task exceptioned: "
             f"tenant={tenant_id} "
@@ -737,7 +757,8 @@ def connector_indexing_task(
         f"attempt={index_attempt_id} "
         f"tenant={tenant_id} "
         f"cc_pair={cc_pair_id} "
-        f"search_settings={search_settings_id}"
+        f"search_settings={search_settings_id} "
+        f"pid={os.getpid()}"
     )
 
     attempt_found = False

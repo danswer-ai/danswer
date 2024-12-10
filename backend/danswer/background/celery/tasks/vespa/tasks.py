@@ -1,5 +1,6 @@
 import traceback
 from datetime import datetime
+from datetime import timedelta
 from datetime import timezone
 from http import HTTPStatus
 from typing import cast
@@ -22,6 +23,7 @@ from danswer.background.celery.celery_redis import celery_get_queue_length
 from danswer.background.celery.tasks.shared.RetryDocumentIndex import RetryDocumentIndex
 from danswer.background.celery.tasks.shared.tasks import LIGHT_SOFT_TIME_LIMIT
 from danswer.background.celery.tasks.shared.tasks import LIGHT_TIME_LIMIT
+from danswer.configs.app_configs import INDEXING_MONITORING_HARD_TIMEOUT
 from danswer.configs.app_configs import JOB_TIMEOUT
 from danswer.configs.constants import CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT
 from danswer.configs.constants import DanswerCeleryQueues
@@ -63,6 +65,7 @@ from danswer.redis.redis_connector_doc_perm_sync import (
     RedisConnectorPermissionSyncPayload,
 )
 from danswer.redis.redis_connector_index import RedisConnectorIndex
+from danswer.redis.redis_connector_index import RedisConnectorIndexPayload
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
 from danswer.redis.redis_document_set import RedisDocumentSet
 from danswer.redis.redis_pool import get_redis_client
@@ -601,6 +604,12 @@ def monitor_ccpair_permissions_taskset(
     redis_connector.permissions.reset()
 
 
+def _format_timedelta(object_timedelta: timedelta | None):
+    if not object_timedelta:
+        return "None"
+    return f"{object_timedelta.total_seconds():.2f}"
+
+
 def monitor_ccpair_indexing_taskset(
     tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
@@ -630,8 +639,14 @@ def monitor_ccpair_indexing_taskset(
     if not payload:
         return
 
+    # calculate elapsed times
     elapsed_submitted = datetime.now(timezone.utc) - payload.submitted
 
+    elapsed_started = None
+    if payload.started:
+        elapsed_started = datetime.now(timezone.utc) - payload.started
+
+    # print indexing progress if we have it
     progress = redis_connector_index.get_progress()
     if progress is not None:
         task_logger.info(
@@ -639,14 +654,29 @@ def monitor_ccpair_indexing_taskset(
             f"search_settings={search_settings_id} "
             f"progress={progress} "
             f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
+            f"elapsed_started={_format_timedelta(elapsed_started)}"
         )
+
+    # set a hard timeout on indexing task duration
+    # (measured from submission to celery)
+    if elapsed_submitted.total_seconds() > INDEXING_MONITORING_HARD_TIMEOUT:
+        monitor_ccpair_indexing_for_hard_timeout(
+            elapsed_submitted,
+            elapsed_started,
+            payload,
+            redis_connector_index,
+            cc_pair_id,
+            search_settings_id,
+            progress,
+            db_session,
+        )
+        return
 
     if payload.index_attempt_id is None or payload.celery_task_id is None:
         # the task is still setting up
         return
 
-    # never use any blocking methods on the result from inside a task!
-    result: AsyncResult = AsyncResult(payload.celery_task_id)
+    # look for aborted or exceptioned tasks
 
     # inner/outer/inner double check pattern to avoid race conditions when checking for
     # bad state
@@ -654,45 +684,16 @@ def monitor_ccpair_indexing_taskset(
     # inner = get_completion / generator_complete not signaled
     # outer = result.state in READY state
     status_int = redis_connector_index.get_completion()
-    if status_int is None:  # inner signal not set ... possible error
-        task_state = result.state
-        if (
-            task_state in READY_STATES
-        ):  # outer signal in terminal state ... possible error
-            # Now double check!
-            if redis_connector_index.get_completion() is None:
-                # inner signal still not set (and cannot change when outer result_state is READY)
-                # Task is finished but generator complete isn't set.
-                # We have a problem! Worker may have crashed.
-                task_result = str(result.result)
-                task_traceback = str(result.traceback)
-
-                msg = (
-                    f"Connector indexing aborted or exceptioned: "
-                    f"attempt={payload.index_attempt_id} "
-                    f"celery_task={payload.celery_task_id} "
-                    f"cc_pair={cc_pair_id} "
-                    f"search_settings={search_settings_id} "
-                    f"elapsed_submitted={elapsed_submitted.total_seconds():.2f} "
-                    f"result.state={task_state} "
-                    f"result.result={task_result} "
-                    f"result.traceback={task_traceback}"
-                )
-                task_logger.warning(msg)
-
-                index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
-                if index_attempt:
-                    if (
-                        index_attempt.status != IndexingStatus.CANCELED
-                        and index_attempt.status != IndexingStatus.FAILED
-                    ):
-                        mark_attempt_failed(
-                            index_attempt_id=payload.index_attempt_id,
-                            db_session=db_session,
-                            failure_reason=msg,
-                        )
-
-                redis_connector_index.reset()
+    if status_int is None:
+        monitor_ccpair_indexing_for_exception(
+            elapsed_submitted,
+            elapsed_started,
+            payload,
+            redis_connector_index,
+            cc_pair_id,
+            search_settings_id,
+            db_session,
+        )
         return
 
     status_enum = HTTPStatus(status_int)
@@ -702,10 +703,150 @@ def monitor_ccpair_indexing_taskset(
         f"search_settings={search_settings_id} "
         f"progress={progress} "
         f"status={status_enum.name} "
-        f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
+        f"elapsed_submitted={elapsed_submitted.total_seconds():.2f} "
+        f"elapsed_started={_format_timedelta(elapsed_started)}"
     )
 
     redis_connector_index.reset()
+
+
+def monitor_ccpair_indexing_for_hard_timeout(
+    elapsed_submitted: timedelta,
+    elapsed_started: timedelta | None,
+    payload: RedisConnectorIndexPayload,
+    redis_connector_index: RedisConnectorIndex,
+    cc_pair_id: int,
+    search_settings_id: int,
+    progress: int | None,
+    db_session: Session,
+) -> None:
+    if payload.index_attempt_id is None:
+        return
+
+    if not payload.celery_task_id:
+        return
+
+    if elapsed_submitted.total_seconds() < INDEXING_MONITORING_HARD_TIMEOUT + 120:
+        # case 1: we've just reached the timeout
+        # Set the terminating signal if not set, but don't hard reset yet
+        if payload.celery_task_id:
+            if not redis_connector_index.terminating(payload.celery_task_id):
+                task_logger.warning(
+                    f"Connector indexing hard timeout - Timeout exceeded, setting termination signal: "
+                    f"cc_pair={cc_pair_id} "
+                    f"search_settings={search_settings_id} "
+                    f"progress={progress} "
+                    f"elapsed_submitted={elapsed_submitted.total_seconds():.2f} "
+                    f"elapsed_started={_format_timedelta(elapsed_started)} "
+                    f"timeout={INDEXING_MONITORING_HARD_TIMEOUT}"
+                )
+
+                redis_connector_index.set_terminate(payload.celery_task_id)
+
+            # don't reset values in redis yet as that can result in messy logs
+            return
+
+    # case 2: it's been two minutes since we reached the timeout
+    # Just reset everything
+    try:
+        if payload.index_attempt_id is not None:
+            index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
+            if index_attempt:
+                if (
+                    index_attempt.status != IndexingStatus.CANCELED
+                    and index_attempt.status != IndexingStatus.FAILED
+                ):
+                    mark_attempt_failed(
+                        index_attempt_id=payload.index_attempt_id,
+                        db_session=db_session,
+                        failure_reason="Indexing monitor detected that the hard timeout was exceeded.",
+                    )
+    except Exception:
+        task_logger.warning(
+            f"Connector indexing hard timeout - transient DB exception while marking attempt: "
+            f"cc_pair={cc_pair_id} "
+            f"search_settings={search_settings_id} "
+        )
+
+    task_logger.warning(
+        f"Connector indexing hard timeout - Grace period exceeded, hard resetting...: "
+        f"cc_pair={cc_pair_id} "
+        f"search_settings={search_settings_id}"
+    )
+
+    redis_connector_index.reset()
+    return
+
+
+def monitor_ccpair_indexing_for_exception(
+    elapsed_submitted: timedelta,
+    elapsed_started: timedelta | None,
+    payload: RedisConnectorIndexPayload,
+    redis_connector_index: RedisConnectorIndex,
+    cc_pair_id: int,
+    search_settings_id: int,
+    db_session: Session,
+) -> None:
+    if payload.index_attempt_id is None:
+        return
+
+    if not payload.celery_task_id:
+        return
+
+    # never use any blocking methods on the result from inside a task!
+    result: AsyncResult = AsyncResult(payload.celery_task_id)
+
+    # inner signal not set ... possible error
+    task_state = result.state
+    if task_state not in READY_STATES:
+        return
+
+    # outer signal in terminal state ... possible error
+    # Now double check!
+    if redis_connector_index.get_completion() is not None:
+        return
+
+    # inner signal still not set (and cannot change when outer result_state is READY)
+    # Task is finished but generator complete isn't set.
+    # We have a problem! Worker may have crashed.
+    task_result = str(result.result)
+    task_traceback = str(result.traceback)
+
+    msg = (
+        f"Connector indexing aborted or exceptioned: "
+        f"attempt={payload.index_attempt_id} "
+        f"celery_task={payload.celery_task_id} "
+        f"cc_pair={cc_pair_id} "
+        f"search_settings={search_settings_id} "
+        f"elapsed_submitted={elapsed_submitted.total_seconds():.2f} "
+        f"elapsed_started={_format_timedelta(elapsed_started)} "
+        f"result.state={task_state} "
+        f"result.result={task_result} "
+        f"result.traceback={task_traceback}"
+    )
+    task_logger.warning(msg)
+
+    try:
+        index_attempt = get_index_attempt(db_session, payload.index_attempt_id)
+        if index_attempt:
+            if (
+                index_attempt.status != IndexingStatus.CANCELED
+                and index_attempt.status != IndexingStatus.FAILED
+            ):
+                mark_attempt_failed(
+                    index_attempt_id=payload.index_attempt_id,
+                    db_session=db_session,
+                    failure_reason=msg,
+                )
+    except Exception:
+        task_logger.warning(
+            f"Connector indexing aborted or exceptioned - transient DB exception while marking attempt: "
+            f"cc_pair={cc_pair_id} "
+            f"search_settings={search_settings_id} "
+        )
+
+    redis_connector_index.reset()
+    return
 
 
 @shared_task(name=DanswerCeleryTask.MONITOR_VESPA_SYNC, soft_time_limit=300, bind=True)
