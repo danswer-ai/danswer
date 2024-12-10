@@ -74,7 +74,6 @@ import sharepointIcon from "../../../public/Sharepoint.png";
 import teamsIcon from "../../../public/Teams.png";
 import mediawikiIcon from "../../../public/MediaWiki.svg";
 import wikipediaIcon from "../../../public/Wikipedia.svg";
-
 import discourseIcon from "../../../public/Discourse.png";
 import clickupIcon from "../../../public/Clickup.svg";
 import cohereIcon from "../../../public/Cohere.svg";
@@ -82,7 +81,7 @@ import voyageIcon from "../../../public/Voyage.png";
 import googleIcon from "../../../public/Google.webp";
 import xenforoIcon from "../../../public/Xenforo.svg";
 import { FaGithub, FaRobot } from "react-icons/fa";
-import { isConstructSignatureDeclaration } from "typescript";
+
 import { cn } from "@/lib/utils";
 
 export interface IconProps {
