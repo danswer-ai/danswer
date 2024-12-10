@@ -59,7 +59,7 @@ import { useDocumentSelection } from "./useDocumentSelection";
 import { LlmOverride, useFilters, useLlmOverride } from "@/lib/hooks";
 import { computeAvailableFilters } from "@/lib/filters";
 import { ChatState, FeedbackType, RegenerationState } from "./types";
-import { ChatFilters } from "./documentSidebar/ChatFilters";
+import { ChatFilters } from "./filters/ChatFilters";
 import { DanswerInitializingLoader } from "@/components/DanswerInitializingLoader";
 import { FeedbackModal } from "./modal/FeedbackModal";
 import { ShareChatSessionModal } from "./modal/ShareChatSessionModal";
@@ -791,6 +791,8 @@ export function ChatPage({
     clearSelectedDocuments,
     selectedDocumentTokens,
   ] = useDocumentSelection();
+  const [selectedFiles, setSelectedFiles] = useState<FileDescriptor[]>([]);
+
   // just choose a conservative default, this will be updated in the
   // background on initial load / on persona change
   const [maxTokens, setMaxTokens] = useState<number>(4096);
@@ -1893,10 +1895,6 @@ export function ChatPage({
     setSharedChatSession(chatSession);
   };
   const [documentSelection, setDocumentSelection] = useState(false);
-  // const toggleDocumentSelectionAspects = () => {
-  //   setDocumentSelection((documentSelection) => !documentSelection);
-  //   setShowDocSidebar(false);
-  // };
 
   const toggleDocumentSidebar = () => {
     if (!documentSidebarToggled) {
@@ -1990,7 +1988,7 @@ export function ChatPage({
         />
       )}
 
-      {retrievalEnabled && documentSidebarToggled && settings?.isMobile && (
+      {documentSidebarToggled && settings?.isMobile && (
         <div className="md:hidden">
           <Modal noPadding noScroll>
             <ChatFilters
@@ -2006,6 +2004,7 @@ export function ChatPage({
                 setDocumentSidebarToggled(false);
               }}
               selectedMessage={aiMessage}
+              selectedFiles={selectedFiles}
               selectedDocuments={selectedDocuments}
               toggleDocumentSelection={toggleDocumentSelection}
               clearSelectedDocuments={clearSelectedDocuments}
@@ -2125,7 +2124,7 @@ export function ChatPage({
               </div>
             </div>
           </div>
-          {!settings?.isMobile && retrievalEnabled && (
+          {!settings?.isMobile && (
             <div
               style={{ transition: "width 0.30s ease-out" }}
               className={`
@@ -2150,6 +2149,7 @@ export function ChatPage({
             `}
             >
               <ChatFilters
+                selectedFiles={selectedFiles}
                 setPresentingDocument={setPresentingDocument}
                 modal={false}
                 filterManager={filterManager}
@@ -2446,6 +2446,8 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
+                                      setSelectedFiles={setSelectedFiles}
+                                      userFiles={previousMessage?.files}
                                       setPresentingDocument={
                                         setPresentingDocument
                                       }
@@ -2504,6 +2506,9 @@ export function ChatPage({
                                         }
                                         setSelectedMessageForDocDisplay(
                                           message.messageId
+                                        );
+                                        setSelectedFiles(
+                                          parentMessage?.files || []
                                         );
                                       }}
                                       docs={message.documents}
@@ -2800,11 +2805,7 @@ export function ChatPage({
                           transition-all 
                           duration-300 
                           ease-in-out
-                          ${
-                            documentSidebarToggled && retrievalEnabled
-                              ? "w-[400px]"
-                              : "w-[0px]"
-                          }
+                          ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
                       `}
                         ></div>
                       )}
