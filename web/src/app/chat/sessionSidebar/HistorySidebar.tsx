@@ -10,7 +10,6 @@ import { Folder } from "../folders/interfaces";
 import { createFolder } from "../folders/FolderManagement";
 import { usePopup } from "@/components/admin/connectors/Popup";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-
 import {
   AssistantsIconSkeleton,
   ClosedBookIcon,
@@ -58,19 +57,10 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
   ) => {
     const router = useRouter();
     const { popup, setPopup } = usePopup();
-
-    // For determining intial focus state
     const [newFolderId, setNewFolderId] = useState<number | null>(null);
-
     const currentChatId = currentChatSession?.id;
-
-    // NOTE: do not do something like the below - assume that the parent
-    // will handle properly refreshing the existingChats
-    // useEffect(() => {
-    //   router.refresh();
-    // }, [currentChatId]);
-
     const combinedSettings = useContext(SettingsContext);
+
     if (!combinedSettings) {
       return null;
     }
@@ -91,17 +81,14 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
         <div
           ref={ref}
           className={`
-            flex
-            flex-none
-            bg-background-sidebar
-            w-full
-            border-r 
-            border-sidebar-border 
-            flex 
-            flex-col relative
-            h-screen
-            transition-transform 
-            pt-2`}
+            flex flex-col h-screen w-full
+            bg-[#f1eee8]
+            border-r border-[#dcdad4]
+            font-['KH Teka TRIAL']
+            relative
+            pt-2
+            shadow-md
+          `}
         >
           <LogoType
             showArrow={true}
@@ -109,29 +96,27 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             page={page}
             toggleSidebar={toggleSidebar}
             explicitlyUntoggle={explicitlyUntoggle}
+            // Customize LogoType if needed to match final design
           />
-          {page == "chat" && (
-            <div className="mx-3 mt-4 gap-y-1 flex-col text-text-history-sidebar-button flex gap-x-1.5 items-center items-center">
+
+          {page === "chat" && (
+            <div className="mx-3 mt-4 flex flex-col gap-y-2 text-black">
               <Link
-                className=" w-full p-2 bg-white border-border border rounded items-center hover:bg-background-200 cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border border-[#dcdad4] rounded hover:bg-[#fffcf4] cursor-pointer transition-all duration-150 flex items-center gap-x-2"
                 href={
                   `/${page}` +
                   (NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA &&
                   currentChatSession?.persona_id
-                    ? `?assistantId=${currentChatSession?.persona_id}`
+                    ? `?assistantId=${currentChatSession.persona_id}`
                     : "")
                 }
                 onClick={(e) => {
-                  if (e.metaKey || e.ctrlKey) {
-                    return;
-                  }
-                  if (handleNewChat) {
-                    handleNewChat();
-                  }
+                  if (e.metaKey || e.ctrlKey) return;
+                  handleNewChat();
                 }}
               >
-                <FiEdit className="flex-none text-text-history-sidebar-button" />
-                <p className="my-auto flex items-center text-sm">New Chat</p>
+                <FiEdit className="text-black" />
+                <p className="text-base font-medium leading-normal">New Chat</p>
               </Link>
               <button
                 onClick={() =>
@@ -148,33 +133,37 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                       });
                     })
                 }
-                className="w-full p-2 bg-white border-border border rounded items-center  hover:bg-background-history-sidebar-button-hover cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border border-[#dcdad4] rounded hover:bg-[#fffcf4] cursor-pointer transition-all duration-150 flex items-center gap-x-2"
               >
-                <FiFolderPlus className="my-auto text-text-history-sidebar-button" />
-                <p className="my-auto flex items-center text-sm">New Folder</p>
+                <FiFolderPlus className="text-black" />
+                <p className="text-base font-medium leading-normal">
+                  New Folder
+                </p>
               </button>
 
               <Link
                 href="/assistants/mine"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-history-sidebar-button-hover cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border border-[#dcdad4] rounded hover:bg-[#fffcf4] cursor-pointer transition-all duration-150 flex items-center gap-x-2"
               >
-                <AssistantsIconSkeleton className="h-4 w-4 my-auto text-text-history-sidebar-button" />
-                <p className="my-auto flex items-center text-sm">
+                <AssistantsIconSkeleton className="h-4 w-4 text-black" />
+                <p className="text-base font-medium leading-normal">
                   Manage Assistants
                 </p>
               </Link>
               <Link
                 href="/prompts"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-history-sidebar-button-hover cursor-pointer transition-all duration-150 flex gap-x-2"
+                className="w-full p-2 bg-white border border-[#dcdad4] rounded hover:bg-[#fffcf4] cursor-pointer transition-all duration-150 flex items-center gap-x-2"
               >
-                <ClosedBookIcon className="h-4 w-4 my-auto text-text-history-sidebar-button" />
-                <p className="my-auto flex items-center text-sm ">
+                <ClosedBookIcon className="h-4 w-4 text-black" />
+                <p className="text-base font-medium leading-normal">
                   Manage Prompts
                 </p>
               </Link>
             </div>
           )}
-          <div className="border-b border-divider-history-sidebar-bar pb-4 mx-3" />
+
+          <div className="border-b border-[#dcdad4] pb-4 mx-3 mt-4" />
+
           <PagesTab
             newFolderId={newFolderId}
             showDeleteModal={showDeleteModal}

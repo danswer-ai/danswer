@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { ChatSession } from "../interfaces";
 import { useState, useEffect, useContext } from "react";
 import { getChatRetentionInfo, renameChatSession } from "../lib";
-import { BasicSelectable } from "@/components/BasicClickable";
 import Link from "next/link";
 import {
   FiCheck,
@@ -34,8 +33,6 @@ export function ChatSessionDisplay({
   chatSession: ChatSession;
   isSelected: boolean;
   search?: boolean;
-  // needed when the parent is trying to apply some background effect
-  // if not set, the gradient will still be applied and cause weirdness
   skipGradient?: boolean;
   closeSidebar?: () => void;
   showShareModal?: (chatSession: ChatSession) => void;
@@ -73,7 +70,7 @@ export function ChatSessionDisplay({
   };
 
   if (!settings) {
-    return <></>;
+    return null;
   }
 
   const { daysUntilExpiration, showRetentionWarning } = getChatRetentionInfo(
@@ -92,7 +89,11 @@ export function ChatSessionDisplay({
       )}
 
       <Link
-        className="flex my-1 group relative"
+        className={`flex my-1 group relative font-['KH Teka TRIAL'] ${
+          isSelected
+            ? "bg-[#e6e3dd] rounded"
+            : "hover:bg-[#e6e3dd] hover:rounded"
+        } transition-all duration-150`}
         key={chatSession.id}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => {
@@ -122,147 +123,135 @@ export function ChatSessionDisplay({
           );
         }}
       >
-        <BasicSelectable padding="extra" fullWidth selected={isSelected}>
-          <>
-            <div className="flex relative">
-              {isRenamingChat ? (
-                <input
-                  value={chatName}
-                  onChange={(e) => setChatName(e.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      onRename();
-                      event.preventDefault();
-                    }
-                  }}
-                  className="-my-px px-1 mr-1 w-full rounded"
-                />
-              ) : (
-                <p className="break-all overflow-hidden whitespace-nowrap w-full mr-3 relative">
-                  {chatName || `Chat ${chatSession.id}`}
-                  <span
-                    className={`absolute right-0 top-0 h-full w-8 bg-gradient-to-r from-transparent 
-                    ${
-                      isSelected
-                        ? "to-background-chat-selected"
-                        : "group-hover:to-background-chat-hover"
-                    } `}
-                  />
-                </p>
-              )}
-
-              {isHovering &&
-                (isRenamingChat ? (
-                  <div className="ml-auto my-auto items-center flex">
-                    <div
-                      onClick={onRename}
-                      className={`hover:bg-black/10  p-1 -m-1 rounded`}
-                    >
-                      <FiCheck size={16} />
-                    </div>
-                    <div
-                      onClick={() => {
-                        setChatName(chatSession.name);
-                        setIsRenamingChat(false);
-                      }}
-                      className={`hover:bg-black/10 p-1 -m-1 rounded ml-2`}
-                    >
-                      <FiX size={16} />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="ml-auto my-auto justify-end flex z-30">
-                    {!showShareModal && showRetentionWarning && (
-                      <CustomTooltip
-                        line
-                        content={
-                          <p>
-                            This chat will expire{" "}
-                            {daysUntilExpiration < 1
-                              ? "today"
-                              : `in ${daysUntilExpiration} day${
-                                  daysUntilExpiration !== 1 ? "s" : ""
-                                }`}
-                          </p>
-                        }
-                      >
-                        <div className="mr-1 hover:bg-black/10 p-1 -m-1 rounded z-50">
-                          <WarningCircle className="text-warning" />
-                        </div>
-                      </CustomTooltip>
-                    )}
-                    <div>
-                      {search ? (
-                        showDeleteModal && (
-                          <div
-                            onClick={(e) => {
-                              e.preventDefault();
-                              showDeleteModal(chatSession);
-                            }}
-                            className={`p-1 -m-1 rounded ml-1`}
-                          >
-                            <FiTrash size={16} />
-                          </div>
-                        )
-                      ) : (
-                        <div
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setIsMoreOptionsDropdownOpen(
-                              !isMoreOptionsDropdownOpen
-                            );
-                          }}
-                          className="-my-1"
-                        >
-                          <Popover
-                            open={isMoreOptionsDropdownOpen}
-                            onOpenChange={(open: boolean) =>
-                              setIsMoreOptionsDropdownOpen(open)
-                            }
-                            content={
-                              <div className="p-1 rounded">
-                                <FiMoreHorizontal size={16} />
-                              </div>
-                            }
-                            popover={
-                              <div className="border border-border rounded-lg bg-background z-50 w-32">
-                                {showShareModal && (
-                                  <DefaultDropdownElement
-                                    name="Share"
-                                    icon={FiShare2}
-                                    onSelect={() => showShareModal(chatSession)}
-                                  />
-                                )}
-                                {!search && (
-                                  <DefaultDropdownElement
-                                    name="Rename"
-                                    icon={FiEdit2}
-                                    onSelect={() => setIsRenamingChat(true)}
-                                  />
-                                )}
-                                {showDeleteModal && (
-                                  <DefaultDropdownElement
-                                    name="Delete"
-                                    icon={FiTrash}
-                                    onSelect={() =>
-                                      showDeleteModal(chatSession)
-                                    }
-                                  />
-                                )}
-                              </div>
-                            }
-                            requiresContentPadding
-                            sideOffset={6}
-                            triggerMaxWidth
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+        <div className="flex items-center w-full p-1">
+          {isRenamingChat ? (
+            <input
+              value={chatName}
+              onChange={(e) => setChatName(e.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  onRename();
+                  event.preventDefault();
+                }
+              }}
+              className="px-1 mr-1 w-full rounded text-base font-normal leading-normal text-black border border-[#dcdad4]"
+            />
+          ) : (
+            <div className="flex-1 text-base font-normal text-black break-all whitespace-nowrap overflow-hidden mr-3">
+              {chatName || `Chat ${chatSession.id}`}
             </div>
-          </>
-        </BasicSelectable>
+          )}
+
+          {isHovering && (
+            <div className="flex items-center ml-auto">
+              {isRenamingChat ? (
+                <>
+                  <div
+                    onClick={onRename}
+                    className="hover:bg-black/10 p-1 rounded cursor-pointer"
+                  >
+                    <FiCheck size={16} />
+                  </div>
+                  <div
+                    onClick={() => {
+                      setChatName(chatSession.name);
+                      setIsRenamingChat(false);
+                    }}
+                    className="hover:bg-black/10 p-1 rounded ml-2 cursor-pointer"
+                  >
+                    <FiX size={16} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {!showShareModal && showRetentionWarning && (
+                    <CustomTooltip
+                      line
+                      content={
+                        <p>
+                          This chat will expire{" "}
+                          {daysUntilExpiration < 1
+                            ? "today"
+                            : `in ${daysUntilExpiration} day${
+                                daysUntilExpiration !== 1 ? "s" : ""
+                              }`}
+                        </p>
+                      }
+                    >
+                      <div className="mr-1 hover:bg-black/10 p-1 rounded cursor-pointer">
+                        <WarningCircle className="text-warning" size={16} />
+                      </div>
+                    </CustomTooltip>
+                  )}
+
+                  {search ? (
+                    showDeleteModal && (
+                      <div
+                        onClick={(e) => {
+                          e.preventDefault();
+                          showDeleteModal(chatSession);
+                        }}
+                        className="p-1 rounded ml-1 cursor-pointer hover:bg-black/10"
+                      >
+                        <FiTrash size={16} />
+                      </div>
+                    )
+                  ) : (
+                    <div
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsMoreOptionsDropdownOpen(
+                          !isMoreOptionsDropdownOpen
+                        );
+                      }}
+                      className="-my-1 cursor-pointer"
+                    >
+                      <Popover
+                        open={isMoreOptionsDropdownOpen}
+                        onOpenChange={(open: boolean) =>
+                          setIsMoreOptionsDropdownOpen(open)
+                        }
+                        content={
+                          <div className="p-1 rounded">
+                            <FiMoreHorizontal size={16} />
+                          </div>
+                        }
+                        popover={
+                          <div className="border border-[#dcdad4] rounded-lg bg-white z-50 w-32 shadow-lg">
+                            {showShareModal && (
+                              <DefaultDropdownElement
+                                name="Share"
+                                icon={FiShare2}
+                                onSelect={() => showShareModal(chatSession)}
+                              />
+                            )}
+                            {!search && (
+                              <DefaultDropdownElement
+                                name="Rename"
+                                icon={FiEdit2}
+                                onSelect={() => setIsRenamingChat(true)}
+                              />
+                            )}
+                            {showDeleteModal && (
+                              <DefaultDropdownElement
+                                name="Delete"
+                                icon={FiTrash}
+                                onSelect={() => showDeleteModal(chatSession)}
+                              />
+                            )}
+                          </div>
+                        }
+                        requiresContentPadding
+                        sideOffset={6}
+                        triggerMaxWidth
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </Link>
     </>
   );
