@@ -102,10 +102,17 @@ class CitationProcessor:
                         self.citation_order.index(real_citation_num) + 1
                     )
 
-                    # get the value that was displayed to user
-                    displayed_citation_num = self.display_doc_order_dict[
-                        context_llm_doc.document_id
-                    ]
+                    # get the value that was displayed to user, should always
+                    # be in the display_doc_order_dict. But check anyways
+                    if context_llm_doc.document_id in self.display_doc_order_dict:
+                        displayed_citation_num = self.display_doc_order_dict[
+                            context_llm_doc.document_id
+                        ]
+                    else:
+                        displayed_citation_num = real_citation_num
+                        logger.warning(
+                            f"Doc {context_llm_doc.document_id} not in display_doc_order_dict. Used LLM citation number instead."
+                        )
 
                     # Skip consecutive citations of the same work
                     if target_citation_num in self.current_citations:
