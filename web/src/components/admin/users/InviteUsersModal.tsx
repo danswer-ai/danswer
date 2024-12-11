@@ -5,16 +5,16 @@ import BulkAdd from "@/components/admin/users/BulkAdd";
 import Text from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/Modal";
-import { FiPlusSquare } from "react-icons/fi";
-import { PopupSpec } from "@/components/admin/connectors/Popup";
-import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
 import { PageSelector } from "@/components/PageSelector";
+import { PopupSpec } from "@/components/admin/connectors/Popup";
 
+import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
+import { FiPlusSquare } from "react-icons/fi";
 import { type User } from "@/lib/types";
 import { mutate } from "swr";
 
-const ITEMS_PER_PAGE = 10;
 const PAGES_PER_BATCH = 2;
+const ITEMS_PER_PAGE = 10;
 
 const InviteUsersModal = ({
   setPopup,
@@ -41,7 +41,6 @@ const InviteUsersModal = ({
     mutate(
       (key) => typeof key === "string" && key.startsWith("/api/manage/users")
     );
-    setModal(false);
     setPopup({
       message: "Users invited!",
       type: "success",

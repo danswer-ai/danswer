@@ -30,23 +30,37 @@ const AddUserFormRenderer = ({
   touched,
   errors,
   isSubmitting,
-}: FormikProps<FormValues>) => (
-  <Form className="w-full">
-    <Field id="emails" name="emails" as="textarea" className="w-full p-4" />
-    {touched.emails && errors.emails && (
-      <div className="text-error text-sm">{errors.emails}</div>
-    )}
-    <Button
-      className="mx-auto"
-      variant="submit"
-      size="sm"
-      type="submit"
-      disabled={isSubmitting}
-    >
-      Add!
-    </Button>
-  </Form>
-);
+}: FormikProps<FormValues>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !isSubmitting) {
+      e.preventDefault(); // prevents enters default behavior
+      e.currentTarget.form?.requestSubmit();
+    }
+  };
+  return (
+    <Form className="w-full">
+      <Field
+        id="emails"
+        name="emails"
+        as="textarea"
+        className="w-full p-4 border-2 border-gray-300 rounded-md"
+        onKeyDown={handleKeyDown}
+      />
+      {touched.emails && errors.emails && (
+        <div className="text-error text-sm">{errors.emails}</div>
+      )}
+      <Button
+        className="mx-auto"
+        variant="submit"
+        size="sm"
+        type="submit"
+        disabled={isSubmitting}
+      >
+        Add!
+      </Button>
+    </Form>
+  );
+};
 
 const AddUserForm = withFormik<FormProps, FormValues>({
   mapPropsToValues: (props) => {
@@ -71,6 +85,7 @@ const AddUserForm = withFormik<FormProps, FormValues>({
     await addUsers("/api/manage/admin/users", { arg: emails }).then((res) => {
       if (res.ok) {
         formikBag.props.onSuccess();
+        formikBag.resetForm();
       } else {
         formikBag.props.onFailure(res);
       }

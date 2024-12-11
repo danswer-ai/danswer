@@ -1,5 +1,4 @@
 import UserInviteInfo from "@/components/admin/users/UserInviteInfo";
-import { PageSelector } from "@/components/PageSelector";
 import { ErrorCallout } from "@/components/ErrorCallout";
 import { PopupSpec } from "@/components/admin/connectors/Popup";
 import { Button } from "@/components/ui/button";
@@ -54,9 +53,6 @@ const InvitedUserTable = ({
   pageOfUsers,
   isLoading,
   error,
-  currentPage,
-  totalPages,
-  goToPage,
   refresh,
   hasNoData: noInvitedUsers,
   setPopup,

@@ -263,6 +263,16 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
     filter: filters,
   });
 
+  if (isLoading) {
+    return (
+      <TableRow>
+        <TableCell colSpan={4} className="h-24 text-center">
+          <ThreeDotsLoader />
+        </TableCell>
+      </TableRow>
+    );
+  }
+
   if (error || !pageOfUsers) {
     return (
       <ErrorCallout
@@ -282,83 +292,86 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
   const onRoleChangeError = (errorMsg: string) =>
     handlePopup(`Unable to update user role - ${errorMsg}`, "error");
 
+  // Creates the filter options and handles the state manipulation
+  const renderFilters = () => (
+    <div className="flex items-center gap-4 py-4">
+      <Select
+        value={filters.status || "all"}
+        onValueChange={(value) =>
+          setFilters((prev) => {
+            if (value === "all") {
+              const { status, ...rest } = prev;
+              return rest;
+            }
+            return {
+              ...prev,
+              status: value as UserStatus.live | UserStatus.deactivated,
+            };
+          })
+        }
+      >
+        <SelectTrigger className="w-[260px] h-[34px] bg-neutral">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="bg-neutral-50">
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="live">Active</SelectItem>
+          <SelectItem value="deactivated">Inactive</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value="roles">
+        <SelectTrigger className="w-[260px] h-[34px] bg-neutral">
+          <SelectValue>
+            {filters.roles?.length
+              ? `${filters.roles.length} role(s) selected`
+              : "All Roles"}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="bg-neutral-50">
+          {Object.entries(USER_ROLE_LABELS)
+            .filter(([role]) => role !== UserRole.EXT_PERM_USER)
+            .map(([role, label]) => (
+              <div
+                key={role}
+                className="flex items-center space-x-2 px-2 py-1.5 cursor-pointer hover:bg-gray-200"
+                onClick={() => {
+                  setFilters((prev) => {
+                    const roleEnum = role as UserRole;
+                    const currentRoles = prev.roles || [];
+
+                    if (currentRoles.includes(roleEnum)) {
+                      // Remove role if already selected
+                      return {
+                        ...prev,
+                        roles: currentRoles.filter((r) => r !== roleEnum),
+                      };
+                    } else {
+                      // Add role if not selected
+                      return {
+                        ...prev,
+                        roles: [...currentRoles, roleEnum],
+                      };
+                    }
+                  });
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.roles?.includes(role as UserRole) || false}
+                  onChange={(e) => e.stopPropagation()}
+                />
+                <label className="text-sm font-normal">{label}</label>
+              </div>
+            ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   return (
     <>
-      <div className="flex items-center gap-4 py-4">
-        <Select
-          value={filters.status || "all"}
-          onValueChange={(value) =>
-            setFilters((prev) => {
-              if (value === "all") {
-                const { status, ...rest } = prev;
-                return rest;
-              }
-              return {
-                ...prev,
-                status: value as UserStatus.live | UserStatus.deactivated,
-              };
-            })
-          }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="live">Active</SelectItem>
-            <SelectItem value="deactivated">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
-          value="roles" // Static value since this is just a container for checkboxes
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue>
-              {filters.roles?.length
-                ? `${filters.roles.length} role(s) selected`
-                : "All Roles"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(USER_ROLE_LABELS)
-              .filter(([role]) => role !== UserRole.EXT_PERM_USER)
-              .map(([role, label]) => (
-                <div
-                  key={role}
-                  className="flex items-center space-x-2 px-2 py-1.5"
-                >
-                  <input
-                    type="checkbox"
-                    checked={filters.roles?.includes(role as UserRole) || false}
-                    onChange={() => {
-                      setFilters((prev) => {
-                        const roleEnum = role as UserRole;
-                        const currentRoles = prev.roles || [];
-
-                        if (currentRoles.includes(roleEnum)) {
-                          // Remove role if already selected
-                          return {
-                            ...prev,
-                            roles: currentRoles.filter((r) => r !== roleEnum),
-                          };
-                        } else {
-                          // Add role if not selected
-                          return {
-                            ...prev,
-                            roles: [...currentRoles, roleEnum],
-                          };
-                        }
-                      });
-                    }}
-                  />
-                  <label className="text-sm font-normal">{label}</label>
-                </div>
-              ))}
-          </SelectContent>
-        </Select>
-      </div>
-
+      {renderFilters()}
       <Table className="overflow-visible">
         <TableHeader>
           <TableRow>
@@ -373,13 +386,7 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
-            <TableRow>
-              <TableCell colSpan={4} className="h-24 text-center">
-                <ThreeDotsLoader />
-              </TableCell>
-            </TableRow>
-          ) : hasNoData ? (
+          {hasNoData ? (
             <TableRow>
               <TableCell
                 colSpan={4}
@@ -393,40 +400,38 @@ const SignedUpUserTable = ({ setPopup, q = "" }: Props) => {
               </TableCell>
             </TableRow>
           ) : (
-            pageOfUsers
-              .filter((user) => user.role !== UserRole.EXT_PERM_USER)
-              .map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell className="w-40 ">
-                    <UserRoleDropdown
+            pageOfUsers.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.email}</TableCell>
+                <TableCell className="w-40 ">
+                  <UserRoleDropdown
+                    user={user}
+                    onSuccess={onRoleChangeSuccess}
+                    onError={onRoleChangeError}
+                  />
+                </TableCell>
+                <TableCell className="text-center">
+                  <i>{user.status === "live" ? "Active" : "Inactive"}</i>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-x-2">
+                    <DeactivateUserButton
                       user={user}
-                      onSuccess={onRoleChangeSuccess}
-                      onError={onRoleChangeError}
+                      deactivate={user.status === UserStatus.live}
+                      setPopup={setPopup}
+                      refresh={refresh}
                     />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <i>{user.status === "live" ? "Active" : "Inactive"}</i>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-x-2">
-                      <DeactivateUserButton
+                    {user.status == UserStatus.deactivated && (
+                      <DeleteUserButton
                         user={user}
-                        deactivate={user.status === UserStatus.live}
                         setPopup={setPopup}
                         refresh={refresh}
                       />
-                      {user.status == UserStatus.deactivated && (
-                        <DeleteUserButton
-                          user={user}
-                          setPopup={setPopup}
-                          refresh={refresh}
-                        />
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
           )}
         </TableBody>
       </Table>
