@@ -1,7 +1,7 @@
 """make document set description optional
 
 Revision ID: 94dc3d0236f8
-Revises: f7a894b06d02
+Revises: bf7a81109301
 Create Date: 2024-12-11 11:26:10.616722
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "94dc3d0236f8"
-down_revision = "f7a894b06d02"
+down_revision = "bf7a81109301"
 branch_labels = None
 depends_on = None
 
