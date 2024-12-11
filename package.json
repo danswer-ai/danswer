@@ -1,0 +1,15 @@
+{
+  "name": "danswer",
+  "version": "1.0.0",
+  "description": "<!-- DANSWER_METADATA={\"link\": \"https://github.com/danswer-ai/danswer/blob/main/README.md\"} --> <a name=\"readme-top\"></a>",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
