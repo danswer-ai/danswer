@@ -195,6 +195,10 @@ def seed_initial_documents(
 
     docs, chunks = _create_indexable_chunks(processed_docs, tenant_id)
 
+    # The point of this is to upsert the documents into the DB
+    # and add the document->cc_pair relationship
+    # TODO: break out the functionality into calling the 2 functions separately
+    #   directly from here
     index_doc_batch_prepare(
         document_batch=docs,
         index_attempt_metadata=IndexAttemptMetadata(
