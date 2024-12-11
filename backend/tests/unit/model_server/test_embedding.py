@@ -194,5 +194,5 @@ async def test_concurrent_embeddings() -> None:
 
         # 5 * 5 seconds = 25 seconds, this test ensures that the embeddings are at least yielding the thread
         # However, the developer may still introduce unnecessary blocking above the mock and this test will
-        # still pass as long as it's less than 7 / 5 seconds
+        # still pass as long as it's less than (7 - 5) / 5 seconds
         assert end_time - start_time < 7
