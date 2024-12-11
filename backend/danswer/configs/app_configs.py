@@ -417,21 +417,28 @@ LARGE_CHUNK_RATIO = 4
 # We don't want the metadata to overwhelm the actual contents of the chunk
 SKIP_METADATA_IN_CHUNK = os.environ.get("SKIP_METADATA_IN_CHUNK", "").lower() == "true"
 # Timeout to wait for job's last update before killing it, in hours
-CLEANUP_INDEXING_JOBS_TIMEOUT = int(os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT", 3))
+CLEANUP_INDEXING_JOBS_TIMEOUT = int(
+    os.environ.get("CLEANUP_INDEXING_JOBS_TIMEOUT") or 3
+)
 
 # The indexer will warn in the logs whenver a document exceeds this threshold (in bytes)
 INDEXING_SIZE_WARNING_THRESHOLD = int(
-    os.environ.get("INDEXING_SIZE_WARNING_THRESHOLD", 100 * 1024 * 1024)
+    os.environ.get("INDEXING_SIZE_WARNING_THRESHOLD") or 100 * 1024 * 1024
 )
 
 # during indexing, will log verbose memory diff stats every x batches and at the end.
 # 0 disables this behavior and is the default.
-INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
+INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL") or 0)
 
 # During an indexing attempt, specifies the number of batches which are allowed to
 # exception without aborting the attempt.
-INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
+INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT") or 0)
 
+# Maximum file size in a document to be indexed
+MAX_DOCUMENT_CHARS = int(os.environ.get("MAX_DOCUMENT_CHARS") or 5_000_000)
+MAX_FILE_SIZE_BYTES = int(
+    os.environ.get("MAX_FILE_SIZE_BYTES") or 2 * 1024 * 1024 * 1024
+)  # 2GB in bytes
 
 #####
 # Miscellaneous
