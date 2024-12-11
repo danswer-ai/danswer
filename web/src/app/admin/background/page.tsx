@@ -1,19 +1,12 @@
 "use client";
 
 import { LoadingAnimation } from "@/components/Loading";
-import { NotebookIcon } from "@/components/icons/icons";
-import { CCPairIndexingStatusTable } from "./CCPairIndexingStatusTable";
 import { AdminPageTitle } from "@/components/admin/Title";
-import Link from "next/link";
+import { NotebookIcon } from "@/components/icons/icons";
 import Text from "@/components/ui/text";
-import {
-  useBackgroundIndexingStatus,
-  useConnectorCredentialIndexingStatus,
-} from "@/lib/hooks";
-import { usePopupFromQuery } from "@/components/popup/PopupFromQuery";
-import { Button } from "@/components/ui/button";
-import { BackgroundIndexingStatusTable } from "./BackgroundIndexingStatusTable";
+import { useBackgroundIndexingStatus } from "@/lib/hooks";
 import { useEffect } from "react";
+import { BackgroundIndexingStatusTable } from "./BackgroundIndexingStatusTable";
 
 function Main() {
   const {
