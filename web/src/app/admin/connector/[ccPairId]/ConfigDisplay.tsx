@@ -55,7 +55,7 @@ function ConfigItem({ label, value }: { label: string; value: any }) {
           {displayedItems.map((item, index) => (
             <li
               key={index}
-              className="mb-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+              className="mb-1 max-w-full overflow-hidden  text-right text-ellipsis whitespace-nowrap"
             >
               {convertObjectToString(item)}
             </li>
@@ -87,7 +87,7 @@ function ConfigItem({ label, value }: { label: string; value: any }) {
           {isExpandable && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="mt-2 text-text-600 hover:text-text-800 flex items-center"
+              className="mt-2 ml-auto text-text-600 hover:text-text-800 flex items-center"
             >
               {isExpanded ? (
                 <>
