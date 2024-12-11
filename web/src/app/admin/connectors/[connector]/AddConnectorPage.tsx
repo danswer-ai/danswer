@@ -48,7 +48,11 @@ import NavigationRow from "./NavigationRow";
 import { useRouter } from "next/navigation";
 import CardSection from "@/components/admin/CardSection";
 import { prepareOAuthAuthorizationRequest } from "@/lib/oauth_utils";
-import { EE_ENABLED, NEXT_PUBLIC_CLOUD_ENABLED } from "@/lib/constants";
+import {
+  EE_ENABLED,
+  NEXT_PUBLIC_CLOUD_ENABLED,
+  TEST_ENV,
+} from "@/lib/constants";
 export interface AdvancedConfig {
   refreshFreq: number;
   pruneFreq: number;
