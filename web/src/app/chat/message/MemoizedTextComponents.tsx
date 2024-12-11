@@ -5,6 +5,8 @@ import { getSourceMetadata, SOURCE_METADATA_MAP } from "@/lib/sources";
 import { ValidSources } from "@/lib/types";
 import React, { memo } from "react";
 import isEqual from "lodash/isEqual";
+import { SlackIcon } from "@/components/icons/icons";
+import { SourceIcon } from "@/components/SourceIcon";
 
 export const MemoizedAnchor = memo(
   ({ docs, updatePresentingDocument, children }: any) => {
@@ -19,21 +21,9 @@ export const MemoizedAnchor = memo(
           ? new URL(associatedDoc.link).origin + "/favicon.ico"
           : "";
 
-        const getIcon = (sourceType: ValidSources, link: string) => {
-          return getSourceMetadata(sourceType).icon({ size: 18 });
-        };
-
-        const icon =
-          associatedDoc?.source_type === "web" ? (
-            <WebResultIcon url={associatedDoc.link} />
-          ) : (
-            SOURCE_METADATA_MAP[
-              (associatedDoc?.source_type ||
-                "web") as keyof typeof SOURCE_METADATA_MAP
-            ].icon({
-              size: 18,
-            })
-          );
+        const icon = (
+          <SourceIcon sourceType={associatedDoc?.source_type} iconSize={18} />
+        );
 
         return (
           <MemoizedLink

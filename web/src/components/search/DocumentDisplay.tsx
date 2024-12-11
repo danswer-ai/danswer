@@ -21,6 +21,7 @@ import { CustomTooltip, TooltipGroup } from "../tooltip/CustomTooltip";
 import { WarningCircle } from "@phosphor-icons/react";
 import TextView from "../chat_search/TextView";
 import { SearchResultIcon } from "../SearchResultIcon";
+import { ValidSources } from "@/lib/types";
 
 export const buildDocumentSummaryDisplay = (
   matchHighlights: string[],
@@ -425,16 +426,20 @@ export function CompactDocumentCard({
   document,
   icon,
   url,
+  updatePresentingDocument,
 }: {
   document: LoadedDanswerDocument;
   icon?: React.ReactNode;
   url?: string;
+  updatePresentingDocument: (documentIndex: LoadedDanswerDocument) => void;
 }) {
   return (
     <div className="max-w-[250px]  pb-0 pt-0 mt-0 flex gap-y-0  flex-col  content-start items-start gap-0 ">
       <div
         onClick={() => {
-          if (document.link) {
+          if (document.source_type === ValidSources.File) {
+            updatePresentingDocument(document);
+          } else if (document.link) {
             window.open(document.link, "_blank");
           }
         }}
