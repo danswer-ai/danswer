@@ -35,8 +35,8 @@ class DummyAnswerResponseHandler(AnswerResponseHandler):
 
 class CitationResponseHandler(AnswerResponseHandler):
     def __init__(
-        self, 
-        context_docs: list[LlmDoc], 
+        self,
+        context_docs: list[LlmDoc],
         doc_id_to_rank_map: DocumentIdOrderMapping,
         display_doc_order_dict: dict[str, int],
     ):
