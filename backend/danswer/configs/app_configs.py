@@ -525,3 +525,5 @@ POD_NAMESPACE = os.environ.get("POD_NAMESPACE")
 
 
 DEV_MODE = os.environ.get("DEV_MODE", "").lower() == "true"
+
+TEST_ENV = os.environ.get("TEST_ENV", "").lower() == "true"

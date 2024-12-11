@@ -125,7 +125,7 @@ export default function AddConnector({
       setCurrentPageUrl(window.location.href);
     }
 
-    if (EE_ENABLED && NEXT_PUBLIC_CLOUD_ENABLED) {
+    if (EE_ENABLED && (NEXT_PUBLIC_CLOUD_ENABLED || TEST_ENV)) {
       const sourceMetadata = getSourceMetadata(connector);
       if (sourceMetadata?.oauthSupported == true) {
         setIsAuthorizeVisible(true);
