@@ -58,15 +58,6 @@ mock_doc_mapping = {
     "doc_5": 6,
 }
 
-mock_doc_mapping_rerank = {
-    "doc_0": 2,
-    "doc_1": 1,
-    "doc_2": 4,
-    "doc_3": 3,
-    "doc_4": 5,
-    "doc_5": 6,
-}
-
 
 @pytest.fixture
 def mock_data() -> tuple[list[LlmDoc], dict[str, int]]:

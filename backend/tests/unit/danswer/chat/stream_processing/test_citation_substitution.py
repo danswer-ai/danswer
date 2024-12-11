@@ -11,15 +11,17 @@ from danswer.configs.constants import DocumentSource
 
 
 """
-This module contains tests for the citation extraction functionality in Danswer.
+This module contains tests for the citation extraction functionality in Danswer,
+specifically the substitution of the number of document cited in the UI. (The LLM
+will see the sources post re-ranking and relevance check, the UI before these steps.)
+This module is a derivative of test_citation_processing.py.
 
-The tests focus on the `extract_citations_from_stream` function, which processes
-a stream of tokens and extracts citations, replacing them with properly formatted
-versions including links where available.
+The tests focusses specifically on the substitution of the number of document cited in the UI.
 
 Key components:
 - mock_docs: A list of mock LlmDoc objects used for testing.
-- mock_doc_mapping: A dictionary mapping document IDs to their ranks.
+- mock_doc_mapping: A dictionary mapping document IDs to their initial ranks.
+- mock_doc_mapping_rerank: A dictionary mapping document IDs to their ranks after re-ranking/relevance check.
 - process_text: A helper function that simulates the citation extraction process.
 - test_citation_extraction: A parametrized test function covering various citation scenarios.
 
