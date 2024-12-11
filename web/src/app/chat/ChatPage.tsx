@@ -470,13 +470,14 @@ export function ChatPage({
           loadedSessionId != null) &&
         !currentChatAnswering()
       ) {
-        updateCompleteMessageDetail(chatSession.chat_session_id, newMessageMap);
-
         const latestMessageId =
           newMessageHistory[newMessageHistory.length - 1]?.messageId;
+
         setSelectedMessageForDocDisplay(
           latestMessageId !== undefined ? latestMessageId : null
         );
+
+        updateCompleteMessageDetail(chatSession.chat_session_id, newMessageMap);
       }
 
       setChatSessionSharedStatus(chatSession.shared_status);
@@ -975,6 +976,7 @@ export function ChatPage({
 
   useEffect(() => {
     if (
+      !personaIncludesRetrieval &&
       (!selectedDocuments || selectedDocuments.length === 0) &&
       documentSidebarToggled &&
       !filtersToggled
@@ -1078,10 +1080,17 @@ export function ChatPage({
     updateCanContinue(false, frozenSessionId);
 
     if (currentChatState() != "input") {
-      setPopup({
-        message: "Please wait for the response to complete",
-        type: "error",
-      });
+      if (currentChatState() == "uploading") {
+        setPopup({
+          message: "Please wait for the content to upload",
+          type: "error",
+        });
+      } else {
+        setPopup({
+          message: "Please wait for the response to complete",
+          type: "error",
+        });
+      }
 
       return;
     }
@@ -1556,7 +1565,7 @@ export function ChatPage({
     }
   };
 
-  const handleImageUpload = (acceptedFiles: File[]) => {
+  const handleImageUpload = async (acceptedFiles: File[]) => {
     const [_, llmModel] = getFinalLLM(
       llmProviders,
       liveAssistant,
@@ -1596,8 +1605,9 @@ export function ChatPage({
         (file) => !tempFileDescriptors.some((newFile) => newFile.id === file.id)
       );
     };
+    updateChatState("uploading", currentSessionId());
 
-    uploadFilesForChat(acceptedFiles).then(([files, error]) => {
+    await uploadFilesForChat(acceptedFiles).then(([files, error]) => {
       if (error) {
         setCurrentMessageFiles((prev) => removeTempFiles(prev));
         setPopup({
@@ -1608,6 +1618,7 @@ export function ChatPage({
         setCurrentMessageFiles((prev) => [...removeTempFiles(prev), ...files]);
       }
     });
+    updateChatState("input", currentSessionId());
   };
   const [showHistorySidebar, setShowHistorySidebar] = useState(false); // State to track if sidebar is open
 
@@ -2230,7 +2241,7 @@ export function ChatPage({
                           ref={scrollableDivRef}
                         >
                           {liveAssistant && onAssistantChange && (
-                            <div className="z-20 fixed top-4 pointer-events-none left-0 w-full flex justify-center overflow-visible">
+                            <div className="z-20 fixed top-0 pointer-events-none left-0 w-full flex justify-center overflow-visible">
                               {!settings?.isMobile && (
                                 <div
                                   style={{ transition: "width 0.30s ease-out" }}

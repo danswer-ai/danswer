@@ -5,13 +5,6 @@ import { NextRequest, NextResponse } from "next/server";
 // For some reason Egnyte doesn't work when using /api, so leaving this as is for now
 // If we do try and remove this, make sure we test the Egnyte connector oauth flow
 export async function GET(request: NextRequest) {
-  if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json(
-      { message: "This API is only available in development mode." },
-      { status: 404 }
-    );
-  }
-
   try {
     const backendUrl = new URL(INTERNAL_URL);
     // Copy path and query parameters from incoming request

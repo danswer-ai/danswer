@@ -374,6 +374,11 @@ class ConnectorBackgroundIndexingStatus(BaseModel):
     progress: int | None
 
 
+class CCPropertyUpdateRequest(BaseModel):
+    name: str
+    value: str
+
+
 """Connectors Models"""
 
 
