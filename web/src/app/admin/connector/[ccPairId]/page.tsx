@@ -126,7 +126,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
         </div>
 
         <div className="ml-1 overflow-hidden text-ellipsis whitespace-nowrap flex-1 mr-4">
-  <EditableStringFieldDisplay
+          <EditableStringFieldDisplay
             value={ccPair.name}
             isEditable={ccPair.is_editable_for_current_user}
             onUpdate={handleUpdateName}
