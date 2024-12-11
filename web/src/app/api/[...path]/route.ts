@@ -61,15 +61,18 @@ export async function OPTIONS(
 }
 
 async function handleRequest(request: NextRequest, path: string[]) {
-  // if (process.env.NODE_ENV === "production") {
-  //   return NextResponse.json(
-  //     {
-  //       message:
-  //         "This API is only available in development or preview mode. In production, something else (e.g. nginx) should handle this.",
-  //     },
-  //     { status: 404 }
-  //   );
-  // }
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.OVERRIDE_API_PRODUCTION !== "true"
+  ) {
+    return NextResponse.json(
+      {
+        message:
+          "This API is only available in development ormode. In production, something else (e.g. nginx) should handle this.",
+      },
+      { status: 404 }
+    );
+  }
 
   try {
     const backendUrl = new URL(`${INTERNAL_URL}/${path.join("/")}`);
