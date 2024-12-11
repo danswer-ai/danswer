@@ -2,7 +2,6 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { Credential } from "./connectors/credentials";
 import { Connector } from "./connectors/connectors";
 import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/types";
-import dayjs from "dayjs";
 
 interface UserPreferences {
   chosen_assistants: number[] | null;
