@@ -70,7 +70,7 @@ async function handleRequest(request: NextRequest, path: string[]) {
     return NextResponse.json(
       {
         message:
-          "This API is only available in development ormode. In production, something else (e.g. nginx) should handle this.",
+          "This API is only available in development mode. In production, something else (e.g. nginx) should handle this.",
       },
       { status: 404 }
     );
