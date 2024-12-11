@@ -8,11 +8,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: ${VESPA_CPU_LIMIT:-4}
-          memory: ${VESPA_MEM_LIMIT:-4g}
+          cpus: ${BACKGROUND_CPU_LIMIT:-4}
+          memory: ${BACKGROUND_MEM_LIMIT:-4g}
   #       reservations:
-  #         cpus: ${VESPA_CPU_RESERVATION}
-  #         memory: ${VESPA_MEM_RESERVATION}
+  #         cpus: ${BACKGROUND_CPU_RESERVATION}
+  #         memory: ${BACKGROUND_MEM_RESERVATION}
 
   # nginx:
   #   deploy:
@@ -37,11 +37,11 @@ services:
   #     deploy:
   #       resources:
   #         limits:
-  #           cpus: ${BACKGROUND_CPU_LIMIT}
-  #           memory: ${BACKGROUND_MEM_LIMIT}
+  #           cpus: ${VESPA_CPU_LIMIT}
+  #           memory: ${VESPA_MEM_LIMIT}
   #         reservations:
-  #           cpus: ${BACKGROUND_CPU_RESERVATION}
-  #           memory: ${BACKGROUND_MEM_RESERVATION}
+  #           cpus: ${VESPA_CPU_RESERVATION}
+  #           memory: ${VESPA_MEM_RESERVATION}
 
   #   inference_model_server:
   #     deploy:
