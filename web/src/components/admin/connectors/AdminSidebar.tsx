@@ -6,7 +6,6 @@ import { Logo } from "@/components/Logo";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
-import { BackIcon } from "@/components/icons/icons";
 import { WarningCircle, WarningDiamond } from "@phosphor-icons/react";
 import {
   Tooltip,
@@ -14,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { CgArrowsExpandUpLeft } from "react-icons/cg";
 
 interface Item {
   name: string | JSX.Element;
@@ -67,12 +67,10 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
         </div>
         <div className="flex w-full justify-center">
           <Link href="/chat">
-            <button className="text-sm flex items-center block w-52 py-2.5 flex px-2 text-left text-text-back-button bg-background-back-button hover:bg-opacity-80 cursor-pointer rounded">
-              <BackIcon className="my-auto" size={18} />
+            <button className="text-sm flex items-center block w-52 py-2.5 flex px-2 text-left hover:bg-opacity-80 cursor-pointer rounded">
+              <CgArrowsExpandUpLeft className="my-auto" size={18} />
               <p className="ml-1 break-words line-clamp-2 ellipsis leading-none">
-                Back to{" "}
-                {combinedSettings.enterpriseSettings?.application_name ||
-                  "Danswer"}
+                Exit Admin
               </p>
             </button>
           </Link>
