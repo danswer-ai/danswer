@@ -144,7 +144,7 @@ export function ChatFileDisplay({
   file: FileDescriptor;
   modal?: boolean;
   isSelected: boolean;
-  handleSelect: (fileId: string) => void;
+  handleSelect: (file: FileDescriptor) => void;
   tokenLimitReached: boolean;
   setPresentingDocument?: (document: DanswerDocument) => void;
 }) {
@@ -181,7 +181,7 @@ export function ChatFileDisplay({
           <div className="absolute top-2 right-2">
             <DocumentSelector
               isSelected={isSelected}
-              handleSelect={() => handleSelect(file.id)}
+              handleSelect={() => handleSelect(file)}
               isDisabled={tokenLimitReached && !isSelected}
             />
           </div>

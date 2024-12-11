@@ -23,6 +23,7 @@ interface ChatFiltersProps {
   selectedMessage: Message | null;
   selectedDocuments: DanswerDocument[] | null;
   toggleDocumentSelection: (document: DanswerDocument) => void;
+  toggleFileSelection: (file: FileDescriptor) => void;
   clearSelectedDocuments: () => void;
   selectedDocumentTokens: number;
   maxTokens: number;
@@ -35,7 +36,7 @@ interface ChatFiltersProps {
   showFilters: boolean;
   setPresentingDocument: Dispatch<SetStateAction<DanswerDocument | null>>;
   selectedFiles: FileDescriptor[];
-  toggledFiles?: FileDescriptor[];
+  toggledFiles: FileDescriptor[];
 }
 
 export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
@@ -47,6 +48,7 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
       selectedDocuments,
       filterManager,
       toggleDocumentSelection,
+      toggleFileSelection,
       clearSelectedDocuments,
       selectedDocumentTokens,
       maxTokens,
@@ -56,7 +58,7 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
       tags,
       setPresentingDocument,
       selectedFiles,
-      toggledFiles = [],
+      toggledFiles,
       documentSets,
       showFilters,
     },
@@ -79,7 +81,10 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
 
     const selectedDocumentIds = (
       selectedDocuments?.map((document) => document.document_id) || []
-    ).concat(toggledFiles.map((file) => file.id));
+    ).concat(toggledFiles?.map((file) => file.id) || []);
+
+    console.log("SELECTED DOCUMENT IDS", selectedDocumentIds);
+    console.log("toggled files", toggledFiles);
 
     const currentDocuments = selectedMessage?.documents || null;
     const dedupedDocuments = removeDuplicateDocs(currentDocuments || []);
@@ -174,7 +179,9 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
                           closeSidebar={closeSidebar}
                           modal={modal}
                           isSelected={selectedDocumentIds.includes(file.id)}
-                          handleSelect={(d: any) => toggleDocumentSelection(d)}
+                          handleSelect={(d: FileDescriptor) =>
+                            toggleFileSelection(d)
+                          }
                           tokenLimitReached={tokenLimitReached}
                           setPresentingDocument={setPresentingDocument}
                         />

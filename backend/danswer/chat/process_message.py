@@ -475,21 +475,27 @@ def stream_chat_message_objects(
         files = load_all_chat_files(
             history_msgs, new_msg_req.file_descriptors, db_session
         )
-        print("")
-        print("message")
-        print(new_msg_req.__dict__)
-        latest_query_files = [
-            file
-            for file in files
-            if file.file_id in [f["id"] for f in new_msg_req.file_descriptors]
-        ]
+
+        file_ids = {f["id"] for f in new_msg_req.file_descriptors}
+        latest_query_files = [file for file in files if file.file_id in file_ids]
+
+        latest_query_file_descriptors = list(
+            {
+                file.file_id: file.to_file_descriptor() for file in latest_query_files
+            }.values()
+        )
+
+        print("fiel ids")
+        print(file_ids)
+        print(len(file_ids))
+        print("FILE DESCRIPTORS")
+        print(latest_query_file_descriptors)
+        print(len(latest_query_file_descriptors))
 
         if user_message:
             attach_files_to_chat_message(
                 chat_message=user_message,
-                files=[
-                    new_file.to_file_descriptor() for new_file in latest_query_files
-                ],
+                files=latest_query_file_descriptors,
                 db_session=db_session,
                 commit=False,
             )

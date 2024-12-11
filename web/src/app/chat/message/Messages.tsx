@@ -166,7 +166,6 @@ function FileDisplay({
 }
 
 export const AIMessage = ({
-  setSelectedFiles = () => {},
   regenerate,
   overriddenModel,
   selectedMessageForDocDisplay,
@@ -198,7 +197,6 @@ export const AIMessage = ({
   setPresentingDocument,
   index,
 }: {
-  setSelectedFiles?: (files: FileDescriptor[]) => void;
   userFiles?: FileDescriptor[];
   index?: number;
   selectedMessageForDocDisplay?: number | null;

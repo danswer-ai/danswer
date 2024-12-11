@@ -1,5 +1,6 @@
 import { DanswerDocument } from "@/lib/search/interfaces";
 import { useState } from "react";
+import { FileDescriptor } from "./interfaces";
 
 interface DocumentInfo {
   num_chunks: number;
@@ -22,15 +23,28 @@ export function useDocumentSelection(): [
   (document: DanswerDocument) => void,
   () => void,
   number,
+  FileDescriptor[],
+  (file: FileDescriptor) => void,
 ] {
   const [selectedDocuments, setSelectedDocuments] = useState<DanswerDocument[]>(
     []
   );
   const [totalTokens, setTotalTokens] = useState(0);
+  const [selectedFiles, setSelectedFiles] = useState<FileDescriptor[]>([]);
   const selectedDocumentIds = selectedDocuments.map(
     (document) => document.document_id
   );
   const documentIdToLength = new Map<string, number>();
+  function toggleFileSelection(file: FileDescriptor) {
+    const isAdding = !selectedFiles.includes(file);
+    console.log("is adding", isAdding);
+    console.log("selected files", selectedFiles);
+    if (!isAdding) {
+      setSelectedFiles(selectedFiles.filter((f) => f.id !== file.id));
+    } else {
+      setSelectedFiles([...selectedFiles, file]);
+    }
+  }
 
   function toggleDocumentSelection(document: DanswerDocument) {
     const documentId = document.document_id;
@@ -57,6 +71,7 @@ export function useDocumentSelection(): [
 
   function clearDocuments() {
     setSelectedDocuments([]);
+    setSelectedFiles([]);
     setTotalTokens(0);
   }
 
@@ -65,5 +80,7 @@ export function useDocumentSelection(): [
     toggleDocumentSelection,
     clearDocuments,
     totalTokens,
+    selectedFiles,
+    toggleFileSelection,
   ];
 }

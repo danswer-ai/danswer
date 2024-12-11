@@ -478,7 +478,7 @@ export function ChatPage({
           latestMessageId !== undefined ? latestMessageId : null
         );
       }
-
+      clearSelectedDocuments();
       setChatSessionSharedStatus(chatSession.shared_status);
 
       // go to bottom. If initial load, then do a scroll,
@@ -790,7 +790,21 @@ export function ChatPage({
     toggleDocumentSelection,
     clearSelectedDocuments,
     selectedDocumentTokens,
+    selectedUploadedFiles,
+    toggleFileSelection,
   ] = useDocumentSelection();
+  console.log(
+    "the length of selected uploaded files",
+    selectedUploadedFiles.length
+  );
+
+  // selectedDocuments,
+  // toggleDocumentSelection,
+  // clearDocuments,
+  // totalTokens,
+  // selectedFiles,
+  // toggleFileSelection,
+
   const [selectedFiles, setSelectedFiles] = useState<FileDescriptor[]>([]);
 
   // just choose a conservative default, this will be updated in the
@@ -1206,17 +1220,12 @@ export function ChatPage({
         getLastSuccessfulMessageId(currMessageHistory) || systemMessage;
 
       const stack = new CurrentMessageFIFO();
-      console.log("currentMessageFiles", currentMessageFiles);
-      console.log("selectedFiles", selectedFiles);
-      console.log(
-        "currentMessageFiles || selectedFiles",
-        currentMessageFiles || selectedFiles
-      );
+
       updateCurrentMessageFIFO(stack, {
         signal: controller.signal, // Add this line
         message: currMessage,
         alternateAssistantId: currentAssistantId,
-        fileDescriptors: currentMessageFiles.concat(selectedFiles),
+        fileDescriptors: selectedUploadedFiles,
         parentMessageId:
           regenerationRequest?.parentMessage.messageId ||
           lastSuccessfulMessageId,
@@ -1998,7 +2007,8 @@ export function ChatPage({
         <div className="md:hidden">
           <Modal noPadding noScroll>
             <ChatFilters
-              // toggledFiles={toggledFiles}
+              toggleFileSelection={toggleFileSelection}
+              toggledFiles={selectedUploadedFiles}
               setPresentingDocument={setPresentingDocument}
               modal={true}
               filterManager={filterManager}
@@ -2155,7 +2165,9 @@ export function ChatPage({
             `}
             >
               <ChatFilters
+                toggledFiles={selectedUploadedFiles}
                 selectedFiles={selectedFiles}
+                toggleFileSelection={toggleFileSelection}
                 setPresentingDocument={setPresentingDocument}
                 modal={false}
                 filterManager={filterManager}
@@ -2457,7 +2469,6 @@ export function ChatPage({
                                     }
                                   >
                                     <AIMessage
-                                      setSelectedFiles={setSelectedFiles}
                                       userFiles={previousMessage?.files}
                                       setPresentingDocument={
                                         setPresentingDocument
