@@ -86,17 +86,20 @@ export const ConnectorTitle = ({
     );
   }
 
-  const mainSectionClassName = "text-blue-500 flex w-fit";
+  const mainSectionClassName = "text-blue-500 flex w-fit max-w-full";
   const mainDisplay = (
     <>
-      {sourceMetadata.icon({ size: 20 })}
-      <div className="ml-1 my-auto">
+      <div className="flex-shrink-0">
+        {sourceMetadata.icon({ size: 20 })}
+      </div>
+      <div className="ml-1 my-auto truncate">
         {ccPairName || sourceMetadata.displayName}
       </div>
     </>
   );
+
   return (
-    <div className="my-auto">
+    <div className="my-auto max-w-full">
       {isLink ? (
         <Link
           className={mainSectionClassName}
@@ -108,10 +111,10 @@ export const ConnectorTitle = ({
         <div className={mainSectionClassName}>{mainDisplay}</div>
       )}
       {showMetadata && additionalMetadata.size > 0 && (
-        <div className="text-xs mt-1">
+        <div className="text-xs mt-1 truncate">
           {Array.from(additionalMetadata.entries()).map(([key, value]) => {
             return (
-              <div key={key}>
+              <div key={key} className="truncate">
                 <i>{key}:</i> {value}
               </div>
             );

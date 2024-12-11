@@ -120,22 +120,45 @@ function Main({ ccPairId }: { ccPairId: number }) {
       <BackButton
         behaviorOverride={() => router.push("/admin/indexing/status")}
       />
-      <div className="flex items-center justify-between h-14">
-        <div className="my-auto">
-          <SourceIcon iconSize={32} sourceType={ccPair.connector.source} />
+      <div className="pb-1 flex mt-1">
+        <div className="mr-2 my-auto">
+          <SourceIcon iconSize={24} sourceType={ccPair.connector.source} />
         </div>
 
-        <div className="ml-1">
-          <EditableStringFieldDisplay
-            value={ccPair.name}
-            isEditable={ccPair.is_editable_for_current_user}
-            onUpdate={handleUpdateName}
-            scale={2.1}
-          />
-        </div>
+        {ccPair.is_editable_for_current_user && isEditing ? (
+          <div className="flex items-center">
+            <input
+              ref={inputRef}
+              type="text"
+              value={editableName}
+              onChange={handleNameChange}
+              className="text-3xl w-full ring ring-1 ring-neutral-800 text-emphasis font-bold"
+            />
+            <Button onClick={handleUpdateName}>
+              <CheckmarkIcon className="text-neutral-200" />
+            </Button>
+            <Button onClick={() => resetEditing()}>
+              <XIcon className="text-neutral-200" />
+            </Button>
+          </div>
+        ) : (
+          <h1
+            onClick={() =>
+              ccPair.is_editable_for_current_user && startEditing()
+            }
+            className={`group flex ${
+              ccPair.is_editable_for_current_user ? "cursor-pointer" : ""
+            } text-3xl text-emphasis gap-x-2 items-center font-bold`}
+          >
+            {ccPair.name}
+            {ccPair.is_editable_for_current_user && (
+              <EditIcon className="group-hover:visible invisible" />
+            )}
+          </h1>
+        )}
 
         {ccPair.is_editable_for_current_user && (
-          <div className="ml-auto flex gap-x-2">
+          <div className="ml-auto flex gap-x-2 flex-shrink-0">
             {!CONNECTOR_TYPES_THAT_CANT_REINDEX.includes(
               ccPair.connector.source
             ) && (
