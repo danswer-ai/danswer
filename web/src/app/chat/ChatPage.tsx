@@ -1079,10 +1079,17 @@ export function ChatPage({
     updateCanContinue(false, frozenSessionId);
 
     if (currentChatState() != "input") {
-      setPopup({
-        message: "Please wait for the response to complete",
-        type: "error",
-      });
+      if (currentChatState() == "uploading") {
+        setPopup({
+          message: "Please wait for the content to upload",
+          type: "error",
+        });
+      } else {
+        setPopup({
+          message: "Please wait for the response to complete",
+          type: "error",
+        });
+      }
 
       return;
     }
