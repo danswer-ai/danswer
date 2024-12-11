@@ -189,7 +189,8 @@ def extract_text_from_confluence_html(
 
 def validate_attachment_filetype(media_type: str) -> bool:
     if media_type.startswith("video/") or media_type == "application/gliffy+json":
-        return True
+        return False
+    return True
 
 
 def attachment_to_content(

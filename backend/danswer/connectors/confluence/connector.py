@@ -330,7 +330,8 @@ class ConfluenceConnector(LoadConnector, PollConnector, SlimConnector):
                 expand=restrictions_expand,
                 limit=_SLIM_DOC_BATCH_SIZE,
             ):
-                if not validate_attachment_filetype(attachment):
+                media_type = attachment["metadata"]["mediaType"]
+                if not validate_attachment_filetype(media_type):
                     continue
                 attachment_restrictions = attachment.get("restrictions")
                 if not attachment_restrictions:
