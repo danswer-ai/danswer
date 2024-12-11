@@ -1,9 +1,10 @@
-# Refer to the docs for more information: https://docs.onyx.app/resourcing
-# Some resonable defaults are provided below, but you can override them as needed.
-# Uncomment the services you want to override.
+# Docker service resource limits. Most are commented out by default.
+# 'background' service has preset limits due to variable resource needs.
+# Uncomment and set env vars for specific service limits.
+# See: https://docs.danswer.dev/deployment/resource-sizing for details.
 
 services:
-  index:
+  background:
     deploy:
       resources:
         limits:
@@ -32,7 +33,7 @@ services:
   #           cpus: ${API_SERVER_CPU_RESERVATION}
   #           memory: ${API_SERVER_MEM_RESERVATION}
 
-  #   background:
+  #   index:
   #     deploy:
   #       resources:
   #         limits:
