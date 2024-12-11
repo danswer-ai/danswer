@@ -1206,11 +1206,17 @@ export function ChatPage({
         getLastSuccessfulMessageId(currMessageHistory) || systemMessage;
 
       const stack = new CurrentMessageFIFO();
+      console.log("currentMessageFiles", currentMessageFiles);
+      console.log("selectedFiles", selectedFiles);
+      console.log(
+        "currentMessageFiles || selectedFiles",
+        currentMessageFiles || selectedFiles
+      );
       updateCurrentMessageFIFO(stack, {
         signal: controller.signal, // Add this line
         message: currMessage,
         alternateAssistantId: currentAssistantId,
-        fileDescriptors: currentMessageFiles,
+        fileDescriptors: currentMessageFiles.concat(selectedFiles),
         parentMessageId:
           regenerationRequest?.parentMessage.messageId ||
           lastSuccessfulMessageId,
@@ -1992,6 +1998,7 @@ export function ChatPage({
         <div className="md:hidden">
           <Modal noPadding noScroll>
             <ChatFilters
+              // toggledFiles={toggledFiles}
               setPresentingDocument={setPresentingDocument}
               modal={true}
               filterManager={filterManager}
@@ -2132,7 +2139,6 @@ export function ChatPage({
                 fixed
                 right-0
                 z-[1000]
-
                 bg-background
                 h-screen
                 transition-all
@@ -2341,6 +2347,11 @@ export function ChatPage({
                               const messageMap = currentMessageMap(
                                 completeMessageDetail
                               );
+                              const files = message.files.filter(
+                                (file) =>
+                                  file.type != "document" &&
+                                  file.type != "plain_text"
+                              );
                               const messageReactComponentKey = `${i}-${currentSessionId()}`;
                               const parentMessage = message.parentMessageId
                                 ? messageMap.get(message.parentMessageId)
@@ -2363,7 +2374,7 @@ export function ChatPage({
                                     <HumanMessage
                                       stopGenerating={stopGenerating}
                                       content={message.message}
-                                      files={message.files}
+                                      files={files}
                                       messageId={message.messageId}
                                       onEdit={(editedContent) => {
                                         const parentMessageId =
