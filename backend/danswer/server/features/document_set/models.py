@@ -44,7 +44,7 @@ class CheckDocSetPublicResponse(BaseModel):
 class DocumentSet(BaseModel):
     id: int
     name: str
-    description: str
+    description: str | None
     cc_pair_descriptors: list[ConnectorCredentialPairDescriptor]
     is_up_to_date: bool
     is_public: bool
