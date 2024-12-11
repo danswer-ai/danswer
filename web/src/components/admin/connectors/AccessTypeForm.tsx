@@ -49,7 +49,7 @@ export function AccessTypeForm({
       name: "Private",
       value: "private",
       description:
-        "Only users who have expliticly been given access to this connector (through the User Groups page) can access the documents pulled in by this connector",
+        "Only users who have explicitly been given access to this connector (through the User Groups page) can access the documents pulled in by this connector",
     },
   ];
 

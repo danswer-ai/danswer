@@ -38,6 +38,7 @@ import {
   XenforoIcon,
   FreshdeskIcon,
   FirefliesIcon,
+  EgnyteIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "./types";
 import {
@@ -303,6 +304,12 @@ export const SOURCE_METADATA_MAP: SourceMap = {
     icon: GlobeIcon,
     displayName: "Not Applicable",
     category: SourceCategory.Other,
+  },
+  egnyte: {
+    icon: EgnyteIcon,
+    displayName: "Egnyte",
+    category: SourceCategory.Storage,
+    docs: "https://docs.danswer.dev/connectors/egnyte",
   },
 } as SourceMap;
 
