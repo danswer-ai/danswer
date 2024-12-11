@@ -257,7 +257,7 @@ function Main({ ccPairId }: { ccPairId: number }) {
           <SourceIcon iconSize={32} sourceType={ccPair.connector.source} />
         </div>
 
-        <div className="ml-1">
+        <div className="ml-1 overflow-hidden text-ellipsis whitespace-nowrap flex-1 mr-4">
           <EditableStringFieldDisplay
             value={ccPair.name}
             isEditable={ccPair.is_editable_for_current_user}

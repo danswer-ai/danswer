@@ -22,12 +22,16 @@ class CitationProcessor:
         self,
         context_docs: list[LlmDoc],
         doc_id_to_rank_map: DocumentIdOrderMapping,
+        display_doc_order_dict: dict[str, int],
         stop_stream: str | None = STOP_STREAM_PAT,
     ):
         self.context_docs = context_docs
         self.doc_id_to_rank_map = doc_id_to_rank_map
         self.stop_stream = stop_stream
         self.order_mapping = doc_id_to_rank_map.order_mapping
+        self.display_doc_order_dict = (
+            display_doc_order_dict  # original order of docs to displayed to user
+        )
         self.llm_out = ""
         self.max_citation_num = len(context_docs)
         self.citation_order: list[int] = []
@@ -98,6 +102,18 @@ class CitationProcessor:
                         self.citation_order.index(real_citation_num) + 1
                     )
 
+                    # get the value that was displayed to user, should always
+                    # be in the display_doc_order_dict. But check anyways
+                    if context_llm_doc.document_id in self.display_doc_order_dict:
+                        displayed_citation_num = self.display_doc_order_dict[
+                            context_llm_doc.document_id
+                        ]
+                    else:
+                        displayed_citation_num = real_citation_num
+                        logger.warning(
+                            f"Doc {context_llm_doc.document_id} not in display_doc_order_dict. Used LLM citation number instead."
+                        )
+
                     # Skip consecutive citations of the same work
                     if target_citation_num in self.current_citations:
                         start, end = citation.span()
@@ -118,6 +134,7 @@ class CitationProcessor:
                                 doc_id = int(match.group(1))
                                 context_llm_doc = self.context_docs[doc_id - 1]
                                 yield CitationInfo(
+                                    # stay with the original for now (order of LLM cites)
                                     citation_num=target_citation_num,
                                     document_id=context_llm_doc.document_id,
                                 )
@@ -139,6 +156,7 @@ class CitationProcessor:
                     if target_citation_num not in self.cited_inds:
                         self.cited_inds.add(target_citation_num)
                         yield CitationInfo(
+                            # stay with the original for now (order of LLM cites)
                             citation_num=target_citation_num,
                             document_id=context_llm_doc.document_id,
                         )
@@ -148,7 +166,8 @@ class CitationProcessor:
                         prev_length = len(self.curr_segment)
                         self.curr_segment = (
                             self.curr_segment[: start + length_to_add]
-                            + f"[[{target_citation_num}]]({link})"
+                            + f"[[{displayed_citation_num}]]({link})"  # use the value that was displayed to user
+                            # + f"[[{target_citation_num}]]({link})"
                             + self.curr_segment[end + length_to_add :]
                         )
                         length_to_add += len(self.curr_segment) - prev_length
@@ -156,7 +175,8 @@ class CitationProcessor:
                         prev_length = len(self.curr_segment)
                         self.curr_segment = (
                             self.curr_segment[: start + length_to_add]
-                            + f"[[{target_citation_num}]]()"
+                            + f"[[{displayed_citation_num}]]()"  # use the value that was displayed to user
+                            # + f"[[{target_citation_num}]]()"
                             + self.curr_segment[end + length_to_add :]
                         )
                         length_to_add += len(self.curr_segment) - prev_length
