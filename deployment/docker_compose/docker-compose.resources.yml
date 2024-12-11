@@ -10,18 +10,18 @@ services:
           cpus: ${VESPA_CPU_LIMIT:-4}
           memory: ${VESPA_MEM_LIMIT:-4g}
   #       reservations:
-  #         cpus: ${VESPA_CPU_RESERVATION:-4.0}
-  #         memory: ${VESPA_MEM_RESERVATION:-8g}
+  #         cpus: ${VESPA_CPU_RESERVATION}
+  #         memory: ${VESPA_MEM_RESERVATION}
 
   # nginx:
   #   deploy:
   #     resources:
   #       limits:
-  #         cpus: ${NGINX_CPU_LIMIT:-0.25}
-  #         memory: ${NGINX_MEM_LIMIT:-128m}
+  #         cpus: ${NGINX_CPU_LIMIT}
+  #         memory: ${NGINX_MEM_LIMIT}
   #       reservations:
-  #         cpus: ${NGINX_CPU_RESERVATION:-0.1}
-  #         memory: ${NGINX_MEM_RESERVATION:-64m}
+  #         cpus: ${NGINX_CPU_RESERVATION}
+  #         memory: ${NGINX_MEM_RESERVATION}
   # api_server:
   #     deploy:
   #       resources:
