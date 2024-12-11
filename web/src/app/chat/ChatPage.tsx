@@ -1557,7 +1557,7 @@ export function ChatPage({
     }
   };
 
-  const handleImageUpload = (acceptedFiles: File[]) => {
+  const handleImageUpload = async (acceptedFiles: File[]) => {
     const [_, llmModel] = getFinalLLM(
       llmProviders,
       liveAssistant,
@@ -1597,8 +1597,9 @@ export function ChatPage({
         (file) => !tempFileDescriptors.some((newFile) => newFile.id === file.id)
       );
     };
+    updateChatState("uploading", currentSessionId());
 
-    uploadFilesForChat(acceptedFiles).then(([files, error]) => {
+    await uploadFilesForChat(acceptedFiles).then(([files, error]) => {
       if (error) {
         setCurrentMessageFiles((prev) => removeTempFiles(prev));
         setPopup({
@@ -1609,6 +1610,7 @@ export function ChatPage({
         setCurrentMessageFiles((prev) => [...removeTempFiles(prev), ...files]);
       }
     });
+    updateChatState("input", currentSessionId());
   };
   const [showHistorySidebar, setShowHistorySidebar] = useState(false); // State to track if sidebar is open
 
