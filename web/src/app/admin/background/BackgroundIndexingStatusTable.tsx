@@ -11,18 +11,30 @@ import { getTimeElapsedString } from "@/lib/dateUtils";
 import { getSourceDisplayName } from "@/lib/sources";
 import { ConnectorBackgroundIndexingStatus, ValidSources } from "@/lib/types";
 import React from "react";
+import { useRouter } from "next/navigation";
 
-function SummaryRow({ status }: { status: ConnectorBackgroundIndexingStatus }) {
+function IndexingAttemptRow({
+  status,
+}: {
+  status: ConnectorBackgroundIndexingStatus;
+}) {
   let elapsedString = "Waiting to start...";
   if (status.started) {
     const parsedDate = new Date(status.started);
     elapsedString = getTimeElapsedString(parsedDate);
   }
 
+  const router = useRouter();
+
   const source = status.source as ValidSources;
 
   return (
-    <TableRow className="border-border bg-white py-4 rounded-sm !border cursor-pointer">
+    <TableRow
+      className="border-border bg-white py-4 rounded-sm !border cursor-pointer"
+      onClick={() => {
+        router.push(`/admin/connector/${status.cc_pair_id}`);
+      }}
+    >
       <TableCell>
         <div className="text-xl font-semibold">{status.name}</div>
       </TableCell>
@@ -41,15 +53,12 @@ function SummaryRow({ status }: { status: ConnectorBackgroundIndexingStatus }) {
       <TableCell>
         <div className="text-xl font-semibold">{status.index_attempt_id}</div>
       </TableCell>
-
       <TableCell>
         <div className="text-xl font-semibold">{status.progress}</div>
       </TableCell>
-
       <TableCell>
         <div className="text-xl font-semibold">{elapsedString}</div>
       </TableCell>
-
       <TableCell />
     </TableRow>
   );
@@ -76,7 +85,7 @@ export function BackgroundIndexingStatusTable({
       <TableBody>
         {indexingStatuses.map((status, index) => (
           <React.Fragment key={index}>
-            <SummaryRow status={status} />
+            <IndexingAttemptRow status={status} />
           </React.Fragment>
         ))}
       </TableBody>

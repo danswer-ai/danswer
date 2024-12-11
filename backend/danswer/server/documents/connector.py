@@ -648,7 +648,7 @@ def get_connector_indexing_status(
 
 @router.get("/admin/background/indexing")
 def get_background_indexing(
-    user: User = Depends(current_curator_or_admin_user),
+    user: User = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
     tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> list[ConnectorBackgroundIndexingStatus]:
