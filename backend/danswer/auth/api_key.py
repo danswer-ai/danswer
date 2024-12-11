@@ -1,3 +1,4 @@
+import hashlib
 import secrets
 import uuid
 from urllib.parse import quote
@@ -74,7 +75,7 @@ def hash_api_key(api_key: str) -> str:
     # NOTE: no salt is needed, as the API key is randomly generated
     # and overlaps are impossible
     if api_key.startswith(_API_KEY_PREFIX):
-        return sha256_crypt.hash(api_key, salt="", rounds=API_KEY_HASH_ROUNDS)
+        return hashlib.sha256(api_key.encode("utf-8")).hexdigest()
     elif api_key.startswith(_DEPRECATED_API_KEY_PREFIX):
         return _deprecated_hash_api_key(api_key)
     else:
