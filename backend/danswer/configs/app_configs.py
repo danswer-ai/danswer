@@ -348,6 +348,12 @@ GITLAB_CONNECTOR_INCLUDE_CODE_FILES = (
     os.environ.get("GITLAB_CONNECTOR_INCLUDE_CODE_FILES", "").lower() == "true"
 )
 
+# Egnyte specific configs
+EGNYTE_LOCALHOST_OVERRIDE = os.getenv("EGNYTE_LOCALHOST_OVERRIDE")
+EGNYTE_BASE_DOMAIN = os.getenv("EGNYTE_DOMAIN")
+EGNYTE_CLIENT_ID = os.getenv("EGNYTE_CLIENT_ID")
+EGNYTE_CLIENT_SECRET = os.getenv("EGNYTE_CLIENT_SECRET")
+
 DASK_JOB_CLIENT_ENABLED = (
     os.environ.get("DASK_JOB_CLIENT_ENABLED", "").lower() == "true"
 )

@@ -70,7 +70,7 @@ def get_file_ext(file_path_or_name: str | Path) -> str:
     return extension
 
 
-def check_file_ext_is_valid(ext: str) -> bool:
+def is_valid_file_ext(ext: str) -> bool:
     return ext in VALID_FILE_EXTENSIONS
 
 
@@ -364,7 +364,7 @@ def extract_file_text(
             elif file_name is not None:
                 final_extension = get_file_ext(file_name)
 
-            if check_file_ext_is_valid(final_extension):
+            if is_valid_file_ext(final_extension):
                 return extension_to_function.get(final_extension, file_io_to_text)(file)
 
         # Either the file somehow has no name or the extension is not one that we recognize

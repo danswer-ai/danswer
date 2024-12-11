@@ -49,6 +49,7 @@ import { useRouter } from "next/navigation";
 import CardSection from "@/components/admin/CardSection";
 import { prepareOAuthAuthorizationRequest } from "@/lib/oauth_utils";
 import { EE_ENABLED, NEXT_PUBLIC_CLOUD_ENABLED } from "@/lib/constants";
+import { getConnectorOauthRedirectUrl } from "@/lib/connectors/oauth";
 export interface AdvancedConfig {
   refreshFreq: number;
   pruneFreq: number;
@@ -442,11 +443,19 @@ export default function AddConnector({
                         {/* Button to pop up a form to manually enter credentials */}
                         <button
                           className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded mr-4"
-                          onClick={() =>
-                            setCreateConnectorToggle(
-                              (createConnectorToggle) => !createConnectorToggle
-                            )
-                          }
+                          onClick={async () => {
+                            const redirectUrl =
+                              await getConnectorOauthRedirectUrl(connector);
+                            // if redirect is supported, just use it
+                            if (redirectUrl) {
+                              window.location.href = redirectUrl;
+                            } else {
+                              setCreateConnectorToggle(
+                                (createConnectorToggle) =>
+                                  !createConnectorToggle
+                              );
+                            }
+                          }}
                         >
                           Create New
                         </button>
