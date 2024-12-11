@@ -8,7 +8,7 @@ services:
       resources:
         limits:
           cpus: ${VESPA_CPU_LIMIT:-4}
-          memory: ${VESPA_MEM_LIMIT:-2g}
+          memory: ${VESPA_MEM_LIMIT:-4g}
   #       reservations:
   #         cpus: ${VESPA_CPU_RESERVATION:-4.0}
   #         memory: ${VESPA_MEM_RESERVATION:-8g}
