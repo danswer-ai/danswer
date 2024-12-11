@@ -171,7 +171,9 @@ def thread_to_doc(
         else first_message
     )
 
-    doc_sem_id = f"{initial_sender_name} in #{channel['name']}: {snippet}"
+    doc_sem_id = f"{initial_sender_name} in #{channel['name']}: {snippet}".replace(
+        "\n", " "
+    )
 
     return Document(
         id=f"{channel_id}__{thread[0]['ts']}",

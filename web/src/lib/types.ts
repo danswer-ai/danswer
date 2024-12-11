@@ -319,6 +319,7 @@ export enum ValidSources {
   IngestionApi = "ingestion_api",
   Freshdesk = "freshdesk",
   Fireflies = "fireflies",
+  Egnyte = "egnyte",
 }
 
 export const validAutoSyncSources = [

@@ -159,9 +159,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     )
 
     prompts: Mapped[list["Prompt"]] = relationship("Prompt", back_populates="user")
-    input_prompts: Mapped[list["InputPrompt"]] = relationship(
-        "InputPrompt", back_populates="user"
-    )
 
     # Personas owned by this user
     personas: Mapped[list["Persona"]] = relationship("Persona", back_populates="user")
@@ -175,31 +172,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         "ConnectorCredentialPair",
         back_populates="creator",
         primaryjoin="User.id == foreign(ConnectorCredentialPair.creator_id)",
-    )
-
-
-class InputPrompt(Base):
-    __tablename__ = "inputprompt"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    prompt: Mapped[str] = mapped_column(String)
-    content: Mapped[str] = mapped_column(String)
-    active: Mapped[bool] = mapped_column(Boolean)
-    user: Mapped[User | None] = relationship("User", back_populates="input_prompts")
-    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
-    )
-
-
-class InputPrompt__User(Base):
-    __tablename__ = "inputprompt__user"
-
-    input_prompt_id: Mapped[int] = mapped_column(
-        ForeignKey("inputprompt.id"), primary_key=True
-    )
-    user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("inputprompt.id"), primary_key=True
     )
 
 
@@ -595,6 +567,25 @@ class Connector(Base):
     documents_by_connector: Mapped[
         list["DocumentByConnectorCredentialPair"]
     ] = relationship("DocumentByConnectorCredentialPair", back_populates="connector")
+
+    # synchronize this validation logic with RefreshFrequencySchema etc on front end
+    # until we have a centralized validation schema
+
+    # TODO(rkuo): experiment with SQLAlchemy validators rather than manual checks
+    # https://docs.sqlalchemy.org/en/20/orm/mapped_attributes.html
+    def validate_refresh_freq(self) -> None:
+        if self.refresh_freq is not None:
+            if self.refresh_freq < 60:
+                raise ValueError(
+                    "refresh_freq must be greater than or equal to 60 seconds."
+                )
+
+    def validate_prune_freq(self) -> None:
+        if self.prune_freq is not None:
+            if self.prune_freq < 86400:
+                raise ValueError(
+                    "prune_freq must be greater than or equal to 86400 seconds."
+                )
 
 
 class Credential(Base):

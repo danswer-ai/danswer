@@ -101,7 +101,7 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
             flex-col relative
             h-screen
             transition-transform 
-            pt-2`}
+            `}
         >
           <LogoType
             showArrow={true}
@@ -161,15 +161,6 @@ export const HistorySidebar = forwardRef<HTMLDivElement, HistorySidebarProps>(
                 <AssistantsIconSkeleton className="h-4 w-4 my-auto text-text-history-sidebar-button" />
                 <p className="my-auto flex items-center text-sm">
                   Manage Assistants
-                </p>
-              </Link>
-              <Link
-                href="/prompts"
-                className="w-full p-2 bg-white border-border border rounded items-center hover:bg-background-history-sidebar-button-hover cursor-pointer transition-all duration-150 flex gap-x-2"
-              >
-                <ClosedBookIcon className="h-4 w-4 my-auto text-text-history-sidebar-button" />
-                <p className="my-auto flex items-center text-sm ">
-                  Manage Prompts
                 </p>
               </Link>
             </div>

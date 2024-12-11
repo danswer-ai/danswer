@@ -15,6 +15,7 @@ from danswer.connectors.danswer_jira.connector import JiraConnector
 from danswer.connectors.discourse.connector import DiscourseConnector
 from danswer.connectors.document360.connector import Document360Connector
 from danswer.connectors.dropbox.connector import DropboxConnector
+from danswer.connectors.egnyte.connector import EgnyteConnector
 from danswer.connectors.file.connector import LocalFileConnector
 from danswer.connectors.fireflies.connector import FirefliesConnector
 from danswer.connectors.freshdesk.connector import FreshdeskConnector
@@ -103,6 +104,7 @@ def identify_connector_class(
         DocumentSource.XENFORO: XenforoConnector,
         DocumentSource.FRESHDESK: FreshdeskConnector,
         DocumentSource.FIREFLIES: FirefliesConnector,
+        DocumentSource.EGNYTE: EgnyteConnector,
     }
     connector_by_source = connector_map.get(source, {})
 

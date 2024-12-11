@@ -353,13 +353,9 @@ export function CCPairIndexingStatusTable({
     );
   };
   const toggleSources = () => {
-    const currentToggledCount =
-      Object.values(connectorsToggled).filter(Boolean).length;
-    const shouldToggleOn = currentToggledCount < sortedSources.length / 2;
-
     const connectors = sortedSources.reduce(
       (acc, source) => {
-        acc[source] = shouldToggleOn;
+        acc[source] = shouldExpand;
         return acc;
       },
       {} as Record<ValidSources, boolean>
@@ -368,6 +364,7 @@ export function CCPairIndexingStatusTable({
     setConnectorsToggled(connectors);
     Cookies.set(TOGGLED_CONNECTORS_COOKIE_NAME, JSON.stringify(connectors));
   };
+
   const shouldExpand =
     Object.values(connectorsToggled).filter(Boolean).length <
     sortedSources.length;

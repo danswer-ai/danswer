@@ -53,6 +53,8 @@ import {
   NEXT_PUBLIC_CLOUD_ENABLED,
   TEST_ENV,
 } from "@/lib/constants";
+import TemporaryLoadingModal from "@/components/TemporaryLoadingModal";
+import { getConnectorOauthRedirectUrl } from "@/lib/connectors/oauth";
 export interface AdvancedConfig {
   refreshFreq: number;
   pruneFreq: number;
@@ -164,6 +166,7 @@ export default function AddConnector({
   // Form context and popup management
   const { setFormStep, setAllowCreate, formStep } = useFormContext();
   const { popup, setPopup } = usePopup();
+  const [uploading, setUploading] = useState(false);
 
   // Hooks for Google Drive and Gmail credentials
   const { liveGDriveCredential } = useGoogleDriveCredentials(connector);
@@ -341,16 +344,24 @@ export default function AddConnector({
         }
         // File-specific handling
         if (connector == "file") {
-          const response = await submitFiles(
-            selectedFiles,
-            setPopup,
-            name,
-            access_type,
-            groups
-          );
-          if (response) {
-            onSuccess();
+          setUploading(true);
+          try {
+            const response = await submitFiles(
+              selectedFiles,
+              setPopup,
+              name,
+              access_type,
+              groups
+            );
+            if (response) {
+              onSuccess();
+            }
+          } catch (error) {
+            setPopup({ message: "Error uploading files", type: "error" });
+          } finally {
+            setUploading(false);
           }
+
           return;
         }
 
@@ -412,9 +423,9 @@ export default function AddConnector({
           <div className="mx-auto mb-8 w-full">
             {popup}
 
-            <div className="mb-4">
-              <HealthCheckBanner />
-            </div>
+            {uploading && (
+              <TemporaryLoadingModal content="Uploading files..." />
+            )}
 
             <AdminPageTitle
               includeDivider={false}
@@ -444,11 +455,19 @@ export default function AddConnector({
                         {/* Button to pop up a form to manually enter credentials */}
                         <button
                           className="mt-6 text-sm bg-background-900 px-2 py-1.5 flex text-text-200 flex-none rounded mr-4"
-                          onClick={() =>
-                            setCreateConnectorToggle(
-                              (createConnectorToggle) => !createConnectorToggle
-                            )
-                          }
+                          onClick={async () => {
+                            const redirectUrl =
+                              await getConnectorOauthRedirectUrl(connector);
+                            // if redirect is supported, just use it
+                            if (redirectUrl) {
+                              window.location.href = redirectUrl;
+                            } else {
+                              setCreateConnectorToggle(
+                                (createConnectorToggle) =>
+                                  !createConnectorToggle
+                              );
+                            }
+                          }}
                         >
                           Create New
                         </button>
