@@ -1,5 +1,5 @@
 # Docker service resource limits. Most are commented out by default.
-# 'background' service has preset limits due to variable resource needs.
+# 'background' service has preset (override-able) limits due to variable resource needs.
 # Uncomment and set env vars for specific service limits.
 # See: https://docs.danswer.dev/deployment/resource-sizing for details.
 
