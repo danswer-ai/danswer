@@ -75,7 +75,7 @@ export default function FunctionalHeader({
   };
   return (
     <div className="left-0 sticky top-0 z-20 w-full relative flex">
-      <div className="items-end flex  cursor-pointer text-text-700 relative flex w-full">
+      <div className="items-end flex mt-2 cursor-pointer text-text-700 relative flex w-full">
         <LogoType
           assistantId={currentChatSession?.persona_id}
           page={page}
@@ -110,13 +110,13 @@ export default function FunctionalHeader({
             />
           </div>
 
-          <div className="absolute right-0 top-2 h-8 items-end flex gap-x-2">
+          <div className="absolute right-0 top-0 flex gap-x-2">
             {setSharingModalVisible && (
               <div
                 onClick={() => setSharingModalVisible(true)}
-                className="mobile:hidden p-1 my-auto rounded cursor-pointer hover:bg-hover-light"
+                className="mobile:hidden my-auto rounded cursor-pointer hover:bg-hover-light"
               >
-                <FiShare2 size="16" />
+                <FiShare2 size="18" />
               </div>
             )}
             <div className="mobile:hidden flex my-auto">
@@ -139,20 +139,6 @@ export default function FunctionalHeader({
                 <NewChatIcon size={20} />
               </div>
             </Link>
-            <div
-              style={{ transition: "width 0.30s ease-out" }}
-              className={`
-              hidden
-              md:flex 
-              mx-auto
-              overflow-y-hidden 
-              transition-all 
-              duration-300 
-              ease-in-out
-              h-full
-              ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
-              `}
-            />
           </div>
           <div
             style={{ transition: "width 0.30s ease-out" }}
