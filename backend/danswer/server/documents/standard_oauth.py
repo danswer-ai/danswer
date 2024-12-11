@@ -6,7 +6,6 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Query
-from fastapi import Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -58,7 +57,6 @@ class AuthorizeResponse(BaseModel):
 
 @router.get("/authorize/{source}")
 def oauth_authorize(
-    request: Request,
     source: DocumentSource,
     desired_return_url: Annotated[str | None, Query()] = None,
     _: User = Depends(current_user),
@@ -71,13 +69,11 @@ def oauth_authorize(
         raise HTTPException(status_code=400, detail=f"Unknown OAuth source: {source}")
 
     connector_cls = oauth_connectors[source]
-    base_url = str(request.base_url)
-    if "127.0.0.1" in base_url:
-        base_url = base_url.replace("127.0.0.1", "localhost")
+    base_url = WEB_DOMAIN
 
     # store state in redis
     if not desired_return_url:
-        desired_return_url = f"{WEB_DOMAIN}/admin/connectors/{source}?step=0"
+        desired_return_url = f"{base_url}/admin/connectors/{source}?step=0"
     redis_client = get_redis_client(tenant_id=tenant_id)
     state = str(uuid.uuid4())
     redis_client.set(
