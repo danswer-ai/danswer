@@ -206,7 +206,9 @@ class Answer:
         # + figure out what the next LLM call should be
         tool_call_handler = ToolResponseHandler(current_llm_call.tools)
 
-        search_result, displayed_search_results_map = SearchTool.get_search_result(current_llm_call) or ([], {})
+        search_result, displayed_search_results_map = SearchTool.get_search_result(
+            current_llm_call
+        ) or ([], {})
 
         # Quotes are no longer supported
         # answer_handler: AnswerResponseHandler

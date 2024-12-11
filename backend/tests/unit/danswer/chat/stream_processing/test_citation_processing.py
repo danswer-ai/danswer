@@ -58,6 +58,15 @@ mock_doc_mapping = {
     "doc_5": 6,
 }
 
+mock_doc_mapping_rerank = {
+    "doc_0": 2,
+    "doc_1": 1,
+    "doc_2": 4,
+    "doc_3": 3,
+    "doc_4": 5,
+    "doc_5": 6,
+}
+
 
 @pytest.fixture
 def mock_data() -> tuple[list[LlmDoc], dict[str, int]]:
@@ -72,8 +81,10 @@ def process_text(
     processor = CitationProcessor(
         context_docs=mock_docs,
         doc_id_to_rank_map=mapping,
+        display_doc_order_dict=mock_doc_id_to_rank_map,
         stop_stream=None,
     )
+
     result: list[DanswerAnswerPiece | CitationInfo] = []
     for token in tokens:
         result.extend(processor.process_token(token))
@@ -86,6 +97,7 @@ def process_text(
             final_answer_text += piece.answer_piece or ""
         elif isinstance(piece, CitationInfo):
             citations.append(piece)
+
     return final_answer_text, citations
 
 

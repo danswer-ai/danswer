@@ -47,6 +47,8 @@ from danswer.tools.tool_implementations.search_like_tool_utils import (
 )
 from danswer.tools.tool_implementations.search_like_tool_utils import (
     FINAL_CONTEXT_DOCUMENTS_ID,
+)
+from danswer.tools.tool_implementations.search_like_tool_utils import (
     ORIGINAL_CONTEXT_DOCUMENTS_ID,
 )
 from danswer.utils.logger import setup_logger
@@ -392,15 +394,18 @@ class SearchTool(Tool):
     """Other utility functions"""
 
     @classmethod
-    def get_search_result(cls, llm_call: LLMCall) -> tuple[list[LlmDoc], dict[str, int]] | None:
+    def get_search_result(
+        cls, llm_call: LLMCall
+    ) -> tuple[list[LlmDoc], dict[str, int]] | None:
         """
         Returns the final search results and a map of docs to their original search rank (which is what is displayed to user)
         """
         if not llm_call.tool_call_info:
             return None
 
-        final_search_results = None
-        
+        final_search_results = []
+        doc_id_to_original_search_rank_map = {}
+
         for yield_item in llm_call.tool_call_info:
             if (
                 isinstance(yield_item, ToolResponse)
@@ -413,10 +418,11 @@ class SearchTool(Tool):
             ):
                 search_contexts = yield_item.response.contexts
                 original_doc_search_rank = 1
-                doc_id_to_original_search_rank_map = {}
                 for idx, doc in enumerate(search_contexts):
                     if doc.document_id not in doc_id_to_original_search_rank_map:
-                        doc_id_to_original_search_rank_map[doc.document_id] = original_doc_search_rank
+                        doc_id_to_original_search_rank_map[
+                            doc.document_id
+                        ] = original_doc_search_rank
                         original_doc_search_rank += 1
-                
+
         return final_search_results, doc_id_to_original_search_rank_map

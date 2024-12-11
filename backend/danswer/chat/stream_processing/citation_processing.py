@@ -29,7 +29,9 @@ class CitationProcessor:
         self.doc_id_to_rank_map = doc_id_to_rank_map
         self.stop_stream = stop_stream
         self.order_mapping = doc_id_to_rank_map.order_mapping
-        self.display_doc_order_dict = display_doc_order_dict     # original order of docs to displayed to user
+        self.display_doc_order_dict = (
+            display_doc_order_dict  # original order of docs to displayed to user
+        )
         self.llm_out = ""
         self.max_citation_num = len(context_docs)
         self.citation_order: list[int] = []
@@ -101,7 +103,9 @@ class CitationProcessor:
                     )
 
                     # get the value that was displayed to user
-                    displayed_citation_num = self.display_doc_order_dict[context_llm_doc.document_id]
+                    displayed_citation_num = self.display_doc_order_dict[
+                        context_llm_doc.document_id
+                    ]
 
                     # Skip consecutive citations of the same work
                     if target_citation_num in self.current_citations:
@@ -123,7 +127,8 @@ class CitationProcessor:
                                 doc_id = int(match.group(1))
                                 context_llm_doc = self.context_docs[doc_id - 1]
                                 yield CitationInfo(
-                                    citation_num=target_citation_num,               # stay with the original for now (order of LLM cites)
+                                    # stay with the original for now (order of LLM cites)
+                                    citation_num=target_citation_num,
                                     document_id=context_llm_doc.document_id,
                                 )
                             except Exception as e:
@@ -144,7 +149,8 @@ class CitationProcessor:
                     if target_citation_num not in self.cited_inds:
                         self.cited_inds.add(target_citation_num)
                         yield CitationInfo(
-                            citation_num=target_citation_num,         # stay with the original for now (order of LLM cites)
+                            # stay with the original for now (order of LLM cites)
+                            citation_num=target_citation_num,
                             document_id=context_llm_doc.document_id,
                         )
 
@@ -153,8 +159,8 @@ class CitationProcessor:
                         prev_length = len(self.curr_segment)
                         self.curr_segment = (
                             self.curr_segment[: start + length_to_add]
-                            + f"[[{displayed_citation_num}]]({link})" # use the value that was displayed to user
-                            #+ f"[[{target_citation_num}]]({link})"
+                            + f"[[{displayed_citation_num}]]({link})"  # use the value that was displayed to user
+                            # + f"[[{target_citation_num}]]({link})"
                             + self.curr_segment[end + length_to_add :]
                         )
                         length_to_add += len(self.curr_segment) - prev_length
@@ -163,7 +169,7 @@ class CitationProcessor:
                         self.curr_segment = (
                             self.curr_segment[: start + length_to_add]
                             + f"[[{displayed_citation_num}]]()"  # use the value that was displayed to user
-                            #+ f"[[{target_citation_num}]]()"  
+                            # + f"[[{target_citation_num}]]()"
                             + self.curr_segment[end + length_to_add :]
                         )
                         length_to_add += len(self.curr_segment) - prev_length
