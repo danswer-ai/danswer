@@ -375,6 +375,6 @@ class Chunker:
             final_chunks.extend(chunks)
 
             if self.callback:
-                self.callback.progress("Chunker.chunk", len(chunks))
+                self.callback.progress("Chunker.chunk", 0)
 
         return final_chunks

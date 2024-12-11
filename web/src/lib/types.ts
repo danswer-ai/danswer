@@ -2,6 +2,7 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { Credential } from "./connectors/credentials";
 import { Connector } from "./connectors/connectors";
 import { ConnectorCredentialPairStatus } from "@/app/admin/connector/[ccPairId]/types";
+import dayjs from "dayjs";
 
 interface UserPreferences {
   chosen_assistants: number[] | null;
@@ -133,6 +134,17 @@ export interface ConnectorIndexingStatus<
   deletion_attempt: DeletionAttemptSnapshot | null;
   is_deletable: boolean;
   in_progress: boolean;
+}
+
+// slimmer set of data used for the background indexing monitoring page
+export interface ConnectorBackgroundIndexingStatus {
+  name: string;
+  source: string;
+  cc_pair_id: number;
+  search_settings_id: number;
+  index_attempt_id: number | null;
+  started: string | null;
+  progress: number | null;
 }
 
 export interface OAuthPrepareAuthorizationResponse {

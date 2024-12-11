@@ -65,6 +65,7 @@ from danswer.db.connector import update_connector
 from danswer.db.connector_credential_pair import add_credential_to_connector
 from danswer.db.connector_credential_pair import get_cc_pair_groups_for_ids
 from danswer.db.connector_credential_pair import get_connector_credential_pair
+from danswer.db.connector_credential_pair import get_connector_credential_pair_from_id
 from danswer.db.connector_credential_pair import get_connector_credential_pairs
 from danswer.db.credentials import cleanup_gmail_credentials
 from danswer.db.credentials import cleanup_google_drive_credentials
@@ -90,8 +91,11 @@ from danswer.file_processing.extract_file_text import convert_docx_to_txt
 from danswer.file_store.file_store import get_default_file_store
 from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.redis.redis_connector import RedisConnector
+from danswer.redis.redis_connector_index import RedisConnectorIndex
+from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
+from danswer.server.documents.models import ConnectorBackgroundIndexingStatus
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
 from danswer.server.documents.models import ConnectorIndexingStatus
 from danswer.server.documents.models import ConnectorSnapshot
@@ -638,6 +642,64 @@ def get_connector_indexing_status(
                 in_progress=in_progress,
             )
         )
+
+    return indexing_statuses
+
+
+@router.get("/admin/background/indexing")
+def get_background_indexing(
+    user: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+    tenant_id: str | None = Depends(get_current_tenant_id),
+) -> list[ConnectorBackgroundIndexingStatus]:
+    indexing_statuses: list[ConnectorBackgroundIndexingStatus] = []
+
+    r = get_redis_client(tenant_id=tenant_id)
+
+    for key_bytes in r.scan_iter(RedisConnectorIndex.FENCE_PREFIX + "*"):
+        redis_ids = RedisConnectorIndex.parse_key(key_bytes)
+        if not redis_ids:
+            continue
+
+        redis_connector = RedisConnector(tenant_id, redis_ids.cc_pair_id)
+        redis_connector_index = redis_connector.new_index(redis_ids.search_settings_id)
+        if not redis_connector_index.fenced:
+            continue
+
+        payload = redis_connector_index.payload
+        if not payload:
+            continue
+
+        if not payload.started:
+            continue
+
+        n_progress = redis_connector_index.get_progress()
+        if not n_progress:
+            n_progress = 0
+
+        cc_pair = get_connector_credential_pair_from_id(
+            redis_ids.cc_pair_id, db_session
+        )
+        if not cc_pair:
+            continue
+
+        indexing_statuses.append(
+            ConnectorBackgroundIndexingStatus(
+                name=cc_pair.name,
+                source=cc_pair.connector.source,
+                started=payload.started,
+                progress=n_progress,
+                index_attempt_id=payload.index_attempt_id,
+                cc_pair_id=redis_ids.cc_pair_id,
+                search_settings_id=redis_ids.search_settings_id,
+            )
+        )
+
+    # Sort the statuses
+    indexing_statuses = sorted(
+        indexing_statuses,
+        key=lambda status: (status.cc_pair_id, status.search_settings_id),
+    )
 
     return indexing_statuses
 
