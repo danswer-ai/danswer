@@ -67,7 +67,6 @@ def test_slack_permission_sync(
         input_type=InputType.POLL,
         source=DocumentSource.SLACK,
         connector_specific_config={
-            "workspace": "onyx-test-workspace",
             "channels": [public_channel["name"], private_channel["name"]],
         },
         access_type=AccessType.SYNC,
@@ -281,7 +280,6 @@ def test_slack_group_permission_sync(
         input_type=InputType.POLL,
         source=DocumentSource.SLACK,
         connector_specific_config={
-            "workspace": "onyx-test-workspace",
             "channels": [private_channel["name"]],
         },
         access_type=AccessType.SYNC,
