@@ -5,6 +5,7 @@ import {
   DocumentBoostStatus,
   Tag,
   UserGroup,
+  ConnectorBackgroundIndexingStatus,
 } from "@/lib/types";
 import useSWR, { mutate, useSWRConfig } from "swr";
 import { errorHandlingFetcher } from "./fetcher";
@@ -85,6 +86,22 @@ export const useConnectorCredentialIndexingStatus = (
   return {
     ...swrResponse,
     refreshIndexingStatus: () => mutate(url),
+  };
+};
+
+export const useBackgroundIndexingStatus = (refreshInterval = 15000) => {
+  const url = "/api/manage/admin/background/indexing";
+
+  const { mutate } = useSWRConfig();
+  const swrResponse = useSWR<ConnectorBackgroundIndexingStatus[]>(
+    url,
+    errorHandlingFetcher,
+    { refreshInterval: refreshInterval }
+  );
+
+  return {
+    ...swrResponse,
+    refreshBackgroundIndexingStatus: () => mutate(url),
   };
 };
 

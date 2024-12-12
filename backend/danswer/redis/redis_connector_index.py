@@ -5,6 +5,13 @@ from uuid import uuid4
 import redis
 from pydantic import BaseModel
 
+from danswer.redis.redis_connector_utils import RedisConnectorUtils
+
+
+class RedisConnectorIndexIdentifiers(BaseModel):
+    cc_pair_id: int
+    search_settings_id: int
+
 
 class RedisConnectorIndexPayload(BaseModel):
     index_attempt_id: int | None
@@ -119,7 +126,8 @@ class RedisConnectorIndex:
         self.redis.delete(self.generator_complete_key)
 
     def get_progress(self) -> int | None:
-        """Returns None if the key doesn't exist. The"""
+        """Returns None if the key doesn't exist. Returns an int representing
+        the number of documents processed otherwise."""
         # TODO: move into fence?
         bytes = self.redis.get(self.generator_progress_key)
         if bytes is None:
@@ -142,6 +150,26 @@ class RedisConnectorIndex:
         self.redis.delete(self.generator_progress_key)
         self.redis.delete(self.generator_complete_key)
         self.redis.delete(self.fence_key)
+
+    @staticmethod
+    def parse_key(key_bytes: bytes) -> RedisConnectorIndexIdentifiers | None:
+        """Parses the redis key for an indexing job and extracts
+        the cc_pair_id and search_settings_id"""
+        fence_key = key_bytes.decode("utf-8")
+        composite_id = RedisConnectorUtils.get_id_from_fence_key(fence_key)
+        if composite_id is None:
+            return None
+
+        # parse out metadata and initialize the helper class with it
+        parts = composite_id.split("/")
+        if len(parts) != 2:
+            return None
+
+        cc_pair_id = int(parts[0])
+        search_settings_id = int(parts[1])
+        return RedisConnectorIndexIdentifiers(
+            cc_pair_id=cc_pair_id, search_settings_id=search_settings_id
+        )
 
     @staticmethod
     def reset_all(r: redis.Redis) -> None:

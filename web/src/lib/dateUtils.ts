@@ -93,3 +93,25 @@ export const getTimeAgoString = (date: Date | null) => {
   if (diffDays < 30) return `${diffWeeks}w ago`;
   return `${diffMonths}mo ago`;
 };
+
+export const getTimeElapsedString = (dateStart: Date) => {
+  // return a readable string representing time elapsed
+  // between the given time and now
+  // aka 1d 5h 10m 6s
+  // omits leading units if they are zero for readability
+
+  const now = new Date(); // Current date and time
+
+  const diffMs = now.getTime() - dateStart.getTime(); // Difference in milliseconds
+  const diffSeconds = Math.floor(diffMs / 1000); // Convert to seconds
+  const diffMinutes = Math.floor(diffSeconds / 60); // Convert to minutes
+  const diffHours = Math.floor(diffMinutes / 60); // Convert to hours
+  const diffDays = Math.floor(diffHours / 24); // Convert to days
+
+  const days = diffDays > 0 ? `${diffDays}d ` : "";
+  const hours = diffHours % 24 > 0 ? `${diffHours % 24}h ` : "";
+  const minutes = diffMinutes % 60 > 0 ? `${diffMinutes % 60}m ` : "";
+  const seconds = `${diffSeconds % 60}s`;
+
+  return `${days}${hours}${minutes}${seconds}`.trim();
+};

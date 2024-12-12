@@ -22,6 +22,7 @@ import {
   ClosedBookIcon,
   SearchIcon,
   DocumentIcon2,
+  NotebookIcon,
 } from "@/components/icons/icons";
 import { UserRole } from "@/lib/types";
 import { FiActivity, FiBarChart2 } from "react-icons/fi";
@@ -345,6 +346,20 @@ export function ClientLayout({
                                   </div>
                                 ),
                                 link: "/admin/performance/custom-analytics",
+                              },
+                              {
+                                name: (
+                                  <div className="flex">
+                                    <NotebookIcon
+                                      className="text-icon-settings-sidebar"
+                                      size={18}
+                                    />
+                                    <div className="ml-1">
+                                      Background Indexing
+                                    </div>
+                                  </div>
+                                ),
+                                link: "/admin/background",
                               },
                             ],
                           },

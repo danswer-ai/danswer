@@ -182,7 +182,7 @@ class EmbeddingModel:
             embeddings.extend(response.embeddings)
 
             if self.callback:
-                self.callback.progress("_batch_encode_texts", 1)
+                self.callback.progress("_batch_encode_texts", 0)
         return embeddings
 
     def encode(

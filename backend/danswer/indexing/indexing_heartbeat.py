@@ -12,4 +12,5 @@ class IndexingHeartbeatInterface(ABC):
 
     @abstractmethod
     def progress(self, tag: str, amount: int) -> None:
-        """Send progress updates to the caller."""
+        """Send progress updates to the caller.
+        Send 0 for the amount if you just want to do a keep alive ping."""
