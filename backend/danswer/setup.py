@@ -22,7 +22,6 @@ from danswer.db.document import check_docs_exist
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.llm import fetch_default_provider
-from danswer.seeding.load_docs import seed_initial_documents
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.persona import delete_old_default_personas
@@ -40,6 +39,7 @@ from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.natural_language_processing.search_nlp_models import EmbeddingModel
 from danswer.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from danswer.natural_language_processing.search_nlp_models import warm_up_cross_encoder
+from danswer.seeding.load_docs import seed_initial_documents
 from danswer.seeding.load_yamls import load_chat_yamls
 from danswer.server.manage.llm.models import LLMProviderUpsertRequest
 from danswer.server.settings.store import load_settings
