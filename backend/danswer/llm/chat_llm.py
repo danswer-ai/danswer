@@ -353,7 +353,12 @@ class DefaultMultiLLM(LLM):
         response = cast(
             litellm.ModelResponse,
             self._completion(
-                prompt, tools, tool_choice, False, structured_response_format, max_tokens
+                prompt,
+                tools,
+                tool_choice,
+                False,
+                structured_response_format,
+                max_tokens,
             ),
         )
         choice = response.choices[0]
