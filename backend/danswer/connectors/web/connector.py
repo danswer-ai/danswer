@@ -242,8 +242,11 @@ class WebConnector(LoadConnector):
             self.to_visit_list = extract_urls_from_sitemap(_ensure_valid_url(base_url))
 
         elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.UPLOAD:
+            # Explicitly check if running in multi-tenant mode to prevent potential security risks
             if MULTI_TENANT:
-                raise ValueError("Upload connector is not supported in the cloud")
+                raise ValueError(
+                    "Upload input for web connector is not supported in cloud environments"
+                )
 
             logger.warning(
                 "This is not a UI supported Web Connector flow, "
