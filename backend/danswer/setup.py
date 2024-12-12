@@ -22,6 +22,7 @@ from danswer.db.document import check_docs_exist
 from danswer.db.index_attempt import cancel_indexing_attempts_past_model
 from danswer.db.index_attempt import expire_index_attempts
 from danswer.db.llm import fetch_default_provider
+from danswer.seeding.load_docs import seed_initial_documents
 from danswer.db.llm import update_default_provider
 from danswer.db.llm import upsert_llm_provider
 from danswer.db.persona import delete_old_default_personas
@@ -150,7 +151,7 @@ def setup_danswer(
     # update multipass indexing setting based on GPU availability
     update_default_multipass_indexing(db_session)
 
-    # seed_initial_documents(db_session, tenant_id, cohere_enabled)
+    seed_initial_documents(db_session, tenant_id, cohere_enabled)
 
 
 def translate_saved_search_settings(db_session: Session) -> None:
