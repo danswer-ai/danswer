@@ -61,12 +61,7 @@ export async function OPTIONS(
 }
 
 async function handleRequest(request: NextRequest, path: string[]) {
-  if (
-    process.env.NODE_ENV !== "production" &&
-    // NOTE: Set this environment variable to 'true' for preview environments
-    // Where you want finer-grained control over API access
-    process.env.OVERRIDE_API_PRODUCTION !== "true"
-  ) {
+  if (process.env.NODE_ENV !== "development") {
     return NextResponse.json(
       {
         message:
