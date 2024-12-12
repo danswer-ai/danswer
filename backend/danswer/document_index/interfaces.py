@@ -143,6 +143,7 @@ class Indexable(abc.ABC):
     """
     Class must implement the ability to index document chunks
     """
+
     @abc.abstractmethod
     def index(
         self,
