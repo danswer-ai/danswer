@@ -33,6 +33,7 @@ from danswer.file_processing.extract_file_text import read_pdf_file
 from danswer.file_processing.html_utils import web_html_cleanup
 from danswer.utils.logger import setup_logger
 from danswer.utils.sitemap import list_pages_for_site
+from shared_configs.configs import MULTI_TENANT
 
 logger = setup_logger()
 
@@ -241,6 +242,9 @@ class WebConnector(LoadConnector):
             self.to_visit_list = extract_urls_from_sitemap(_ensure_valid_url(base_url))
 
         elif web_connector_type == WEB_CONNECTOR_VALID_SETTINGS.UPLOAD:
+            if MULTI_TENANT:
+                raise ValueError("Upload connector is not supported in the cloud")
+
             logger.warning(
                 "This is not a UI supported Web Connector flow, "
                 "are you sure you want to do this?"
