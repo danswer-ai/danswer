@@ -78,7 +78,7 @@ class OAuthConnector(BaseConnector):
 
     @classmethod
     @abc.abstractmethod
-    def oauth_code_to_token(cls, code: str) -> dict[str, Any]:
+    def oauth_code_to_token(cls, base_domain: str, code: str) -> dict[str, Any]:
         raise NotImplementedError
 
 
