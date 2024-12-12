@@ -33,7 +33,7 @@ class CitationProcessor:
         self.display_order_mapping = display_doc_id_to_rank_map.order_mapping
         self.llm_out = ""
         self.max_citation_num = len(context_docs)
-        self.citation_order: list[int] = []
+        self.citation_order: list[int] = []  # order of citations in the LLM output
         self.curr_segment = ""
         self.cited_inds: set[int] = set()
         self.hold = ""
@@ -92,15 +92,15 @@ class CitationProcessor:
 
                 if 1 <= numerical_value <= self.max_citation_num:
                     context_llm_doc = self.context_docs[numerical_value - 1]
-                    real_citation_num = self.final_order_mapping[
+                    final_citation_num = self.final_order_mapping[
                         context_llm_doc.document_id
                     ]
 
-                    if real_citation_num not in self.citation_order:
-                        self.citation_order.append(real_citation_num)
+                    if final_citation_num not in self.citation_order:
+                        self.citation_order.append(final_citation_num)
 
-                    target_citation_num = (
-                        self.citation_order.index(real_citation_num) + 1
+                    citation_order_idx = (
+                        self.citation_order.index(final_citation_num) + 1
                     )
 
                     # get the value that was displayed to user, should always
@@ -110,13 +110,13 @@ class CitationProcessor:
                             context_llm_doc.document_id
                         ]
                     else:
-                        displayed_citation_num = real_citation_num
+                        displayed_citation_num = final_citation_num
                         logger.warning(
                             f"Doc {context_llm_doc.document_id} not in display_doc_order_dict. Used LLM citation number instead."
                         )
 
                     # Skip consecutive citations of the same work
-                    if real_citation_num in self.current_citations:
+                    if final_citation_num in self.current_citations:
                         start, end = citation.span()
                         real_start = length_to_add + start
                         diff = end - start
@@ -136,7 +136,7 @@ class CitationProcessor:
                                 context_llm_doc = self.context_docs[doc_id - 1]
                                 yield CitationInfo(
                                     # stay with the original for now (order of LLM cites)
-                                    citation_num=target_citation_num,
+                                    citation_num=citation_order_idx,
                                     document_id=context_llm_doc.document_id,
                                 )
                             except Exception as e:
@@ -152,13 +152,13 @@ class CitationProcessor:
                     link = context_llm_doc.link
 
                     self.past_cite_count = len(self.llm_out)
-                    self.current_citations.append(real_citation_num)
+                    self.current_citations.append(final_citation_num)
 
-                    if target_citation_num not in self.cited_inds:
-                        self.cited_inds.add(target_citation_num)
+                    if citation_order_idx not in self.cited_inds:
+                        self.cited_inds.add(citation_order_idx)
                         yield CitationInfo(
                             # stay with the original for now (order of LLM cites)
-                            citation_num=target_citation_num,
+                            citation_num=citation_order_idx,
                             document_id=context_llm_doc.document_id,
                         )
 
