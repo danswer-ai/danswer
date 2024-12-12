@@ -13,19 +13,19 @@ import Text from "@/components/ui/text";
 import { USER_ROLE_LABELS, UserRole } from "@/lib/types";
 import { APIKey } from "./types";
 
-interface DanswerApiKeyFormProps {
+interface OnyxApiKeyFormProps {
   onClose: () => void;
   setPopup: (popupSpec: PopupSpec | null) => void;
   onCreateApiKey: (apiKey: APIKey) => void;
   apiKey?: APIKey;
 }
 
-export const DanswerApiKeyForm = ({
+export const OnyxApiKeyForm = ({
   onClose,
   setPopup,
   onCreateApiKey,
   apiKey,
-}: DanswerApiKeyFormProps) => {
+}: OnyxApiKeyFormProps) => {
   const isUpdate = apiKey !== undefined;
 
   return (
