@@ -65,7 +65,18 @@ def _request_with_retries(
             timeout=timeout,
             stream=stream,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code != 403:
+                logger.exception(
+                    f"Failed to call Egnyte API.\n"
+                    f"URL: {url}\n"
+                    f"Headers: {headers}\n"
+                    f"Data: {data}\n"
+                    f"Params: {params}"
+                )
+            raise e
         return response
 
     return _make_request()
@@ -190,7 +201,7 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
         )
 
     @classmethod
-    def oauth_code_to_token(cls, code: str) -> dict[str, Any]:
+    def oauth_code_to_token(cls, base_domain: str, code: str) -> dict[str, Any]:
         if not EGNYTE_CLIENT_ID:
             raise ValueError("EGNYTE_CLIENT_ID environment variable must be set")
         if not EGNYTE_CLIENT_SECRET:
@@ -200,12 +211,13 @@ class EgnyteConnector(LoadConnector, PollConnector, OAuthConnector):
 
         # Exchange code for token
         url = f"https://{EGNYTE_BASE_DOMAIN}.egnyte.com/puboauth/token"
+        redirect_uri = f"{EGNYTE_LOCALHOST_OVERRIDE or base_domain}/connector/oauth/callback/egnyte"
         data = {
             "client_id": EGNYTE_CLIENT_ID,
             "client_secret": EGNYTE_CLIENT_SECRET,
             "code": code,
             "grant_type": "authorization_code",
-            "redirect_uri": f"{EGNYTE_LOCALHOST_OVERRIDE or ''}/connector/oauth/callback/egnyte",
+            "redirect_uri": redirect_uri,
             "scope": "Egnyte.filesystem",
         }
         headers = {"Content-Type": "application/x-www-form-urlencoded"}

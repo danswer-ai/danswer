@@ -117,7 +117,8 @@ def oauth_callback(
         raise HTTPException(status_code=400, detail="Invalid OAuth state")
     original_url = original_url_bytes.decode("utf-8")
 
-    token_info = connector_cls.oauth_code_to_token(code)
+    base_url = WEB_DOMAIN
+    token_info = connector_cls.oauth_code_to_token(base_url, code)
 
     # Create a new credential with the token info
     credential_data = CredentialBase(
