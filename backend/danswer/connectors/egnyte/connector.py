@@ -65,7 +65,18 @@ def _request_with_retries(
             timeout=timeout,
             stream=stream,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code != 403:
+                logger.exception(
+                    f"Failed to call Egnyte API.\n"
+                    f"URL: {url}\n"
+                    f"Headers: {headers}\n"
+                    f"Data: {data}\n"
+                    f"Params: {params}"
+                )
+            raise e
         return response
 
     return _make_request()
