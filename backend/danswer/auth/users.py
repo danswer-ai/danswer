@@ -546,9 +546,7 @@ def get_database_strategy(
 
 
 auth_backend = AuthenticationBackend(
-    name="jwt" if MULTI_TENANT else "database",
-    transport=cookie_transport,
-    get_strategy=get_jwt_strategy if MULTI_TENANT else get_database_strategy,  # type: ignore
+    name="jwt", transport=cookie_transport, get_strategy=get_jwt_strategy
 )  # type: ignore
 
 

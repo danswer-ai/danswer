@@ -16,6 +16,7 @@ import { LoginText } from "./LoginText";
 import { getSecondsUntilExpiration } from "@/lib/time";
 import AuthFlowContainer from "@/components/auth/AuthFlowContainer";
 import CardSection from "@/components/admin/CardSection";
+import { NEXT_PUBLIC_FORGOT_PASSWORD_ENABLED } from "@/lib/constants";
 
 const Page = async (props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -105,12 +106,22 @@ const Page = async (props: {
               <Text className="mt-4 mx-auto">
                 Don&apos;t have an account?{" "}
                 <Link
-                  href={`/auth/signup${searchParams?.next ? `?next=${searchParams.next}` : ""}`}
+                  href={`/auth/signup${
+                    searchParams?.next ? `?next=${searchParams.next}` : ""
+                  }`}
                   className="text-link font-medium"
                 >
                   Create an account
                 </Link>
               </Text>
+              {NEXT_PUBLIC_FORGOT_PASSWORD_ENABLED && (
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-link font-medium"
+                >
+                  Forgot Password?
+                </Link>
+              )}
             </div>
           </div>
         )}
@@ -127,7 +138,9 @@ const Page = async (props: {
               <Text className="mt-4 mx-auto">
                 Don&apos;t have an account?{" "}
                 <Link
-                  href={`/auth/signup${searchParams?.next ? `?next=${searchParams.next}` : ""}`}
+                  href={`/auth/signup${
+                    searchParams?.next ? `?next=${searchParams.next}` : ""
+                  }`}
                   className="text-link font-medium"
                 >
                   Create an account
