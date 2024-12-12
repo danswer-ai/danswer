@@ -1521,6 +1521,7 @@ class SlackBot(Base):
     slack_channel_configs: Mapped[list[SlackChannelConfig]] = relationship(
         "SlackChannelConfig",
         back_populates="slack_bot",
+        cascade="all, delete-orphan",
     )
 
 
