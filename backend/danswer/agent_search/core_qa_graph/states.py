@@ -37,6 +37,7 @@ class BaseQAState(TypedDict):
     sub_question_rewritten_queries: list[str]
     sub_question_str: str
     sub_question_search_queries: RewrittenQueries
+    deduped_retrieval_docs: list[InferenceSection]
     sub_question_nr: int
     sub_question_base_retrieval_docs: Annotated[
         Sequence[InferenceSection], operator.add

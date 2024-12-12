@@ -12,7 +12,7 @@ def run_graph(
     graph = build_core_graph()
 
     inputs = {
-        "original_question": query,
+        "original_query": query,
         "messages": [],
         "tools": tools,
         "llm": llm,
@@ -20,3 +20,8 @@ def run_graph(
     compiled_graph = graph.compile()
     output = compiled_graph.invoke(input=inputs)
     yield from output
+
+
+if __name__ == "__main__":
+    pass
+    # run_graph("What is the capital of France?", llm, [])
