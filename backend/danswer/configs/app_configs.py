@@ -395,6 +395,9 @@ INDEXING_TRACER_INTERVAL = int(os.environ.get("INDEXING_TRACER_INTERVAL", 0))
 # exception without aborting the attempt.
 INDEXING_EXCEPTION_LIMIT = int(os.environ.get("INDEXING_EXCEPTION_LIMIT", 0))
 
+INCLUDE_DOCUMENT_SUMMARY_IN_CHUNK = (
+    os.environ.get("INCLUDE_DOCUMENT_SUMMARY_IN_CHUNK", "false").lower() == "true"
+)
 
 #####
 # Miscellaneous

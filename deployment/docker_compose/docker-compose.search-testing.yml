@@ -157,7 +157,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
     ports:
-      - "5432"
+      - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
 
@@ -167,8 +167,8 @@ services:
     image: vespaengine/vespa:8.277.17
     restart: always
     ports:
-      - "19071"
-      - "8081"
+      - "19071:19071"
+      - "8081:8081"
     volumes:
       - vespa_volume:/opt/vespa/var
     logging:

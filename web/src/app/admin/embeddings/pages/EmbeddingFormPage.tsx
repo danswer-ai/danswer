@@ -154,7 +154,9 @@ export default function EmbeddingForm() {
   const needsReIndex =
     currentEmbeddingModel != selectedProvider ||
     searchSettings?.multipass_indexing !=
-      advancedEmbeddingDetails.multipass_indexing;
+      advancedEmbeddingDetails.multipass_indexing ||
+    searchSettings?.enable_contextual_rag !=
+      advancedEmbeddingDetails.enable_contextual_rag;
 
   const ReIndexingButton = useMemo(() => {
     const ReIndexingButtonComponent = ({
@@ -185,6 +187,10 @@ export default function EmbeddingForm() {
                 {searchSettings?.multipass_indexing !=
                   advancedEmbeddingDetails.multipass_indexing && (
                   <li>Multipass indexing modification</li>
+                )}
+                {searchSettings?.enable_contextual_rag !=
+                  advancedEmbeddingDetails.enable_contextual_rag && (
+                  <li>Contextual RAG modification</li>
                 )}
               </ul>
             </div>
@@ -248,6 +254,9 @@ export default function EmbeddingForm() {
     }
     let newModel: SavedSearchSettings;
 
+    console.log("selectedProvider", selectedProvider);
+    console.log("rerankingDetails", rerankingDetails);
+    console.log("advancedEmbeddingDetails", advancedEmbeddingDetails);
     // We use a spread operation to merge properties from multiple objects into a single object.
     // Advanced embedding details may update default values.
     // Do NOT modify the order unless you are positive the new hierarchy is correct.
@@ -274,6 +283,7 @@ export default function EmbeddingForm() {
 
     newModel.index_name = null;
 
+    console.log("newModel", newModel);
     const response = await fetch(
       "/api/search-settings/set-new-search-settings",
       {

@@ -154,7 +154,7 @@ def start_docker_compose(
     command += " --force-recreate"
 
     if only_state:
-        command += " index relational_db"
+        command += " index relational_db cache"
     else:
         if use_cloud_gpu:
             command += " --scale indexing_model_server=0"
@@ -185,7 +185,7 @@ def cleanup_docker(env_name: str) -> None:
     containers = [json.loads(line) for line in stdout.splitlines()]
     if not env_name:
         env_name = datetime.now().strftime("-%Y")
-    project_name = f"danswer-stack{env_name}"
+    project_name = f"danswer-stack{env_name}"  # should there be a dash?
     containers_to_delete = [
         c for c in containers if c["Names"].startswith(project_name)
     ]

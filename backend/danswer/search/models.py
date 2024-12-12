@@ -99,6 +99,7 @@ class BaseFilters(BaseModel):
     document_set: list[str] | None = None
     time_cutoff: datetime | None = None
     tags: list[Tag] | None = None
+    document_ids: list[str] | None = None
 
 
 class IndexFilters(BaseFilters):

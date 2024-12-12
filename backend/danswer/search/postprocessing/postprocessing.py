@@ -74,7 +74,9 @@ def cleanup_chunks(chunks: list[InferenceChunkUncleaned]) -> list[InferenceChunk
             chunk.content = chunk.content[len(chunk.doc_summary) :].lstrip()
         # remove chunk context
         if chunk.content.endswith(chunk.chunk_context):
-            chunk.content = chunk.content[: -len(chunk.chunk_context)].rstrip()
+            chunk.content = chunk.content[
+                : len(chunk.content) - len(chunk.chunk_context)
+            ].rstrip()
         return chunk.content
 
     for chunk in chunks:

@@ -78,6 +78,8 @@ def build_vespa_filters(filters: IndexFilters, include_hidden: bool = False) -> 
 
     filter_str += _build_time_filter(filters.time_cutoff)
 
+    filter_str += _build_or_filters(DOCUMENT_ID, filters.document_ids)
+
     return filter_str
 
 

@@ -163,6 +163,7 @@ def retrieval_preprocessing(
         tags=preset_filters.tags,  # Tags are never auto-extracted
         access_control_list=user_acl_filters,
         tenant_id=CURRENT_TENANT_ID_CONTEXTVAR.get() if MULTI_TENANT else None,
+        document_ids=preset_filters.document_ids,
     )
 
     llm_evaluation_type = LLMEvaluationType.BASIC

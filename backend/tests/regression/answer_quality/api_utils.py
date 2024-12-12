@@ -4,6 +4,7 @@ from retry import retry
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import MessageType
 from danswer.connectors.models import InputType
+from danswer.db.enums import AccessType
 from danswer.db.enums import IndexingStatus
 from danswer.one_shot_answer.models import DirectQARequest
 from danswer.one_shot_answer.models import ThreadMessage
@@ -25,34 +26,43 @@ def _api_url_builder(env_name: str, api_path: str) -> str:
 
 @retry(tries=5, delay=5)
 def get_answer_from_query(
-    query: str, only_retrieve_docs: bool, env_name: str
+    query: str,
+    retrieval_options: RetrievalDetails | None,
+    only_retrieve_docs: bool,
+    env_name: str,
 ) -> tuple[list[str], str]:
-    filters = IndexFilters(
-        source_type=None,
-        document_set=None,
-        time_cutoff=None,
-        tags=None,
-        access_control_list=None,
-    )
-
-    messages = [ThreadMessage(message=query, sender=None, role=MessageType.USER)]
-
-    new_message_request = DirectQARequest(
-        messages=messages,
-        prompt_id=0,
-        persona_id=0,
-        retrieval_options=RetrievalDetails(
+    if retrieval_options is None:
+        filters = IndexFilters(
+            source_type=None,
+            document_set=None,
+            time_cutoff=None,
+            tags=None,
+            access_control_list=None,
+        )
+        retrieval_options = RetrievalDetails(
             run_search=OptionalSearchSetting.ALWAYS,
             real_time=True,
             filters=filters,
             enable_auto_detect_filters=False,
-        ),
+        )
+    # print(f"query: {query}")
+    # print(f"filters: {filters}")
+
+    messages = [ThreadMessage(message=query, sender=None, role=MessageType.USER)]
+    # print(f"messages: {messages}")
+    # print(f"only_retrieve_docs: {only_retrieve_docs}")
+    new_message_request = DirectQARequest(
+        messages=messages,
+        prompt_id=0,
+        persona_id=0,
+        retrieval_options=retrieval_options,
         chain_of_thought=False,
         return_contexts=True,
         skip_gen_ai_answer_generation=only_retrieve_docs,
     )
-
+    # print(f"new_message_request: {new_message_request}")
     url = _api_url_builder(env_name, "/query/answer-with-quote/")
+    # print(f"url: {url}")
     headers = {
         "Content-Type": "application/json",
     }
@@ -72,10 +82,12 @@ def get_answer_from_query(
 
 
 @retry(tries=10, delay=10)
-def check_indexing_status(env_name: str) -> tuple[int, bool]:
+def check_indexing_status(
+    env_name: str, source: DocumentSource | None = None
+) -> tuple[int, bool]:
     url = _api_url_builder(env_name, "/manage/admin/connector/indexing-status/")
     try:
-        indexing_status_dict = requests.get(url, headers=GENERAL_HEADERS).json()
+        indexing_status_dicts = requests.get(url, headers=GENERAL_HEADERS).json()
     except Exception as e:
         print("Failed to check indexing status, API server is likely starting up:")
         print(f"\t {str(e)}")
@@ -84,8 +96,12 @@ def check_indexing_status(env_name: str) -> tuple[int, bool]:
 
     ongoing_index_attempts = False
     doc_count = 0
-    for index_attempt in indexing_status_dict:
+    for index_attempt in indexing_status_dicts:
         status = index_attempt["last_status"]
+        index_source = index_attempt["connector"]["source"]
+        if source is not None and index_source != source:
+            continue
+
         if status == IndexingStatus.IN_PROGRESS or status == IndexingStatus.NOT_STARTED:
             ongoing_index_attempts = True
         elif status == IndexingStatus.SUCCESS:
@@ -122,8 +138,13 @@ def create_cc_pair(env_name: str, connector_id: int, credential_id: int) -> None
         env_name, f"/manage/connector/{connector_id}/credential/{credential_id}"
     )
 
-    body = {"name": "zip_folder_contents", "is_public": True, "groups": []}
+    body = {
+        "name": "zip_folder_contents",
+        "access_type": AccessType.PUBLIC,
+        "groups": [],
+    }
     print("body:", body)
+    # print("url:", url)
     response = requests.put(url, headers=GENERAL_HEADERS, json=body)
     if response.status_code == 200:
         print("Connector created successfully:", response.json())

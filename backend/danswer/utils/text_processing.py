@@ -86,8 +86,15 @@ def extract_embedded_json(s: str) -> dict:
     except json.JSONDecodeError:
         try:
             return json.loads(escape_quotes(json_str), strict=False)
-        except json.JSONDecodeError as e:
-            raise ValueError("Failed to parse JSON, even after escaping quotes") from e
+        except json.JSONDecodeError:
+            try:
+                return json.loads(
+                    escape_quotes(json_str.replace("`", '"')), strict=False
+                )
+            except json.JSONDecodeError as e2:
+                raise ValueError(
+                    "Failed to parse JSON, even after escaping quotes"
+                ) from e2
 
 
 def clean_up_code_blocks(model_out_raw: str) -> str:

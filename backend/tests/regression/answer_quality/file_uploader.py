@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import yaml
 
+from danswer.connectors.models import DocumentSource
 from tests.regression.answer_quality.api_utils import check_indexing_status
 from tests.regression.answer_quality.api_utils import create_cc_pair
 from tests.regression.answer_quality.api_utils import create_connector
@@ -58,7 +59,9 @@ def manage_file_upload(zip_file_path: str, env_name: str) -> None:
     problem_file_list: list[str] = []
 
     while True:
-        doc_count, ongoing_index_attempts = check_indexing_status(env_name)
+        doc_count, ongoing_index_attempts = check_indexing_status(
+            env_name, source=DocumentSource.FILE
+        )
 
         if ongoing_index_attempts:
             print(
@@ -104,5 +107,5 @@ if __name__ == "__main__":
     with open(config_path, "r") as file:
         config = SimpleNamespace(**yaml.safe_load(file))
     file_location = config.zipped_documents_file
-    env_name = config.environment_name
+    env_name = config.environment_name if not config.local_deployment else ""
     manage_file_upload(file_location, env_name)
