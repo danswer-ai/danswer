@@ -75,6 +75,9 @@ ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
 ARG NEXT_PUBLIC_GTM_ENABLED
 ENV NEXT_PUBLIC_GTM_ENABLED=${NEXT_PUBLIC_GTM_ENABLED}
 
+ARG NEXT_PUBLIC_TEST_ENV
+ENV NEXT_PUBLIC_TEST_ENV=${NEXT_PUBLIC_TEST_ENV}
+
 RUN npx next build
 
 # Step 2. Production image, copy all the files and run next
@@ -149,6 +152,9 @@ ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
 
 ARG NEXT_PUBLIC_GTM_ENABLED
 ENV NEXT_PUBLIC_GTM_ENABLED=${NEXT_PUBLIC_GTM_ENABLED}
+
+ARG NEXT_PUBLIC_TEST_ENV
+ENV NEXT_PUBLIC_TEST_ENV=${NEXT_PUBLIC_TEST_ENV}
 
 # Note: Don't expose ports here, Compose will handle that for us if necessary. 
 # If you want to run this without compose, specify the ports to 
