@@ -32,7 +32,10 @@ export function Verify({ user }: { user: User | null }) {
     });
 
     if (response.ok) {
-      router.push("/");
+      // Use window.location.href to force a full page reload,
+      // ensuring app re-initializes with the new state (including
+      // server-side provider values)
+      window.location.href = "/";
     } else {
       const errorDetail = (await response.json()).detail;
       setError(
