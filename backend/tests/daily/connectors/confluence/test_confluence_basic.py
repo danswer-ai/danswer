@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from danswer.connectors.confluence.connector import ConfluenceConnector
+from onyx.connectors.confluence.connector import ConfluenceConnector
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def confluence_connector() -> ConfluenceConnector:
 
 
 @patch(
-    "danswer.file_processing.extract_file_text.get_unstructured_api_key",
+    "onyx.file_processing.extract_file_text.get_unstructured_api_key",
     return_value=None,
 )
 def test_confluence_connector_basic(
@@ -51,7 +51,7 @@ def test_confluence_connector_basic(
 
     assert page_within_a_page_doc.semantic_identifier == "Page Within A Page"
     assert page_within_a_page_doc.primary_owners
-    assert page_within_a_page_doc.primary_owners[0].email == "hagen@danswer.ai"
+    assert page_within_a_page_doc.primary_owners[0].email == "hagen@onyx.app"
     assert len(page_within_a_page_doc.sections) == 1
 
     page_within_a_page_section = page_within_a_page_doc.sections[0]
@@ -59,28 +59,28 @@ def test_confluence_connector_basic(
     assert page_within_a_page_section.text == page_within_a_page_text
     assert (
         page_within_a_page_section.link
-        == "https://danswerai.atlassian.net/wiki/spaces/DailyConne/pages/200769540/Page+Within+A+Page"
+        == "https://onyxai.atlassian.net/wiki/spaces/DailyConne/pages/200769540/Page+Within+A+Page"
     )
 
     assert page_doc.semantic_identifier == "DailyConnectorTestSpace Home"
     assert page_doc.metadata["labels"] == ["testlabel"]
     assert page_doc.primary_owners
-    assert page_doc.primary_owners[0].email == "hagen@danswer.ai"
+    assert page_doc.primary_owners[0].email == "hagen@onyx.app"
     assert len(page_doc.sections) == 1
 
     page_section = page_doc.sections[0]
     assert page_section.text == "test123 " + page_within_a_page_text
     assert (
         page_section.link
-        == "https://danswerai.atlassian.net/wiki/spaces/DailyConne/overview"
+        == "https://onyxai.atlassian.net/wiki/spaces/DailyConne/overview"
     )
 
     assert txt_doc.semantic_identifier == "small-file.txt"
     assert len(txt_doc.sections) == 1
     assert txt_doc.sections[0].text == "small"
     assert txt_doc.primary_owners
-    assert txt_doc.primary_owners[0].email == "chris@danswer.ai"
+    assert txt_doc.primary_owners[0].email == "chris@onyx.app"
     assert (
         txt_doc.sections[0].link
-        == "https://danswerai.atlassian.net/wiki/pages/viewpageattachments.action?pageId=52494430&preview=%2F52494430%2F52527123%2Fsmall-file.txt"
+        == "https://onyxai.atlassian.net/wiki/pages/viewpageattachments.action?pageId=52494430&preview=%2F52494430%2F52527123%2Fsmall-file.txt"
     )

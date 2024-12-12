@@ -10,7 +10,7 @@ test(
     await page.goto("http://localhost:3000/admin/bots");
     await expect(page.locator("h1.text-3xl")).toHaveText("Slack Bots");
     await expect(page.locator("p.text-sm").nth(0)).toHaveText(
-      /^Setup Slack bots that connect to Danswer./
+      /^Setup Slack bots that connect to Onyx./
     );
   }
 );

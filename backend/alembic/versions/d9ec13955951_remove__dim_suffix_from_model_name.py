@@ -20,12 +20,12 @@ def upgrade() -> None:
     op.execute(
         """
         UPDATE embedding_model
-        SET model_name = regexp_replace(model_name, '__danswer_alt_index$', '')
-        WHERE model_name LIKE '%__danswer_alt_index'
+        SET model_name = regexp_replace(model_name, '__onyx_alt_index$', '')
+        WHERE model_name LIKE '%__onyx_alt_index'
     """
     )
 
 
 def downgrade() -> None:
-    # We can't reliably add the __danswer_alt_index suffix back, so we'll leave this empty
+    # We can't reliably add the __onyx_alt_index suffix back, so we'll leave this empty
     pass

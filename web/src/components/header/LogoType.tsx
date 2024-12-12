@@ -73,11 +73,11 @@ export default function LogoType({
                 {enterpriseSettings.application_name}
               </HeaderTitle>
               {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                <p className="text-xs text-subtle">Powered by Danswer</p>
+                <p className="text-xs text-subtle">Powered by Onyx</p>
               )}
             </div>
           ) : (
-            <HeaderTitle backgroundToggled={toggled}>Danswer</HeaderTitle>
+            <HeaderTitle backgroundToggled={toggled}>Onyx</HeaderTitle>
           )}
         </div>
       </div>

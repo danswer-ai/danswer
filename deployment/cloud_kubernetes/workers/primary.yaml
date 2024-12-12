@@ -20,7 +20,7 @@ spec:
             [
               "celery",
               "-A",
-              "danswer.background.celery.versioned_apps.primary",
+              "onyx.background.celery.versioned_apps.primary",
               "worker",
               "--loglevel=INFO",
               "--hostname=primary@%n",
@@ -33,7 +33,7 @@ spec:
             - name: REDIS_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: danswer-secrets
+                  name: onyx-secrets
                   key: redis_password
             - name: DANSWER_VERSION
               value: "v0.11.0-cloud.beta.8"
