@@ -216,7 +216,7 @@ def seed_initial_documents(
     # as we just sent over the Vespa schema and there is a slight delay
 
     index_with_retries = retry_builder()(document_index.index)
-    index_with_retries(chunks=chunks)
+    index_with_retries(chunks=chunks, fresh_index=True)
 
     # Mock a run for the UI even though it did not actually call out to anything
     mock_successful_index_attempt(
