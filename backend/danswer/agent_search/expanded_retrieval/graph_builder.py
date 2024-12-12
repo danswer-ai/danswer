@@ -16,7 +16,7 @@ from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalInpu
 from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalState
 
 
-def qa_graph_builder() -> StateGraph:
+def expanded_retrieval_graph_builder() -> StateGraph:
     graph = StateGraph(ExpandedRetrievalState)
 
     graph.add_node(
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     from danswer.llm.factory import get_default_llms
     from danswer.context.search.models import SearchRequest
 
-    graph = qa_graph_builder()
+    graph = expanded_retrieval_graph_builder()
     compiled_graph = graph.compile()
     primary_llm, fast_llm = get_default_llms()
     search_request = SearchRequest(
@@ -81,15 +81,3 @@ if __name__ == "__main__":
         )
         for thing in compiled_graph.stream(inputs, debug=True):
             print(thing)
-        # output = compiled_graph.invoke(inputs)
-        # print("\nOUTPUT:")
-        # print(output.keys())
-        # for key, value in output.items():
-        #     if key in [
-        #         "sub_question_answer",
-        #         "sub_question_str",
-        #         "sub_qas",
-        #         "initial_sub_qas",
-        #         "sub_question_answer",
-        #     ]:
-        #         print(f"{key}: {value}")

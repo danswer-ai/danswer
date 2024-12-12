@@ -24,7 +24,7 @@ def parallel_retrieval_edge(state: ExpandedRetrievalInput) -> Literal["doc_retri
 
     print(f"parallel_retrieval_edge state: {state.keys()}")
     # messages = state["base_answer_messages"]
-    question = state["query_to_expand"]
+    question = state["query_to_answer"]
     llm: LLM = state["fast_llm"]
 
     msg = [

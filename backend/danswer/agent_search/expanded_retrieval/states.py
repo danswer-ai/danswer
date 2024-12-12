@@ -32,11 +32,11 @@ class ExpandedRetrievalState(
     DocRerankingOutput,
     total=True,
 ):
-    query_to_expand: str
+    query_to_answer: str
 
 
 class ExpandedRetrievalInput(PrimaryState, total=True):
-    query_to_expand: str
+    query_to_answer: str
 
 
 class ExpandedRetrievalOutput(TypedDict):
