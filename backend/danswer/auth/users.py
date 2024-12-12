@@ -131,7 +131,7 @@ def get_display_email(email: str | None, space_less: bool = False) -> str:
 
 
 def user_needs_to_be_verified() -> bool:
-    if AUTH_TYPE == AuthType.BASIC:
+    if AUTH_TYPE == AuthType.BASIC or AUTH_TYPE == AuthType.CLOUD:
         return REQUIRE_EMAIL_VERIFICATION
 
     # For other auth types, if the user is authenticated it's assumed that
