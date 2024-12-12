@@ -21,17 +21,16 @@ class CitationProcessor:
     def __init__(
         self,
         context_docs: list[LlmDoc],
-        doc_id_to_rank_map: DocumentIdOrderMapping,
-        display_doc_order_dict: dict[str, int],
+        final_doc_id_to_rank_map: DocumentIdOrderMapping,
+        display_doc_id_to_rank_map: DocumentIdOrderMapping,
         stop_stream: str | None = STOP_STREAM_PAT,
     ):
         self.context_docs = context_docs
-        self.doc_id_to_rank_map = doc_id_to_rank_map
+        self.final_doc_id_to_rank_map = final_doc_id_to_rank_map
+        self.display_doc_id_to_rank_map = display_doc_id_to_rank_map
         self.stop_stream = stop_stream
-        self.order_mapping = doc_id_to_rank_map.order_mapping
-        self.display_doc_order_dict = (
-            display_doc_order_dict  # original order of docs to displayed to user
-        )
+        self.final_order_mapping = final_doc_id_to_rank_map.order_mapping
+        self.display_order_mapping = display_doc_id_to_rank_map.order_mapping
         self.llm_out = ""
         self.max_citation_num = len(context_docs)
         self.citation_order: list[int] = []
@@ -93,7 +92,9 @@ class CitationProcessor:
 
                 if 1 <= numerical_value <= self.max_citation_num:
                     context_llm_doc = self.context_docs[numerical_value - 1]
-                    real_citation_num = self.order_mapping[context_llm_doc.document_id]
+                    real_citation_num = self.final_order_mapping[
+                        context_llm_doc.document_id
+                    ]
 
                     if real_citation_num not in self.citation_order:
                         self.citation_order.append(real_citation_num)
@@ -104,8 +105,8 @@ class CitationProcessor:
 
                     # get the value that was displayed to user, should always
                     # be in the display_doc_order_dict. But check anyways
-                    if context_llm_doc.document_id in self.display_doc_order_dict:
-                        displayed_citation_num = self.display_doc_order_dict[
+                    if context_llm_doc.document_id in self.display_order_mapping:
+                        displayed_citation_num = self.display_order_mapping[
                             context_llm_doc.document_id
                         ]
                     else:
@@ -115,7 +116,7 @@ class CitationProcessor:
                         )
 
                     # Skip consecutive citations of the same work
-                    if target_citation_num in self.current_citations:
+                    if real_citation_num in self.current_citations:
                         start, end = citation.span()
                         real_start = length_to_add + start
                         diff = end - start
@@ -151,7 +152,7 @@ class CitationProcessor:
                     link = context_llm_doc.link
 
                     self.past_cite_count = len(self.llm_out)
-                    self.current_citations.append(target_citation_num)
+                    self.current_citations.append(real_citation_num)
 
                     if target_citation_num not in self.cited_inds:
                         self.cited_inds.add(target_citation_num)
@@ -167,7 +168,6 @@ class CitationProcessor:
                         self.curr_segment = (
                             self.curr_segment[: start + length_to_add]
                             + f"[[{displayed_citation_num}]]({link})"  # use the value that was displayed to user
-                            # + f"[[{target_citation_num}]]({link})"
                             + self.curr_segment[end + length_to_add :]
                         )
                         length_to_add += len(self.curr_segment) - prev_length
@@ -176,7 +176,6 @@ class CitationProcessor:
                         self.curr_segment = (
                             self.curr_segment[: start + length_to_add]
                             + f"[[{displayed_citation_num}]]()"  # use the value that was displayed to user
-                            # + f"[[{target_citation_num}]]()"
                             + self.curr_segment[end + length_to_add :]
                         )
                         length_to_add += len(self.curr_segment) - prev_length
