@@ -306,7 +306,7 @@ class VespaIndex(DocumentIndex):
     def index(
         self,
         chunks: list[DocMetadataAwareIndexChunk],
-        fresh_index: bool = False, 
+        fresh_index: bool = False,
     ) -> set[DocumentInsertionRecord]:
         """Receive a list of chunks from a batch of documents and index the chunks into Vespa along
         with updating the associated permissions. Assumes that a document will not be split into
