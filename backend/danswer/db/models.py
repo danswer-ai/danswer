@@ -1226,7 +1226,7 @@ class DocumentSet(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True)
-    description: Mapped[str] = mapped_column(String)
+    description: Mapped[str | None] = mapped_column(String)
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE"), nullable=True
     )
