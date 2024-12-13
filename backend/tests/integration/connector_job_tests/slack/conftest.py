@@ -15,7 +15,7 @@ from tests.integration.connector_job_tests.slack.slack_api_utils import SlackMan
 def slack_test_setup() -> Generator[tuple[dict[str, Any], dict[str, Any]], None, None]:
     slack_client = SlackManager.get_slack_client(os.environ["SLACK_BOT_TOKEN"])
     admin_user_id = SlackManager.build_slack_user_email_id_map(slack_client)[
-        "admin@onyx-test.com"
+        "admin@danswer-test.com"
     ]
 
     (

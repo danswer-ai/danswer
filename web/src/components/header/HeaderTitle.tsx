@@ -18,7 +18,7 @@ export function HeaderTitle({
         backgroundToggled
           ? "text-text-sidebar-toggled-header"
           : "text-text-sidebar-header"
-      } break-words line-clamp-2 ellipsis text-strong leading-none font-bold`}
+      } break-words line-clamp-2 ellipsis text-strong overflow-visible leading-none font-bold`}
     >
       {children}
     </h1>

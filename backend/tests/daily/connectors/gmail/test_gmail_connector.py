@@ -3,9 +3,9 @@ from typing import Any
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from danswer.connectors.gmail.connector import GmailConnector
-from danswer.connectors.models import Document
-from danswer.connectors.models import SlimDocument
+from onyx.connectors.gmail.connector import GmailConnector
+from onyx.connectors.models import Document
+from onyx.connectors.models import SlimDocument
 
 
 _THREAD_1_START_TIME = 1730568700
@@ -13,18 +13,18 @@ _THREAD_1_END_TIME = 1730569000
 
 """
 This thread was 4 emails long:
-    admin@onyx-test.com -> test-group-1@onyx-test.com (conaining test_user_1 and test_user_2)
-    test_user_1@onyx-test.com -> admin@onyx-test.com
-    admin@onyx-test.com -> test_user_2@onyx-test.com + BCC: test_user_3@onyx-test.com
-    test_user_3@onyx-test.com -> admin@onyx-test.com
+    admin@danswer-test.com -> test-group-1@onyx-test.com (conaining test_user_1 and test_user_2)
+    test_user_1@onyx-test.com -> admin@danswer-test.com
+    admin@danswer-test.com -> test_user_2@onyx-test.com + BCC: test_user_3@onyx-test.com
+    test_user_3@onyx-test.com -> admin@danswer-test.com
 """
 _THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
     "192edefb315737c3": {
-        "email": "admin@onyx-test.com",
+        "email": "admin@danswer-test.com",
         "sections_count": 4,
         "primary_owners": set(
             [
-                "admin@onyx-test.com",
+                "admin@danswer-test.com",
                 "test_user_1@onyx-test.com",
                 "test_user_3@onyx-test.com",
             ]
@@ -32,7 +32,7 @@ _THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
         "secondary_owners": set(
             [
                 "test-group-1@onyx-test.com",
-                "admin@onyx-test.com",
+                "admin@danswer-test.com",
                 "test_user_2@onyx-test.com",
                 "test_user_3@onyx-test.com",
             ]
@@ -41,13 +41,15 @@ _THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
     "192edf020d2f5def": {
         "email": "test_user_1@onyx-test.com",
         "sections_count": 2,
-        "primary_owners": set(["admin@onyx-test.com", "test_user_1@onyx-test.com"]),
-        "secondary_owners": set(["test-group-1@onyx-test.com", "admin@onyx-test.com"]),
+        "primary_owners": set(["admin@danswer-test.com", "test_user_1@onyx-test.com"]),
+        "secondary_owners": set(
+            ["test-group-1@onyx-test.com", "admin@danswer-test.com"]
+        ),
     },
     "192edf020ae90aab": {
         "email": "test_user_2@onyx-test.com",
         "sections_count": 2,
-        "primary_owners": set(["admin@onyx-test.com"]),
+        "primary_owners": set(["admin@danswer-test.com"]),
         "secondary_owners": set(
             ["test-group-1@onyx-test.com", "test_user_2@onyx-test.com"]
         ),
@@ -55,10 +57,10 @@ _THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
     "192edf18316015fa": {
         "email": "test_user_3@onyx-test.com",
         "sections_count": 2,
-        "primary_owners": set(["admin@onyx-test.com", "test_user_3@onyx-test.com"]),
+        "primary_owners": set(["admin@danswer-test.com", "test_user_3@onyx-test.com"]),
         "secondary_owners": set(
             [
-                "admin@onyx-test.com",
+                "admin@danswer-test.com",
                 "test_user_2@onyx-test.com",
                 "test_user_3@onyx-test.com",
             ]
@@ -68,7 +70,7 @@ _THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
 
 
 @patch(
-    "danswer.file_processing.extract_file_text.get_unstructured_api_key",
+    "onyx.file_processing.extract_file_text.get_unstructured_api_key",
     return_value=None,
 )
 def test_slim_docs_retrieval(
@@ -93,7 +95,7 @@ def test_slim_docs_retrieval(
 
 
 @patch(
-    "danswer.file_processing.extract_file_text.get_unstructured_api_key",
+    "onyx.file_processing.extract_file_text.get_unstructured_api_key",
     return_value=None,
 )
 def test_docs_retrieval(

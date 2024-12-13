@@ -4,20 +4,20 @@ from collections.abc import Callable
 
 import pytest
 
-from danswer.connectors.gmail.connector import GmailConnector
-from danswer.connectors.google_utils.shared_constants import (
+from onyx.connectors.gmail.connector import GmailConnector
+from onyx.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_AUTHENTICATION_METHOD,
 )
-from danswer.connectors.google_utils.shared_constants import (
+from onyx.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_SERVICE_ACCOUNT_KEY,
 )
-from danswer.connectors.google_utils.shared_constants import (
+from onyx.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_TOKEN_KEY,
 )
-from danswer.connectors.google_utils.shared_constants import (
+from onyx.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
-from danswer.connectors.google_utils.shared_constants import (
+from onyx.connectors.google_utils.shared_constants import (
     GoogleOAuthAuthenticationMethod,
 )
 from tests.load_env_vars import load_env_vars
@@ -54,7 +54,7 @@ def parse_credentials(env_str: str) -> dict:
 @pytest.fixture
 def google_gmail_oauth_connector_factory() -> Callable[..., GmailConnector]:
     def _connector_factory(
-        primary_admin_email: str = "admin@onyx-test.com",
+        primary_admin_email: str = "admin@danswer-test.com",
     ) -> GmailConnector:
         print("Creating GmailConnector with OAuth credentials")
         connector = GmailConnector()
@@ -76,7 +76,7 @@ def google_gmail_oauth_connector_factory() -> Callable[..., GmailConnector]:
 @pytest.fixture
 def google_gmail_service_acct_connector_factory() -> Callable[..., GmailConnector]:
     def _connector_factory(
-        primary_admin_email: str = "admin@onyx-test.com",
+        primary_admin_email: str = "admin@danswer-test.com",
     ) -> GmailConnector:
         print("Creating GmailConnector with service account credentials")
         connector = GmailConnector()
