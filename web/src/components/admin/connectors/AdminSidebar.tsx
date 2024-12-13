@@ -50,11 +50,11 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
                     {enterpriseSettings.application_name}
                   </HeaderTitle>
                   {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle">Powered by Danswer</p>
+                    <p className="text-xs text-subtle">Powered by Onyx</p>
                   )}
                 </div>
               ) : (
-                <HeaderTitle>Danswer</HeaderTitle>
+                <HeaderTitle>Onyx</HeaderTitle>
               )}
             </div>
           </div>
@@ -104,10 +104,10 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
       {combinedSettings.webVersion && (
         <div
           className="flex flex-col mt-6 items-center justify-center w-full"
-          key={"danswerVersion"}
+          key={"onyxVersion"}
         >
           <h2 className="text-xs text-text w-52 font-medium pb-2">
-            Danswer version: {combinedSettings.webVersion}
+            Onyx version: {combinedSettings.webVersion}
           </h2>
         </div>
       )}

@@ -10,7 +10,7 @@ test(
     await page.goto("http://localhost:3000/admin/api-key");
     await expect(page.locator("h1.text-3xl")).toHaveText("API Keys");
     await expect(page.locator("p.text-sm")).toHaveText(
-      /^API Keys allow you to access Danswer APIs programmatically/
+      /^API Keys allow you to access Onyx APIs programmatically/
     );
     await expect(
       page.getByRole("button", { name: "Create API Key" })

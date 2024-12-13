@@ -2,13 +2,13 @@ import os
 
 import pytest
 
-from danswer.connectors.confluence.connector import ConfluenceConnector
+from onyx.connectors.confluence.connector import ConfluenceConnector
 
 
 @pytest.fixture
 def confluence_connector() -> ConfluenceConnector:
     connector = ConfluenceConnector(
-        wiki_base="https://danswerai.atlassian.net",
+        wiki_base="https://onyxai.atlassian.net",
         is_cloud=True,
     )
     connector.load_credentials(

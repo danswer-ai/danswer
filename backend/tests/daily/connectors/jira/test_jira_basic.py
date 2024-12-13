@@ -3,14 +3,14 @@ import time
 
 import pytest
 
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.danswer_jira.connector import JiraConnector
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.onyx_jira.connector import JiraConnector
 
 
 @pytest.fixture
 def jira_connector() -> JiraConnector:
     connector = JiraConnector(
-        "https://danswerai.atlassian.net/jira/software/c/projects/AS/boards/6",
+        "https://onyxai.atlassian.net/jira/software/c/projects/AS/boards/6",
         comment_email_blacklist=[],
     )
     connector.load_credentials(
@@ -33,7 +33,7 @@ def test_jira_connector_basic(jira_connector: JiraConnector) -> None:
 
     doc = doc_batch[0]
 
-    assert doc.id == "https://danswerai.atlassian.net/browse/AS-2"
+    assert doc.id == "https://onyxai.atlassian.net/browse/AS-2"
     assert doc.semantic_identifier == "test123small"
     assert doc.source == DocumentSource.JIRA
     assert doc.metadata == {"priority": "Medium", "status": "Backlog"}
@@ -45,4 +45,4 @@ def test_jira_connector_basic(jira_connector: JiraConnector) -> None:
     assert len(doc.sections) == 1
     section = doc.sections[0]
     assert section.text == "example_text\n"
-    assert section.link == "https://danswerai.atlassian.net/browse/AS-2"
+    assert section.link == "https://onyxai.atlassian.net/browse/AS-2"

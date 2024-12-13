@@ -44,3 +44,16 @@ export function Logo({
     </div>
   );
 }
+
+export default function LogoType() {
+  return (
+    <Image
+      className="max-h-8 mr-auto "
+      src="/logotype.png"
+      alt="Logo"
+      width={2640}
+      height={733}
+      style={{ objectFit: "contain", width: "100%", height: "100%" }}
+    />
+  );
+}
