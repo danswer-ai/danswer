@@ -28,6 +28,6 @@ test(
     });
     await page.getByPlaceholder("Send a message or try using").fill("Hello");
     await page.keyboard.press("Enter");
-    await page.waitForSelector("#danswer-ai-message", { state: "visible" });
+    await page.waitForSelector("#onyx-ai-message", { state: "visible" });
   }
 );
