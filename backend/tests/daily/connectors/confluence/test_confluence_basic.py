@@ -51,7 +51,7 @@ def test_confluence_connector_basic(
 
     assert page_within_a_page_doc.semantic_identifier == "Page Within A Page"
     assert page_within_a_page_doc.primary_owners
-    assert page_within_a_page_doc.primary_owners[0].email == "hagen@onyx.app"
+    assert page_within_a_page_doc.primary_owners[0].email == "hagen@danswer.ai"
     assert len(page_within_a_page_doc.sections) == 1
 
     page_within_a_page_section = page_within_a_page_doc.sections[0]
@@ -65,7 +65,7 @@ def test_confluence_connector_basic(
     assert page_doc.semantic_identifier == "DailyConnectorTestSpace Home"
     assert page_doc.metadata["labels"] == ["testlabel"]
     assert page_doc.primary_owners
-    assert page_doc.primary_owners[0].email == "hagen@onyx.app"
+    assert page_doc.primary_owners[0].email == "hagen@danswer.ai"
     assert len(page_doc.sections) == 1
 
     page_section = page_doc.sections[0]
@@ -79,7 +79,7 @@ def test_confluence_connector_basic(
     assert len(txt_doc.sections) == 1
     assert txt_doc.sections[0].text == "small"
     assert txt_doc.primary_owners
-    assert txt_doc.primary_owners[0].email == "chris@onyx.app"
+    assert txt_doc.primary_owners[0].email == "chris@danswer.ai"
     assert (
         txt_doc.sections[0].link
         == "https://onyxai.atlassian.net/wiki/pages/viewpageattachments.action?pageId=52494430&preview=%2F52494430%2F52527123%2Fsmall-file.txt"
