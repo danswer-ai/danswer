@@ -49,6 +49,7 @@ const Page = async (props: {
     }
     return redirect("/auth/waiting-on-verification");
   }
+  console.log("authTypeMetadata", authTypeMetadata);
   const cloud = authTypeMetadata?.authType === "cloud";
 
   // only enable this page if basic login is enabled

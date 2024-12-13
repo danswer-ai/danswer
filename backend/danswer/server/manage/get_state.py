@@ -17,6 +17,7 @@ def healthcheck() -> StatusResponse:
 
 @router.get("/auth/type")
 def get_auth_type() -> AuthTypeResponse:
+    print("AUTH_TYPE", AUTH_TYPE)
     return AuthTypeResponse(
         auth_type=AUTH_TYPE, requires_verification=user_needs_to_be_verified()
     )

@@ -280,6 +280,35 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
             return user
 
+    async def validate_password(self, password: str, _: schemas.UC | models.UP) -> None:
+        # Validate password according to basic security guidelines
+        if len(password) < 12:
+            raise exceptions.InvalidPasswordException(
+                reason="Password must be at least 12 characters long."
+            )
+        if len(password) > 64:
+            raise exceptions.InvalidPasswordException(
+                reason="Password must not exceed 64 characters."
+            )
+        if not any(char.isupper() for char in password):
+            raise exceptions.InvalidPasswordException(
+                reason="Password must contain at least one uppercase letter."
+            )
+        if not any(char.islower() for char in password):
+            raise exceptions.InvalidPasswordException(
+                reason="Password must contain at least one lowercase letter."
+            )
+        if not any(char.isdigit() for char in password):
+            raise exceptions.InvalidPasswordException(
+                reason="Password must contain at least one number."
+            )
+        if not any(char in "!@#$%^&*()_+-=[]{}|;:,.<>?" for char in password):
+            raise exceptions.InvalidPasswordException(
+                reason="Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)."
+            )
+
+        return
+
     async def oauth_callback(
         self,
         oauth_name: str,
