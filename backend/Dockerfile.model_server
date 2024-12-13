@@ -6,13 +6,13 @@ AI models for Onyx. This container and all the code is MIT Licensed and free for
 You can find it at https://hub.docker.com/r/onyx/onyx-model-server. For more details, \
 visit https://github.com/onyx-dot-app/onyx."
 
-# Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
-ARG DANSWER_VERSION=0.8-dev
-ENV DANSWER_VERSION=${DANSWER_VERSION} \
+# Default ONYX_VERSION, typically overriden during builds by GitHub Actions.
+ARG ONYX_VERSION=0.8-dev
+ENV ONYX_VERSION=${ONYX_VERSION} \
     DANSWER_RUNNING_IN_DOCKER="true"
 
 
-RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
+RUN echo "ONYX_VERSION: ${ONYX_VERSION}"
 
 COPY ./requirements/model_server.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade \
