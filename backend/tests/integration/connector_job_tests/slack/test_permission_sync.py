@@ -231,7 +231,7 @@ def test_slack_group_permission_sync(
 
     # Creating an admin user (first user created is automatically an admin)
     admin_user: DATestUser = UserManager.create(
-        email="admin@danswer-test.com",
+        email="admin@onyx-test.com",
     )
 
     # Creating a non-admin user
