@@ -53,7 +53,7 @@ SECTIONS_FOLDER_URL = (
     "https://drive.google.com/drive/u/5/folders/1loe6XJ-pJxu9YYPv7cF3Hmz296VNzA33"
 )
 
-ADMIN_EMAIL = "admin@onyx-test.com"
+ADMIN_EMAIL = "admin@danswer-test.com"
 TEST_USER_1_EMAIL = "test_user_1@onyx-test.com"
 TEST_USER_2_EMAIL = "test_user_2@onyx-test.com"
 TEST_USER_3_EMAIL = "test_user_3@onyx-test.com"

@@ -34,7 +34,7 @@ def test_slack_prune(
 
     # Creating an admin user (first user created is automatically an admin)
     admin_user: DATestUser = UserManager.create(
-        email="admin@onyx-test.com",
+        email="admin@danswer-test.com",
     )
 
     # Creating a non-admin user

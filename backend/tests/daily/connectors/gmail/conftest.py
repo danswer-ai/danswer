@@ -54,7 +54,7 @@ def parse_credentials(env_str: str) -> dict:
 @pytest.fixture
 def google_gmail_oauth_connector_factory() -> Callable[..., GmailConnector]:
     def _connector_factory(
-        primary_admin_email: str = "admin@onyx-test.com",
+        primary_admin_email: str = "admin@danswer-test.com",
     ) -> GmailConnector:
         print("Creating GmailConnector with OAuth credentials")
         connector = GmailConnector()
@@ -76,7 +76,7 @@ def google_gmail_oauth_connector_factory() -> Callable[..., GmailConnector]:
 @pytest.fixture
 def google_gmail_service_acct_connector_factory() -> Callable[..., GmailConnector]:
     def _connector_factory(
-        primary_admin_email: str = "admin@onyx-test.com",
+        primary_admin_email: str = "admin@danswer-test.com",
     ) -> GmailConnector:
         print("Creating GmailConnector with service account credentials")
         connector = GmailConnector()

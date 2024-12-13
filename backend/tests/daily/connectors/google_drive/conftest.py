@@ -28,12 +28,12 @@ load_env_vars()
 
 
 _USER_TO_OAUTH_CREDENTIALS_MAP = {
-    "admin@onyx-test.com": "GOOGLE_DRIVE_OAUTH_CREDENTIALS_JSON_STR",
+    "admin@danswer-test.com": "GOOGLE_DRIVE_OAUTH_CREDENTIALS_JSON_STR",
     "test_user_1@onyx-test.com": "GOOGLE_DRIVE_OAUTH_CREDENTIALS_JSON_STR_TEST_USER_1",
 }
 
 _USER_TO_SERVICE_ACCOUNT_CREDENTIALS_MAP = {
-    "admin@onyx-test.com": "GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON_STR",
+    "admin@danswer-test.com": "GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON_STR",
 }
 
 
