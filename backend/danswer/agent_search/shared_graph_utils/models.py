@@ -10,7 +10,3 @@ class RewrittenQueries(BaseModel):
 
 class BinaryDecision(BaseModel):
     decision: Literal["yes", "no"]
-
-
-class SubQuestions(BaseModel):
-    sub_questions: list[str]

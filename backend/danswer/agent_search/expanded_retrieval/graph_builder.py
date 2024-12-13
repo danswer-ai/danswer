@@ -4,28 +4,35 @@ from langgraph.graph import StateGraph
 
 from danswer.agent_search.expanded_retrieval.edges import conditionally_rerank_edge
 from danswer.agent_search.expanded_retrieval.edges import parallel_retrieval_edge
-from danswer.agent_search.expanded_retrieval.nodes.collect_retrieved_docs import (
-    kick_off_verification,
-)
 from danswer.agent_search.expanded_retrieval.nodes.doc_reranking import doc_reranking
 from danswer.agent_search.expanded_retrieval.nodes.doc_retrieval import doc_retrieval
 from danswer.agent_search.expanded_retrieval.nodes.doc_verification import (
     doc_verification,
 )
+from danswer.agent_search.expanded_retrieval.nodes.verification_kickoff import (
+    verification_kickoff,
+)
 from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalInput
+from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalOutput
 from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalState
 
 
 def expanded_retrieval_graph_builder() -> StateGraph:
-    graph = StateGraph(ExpandedRetrievalState)
+    graph = StateGraph(
+        state_schema=ExpandedRetrievalState,
+        input=ExpandedRetrievalInput,
+        output=ExpandedRetrievalOutput,
+    )
+
+    ### Add nodes ###
 
     graph.add_node(
         node="doc_retrieval",
         action=doc_retrieval,
     )
     graph.add_node(
-        node="kick_off_verification",
-        action=kick_off_verification,
+        node="verification_kickoff",
+        action=verification_kickoff,
     )
     graph.add_node(
         node="doc_verification",
@@ -36,13 +43,16 @@ def expanded_retrieval_graph_builder() -> StateGraph:
         action=doc_reranking,
     )
 
+    ### Add edges ###
+
     graph.add_conditional_edges(
         source=START,
         path=parallel_retrieval_edge,
+        path_map=["doc_retrieval"],
     )
     graph.add_edge(
         start_key="doc_retrieval",
-        end_key="kick_off_verification",
+        end_key="verification_kickoff",
     )
     graph.add_conditional_edges(
         source="doc_verification",
@@ -77,7 +87,7 @@ if __name__ == "__main__":
             primary_llm=primary_llm,
             fast_llm=fast_llm,
             db_session=db_session,
-            query_to_expand="Who made Excel?",
+            query_to_answer="Who made Excel?",
         )
         for thing in compiled_graph.stream(inputs, debug=True):
             print(thing)

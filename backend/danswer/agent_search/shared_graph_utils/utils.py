@@ -22,12 +22,22 @@ def format_docs(docs: Sequence[InferenceSection]) -> str:
 
 
 def clean_and_parse_list_string(json_string: str) -> list[dict]:
+    # Remove any prefixes/labels before the actual JSON content
+    json_string = re.sub(r"^.*?(?=\[)", "", json_string, flags=re.DOTALL)
+
     # Remove markdown code block markers and any newline prefixes
     cleaned_string = re.sub(r"```json\n|\n```", "", json_string)
     cleaned_string = cleaned_string.replace("\\n", " ").replace("\n", " ")
     cleaned_string = " ".join(cleaned_string.split())
-    # Parse the cleaned string into a Python dictionary
-    return ast.literal_eval(cleaned_string)
+
+    # Try parsing with json.loads first, fall back to ast.literal_eval
+    try:
+        return json.loads(cleaned_string)
+    except json.JSONDecodeError:
+        try:
+            return ast.literal_eval(cleaned_string)
+        except (ValueError, SyntaxError) as e:
+            raise ValueError(f"Failed to parse JSON string: {cleaned_string}") from e
 
 
 def clean_and_parse_json_string(json_string: str) -> dict[str, Any]:
