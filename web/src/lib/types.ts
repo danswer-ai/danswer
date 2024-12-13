@@ -139,6 +139,17 @@ export interface ConnectorIndexingStatus<
   in_progress: boolean;
 }
 
+// slimmer set of data used for the background indexing monitoring page
+export interface ConnectorBackgroundIndexingStatus {
+  name: string;
+  source: string;
+  cc_pair_id: number;
+  search_settings_id: number;
+  index_attempt_id: number | null;
+  started: string | null;
+  progress: number | null;
+}
+
 export interface OAuthPrepareAuthorizationResponse {
   url: string;
 }

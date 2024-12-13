@@ -364,6 +364,16 @@ class RunConnectorRequest(BaseModel):
     from_beginning: bool = False
 
 
+class ConnectorBackgroundIndexingStatus(BaseModel):
+    name: str
+    source: DocumentSource
+    cc_pair_id: int
+    search_settings_id: int
+    index_attempt_id: int | None
+    started: datetime | None
+    progress: int | None
+
+
 class CCPropertyUpdateRequest(BaseModel):
     name: str
     value: str

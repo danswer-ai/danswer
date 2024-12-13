@@ -64,6 +64,7 @@ from danswer.redis.redis_connector_doc_perm_sync import (
 )
 from danswer.redis.redis_connector_index import RedisConnectorIndex
 from danswer.redis.redis_connector_prune import RedisConnectorPrune
+from danswer.redis.redis_connector_utils import RedisConnectorUtils
 from danswer.redis.redis_document_set import RedisDocumentSet
 from danswer.redis.redis_pool import get_redis_client
 from danswer.redis.redis_usergroup import RedisUserGroup
@@ -402,7 +403,7 @@ def monitor_connector_deletion_taskset(
     tenant_id: str | None, key_bytes: bytes, r: Redis
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    cc_pair_id_str = RedisConnector.get_id_from_fence_key(fence_key)
+    cc_pair_id_str = RedisConnectorUtils.get_id_from_fence_key(fence_key)
     if cc_pair_id_str is None:
         task_logger.warning(f"could not parse cc_pair_id from {fence_key}")
         return
@@ -528,7 +529,7 @@ def monitor_ccpair_pruning_taskset(
     tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    cc_pair_id_str = RedisConnector.get_id_from_fence_key(fence_key)
+    cc_pair_id_str = RedisConnectorUtils.get_id_from_fence_key(fence_key)
     if cc_pair_id_str is None:
         task_logger.warning(
             f"monitor_ccpair_pruning_taskset: could not parse cc_pair_id from {fence_key}"
@@ -566,7 +567,7 @@ def monitor_ccpair_permissions_taskset(
     tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
     fence_key = key_bytes.decode("utf-8")
-    cc_pair_id_str = RedisConnector.get_id_from_fence_key(fence_key)
+    cc_pair_id_str = RedisConnectorUtils.get_id_from_fence_key(fence_key)
     if cc_pair_id_str is None:
         task_logger.warning(
             f"monitor_ccpair_permissions_taskset: could not parse cc_pair_id from {fence_key}"
@@ -604,25 +605,15 @@ def monitor_ccpair_permissions_taskset(
 def monitor_ccpair_indexing_taskset(
     tenant_id: str | None, key_bytes: bytes, r: Redis, db_session: Session
 ) -> None:
-    # if the fence doesn't exist, there's nothing to do
-    fence_key = key_bytes.decode("utf-8")
-    composite_id = RedisConnector.get_id_from_fence_key(fence_key)
-    if composite_id is None:
+    redis_ids = RedisConnectorIndex.parse_key(key_bytes)
+    if not redis_ids:
         task_logger.warning(
-            f"monitor_ccpair_indexing_taskset: could not parse composite_id from {fence_key}"
+            f"monitor_ccpair_indexing_taskset: could not parse composite_id from {key_bytes!r}"
         )
         return
 
-    # parse out metadata and initialize the helper class with it
-    parts = composite_id.split("/")
-    if len(parts) != 2:
-        return
-
-    cc_pair_id = int(parts[0])
-    search_settings_id = int(parts[1])
-
-    redis_connector = RedisConnector(tenant_id, cc_pair_id)
-    redis_connector_index = redis_connector.new_index(search_settings_id)
+    redis_connector = RedisConnector(tenant_id, redis_ids.cc_pair_id)
+    redis_connector_index = redis_connector.new_index(redis_ids.search_settings_id)
     if not redis_connector_index.fenced:
         return
 
@@ -635,8 +626,8 @@ def monitor_ccpair_indexing_taskset(
     progress = redis_connector_index.get_progress()
     if progress is not None:
         task_logger.info(
-            f"Connector indexing progress: cc_pair={cc_pair_id} "
-            f"search_settings={search_settings_id} "
+            f"Connector indexing progress: cc_pair={redis_ids.cc_pair_id} "
+            f"search_settings={redis_ids.search_settings_id} "
             f"progress={progress} "
             f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
         )
@@ -671,8 +662,8 @@ def monitor_ccpair_indexing_taskset(
                     f"Connector indexing aborted or exceptioned: "
                     f"attempt={payload.index_attempt_id} "
                     f"celery_task={payload.celery_task_id} "
-                    f"cc_pair={cc_pair_id} "
-                    f"search_settings={search_settings_id} "
+                    f"cc_pair={redis_ids.cc_pair_id} "
+                    f"search_settings={redis_ids.search_settings_id} "
                     f"elapsed_submitted={elapsed_submitted.total_seconds():.2f} "
                     f"result.state={task_state} "
                     f"result.result={task_result} "
@@ -699,8 +690,8 @@ def monitor_ccpair_indexing_taskset(
                         "monitor_ccpair_indexing_taskset - transient exception marking index attempt as failed: "
                         f"attempt={payload.index_attempt_id} "
                         f"tenant={tenant_id} "
-                        f"cc_pair={cc_pair_id} "
-                        f"search_settings={search_settings_id}"
+                        f"cc_pair={redis_ids.cc_pair_id} "
+                        f"search_settings={redis_ids.search_settings_id}"
                     )
 
                 redis_connector_index.reset()
@@ -709,8 +700,8 @@ def monitor_ccpair_indexing_taskset(
     status_enum = HTTPStatus(status_int)
 
     task_logger.info(
-        f"Connector indexing finished: cc_pair={cc_pair_id} "
-        f"search_settings={search_settings_id} "
+        f"Connector indexing finished: cc_pair={redis_ids.cc_pair_id} "
+        f"search_settings={redis_ids.search_settings_id} "
         f"progress={progress} "
         f"status={status_enum.name} "
         f"elapsed_submitted={elapsed_submitted.total_seconds():.2f}"
