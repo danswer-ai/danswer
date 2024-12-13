@@ -41,7 +41,6 @@ from onyx.connectors.salesforce.connector import SalesforceConnector
 from onyx.connectors.sharepoint.connector import SharepointConnector
 from onyx.connectors.slab.connector import SlabConnector
 from onyx.connectors.slack.connector import SlackPollConnector
-from onyx.connectors.slack.load_connector import SlackLoadConnector
 from onyx.connectors.teams.connector import TeamsConnector
 from onyx.connectors.web.connector import WebConnector
 from onyx.connectors.wikipedia.connector import WikipediaConnector
@@ -64,7 +63,6 @@ def identify_connector_class(
         DocumentSource.WEB: WebConnector,
         DocumentSource.FILE: LocalFileConnector,
         DocumentSource.SLACK: {
-            InputType.LOAD_STATE: SlackLoadConnector,
             InputType.POLL: SlackPollConnector,
             InputType.SLIM_RETRIEVAL: SlackPollConnector,
         },

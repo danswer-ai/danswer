@@ -12,36 +12,36 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from danswer.auth.users import current_user
-from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.configs.constants import DocumentSource
-from danswer.connectors.google_utils.google_auth import get_google_oauth_creds
-from danswer.connectors.google_utils.google_auth import sanitize_oauth_credentials
-from danswer.connectors.google_utils.shared_constants import (
+from ee.onyx.configs.app_configs import OAUTH_CONFLUENCE_CLIENT_ID
+from ee.onyx.configs.app_configs import OAUTH_CONFLUENCE_CLIENT_SECRET
+from ee.onyx.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_ID
+from ee.onyx.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
+from ee.onyx.configs.app_configs import OAUTH_SLACK_CLIENT_ID
+from ee.onyx.configs.app_configs import OAUTH_SLACK_CLIENT_SECRET
+from onyx.auth.users import current_user
+from onyx.configs.app_configs import WEB_DOMAIN
+from onyx.configs.constants import DocumentSource
+from onyx.connectors.google_utils.google_auth import get_google_oauth_creds
+from onyx.connectors.google_utils.google_auth import sanitize_oauth_credentials
+from onyx.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_AUTHENTICATION_METHOD,
 )
-from danswer.connectors.google_utils.shared_constants import (
+from onyx.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_DICT_TOKEN_KEY,
 )
-from danswer.connectors.google_utils.shared_constants import (
+from onyx.connectors.google_utils.shared_constants import (
     DB_CREDENTIALS_PRIMARY_ADMIN_KEY,
 )
-from danswer.connectors.google_utils.shared_constants import (
+from onyx.connectors.google_utils.shared_constants import (
     GoogleOAuthAuthenticationMethod,
 )
-from danswer.db.credentials import create_credential
-from danswer.db.engine import get_current_tenant_id
-from danswer.db.engine import get_session
-from danswer.db.models import User
-from danswer.redis.redis_pool import get_redis_client
-from danswer.server.documents.models import CredentialBase
-from danswer.utils.logger import setup_logger
-from ee.danswer.configs.app_configs import OAUTH_CONFLUENCE_CLIENT_ID
-from ee.danswer.configs.app_configs import OAUTH_CONFLUENCE_CLIENT_SECRET
-from ee.danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_ID
-from ee.danswer.configs.app_configs import OAUTH_GOOGLE_DRIVE_CLIENT_SECRET
-from ee.danswer.configs.app_configs import OAUTH_SLACK_CLIENT_ID
-from ee.danswer.configs.app_configs import OAUTH_SLACK_CLIENT_SECRET
+from onyx.db.credentials import create_credential
+from onyx.db.engine import get_current_tenant_id
+from onyx.db.engine import get_session
+from onyx.db.models import User
+from onyx.redis.redis_pool import get_redis_client
+from onyx.server.documents.models import CredentialBase
+from onyx.utils.logger import setup_logger
 
 
 logger = setup_logger()
@@ -64,7 +64,7 @@ class SlackOAuth:
 
     TOKEN_URL = "https://slack.com/api/oauth.v2.access"
 
-    # SCOPE is per https://docs.danswer.dev/connectors/slack
+    # SCOPE is per https://docs.onyx.app/connectors/slack
     BOT_SCOPE = (
         "channels:history,"
         "channels:read,"
@@ -211,7 +211,7 @@ class GoogleDriveOAuth:
 
     TOKEN_URL = "https://oauth2.googleapis.com/token"
 
-    # SCOPE is per https://docs.danswer.dev/connectors/google-drive
+    # SCOPE is per https://docs.onyx.app/connectors/google-drive
     # TODO: Merge with or use google_utils.GOOGLE_SCOPES
     SCOPE = (
         "https://www.googleapis.com/auth/drive.readonly%20"
