@@ -59,7 +59,7 @@ def test_confluence_connector_basic(
     assert page_within_a_page_section.text == page_within_a_page_text
     assert (
         page_within_a_page_section.link
-        == "https://onyxai.atlassian.net/wiki/spaces/DailyConne/pages/200769540/Page+Within+A+Page"
+        == "https://danswerai.atlassian.net/wiki/spaces/DailyConne/pages/200769540/Page+Within+A+Page"
     )
 
     assert page_doc.semantic_identifier == "DailyConnectorTestSpace Home"
@@ -72,7 +72,7 @@ def test_confluence_connector_basic(
     assert page_section.text == "test123 " + page_within_a_page_text
     assert (
         page_section.link
-        == "https://onyxai.atlassian.net/wiki/spaces/DailyConne/overview"
+        == "https://danswerai.atlassian.net/wiki/spaces/DailyConne/overview"
     )
 
     assert txt_doc.semantic_identifier == "small-file.txt"
@@ -82,5 +82,5 @@ def test_confluence_connector_basic(
     assert txt_doc.primary_owners[0].email == "chris@danswer.ai"
     assert (
         txt_doc.sections[0].link
-        == "https://onyxai.atlassian.net/wiki/pages/viewpageattachments.action?pageId=52494430&preview=%2F52494430%2F52527123%2Fsmall-file.txt"
+        == "https://danswerai.atlassian.net/wiki/pages/viewpageattachments.action?pageId=52494430&preview=%2F52494430%2F52527123%2Fsmall-file.txt"
     )
