@@ -30,7 +30,7 @@ spec:
                 secretKeyRef:
                   name: onyx-secrets
                   key: redis_password
-            - name: DANSWER_VERSION
+            - name: ONYX_VERSION
               value: "v0.11.0-cloud.beta.8"
           envFrom:
             - configMapRef:
