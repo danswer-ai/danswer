@@ -309,7 +309,10 @@ class WebConnector(LoadConnector):
                     page_text, metadata = read_pdf_file(
                         file=io.BytesIO(response.content)
                     )
+                    document_title = response.headers.get("X-Danswer-Document-Title")
                     last_modified = response.headers.get("Last-Modified")
+                    if document_title:
+                        metadata["title"] = document_title
 
                     doc_batch.append(
                         Document(
@@ -329,6 +332,7 @@ class WebConnector(LoadConnector):
 
                 page = context.new_page()
                 page_response = page.goto(current_url)
+                document_title = page_response.header_value("X-Danswer-Document-Title")
                 last_modified = (
                     page_response.header_value("Last-Modified")
                     if page_response
@@ -360,6 +364,10 @@ class WebConnector(LoadConnector):
 
                 parsed_html = web_html_cleanup(soup, self.mintlify_cleanup)
 
+                metadata = {}
+                if document_title:
+                    metadata["title"] = document_title
+
                 doc_batch.append(
                     Document(
                         id=current_url,
@@ -368,7 +376,7 @@ class WebConnector(LoadConnector):
                         ],
                         source=DocumentSource.WEB,
                         semantic_identifier=parsed_html.title or current_url,
-                        metadata={},
+                        metadata=metadata,
                         doc_updated_at=_get_datetime_from_last_modified_header(
                             last_modified
                         )
