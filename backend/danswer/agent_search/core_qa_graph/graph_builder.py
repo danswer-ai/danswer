@@ -101,21 +101,20 @@ def build_core_qa_graph() -> StateGraph:
 
 
 if __name__ == "__main__":
+    # q = "Whose music is kind of hard to easily enjoy?"
+    # q = "What is voice leading?"
+    # q = "What are the types of motions in music?"
+    # q = "What are key elements of music theory?"
+    # q = "How can I best understand music theory using voice leading?"
+    q = "What makes good music?"
+    # q = "types of motions in music"
+    # q = "What is the relationship between music and physics?"
+    # q = "Can you compare various grunge styles?"
+    # q = "Why is quantum gravity so hard?"
+
     inputs = CoreQAInputState(
-        #original_question="Whose music is kind of hard to easily enjoy?",
-        #sub_question_str="Whose music is kind of hard to easily enjoy?",
-        #original_question="What is voice leading?",
-        #sub_question_str="What is voice leading?",
-        original_question="What are the types of motions in music?",
-        #original_question="types of motions in music",
-        #sub_question_str="What are key elements of music theory?",
-        #sub_question_str="How can I best understand music theory using voice leading?",
-        sub_question_str="What are the types of motions in music?",
-        #sub_question_str="types of motions in music",
-        #sub_question_str="What is the relationship between music and physics?",
-        #sub_question_str="Can you compare various grunge styles?",
-        #sub_question_str="Why is quantum gravity so hard?",
-    
+        original_question=q,
+        sub_question_str=q,
     )
     sub_answers_graph = build_core_qa_graph()
     compiled_sub_answers = sub_answers_graph.compile()

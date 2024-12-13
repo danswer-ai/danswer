@@ -1,17 +1,19 @@
-
 REWRITE_PROMPT_MULTI_ORIGINAL = """ \n
-    Please convert an initial user question into a 2-3 more appropriate search queries for retrievel from a
-    document store. \n
+    Please convert an initial user question into a 2-3 more appropriate short and pointed search queries for retrievel from a
+    document store. Particularly, try to think about resolving ambiguities and make the search queries more specific,
+    enabling the system to search more broadly.
+    Also, try to make the search queries not redundant, i.e. not too similar! \n\n
     Here is the initial question:
     \n ------- \n
     {question}
     \n ------- \n
 
-    Formulate the query: """
+    Formulate the queries separated by '--' (Do not say 'Query 1: ...', just write the querytext): """
 
 
 REWRITE_PROMPT_MULTI = """ \n
-    Please create a list of 2-3 sample documents that could answer an original question. Each document should be about as long as the original question. \n
+    Please create a list of 2-3 sample documents that could answer an original question. Each document
+    should be about as long as the original question. \n
     Here is the initial question:
     \n ------- \n
     {question}

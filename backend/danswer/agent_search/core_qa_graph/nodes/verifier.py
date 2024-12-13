@@ -22,7 +22,7 @@ def sub_verifier(state: VerifierState) -> dict[str, Any]:
         dict: ict: The updated state with the final decision
     """
 
-    #print("---VERIFY QUTPUT---")
+    # print("---VERIFY QUTPUT---")
     node_start_time = datetime.datetime.now()
 
     question = state["question"]
@@ -50,8 +50,7 @@ def sub_verifier(state: VerifierState) -> dict[str, Any]:
     decision_dict = {"decision": response_string.lower()}
     formatted_response = BinaryDecision.model_validate(decision_dict)
 
-    if formatted_response.decision == "yes":
-        print(f"D: {document_content[:100]}\n\n")
+    print(f"Verification end time: {datetime.datetime.now()}")
 
     return {
         "sub_question_verified_retrieval_docs": [state["document"]]
