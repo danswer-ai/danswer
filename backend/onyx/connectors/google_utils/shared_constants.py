@@ -12,7 +12,7 @@ GOOGLE_SCOPES = {
         "https://www.googleapis.com/auth/admin.directory.user.readonly",
     ],
     DocumentSource.GMAIL: [
-        "https://www.googleapis.com/auth/gmail.readonfromly",
+        "https://www.googleapis.com/auth/gmail.readonly",
         "https://www.googleapis.com/auth/admin.directory.user.readonly",
         "https://www.googleapis.com/auth/admin.directory.group.readonly",
     ],
