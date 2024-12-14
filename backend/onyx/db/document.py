@@ -12,6 +12,7 @@ from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy import Select
 from sqlalchemy import select
+from sqlalchemy import tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine.util import TransactionalContext
 from sqlalchemy.exc import OperationalError
@@ -210,6 +211,7 @@ def get_document_counts_for_cc_pairs(
     db_session: Session, cc_pair_identifiers: list[ConnectorCredentialPairIdentifier]
 ) -> Sequence[tuple[int, int, int]]:
     """Returns a sequence of tuples of (connector_id, credential_id, document count)"""
+
     # Prepare a list of (connector_id, credential_id) tuples
     cc_ids = [(x.connector_id, x.credential_id) for x in cc_pair_identifiers]
 
@@ -220,7 +222,7 @@ def get_document_counts_for_cc_pairs(
             func.count(),
         )
         .where(
-            (
+            tuple_(
                 DocumentByConnectorCredentialPair.connector_id,
                 DocumentByConnectorCredentialPair.credential_id,
             ).in_(cc_ids)

@@ -15,8 +15,8 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
-    # Create composite index on (connector_id, credential_id)
+def upgrade() -> None:
+    # Composite index on (connector_id, credential_id)
     op.create_index(
         "idx_document_cc_pair_connector_credential",
         "document_by_connector_credential_pair",
@@ -25,8 +25,7 @@ def upgrade():
     )
 
 
-def downgrade():
-    # Drop the composite index
+def downgrade() -> None:
     op.drop_index(
         "idx_document_cc_pair_connector_credential",
         table_name="document_by_connector_credential_pair",
