@@ -16,6 +16,7 @@ from fastapi import status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi_limiter.depends import RateLimiter
 from httpx_oauth.clients.google import GoogleOAuth2
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
@@ -46,7 +47,6 @@ from onyx.configs.constants import POSTGRES_WEB_APP_NAME
 from onyx.db.engine import SqlEngine
 from onyx.db.engine import warm_up_connections
 from onyx.rate_limiter import close_limiter
-from onyx.rate_limiter import ip_rate_limit
 from onyx.rate_limiter import setup_limiter
 from onyx.server.api_key.api import router as api_key_router
 from onyx.server.auth_check import check_router_auth
@@ -299,7 +299,7 @@ def get_application() -> FastAPI:
             fastapi_users.get_auth_router(auth_backend),
             prefix="/auth",
             tags=["auth"],
-            dependencies=[Depends(ip_rate_limit(times=10, seconds=60))],
+            dependencies=[Depends(RateLimiter(times=0, seconds=60))],
         )
 
         include_router_with_global_prefix_prepended(
@@ -307,7 +307,7 @@ def get_application() -> FastAPI:
             fastapi_users.get_register_router(UserRead, UserCreate),
             prefix="/auth",
             tags=["auth"],
-            dependencies=[Depends(ip_rate_limit(times=5, seconds=60))],
+            dependencies=[Depends(RateLimiter(times=0, seconds=60))],
         )
 
         include_router_with_global_prefix_prepended(
@@ -315,18 +315,21 @@ def get_application() -> FastAPI:
             fastapi_users.get_reset_password_router(),
             prefix="/auth",
             tags=["auth"],
+            dependencies=[Depends(RateLimiter(times=0, seconds=60))],
         )
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_verify_router(UserRead),
             prefix="/auth",
             tags=["auth"],
+            dependencies=[Depends(RateLimiter(times=0, seconds=60))],
         )
         include_router_with_global_prefix_prepended(
             application,
             fastapi_users.get_users_router(UserRead, UserUpdate),
             prefix="/users",
             tags=["users"],
+            dependencies=[Depends(RateLimiter(times=0, seconds=60))],
         )
 
     if AUTH_TYPE == AuthType.GOOGLE_OAUTH:
