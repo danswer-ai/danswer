@@ -210,6 +210,9 @@ def get_document_counts_for_cc_pairs(
     db_session: Session, cc_pair_identifiers: list[ConnectorCredentialPairIdentifier]
 ) -> Sequence[tuple[int, int, int]]:
     """Returns a sequence of tuples of (connector_id, credential_id, document count)"""
+    # Prepare a list of (connector_id, credential_id) tuples
+    cc_ids = [(x.connector_id, x.credential_id) for x in cc_pair_identifiers]
+
     stmt = (
         select(
             DocumentByConnectorCredentialPair.connector_id,
@@ -217,17 +220,10 @@ def get_document_counts_for_cc_pairs(
             func.count(),
         )
         .where(
-            or_(
-                *[
-                    and_(
-                        DocumentByConnectorCredentialPair.connector_id
-                        == cc_pair_identifier.connector_id,
-                        DocumentByConnectorCredentialPair.credential_id
-                        == cc_pair_identifier.credential_id,
-                    )
-                    for cc_pair_identifier in cc_pair_identifiers
-                ]
-            )
+            (
+                DocumentByConnectorCredentialPair.connector_id,
+                DocumentByConnectorCredentialPair.credential_id,
+            ).in_(cc_ids)
         )
         .group_by(
             DocumentByConnectorCredentialPair.connector_id,
