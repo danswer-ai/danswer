@@ -8,6 +8,7 @@ from typing import cast
 import sentry_sdk
 import uvicorn
 from fastapi import APIRouter
+from fastapi import Depends
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import Request
@@ -44,6 +45,9 @@ from onyx.configs.constants import AuthType
 from onyx.configs.constants import POSTGRES_WEB_APP_NAME
 from onyx.db.engine import SqlEngine
 from onyx.db.engine import warm_up_connections
+from onyx.rate_limiter import close_limiter
+from onyx.rate_limiter import ip_rate_limit
+from onyx.rate_limiter import setup_limiter
 from onyx.server.api_key.api import router as api_key_router
 from onyx.server.auth_check import check_router_auth
 from onyx.server.documents.cc_pair import router as cc_pair_router
@@ -194,7 +198,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         setup_multitenant_onyx()
 
     optional_telemetry(record_type=RecordType.VERSION, data={"version": __version__})
+
+    # Set up rate limiter
+    await setup_limiter()
+
     yield
+
+    # Close rate limiter
+    await close_limiter()
 
 
 def log_http_error(_: Request, exc: Exception) -> JSONResponse:
@@ -288,6 +299,7 @@ def get_application() -> FastAPI:
             fastapi_users.get_auth_router(auth_backend),
             prefix="/auth",
             tags=["auth"],
+            dependencies=[Depends(ip_rate_limit(times=10, seconds=60))],
         )
 
         include_router_with_global_prefix_prepended(
@@ -295,6 +307,7 @@ def get_application() -> FastAPI:
             fastapi_users.get_register_router(UserRead, UserCreate),
             prefix="/auth",
             tags=["auth"],
+            dependencies=[Depends(ip_rate_limit(times=5, seconds=60))],
         )
 
         include_router_with_global_prefix_prepended(

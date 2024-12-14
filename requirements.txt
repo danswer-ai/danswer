@@ -1,0 +1,2 @@
+fastapi-limiter==0.1.5
+aioredis==2.0.1 
