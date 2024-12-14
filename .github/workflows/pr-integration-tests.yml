@@ -43,8 +43,8 @@ jobs:
       # successfully.
       - name: Pull Web Docker image
         run: |
-          docker pull onyx/onyx-web-server:latest
-          docker tag onyx/onyx-web-server:latest onyx/onyx-web-server:test
+          docker pull onyxdotapp/onyx-web-server:latest
+          docker tag onyxdotapp/onyx-web-server:latest onyxdotapp/onyx-web-server:test
 
       # we use the runs-on cache for docker builds
       # in conjunction with runs-on runners, it has better speed and unlimited caching
@@ -59,7 +59,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           platforms: linux/amd64
-          tags: onyx/onyx-backend:test
+          tags: onyxdotapp/onyx-backend:test
           push: false
           load: true
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/backend/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
@@ -71,7 +71,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile.model_server
           platforms: linux/amd64
-          tags: onyx/onyx-model-server:test
+          tags: onyxdotapp/onyx-model-server:test
           push: false
           load: true
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/model-server/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
@@ -83,7 +83,7 @@ jobs:
           context: ./backend
           file: ./backend/tests/integration/Dockerfile
           platforms: linux/amd64
-          tags: onyx/onyx-integration:test
+          tags: onyxdotapp/onyx-integration:test
           push: false
           load: true
           cache-from: type=s3,prefix=cache/${{ github.repository }}/integration-tests/integration/,region=${{ env.RUNS_ON_AWS_REGION }},bucket=${{ env.RUNS_ON_S3_BUCKET_CACHE }}
@@ -120,7 +120,7 @@ jobs:
             -e TEST_WEB_HOSTNAME=test-runner \
             -e AUTH_TYPE=cloud \
             -e MULTI_TENANT=true \
-            onyx/onyx-integration:test \
+            onyxdotapp/onyx-integration:test \
             /app/tests/integration/multitenant_tests
         continue-on-error: true
         id: run_multitenant_tests
@@ -202,7 +202,7 @@ jobs:
             -e CONFLUENCE_USER_NAME=${CONFLUENCE_USER_NAME} \
             -e CONFLUENCE_ACCESS_TOKEN=${CONFLUENCE_ACCESS_TOKEN} \
             -e TEST_WEB_HOSTNAME=test-runner \
-            onyx/onyx-integration:test \
+            onyxdotapp/onyx-integration:test \
             /app/tests/integration/tests \
             /app/tests/integration/connector_job_tests
         continue-on-error: true
