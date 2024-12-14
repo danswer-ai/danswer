@@ -23,7 +23,7 @@
           },
           {
             "name": "From",
-            "value": "Test Admin Admin <admin@danswer-test.com>"
+            "value": "Test Admin Admin <admin@onyx-test.com>"
           },
           {
             "name": "To",
@@ -56,7 +56,7 @@
         "headers": [
           {
             "name": "Delivered-To",
-            "value": "admin@danswer-test.com"
+            "value": "admin@onyx-test.com"
           },
           {
             "name": "Received",
@@ -84,7 +84,7 @@
           },
           {
             "name": "Received",
-            "value": "from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])        by mx.google.com with SMTPS id a1e0cc1a2514c-855dae589a1sor1192309241.6.2024.11.02.10.33.34        for <admin@danswer-test.com>        (Google Transport Security);        Sat, 02 Nov 2024 10:33:34 -0700 (PDT)"
+            "value": "from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])        by mx.google.com with SMTPS id a1e0cc1a2514c-855dae589a1sor1192309241.6.2024.11.02.10.33.34        for <admin@onyx-test.com>        (Google Transport Security);        Sat, 02 Nov 2024 10:33:34 -0700 (PDT)"
           },
           {
             "name": "Received-SPF",
@@ -144,7 +144,7 @@
           },
           {
             "name": "To",
-            "value": "Test Admin Admin <admin@danswer-test.com>"
+            "value": "Test Admin Admin <admin@onyx-test.com>"
           },
           {
             "name": "Content-Type",
@@ -201,7 +201,7 @@
           },
           {
             "name": "From",
-            "value": "Test Admin Admin <admin@danswer-test.com>"
+            "value": "Test Admin Admin <admin@onyx-test.com>"
           },
           {
             "name": "To",
@@ -234,7 +234,7 @@
         "headers": [
           {
             "name": "Delivered-To",
-            "value": "admin@danswer-test.com"
+            "value": "admin@onyx-test.com"
           },
           {
             "name": "Received",
@@ -262,7 +262,7 @@
           },
           {
             "name": "Received",
-            "value": "from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])        by mx.google.com with SMTPS id 71dfb90a1353d-5106f3f9037sor1051490e0c.7.2024.11.02.10.35.06        for <admin@danswer-test.com>        (Google Transport Security);        Sat, 02 Nov 2024 10:35:06 -0700 (PDT)"
+            "value": "from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])        by mx.google.com with SMTPS id 71dfb90a1353d-5106f3f9037sor1051490e0c.7.2024.11.02.10.35.06        for <admin@onyx-test.com>        (Google Transport Security);        Sat, 02 Nov 2024 10:35:06 -0700 (PDT)"
           },
           {
             "name": "Received-SPF",
@@ -322,7 +322,7 @@
           },
           {
             "name": "To",
-            "value": "Test Admin Admin <admin@danswer-test.com>"
+            "value": "Test Admin Admin <admin@onyx-test.com>"
           },
           {
             "name": "Content-Type",

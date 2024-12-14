@@ -13,18 +13,18 @@ _THREAD_1_END_TIME = 1730569000
 
 """
 This thread was 4 emails long:
-    admin@danswer-test.com -> test-group-1@onyx-test.com (conaining test_user_1 and test_user_2)
-    test_user_1@onyx-test.com -> admin@danswer-test.com
-    admin@danswer-test.com -> test_user_2@onyx-test.com + BCC: test_user_3@onyx-test.com
-    test_user_3@onyx-test.com -> admin@danswer-test.com
+    admin@onyx-test.com -> test-group-1@onyx-test.com (conaining test_user_1 and test_user_2)
+    test_user_1@onyx-test.com -> admin@onyx-test.com
+    admin@onyx-test.com -> test_user_2@onyx-test.com + BCC: test_user_3@onyx-test.com
+    test_user_3@onyx-test.com -> admin@onyx-test.com
 """
 _THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
     "192edefb315737c3": {
-        "email": "admin@danswer-test.com",
+        "email": "admin@onyx-test.com",
         "sections_count": 4,
         "primary_owners": set(
             [
-                "admin@danswer-test.com",
+                "admin@onyx-test.com",
                 "test_user_1@onyx-test.com",
                 "test_user_3@onyx-test.com",
             ]
@@ -32,7 +32,7 @@ _THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
         "secondary_owners": set(
             [
                 "test-group-1@onyx-test.com",
-                "admin@danswer-test.com",
+                "admin@onyx-test.com",
                 "test_user_2@onyx-test.com",
                 "test_user_3@onyx-test.com",
             ]
@@ -41,15 +41,13 @@ _THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
     "192edf020d2f5def": {
         "email": "test_user_1@onyx-test.com",
         "sections_count": 2,
-        "primary_owners": set(["admin@danswer-test.com", "test_user_1@onyx-test.com"]),
-        "secondary_owners": set(
-            ["test-group-1@onyx-test.com", "admin@danswer-test.com"]
-        ),
+        "primary_owners": set(["admin@onyx-test.com", "test_user_1@onyx-test.com"]),
+        "secondary_owners": set(["test-group-1@onyx-test.com", "admin@onyx-test.com"]),
     },
     "192edf020ae90aab": {
         "email": "test_user_2@onyx-test.com",
         "sections_count": 2,
-        "primary_owners": set(["admin@danswer-test.com"]),
+        "primary_owners": set(["admin@onyx-test.com"]),
         "secondary_owners": set(
             ["test-group-1@onyx-test.com", "test_user_2@onyx-test.com"]
         ),
@@ -57,10 +55,10 @@ _THREAD_1_BY_ID: dict[str, dict[str, Any]] = {
     "192edf18316015fa": {
         "email": "test_user_3@onyx-test.com",
         "sections_count": 2,
-        "primary_owners": set(["admin@danswer-test.com", "test_user_3@onyx-test.com"]),
+        "primary_owners": set(["admin@onyx-test.com", "test_user_3@onyx-test.com"]),
         "secondary_owners": set(
             [
-                "admin@danswer-test.com",
+                "admin@onyx-test.com",
                 "test_user_2@onyx-test.com",
                 "test_user_3@onyx-test.com",
             ]
