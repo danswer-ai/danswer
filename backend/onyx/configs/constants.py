@@ -210,6 +210,18 @@ class FileOrigin(str, Enum):
     OTHER = "other"
 
 
+class MilestoneRecordType(str, Enum):
+    TENANT_CREATED = "tenant_created"
+    USER_SIGNED_UP = "user_signed_up"
+    MULTIPLE_USERS = "multiple_users"
+    VISITED_ADMIN_PAGE = "visited_admin_page"
+    CREATED_CONNECTOR = "created_connector"
+    RAN_QUERY = "ran_query"
+    MULTIPLE_ASSISTANTS = "multiple_assistants"
+    CREATED_ASSISTANT = "created_assistant"
+    CREATED_ONYX_BOT = "created_onyx_bot"
+
+
 class PostgresAdvisoryLocks(Enum):
     KOMBU_MESSAGE_CLEANUP_LOCK_ID = auto()
 
