@@ -319,7 +319,7 @@ def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     request: Request,
     user: User | None = Depends(current_limited_user),
-    _: None = Depends(check_token_rate_limits),
+    _rate_limit_check: None = Depends(check_token_rate_limits),
     is_connected_func: Callable[[], bool] = Depends(is_connected),
     tenant_id: str = Depends(get_current_tenant_id),
 ) -> StreamingResponse:

@@ -6,6 +6,10 @@ from onyx.db.models import Milestone
 from onyx.db.models import User
 
 
+USER_ASSISTANT_PREFIX = "user_assistants_used_"
+MULTI_ASSISTANT_USED = "multi_assistant_used"
+
+
 def create_milestone(
     user: User | None,
     tenant_id: str | None,
@@ -50,3 +54,56 @@ def create_milestone_if_not_exists(
         return create_milestone(user, tenant_id, event_type, db_session), True
 
     return milestones[0], False
+
+
+def update_milestone_event_tracker(
+    milestone: Milestone,
+    event_update: dict,
+    db_session: Session,
+) -> None:
+    if milestone.event_tracker is None:
+        milestone.event_tracker = event_update
+    else:
+        milestone.event_tracker.update(event_update)
+    db_session.commit()
+
+
+def update_user_assistant_milestone(
+    milestone: Milestone,
+    user_id: str | None,
+    assistant_id: int,
+    db_session: Session,
+) -> None:
+    event_tracker = milestone.event_tracker
+    if event_tracker is None:
+        milestone.event_tracker = event_tracker = {}
+
+    user_key = f"{USER_ASSISTANT_PREFIX}{user_id}"
+
+    if event_tracker.get(user_key) is None:
+        event_tracker[user_key] = [assistant_id]
+    else:
+        event_tracker[user_key].append(assistant_id)
+
+    db_session.commit()
+
+
+def check_multi_assistant_milestone(
+    milestone: Milestone,
+    db_session: Session,
+) -> tuple[bool, bool]:
+    """Returns if the milestone was hit and if it was just hit for the first time"""
+    event_tracker = milestone.event_tracker
+    if event_tracker is None:
+        return False, False
+
+    if event_tracker.get(MULTI_ASSISTANT_USED):
+        return True, False
+
+    for key, value in event_tracker.items():
+        if key.startswith(USER_ASSISTANT_PREFIX) and len(value) > 1:
+            event_tracker[MULTI_ASSISTANT_USED] = True
+            db_session.commit()
+            return True, True
+
+    return False, False

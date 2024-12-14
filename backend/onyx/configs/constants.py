@@ -15,6 +15,9 @@ ID_SEPARATOR = ":;:"
 DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 
+NO_AUTH_USER_ID = "__no_auth_user__"
+NO_AUTH_USER_EMAIL = "anonymous@onyx.app"
+
 # For chunking/processing chunks
 RETURN_SEPARATOR = "\n\r\n"
 SECTION_SEPARATOR = "\n\n"

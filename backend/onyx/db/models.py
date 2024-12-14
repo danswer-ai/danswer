@@ -1549,7 +1549,7 @@ class Milestone(Base):
     )
     event_type: Mapped[MilestoneRecordType] = mapped_column(String)
     # Need to track counts and specific ids of certain events to know if the Milestone has been reached
-    event_tracker: Mapped[list[int] | None] = mapped_column(
+    event_tracker: Mapped[dict | None] = mapped_column(
         postgresql.JSONB(), nullable=True
     )
     time_created: Mapped[datetime.datetime] = mapped_column(
