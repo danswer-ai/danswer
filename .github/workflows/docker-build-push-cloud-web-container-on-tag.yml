@@ -7,7 +7,7 @@ on:
       - "*"
 
 env:
-  REGISTRY_IMAGE: danswer/danswer-web-server-cloud
+  REGISTRY_IMAGE: onyxdotapp/onyx-web-server-cloud
   LATEST_TAG: ${{ contains(github.ref_name, 'latest') }}
 
 jobs:
