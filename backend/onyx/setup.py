@@ -39,6 +39,7 @@ from onyx.key_value_store.interface import KvKeyNotFoundError
 from onyx.natural_language_processing.search_nlp_models import EmbeddingModel
 from onyx.natural_language_processing.search_nlp_models import warm_up_bi_encoder
 from onyx.natural_language_processing.search_nlp_models import warm_up_cross_encoder
+from onyx.seeding.load_docs import seed_initial_documents
 from onyx.seeding.load_yamls import load_chat_yamls
 from onyx.server.manage.llm.models import LLMProviderUpsertRequest
 from onyx.server.settings.store import load_settings
@@ -150,7 +151,7 @@ def setup_onyx(
     # update multipass indexing setting based on GPU availability
     update_default_multipass_indexing(db_session)
 
-    # seed_initial_documents(db_session, tenant_id, cohere_enabled)
+    seed_initial_documents(db_session, tenant_id, cohere_enabled)
 
 
 def translate_saved_search_settings(db_session: Session) -> None:
