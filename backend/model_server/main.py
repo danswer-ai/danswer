@@ -27,8 +27,8 @@ from shared_configs.configs import SENTRY_DSN
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 
-HF_CACHE_PATH = Path("/root/.cache/huggingface/")
-TEMP_HF_CACHE_PATH = Path("/root/.cache/temp_huggingface/")
+HF_CACHE_PATH = Path(os.path.expanduser("~")) / ".cache/huggingface"
+TEMP_HF_CACHE_PATH = Path(os.path.expanduser("~")) / ".cache/temp_huggingface"
 
 transformer_logging.set_verbosity_error()
 
