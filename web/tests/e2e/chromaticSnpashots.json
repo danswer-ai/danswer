@@ -70,14 +70,6 @@
     "pageTitle": "Existing Connectors"
   },
   {
-    "name": "Custom Assistants - Prompt Library",
-    "path": "prompt-library",
-    "pageTitle": "Prompt Library",
-    "options": {
-      "paragraphText": "Create prompts that can be accessed with the `/` shortcut in Onyx Chat. Prompts created here will be accessible to all users."
-    }
-  },
-  {
     "name": "User Management - Groups",
     "path": "groups",
     "pageTitle": "Manage User Groups"

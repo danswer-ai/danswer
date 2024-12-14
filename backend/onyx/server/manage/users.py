@@ -206,9 +206,9 @@ def list_all_users(
         invited=[InvitedUserSnapshot(email=email) for email in invited_emails][
             invited_page * USERS_PAGE_SIZE : (invited_page + 1) * USERS_PAGE_SIZE
         ],
-        accepted_pages=accepted_count // USERS_PAGE_SIZE + 1,
-        invited_pages=invited_count // USERS_PAGE_SIZE + 1,
-        slack_users_pages=slack_users_count // USERS_PAGE_SIZE + 1,
+        accepted_pages=(accepted_count + USERS_PAGE_SIZE - 1) // USERS_PAGE_SIZE,
+        invited_pages=(invited_count + USERS_PAGE_SIZE - 1) // USERS_PAGE_SIZE,
+        slack_users_pages=(slack_users_count + USERS_PAGE_SIZE - 1) // USERS_PAGE_SIZE,
     )
 
 
