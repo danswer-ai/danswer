@@ -1,3 +1,5 @@
+import datetime
+
 from langgraph.graph import END
 from langgraph.graph import START
 from langgraph.graph import StateGraph
@@ -8,6 +10,7 @@ from danswer.agent_search.expanded_retrieval.graph_builder import (
 )
 from danswer.agent_search.main.edges import parallelize_decompozed_answer_queries
 from danswer.agent_search.main.nodes.base_decomp import main_decomp_base
+from danswer.agent_search.main.nodes.dummy_node import dummy_node
 from danswer.agent_search.main.nodes.generate_initial_answer import (
     generate_initial_answer,
 )
@@ -22,6 +25,16 @@ def main_graph_builder() -> StateGraph:
     )
 
     ### Add nodes ###
+
+    graph.add_node(
+        node="dummy_node_start",
+        action=dummy_node,
+    )
+
+    graph.add_node(
+        node="dummy_node_right",
+        action=dummy_node,
+    )
 
     graph.add_node(
         node="base_decomp",
@@ -43,17 +56,27 @@ def main_graph_builder() -> StateGraph:
     )
 
     ### Add edges ###
-    graph.add_edge(
-        start_key=START,
-        end_key="expanded_retrieval",
-    )
-    graph.add_edge(
-        start_key="expanded_retrieval",
-        end_key="generate_initial_answer",
-    )
 
     graph.add_edge(
         start_key=START,
+        end_key="dummy_node_start",
+    )
+
+    graph.add_edge(
+        start_key="dummy_node_start",
+        end_key="dummy_node_right",
+    )
+    graph.add_edge(
+        start_key="dummy_node_right",
+        end_key="expanded_retrieval",
+    )
+    # graph.add_edge(
+    #    start_key="expanded_retrieval",
+    #    end_key="generate_initial_answer",
+    # )
+
+    graph.add_edge(
+        start_key="dummy_node_start",
         end_key="base_decomp",
     )
     graph.add_conditional_edges(
@@ -62,7 +85,7 @@ def main_graph_builder() -> StateGraph:
         path_map=["answer_query"],
     )
     graph.add_edge(
-        start_key="answer_query",
+        start_key=["answer_query", "expanded_retrieval"],
         end_key="generate_initial_answer",
     )
     graph.add_edge(
@@ -91,6 +114,9 @@ if __name__ == "__main__":
             fast_llm=fast_llm,
             db_session=db_session,
         )
+
+        print(f"START: {datetime.datetime.now()}")
+
         output = compiled_graph.invoke(
             input=inputs,
             # debug=True,
