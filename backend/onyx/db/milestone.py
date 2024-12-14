@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from onyx.configs.constants import MilestoneRecordType
 from onyx.db.models import Milestone
@@ -56,18 +57,6 @@ def create_milestone_if_not_exists(
     return milestones[0], False
 
 
-def update_milestone_event_tracker(
-    milestone: Milestone,
-    event_update: dict,
-    db_session: Session,
-) -> None:
-    if milestone.event_tracker is None:
-        milestone.event_tracker = event_update
-    else:
-        milestone.event_tracker.update(event_update)
-    db_session.commit()
-
-
 def update_user_assistant_milestone(
     milestone: Milestone,
     user_id: str | None,
@@ -78,13 +67,18 @@ def update_user_assistant_milestone(
     if event_tracker is None:
         milestone.event_tracker = event_tracker = {}
 
+    if event_tracker.get(MULTI_ASSISTANT_USED):
+        # No need to keep tracking and populating if the milestone has already been hit
+        return
+
     user_key = f"{USER_ASSISTANT_PREFIX}{user_id}"
 
     if event_tracker.get(user_key) is None:
         event_tracker[user_key] = [assistant_id]
-    else:
+    elif assistant_id not in event_tracker[user_key]:
         event_tracker[user_key].append(assistant_id)
 
+    flag_modified(milestone, "event_tracker")
     db_session.commit()
 
 
@@ -103,6 +97,7 @@ def check_multi_assistant_milestone(
     for key, value in event_tracker.items():
         if key.startswith(USER_ASSISTANT_PREFIX) and len(value) > 1:
             event_tracker[MULTI_ASSISTANT_USED] = True
+            flag_modified(milestone, "event_tracker")
             db_session.commit()
             return True, True
 

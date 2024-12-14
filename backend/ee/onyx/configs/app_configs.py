@@ -49,5 +49,7 @@ OAUTH_GOOGLE_DRIVE_CLIENT_SECRET = os.environ.get(
 )
 
 
-POSTHOG_API_KEY = os.environ.get("POSTHOG_API_KEY")
-POSTHOG_HOST = os.environ.get("POSTHOG_HOST", "https://us.i.posthog.com")
+# The posthog client does not accept empty API keys or hosts however it fails silently
+# when the capture is called. These defaults prevent Posthog issues from breaking the Onyx app
+POSTHOG_API_KEY = os.environ.get("POSTHOG_API_KEY") or "FooBar"
+POSTHOG_HOST = os.environ.get("POSTHOG_HOST") or "https://us.i.posthog.com"
