@@ -115,8 +115,7 @@ export const getAuthUrlSS = async (
       return await getGoogleOAuthUrlSS(nextUrl);
     }
     case "cloud": {
-      return "";
-      // await getGoogleOAuthUrlSS(nextUrl);
+      return await getGoogleOAuthUrlSS(nextUrl);
     }
     case "saml": {
       return await getSAMLAuthUrlSS(nextUrl);

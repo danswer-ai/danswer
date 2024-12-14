@@ -179,6 +179,10 @@ REDIS_HOST = os.environ.get("REDIS_HOST") or "localhost"
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD") or ""
 
+# Rate limiting for auth endpoints
+RATE_LIMIT_WINDOW_SECONDS = 60
+RATE_LIMIT_MAX_REQUESTS = 10
+
 # Used for general redis things
 REDIS_DB_NUMBER = int(os.environ.get("REDIS_DB_NUMBER", 0))
 
