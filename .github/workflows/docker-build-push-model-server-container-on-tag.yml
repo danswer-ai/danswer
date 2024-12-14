@@ -6,7 +6,7 @@ on:
       - "*"
 
 env:
-  REGISTRY_IMAGE: ${{ contains(github.ref_name, 'cloud') && 'danswer/danswer-model-server-cloud' || 'danswer/danswer-model-server' }}
+  REGISTRY_IMAGE: ${{ contains(github.ref_name, 'cloud') && 'onyxdotapp/onyx-model-server-cloud' || 'onyxdotapp/onyx-model-server' }}
   LATEST_TAG: ${{ contains(github.ref_name, 'latest') }}
 
 jobs:
@@ -51,5 +51,5 @@ jobs:
           TRIVY_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-db:2"
           TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-java-db:1"
         with:
-          image-ref: docker.io/danswer/danswer-model-server:${{ github.ref_name }}
+          image-ref: docker.io/onyxdotapp/onyx-model-server:${{ github.ref_name }}
           severity: "CRITICAL,HIGH"
