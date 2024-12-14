@@ -1,9 +1,10 @@
+import datetime
 from typing import Literal
 
 from langgraph.types import Command
 from langgraph.types import Send
 
-from danswer.agent_search.expanded_retrieval.nodes.doc_verification import (
+from danswer.agent_search.expanded_retrieval.states import (
     DocVerificationInput,
 )
 from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalState
@@ -12,7 +13,7 @@ from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalStat
 def verification_kickoff(
     state: ExpandedRetrievalState,
 ) -> Command[Literal["doc_verification"]]:
-    print(f"verification_kickoff state: {state.keys()}")
+    print(f"verification_kickoff state: {datetime.datetime.now()}")
 
     documents = state["retrieved_documents"]
     return Command(

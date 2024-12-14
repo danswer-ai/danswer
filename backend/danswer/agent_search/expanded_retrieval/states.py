@@ -8,6 +8,12 @@ from danswer.context.search.models import InferenceSection
 
 class DocRetrievalOutput(TypedDict, total=False):
     retrieved_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    query_to_answer: str
+
+
+class DocVerificationInput(TypedDict, total=True):
+    query_to_answer: str
+    doc_to_verify: InferenceSection
 
 
 class DocVerificationOutput(TypedDict, total=False):
@@ -33,4 +39,4 @@ class ExpandedRetrievalInput(PrimaryState, total=True):
 
 
 class ExpandedRetrievalOutput(TypedDict):
-    documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]

@@ -1,18 +1,15 @@
+import datetime
+
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import merge_message_runs
 
+from danswer.agent_search.expanded_retrieval.states import DocRetrievalOutput
 from danswer.agent_search.expanded_retrieval.states import DocVerificationOutput
-from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalState
 from danswer.agent_search.shared_graph_utils.models import BinaryDecision
 from danswer.agent_search.shared_graph_utils.prompts import VERIFIER_PROMPT
-from danswer.context.search.models import InferenceSection
 
 
-class DocVerificationInput(ExpandedRetrievalState, total=True):
-    doc_to_verify: InferenceSection
-
-
-def doc_verification(state: DocVerificationInput) -> DocVerificationOutput:
+def doc_verification(state: DocRetrievalOutput) -> DocVerificationOutput:
     """
     Check whether the document is relevant for the original user question
 
@@ -23,7 +20,7 @@ def doc_verification(state: DocVerificationInput) -> DocVerificationOutput:
         dict: ict: The updated state with the final decision
     """
 
-    print(f"doc_verification state: {state.keys()}")
+    # print(f"--- doc_verification state ---")
 
     original_query = state["search_request"].query
     doc_to_verify = state["doc_to_verify"]
@@ -49,11 +46,13 @@ def doc_verification(state: DocVerificationInput) -> DocVerificationOutput:
     decision_dict = {"decision": response_string.lower()}
     formatted_response = BinaryDecision.model_validate(decision_dict)
 
-    print(f"Verdict: {formatted_response.decision}")
-
     verified_documents = []
     if formatted_response.decision == "yes":
         verified_documents.append(doc_to_verify)
+
+        print(
+            f"Verdict & Completion: {formatted_response.decision} -- {datetime.datetime.now()}"
+        )
 
     return DocVerificationOutput(
         verified_documents=verified_documents,

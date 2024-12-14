@@ -2,19 +2,22 @@ from langgraph.graph import END
 from langgraph.graph import START
 from langgraph.graph import StateGraph
 
-from danswer.agent_search.expanded_retrieval.edges import conditionally_rerank_edge
 from danswer.agent_search.expanded_retrieval.edges import parallel_retrieval_edge
+from danswer.agent_search.expanded_retrieval.edges import parallel_verification_edge
 from danswer.agent_search.expanded_retrieval.nodes.doc_reranking import doc_reranking
 from danswer.agent_search.expanded_retrieval.nodes.doc_retrieval import doc_retrieval
 from danswer.agent_search.expanded_retrieval.nodes.doc_verification import (
     doc_verification,
 )
+from danswer.agent_search.expanded_retrieval.nodes.dummy_node import dummy_node
 from danswer.agent_search.expanded_retrieval.nodes.verification_kickoff import (
     verification_kickoff,
 )
 from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalInput
 from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalOutput
 from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalState
+
+# from danswer.agent_search.expanded_retrieval.edges import conditionally_rerank_edge
 
 
 def expanded_retrieval_graph_builder() -> StateGraph:
@@ -43,6 +46,16 @@ def expanded_retrieval_graph_builder() -> StateGraph:
         action=doc_reranking,
     )
 
+    graph.add_node(
+        node="post_retrieval_dummy_node",
+        action=dummy_node,
+    )
+
+    graph.add_node(
+        node="dummy_node",
+        action=dummy_node,
+    )
+
     ### Add edges ###
 
     graph.add_conditional_edges(
@@ -50,20 +63,43 @@ def expanded_retrieval_graph_builder() -> StateGraph:
         path=parallel_retrieval_edge,
         path_map=["doc_retrieval"],
     )
+
     graph.add_edge(
         start_key="doc_retrieval",
         end_key="verification_kickoff",
     )
+
     graph.add_conditional_edges(
-        source="doc_verification",
-        path=conditionally_rerank_edge,
-        path_map={
-            True: "doc_reranking",
-            False: END,
-        },
+        source="verification_kickoff",
+        path=parallel_verification_edge,
+        path_map=["doc_verification"],
     )
+
+    # graph.add_edge(
+    #    start_key="doc_verification",
+    #    end_key="post_retrieval_dummy_node",
+    # )
+
+    graph.add_edge(
+        start_key="doc_verification",
+        end_key="doc_reranking",
+    )
+
     graph.add_edge(
         start_key="doc_reranking",
+        end_key="dummy_node",
+    )
+
+    # graph.add_conditional_edges(
+    #    source="doc_verification",
+    #    path=conditionally_rerank_edge,
+    #    path_map={
+    #        True: "doc_reranking",
+    #        False: END,
+    #    },
+    # )
+    graph.add_edge(
+        start_key="dummy_node",
         end_key=END,
     )
 

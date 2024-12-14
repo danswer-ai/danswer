@@ -24,7 +24,7 @@ class QAGenerationOutput(TypedDict, total=False):
 
 
 class ExpandedRetrievalOutput(TypedDict):
-    documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
 class AnswerQueryState(
@@ -35,6 +35,9 @@ class AnswerQueryState(
     total=True,
 ):
     query_to_answer: str
+    retrieved_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    verified_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
 class AnswerQueryInput(PrimaryState, total=True):

@@ -2,7 +2,7 @@ from langchain_core.messages import HumanMessage
 
 from danswer.agent_search.main.states import InitialAnswerOutput
 from danswer.agent_search.main.states import MainState
-from danswer.agent_search.primary_graph.prompts import INITIAL_RAG_PROMPT
+from danswer.agent_search.shared_graph_utils.prompts import INITIAL_RAG_PROMPT
 from danswer.agent_search.shared_graph_utils.utils import format_docs
 
 
