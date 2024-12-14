@@ -219,6 +219,7 @@ class MilestoneRecordType(str, Enum):
     MULTIPLE_USERS = "multiple_users"
     VISITED_ADMIN_PAGE = "visited_admin_page"
     CREATED_CONNECTOR = "created_connector"
+    CONNECTOR_SUCCEEDED = "connector_succeeded"
     RAN_QUERY = "ran_query"
     MULTIPLE_ASSISTANTS = "multiple_assistants"
     CREATED_ASSISTANT = "created_assistant"
