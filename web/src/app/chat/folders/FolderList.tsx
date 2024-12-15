@@ -95,7 +95,7 @@ const FolderItem = ({
       if (!continueEditing) {
         setIsEditing(false);
       }
-      router.refresh();
+      router.refresh(); // Refresh values to update the sidebar
     } catch (error) {
       setPopup({ message: "Failed to save folder name", type: "error" });
     }
