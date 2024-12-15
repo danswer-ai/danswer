@@ -364,7 +364,6 @@ def stream_chat_message_objects(
 
         multi_assistant_milestone, _is_new = create_milestone_if_not_exists(
             user=user,
-            tenant_id=tenant_id,
             event_type=MilestoneRecordType.MULTIPLE_ASSISTANTS,
             db_session=db_session,
         )

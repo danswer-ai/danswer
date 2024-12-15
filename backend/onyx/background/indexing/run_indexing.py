@@ -401,7 +401,6 @@ def _run_indexing(
 
         create_milestone_and_report(
             user=None,
-            tenant_id=tenant_id,
             distinct_id=tenant_id or "N/A",
             event_type=MilestoneRecordType.CONNECTOR_SUCCEEDED,
             properties=None,

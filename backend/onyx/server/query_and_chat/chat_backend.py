@@ -355,7 +355,6 @@ def handle_new_chat_message(
     with get_session_with_tenant(tenant_id) as db_session:
         create_milestone_and_report(
             user=user,
-            tenant_id=tenant_id,
             distinct_id=user.email if user else tenant_id or "N/A",
             event_type=MilestoneRecordType.RAN_QUERY,
             properties=None,

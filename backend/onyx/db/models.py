@@ -1543,7 +1543,6 @@ class Milestone(Base):
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True), primary_key=True, default=uuid4
     )
-    tenant_id: Mapped[str | None] = mapped_column(String, nullable=True)
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE"), nullable=True
     )

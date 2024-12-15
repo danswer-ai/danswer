@@ -286,7 +286,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             if not user_count:
                 create_milestone_and_report(
                     user=user,
-                    tenant_id=tenant_id,
                     distinct_id=user.email,
                     event_type=MilestoneRecordType.USER_SIGNED_UP,
                     properties=None,
@@ -295,7 +294,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             else:
                 create_milestone_and_report(
                     user=user,
-                    tenant_id=tenant_id,
                     distinct_id=user.email,
                     event_type=MilestoneRecordType.MULTIPLE_USERS,
                     properties=None,

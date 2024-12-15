@@ -644,7 +644,6 @@ def get_connector_indexing_status(
     # Visiting admin page brings the user to the current connectors page which calls this endpoint
     create_milestone_and_report(
         user=user,
-        tenant_id=tenant_id,
         distinct_id=user.email if user else tenant_id or "N/A",
         event_type=MilestoneRecordType.VISITED_ADMIN_PAGE,
         properties=None,
@@ -697,7 +696,6 @@ def create_connector_from_model(
 
         create_milestone_and_report(
             user=user,
-            tenant_id=tenant_id,
             distinct_id=user.email if user else tenant_id or "N/A",
             event_type=MilestoneRecordType.CREATED_CONNECTOR,
             properties=None,
@@ -756,7 +754,6 @@ def create_connector_with_mock_credential(
 
         create_milestone_and_report(
             user=user,
-            tenant_id=tenant_id,
             distinct_id=user.email if user else tenant_id or "N/A",
             event_type=MilestoneRecordType.CREATED_CONNECTOR,
             properties=None,

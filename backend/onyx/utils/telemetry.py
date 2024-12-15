@@ -132,13 +132,12 @@ def mt_cloud_telemetry(
 
 def create_milestone_and_report(
     user: User | None,
-    tenant_id: str | None,
     distinct_id: str,
     event_type: MilestoneRecordType,
     properties: dict | None,
     db_session: Session,
 ) -> None:
-    _, is_new = create_milestone_if_not_exists(user, tenant_id, event_type, db_session)
+    _, is_new = create_milestone_if_not_exists(user, event_type, db_session)
     if is_new:
         mt_cloud_telemetry(
             distinct_id=distinct_id,

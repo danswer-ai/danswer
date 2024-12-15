@@ -181,7 +181,6 @@ def create_persona(
 
     create_milestone_and_report(
         user=user,
-        tenant_id=tenant_id,
         distinct_id=tenant_id or "N/A",
         event_type=MilestoneRecordType.CREATED_ASSISTANT,
         properties=None,

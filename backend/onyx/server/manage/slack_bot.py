@@ -232,7 +232,6 @@ def create_bot(
 
     create_milestone_and_report(
         user=None,
-        tenant_id=tenant_id,
         distinct_id=tenant_id or "N/A",
         event_type=MilestoneRecordType.CREATED_ONYX_BOT,
         properties=None,

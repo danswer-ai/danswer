@@ -128,7 +128,6 @@ async def provision_tenant(tenant_id: str, email: str) -> None:
         with get_session_with_tenant(tenant_id) as db_session:
             create_milestone_and_report(
                 user=None,
-                tenant_id=tenant_id,
                 distinct_id=tenant_id,
                 event_type=MilestoneRecordType.TENANT_CREATED,
                 properties={
