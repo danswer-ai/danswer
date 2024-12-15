@@ -139,10 +139,9 @@ export default function FunctionalHeader({
                 <NewChatIcon size={20} />
               </div>
             </Link>
-          </div>
-          <div
-            style={{ transition: "width 0.30s ease-out" }}
-            className={`
+            <div
+              style={{ transition: "width 0.30s ease-out" }}
+              className={`
             hidden
             md:flex 
             mx-auto
@@ -153,7 +152,8 @@ export default function FunctionalHeader({
             h-full
             ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
             `}
-          />
+            />
+          </div>
 
           {page != "assistants" && (
             <div
