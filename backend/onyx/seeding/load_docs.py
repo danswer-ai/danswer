@@ -9,6 +9,7 @@ from onyx.access.models import default_public_access
 from onyx.configs.constants import DEFAULT_BOOST
 from onyx.configs.constants import DocumentSource
 from onyx.configs.constants import KV_DOCUMENTS_SEEDED_KEY
+from onyx.configs.constants import RETURN_SEPARATOR
 from onyx.configs.model_configs import DEFAULT_DOCUMENT_ENCODER_MODEL
 from onyx.connectors.models import Document
 from onyx.connectors.models import IndexAttemptMetadata
@@ -71,7 +72,7 @@ def _create_indexable_chunks(
             source_links={0: preprocessed_doc["url"]},
             section_continuation=False,
             source_document=document,
-            title_prefix=preprocessed_doc["title"],
+            title_prefix=preprocessed_doc["title"] + RETURN_SEPARATOR,
             metadata_suffix_semantic="",
             metadata_suffix_keyword="",
             mini_chunk_texts=None,
