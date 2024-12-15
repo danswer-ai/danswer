@@ -6,7 +6,6 @@ from langgraph.types import Send
 
 from danswer.agent_search.expanded_retrieval.nodes.doc_retrieval import RetrieveInput
 from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalInput
-from danswer.agent_search.expanded_retrieval.states import ExpandedRetrievalState
 from danswer.agent_search.shared_graph_utils.prompts import REWRITE_PROMPT_MULTI
 from danswer.llm.interfaces import LLM
 
@@ -43,8 +42,3 @@ def parallel_retrieval_edge(state: ExpandedRetrievalInput) -> list[Send | Hashab
         )
         for query in rewritten_queries
     ]
-
-
-def conditionally_rerank_edge(state: ExpandedRetrievalState) -> bool:
-    print(f"conditionally_rerank_edge state: {state.keys()}")
-    return bool(state["search_request"].rerank_settings)

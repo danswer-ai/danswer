@@ -1,12 +1,22 @@
-REWRITE_PROMPT_MULTI = """ \n
-    Please convert an initial user question into a 2-3 more appropriate search queries for retrievel from a
-    document store. \n
+REWRITE_PROMPT_MULTI_ORIGINAL = """ \n
+    Please convert an initial user question into a 2-3 more appropriate short and pointed search queries for retrievel from a
+    document store. Particularly, try to think about resolving ambiguities and make the search queries more specific,
+    enabling the system to search more broadly.
+    Also, try to make the search queries not redundant, i.e. not too similar! \n\n
     Here is the initial question:
     \n ------- \n
     {question}
     \n ------- \n
+    Formulate the queries separated by '--' (Do not say 'Query 1: ...', just write the querytext): """
 
-    Formulate the query: """
+REWRITE_PROMPT_MULTI = """ \n
+    Please create a list of 2-3 sample documents that could answer an original question. Each document
+    should be about as long as the original question. \n
+    Here is the initial question:
+    \n ------- \n
+    {question}
+    \n ------- \n
+    Formulate the sample documents separated by '--' (Do not say 'Document 1: ...', just write the text): """
 
 BASE_RAG_PROMPT = """ \n
     You are an assistant for question-answering tasks. Use the context provided below - and only the
@@ -40,7 +50,7 @@ BASE_CHECK_PROMPT = """ \n
     Please answer with yes or no:"""
 
 VERIFIER_PROMPT = """ \n
-    Please check whether the document seems to be relevant for the answer of the original question. Please
+    Please check whether the document seems to be relevant for the answer of the question. Please
     only answer with 'yes' or 'no' \n
     Here is the initial question:
     \n ------- \n
@@ -330,7 +340,7 @@ SUB_QUESTION_EXPLANATION_RANKER_PROMPT = """-------
 
 
 INITIAL_DECOMPOSITION_PROMPT = """ \n
-    Please decompose an initial user question into not more than 4 appropriate sub-questions that help to
+    Please decompose an initial user question into 2 or 3 appropriate sub-questions that help to
     answer the original question. The purpose for this decomposition is to isolate individulal entities
     (i.e., 'compare sales of company A and company B' -> 'what are sales for company A' + 'what are sales
     for company B'), split ambiguous terms (i.e., 'what is our success with company A' -> 'what are our

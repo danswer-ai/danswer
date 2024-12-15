@@ -2,7 +2,7 @@ from langchain_core.messages import HumanMessage
 
 from danswer.agent_search.main.states import InitialAnswerOutput
 from danswer.agent_search.main.states import MainState
-from danswer.agent_search.primary_graph.prompts import INITIAL_RAG_PROMPT
+from danswer.agent_search.shared_graph_utils.prompts import INITIAL_RAG_PROMPT
 from danswer.agent_search.shared_graph_utils.utils import format_docs
 
 
@@ -21,7 +21,7 @@ def generate_initial_answer(state: MainState) -> InitialAnswerOutput:
     """
     for decomp_answer_result in decomp_answer_results:
         if (
-            decomp_answer_result.quality == "yes"
+            decomp_answer_result.quality.lower() == "yes"
             and len(decomp_answer_result.answer) > 0
             and decomp_answer_result.answer != "I don't know"
         ):
@@ -47,5 +47,7 @@ def generate_initial_answer(state: MainState) -> InitialAnswerOutput:
     # Grader
     model = state["fast_llm"]
     response = model.invoke(msg)
+    answer = response.pretty_repr()
 
-    return InitialAnswerOutput(initial_answer=response.pretty_repr())
+    print(answer)
+    return InitialAnswerOutput(initial_answer=answer)

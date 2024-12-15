@@ -47,10 +47,6 @@ def main_graph_builder() -> StateGraph:
         start_key=START,
         end_key="expanded_retrieval",
     )
-    graph.add_edge(
-        start_key="expanded_retrieval",
-        end_key="generate_initial_answer",
-    )
 
     graph.add_edge(
         start_key=START,
@@ -62,7 +58,7 @@ def main_graph_builder() -> StateGraph:
         path_map=["answer_query"],
     )
     graph.add_edge(
-        start_key="answer_query",
+        start_key=["answer_query", "expanded_retrieval"],
         end_key="generate_initial_answer",
     )
     graph.add_edge(
@@ -82,7 +78,7 @@ if __name__ == "__main__":
     compiled_graph = graph.compile()
     primary_llm, fast_llm = get_default_llms()
     search_request = SearchRequest(
-        query="Who made Excel and what other products did they make?",
+        query="If i am familiar with the function that I need, how can I type it into a cell?",
     )
     with get_session_context_manager() as db_session:
         inputs = MainInput(
@@ -91,9 +87,12 @@ if __name__ == "__main__":
             fast_llm=fast_llm,
             db_session=db_session,
         )
-        output = compiled_graph.invoke(
+        for thing in compiled_graph.stream(
             input=inputs,
+            # stream_mode="debug",
             # debug=True,
-            # subgraphs=True,
-        )
-        print(output)
+            subgraphs=True,
+        ):
+            # print(thing)
+            print()
+            print()

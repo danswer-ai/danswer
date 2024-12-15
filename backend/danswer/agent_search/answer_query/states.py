@@ -24,7 +24,7 @@ class QAGenerationOutput(TypedDict, total=False):
 
 
 class ExpandedRetrievalOutput(TypedDict):
-    documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    reordered_documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
 class AnswerQueryState(

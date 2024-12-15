@@ -2,7 +2,6 @@ from langgraph.graph import END
 from langgraph.graph import START
 from langgraph.graph import StateGraph
 
-from danswer.agent_search.expanded_retrieval.edges import conditionally_rerank_edge
 from danswer.agent_search.expanded_retrieval.edges import parallel_retrieval_edge
 from danswer.agent_search.expanded_retrieval.nodes.doc_reranking import doc_reranking
 from danswer.agent_search.expanded_retrieval.nodes.doc_retrieval import doc_retrieval
@@ -54,13 +53,9 @@ def expanded_retrieval_graph_builder() -> StateGraph:
         start_key="doc_retrieval",
         end_key="verification_kickoff",
     )
-    graph.add_conditional_edges(
-        source="doc_verification",
-        path=conditionally_rerank_edge,
-        path_map={
-            True: "doc_reranking",
-            False: END,
-        },
+    graph.add_edge(
+        start_key="doc_verification",
+        end_key="doc_reranking",
     )
     graph.add_edge(
         start_key="doc_reranking",
