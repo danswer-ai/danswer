@@ -15,7 +15,7 @@ jobs:
 
     # See https://runs-on.com/runners/linux/
     runs-on:
-      [runs-on, runner=8cpu-linux-x64, ram=16, "run-id=${{ github.run_id }}"]
+      [runs-on, runner=32cpu-linux-x64, ram=16, "run-id=${{ github.run_id }}"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
