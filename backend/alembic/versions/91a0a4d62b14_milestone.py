@@ -37,6 +37,7 @@ def upgrade() -> None:
         sa.Column("event_tracker", postgresql.JSONB(), nullable=True),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("event_type", name="uq_milestone_event_type"),
     )
 
 

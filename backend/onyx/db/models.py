@@ -1557,6 +1557,8 @@ class Milestone(Base):
 
     user: Mapped[User | None] = relationship("User")
 
+    __table_args__ = (UniqueConstraint("event_type", name="uq_milestone_event_type"),)
+
 
 class TaskQueueState(Base):
     # Currently refers to Celery Tasks

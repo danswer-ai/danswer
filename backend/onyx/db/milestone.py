@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -27,28 +28,28 @@ def create_milestone(
 
 
 def create_milestone_if_not_exists(
-    user: User | None,
-    event_type: MilestoneRecordType,
-    db_session: Session,
+    user: User | None, event_type: MilestoneRecordType, db_session: Session
 ) -> tuple[Milestone, bool]:
-    """
-    Create a milestone if it doesn't already exist.
-    Returns the milestone and a boolean indicating if it was created.
-    """
-    # Every milestone should only happen once per deployment/tenant
-    stmt = select(Milestone).where(
-        Milestone.event_type == event_type,
-    )
-    result = db_session.execute(stmt)
-    milestones = result.scalars().all()
+    # Check if it exists
+    milestone = db_session.execute(
+        select(Milestone).where(Milestone.event_type == event_type)
+    ).scalar_one_or_none()
 
-    if len(milestones) > 1:
-        raise ValueError(f"Multiple {event_type} milestones found")
+    if milestone is not None:
+        return milestone, False
 
-    if not milestones:
-        return create_milestone(user, event_type, db_session), True
-
-    return milestones[0], False
+    # If it doesn't exist, try to create it.
+    try:
+        milestone = create_milestone(user, event_type, db_session)
+        return milestone, True
+    except IntegrityError:
+        # Another thread or process inserted it in the meantime
+        db_session.rollback()
+        # Fetch again to return the existing record
+        milestone = db_session.execute(
+            select(Milestone).where(Milestone.event_type == event_type)
+        ).scalar_one()  # Now should exist
+        return milestone, False
 
 
 def update_user_assistant_milestone(
