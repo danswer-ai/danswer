@@ -521,7 +521,6 @@ def upsert_persona(
         existing_persona.llm_model_provider_override = llm_model_provider_override
         existing_persona.llm_model_version_override = llm_model_version_override
         existing_persona.starter_messages = starter_messages
-        existing_persona.display_priority = display_priority
         existing_persona.deleted = False  # Un-delete if previously deleted
         existing_persona.is_public = is_public
         existing_persona.icon_color = icon_color
@@ -543,6 +542,10 @@ def upsert_persona(
 
         if tools is not None:
             existing_persona.tools = tools or []
+
+        # We should only update display priority if it is not already set
+        if existing_persona.display_priority is None:
+            existing_persona.display_priority = display_priority
 
         persona = existing_persona
 
