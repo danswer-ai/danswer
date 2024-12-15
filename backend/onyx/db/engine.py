@@ -1,7 +1,7 @@
 import contextlib
 import os
 import re
-import subprocess
+import ssl
 import threading
 import time
 from collections.abc import AsyncGenerator
@@ -12,6 +12,8 @@ from datetime import datetime
 from typing import Any
 from typing import ContextManager
 
+import asyncpg
+import boto3
 import jwt
 from fastapi import HTTPException
 from fastapi import Request
@@ -60,6 +62,8 @@ USE_IAM_AUTH = os.getenv("USE_IAM_AUTH", "False").lower() == "true"
 
 _ASYNC_ENGINE: AsyncEngine | None = None
 SessionFactory: sessionmaker[Session] | None = None
+
+ssl_context = ssl.create_default_context(cafile="us-east-2-bundle.pem")
 
 if LOG_POSTGRES_LATENCY:
     # Function to log before query execution
@@ -133,33 +137,16 @@ def is_valid_schema_name(name: str) -> bool:
 
 
 def get_iam_auth_token(
-    host: str, port: str, user: str, region: str = "us-west-2"  # Change as needed
+    host: str, port: str, user: str, region: str = "us-west-2"
 ) -> str:
     """
-    Generate an IAM authentication token using the AWS CLI.
-    In production, prefer using boto3 for proper error handling.
+    Generate an IAM authentication token using boto3.
     """
-    try:
-        # Example using aws cli; you must have AWS credentials configured
-        # and the AWS CLI installed on the environment.
-        cmd = [
-            "aws",
-            "rds",
-            "generate-db-auth-token",
-            "--hostname",
-            host,
-            "--port",
-            str(port),
-            "--username",
-            user,
-            "--region",
-            region,
-        ]
-        token = subprocess.check_output(cmd, text=True).strip()
-        return token
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Error generating IAM auth token: {e.output}")
-        raise HTTPException(status_code=500, detail="Failed to generate IAM auth token")
+    client = boto3.client("rds", region_name=region)
+    token = client.generate_db_auth_token(
+        DBHostname=host, Port=int(port), DBUsername=user
+    )
+    return token
 
 
 def build_connection_string(
@@ -174,29 +161,22 @@ def build_connection_string(
     use_iam: bool = USE_IAM_AUTH,
     region: str = "us-west-2",
 ) -> str:
-    """
-    Build a connection string that supports both password and IAM auth modes.
-    If USE_IAM_AUTH is True, we fetch a token and ignore the POSTGRES_PASSWORD.
-    """
     if use_iam:
-        # Generate a token and use that as the password
-        token = get_iam_auth_token(host=host, port=port, user=user, region=region)
-        # Include SSL mode requirement for IAM auth
-        # SSL root cert can be included if needed: sslrootcert=rds-combined-ca-bundle.pem
-        # This example uses sslmode=require for simplicity.
-        base_conn_str = (
-            f"postgresql+{db_api}://{user}:{token}@{host}:{port}/{db}?sslmode=require"
-        )
+        # Exclude password and enforce SSL
+        base_conn_str = f"postgresql+{db_api}://{user}@{host}:{port}/{db}"
     else:
         base_conn_str = f"postgresql+{db_api}://{user}:{password}@{host}:{port}/{db}"
 
-    if app_name:
-        # Add application_name parameter
+    # For asyncpg, do not include application_name in the connection string
+    if app_name and db_api != "asyncpg":
         if "?" in base_conn_str:
             return f"{base_conn_str}&application_name={app_name}"
         else:
             return f"{base_conn_str}?application_name={app_name}"
     return base_conn_str
+
+
+# 41484600 0590 1120 509
 
 
 class SqlEngine:
@@ -227,7 +207,13 @@ class SqlEngine:
             db_api=SYNC_DB_API, app_name=cls._app_name + "_sync", use_iam=USE_IAM_AUTH
         )
         merged_kwargs = {**cls.DEFAULT_ENGINE_KWARGS, **engine_kwargs}
-        return create_engine(connection_string, **merged_kwargs)
+        engine = create_engine(connection_string, **merged_kwargs)
+
+        if USE_IAM_AUTH:
+            # Register the event listener
+            event.listen(engine, "do_connect", provide_iam_token)
+
+        return engine
 
     @classmethod
     def init_engine(cls, **engine_kwargs: Any) -> None:
@@ -297,28 +283,64 @@ def get_sqlalchemy_engine() -> Engine:
     return SqlEngine.get_engine()
 
 
+async def get_async_connection():
+    """
+    Custom connection function for async engine when using IAM auth.
+    """
+    host = POSTGRES_HOST
+    port = POSTGRES_PORT
+    user = POSTGRES_USER
+    db = POSTGRES_DB
+    region = os.getenv("AWS_REGION", "us-west-2")
+    token = get_iam_auth_token(host, port, user, region)
+
+    conn = await asyncpg.connect(
+        user=user, password=token, host=host, port=int(port), database=db, ssl="require"
+    )
+    return conn
+
+
 def get_sqlalchemy_async_engine() -> AsyncEngine:
     global _ASYNC_ENGINE
     if _ASYNC_ENGINE is None:
+        app_name = SqlEngine.get_app_name() + "_async"
         connection_string = build_connection_string(
             db_api=ASYNC_DB_API,
-            app_name=SqlEngine.get_app_name() + "_async",
             use_iam=USE_IAM_AUTH,
         )
+
+        connect_args = {}
+        if app_name:
+            connect_args["server_settings"] = {"application_name": app_name}
+
+        # Add SSL context to connect_args
+        connect_args["ssl"] = ssl_context
+
         _ASYNC_ENGINE = create_async_engine(
             connection_string,
-            connect_args={
-                "server_settings": {
-                    "application_name": SqlEngine.get_app_name() + "_async"
-                }
-            },
-            # async engine is only used by API server, so we can use those values
-            # here as well
+            connect_args=connect_args,
             pool_size=POSTGRES_API_SERVER_POOL_SIZE,
             max_overflow=POSTGRES_API_SERVER_POOL_OVERFLOW,
             pool_pre_ping=POSTGRES_POOL_PRE_PING,
             pool_recycle=POSTGRES_POOL_RECYCLE,
         )
+
+        if USE_IAM_AUTH:
+
+            @event.listens_for(_ASYNC_ENGINE.sync_engine, "do_connect")
+            def provide_iam_token(dialect, conn_rec, cargs, cparams):
+                host = POSTGRES_HOST
+                port = POSTGRES_PORT
+                user = POSTGRES_USER
+                region = os.getenv("AWS_REGION", "us-west-2")
+                token = get_iam_auth_token(host, port, user, region)
+                # Inject the token as the password
+                cparams["password"] = token
+                # Ensure SSL mode is required and use the SSL context
+                cparams["ssl"] = ssl_context
+
+    # if USE_IAM_AUTH:
+
     return _ASYNC_ENGINE
 
 
@@ -548,3 +570,20 @@ async def warm_up_connections(
         await async_conn.execute(text("SELECT 1"))
     for async_conn in async_connections:
         await async_conn.close()
+
+
+def provide_iam_token(dialect, conn_rec, cargs, cparams):
+    if USE_IAM_AUTH:
+        host = POSTGRES_HOST
+        port = POSTGRES_PORT
+        user = POSTGRES_USER
+        region = os.getenv("AWS_REGION", "us-east-2")
+        token = get_iam_auth_token(host, port, user, region)
+
+        # Inject the token as the password
+        cparams["password"] = token
+
+        # For psycopg2, remove `ssl` param. Instead use `sslmode`
+        cparams["sslmode"] = "require"
+        # If you have a CA file, specify it:
+        cparams["sslrootcert"] = "us-east-2-bundle.pem"  # ensure path is correct

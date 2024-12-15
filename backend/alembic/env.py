@@ -1,3 +1,12 @@
+from onyx.db.engine import (
+    get_iam_auth_token,
+    USE_IAM_AUTH,
+    POSTGRES_HOST,
+    POSTGRES_PORT,
+    POSTGRES_USER,
+)
+from sqlalchemy import event
+import os
 from sqlalchemy.engine.base import Connection
 from typing import Literal
 import asyncio
@@ -16,6 +25,7 @@ from onyx.db.models import Base
 from celery.backends.database.session import ResultModelBase  # type: ignore
 from onyx.db.engine import get_all_tenant_ids
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
+import ssl
 
 # Alembic Config object
 config = context.config
@@ -33,6 +43,8 @@ EXCLUDE_TABLES = {"kombu_queue", "kombu_message"}
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+ssl_context = ssl.create_default_context(cafile="us-east-2-bundle.pem")
 
 
 def include_object(
@@ -128,6 +140,30 @@ async def run_async_migrations() -> None:
         build_connection_string(),
         poolclass=pool.NullPool,
     )
+    if USE_IAM_AUTH:
+
+        @event.listens_for(engine.sync_engine, "do_connect")
+        def provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams):
+            region = os.getenv("AWS_REGION", "us-east-2")
+            host = POSTGRES_HOST
+            port = POSTGRES_PORT
+            user = POSTGRES_USER
+            token = get_iam_auth_token(host, port, user, region)
+
+            cparams["password"] = token
+            cparams["ssl"] = ssl_context
+
+        # @event.listens_for(engine.sync_engine, "do_connect")
+        # def provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams):
+        #     region = os.getenv('AWS_REGION', 'us-east-2')  # Or your configured region
+        #     host = POSTGRES_HOST
+        #     port = POSTGRES_PORT
+        #     user = POSTGRES_USER
+        #     token = get_iam_auth_token(host, port, user, region)
+
+        #     # asyncpg doesn't accept sslmode; use ssl=True
+        #     cparams['password'] = token
+        #     cparams['ssl'] = True  # This enforces TLS
 
     if upgrade_all_tenants:
         # Run migrations for all tenant schemas sequentially
@@ -171,6 +207,31 @@ def run_migrations_offline() -> None:
     if upgrade_all_tenants:
         # Run offline migrations for all tenant schemas
         engine = create_async_engine(url)
+        if USE_IAM_AUTH:
+
+            @event.listens_for(engine.sync_engine, "do_connect")
+            def provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams):
+                region = os.getenv("AWS_REGION", "us-east-2")
+                host = POSTGRES_HOST
+                port = POSTGRES_PORT
+                user = POSTGRES_USER
+                token = get_iam_auth_token(host, port, user, region)
+
+                cparams["password"] = token
+                cparams["ssl"] = ssl_context
+
+            # @event.listens_for(engine.sync_engine, "do_connect")
+            # def provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams):
+            #     region = os.getenv('AWS_REGION', 'us-east-2')  # Or your configured region
+            #     host = POSTGRES_HOST
+            #     port = POSTGRES_PORT
+            #     user = POSTGRES_USER
+            #     token = get_iam_auth_token(host, port, user, region)
+
+            #     # asyncpg doesn't accept sslmode; use ssl=True
+            #     cparams['password'] = token
+            #     cparams['ssl'] = True  # This enforces TLS
+
         tenant_schemas = get_all_tenant_ids()
         engine.sync_engine.dispose()
 
