@@ -114,9 +114,11 @@ export function getUserCreatedAssistants(
   user: User | null,
   assistants: Persona[]
 ) {
-  return assistants.filter((assistant) =>
+  const result = assistants.filter((assistant) =>
     checkUserOwnsAssistant(user, assistant)
   );
+  console.log("Output - user created assistants:", result);
+  return result;
 }
 
 // Filter assistants based on connector status, image compatibility and visibility

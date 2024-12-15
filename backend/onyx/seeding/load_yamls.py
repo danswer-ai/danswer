@@ -48,6 +48,7 @@ def load_personas_from_yaml(
         data = yaml.safe_load(file)
 
     all_personas = data.get("personas", [])
+
     for persona in all_personas:
         doc_set_names = persona["document_sets"]
         doc_sets: list[DocumentSetDBModel] = [
@@ -127,6 +128,7 @@ def load_personas_from_yaml(
             display_priority=(
                 existing_persona.display_priority
                 if existing_persona is not None
+                and persona.get("display_priority") is None
                 else persona.get("display_priority")
             ),
             is_visible=(
