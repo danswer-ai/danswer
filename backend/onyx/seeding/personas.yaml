@@ -7,7 +7,7 @@ personas:
   - id: 0
     name: "Search"
     description: >
-      Assistant with access to documents from your Connected Sources.
+      Assistant with access to documents and knowledge from Connected Sources.
     # Default Prompt objects attached to the persona, see prompts.yaml
     prompts:
       - "Answer-Question"
@@ -54,7 +54,7 @@ personas:
   - id: 1
     name: "General"
     description: >
-      Assistant with no access to documents. Chat with just the Large Language Model.
+      Assistant with no search functionalities. Chat directly with the Large Language Model.
     prompts:
       - "OnlyLLM"
     num_chunks: 0
