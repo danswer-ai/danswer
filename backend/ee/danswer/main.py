@@ -26,7 +26,7 @@ from ee.danswer.server.enterprise_settings.api import (
 )
 from ee.danswer.server.manage.standard_answer import router as standard_answer_router
 from ee.danswer.server.middleware.tenant_tracking import add_tenant_id_middleware
-from ee.danswer.server.oauth import router as oauth_router
+from ee.danswer.server.oauth.api import router as oauth_router
 from ee.danswer.server.query_and_chat.chat_backend import (
     router as chat_router,
 )
@@ -143,5 +143,9 @@ def get_application() -> FastAPI:
     # seed the Danswer environment with LLMs, Assistants, etc. based on an optional
     # environment variable. Used to automate deployment for multiple environments.
     seed_db()
+
+    # for debugging discovered routes
+    # for route in application.router.routes:
+    #     print(f"Path: {route.path}, Methods: {route.methods}")
 
     return application

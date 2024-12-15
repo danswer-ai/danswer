@@ -1,6 +1,8 @@
 from danswer.connectors.confluence.onyx_confluence import build_confluence_client
+from danswer.connectors.confluence.onyx_confluence import (
+    get_user_email_from_username__server,
+)
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
-from danswer.connectors.confluence.utils import get_user_email_from_username__server
 from danswer.db.models import ConnectorCredentialPair
 from danswer.utils.logger import setup_logger
 from ee.danswer.db.external_perm import ExternalUserGroup

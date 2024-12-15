@@ -7,8 +7,10 @@ from typing import Any
 from danswer.access.models import DocExternalAccess
 from danswer.access.models import ExternalAccess
 from danswer.connectors.confluence.connector import ConfluenceConnector
+from danswer.connectors.confluence.onyx_confluence import (
+    get_user_email_from_username__server,
+)
 from danswer.connectors.confluence.onyx_confluence import OnyxConfluence
-from danswer.connectors.confluence.utils import get_user_email_from_username__server
 from danswer.connectors.models import SlimDocument
 from danswer.db.models import ConnectorCredentialPair
 from danswer.utils.logger import setup_logger
