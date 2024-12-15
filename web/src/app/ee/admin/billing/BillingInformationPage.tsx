@@ -85,8 +85,8 @@ export default function BillingInformationPage() {
         {popup}
 
         <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center">
-          <CreditCard className="mr-4 text-gray-600" size={24} />
-          Billing Information
+          {/* <CreditCard className="mr-4 text-gray-600" size={24} /> */}
+          Subscription Details
         </h2>
 
         <div className="space-y-4">
