@@ -865,6 +865,15 @@ class DocumentByConnectorCredentialPair(Base):
         "Credential", back_populates="documents_by_credential"
     )
 
+    __table_args__ = (
+        Index(
+            "idx_document_cc_pair_connector_credential",
+            "connector_id",
+            "credential_id",
+            unique=False,
+        ),
+    )
+
 
 """
 Messages Tables
