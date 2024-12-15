@@ -12,23 +12,6 @@ env:
   BUILDKIT_PROGRESS: plain
 
 jobs:
-  test-connection:
-    runs-on:
-      [runs-on, runner=8cpu-linux-x64, "run-id=${{ github.run_id }}-test"]
-    steps:
-      - name: Docker Hub Connection Test
-        run: |
-          echo "Testing Docker Hub connectivity..."
-          curl -v https://hub.docker.com/v2/
-
-          echo "Testing Docker Hub authentication..."
-          echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-          echo "Testing push access..."
-          docker pull hello-world
-          docker tag hello-world ${{ env.REGISTRY_IMAGE }}:test
-          docker push ${{ env.REGISTRY_IMAGE }}:test
-
   build-amd64:
     runs-on:
       [runs-on, runner=8cpu-linux-x64, "run-id=${{ github.run_id }}-amd64"]
