@@ -174,6 +174,8 @@ try:
 except ValueError:
     POSTGRES_IDLE_SESSIONS_TIMEOUT = POSTGRES_IDLE_SESSIONS_TIMEOUT_DEFAULT
 
+USE_IAM_AUTH = os.getenv("USE_IAM_AUTH", "False").lower() == "true"
+
 REDIS_SSL = os.getenv("REDIS_SSL", "").lower() == "true"
 REDIS_HOST = os.environ.get("REDIS_HOST") or "localhost"
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
