@@ -1,3 +1,4 @@
+from typing import Any
 from onyx.db.engine import (
     get_iam_auth_token,
     USE_IAM_AUTH,
@@ -143,7 +144,9 @@ async def run_async_migrations() -> None:
     if USE_IAM_AUTH:
 
         @event.listens_for(engine.sync_engine, "do_connect")
-        def provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams):
+        def provide_iam_token_for_alembic(
+            dialect: Any, conn_rec: Any, cargs: Any, cparams: Any
+        ) -> None:
             region = os.getenv("AWS_REGION", "us-east-2")
             host = POSTGRES_HOST
             port = POSTGRES_PORT
@@ -198,7 +201,9 @@ def run_migrations_offline() -> None:
         if USE_IAM_AUTH:
 
             @event.listens_for(engine.sync_engine, "do_connect")
-            def provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams):
+            def provide_iam_token_for_alembic(
+                dialect: Any, conn_rec: Any, cargs: Any, cparams: Any
+            ) -> None:
                 region = os.getenv("AWS_REGION", "us-east-2")
                 host = POSTGRES_HOST
                 port = POSTGRES_PORT

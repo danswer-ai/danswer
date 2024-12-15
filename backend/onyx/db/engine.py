@@ -12,9 +12,10 @@ from datetime import datetime
 from typing import Any
 from typing import ContextManager
 
-import asyncpg
+import asyncpg  # type: ignore
 import boto3
 import jwt
+from asyncpg import AsyncConnection  # type: ignore
 from fastapi import HTTPException
 from fastapi import Request
 from sqlalchemy import event
@@ -280,7 +281,7 @@ def get_sqlalchemy_engine() -> Engine:
     return SqlEngine.get_engine()
 
 
-async def get_async_connection():
+async def get_async_connection() -> AsyncConnection:
     """
     Custom connection function for async engine when using IAM auth.
     """
@@ -306,7 +307,7 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
             use_iam=USE_IAM_AUTH,
         )
 
-        connect_args = {}
+        connect_args: dict[str, Any] = {}
         if app_name:
             connect_args["server_settings"] = {"application_name": app_name}
 
@@ -325,7 +326,9 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
         if USE_IAM_AUTH:
 
             @event.listens_for(_ASYNC_ENGINE.sync_engine, "do_connect")
-            def provide_iam_token(dialect, conn_rec, cargs, cparams):
+            def provide_iam_token(
+                dialect: Any, conn_rec: Any, cargs: Any, cparams: Any
+            ) -> None:
                 host = POSTGRES_HOST
                 port = POSTGRES_PORT
                 user = POSTGRES_USER
@@ -567,7 +570,7 @@ async def warm_up_connections(
         await async_conn.close()
 
 
-def provide_iam_token(dialect, conn_rec, cargs, cparams):
+def provide_iam_token(dialect: Any, conn_rec: Any, cargs: Any, cparams: Any) -> None:
     if USE_IAM_AUTH:
         host = POSTGRES_HOST
         port = POSTGRES_PORT
