@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { User } from "./types";
 import { buildUrl } from "./utilsSS";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
-import { AuthType, SERVER_SIDE_ONLY__CLOUD_ENABLED } from "./constants";
+import { AuthType, NEXT_PUBLIC_CLOUD_ENABLED } from "./constants";
 
 export interface AuthTypeMetadata {
   authType: AuthType;
@@ -22,7 +22,7 @@ export const getAuthTypeMetadataSS = async (): Promise<AuthTypeMetadata> => {
   let authType: AuthType;
 
   // Override fasapi users auth so we can use both
-  if (SERVER_SIDE_ONLY__CLOUD_ENABLED) {
+  if (NEXT_PUBLIC_CLOUD_ENABLED) {
     authType = "cloud";
   } else {
     authType = data.auth_type as AuthType;

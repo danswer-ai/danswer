@@ -1,6 +1,6 @@
 import { AdminPageTitle } from "@/components/admin/Title";
 import BillingInformationPage from "./BillingInformationPage";
-import { FaCloud } from "react-icons/fa";
+import { MdOutlineCreditCard } from "react-icons/md";
 
 export interface BillingInformation {
   seats: number;
@@ -14,8 +14,8 @@ export default function page() {
   return (
     <div className="container max-w-4xl">
       <AdminPageTitle
-        title="Cloud Settings"
-        icon={<FaCloud size={32} className="my-auto" />}
+        title="Billing Information"
+        icon={<MdOutlineCreditCard size={32} className="my-auto" />}
       />
       <BillingInformationPage />
     </div>
