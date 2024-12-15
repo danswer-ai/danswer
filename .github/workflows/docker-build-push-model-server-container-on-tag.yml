@@ -47,7 +47,7 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}-amd64
           build-args: |
-            DANSWER_VERSION=${{ github.ref_name }}
+            ONYX_VERSION=${{ github.ref_name }}
           outputs: type=registry
           provenance: false
 
@@ -86,7 +86,7 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY_IMAGE }}:${{ github.ref_name }}-arm64
           build-args: |
-            DANSWER_VERSION=${{ github.ref_name }}
+            ONYX_VERSION=${{ github.ref_name }}
           outputs: type=registry
           provenance: false
 
