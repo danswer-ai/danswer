@@ -176,9 +176,6 @@ def build_connection_string(
     return base_conn_str
 
 
-# 41484600 0590 1120 509
-
-
 class SqlEngine:
     """Class to manage a global SQLAlchemy engine (needed for proper resource control).
     Will eventually subsume most of the standalone functions in this file.
@@ -338,8 +335,6 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
                 cparams["password"] = token
                 # Ensure SSL mode is required and use the SSL context
                 cparams["ssl"] = ssl_context
-
-    # if USE_IAM_AUTH:
 
     return _ASYNC_ENGINE
 

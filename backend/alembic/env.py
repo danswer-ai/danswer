@@ -153,18 +153,6 @@ async def run_async_migrations() -> None:
             cparams["password"] = token
             cparams["ssl"] = ssl_context
 
-        # @event.listens_for(engine.sync_engine, "do_connect")
-        # def provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams):
-        #     region = os.getenv('AWS_REGION', 'us-east-2')  # Or your configured region
-        #     host = POSTGRES_HOST
-        #     port = POSTGRES_PORT
-        #     user = POSTGRES_USER
-        #     token = get_iam_auth_token(host, port, user, region)
-
-        #     # asyncpg doesn't accept sslmode; use ssl=True
-        #     cparams['password'] = token
-        #     cparams['ssl'] = True  # This enforces TLS
-
     if upgrade_all_tenants:
         # Run migrations for all tenant schemas sequentially
         tenant_schemas = get_all_tenant_ids()
@@ -219,18 +207,6 @@ def run_migrations_offline() -> None:
 
                 cparams["password"] = token
                 cparams["ssl"] = ssl_context
-
-            # @event.listens_for(engine.sync_engine, "do_connect")
-            # def provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams):
-            #     region = os.getenv('AWS_REGION', 'us-east-2')  # Or your configured region
-            #     host = POSTGRES_HOST
-            #     port = POSTGRES_PORT
-            #     user = POSTGRES_USER
-            #     token = get_iam_auth_token(host, port, user, region)
-
-            #     # asyncpg doesn't accept sslmode; use ssl=True
-            #     cparams['password'] = token
-            #     cparams['ssl'] = True  # This enforces TLS
 
         tenant_schemas = get_all_tenant_ids()
         engine.sync_engine.dispose()
