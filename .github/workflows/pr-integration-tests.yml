@@ -122,12 +122,13 @@ jobs:
             -e MULTI_TENANT=true \
             onyxdotapp/onyx-integration:test \
             /app/tests/integration/multitenant_tests
+
         continue-on-error: true
         id: run_multitenant_tests
 
       - name: Check multi-tenant test results
         run: |
-          if [ ${{ steps.run_tests.outcome }} == 'failure' ]; then
+          if [ ${{ steps.run_multitenant_tests.outcome }} == 'failure' ]; then
             echo "Integration tests failed. Exiting with error."
             exit 1
           else
