@@ -30,6 +30,17 @@ export default defineConfig({
       dependencies: ["admin_setup"],
     },
     {
+      // tests core flows
+      name: "chromium-core-flows",
+      testMatch: /.*\/core_flows\/.*/,
+      use: {
+        ...devices["Desktop Chrome"],
+        // Use prepared auth state.
+        storageState: "admin_auth.json",
+      },
+      dependencies: ["admin_setup"],
+    },
+    {
       // tests logged out / guest workflows
       name: "chromium-guest",
       grep: /@guest/,
