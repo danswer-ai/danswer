@@ -1100,9 +1100,7 @@ export function AssistantEditor({
                               ) : (
                                 <SwapIcon className="w-4 h-4 text-blue-600" />
                               )}
-                              {values.starter_messages.length > 0
-                                ? "Regenerate"
-                                : "Generate"}
+                              Generate
                             </div>
                           </Button>
                         </div>
