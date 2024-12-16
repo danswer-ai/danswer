@@ -107,10 +107,9 @@ services:
       - AWS_REGION=${AWS_REGION}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-    volumes:
-      # Only mount if USE_IAM_AUTH is true and you have a bundle.pem in your project dir
-      # Uncomment the line below to use:
-      # - ./bundle.pem:/app/bundle.pem:ro
+    # Uncomment the line below to use if IAM_AUTH is true and you are using iam auth for postgres
+    # volumes:
+    #   - ./bundle.pem:/app/bundle.pem:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -235,10 +234,9 @@ services:
       - AWS_REGION=${AWS_REGION}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-    volumes:
-      # Only mount if USE_IAM_AUTH is true and you have a bundle.pem in your project dir
-      # Uncomment the line below to use:
-      # - ./bundle.pem:/app/bundle.pem:ro
+    # Uncomment the line below to use if IAM_AUTH is true and you are using iam auth for postgres
+    # volumes:
+    #   - ./bundle.pem:/app/bundle.pem:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -287,7 +285,7 @@ services:
       - NEXT_PUBLIC_CUSTOM_REFRESH_URL=${NEXT_PUBLIC_CUSTOM_REFRESH_URL:-}
 
   inference_model_server:
-    image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
+    # image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -316,7 +314,7 @@ services:
         max-file: "6"
 
   indexing_model_server:
-    image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
+    # image: onyxdotapp/onyx-model-server-indexing:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server

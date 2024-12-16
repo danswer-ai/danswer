@@ -27,10 +27,9 @@ services:
       - AWS_REGION=${AWS_REGION}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-    volumes:
-      # Only mount if USE_IAM_AUTH is true and you have a bundle.pem in your project dir
-      # Uncomment the line below to use:
-      # - ./bundle.pem:/app/bundle.pem:ro
+    # Uncomment the line below to use if IAM_AUTH is true and you are using iam auth for postgres
+    # volumes:
+    #   - ./bundle.pem:/app/bundle.pem:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -69,10 +68,9 @@ services:
       - AWS_REGION=${AWS_REGION}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-    volumes:
-      # Only mount if USE_IAM_AUTH is true and you have a bundle.pem in your project dir
-      # Uncomment the line below to use:
-      # - ./bundle.pem:/app/bundle.pem:ro
+    # Uncomment the line below to use if IAM_AUTH is true and you are using iam auth for postgres
+    # volumes:
+    #   - ./bundle.pem:/app/bundle.pem:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -239,7 +237,7 @@ services:
     volumes:
       - ../data/certbot/conf:/etc/letsencrypt
       - ../data/certbot/www:/var/www/certbot
-    logging:
+    logging::wq
       driver: json-file
       options:
         max-size: "50m"
@@ -261,3 +259,6 @@ volumes:
   # Created by the container itself
   model_cache_huggingface:
   indexing_huggingface_model_cache:
+
+
+
