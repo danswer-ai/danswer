@@ -135,8 +135,8 @@ class CitationProcessor:
                                 doc_id = int(match.group(1))
                                 context_llm_doc = self.context_docs[doc_id - 1]
                                 yield CitationInfo(
-                                    # stay with the original for now (order of LLM cites)
-                                    citation_num=citation_order_idx,
+                                    # citation_num is updated from the original target_citation_num (now: citation_order_idx)
+                                    citation_num=displayed_citation_num,
                                     document_id=context_llm_doc.document_id,
                                 )
                             except Exception as e:
