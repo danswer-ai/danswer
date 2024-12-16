@@ -291,8 +291,6 @@ def delete_all_chat_sessions(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    return None
-
 
 @router.delete("/delete-chat-session/{session_id}")
 def delete_chat_session_by_id(

@@ -153,9 +153,7 @@ export function PagesTab({
           <div className="absolute w-full border-t border-t-border bg-background-100 bottom-0 left-0 p-4">
             <button
               className="w-full py-2 px-4 text-text-600 hover:text-text-800 bg-background-125 border border-border-strong/50 shadow-sm rounded-md transition-colors duration-200 flex items-center justify-center text-sm"
-              onClick={() => {
-                showDeleteAllModal();
-              }}
+              onClick={showDeleteAllModal}
             >
               <FiTrash2 className="mr-2" size={14} />
               Clear All History
