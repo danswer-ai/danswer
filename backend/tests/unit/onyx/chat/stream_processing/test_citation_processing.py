@@ -377,6 +377,26 @@ def process_text(
             [],
         ),
         (
+            "Long JSON string in code block",
+            [
+                "```json\n{",
+                '"name": "John Doe",',
+                '"age": 30,',
+                '"city": "New York",',
+                '"hobbies": ["reading", "swimming", "cycling"],',
+                '"education": {',
+                '    "degree": "Bachelor\'s",',
+                '    "major": "Computer Science",',
+                '    "university": "Example University"',
+                "}",
+                "}\n```",
+            ],
+            '```json\n{"name": "John Doe","age": 30,"city": "New York","hobbies": '
+            '["reading", "swimming", "cycling"],"education": {    '
+            '"degree": "Bachelor\'s",    "major": "Computer Science",    "university": "Example University"}}\n```',
+            [],
+        ),
+        (
             "Citation as a single token",
             [
                 "Here is some text",

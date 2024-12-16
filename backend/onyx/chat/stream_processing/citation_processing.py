@@ -65,7 +65,7 @@ class CitationProcessor:
         # Handle code blocks without language tags
         if "`" in self.curr_segment:
             if self.curr_segment.endswith("`"):
-                return
+                pass
             elif "```" in self.curr_segment:
                 piece_that_comes_after = self.curr_segment.split("```")[1][0]
                 if piece_that_comes_after == "\n" and in_code_block(self.llm_out):
