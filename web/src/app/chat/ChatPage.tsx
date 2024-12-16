@@ -272,6 +272,7 @@ export function ChatPage({
   };
 
   const llmOverrideManager = useLlmOverride(
+    llmProviders,
     modelVersionFromSearchParams || (user?.preferences.default_model ?? null),
     selectedChatSession,
     defaultTemperature
@@ -318,9 +319,9 @@ export function ChatPage({
     );
 
     if (personaDefault) {
-      llmOverrideManager.setLlmOverride(personaDefault);
+      llmOverrideManager.updateLLMOverride(personaDefault);
     } else if (user?.preferences.default_model) {
-      llmOverrideManager.setLlmOverride(
+      llmOverrideManager.updateLLMOverride(
         destructureValue(user?.preferences.default_model)
       );
     }
@@ -1202,7 +1203,6 @@ export function ChatPage({
       assistant_message_id: number;
       frozenMessageMap: Map<number, Message>;
     } = null;
-
     try {
       const mapKeys = Array.from(
         currentMessageMap(completeMessageDetail).keys()
