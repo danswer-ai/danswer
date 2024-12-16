@@ -91,6 +91,14 @@ services:
       # Enterprise Edition only
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+      - USE_IAM_AUTH=${USE_IAM_AUTH}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      # Only mount if USE_IAM_AUTH is true and you have a bundle.pem in your project dir
+      # Uncomment the line below to use:
+      # - ./bundle.pem:/app/bundle.pem:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -192,6 +200,14 @@ services:
       # Enterprise Edition only
       - API_KEY_HASH_ROUNDS=${API_KEY_HASH_ROUNDS:-}
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
+      - USE_IAM_AUTH=${USE_IAM_AUTH}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      # Only mount if USE_IAM_AUTH is true and you have a bundle.pem in your project dir
+      # Uncomment the line below to use:
+      # - ./bundle.pem:/app/bundle.pem:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:

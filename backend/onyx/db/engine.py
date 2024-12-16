@@ -15,7 +15,6 @@ from typing import ContextManager
 import asyncpg  # type: ignore
 import boto3
 import jwt
-from asyncpg import AsyncConnection  # type: ignore
 from fastapi import HTTPException
 from fastapi import Request
 from sqlalchemy import event
@@ -28,6 +27,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
+from onyx.configs.app_configs import AWS_REGION
 from onyx.configs.app_configs import LOG_POSTGRES_CONN_COUNTS
 from onyx.configs.app_configs import LOG_POSTGRES_LATENCY
 from onyx.configs.app_configs import POSTGRES_API_SERVER_POOL_OVERFLOW
@@ -42,6 +42,7 @@ from onyx.configs.app_configs import POSTGRES_PORT
 from onyx.configs.app_configs import POSTGRES_USER
 from onyx.configs.app_configs import USER_AUTH_SECRET
 from onyx.configs.constants import POSTGRES_UNKNOWN_APP_NAME
+from onyx.configs.constants import SSL_CERT_FILE
 from onyx.server.utils import BasicAuthenticationError
 from onyx.utils.logger import setup_logger
 from shared_configs.configs import MULTI_TENANT
@@ -64,7 +65,12 @@ USE_IAM_AUTH = os.getenv("USE_IAM_AUTH", "False").lower() == "true"
 _ASYNC_ENGINE: AsyncEngine | None = None
 SessionFactory: sessionmaker[Session] | None = None
 
-ssl_context = ssl.create_default_context(cafile="us-east-2-bundle.pem")
+
+ssl_context: ssl.SSLContext | None = None
+if USE_IAM_AUTH:
+    ssl_context = ssl.create_default_context(cafile=SSL_CERT_FILE)
+else:
+    ssl_context = None
 
 if LOG_POSTGRES_LATENCY:
     # Function to log before query execution
@@ -138,7 +144,7 @@ def is_valid_schema_name(name: str) -> bool:
 
 
 def get_iam_auth_token(
-    host: str, port: str, user: str, region: str = "us-west-2"
+    host: str, port: str, user: str, region: str = "us-east-2"
 ) -> str:
     """
     Generate an IAM authentication token using boto3.
@@ -281,7 +287,7 @@ def get_sqlalchemy_engine() -> Engine:
     return SqlEngine.get_engine()
 
 
-async def get_async_connection() -> AsyncConnection:
+async def get_async_connection() -> Any:
     """
     Custom connection function for async engine when using IAM auth.
     """
@@ -289,8 +295,7 @@ async def get_async_connection() -> AsyncConnection:
     port = POSTGRES_PORT
     user = POSTGRES_USER
     db = POSTGRES_DB
-    region = os.getenv("AWS_REGION", "us-west-2")
-    token = get_iam_auth_token(host, port, user, region)
+    token = get_iam_auth_token(host, port, user, AWS_REGION)
 
     conn = await asyncpg.connect(
         user=user, password=token, host=host, port=int(port), database=db, ssl="require"
@@ -332,8 +337,7 @@ def get_sqlalchemy_async_engine() -> AsyncEngine:
                 host = POSTGRES_HOST
                 port = POSTGRES_PORT
                 user = POSTGRES_USER
-                region = os.getenv("AWS_REGION", "us-west-2")
-                token = get_iam_auth_token(host, port, user, region)
+                token = get_iam_auth_token(host, port, user, AWS_REGION)
                 # Inject the token as the password
                 cparams["password"] = token
                 # Ensure SSL mode is required and use the SSL context
@@ -584,4 +588,4 @@ def provide_iam_token(dialect: Any, conn_rec: Any, cargs: Any, cparams: Any) -> 
         # For psycopg2, remove `ssl` param. Instead use `sslmode`
         cparams["sslmode"] = "require"
         # If you have a CA file, specify it:
-        cparams["sslrootcert"] = "us-east-2-bundle.pem"  # ensure path is correct
+        cparams["sslrootcert"] = SSL_CERT_FILE

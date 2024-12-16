@@ -22,6 +22,14 @@ services:
       - VESPA_HOST=index
       - REDIS_HOST=cache
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
+      - USE_IAM_AUTH=${USE_IAM_AUTH}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      # Only mount if USE_IAM_AUTH is true and you have a bundle.pem in your project dir
+      # Uncomment the line below to use:
+      # - ./bundle.pem:/app/bundle.pem:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -52,6 +60,14 @@ services:
       - REDIS_HOST=cache
       - MODEL_SERVER_HOST=${MODEL_SERVER_HOST:-inference_model_server}
       - INDEXING_MODEL_SERVER_HOST=${INDEXING_MODEL_SERVER_HOST:-indexing_model_server}
+      - USE_IAM_AUTH=${USE_IAM_AUTH}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      # Only mount if USE_IAM_AUTH is true and you have a bundle.pem in your project dir
+      # Uncomment the line below to use:
+      # - ./bundle.pem:/app/bundle.pem:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:

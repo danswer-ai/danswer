@@ -19,6 +19,7 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.sql import text
 from sqlalchemy.sql.schema import SchemaItem
+from onyx.configs.constants import SSL_CERT_FILE
 
 from shared_configs.configs import MULTI_TENANT
 from onyx.db.engine import build_connection_string
@@ -45,7 +46,13 @@ EXCLUDE_TABLES = {"kombu_queue", "kombu_message"}
 # Set up logging
 logger = logging.getLogger(__name__)
 
-ssl_context = ssl.create_default_context(cafile="us-east-2-bundle.pem")
+ssl_context: None | ssl.SSLContext = None
+if USE_IAM_AUTH:
+    if not os.path.exists(SSL_CERT_FILE):
+        raise FileNotFoundError(f"Expected {SSL_CERT_FILE} when USE_IAM_AUTH is true.")
+    ssl_context = ssl.create_default_context(cafile=SSL_CERT_FILE)
+else:
+    ssl_context = None
 
 
 def include_object(
