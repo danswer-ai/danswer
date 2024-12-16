@@ -47,7 +47,13 @@ export default function FixedLogo({
         </div>
       </Link>
       <div className="mobile:hidden fixed left-4 bottom-4">
-        <FiSidebar className="text-text-mobile-sidebar" />
+        <FiSidebar
+          className={`${
+            backgroundToggled
+              ? "text-text-mobile-sidebar-toggled"
+              : "text-text-mobile-sidebar-untoggled"
+          }`}
+        />
       </div>
     </>
   );
