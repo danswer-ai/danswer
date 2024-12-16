@@ -1,58 +1,47 @@
-from typing import Any
+from typing import Any, Literal
 from onyx.db.engine import (
     get_iam_auth_token,
     USE_IAM_AUTH,
     POSTGRES_HOST,
     POSTGRES_PORT,
     POSTGRES_USER,
+    build_connection_string,
+    get_all_tenant_ids,
 )
-from sqlalchemy import event
-import os
+from sqlalchemy import event, pool, text
 from sqlalchemy.engine.base import Connection
-from typing import Literal
+import os
+import ssl
 import asyncio
-from logging.config import fileConfig
 import logging
+from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.sql import text
 from sqlalchemy.sql.schema import SchemaItem
 from onyx.configs.constants import SSL_CERT_FILE
-
-from shared_configs.configs import MULTI_TENANT
-from onyx.db.engine import build_connection_string
+from shared_configs.configs import MULTI_TENANT, POSTGRES_DEFAULT_SCHEMA
 from onyx.db.models import Base
 from celery.backends.database.session import ResultModelBase  # type: ignore
-from onyx.db.engine import get_all_tenant_ids
-from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
-import ssl
 
 # Alembic Config object
 config = context.config
 
-# Interpret the config file for Python logging.
 if config.config_file_name is not None and config.attributes.get(
     "configure_logger", True
 ):
     fileConfig(config.config_file_name)
 
-# Add your model's MetaData object here for 'autogenerate' support
 target_metadata = [Base.metadata, ResultModelBase.metadata]
 
 EXCLUDE_TABLES = {"kombu_queue", "kombu_message"}
-
-# Set up logging
 logger = logging.getLogger(__name__)
 
-ssl_context: None | ssl.SSLContext = None
+ssl_context: ssl.SSLContext | None = None
 if USE_IAM_AUTH:
     if not os.path.exists(SSL_CERT_FILE):
         raise FileNotFoundError(f"Expected {SSL_CERT_FILE} when USE_IAM_AUTH is true.")
     ssl_context = ssl.create_default_context(cafile=SSL_CERT_FILE)
-else:
-    ssl_context = None
 
 
 def include_object(
@@ -69,20 +58,12 @@ def include_object(
     reflected: bool,
     compare_to: SchemaItem | None,
 ) -> bool:
-    """
-    Determines whether a database object should be included in migrations.
-    Excludes specified tables from migrations.
-    """
     if type_ == "table" and name in EXCLUDE_TABLES:
         return False
     return True
 
 
 def get_schema_options() -> tuple[str, bool, bool]:
-    """
-    Parses command-line options passed via '-x' in Alembic commands.
-    Recognizes 'schema', 'create_schema', and 'upgrade_all_tenants' options.
-    """
     x_args_raw = context.get_x_argument()
     x_args = {}
     for arg in x_args_raw:
@@ -110,16 +91,12 @@ def get_schema_options() -> tuple[str, bool, bool]:
 def do_run_migrations(
     connection: Connection, schema_name: str, create_schema: bool
 ) -> None:
-    """
-    Executes migrations in the specified schema.
-    """
     logger.info(f"About to migrate schema: {schema_name}")
 
     if create_schema:
         connection.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema_name}"'))
         connection.execute(text("COMMIT"))
 
-    # Set search_path to the target schema
     connection.execute(text(f'SET search_path TO "{schema_name}"'))
 
     context.configure(
@@ -137,36 +114,39 @@ def do_run_migrations(
         context.run_migrations()
 
 
+def provide_iam_token_for_alembic(
+    dialect: Any, conn_rec: Any, cargs: Any, cparams: Any
+) -> None:
+    if USE_IAM_AUTH:
+        region = os.getenv("AWS_REGION", "us-east-2")
+        host = POSTGRES_HOST
+        port = POSTGRES_PORT
+        user = POSTGRES_USER
+        token = get_iam_auth_token(host, port, user, region)
+
+        # For Alembic / SQLAlchemy in this context, set SSL and password
+        cparams["password"] = token
+        cparams["ssl"] = ssl_context
+
+
 async def run_async_migrations() -> None:
-    """
-    Determines whether to run migrations for a single schema or all schemas,
-    and executes migrations accordingly.
-    """
     schema_name, create_schema, upgrade_all_tenants = get_schema_options()
 
     engine = create_async_engine(
         build_connection_string(),
         poolclass=pool.NullPool,
     )
+
     if USE_IAM_AUTH:
 
         @event.listens_for(engine.sync_engine, "do_connect")
-        def provide_iam_token_for_alembic(
+        def event_provide_iam_token_for_alembic(
             dialect: Any, conn_rec: Any, cargs: Any, cparams: Any
         ) -> None:
-            region = os.getenv("AWS_REGION", "us-east-2")
-            host = POSTGRES_HOST
-            port = POSTGRES_PORT
-            user = POSTGRES_USER
-            token = get_iam_auth_token(host, port, user, region)
-
-            cparams["password"] = token
-            cparams["ssl"] = ssl_context
+            provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams)
 
     if upgrade_all_tenants:
-        # Run migrations for all tenant schemas sequentially
         tenant_schemas = get_all_tenant_ids()
-
         for schema in tenant_schemas:
             try:
                 logger.info(f"Migrating schema: {schema}")
@@ -196,29 +176,19 @@ async def run_async_migrations() -> None:
 
 
 def run_migrations_offline() -> None:
-    """
-    Run migrations in 'offline' mode.
-    """
     schema_name, _, upgrade_all_tenants = get_schema_options()
     url = build_connection_string()
 
     if upgrade_all_tenants:
-        # Run offline migrations for all tenant schemas
         engine = create_async_engine(url)
+
         if USE_IAM_AUTH:
 
             @event.listens_for(engine.sync_engine, "do_connect")
-            def provide_iam_token_for_alembic(
+            def event_provide_iam_token_for_alembic_offline(
                 dialect: Any, conn_rec: Any, cargs: Any, cparams: Any
             ) -> None:
-                region = os.getenv("AWS_REGION", "us-east-2")
-                host = POSTGRES_HOST
-                port = POSTGRES_PORT
-                user = POSTGRES_USER
-                token = get_iam_auth_token(host, port, user, region)
-
-                cparams["password"] = token
-                cparams["ssl"] = ssl_context
+                provide_iam_token_for_alembic(dialect, conn_rec, cargs, cparams)
 
         tenant_schemas = get_all_tenant_ids()
         engine.sync_engine.dispose()
@@ -256,9 +226,6 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """
-    Runs migrations in 'online' mode using an asynchronous engine.
-    """
     asyncio.run(run_async_migrations())
 
 

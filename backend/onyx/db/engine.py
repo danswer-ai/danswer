@@ -395,6 +395,14 @@ def get_session_with_default_tenant() -> Generator[Session, None, None]:
 def get_session_with_tenant(
     tenant_id: str | None = None,
 ) -> Generator[Session, None, None]:
+    """
+    Generate a database session for a specific tenant.
+    This function:
+    1. Sets the database schema to the specified tenant's schema.
+    2. Preserves the tenant ID across the session.
+    3. Reverts to the previous tenant ID after the session is closed.
+    4. Uses the default schema if no tenant ID is provided.
+    """
     engine = get_sqlalchemy_engine()
     previous_tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get() or POSTGRES_DEFAULT_SCHEMA
 
@@ -478,6 +486,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 def get_session_context_manager() -> ContextManager[Session]:
+    """Context manager for database sessions."""
     return contextlib.contextmanager(get_session_generator_with_tenant)()
 
 
