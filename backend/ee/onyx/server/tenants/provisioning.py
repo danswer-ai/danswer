@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from ee.onyx.configs.app_configs import ANTHROPIC_DEFAULT_API_KEY
 from ee.onyx.configs.app_configs import COHERE_DEFAULT_API_KEY
+from ee.onyx.configs.app_configs import HUBSPOT_TRACKING_URL
 from ee.onyx.configs.app_configs import OPENAI_DEFAULT_API_KEY
 from ee.onyx.server.tenants.access import generate_data_plane_token
 from ee.onyx.server.tenants.models import TenantCreationPayload
@@ -26,8 +27,6 @@ from onyx.configs.constants import MilestoneRecordType
 from onyx.db.engine import get_session_with_tenant
 from onyx.db.engine import get_sqlalchemy_engine
 from onyx.db.llm import update_default_provider
-from ee.onyx.configs.app_configs import HUBSPOT_TRACKING_URL
-
 from onyx.db.llm import upsert_cloud_embedding_provider
 from onyx.db.llm import upsert_llm_provider
 from onyx.db.models import IndexModelStatus
@@ -52,11 +51,14 @@ logger = logging.getLogger(__name__)
 
 
 async def get_or_create_tenant_id(
-    email: str, referral_source: str | None = None
+    email: str, referral_source: str | None = None, request: Request | None = None
 ) -> str:
     """Get existing tenant ID for an email or create a new tenant if none exists."""
     if not MULTI_TENANT:
         return POSTGRES_DEFAULT_SCHEMA
+
+    if referral_source and request:
+        await submit_to_hubspot(email, referral_source, request)
 
     try:
         tenant_id = get_tenant_id_for_email(email)

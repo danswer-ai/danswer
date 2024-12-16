@@ -234,11 +234,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             if request is not None
             else None
         )
-        if referral_source:
-            await fetch_ee_implementation_or_noop(
-                "danswer.server.tenants.provisioning",
-                "submit_to_hubspot",
-            )(user_create.email, referral_source, request)
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
@@ -247,6 +242,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         )(
             email=user_create.email,
             referral_source=referral_source,
+            request=request,
         )
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
@@ -356,11 +352,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         referral_source = (
             getattr(request.state, "referral_source", None) if request else None
         )
-        if referral_source:
-            await fetch_ee_implementation_or_noop(
-                "danswer.server.tenants.provisioning",
-                "submit_to_hubspot",
-            )(account_email, referral_source, request)
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
@@ -369,6 +360,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         )(
             email=account_email,
             referral_source=referral_source,
+            request=request,
         )
 
         if not tenant_id:
