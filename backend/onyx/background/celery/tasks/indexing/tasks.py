@@ -166,6 +166,8 @@ def get_unfenced_index_attempt_ids(db_session: Session, r: redis.Redis) -> list[
     bind=True,
 )
 def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
+    """a lightweight task used to kick off indexing tasks.
+    Occcasionally does some validation of existing state to clear up error conditions"""
     time_start = time.monotonic()
 
     tasks_created = 0
@@ -318,6 +320,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
             # tasks can be in the queue in redis, in reserved tasks (prefetched by the worker),
             # or be currently executing
             try:
+                task_logger.info("Validating indexing fences...")
                 validate_indexing_fences(tenant_id, self.app, r, r_celery, lock_beat)
             except Exception:
                 task_logger.exception("Exception while validating indexing fences")
@@ -352,11 +355,11 @@ def validate_indexing_fences(
     r_celery: Redis,
     lock_beat: RedisLock,
 ) -> None:
-    reserved_indexing_tasks: list[dict[str, Any]] = []
-    active_indexing_tasks: list[dict[str, Any]] = []
+    reserved_indexing_tasks: set[str] = set()
+    active_indexing_tasks: set[str] = set()
     indexing_worker_names: list[str] = []
 
-    # get the list of reserved tasks
+    # filter for and create an indexing specific inspect object
     inspect = celery_app.control.inspect()
     workers: dict[str, Any] = inspect.ping()  # type: ignore
     if not workers:
@@ -370,20 +373,30 @@ def validate_indexing_fences(
         raise ValueError("No indexing workers found!")
 
     inspect_indexing = celery_app.control.inspect(destination=indexing_worker_names)
+
+    # NOTE: each dict entry is a map of worker name to a list of tasks
+    # we want sets for reserved task and active task id's to optimize
+    # subsequent validation lookups
+
+    # get the list of reserved tasks
     reserved_tasks: dict[str, list] | None = inspect_indexing.reserved()  # type: ignore
     if reserved_tasks is None:
         raise ValueError("inspect_indexing.reserved() returned None!")
 
-    for _, v in reserved_tasks.items():
-        reserved_indexing_tasks.extend(v)
+    for _, task_list in reserved_tasks.items():
+        for task in task_list:
+            reserved_indexing_tasks.add(task["id"])
 
+    # get the list of active tasks
     active_tasks: dict[str, list] | None = inspect_indexing.active()  # type: ignore
     if active_tasks is None:
         raise ValueError("inspect_indexing.active() returned None!")
 
-    for _, v in active_tasks.items():
-        active_indexing_tasks.extend(v)
+    for _, task_list in active_tasks.items():
+        for task in task_list:
+            active_indexing_tasks.add(task["id"])
 
+    # validate all existing indexing jobs
     for key_bytes in r.scan_iter(RedisConnectorIndex.FENCE_PREFIX + "*"):
         lock_beat.reacquire()
         with get_session_with_tenant(tenant_id) as db_session:
@@ -401,14 +414,15 @@ def validate_indexing_fences(
 def validate_indexing_fence(
     tenant_id: str | None,
     key_bytes: bytes,
-    reserved_tasks: list[dict[str, Any]],
-    active_tasks: list[dict[str, Any]],
+    reserved_tasks: set[str],
+    active_tasks: set[str],
     r_celery: Redis,
     db_session: Session,
 ) -> None:
     """Checks for the error condition where an indexing fence is set but the associated celery tasks don't exist.
     This can happen if the indexing worker hard crashes or is terminated.
-    Being in this bad state means the fence will never clear without help.
+    Being in this bad state means the fence will never clear without help, so this function
+    gives the help.
 
     How this works:
     1. Active signal is renewed with a 5 minute TTL
@@ -429,7 +443,7 @@ def validate_indexing_fence(
     composite_id = RedisConnector.get_id_from_fence_key(fence_key)
     if composite_id is None:
         task_logger.warning(
-            f"monitor_ccpair_indexing_taskset: could not parse composite_id from {fence_key}"
+            f"validate_indexing_fence - could not parse composite_id from {fence_key}"
         )
         return
 
@@ -446,17 +460,21 @@ def validate_indexing_fence(
     if not redis_connector_index.fenced:
         return
 
-    # the indexing has recent activity, don't clear it.
     payload = redis_connector_index.payload
     if not payload:
         return
 
+    # OK, there's actually something for us to validate
+
     if payload.celery_task_id is None:
+        # the fence is just barely set up.
         if redis_connector_index.active():
             return
 
+        # it would be odd to get here as there isn't that much that can go wrong during
+        # initial fence setup, but it's still worth making sure we can recover
         logger.info(
-            f"Resetting fence in basic state without any activity: fence={fence_key}"
+            f"validate_indexing_fence - Resetting fence in basic state without any activity: fence={fence_key}"
         )
         redis_connector_index.reset()
         return
@@ -469,17 +487,15 @@ def validate_indexing_fence(
         redis_connector_index.set_active()
         return
 
-    for task in reserved_tasks:
-        if task["id"] == payload.celery_task_id:
-            # the celery task was prefetched and is reserved within the indexing worker
-            redis_connector_index.set_active()
-            return
+    if payload.celery_task_id in reserved_tasks:
+        # the celery task was prefetched and is reserved within the indexing worker
+        redis_connector_index.set_active()
+        return
 
-    for task in active_tasks:
-        if task["id"] == payload.celery_task_id:
-            # the celery task is active (aka currently executing)
-            redis_connector_index.set_active()
-            return
+    if payload.celery_task_id in active_tasks:
+        # the celery task is active (aka currently executing)
+        redis_connector_index.set_active()
+        return
 
     # we may want to enable this check if using the active task list somehow isn't good enough
     # if redis_connector_index.generator_locked():
@@ -487,20 +503,25 @@ def validate_indexing_fence(
 
     # we didn't find any direct indication that associated celery tasks exist, but they still might be there
     # due to gaps in our ability to check states during transitions
-    # Rely on the active signal (which has a timeout)
+    # Rely on the active signal (which has a duration that allows us to bridge those gaps)
     if redis_connector_index.active():
         return
 
     # celery tasks don't exist and the active signal has expired, possibly due to a crash. Clean it up.
     logger.warning(
-        f"Resetting fence because no associated celery tasks were found: fence={fence_key}"
+        f"validate_indexing_fence - Resetting fence because no associated celery tasks were found: fence={fence_key}"
     )
     if payload.index_attempt_id:
-        mark_attempt_failed(
-            payload.index_attempt_id,
-            db_session,
-            "Canceling index attempt due to missing celery tasks",
-        )
+        try:
+            mark_attempt_failed(
+                payload.index_attempt_id,
+                db_session,
+                "validate_indexing_fence - Canceling index attempt due to missing celery tasks",
+            )
+        except Exception:
+            logger.exception(
+                "validate_indexing_fence - Exception while marking index attempt as failed."
+            )
 
     redis_connector_index.reset()
     return
