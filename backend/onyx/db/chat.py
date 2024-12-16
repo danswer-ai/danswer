@@ -19,6 +19,7 @@ from onyx.auth.schemas import UserRole
 from onyx.chat.models import DocumentRelevance
 from onyx.configs.chat_configs import HARD_DELETE_CHATS
 from onyx.configs.constants import MessageType
+from danswer.configs.constants import SessionType
 from onyx.context.search.models import RetrievalDocs
 from onyx.context.search.models import SavedSearchDoc
 from onyx.context.search.models import SearchDoc as ServerSearchDoc
@@ -314,6 +315,33 @@ def update_chat_session(
     db_session.commit()
 
     return chat_session
+
+
+def delete_all_chat_sessions_for_user(
+    user: User | None, session_type: SessionType, db_session: Session
+) -> None:
+    user_id = user.id if user is not None else None
+    query = db_session.query(ChatSession).filter(ChatSession.user_id == user_id)
+
+    if session_type == SessionType.SLACK:
+        raise ValueError("Slack sessions cannot be deleted en masse")
+    if session_type == SessionType.CHAT:
+        query = query.filter(ChatSession.one_shot.is_(False))  # type: ignore
+    elif session_type == SessionType.SEARCH:
+        query = query.filter(ChatSession.one_shot.is_(True))  # type: ignore
+
+    # Get the IDs of the chat sessions to be deleted
+    chat_session_ids = [session.id for session in query.all()]
+
+    # Delete associated chat messages first
+    db_session.query(ChatMessage).filter(
+        ChatMessage.chat_session_id.in_(chat_session_ids)
+    ).delete(synchronize_session=False)
+
+    # Now delete the chat sessions
+    query.delete(synchronize_session=False)
+
+    db_session.commit()
 
 
 def delete_chat_session(

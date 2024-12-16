@@ -20,6 +20,7 @@ export function PagesTab({
   newFolderId,
   showShareModal,
   showDeleteModal,
+  showDeleteAllModal,
 }: {
   page: pageType;
   existingChats?: ChatSession[];
@@ -30,6 +31,7 @@ export function PagesTab({
   newFolderId: number | null;
   showShareModal?: (chatSession: ChatSession) => void;
   showDeleteModal?: (chatSession: ChatSession) => void;
+  showDeleteAllModal?: () => void;
 }) {
   const groupedChatSessions = existingChats
     ? groupSessionsByDateRange(existingChats)

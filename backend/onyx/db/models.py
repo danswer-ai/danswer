@@ -1008,7 +1008,7 @@ class ChatSession(Base):
         "ChatFolder", back_populates="chat_sessions"
     )
     messages: Mapped[list["ChatMessage"]] = relationship(
-        "ChatMessage", back_populates="chat_session"
+        "ChatMessage", back_populates="chat_session", cascade="all, delete-orphan"
     )
     persona: Mapped["Persona"] = relationship("Persona")
 
@@ -1076,6 +1076,8 @@ class ChatMessage(Base):
         "SearchDoc",
         secondary=ChatMessage__SearchDoc.__table__,
         back_populates="chat_messages",
+        cascade="all, delete-orphan",
+        single_parent=True,
     )
 
     tool_call: Mapped["ToolCall"] = relationship(

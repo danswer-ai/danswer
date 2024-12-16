@@ -27,6 +27,7 @@ import {
   buildLatestMessageChain,
   checkAnyAssistantHasSearch,
   createChatSession,
+  deleteAllChatSessions,
   deleteChatSession,
   getCitedDocumentsFromMessage,
   getHumanAndAIMessageFromMessageNumber,
@@ -242,10 +243,10 @@ export function ChatPage({
           (assistant) => assistant.id === existingChatSessionAssistantId
         )
       : defaultAssistantId !== undefined
-        ? availableAssistants.find(
-            (assistant) => assistant.id === defaultAssistantId
-          )
-        : undefined
+      ? availableAssistants.find(
+          (assistant) => assistant.id === defaultAssistantId
+        )
+      : undefined
   );
   // Gather default temperature settings
   const search_param_temperature = searchParams.get(
@@ -255,12 +256,12 @@ export function ChatPage({
   const defaultTemperature = search_param_temperature
     ? parseFloat(search_param_temperature)
     : selectedAssistant?.tools.some(
-          (tool) =>
-            tool.in_code_tool_id === "SearchTool" ||
-            tool.in_code_tool_id === "InternetSearchTool"
-        )
-      ? 0
-      : 0.7;
+        (tool) =>
+          tool.in_code_tool_id === "SearchTool" ||
+          tool.in_code_tool_id === "InternetSearchTool"
+      )
+    ? 0
+    : 0.7;
 
   const setSelectedAssistantFromId = (assistantId: number) => {
     // NOTE: also intentionally look through available assistants here, so that
@@ -1175,8 +1176,8 @@ export function ChatPage({
     const currentAssistantId = alternativeAssistantOverride
       ? alternativeAssistantOverride.id
       : alternativeAssistant
-        ? alternativeAssistant.id
-        : liveAssistant.id;
+      ? alternativeAssistant.id
+      : liveAssistant.id;
 
     resetInputBar();
     let messageUpdates: Message[] | null = null;
@@ -1837,6 +1838,7 @@ export function ChatPage({
 
   const innerSidebarElementRef = useRef<HTMLDivElement>(null);
   const [settingsToggled, setSettingsToggled] = useState(false);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
 
   const currentPersona = alternativeAssistant || liveAssistant;
   useEffect(() => {
@@ -1971,6 +1973,31 @@ export function ChatPage({
       {popup}
 
       <ChatPopup />
+
+      {showDeleteAllModal && (
+        <DeleteEntityModal
+          entityType="All Chats"
+          entityName="all your chat sessions"
+          onClose={() => setShowDeleteAllModal(false)}
+          additionalDetails="This action cannot be undone. All your chat sessions will be deleted."
+          onSubmit={async () => {
+            const response = await deleteAllChatSessions("Chat");
+            if (response.ok) {
+              setShowDeleteAllModal(false);
+              setPopup({
+                message: "All your chat sessions have been deleted.",
+                type: "success",
+              });
+            } else {
+              setPopup({
+                message: "Failed to delete all chat sessions.",
+                type: "error",
+              });
+            }
+            router.refresh();
+          }}
+        />
+      )}
 
       {currentFeedback && (
         <FeedbackModal
@@ -2132,6 +2159,7 @@ export function ChatPage({
                   removeToggle={removeToggle}
                   showShareModal={showShareModal}
                   showDeleteModal={showDeleteModal}
+                  showDeleteAllModal={() => setShowDeleteAllModal(true)}
                 />
               </div>
             </div>
