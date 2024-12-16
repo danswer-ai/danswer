@@ -19,6 +19,7 @@ from onyx.configs.constants import MilestoneRecordType
 from onyx.configs.constants import NotificationType
 from onyx.db.engine import get_current_tenant_id
 from onyx.db.engine import get_session
+from onyx.db.models import StarterMessageModel as StarterMessage
 from onyx.db.models import User
 from onyx.db.notification import create_notification
 from onyx.db.persona import create_assistant_category
@@ -36,7 +37,11 @@ from onyx.db.persona import update_persona_shared_users
 from onyx.db.persona import update_persona_visibility
 from onyx.file_store.file_store import get_default_file_store
 from onyx.file_store.models import ChatFileType
+from onyx.secondary_llm_flows.starter_message_creation import (
+    generate_starter_messages,
+)
 from onyx.server.features.persona.models import CreatePersonaRequest
+from onyx.server.features.persona.models import GenerateStarterMessageRequest
 from onyx.server.features.persona.models import ImageGenerationToolStatus
 from onyx.server.features.persona.models import PersonaCategoryCreate
 from onyx.server.features.persona.models import PersonaCategoryResponse
@@ -377,3 +382,26 @@ def build_final_template_prompt(
             retrieval_disabled=retrieval_disabled,
         )
     )
+
+
+@basic_router.post("/assistant-prompt-refresh")
+def build_assistant_prompts(
+    generate_persona_prompt_request: GenerateStarterMessageRequest,
+    db_session: Session = Depends(get_session),
+    user: User | None = Depends(current_user),
+) -> list[StarterMessage]:
+    try:
+        logger.info(
+            "Generating starter messages for user: %s", user.id if user else "Anonymous"
+        )
+        return generate_starter_messages(
+            name=generate_persona_prompt_request.name,
+            description=generate_persona_prompt_request.description,
+            instructions=generate_persona_prompt_request.instructions,
+            document_set_ids=generate_persona_prompt_request.document_set_ids,
+            db_session=db_session,
+            user=user,
+        )
+    except Exception as e:
+        logger.exception("Failed to generate starter messages")
+        raise HTTPException(status_code=500, detail=str(e))
