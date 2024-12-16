@@ -109,9 +109,7 @@ export function PagesTab({
           )}
           {isHistoryEmpty ? (
             <p className="text-sm mt-2 w-[250px]">
-              {page === "search"
-                ? "Try running a search! Your search history will appear here."
-                : "Try sending a message! Your chat history will appear here."}
+              Try sending a message! Your chat history will appear here.
             </p>
           ) : (
             Object.entries(groupedChatSessions).map(

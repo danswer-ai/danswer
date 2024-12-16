@@ -2062,7 +2062,6 @@ export function ChatPage({
             if (response.ok) {
               setDeletingChatSession(null);
               // go back to the main page
-              // router.refresh();
               if (deletingChatSession.id === chatSessionIdRef.current) {
                 router.push("/chat");
               }
@@ -2766,6 +2765,10 @@ export function ChatPage({
                             <ChatInputBar
                               removeDocs={() => {
                                 clearSelectedDocuments();
+                              }}
+                              showDocs={() => {
+                                setFiltersToggled(false);
+                                setDocumentSidebarToggled(true);
                               }}
                               removeFilters={() => {
                                 filterManager.setSelectedSources([]);

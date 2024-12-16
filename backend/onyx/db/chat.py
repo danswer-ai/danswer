@@ -319,11 +319,14 @@ def update_chat_session(
 def delete_all_chat_sessions_for_user(user: User | None, db_session: Session) -> None:
     user_id = user.id if user is not None else None
 
-    query = db_session.query(ChatSession).filter(ChatSession.user_id == user_id)
+    query = db_session.query(ChatSession).filter(
+        ChatSession.user_id == user_id, ChatSession.onyxbot_flow.is_(False)
+    )
 
-    query = query.filter(ChatSession.onyxbot_flow.is_(False))
-
-    query.delete(synchronize_session=False)
+    if HARD_DELETE_CHATS:
+        query.delete(synchronize_session=False)
+    else:
+        query.update({ChatSession.deleted: True}, synchronize_session=False)
 
     db_session.commit()
 
