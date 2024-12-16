@@ -4,7 +4,9 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from onyx.auth.users import current_admin_user
+from onyx.configs.constants import MilestoneRecordType
 from onyx.db.constants import SLACK_BOT_PERSONA_PREFIX
+from onyx.db.engine import get_current_tenant_id
 from onyx.db.engine import get_session
 from onyx.db.models import ChannelConfig
 from onyx.db.models import User
@@ -25,6 +27,7 @@ from onyx.server.manage.models import SlackBot
 from onyx.server.manage.models import SlackBotCreationRequest
 from onyx.server.manage.models import SlackChannelConfig
 from onyx.server.manage.models import SlackChannelConfigCreationRequest
+from onyx.utils.telemetry import create_milestone_and_report
 
 
 router = APIRouter(prefix="/manage")
@@ -217,6 +220,7 @@ def create_bot(
     slack_bot_creation_request: SlackBotCreationRequest,
     db_session: Session = Depends(get_session),
     _: User | None = Depends(current_admin_user),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> SlackBot:
     slack_bot_model = insert_slack_bot(
         db_session=db_session,
@@ -225,6 +229,15 @@ def create_bot(
         bot_token=slack_bot_creation_request.bot_token,
         app_token=slack_bot_creation_request.app_token,
     )
+
+    create_milestone_and_report(
+        user=None,
+        distinct_id=tenant_id or "N/A",
+        event_type=MilestoneRecordType.CREATED_ONYX_BOT,
+        properties=None,
+        db_session=db_session,
+    )
+
     return SlackBot.from_model(slack_bot_model)
 
 

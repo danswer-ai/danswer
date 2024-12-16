@@ -37,7 +37,7 @@ from sqlalchemy.types import TypeDecorator
 
 from onyx.auth.schemas import UserRole
 from onyx.configs.chat_configs import NUM_POSTPROCESSED_RESULTS
-from onyx.configs.constants import DEFAULT_BOOST
+from onyx.configs.constants import DEFAULT_BOOST, MilestoneRecordType
 from onyx.configs.constants import DocumentSource
 from onyx.configs.constants import FileOrigin
 from onyx.configs.constants import MessageType
@@ -1532,6 +1532,32 @@ class SlackBot(Base):
         back_populates="slack_bot",
         cascade="all, delete-orphan",
     )
+
+
+class Milestone(Base):
+    # This table is used to track significant events for a deployment towards finding value
+    # The table is currently not used for features but it may be used in the future to inform
+    # users about the product features and encourage usage/exploration.
+    __tablename__ = "milestone"
+
+    id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), nullable=True
+    )
+    event_type: Mapped[MilestoneRecordType] = mapped_column(String)
+    # Need to track counts and specific ids of certain events to know if the Milestone has been reached
+    event_tracker: Mapped[dict | None] = mapped_column(
+        postgresql.JSONB(), nullable=True
+    )
+    time_created: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    user: Mapped[User | None] = relationship("User")
+
+    __table_args__ = (UniqueConstraint("event_type", name="uq_milestone_event_type"),)
 
 
 class TaskQueueState(Base):

@@ -20,6 +20,7 @@ from ee.onyx.server.tenants.user_mapping import get_tenant_id_for_email
 from ee.onyx.server.tenants.user_mapping import user_owns_a_tenant
 from onyx.auth.users import exceptions
 from onyx.configs.app_configs import CONTROL_PLANE_API_BASE_URL
+from onyx.configs.constants import MilestoneRecordType
 from onyx.db.engine import get_session_with_tenant
 from onyx.db.engine import get_sqlalchemy_engine
 from onyx.db.llm import update_default_provider
@@ -35,11 +36,13 @@ from onyx.llm.llm_provider_options import OPENAI_PROVIDER_NAME
 from onyx.server.manage.embedding.models import CloudEmbeddingProviderCreationRequest
 from onyx.server.manage.llm.models import LLMProviderUpsertRequest
 from onyx.setup import setup_onyx
+from onyx.utils.telemetry import create_milestone_and_report
 from shared_configs.configs import MULTI_TENANT
 from shared_configs.configs import POSTGRES_DEFAULT_SCHEMA
 from shared_configs.configs import TENANT_ID_PREFIX
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 from shared_configs.enums import EmbeddingProvider
+
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +124,17 @@ async def provision_tenant(tenant_id: str, email: str) -> None:
             setup_onyx(db_session, tenant_id, cohere_enabled=cohere_enabled)
 
         add_users_to_tenant([email], tenant_id)
+
+        with get_session_with_tenant(tenant_id) as db_session:
+            create_milestone_and_report(
+                user=None,
+                distinct_id=tenant_id,
+                event_type=MilestoneRecordType.TENANT_CREATED,
+                properties={
+                    "email": email,
+                },
+                db_session=db_session,
+            )
 
     except Exception as e:
         logger.exception(f"Failed to create tenant {tenant_id}")

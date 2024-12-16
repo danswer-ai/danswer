@@ -15,7 +15,9 @@ from onyx.auth.users import current_limited_user
 from onyx.auth.users import current_user
 from onyx.chat.prompt_builder.utils import build_dummy_prompt
 from onyx.configs.constants import FileOrigin
+from onyx.configs.constants import MilestoneRecordType
 from onyx.configs.constants import NotificationType
+from onyx.db.engine import get_current_tenant_id
 from onyx.db.engine import get_session
 from onyx.db.models import User
 from onyx.db.notification import create_notification
@@ -44,6 +46,7 @@ from onyx.server.features.persona.models import PromptTemplateResponse
 from onyx.server.models import DisplayPriorityRequest
 from onyx.tools.utils import is_image_generation_available
 from onyx.utils.logger import setup_logger
+from onyx.utils.telemetry import create_milestone_and_report
 
 
 logger = setup_logger()
@@ -167,13 +170,24 @@ def create_persona(
     create_persona_request: CreatePersonaRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str | None = Depends(get_current_tenant_id),
 ) -> PersonaSnapshot:
-    return create_update_persona(
+    persona_snapshot = create_update_persona(
         persona_id=None,
         create_persona_request=create_persona_request,
         user=user,
         db_session=db_session,
     )
+
+    create_milestone_and_report(
+        user=user,
+        distinct_id=tenant_id or "N/A",
+        event_type=MilestoneRecordType.CREATED_ASSISTANT,
+        properties=None,
+        db_session=db_session,
+    )
+
+    return persona_snapshot
 
 
 # NOTE: This endpoint cannot update persona configuration options that

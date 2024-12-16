@@ -30,6 +30,7 @@ from onyx.chat.prompt_builder.citations_prompt import (
 from onyx.configs.app_configs import WEB_DOMAIN
 from onyx.configs.constants import FileOrigin
 from onyx.configs.constants import MessageType
+from onyx.configs.constants import MilestoneRecordType
 from onyx.configs.model_configs import LITELLM_PASS_THROUGH_HEADERS
 from onyx.db.chat import add_chats_to_session_from_slack_thread
 from onyx.db.chat import create_chat_session
@@ -44,7 +45,9 @@ from onyx.db.chat import get_or_create_root_message
 from onyx.db.chat import set_as_latest_chat_message
 from onyx.db.chat import translate_db_message_to_chat_message_detail
 from onyx.db.chat import update_chat_session
+from onyx.db.engine import get_current_tenant_id
 from onyx.db.engine import get_session
+from onyx.db.engine import get_session_with_tenant
 from onyx.db.feedback import create_chat_message_feedback
 from onyx.db.feedback import create_doc_retrieval_feedback
 from onyx.db.models import User
@@ -81,6 +84,7 @@ from onyx.server.query_and_chat.models import UpdateChatSessionThreadRequest
 from onyx.server.query_and_chat.token_limit import check_token_rate_limits
 from onyx.utils.headers import get_custom_tool_additional_request_headers
 from onyx.utils.logger import setup_logger
+from onyx.utils.telemetry import create_milestone_and_report
 
 
 logger = setup_logger()
@@ -315,8 +319,9 @@ def handle_new_chat_message(
     chat_message_req: CreateChatMessageRequest,
     request: Request,
     user: User | None = Depends(current_limited_user),
-    _: None = Depends(check_token_rate_limits),
+    _rate_limit_check: None = Depends(check_token_rate_limits),
     is_connected_func: Callable[[], bool] = Depends(is_connected),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> StreamingResponse:
     """
     This endpoint is both used for all the following purposes:
@@ -346,6 +351,15 @@ def handle_new_chat_message(
         and not chat_message_req.use_existing_user_message
     ):
         raise HTTPException(status_code=400, detail="Empty chat message is invalid")
+
+    with get_session_with_tenant(tenant_id) as db_session:
+        create_milestone_and_report(
+            user=user,
+            distinct_id=user.email if user else tenant_id or "N/A",
+            event_type=MilestoneRecordType.RAN_QUERY,
+            properties=None,
+            db_session=db_session,
+        )
 
     def stream_generator() -> Generator[str, None, None]:
         try:

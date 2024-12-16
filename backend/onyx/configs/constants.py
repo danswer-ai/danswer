@@ -15,6 +15,9 @@ ID_SEPARATOR = ":;:"
 DEFAULT_BOOST = 0
 SESSION_KEY = "session"
 
+NO_AUTH_USER_ID = "__no_auth_user__"
+NO_AUTH_USER_EMAIL = "anonymous@onyx.app"
+
 # For chunking/processing chunks
 RETURN_SEPARATOR = "\n\r\n"
 SECTION_SEPARATOR = "\n\n"
@@ -208,6 +211,19 @@ class FileOrigin(str, Enum):
     CONNECTOR = "connector"
     GENERATED_REPORT = "generated_report"
     OTHER = "other"
+
+
+class MilestoneRecordType(str, Enum):
+    TENANT_CREATED = "tenant_created"
+    USER_SIGNED_UP = "user_signed_up"
+    MULTIPLE_USERS = "multiple_users"
+    VISITED_ADMIN_PAGE = "visited_admin_page"
+    CREATED_CONNECTOR = "created_connector"
+    CONNECTOR_SUCCEEDED = "connector_succeeded"
+    RAN_QUERY = "ran_query"
+    MULTIPLE_ASSISTANTS = "multiple_assistants"
+    CREATED_ASSISTANT = "created_assistant"
+    CREATED_ONYX_BOT = "created_onyx_bot"
 
 
 class PostgresAdvisoryLocks(Enum):
