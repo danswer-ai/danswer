@@ -1,5 +1,5 @@
-from onyx.agent_search.primary_graph.graph_builder import build_core_graph
-from onyx.llm.answering.answer import AnswerStream
+from onyx.agent_search.main.graph_builder import main_graph_builder
+from onyx.chat.answer import AnswerStream
 from onyx.llm.interfaces import LLM
 from onyx.tools.tool import Tool
 
@@ -9,7 +9,7 @@ def run_graph(
     llm: LLM,
     tools: list[Tool],
 ) -> AnswerStream:
-    graph = build_core_graph()
+    graph = main_graph_builder()
 
     inputs = {
         "original_query": query,
