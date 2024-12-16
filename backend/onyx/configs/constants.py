@@ -173,6 +173,10 @@ class AuthType(str, Enum):
     CLOUD = "cloud"
 
 
+# Special characters for password validation
+PASSWORD_SPECIAL_CHARS = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+
+
 class SessionType(str, Enum):
     CHAT = "Chat"
     SEARCH = "Search"

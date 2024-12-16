@@ -14,7 +14,7 @@ from tests.integration.common_utils.test_models import DATestUser
 
 
 DOMAIN = "test.com"
-DEFAULT_PASSWORD = "test"
+DEFAULT_PASSWORD = "TestPassword123!"
 
 
 def build_email(name: str) -> str:
