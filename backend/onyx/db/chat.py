@@ -141,13 +141,19 @@ def get_valid_messages_from_query_sessions(
     return {row.chat_session_id: row.message for row in first_messages}
 
 
+# Retrieves chat sessions by user
+# Chat sessions do not include onyxbot flows
 def get_chat_sessions_by_user(
     user_id: UUID | None,
     deleted: bool | None,
     db_session: Session,
+    include_onyxbot_flows: bool = False,
     limit: int = 50,
 ) -> list[ChatSession]:
     stmt = select(ChatSession).where(ChatSession.user_id == user_id)
+
+    if not include_onyxbot_flows:
+        stmt = stmt.where(ChatSession.onyxbot_flow.is_(False))
 
     stmt = stmt.order_by(desc(ChatSession.time_created))
 
