@@ -54,7 +54,14 @@ export default function LogoType({
           onClick={() => toggleSidebar()}
           className="flex gap-x-2 items-center ml-4 desktop:invisible "
         >
-          <FiSidebar size={20} className="text-text-mobile-sidebar" />
+          <FiSidebar
+            size={20}
+            className={`${
+              toggled
+                ? "text-text-mobile-sidebar-toggled"
+                : "text-text-mobile-sidebar-untoggled"
+            }`}
+          />
           {!showArrow && (
             <Logo className="desktop:hidden -my-2" height={24} width={24} />
           )}
