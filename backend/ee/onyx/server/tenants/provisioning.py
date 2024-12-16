@@ -3,7 +3,9 @@ import logging
 import uuid
 
 import aiohttp  # Async HTTP client
+import httpx
 from fastapi import HTTPException
+from fastapi import Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -24,6 +26,8 @@ from onyx.configs.constants import MilestoneRecordType
 from onyx.db.engine import get_session_with_tenant
 from onyx.db.engine import get_sqlalchemy_engine
 from onyx.db.llm import update_default_provider
+from ee.onyx.configs.app_configs import HUBSPOT_TRACKING_URL
+
 from onyx.db.llm import upsert_cloud_embedding_provider
 from onyx.db.llm import upsert_llm_provider
 from onyx.db.models import IndexModelStatus
@@ -281,3 +285,36 @@ def configure_default_api_keys(db_session: Session) -> None:
         logger.info(
             "COHERE_DEFAULT_API_KEY not set, skipping Cohere embedding provider configuration"
         )
+
+
+async def submit_to_hubspot(
+    email: str, referral_source: str | None, request: Request
+) -> None:
+    if not HUBSPOT_TRACKING_URL:
+        logger.info("HUBSPOT_TRACKING_URL not set, skipping HubSpot submission")
+        return
+
+    # HubSpot tracking cookie
+    hubspot_cookie = request.cookies.get("hubspotutk")
+
+    # IP address
+    ip_address = request.client.host if request.client else None
+
+    data = {
+        "fields": [
+            {"name": "email", "value": email},
+            {"name": "referral_source", "value": referral_source or ""},
+        ],
+        "context": {
+            "hutk": hubspot_cookie,
+            "ipAddress": ip_address,
+            "pageUri": str(request.url),
+            "pageName": "User Registration",
+        },
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(HUBSPOT_TRACKING_URL, json=data)
+
+    if response.status_code != 200:
+        logger.error(f"Failed to submit to HubSpot: {response.text}")
