@@ -33,4 +33,4 @@ class ExpandedRetrievalInput(PrimaryState, total=True):
 
 
 class ExpandedRetrievalOutput(TypedDict):
-    reordered_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]

@@ -10,7 +10,7 @@ def format_answer(state: AnswerQueryState) -> AnswerQueryOutput:
                 query=state["query_to_answer"],
                 quality=state["answer_quality"],
                 answer=state["answer"],
-                documents=state["reordered_documents"],
+                documents=state["reranked_documents"],
             )
         ],
     )
