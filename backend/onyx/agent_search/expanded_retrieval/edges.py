@@ -31,7 +31,7 @@ def parallel_retrieval_edge(state: ExpandedRetrievalInput) -> list[Send | Hashab
 
     print(f"llm_response: {llm_response}")
 
-    rewritten_queries = llm_response.split("\n")
+    rewritten_queries = llm_response.split("--")
 
     print(f"rewritten_queries: {rewritten_queries}")
 

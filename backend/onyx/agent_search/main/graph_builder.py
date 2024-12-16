@@ -78,7 +78,8 @@ if __name__ == "__main__":
     compiled_graph = graph.compile()
     primary_llm, fast_llm = get_default_llms()
     search_request = SearchRequest(
-        query="If i am familiar with the function that I need, how can I type it into a cell?",
+        # query="If i am familiar with the function that I need, how can I type it into a cell?",
+        query="What are the temperatures in Hawaii and New York?",
     )
     with get_session_context_manager() as db_session:
         inputs = MainInput(

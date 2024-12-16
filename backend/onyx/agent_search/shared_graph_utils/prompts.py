@@ -32,6 +32,25 @@ BASE_RAG_PROMPT = """ \n
     \n\n
     Answer:"""
 
+
+SUB_CHECK_PROMPT = """ \n
+    Your task is to see whether a given answer addresses a given question.
+    Please do not use any internal knowledge you may have - just focus on whether the answer
+    as given seems to address the question as given.
+
+    Here is the question:
+    \n ------- \n
+    {question}
+    \n ------- \n
+
+    Here is the suggested answer:
+    \n ------- \n
+    {base_answer}
+    \n ------- \n
+
+    Please answer with yes or no:"""
+
+
 BASE_CHECK_PROMPT = """ \n
     Please check whether 1) the suggested answer seems to fully address the original question AND 2)the
     original question requests a simple, factual answer, and there are no ambiguities, judgements,
@@ -50,7 +69,7 @@ BASE_CHECK_PROMPT = """ \n
     Please answer with yes or no:"""
 
 VERIFIER_PROMPT = """ \n
-    Please check whether the document seems to be relevant for the answer of the question. Please
+    Please check whether the document provided below seems to be relevant to get an answer the provided question. Please
     only answer with 'yes' or 'no' \n
     Here is the initial question:
     \n ------- \n
