@@ -63,6 +63,10 @@ LANGUAGE_CHAT_NAMING_HINT = (
     or "The name of the conversation must be in the same language as the user query."
 )
 
+# Number of prompts each persona should have
+NUM_PERSONA_PROMPTS = 4
+NUM_PERSONA_PROMPT_GENERATION_CHUNKS = 5
+
 # Agentic search takes significantly more tokens and therefore has much higher cost.
 # This configuration allows users to get a search-only experience with instant results
 # and no involvement from the LLM.
