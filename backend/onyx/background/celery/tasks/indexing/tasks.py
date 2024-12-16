@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from datetime import timezone
 from http import HTTPStatus
@@ -165,10 +166,12 @@ def get_unfenced_index_attempt_ids(db_session: Session, r: redis.Redis) -> list[
     bind=True,
 )
 def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
+    time_start = time.monotonic()
+
     tasks_created = 0
     locked = False
     r = get_redis_client(tenant_id=tenant_id)
-    r_celery = self.app.broker_connection().channel().client  # type: ignore
+    r_celery: Redis = self.app.broker_connection().channel().client  # type: ignore
 
     lock_beat: RedisLock = r.lock(
         OnyxRedisLocks.CHECK_INDEXING_BEAT_LOCK,
@@ -337,6 +340,8 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     f"tenant={tenant_id}"
                 )
 
+    time_elapsed = time.monotonic() - time_start
+    task_logger.info(f"check_for_indexing finished: elapsed={time_elapsed:.2f}")
     return tasks_created
 
 
