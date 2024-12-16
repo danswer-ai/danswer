@@ -21,6 +21,7 @@ from onyx.background.celery.versioned_apps.primary import app as primary_app
 from onyx.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from onyx.configs.constants import DocumentSource
 from onyx.configs.constants import FileOrigin
+from onyx.configs.constants import MilestoneRecordType
 from onyx.configs.constants import OnyxCeleryPriority
 from onyx.configs.constants import OnyxCeleryTask
 from onyx.connectors.google_utils.google_auth import (
@@ -110,6 +111,7 @@ from onyx.server.documents.models import ObjectCreationIdResponse
 from onyx.server.documents.models import RunConnectorRequest
 from onyx.server.models import StatusResponse
 from onyx.utils.logger import setup_logger
+from onyx.utils.telemetry import create_milestone_and_report
 from onyx.utils.variable_functionality import fetch_ee_implementation_or_noop
 
 logger = setup_logger()
@@ -639,6 +641,15 @@ def get_connector_indexing_status(
             )
         )
 
+    # Visiting admin page brings the user to the current connectors page which calls this endpoint
+    create_milestone_and_report(
+        user=user,
+        distinct_id=user.email if user else tenant_id or "N/A",
+        event_type=MilestoneRecordType.VISITED_ADMIN_PAGE,
+        properties=None,
+        db_session=db_session,
+    )
+
     return indexing_statuses
 
 
@@ -663,6 +674,7 @@ def create_connector_from_model(
     connector_data: ConnectorUpdateRequest,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> ObjectCreationIdResponse:
     try:
         _validate_connector_allowed(connector_data.source)
@@ -677,10 +689,20 @@ def create_connector_from_model(
             object_is_perm_sync=connector_data.access_type == AccessType.SYNC,
         )
         connector_base = connector_data.to_connector_base()
-        return create_connector(
+        connector_response = create_connector(
             db_session=db_session,
             connector_data=connector_base,
         )
+
+        create_milestone_and_report(
+            user=user,
+            distinct_id=user.email if user else tenant_id or "N/A",
+            event_type=MilestoneRecordType.CREATED_CONNECTOR,
+            properties=None,
+            db_session=db_session,
+        )
+
+        return connector_response
     except ValueError as e:
         logger.error(f"Error creating connector: {e}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -691,6 +713,7 @@ def create_connector_with_mock_credential(
     connector_data: ConnectorUpdateRequest,
     user: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> StatusResponse:
     fetch_ee_implementation_or_noop(
         "onyx.db.user_group", "validate_user_creation_permissions", None
@@ -728,6 +751,15 @@ def create_connector_with_mock_credential(
             cc_pair_name=connector_data.name,
             groups=connector_data.groups,
         )
+
+        create_milestone_and_report(
+            user=user,
+            distinct_id=user.email if user else tenant_id or "N/A",
+            event_type=MilestoneRecordType.CREATED_CONNECTOR,
+            properties=None,
+            db_session=db_session,
+        )
+
         return response
 
     except ValueError as e:

@@ -31,6 +31,8 @@ from onyx.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
 from onyx.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
 from onyx.configs.chat_configs import MAX_CHUNKS_FED_TO_CHAT
 from onyx.configs.constants import MessageType
+from onyx.configs.constants import MilestoneRecordType
+from onyx.configs.constants import NO_AUTH_USER_ID
 from onyx.context.search.enums import OptionalSearchSetting
 from onyx.context.search.enums import QueryFlow
 from onyx.context.search.enums import SearchType
@@ -53,6 +55,9 @@ from onyx.db.chat import reserve_message_id
 from onyx.db.chat import translate_db_message_to_chat_message_detail
 from onyx.db.chat import translate_db_search_doc_to_server_search_doc
 from onyx.db.engine import get_session_context_manager
+from onyx.db.milestone import check_multi_assistant_milestone
+from onyx.db.milestone import create_milestone_if_not_exists
+from onyx.db.milestone import update_user_assistant_milestone
 from onyx.db.models import SearchDoc as DbSearchDoc
 from onyx.db.models import ToolCall
 from onyx.db.models import User
@@ -117,6 +122,7 @@ from onyx.tools.tool_implementations.search.search_tool import (
 from onyx.tools.tool_runner import ToolCallFinalResult
 from onyx.utils.logger import setup_logger
 from onyx.utils.long_term_log import LongTermLogger
+from onyx.utils.telemetry import mt_cloud_telemetry
 from onyx.utils.timing import log_function_time
 from onyx.utils.timing import log_generator_function_time
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
@@ -355,6 +361,31 @@ def stream_chat_message_objects(
 
         if not persona:
             raise RuntimeError("No persona specified or found for chat session")
+
+        multi_assistant_milestone, _is_new = create_milestone_if_not_exists(
+            user=user,
+            event_type=MilestoneRecordType.MULTIPLE_ASSISTANTS,
+            db_session=db_session,
+        )
+
+        update_user_assistant_milestone(
+            milestone=multi_assistant_milestone,
+            user_id=str(user.id) if user else NO_AUTH_USER_ID,
+            assistant_id=persona.id,
+            db_session=db_session,
+        )
+
+        _, just_hit_multi_assistant_milestone = check_multi_assistant_milestone(
+            milestone=multi_assistant_milestone,
+            db_session=db_session,
+        )
+
+        if just_hit_multi_assistant_milestone:
+            mt_cloud_telemetry(
+                distinct_id=tenant_id,
+                event=MilestoneRecordType.MULTIPLE_ASSISTANTS,
+                properties=None,
+            )
 
         # If a prompt override is specified via the API, use that with highest priority
         # but for saving it, we are just mapping it to an existing prompt

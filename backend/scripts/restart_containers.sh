@@ -48,4 +48,7 @@ sleep 1
 echo "Running Alembic migration..."
 alembic upgrade head
 
+# Run the following instead of the above if using MT cloud
+# alembic -n schema_private upgrade head
+
 echo "Containers restarted and migration completed."

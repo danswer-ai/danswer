@@ -11,6 +11,7 @@ from onyx.background.indexing.tracer import OnyxTracer
 from onyx.configs.app_configs import INDEXING_SIZE_WARNING_THRESHOLD
 from onyx.configs.app_configs import INDEXING_TRACER_INTERVAL
 from onyx.configs.app_configs import POLL_CONNECTOR_OFFSET
+from onyx.configs.constants import MilestoneRecordType
 from onyx.connectors.connector_runner import ConnectorRunner
 from onyx.connectors.factory import instantiate_connector
 from onyx.connectors.models import IndexAttemptMetadata
@@ -34,6 +35,7 @@ from onyx.indexing.indexing_heartbeat import IndexingHeartbeatInterface
 from onyx.indexing.indexing_pipeline import build_indexing_pipeline
 from onyx.utils.logger import setup_logger
 from onyx.utils.logger import TaskAttemptSingleton
+from onyx.utils.telemetry import create_milestone_and_report
 from onyx.utils.variable_functionality import global_version
 
 logger = setup_logger()
@@ -396,6 +398,15 @@ def _run_indexing(
 
     if index_attempt_md.num_exceptions == 0:
         mark_attempt_succeeded(index_attempt, db_session)
+
+        create_milestone_and_report(
+            user=None,
+            distinct_id=tenant_id or "N/A",
+            event_type=MilestoneRecordType.CONNECTOR_SUCCEEDED,
+            properties=None,
+            db_session=db_session,
+        )
+
         logger.info(
             f"Connector succeeded: "
             f"docs={document_count} chunks={chunk_count} elapsed={elapsed_time:.2f}s"

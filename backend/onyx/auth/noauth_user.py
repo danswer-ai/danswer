@@ -4,6 +4,8 @@ from typing import cast
 
 from onyx.auth.schemas import UserRole
 from onyx.configs.constants import KV_NO_AUTH_USER_PREFERENCES_KEY
+from onyx.configs.constants import NO_AUTH_USER_EMAIL
+from onyx.configs.constants import NO_AUTH_USER_ID
 from onyx.key_value_store.store import KeyValueStore
 from onyx.key_value_store.store import KvKeyNotFoundError
 from onyx.server.manage.models import UserInfo
@@ -30,8 +32,8 @@ def load_no_auth_user_preferences(store: KeyValueStore) -> UserPreferences:
 
 def fetch_no_auth_user(store: KeyValueStore) -> UserInfo:
     return UserInfo(
-        id="__no_auth_user__",
-        email="anonymous@onyx.app",
+        id=NO_AUTH_USER_ID,
+        email=NO_AUTH_USER_EMAIL,
         is_active=True,
         is_superuser=False,
         is_verified=True,
