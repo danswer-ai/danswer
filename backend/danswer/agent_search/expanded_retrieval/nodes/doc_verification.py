@@ -22,14 +22,18 @@ def doc_verification(state: DocRetrievalOutput) -> DocVerificationOutput:
 
     # print(f"--- doc_verification state ---")
 
-    original_query = state["search_request"].query
+    if "query_to_answer" in state.keys():
+        query_to_answer = state["query_to_answer"]
+    else:
+        query_to_answer = state["search_request"].query
+
     doc_to_verify = state["doc_to_verify"]
     document_content = doc_to_verify.combined_content
 
     msg = [
         HumanMessage(
             content=VERIFIER_PROMPT.format(
-                question=original_query, document_content=document_content
+                question=query_to_answer, document_content=document_content
             )
         )
     ]

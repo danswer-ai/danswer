@@ -24,11 +24,15 @@ def doc_retrieval(state: RetrieveInput) -> DocRetrievalOutput:
     """
     # print(f"doc_retrieval state: {state.keys()}")
 
-    search_request = state["search_request"].query
+    if "query_to_answer" in state.keys():
+        query_question = state["query_to_answer"]
+    else:
+        query_question = state["search_request"].query
+
     query_to_retrieve = state["query_to_retrieve"]
 
     print(f"\ndoc_retrieval state: {datetime.datetime.now()}")
-    print(f"  -- search_request: {search_request[:100]}")
+    print(f"  -- search_request: {query_question[:100]}")
     # print(f"       -- query_to_retrieve: {query_to_retrieve[:100]}")
 
     documents: list[InferenceSection] = []
