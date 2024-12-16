@@ -914,10 +914,7 @@ class VespaIndex(DocumentIndex):
         This method is currently used for random chunk retrieval in the context of
         assistant starter message creation (passed as sample context for usage by the assistant).
         """
-        vespa_where_clauses = build_vespa_filters(filters)
-        # Remove the trailing 'and' if it exists
-        if vespa_where_clauses.strip().endswith("and"):
-            vespa_where_clauses = vespa_where_clauses.strip()[:-3].strip()
+        vespa_where_clauses = build_vespa_filters(filters, remove_trailing_and=True)
 
         yql = YQL_BASE.format(index_name=self.index_name) + vespa_where_clauses
 
