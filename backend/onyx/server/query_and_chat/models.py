@@ -11,7 +11,7 @@ from onyx.chat.models import RetrievalDocs
 from onyx.configs.constants import DocumentSource
 from onyx.configs.constants import MessageType
 from onyx.configs.constants import SearchFeedbackType
-from danswer.configs.constants import SessionType
+from onyx.configs.constants import SessionType
 from onyx.context.search.models import BaseFilters
 from onyx.context.search.models import ChunkContext
 from onyx.context.search.models import RerankingDetails

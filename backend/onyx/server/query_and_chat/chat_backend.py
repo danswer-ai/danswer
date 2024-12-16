@@ -25,36 +25,6 @@ from onyx.chat.chat_utils import create_chat_chain
 from onyx.chat.chat_utils import extract_headers
 from onyx.chat.process_message import stream_chat_message
 from onyx.chat.prompt_builder.citations_prompt import (
-from danswer.auth.users import current_user
-from danswer.chat.chat_utils import create_chat_chain
-from danswer.chat.process_message import stream_chat_message
-from danswer.configs.app_configs import WEB_DOMAIN
-from danswer.configs.constants import FileOrigin
-from danswer.configs.constants import MessageType
-from danswer.db.chat import create_chat_session
-from danswer.db.chat import create_new_chat_message
-from danswer.db.chat import delete_all_chat_sessions_for_user
-from danswer.db.chat import delete_chat_session
-from danswer.db.chat import get_chat_message
-from danswer.db.chat import get_chat_messages_by_session
-from danswer.db.chat import get_chat_session_by_id
-from danswer.db.chat import get_chat_sessions_by_user
-from danswer.db.chat import get_or_create_root_message
-from danswer.db.chat import set_as_latest_chat_message
-from danswer.db.chat import translate_db_message_to_chat_message_detail
-from danswer.db.chat import update_chat_session
-from danswer.db.engine import get_session
-from danswer.db.feedback import create_chat_message_feedback
-from danswer.db.feedback import create_doc_retrieval_feedback
-from danswer.db.models import User
-from danswer.db.persona import get_persona_by_id
-from danswer.document_index.document_index_utils import get_both_index_names
-from danswer.document_index.factory import get_default_document_index
-from danswer.file_processing.extract_file_text import extract_file_text
-from danswer.file_store.file_store import get_default_file_store
-from danswer.file_store.models import ChatFileType
-from danswer.file_store.models import FileDescriptor
-from danswer.llm.answering.prompts.citations_prompt import (
     compute_max_document_tokens_for_persona,
 )
 from onyx.configs.app_configs import WEB_DOMAIN
@@ -65,6 +35,7 @@ from onyx.configs.model_configs import LITELLM_PASS_THROUGH_HEADERS
 from onyx.db.chat import add_chats_to_session_from_slack_thread
 from onyx.db.chat import create_chat_session
 from onyx.db.chat import create_new_chat_message
+from onyx.db.chat import delete_all_chat_sessions_for_user
 from onyx.db.chat import delete_chat_session
 from onyx.db.chat import duplicate_chat_session_for_user_from_slack
 from onyx.db.chat import get_chat_message
@@ -106,7 +77,6 @@ from onyx.server.query_and_chat.models import ChatSessionsResponse
 from onyx.server.query_and_chat.models import ChatSessionUpdateRequest
 from onyx.server.query_and_chat.models import CreateChatMessageRequest
 from onyx.server.query_and_chat.models import CreateChatSessionID
-from danswer.server.query_and_chat.models import DeleteAllSessionsRequest
 from onyx.server.query_and_chat.models import LLMOverride
 from onyx.server.query_and_chat.models import PromptOverride
 from onyx.server.query_and_chat.models import RenameChatSessionResponse
@@ -313,14 +283,11 @@ def patch_chat_session(
 
 @router.delete("/delete-all-chat-sessions")
 def delete_all_chat_sessions(
-    deletion_request: DeleteAllSessionsRequest,
     user: User | None = Depends(current_user),
     db_session: Session = Depends(get_session),
 ) -> None:
     try:
-        delete_all_chat_sessions_for_user(
-            user=user, session_type=deletion_request.session_type, db_session=db_session
-        )
+        delete_all_chat_sessions_for_user(user=user, db_session=db_session)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

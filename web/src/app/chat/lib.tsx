@@ -284,9 +284,6 @@ export async function deleteAllChatSessions(sessionType: "Chat" | "Search") {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      session_type: sessionType,
-    }),
   });
   return response;
 }
