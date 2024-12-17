@@ -14,13 +14,20 @@ export function LogoComponent({
   enterpriseSettings,
   backgroundToggled,
   show,
+  isAdmin,
 }: {
   enterpriseSettings: EnterpriseSettings | null;
   backgroundToggled?: boolean;
   show?: boolean;
+  isAdmin?: boolean;
 }) {
   return (
-    <div
+    <button
+      onClick={
+        isAdmin
+          ? () => (window.location.href = "/admin/indexing/status")
+          : undefined
+      }
       className={`max-w-[200px] ${
         !show && "mobile:hidden"
       } flex items-center gap-x-1`}
@@ -42,7 +49,7 @@ export function LogoComponent({
       ) : (
         <LogoType />
       )}
-    </div>
+    </button>
   );
 }
 
