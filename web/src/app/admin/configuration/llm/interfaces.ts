@@ -4,6 +4,7 @@ import {
   AWSIcon,
   AzureIcon,
   CPUIcon,
+  MicrosoftIconSVG,
   MistralIcon,
   MetaIcon,
   OpenAIIcon,
@@ -78,6 +79,9 @@ export const getProviderIcon = (providerName: string, modelName?: string) => {
       if (modelName?.toLowerCase().includes("amazon")) {
         return AmazonIcon;
       }
+      if (modelName?.toLowerCase().includes("phi")) {
+        return MicrosoftIconSVG;
+      }    
       if (modelName?.toLowerCase().includes("mistral")) {
         return MistralIcon;
       }    

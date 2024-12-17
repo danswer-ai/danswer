@@ -326,6 +326,12 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   // Meta models
   "llama-3.2-90b-vision-instruct": "Llama 3.2 90B",
   "llama-3.2-11b-vision-instruct": "Llama 3.2 11B",
+  "llama-3.3-70b-instruct": "Llama 3.3 70B",
+
+  // Microsoft models
+  "phi-3.5-mini-instruct": "Phi 3.5 Mini",
+  "phi-3.5-moe-instruct": "Phi 3.5 MoE",
+  "phi-3.5-vision-instruct": "Phi 3.5 Vision",
 
   // Anthropic models
   "claude-3-opus-20240229": "Claude 3 Opus",

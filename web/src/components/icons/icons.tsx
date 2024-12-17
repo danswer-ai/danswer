@@ -52,6 +52,7 @@ import asanaIcon from "../../../public/Asana.png";
 import anthropicSVG from "../../../public/Anthropic.svg";
 import nomicSVG from "../../../public/nomic.svg";
 import microsoftIcon from "../../../public/microsoft.png";
+import microsoftSVG from "../../../public/Microsoft.svg";
 import mixedBreadSVG from "../../../public/Mixedbread.png";
 
 import OCIStorageSVG from "../../../public/OCI.svg";
@@ -1116,6 +1117,11 @@ export const MetaIcon = ({
   size = 16,
   className = defaultTailwindCSS,
 }: IconProps) => <LogoIcon size={size} className={className} src={metaSVG} />;
+
+export const MicrosoftIconSVG = ({
+  size = 16,
+  className = defaultTailwindCSS,
+}: IconProps) => <LogoIcon size={size} className={className} src={microsoftSVG} />;
 
 export const MistralIcon = ({
   size = 16,
