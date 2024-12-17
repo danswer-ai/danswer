@@ -15,5 +15,8 @@ export async function loginAs(page: Page, userType: "admin" | "user") {
   // Click the login button
   await page.click('button[type="submit"]');
 
+  // Log the entire page contents after login
+  console.log("Page contents after login:", await page.content());
+
   await page.waitForURL("http://localhost:3000/chat");
 }

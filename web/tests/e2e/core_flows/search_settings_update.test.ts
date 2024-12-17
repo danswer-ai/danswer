@@ -1,8 +1,8 @@
-import { test, expect } from "@playwright/test";
-import { loginAs } from "../utils/auth";
+import { test, expect } from "../utils/auth-utils";
 
-test("update search settings", async ({ page }) => {
-  await loginAs(page, "admin");
+test("update search settings", async ({ auth }) => {
+  const { page } = await auth("admin");
+
   await page.goto("http://localhost:3000/admin/indexing/status");
   await page.getByRole("button", { name: "Search Settings" }).click();
   await page.getByRole("button", { name: "Update Search Settings" }).click();
