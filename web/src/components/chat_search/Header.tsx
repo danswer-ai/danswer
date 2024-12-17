@@ -101,11 +101,11 @@ export default function FunctionalHeader({
             />
           </div>
 
-          <div className="absolute right-0 top-0 flex gap-x-2">
+          <div className="absolute right-0 top-0 flex">
             {setSharingModalVisible && (
               <div
                 onClick={() => setSharingModalVisible(true)}
-                className="mobile:hidden my-auto rounded cursor-pointer hover:bg-hover-light"
+                className="mobile:hidden ml-2 my-auto rounded cursor-pointer hover:bg-hover-light"
               >
                 <FiShare2 size="18" />
               </div>
