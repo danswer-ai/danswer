@@ -295,8 +295,6 @@ async def submit_to_hubspot(
     if not HUBSPOT_TRACKING_URL:
         logger.info("HUBSPOT_TRACKING_URL not set, skipping HubSpot submission")
         return
-    print("CREATING ENTRY")
-    print(email, referral_source, request)
 
     # HubSpot tracking cookie
     hubspot_cookie = request.cookies.get("hubspotutk")
