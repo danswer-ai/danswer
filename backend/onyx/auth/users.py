@@ -285,25 +285,6 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
             finally:
                 CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
 
-        # Blocking but this should be very quick
-        with get_session_with_tenant(tenant_id) as db_session:
-            if not user_count:
-                create_milestone_and_report(
-                    user=user,
-                    distinct_id=user.email,
-                    event_type=MilestoneRecordType.USER_SIGNED_UP,
-                    properties=None,
-                    db_session=db_session,
-                )
-            else:
-                create_milestone_and_report(
-                    user=user,
-                    distinct_id=user.email,
-                    event_type=MilestoneRecordType.MULTIPLE_USERS,
-                    properties=None,
-                    db_session=db_session,
-                )
-
         return user
 
     async def validate_password(self, password: str, _: schemas.UC | models.UP) -> None:
@@ -422,6 +403,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
                     # Add OAuth account
                     await self.user_db.add_oauth_account(user, oauth_account_dict)
+
                     await self.on_after_register(user, request)
 
             else:
@@ -475,6 +457,39 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_register(
         self, user: User, request: Optional[Request] = None
     ) -> None:
+        tenant_id = await fetch_ee_implementation_or_noop(
+            "onyx.server.tenants.provisioning",
+            "get_or_provision_tenant",
+            async_return_default_schema,
+        )(
+            email=user.email,
+            request=request,
+        )
+
+        token = CURRENT_TENANT_ID_CONTEXTVAR.set(tenant_id)
+        try:
+            user_count = await get_user_count()
+
+            with get_session_with_tenant(tenant_id=tenant_id) as db_session:
+                if user_count == 1:
+                    create_milestone_and_report(
+                        user=user,
+                        distinct_id=user.email,
+                        event_type=MilestoneRecordType.USER_SIGNED_UP,
+                        properties=None,
+                        db_session=db_session,
+                    )
+                else:
+                    create_milestone_and_report(
+                        user=user,
+                        distinct_id=user.email,
+                        event_type=MilestoneRecordType.MULTIPLE_USERS,
+                        properties=None,
+                        db_session=db_session,
+                    )
+        finally:
+            CURRENT_TENANT_ID_CONTEXTVAR.reset(token)
+
         logger.notice(f"User {user.id} has registered.")
         optional_telemetry(
             record_type=RecordType.SIGN_UP,
