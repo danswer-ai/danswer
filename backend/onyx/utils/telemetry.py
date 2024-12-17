@@ -122,7 +122,6 @@ def mt_cloud_telemetry(
 
     # MIT version should not need to include any Posthog code
     # This is only for Onyx MT Cloud, this code should also never be hit, no reason for any orgs to
-    # be running the Multi Tenant version of Onyx.
     fetch_versioned_implementation_with_fallback(
         module="onyx.utils.telemetry",
         attribute="event_telemetry",
