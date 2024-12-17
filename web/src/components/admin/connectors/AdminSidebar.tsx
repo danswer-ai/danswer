@@ -2,7 +2,7 @@
 "use client";
 import React, { useContext } from "react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { Logo } from "@/components/logo/Logo";
 import { NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED } from "@/lib/constants";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
@@ -14,6 +14,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CgArrowsExpandUpLeft } from "react-icons/cg";
+import LogoWithText from "@/components/header/LogoWithText";
+import { LogoComponent } from "@/app/chat/shared_chat_search/FixedLogo";
 
 interface Item {
   name: string | JSX.Element;
@@ -32,32 +34,17 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
     return null;
   }
 
-  const settings = combinedSettings.settings;
   const enterpriseSettings = combinedSettings.enterpriseSettings;
 
   return (
     <div className="text-text-settings-sidebar pl-0">
       <nav className="space-y-2">
-        <div className="w-full ml-4  h-8 justify-start mb-4 flex">
-          <div className="flex items-center gap-x-1 my-auto">
-            <div className="flex-none my-auto">
-              <Logo height={24} width={24} />
-            </div>
-            <div className="w-full">
-              {enterpriseSettings && enterpriseSettings.application_name ? (
-                <div>
-                  <HeaderTitle>
-                    {enterpriseSettings.application_name}
-                  </HeaderTitle>
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle">Powered by Danswer</p>
-                  )}
-                </div>
-              ) : (
-                <HeaderTitle>Danswer</HeaderTitle>
-              )}
-            </div>
-          </div>
+        <div className="w-full ml-4  mt-1 h-8 justify-start mb-4 flex">
+          <LogoComponent
+            show={true}
+            enterpriseSettings={enterpriseSettings!}
+            backgroundToggled={false}
+          />
         </div>
         <div className="flex w-full justify-center">
           <Link href="/chat">
@@ -104,10 +91,10 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
       {combinedSettings.webVersion && (
         <div
           className="flex flex-col mt-6 items-center justify-center w-full"
-          key={"danswerVersion"}
+          key={"onyxVersion"}
         >
           <h2 className="text-xs text-text w-52 font-medium pb-2">
-            Danswer version: {combinedSettings.webVersion}
+            Onyx version: {combinedSettings.webVersion}
           </h2>
         </div>
       )}
