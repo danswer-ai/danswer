@@ -172,10 +172,13 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
 
     tasks_created = 0
     locked = False
-    r = get_redis_client(tenant_id=tenant_id)
-    r_celery: Redis = self.app.broker_connection().channel().client  # type: ignore
+    redis_client = get_redis_client(tenant_id=tenant_id)
 
-    lock_beat: RedisLock = r.lock(
+    # we need to use celery's redis client to access its redis data
+    # (which lives on a different db number)
+    redis_client_celery: Redis = self.app.broker_connection().channel().client  # type: ignore
+
+    lock_beat: RedisLock = redis_client.lock(
         OnyxRedisLocks.CHECK_INDEXING_BEAT_LOCK,
         timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
     )
@@ -280,7 +283,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                         search_settings_instance,
                         reindex,
                         db_session,
-                        r,
+                        redis_client,
                         tenant_id,
                     )
                     if attempt_id:
@@ -295,7 +298,9 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
         # Fail any index attempts in the DB that don't have fences
         # This shouldn't ever happen!
         with get_session_with_tenant(tenant_id) as db_session:
-            unfenced_attempt_ids = get_unfenced_index_attempt_ids(db_session, r)
+            unfenced_attempt_ids = get_unfenced_index_attempt_ids(
+                db_session, redis_client
+            )
             for attempt_id in unfenced_attempt_ids:
                 lock_beat.reacquire()
 
@@ -315,17 +320,19 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                 )
 
         # we want to run this less frequently than the overall task
-        if not r.exists(OnyxRedisSignals.VALIDATE_INDEXING_FENCES):
+        if not redis_client.exists(OnyxRedisSignals.VALIDATE_INDEXING_FENCES):
             # clear any indexing fences that don't have associated celery tasks in progress
             # tasks can be in the queue in redis, in reserved tasks (prefetched by the worker),
             # or be currently executing
             try:
                 task_logger.info("Validating indexing fences...")
-                validate_indexing_fences(tenant_id, self.app, r, r_celery, lock_beat)
+                validate_indexing_fences(
+                    tenant_id, self.app, redis_client, redis_client_celery, lock_beat
+                )
             except Exception:
                 task_logger.exception("Exception while validating indexing fences")
 
-            r.set(OnyxRedisSignals.VALIDATE_INDEXING_FENCES, 1, ex=60)
+            redis_client.set(OnyxRedisSignals.VALIDATE_INDEXING_FENCES, 1, ex=60)
 
     except SoftTimeLimitExceeded:
         task_logger.info(

@@ -1,5 +1,6 @@
 # These are helper objects for tracking the keys we need to write in redis
 import json
+from typing import Any
 from typing import cast
 
 from redis import Redis
@@ -36,26 +37,13 @@ def celery_find_task(task_id: str, queue: str, r: Redis) -> int:
 
     Returns true if the id is in the queue, False if not.
     """
-    for i in range(len(OnyxCeleryPriority)):
-        queue_name = queue
-        if i > 0:
-            queue_name += CELERY_SEPARATOR
-            queue_name += str(i)
+    for priority in range(len(OnyxCeleryPriority)):
+        queue_name = f"{queue}{CELERY_SEPARATOR}{priority}" if priority > 0 else queue
 
         tasks = cast(list[bytes], r.lrange(queue_name, 0, -1))
         for task in tasks:
-            task_str = task.decode("utf-8")
-            task_dict = json.loads(task_str)
-            if "headers" not in task_dict:
-                continue
-
-            headers = task_dict["headers"]
-            if "id" not in headers:
-                continue
-
-            if headers["id"] != task_id:
-                continue
-
-            return True
+            task_dict: dict[str, Any] = json.loads(task.decode("utf-8"))
+            if task_dict.get("headers", {}).get("id") == task_id:
+                return True
 
     return False
