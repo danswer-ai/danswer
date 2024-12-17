@@ -41,28 +41,10 @@ export function AdminSidebar({ collections }: { collections: Collection[] }) {
       <nav className="space-y-2">
         <div className="w-full ml-4  mt-1 h-8 justify-start mb-4 flex">
           <LogoComponent
+            show={true}
             enterpriseSettings={enterpriseSettings!}
             backgroundToggled={false}
           />
-          {/* <div className="flex items-center gap-x-1 my-auto">
-            <div className="flex-none my-auto">
-              <Logo height={24} width={24} />
-            </div>
-            <div className="w-full">
-              {enterpriseSettings && enterpriseSettings.application_name ? (
-                <div>
-                  <HeaderTitle>
-                    {enterpriseSettings.application_name}
-                  </HeaderTitle>
-                  {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-                    <p className="text-xs text-subtle">Powered by Onyx</p>
-                  )}
-                </div>
-              ) : (
-                <HeaderTitle>Onyx</HeaderTitle>
-              )}
-            </div>
-          </div> */}
         </div>
         <div className="flex w-full justify-center">
           <Link href="/chat">

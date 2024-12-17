@@ -1,7 +1,7 @@
 "use client";
 import { UserDropdown } from "../UserDropdown";
 import { FiShare2 } from "react-icons/fi";
-import { SetStateAction, useEffect } from "react";
+import { SetStateAction, useContext, useEffect } from "react";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 import { ChatSession } from "@/app/chat/interfaces";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
 import LogoWithText from "../header/LogoWithText";
 import { NewChatIcon } from "../icons/icons";
+import { SettingsContext } from "../settings/SettingsProvider";
 
 export default function FunctionalHeader({
   page,
@@ -30,6 +31,7 @@ export default function FunctionalHeader({
   toggleSidebar?: () => void;
   toggleUserSettings?: () => void;
 }) {
+  const settings = useContext(SettingsContext);
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
@@ -71,6 +73,7 @@ export default function FunctionalHeader({
           assistantId={currentChatSession?.persona_id}
           page={page}
           toggleSidebar={toggleSidebar}
+          toggled={sidebarToggled && !settings?.isMobile}
           handleNewChat={handleNewChat}
         />
         <div className="mt-2 flex w-full h-8">
@@ -96,12 +99,13 @@ export default function FunctionalHeader({
           <div className="invisible">
             <LogoWithText
               page={page}
+              toggled={sidebarToggled}
               toggleSidebar={toggleSidebar}
               handleNewChat={handleNewChat}
             />
           </div>
 
-          <div className="absolute right-0 top-0 flex">
+          <div className="absolute  right-0 mobile:top-2 desktop:top-0 flex">
             {setSharingModalVisible && (
               <div
                 onClick={() => setSharingModalVisible(true)}

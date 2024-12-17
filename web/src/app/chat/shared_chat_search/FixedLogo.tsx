@@ -13,12 +13,18 @@ import { EnterpriseSettings } from "@/app/admin/settings/interfaces";
 export function LogoComponent({
   enterpriseSettings,
   backgroundToggled,
+  show,
 }: {
   enterpriseSettings: EnterpriseSettings | null;
   backgroundToggled?: boolean;
+  show?: boolean;
 }) {
   return (
-    <div className="max-w-[200px] bg- mobile:hidden flex items-center gap-x-1">
+    <div
+      className={`max-w-[200px] ${
+        !show && "mobile:hidden"
+      } flex items-center gap-x-1`}
+    >
       {enterpriseSettings && enterpriseSettings.application_name ? (
         <>
           <div className="flex-none my-auto">

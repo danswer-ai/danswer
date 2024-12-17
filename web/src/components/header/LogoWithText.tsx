@@ -45,14 +45,27 @@ export default function LogoWithText({
       {toggleSidebar && page == "chat" ? (
         <button
           onClick={() => toggleSidebar()}
-          className="flex gap-x-2 items-center ml-4  desktop:hidden "
+          className="flex gap-x-2 items-center ml-0  desktop:hidden "
         >
-          <FiSidebar size={20} className="text-text-mobile-sidebar" />
-          <Logo className="desktop:hidden -my-2" height={24} width={24} />
+          {!toggled ? (
+            <Logo className="desktop:hidden -my-2" height={24} width={24} />
+          ) : (
+            <LogoComponent
+              show={toggled}
+              enterpriseSettings={enterpriseSettings!}
+              backgroundToggled={toggled}
+            />
+          )}
+
+          <FiSidebar
+            size={20}
+            className={`text-text-mobile-sidebar ${toggled && "mobile:hidden"}`}
+          />
         </button>
       ) : (
         <div className="mr-1 invisible mb-auto h-6 w-6">
           <Logo height={24} width={24} />
+          lll
         </div>
       )}
 
@@ -112,10 +125,14 @@ export default function LogoWithText({
                 }}
               >
                 {!toggled && !combinedSettings?.isMobile ? (
-                  <RightToLineIcon className="text-sidebar-toggle" />
+                  <RightToLineIcon className="mobile:hidden text-sidebar-toggle" />
                 ) : (
-                  <LeftToLineIcon className="text-sidebar-toggle" />
+                  <LeftToLineIcon className="mobile:hidden text-sidebar-toggle" />
                 )}
+                <FiSidebar
+                  size={20}
+                  className="hidden mobile:block text-text-mobile-sidebar"
+                />
               </button>
             </TooltipTrigger>
             <TooltipContent>
