@@ -15,7 +15,10 @@ class DocVerificationOutput(TypedDict, total=False):
 
 
 class DocRerankingOutput(TypedDict, total=False):
-    reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    original_question_documents: Annotated[
+        list[InferenceSection], dedup_inference_sections
+    ]
 
 
 class ExpandedRetrievalState(
@@ -33,4 +36,8 @@ class ExpandedRetrievalInput(PrimaryState, total=True):
 
 
 class ExpandedRetrievalOutput(TypedDict):
+    documents: Annotated[list[InferenceSection], dedup_inference_sections]
     reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    original_question_documents: Annotated[
+        list[InferenceSection], dedup_inference_sections
+    ]

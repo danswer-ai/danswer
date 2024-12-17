@@ -57,6 +57,14 @@ def main_graph_builder() -> StateGraph:
         path=parallelize_decompozed_answer_queries,
         path_map=["answer_query"],
     )
+    # graph.add_edge(
+    #    start_key="answer_query",
+    #    end_key="generate_initial_answer",
+    # )
+    # graph.add_edge(
+    #    start_key="expanded_retrieval",
+    #    end_key="generate_initial_answer",
+    # )
     graph.add_edge(
         start_key=["answer_query", "expanded_retrieval"],
         end_key="generate_initial_answer",

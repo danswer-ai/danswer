@@ -4,6 +4,7 @@ from typing import TypedDict
 from pydantic import BaseModel
 
 from onyx.agent_search.core_state import PrimaryState
+from onyx.agent_search.expanded_retrieval.states import DocRerankingOutput
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
 from onyx.context.search.models import InferenceSection
 
@@ -32,6 +33,7 @@ class AnswerQueryState(
     QACheckOutput,
     QAGenerationOutput,
     ExpandedRetrievalOutput,
+    DocRerankingOutput,
     total=True,
 ):
     query_to_answer: str

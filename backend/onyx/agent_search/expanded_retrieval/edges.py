@@ -6,7 +6,7 @@ from langgraph.types import Send
 
 from onyx.agent_search.expanded_retrieval.nodes.doc_retrieval import RetrieveInput
 from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalInput
-from onyx.agent_search.shared_graph_utils.prompts import REWRITE_PROMPT_MULTI
+from onyx.agent_search.shared_graph_utils.prompts import REWRITE_PROMPT_MULTI_ORIGINAL
 from onyx.llm.interfaces import LLM
 
 
@@ -19,7 +19,7 @@ def parallel_retrieval_edge(state: ExpandedRetrievalInput) -> list[Send | Hashab
 
     msg = [
         HumanMessage(
-            content=REWRITE_PROMPT_MULTI.format(question=question),
+            content=REWRITE_PROMPT_MULTI_ORIGINAL.format(question=question),
         )
     ]
     llm_response_list = list(

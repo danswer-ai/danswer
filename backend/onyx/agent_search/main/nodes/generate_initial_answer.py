@@ -10,7 +10,7 @@ def generate_initial_answer(state: MainState) -> InitialAnswerOutput:
     print("---GENERATE INITIAL---")
 
     question = state["search_request"].query
-    docs = state["documents"]
+    docs = state["original_question_documents"]
 
     decomp_answer_results = state["decomp_answer_results"]
 
