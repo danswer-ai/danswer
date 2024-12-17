@@ -144,6 +144,7 @@ POSTGRES_PASSWORD = urllib.parse.quote_plus(
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.environ.get("POSTGRES_PORT") or "5432"
 POSTGRES_DB = os.environ.get("POSTGRES_DB") or "postgres"
+AWS_REGION = os.environ.get("AWS_REGION") or "us-east-2"
 
 POSTGRES_API_SERVER_POOL_SIZE = int(
     os.environ.get("POSTGRES_API_SERVER_POOL_SIZE") or 40
@@ -173,6 +174,9 @@ try:
     )
 except ValueError:
     POSTGRES_IDLE_SESSIONS_TIMEOUT = POSTGRES_IDLE_SESSIONS_TIMEOUT_DEFAULT
+
+USE_IAM_AUTH = os.getenv("USE_IAM_AUTH", "False").lower() == "true"
+
 
 REDIS_SSL = os.getenv("REDIS_SSL", "").lower() == "true"
 REDIS_HOST = os.environ.get("REDIS_HOST") or "localhost"
