@@ -1,6 +1,6 @@
 services:
   api_server:
-     image: onyxdotapp/onyx-backend:${IMAGE_TAG:-latest}
+    image: onyxdotapp/onyx-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -119,7 +119,7 @@ services:
         max-file: "6"
 
   background:
-     image: onyxdotapp/onyx-backend:${IMAGE_TAG:-latest}
+    image: onyxdotapp/onyx-backend:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile
@@ -230,7 +230,7 @@ services:
 
       # Enterprise Edition stuff
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES:-false}
-      - USE_IAM_AUTH=${USE_IAM_AUTH}
+      - USE_IAM_AUTH=${USE_IAM_AUTH:-}
       - AWS_REGION=${AWS_REGION-}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID-}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY-}
@@ -255,7 +255,7 @@ services:
     #   - ${CA_CERT_PATH:-./custom-ca.crt}:/etc/ssl/certs/custom-ca.crt:ro
 
   web_server:
-     image: onyxdotapp/onyx-web-server:${IMAGE_TAG:-latest}
+    image: onyxdotapp/onyx-web-server:${IMAGE_TAG:-latest}
     build:
       context: ../../web
       dockerfile: Dockerfile
@@ -285,7 +285,7 @@ services:
       - NEXT_PUBLIC_CUSTOM_REFRESH_URL=${NEXT_PUBLIC_CUSTOM_REFRESH_URL:-}
 
   inference_model_server:
-     image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
+    image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
@@ -314,7 +314,7 @@ services:
         max-file: "6"
 
   indexing_model_server:
-     image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
+    image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
