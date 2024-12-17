@@ -11,6 +11,7 @@ from onyx.chat.models import RetrievalDocs
 from onyx.configs.constants import DocumentSource
 from onyx.configs.constants import MessageType
 from onyx.configs.constants import SearchFeedbackType
+from onyx.configs.constants import SessionType
 from onyx.context.search.models import BaseFilters
 from onyx.context.search.models import ChunkContext
 from onyx.context.search.models import RerankingDetails
@@ -149,6 +150,10 @@ class ChatRenameRequest(BaseModel):
 
 class ChatSessionUpdateRequest(BaseModel):
     sharing_status: ChatSessionSharedStatus
+
+
+class DeleteAllSessionsRequest(BaseModel):
+    session_type: SessionType
 
 
 class RenameChatSessionResponse(BaseModel):

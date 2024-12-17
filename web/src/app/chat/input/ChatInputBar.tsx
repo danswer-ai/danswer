@@ -31,14 +31,7 @@ import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { ChatState } from "../types";
 import UnconfiguredProviderText from "@/components/chat_search/UnconfiguredProviderText";
 import { useAssistants } from "@/components/context/AssistantsContext";
-import AnimatedToggle from "@/components/search/SearchBar";
-import { Popup } from "@/components/admin/connectors/Popup";
-import { AssistantsTab } from "../modal/configuration/AssistantsTab";
-import { IconType } from "react-icons";
-import { LlmTab } from "../modal/configuration/LlmTab";
 import { XIcon } from "lucide-react";
-import { FilterPills } from "./FilterPills";
-import { Tag } from "@/lib/types";
 import FiltersDisplay from "./FilterDisplay";
 
 const MAX_INPUT_HEIGHT = 200;
@@ -47,7 +40,6 @@ interface ChatInputBarProps {
   removeFilters: () => void;
   removeDocs: () => void;
   openModelSettings: () => void;
-  showDocs: () => void;
   showConfigureAPIKey: () => void;
   selectedDocuments: OnyxDocument[];
   message: string;
@@ -57,6 +49,7 @@ interface ChatInputBarProps {
   filterManager: FilterManager;
   llmOverrideManager: LlmOverrideManager;
   chatState: ChatState;
+  showDocs: () => void;
   alternativeAssistant: Persona | null;
   // assistants
   selectedAssistant: Persona;
@@ -75,8 +68,8 @@ export function ChatInputBar({
   removeFilters,
   removeDocs,
   openModelSettings,
-  showDocs,
   showConfigureAPIKey,
+  showDocs,
   selectedDocuments,
   message,
   setMessage,
@@ -283,10 +276,6 @@ export function ChatInputBar({
               </div>
             </div>
           )}
-
-          {/* <div>
-            <SelectedFilterDisplay filterManager={filterManager} />
-          </div> */}
 
           <UnconfiguredProviderText showConfigureAPIKey={showConfigureAPIKey} />
 

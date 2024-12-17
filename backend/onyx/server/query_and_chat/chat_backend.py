@@ -35,6 +35,7 @@ from onyx.configs.model_configs import LITELLM_PASS_THROUGH_HEADERS
 from onyx.db.chat import add_chats_to_session_from_slack_thread
 from onyx.db.chat import create_chat_session
 from onyx.db.chat import create_new_chat_message
+from onyx.db.chat import delete_all_chat_sessions_for_user
 from onyx.db.chat import delete_chat_session
 from onyx.db.chat import duplicate_chat_session_for_user_from_slack
 from onyx.db.chat import get_chat_message
@@ -278,6 +279,17 @@ def patch_chat_session(
         sharing_status=chat_session_update_req.sharing_status,
     )
     return None
+
+
+@router.delete("/delete-all-chat-sessions")
+def delete_all_chat_sessions(
+    user: User | None = Depends(current_user),
+    db_session: Session = Depends(get_session),
+) -> None:
+    try:
+        delete_all_chat_sessions_for_user(user=user, db_session=db_session)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.delete("/delete-chat-session/{session_id}")

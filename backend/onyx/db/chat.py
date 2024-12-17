@@ -316,6 +316,23 @@ def update_chat_session(
     return chat_session
 
 
+def delete_all_chat_sessions_for_user(
+    user: User | None, db_session: Session, hard_delete: bool = HARD_DELETE_CHATS
+) -> None:
+    user_id = user.id if user is not None else None
+
+    query = db_session.query(ChatSession).filter(
+        ChatSession.user_id == user_id, ChatSession.onyxbot_flow.is_(False)
+    )
+
+    if hard_delete:
+        query.delete(synchronize_session=False)
+    else:
+        query.update({ChatSession.deleted: True}, synchronize_session=False)
+
+    db_session.commit()
+
+
 def delete_chat_session(
     user_id: UUID | None,
     chat_session_id: UUID,
