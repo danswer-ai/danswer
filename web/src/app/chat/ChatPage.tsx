@@ -2123,7 +2123,7 @@ export function ChatPage({
                   page="chat"
                   ref={innerSidebarElementRef}
                   toggleSidebar={toggleSidebar}
-                  toggled={toggledSidebar && !settings?.isMobile}
+                  toggled={toggledSidebar}
                   backgroundToggled={toggledSidebar || showHistorySidebar}
                   existingChats={chatSessions}
                   currentChatSession={selectedChatSession}
@@ -2194,8 +2194,6 @@ export function ChatPage({
               {liveAssistant && (
                 <FunctionalHeader
                   toggleUserSettings={() => setUserSettingsToggled(true)}
-                  liveAssistant={liveAssistant}
-                  onAssistantChange={onAssistantChange}
                   sidebarToggled={toggledSidebar}
                   reset={() => setMessage("")}
                   page="chat"
@@ -2207,7 +2205,6 @@ export function ChatPage({
                   toggleSidebar={toggleSidebar}
                   currentChatSession={selectedChatSession}
                   documentSidebarToggled={documentSidebarToggled}
-                  llmOverrideManager={llmOverrideManager}
                 />
               )}
 

@@ -1,4 +1,4 @@
-import { Logo } from "./Logo";
+import { Logo } from "./logo/Logo";
 import { useContext } from "react";
 import { SettingsContext } from "./settings/SettingsProvider";
 

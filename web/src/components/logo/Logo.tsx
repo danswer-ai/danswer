@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext } from "react";
-import { SettingsContext } from "./settings/SettingsProvider";
+import { SettingsContext } from "../settings/SettingsProvider";
 import Image from "next/image";
 
 export function Logo({
@@ -45,10 +45,10 @@ export function Logo({
   );
 }
 
-export default function LogoType() {
+export function LogoType() {
   return (
     <Image
-      className="max-h-8 mr-auto "
+      className="max-h-8 w-full mr-auto "
       src="/logotype.png"
       alt="Logo"
       width={2640}

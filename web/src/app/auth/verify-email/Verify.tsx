@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import Text from "@/components/ui/text";
 import { RequestNewVerificationEmail } from "../waiting-on-verification/RequestNewVerificationEmail";
 import { User } from "@/lib/types";
-import { Logo } from "@/components/Logo";
+import { Logo } from "@/components/logo/Logo";
 
 export function Verify({ user }: { user: User | null }) {
   const searchParams = useSearchParams();
