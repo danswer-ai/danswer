@@ -1,3 +1,4 @@
+import time
 import traceback
 from datetime import datetime
 from datetime import timezone
@@ -89,10 +90,11 @@ logger = setup_logger()
 def check_for_vespa_sync_task(self: Task, *, tenant_id: str | None) -> None:
     """Runs periodically to check if any document needs syncing.
     Generates sets of tasks for Celery if syncing is needed."""
+    time_start = time.monotonic()
 
     r = get_redis_client(tenant_id=tenant_id)
 
-    lock_beat = r.lock(
+    lock_beat: RedisLock = r.lock(
         OnyxRedisLocks.CHECK_VESPA_SYNC_BEAT_LOCK,
         timeout=CELERY_VESPA_SYNC_BEAT_LOCK_TIMEOUT,
     )
@@ -160,6 +162,10 @@ def check_for_vespa_sync_task(self: Task, *, tenant_id: str | None) -> None:
     finally:
         if lock_beat.owned():
             lock_beat.release()
+
+    time_elapsed = time.monotonic() - time_start
+    task_logger.info(f"check_for_vespa_sync_task finished: elapsed={time_elapsed:.2f}")
+    return
 
 
 def try_generate_stale_document_sync_tasks(
@@ -730,6 +736,7 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
 
     Returns True if the task actually did work, False if it exited early to prevent overlap
     """
+    time_start = time.monotonic()
     r = get_redis_client(tenant_id=tenant_id)
 
     lock_beat: RedisLock = r.lock(
@@ -824,6 +831,8 @@ def monitor_vespa_sync(self: Task, tenant_id: str | None) -> bool:
         if lock_beat.owned():
             lock_beat.release()
 
+    time_elapsed = time.monotonic() - time_start
+    task_logger.info(f"monitor_vespa_sync finished: elapsed={time_elapsed:.2f}")
     return True
 
 

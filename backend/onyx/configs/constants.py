@@ -274,6 +274,10 @@ class OnyxRedisLocks:
     SLACK_BOT_HEARTBEAT_PREFIX = "da_heartbeat:slack_bot"
 
 
+class OnyxRedisSignals:
+    VALIDATE_INDEXING_FENCES = "signal:validate_indexing_fences"
+
+
 class OnyxCeleryPriority(int, Enum):
     HIGHEST = 0
     HIGH = auto()
