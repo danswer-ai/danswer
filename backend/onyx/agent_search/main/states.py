@@ -24,6 +24,9 @@ class MainState(
 ):
     documents: Annotated[list[InferenceSection], dedup_inference_sections]
     decomp_answer_results: Annotated[list[SearchAnswerResults], add]
+    original_question_documents: Annotated[
+        list[InferenceSection], dedup_inference_sections
+    ]
 
 
 class MainInput(PrimaryState, total=True):

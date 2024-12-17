@@ -23,13 +23,11 @@ def doc_retrieval(state: RetrieveInput) -> DocRetrievalOutput:
     """
     print(f"doc_retrieval state: {state.keys()}")
 
-    state["query_to_retrieve"]
-
     documents: list[InferenceSection] = []
     llm = state["primary_llm"]
     fast_llm = state["fast_llm"]
     # db_session = state["db_session"]
-    query_to_retrieve = state["search_request"].query
+    query_to_retrieve = state["query_to_retrieve"]
     with get_session_context_manager() as db_session1:
         documents = SearchPipeline(
             search_request=SearchRequest(
@@ -40,6 +38,8 @@ def doc_retrieval(state: RetrieveInput) -> DocRetrievalOutput:
             fast_llm=fast_llm,
             db_session=db_session1,
         ).reranked_sections
+
+    documents = documents[:4]
 
     print(f"retrieved documents: {len(documents)}")
     return DocRetrievalOutput(
