@@ -318,6 +318,15 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   "gpt-3.5-turbo-16k-0613": "GPT 3.5 Turbo 16k (June 2023)",
   "gpt-3.5-turbo-0301": "GPT 3.5 Turbo (March 2023)",
 
+  // Amazon models
+  "amazon.nova-micro@v1": "Amazon Nova Micro",
+  "amazon.nova-lite@v1": "Amazon Nova Lite",
+  "amazon.nova-pro@v1": "Amazon Nova Pro",
+
+  // Meta models
+  "llama-3.2-90b-vision-instruct": "Llama 3.2 90B",
+  "llama-3.2-11b-vision-instruct": "Llama 3.2 11B",
+
   // Anthropic models
   "claude-3-opus-20240229": "Claude 3 Opus",
   "claude-3-sonnet-20240229": "Claude 3 Sonnet",
@@ -329,6 +338,9 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   "claude-3-5-sonnet-20241022": "Claude 3.5 Sonnet (New)",
   "claude-3-5-sonnet-v2@20241022": "Claude 3.5 Sonnet (New)",
   "claude-3.5-sonnet-v2@20241022": "Claude 3.5 Sonnet (New)",
+  "claude-3-5-haiku-20241022": "Claude 3.5 Haiku",
+  "claude-3-5-haiku@20241022": "Claude 3.5 Haiku",
+  "claude-3.5-haiku@20241022": "Claude 3.5 Haiku",
 
   // Google Models
   "gemini-1.5-pro": "Gemini 1.5 Pro",
@@ -337,6 +349,11 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   "gemini-1.5-flash-001": "Gemini 1.5 Flash",
   "gemini-1.5-pro-002": "Gemini 1.5 Pro (v2)",
   "gemini-1.5-flash-002": "Gemini 1.5 Flash (v2)",
+  "gemini-2.0-flash-exp": "Gemini 2.0 Flash (Experimental)",
+
+  // Mistral Models
+  "mistral-large-2411": "Mistral Large 24.11",
+  "mistral-large@2411": "Mistral Large 24.11",
 
   // Bedrock models
   "meta.llama3-1-70b-instruct-v1:0": "Llama 3.1 70B",
