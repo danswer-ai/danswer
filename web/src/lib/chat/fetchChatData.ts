@@ -26,6 +26,7 @@ import {
 import { hasCompletedWelcomeFlowSS } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN } from "../constants";
 import { redirect } from "next/navigation";
+import { Sidebar } from "lucide-react";
 
 interface FetchChatDataResult {
   user: User | null;
@@ -159,6 +160,12 @@ export async function fetchChatData(searchParams: {
     ? sidebarToggled.value.toLocaleLowerCase() == "true" || false
     : NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN;
 
+  console.log("sidebar toggled", sidebarToggled);
+  console.log("toggleSidebar", toggleSidebar);
+  console.log(
+    "NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN",
+    NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN
+  );
   const finalDocumentSidebarInitialWidth = documentSidebarCookieInitialWidth
     ? parseInt(documentSidebarCookieInitialWidth.value)
     : undefined;
