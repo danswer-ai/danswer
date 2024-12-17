@@ -6,7 +6,9 @@ from onyx.db.engine import POSTGRES_PORT
 from onyx.db.engine import POSTGRES_USER
 from onyx.db.engine import build_connection_string
 from onyx.db.engine import get_all_tenant_ids
-from sqlalchemy import event, pool, text
+from sqlalchemy import event
+from sqlalchemy import pool
+from sqlalchemy import text
 from sqlalchemy.engine.base import Connection
 import os
 import ssl
