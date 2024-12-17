@@ -229,17 +229,20 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         request: Optional[Request] = None,
     ) -> User:
         user_count: int | None = None
-        referral_source = None
-        if request is not None:
-            referral_source = request.cookies.get("referral_source", None)
+        referral_source = (
+            request.cookies.get("referral_source", None)
+            if request is not None
+            else None
+        )
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
-            "get_or_create_tenant_id",
+            "get_or_provision_tenant",
             async_return_default_schema,
         )(
             email=user_create.email,
             referral_source=referral_source,
+            request=request,
         )
 
         async with get_async_session_with_tenant(tenant_id) as db_session:
@@ -346,17 +349,18 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         associate_by_email: bool = False,
         is_verified_by_default: bool = False,
     ) -> User:
-        referral_source = None
-        if request:
-            referral_source = getattr(request.state, "referral_source", None)
+        referral_source = (
+            getattr(request.state, "referral_source", None) if request else None
+        )
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
-            "get_or_create_tenant_id",
+            "get_or_provision_tenant",
             async_return_default_schema,
         )(
             email=account_email,
             referral_source=referral_source,
+            request=request,
         )
 
         if not tenant_id:
@@ -502,7 +506,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         # Get tenant_id from mapping table
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
-            "get_or_create_tenant_id",
+            "get_or_provision_tenant",
             async_return_default_schema,
         )(
             email=email,
@@ -563,7 +567,7 @@ class TenantAwareJWTStrategy(JWTStrategy):
     async def _create_token_data(self, user: User, impersonate: bool = False) -> dict:
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
-            "get_or_create_tenant_id",
+            "get_or_provision_tenant",
             async_return_default_schema,
         )(
             email=user.email,

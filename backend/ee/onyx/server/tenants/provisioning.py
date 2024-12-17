@@ -3,12 +3,15 @@ import logging
 import uuid
 
 import aiohttp  # Async HTTP client
+import httpx
 from fastapi import HTTPException
+from fastapi import Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ee.onyx.configs.app_configs import ANTHROPIC_DEFAULT_API_KEY
 from ee.onyx.configs.app_configs import COHERE_DEFAULT_API_KEY
+from ee.onyx.configs.app_configs import HUBSPOT_TRACKING_URL
 from ee.onyx.configs.app_configs import OPENAI_DEFAULT_API_KEY
 from ee.onyx.server.tenants.access import generate_data_plane_token
 from ee.onyx.server.tenants.models import TenantCreationPayload
@@ -47,12 +50,15 @@ from shared_configs.enums import EmbeddingProvider
 logger = logging.getLogger(__name__)
 
 
-async def get_or_create_tenant_id(
-    email: str, referral_source: str | None = None
+async def get_or_provision_tenant(
+    email: str, referral_source: str | None = None, request: Request | None = None
 ) -> str:
     """Get existing tenant ID for an email or create a new tenant if none exists."""
     if not MULTI_TENANT:
         return POSTGRES_DEFAULT_SCHEMA
+
+    if referral_source and request:
+        await submit_to_hubspot(email, referral_source, request)
 
     try:
         tenant_id = get_tenant_id_for_email(email)
@@ -281,3 +287,36 @@ def configure_default_api_keys(db_session: Session) -> None:
         logger.info(
             "COHERE_DEFAULT_API_KEY not set, skipping Cohere embedding provider configuration"
         )
+
+
+async def submit_to_hubspot(
+    email: str, referral_source: str | None, request: Request
+) -> None:
+    if not HUBSPOT_TRACKING_URL:
+        logger.info("HUBSPOT_TRACKING_URL not set, skipping HubSpot submission")
+        return
+
+    # HubSpot tracking cookie
+    hubspot_cookie = request.cookies.get("hubspotutk")
+
+    # IP address
+    ip_address = request.client.host if request.client else None
+
+    data = {
+        "fields": [
+            {"name": "email", "value": email},
+            {"name": "referral_source", "value": referral_source or ""},
+        ],
+        "context": {
+            "hutk": hubspot_cookie,
+            "ipAddress": ip_address,
+            "pageUri": str(request.url),
+            "pageName": "User Registration",
+        },
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(HUBSPOT_TRACKING_URL, json=data)
+
+    if response.status_code != 200:
+        logger.error(f"Failed to submit to HubSpot: {response.text}")
