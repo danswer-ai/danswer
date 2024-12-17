@@ -5,7 +5,7 @@ from onyx.agent_search.answer_query.states import SearchAnswerResults
 
 def format_answer(state: AnswerQueryState) -> AnswerQueryOutput:
     return AnswerQueryOutput(
-        decomp_answer_results=[
+        answer_results=[
             SearchAnswerResults(
                 question=state["question"],
                 quality=state["answer_quality"],

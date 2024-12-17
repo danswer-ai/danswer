@@ -87,16 +87,11 @@ if __name__ == "__main__":
             db_session=db_session,
             question="what can you do with onyx?",
         )
-        output = compiled_graph.invoke(
+        for thing in compiled_graph.stream(
             input=inputs,
             # debug=True,
             # subgraphs=True,
-        )
-        print(output)
-        # for namespace, chunk in compiled_graph.stream(
-        #     input=inputs,
-        #     # debug=True,
-        #     subgraphs=True,
-        # ):
-        #     print(namespace)
-        #     print(chunk)
+        ):
+            print(thing)
+        # output = compiled_graph.invoke(inputs)
+        # print(output)
