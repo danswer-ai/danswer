@@ -3,14 +3,14 @@ from langchain_core.messages import merge_message_runs
 
 from onyx.agent_search.answer_query.states import AnswerQueryState
 from onyx.agent_search.answer_query.states import QACheckOutput
-from onyx.agent_search.shared_graph_utils.prompts import BASE_CHECK_PROMPT
+from onyx.agent_search.shared_graph_utils.prompts import SUB_CHECK_PROMPT
 
 
 def answer_check(state: AnswerQueryState) -> QACheckOutput:
     msg = [
         HumanMessage(
-            content=BASE_CHECK_PROMPT.format(
-                question=state["search_request"].query,
+            content=SUB_CHECK_PROMPT.format(
+                question=state["query_to_answer"],
                 base_answer=state["answer"],
             )
         )
