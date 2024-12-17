@@ -28,7 +28,7 @@ async def close_limiter() -> None:
 def rate_limit_key(request: Request) -> str:
     return (
         request.client.host if request.client else "unknown"
-    )  # Use IP address for unauthenticated users
+    )  # Use IP address for rate limiting
 
 
 # Custom rate limiter that uses the client's IP address
