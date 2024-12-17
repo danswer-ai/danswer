@@ -50,7 +50,7 @@ from shared_configs.enums import EmbeddingProvider
 logger = logging.getLogger(__name__)
 
 
-async def get_or_create_tenant_id(
+async def get_or_provision_tenant(
     email: str, referral_source: str | None = None, request: Request | None = None
 ) -> str:
     """Get existing tenant ID for an email or create a new tenant if none exists."""
@@ -295,6 +295,8 @@ async def submit_to_hubspot(
     if not HUBSPOT_TRACKING_URL:
         logger.info("HUBSPOT_TRACKING_URL not set, skipping HubSpot submission")
         return
+    print("CREATING ENTRY")
+    print(email, referral_source, request)
 
     # HubSpot tracking cookie
     hubspot_cookie = request.cookies.get("hubspotutk")

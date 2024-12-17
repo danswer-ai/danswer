@@ -237,7 +237,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
-            "get_or_create_tenant_id",
+            "get_or_provision_tenant",
             async_return_default_schema,
         )(
             email=user_create.email,
@@ -355,7 +355,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
 
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
-            "get_or_create_tenant_id",
+            "get_or_provision_tenant",
             async_return_default_schema,
         )(
             email=account_email,
@@ -506,7 +506,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         # Get tenant_id from mapping table
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
-            "get_or_create_tenant_id",
+            "get_or_provision_tenant",
             async_return_default_schema,
         )(
             email=email,
@@ -567,7 +567,7 @@ class TenantAwareJWTStrategy(JWTStrategy):
     async def _create_token_data(self, user: User, impersonate: bool = False) -> dict:
         tenant_id = await fetch_ee_implementation_or_noop(
             "onyx.server.tenants.provisioning",
-            "get_or_create_tenant_id",
+            "get_or_provision_tenant",
             async_return_default_schema,
         )(
             email=user.email,
