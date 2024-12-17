@@ -67,7 +67,12 @@ export default async function Page(props: {
       ? (availableAssistants.find((p) => p.id === chatSession.persona_id) ??
         defaultPersona)
       : (availableAssistants?.[0] ?? defaultPersona);
-
+  console.log("chatSession", chatSession);
+  if (chatSession && chatSession.messages) {
+    chatSession.messages.forEach((message, index) => {
+      console.log(`Message ${index} context_docs:`, message.context_docs);
+    });
+  }
   return (
     <div>
       <div className="absolute top-0 z-40 w-full">

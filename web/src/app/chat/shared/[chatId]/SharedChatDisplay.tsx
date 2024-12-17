@@ -106,6 +106,12 @@ export function SharedChatDisplay({
                       return (
                         <AIMessage
                           shared
+                          query={message.query || undefined}
+                          hasDocs={
+                            (message.documents &&
+                              message.documents.length > 0) === true
+                          }
+                          toolCall={message.toolCall}
                           docs={message.documents}
                           setPresentingDocument={setPresentingDocument}
                           currentPersona={persona}

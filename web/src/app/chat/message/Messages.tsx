@@ -394,7 +394,7 @@ export const AIMessage = ({
                     {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
                       <>
                         {query !== undefined &&
-                          handleShowRetrieved !== undefined &&
+                          handleShowRetrieved &&
                           !retrievalDisabled && (
                             <div className="mb-1">
                               <SearchSummary

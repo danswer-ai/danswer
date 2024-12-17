@@ -109,7 +109,7 @@ export default function FunctionalHeader({
             {setSharingModalVisible && (
               <div
                 onClick={() => setSharingModalVisible(true)}
-                className="mobile:hidden ml-2 my-auto rounded cursor-pointer hover:bg-hover-light"
+                className="mobile:hidden mr-2 my-auto rounded cursor-pointer hover:bg-hover-light"
               >
                 <FiShare2 size="18" />
               </div>
@@ -130,7 +130,7 @@ export default function FunctionalHeader({
                   : "")
               }
             >
-              <div className="cursor-pointer mr-4 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
+              <div className="cursor-pointer ml-2 mr-4 flex-none text-text-700 hover:text-text-600 transition-colors duration-300">
                 <NewChatIcon size={20} />
               </div>
             </Link>
