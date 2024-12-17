@@ -73,6 +73,10 @@ import SourceCard, {
   SeeMoreBlock,
 } from "@/components/chat_search/sources/SourceCard";
 
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css"; // Add this import for KaTeX styles
+
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
   INTERNET_SEARCH_TOOL_NAME,
@@ -356,8 +360,8 @@ export const AIMessage = ({
       <ReactMarkdown
         className="prose max-w-full text-base"
         components={markdownComponents}
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[[rehypePrism, { ignoreMissing: true }], rehypeKatex]}
       >
         {finalContent as string}
       </ReactMarkdown>
