@@ -82,7 +82,9 @@ export function ChatDocumentDisplay({
   };
 
   return (
-    <div className={`opacity-100 ${modal ? "w-[90vw]" : "w-full"}`}>
+    <div
+      className={`max-w-[400px] opacity-100 ${modal ? "w-[90vw]" : "w-full"}`}
+    >
       <div
         className={`flex relative flex-col gap-0.5  rounded-xl mx-2 my-1 ${
           isSelected ? "bg-gray-200" : "hover:bg-background-125"

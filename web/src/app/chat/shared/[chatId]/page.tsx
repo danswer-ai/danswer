@@ -73,15 +73,5 @@ export default async function Page(props: {
       console.log(`Message ${index} context_docs:`, message.context_docs);
     });
   }
-  return (
-    <div>
-      <div className="absolute top-0 z-40 w-full">
-        <FunctionalHeader page="shared" />
-      </div>
-
-      <div className="flex relative bg-background text-default overflow-hidden pt-16 h-screen">
-        <SharedChatDisplay chatSession={chatSession} persona={persona} />
-      </div>
-    </div>
-  );
+  return <SharedChatDisplay chatSession={chatSession} persona={persona} />;
 }

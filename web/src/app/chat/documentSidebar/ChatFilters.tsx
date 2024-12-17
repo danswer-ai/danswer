@@ -17,7 +17,7 @@ import { SourceSelector } from "../shared_chat_search/SearchFilters";
 import { XIcon } from "@/components/icons/icons";
 
 interface ChatFiltersProps {
-  filterManager: FilterManager;
+  filterManager?: FilterManager;
   closeSidebar: () => void;
   selectedMessage: Message | null;
   selectedDocuments: OnyxDocument[] | null;
@@ -79,6 +79,7 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
     const dedupedDocuments = removeDuplicateDocs(currentDocuments || []);
 
     const tokenLimitReached = selectedDocumentTokens > maxTokens - 75;
+    console.log("SELECTED MESSAGE is", selectedMessage);
 
     const hasSelectedDocuments = selectedDocumentIds.length > 0;
 
@@ -122,10 +123,10 @@ export const ChatFilters = forwardRef<HTMLDivElement, ChatFiltersProps>(
             <div className="overflow-y-auto -mx-1 sm:mx-0 flex-grow gap-y-0 default-scrollbar dark-scrollbar flex flex-col">
               {showFilters ? (
                 <SourceSelector
+                  {...filterManager!}
                   modal={modal}
                   tagsOnLeft={true}
                   filtersUntoggled={false}
-                  {...filterManager}
                   availableDocumentSets={documentSets}
                   existingSources={ccPairs.map((ccPair) => ccPair.source)}
                   availableTags={tags}
