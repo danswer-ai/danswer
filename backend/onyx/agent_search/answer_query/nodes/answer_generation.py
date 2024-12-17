@@ -8,8 +8,8 @@ from onyx.agent_search.shared_graph_utils.utils import format_docs
 
 
 def answer_generation(state: AnswerQueryState) -> QAGenerationOutput:
-    query = state["question_to_answer"]
-    docs = state["reranked_documents"]
+    query = state["question"]
+    docs = state["documents"]
 
     print(f"Number of verified retrieval docs: {len(docs)}")
 

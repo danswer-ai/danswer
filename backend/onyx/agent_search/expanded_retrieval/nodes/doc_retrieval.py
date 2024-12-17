@@ -1,4 +1,5 @@
 from onyx.agent_search.expanded_retrieval.states import DocRetrievalOutput
+from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalResult
 from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalState
 from onyx.context.search.models import InferenceSection
 from onyx.context.search.models import SearchRequest
@@ -38,6 +39,11 @@ def doc_retrieval(state: RetrieveInput) -> DocRetrievalOutput:
     ).reranked_sections
 
     print(f"retrieved documents: {len(documents)}")
+    expanded_retrieval_result = ExpandedRetrievalResult(
+        expanded_query=query_to_retrieve,
+        expanded_retrieval_documents=documents[:4],
+    )
     return DocRetrievalOutput(
+        expanded_retrieval_results=[expanded_retrieval_result],
         retrieved_documents=documents[:4],
     )

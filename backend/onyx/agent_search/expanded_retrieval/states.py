@@ -16,10 +16,10 @@ class ExpandedRetrievalResult(BaseModel):
     ]
 
 
-class RetrievalResult(BaseModel):
-    starting_query: str
-    expanded_retrieval_results: list[ExpandedRetrievalResult]
-    documents: Annotated[list[InferenceSection], dedup_inference_sections]
+# class RetrievalResult(BaseModel):
+#     starting_query: str
+#     expanded_retrieval_results: list[ExpandedRetrievalResult]
+#     documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
 class DocRetrievalOutput(TypedDict, total=False):
@@ -36,7 +36,8 @@ class DocRerankingOutput(TypedDict, total=False):
 
 
 class ExpandedRetrievalOutput(TypedDict):
-    retrieval_results: Annotated[list[RetrievalResult], add]
+    expanded_retrieval_results: list[ExpandedRetrievalResult]
+    documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
 class ExpandedRetrievalState(

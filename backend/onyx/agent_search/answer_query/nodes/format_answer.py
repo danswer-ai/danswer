@@ -7,10 +7,11 @@ def format_answer(state: AnswerQueryState) -> AnswerQueryOutput:
     return AnswerQueryOutput(
         decomp_answer_results=[
             SearchAnswerResults(
-                question=state["question_to_answer"],
+                question=state["question"],
                 quality=state["answer_quality"],
                 answer=state["answer"],
-                documents=state["reranked_documents"],
+                expanded_retrieval_results=state["expanded_retrieval_results"],
+                documents=state["documents"],
             )
         ],
     )

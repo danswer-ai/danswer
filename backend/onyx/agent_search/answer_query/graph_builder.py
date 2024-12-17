@@ -77,7 +77,7 @@ if __name__ == "__main__":
     compiled_graph = graph.compile()
     primary_llm, fast_llm = get_default_llms()
     search_request = SearchRequest(
-        query="Who made Excel and what other products did they make?",
+        query="what can you do with onyx or danswer?",
     )
     with get_session_context_manager() as db_session:
         inputs = AnswerQueryInput(
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             primary_llm=primary_llm,
             fast_llm=fast_llm,
             db_session=db_session,
-            question_to_answer="Who made Excel?",
+            question="what can you do with onyx?",
         )
         output = compiled_graph.invoke(
             input=inputs,
