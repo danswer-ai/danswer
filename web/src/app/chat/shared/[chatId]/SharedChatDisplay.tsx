@@ -106,6 +106,7 @@ export function SharedChatDisplay({
                       return (
                         <AIMessage
                           shared
+                          docs={message.documents}
                           setPresentingDocument={setPresentingDocument}
                           currentPersona={persona}
                           key={message.messageId}
