@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from danswer.auth.schemas import UserRole
+from danswer.auth.schemas import UserStatus
 from danswer.db.enums import AccessType
 from danswer.search.enums import RecencyBiasSetting
 from danswer.server.documents.models import DocumentSource
@@ -36,6 +37,8 @@ class DATestUser(BaseModel):
     email: str
     password: str
     headers: dict
+    role: UserRole
+    status: UserStatus
 
 
 class DATestPersonaCategory(BaseModel):

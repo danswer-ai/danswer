@@ -147,6 +147,13 @@ def list_accepted_users(
         roles_filter=roles,
     )
 
+    if not filtered_accepted_users:
+        logger.info("No users found")
+        return PaginatedReturn(
+            items=[],
+            total_items=0,
+        )
+
     return PaginatedReturn(
         items=[
             FullUserSnapshot.from_user_model(user) for user in filtered_accepted_users
