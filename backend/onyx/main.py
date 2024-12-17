@@ -44,9 +44,6 @@ from onyx.configs.constants import AuthType
 from onyx.configs.constants import POSTGRES_WEB_APP_NAME
 from onyx.db.engine import SqlEngine
 from onyx.db.engine import warm_up_connections
-from onyx.rate_limiter import close_limiter
-from onyx.rate_limiter import get_auth_rate_limiters
-from onyx.rate_limiter import setup_limiter
 from onyx.server.api_key.api import router as api_key_router
 from onyx.server.auth_check import check_router_auth
 from onyx.server.documents.cc_pair import router as cc_pair_router
@@ -77,6 +74,9 @@ from onyx.server.manage.search_settings import router as search_settings_router
 from onyx.server.manage.slack_bot import router as slack_bot_management_router
 from onyx.server.manage.users import router as user_router
 from onyx.server.middleware.latency_logging import add_latency_logging_middleware
+from onyx.server.middleware.rate_limiting import close_limiter
+from onyx.server.middleware.rate_limiting import get_auth_rate_limiters
+from onyx.server.middleware.rate_limiting import setup_limiter
 from onyx.server.onyx_api.ingestion import router as onyx_api_router
 from onyx.server.openai_assistants_api.full_openai_assistants_api import (
     get_full_openai_assistants_api_router,
