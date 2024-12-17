@@ -2,7 +2,7 @@ import { useEmbeddingFormContext } from "@/components/context/EmbeddingContext";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 
 import { SettingsIcon } from "@/components/icons/icons";
-import { Logo } from "@/components/Logo";
+import { Logo } from "@/components/logo/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import Link from "next/link";
 import { useContext } from "react";

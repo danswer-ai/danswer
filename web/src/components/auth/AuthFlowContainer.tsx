@@ -1,4 +1,4 @@
-import { Logo } from "../Logo";
+import { Logo } from "../logo/Logo";
 
 export default function AuthFlowContainer({
   children,

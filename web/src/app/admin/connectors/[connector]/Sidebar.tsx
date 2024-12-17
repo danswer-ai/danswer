@@ -2,7 +2,7 @@ import { useFormContext } from "@/components/context/FormContext";
 import { HeaderTitle } from "@/components/header/HeaderTitle";
 
 import { SettingsIcon } from "@/components/icons/icons";
-import { Logo } from "@/components/Logo";
+import { Logo } from "@/components/logo/Logo";
 import { SettingsContext } from "@/components/settings/SettingsProvider";
 import { credentialTemplates } from "@/lib/connectors/credentials";
 import Link from "next/link";

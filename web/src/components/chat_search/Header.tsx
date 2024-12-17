@@ -1,18 +1,15 @@
 "use client";
-import { User } from "@/lib/types";
 import { UserDropdown } from "../UserDropdown";
 import { FiShare2 } from "react-icons/fi";
-import { SetStateAction, useContext, useEffect } from "react";
-import { NewChatIcon } from "../icons/icons";
+import { SetStateAction, useEffect } from "react";
 import { NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA } from "@/lib/constants";
 import { ChatSession } from "@/app/chat/interfaces";
 import Link from "next/link";
 import { pageType } from "@/app/chat/sessionSidebar/types";
 import { useRouter } from "next/navigation";
 import { ChatBanner } from "@/app/chat/ChatBanner";
-import LogoType from "../header/LogoType";
-import { Persona } from "@/app/admin/assistants/interfaces";
-import { LlmOverrideManager } from "@/lib/hooks";
+import LogoWithText from "../header/LogoWithText";
+import { NewChatIcon } from "../icons/icons";
 
 export default function FunctionalHeader({
   page,
@@ -21,9 +18,6 @@ export default function FunctionalHeader({
   toggleSidebar = () => null,
   reset = () => null,
   sidebarToggled,
-  liveAssistant,
-  onAssistantChange,
-  llmOverrideManager,
   documentSidebarToggled,
   toggleUserSettings,
 }: {
@@ -34,9 +28,6 @@ export default function FunctionalHeader({
   currentChatSession?: ChatSession | null | undefined;
   setSharingModalVisible?: (value: SetStateAction<boolean>) => void;
   toggleSidebar?: () => void;
-  liveAssistant?: Persona;
-  onAssistantChange?: (assistant: Persona) => void;
-  llmOverrideManager?: LlmOverrideManager;
   toggleUserSettings?: () => void;
 }) {
   useEffect(() => {
@@ -76,7 +67,7 @@ export default function FunctionalHeader({
   return (
     <div className="left-0 sticky top-0 z-20 w-full relative flex">
       <div className="items-end flex mt-2 cursor-pointer text-text-700 relative flex w-full">
-        <LogoType
+        <LogoWithText
           assistantId={currentChatSession?.persona_id}
           page={page}
           toggleSidebar={toggleSidebar}
@@ -103,7 +94,7 @@ export default function FunctionalHeader({
           </div>
 
           <div className="invisible">
-            <LogoType
+            <LogoWithText
               page={page}
               toggleSidebar={toggleSidebar}
               handleNewChat={handleNewChat}
