@@ -543,6 +543,10 @@ def upsert_persona(
         if tools is not None:
             existing_persona.tools = tools or []
 
+        # We should only update display priority if it is not already set
+        if existing_persona.display_priority is None:
+            existing_persona.display_priority = display_priority
+
         persona = existing_persona
 
     else:
