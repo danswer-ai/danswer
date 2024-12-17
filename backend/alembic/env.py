@@ -1,9 +1,10 @@
 from typing import Any, Literal
 from onyx.db.engine import get_iam_auth_token
-from onyx.db.engine import USE_IAM_AUTH
-from onyx.db.engine import POSTGRES_HOST
-from onyx.db.engine import POSTGRES_PORT
-from onyx.db.engine import POSTGRES_USER
+from onyx.configs.app_configs import USE_IAM_AUTH
+from onyx.configs.app_configs import POSTGRES_HOST
+from onyx.configs.app_configs import POSTGRES_PORT
+from onyx.configs.app_configs import POSTGRES_USER
+from onyx.configs.app_configs import AWS_REGION
 from onyx.db.engine import build_connection_string
 from onyx.db.engine import get_all_tenant_ids
 from sqlalchemy import event
@@ -118,10 +119,13 @@ def provide_iam_token_for_alembic(
     dialect: Any, conn_rec: Any, cargs: Any, cparams: Any
 ) -> None:
     if USE_IAM_AUTH:
-        region = os.getenv("AWS_REGION", "us-east-2")
+        # Database connection settings
+        region = AWS_REGION
         host = POSTGRES_HOST
         port = POSTGRES_PORT
         user = POSTGRES_USER
+
+        # Get IAM authentication token
         token = get_iam_auth_token(host, port, user, region)
 
         # For Alembic / SQLAlchemy in this context, set SSL and password

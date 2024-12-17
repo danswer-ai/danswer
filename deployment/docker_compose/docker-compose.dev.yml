@@ -314,7 +314,7 @@ services:
         max-file: "6"
 
   indexing_model_server:
-     image: onyxdotapp/onyx-model-server-indexing:${IMAGE_TAG:-latest}
+     image: onyxdotapp/onyx-model-server:${IMAGE_TAG:-latest}
     build:
       context: ../../backend
       dockerfile: Dockerfile.model_server
