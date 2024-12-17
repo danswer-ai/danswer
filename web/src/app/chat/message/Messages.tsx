@@ -221,7 +221,7 @@ export const AIMessage = ({
   retrievalDisabled?: boolean;
   overriddenModel?: string;
   regenerate?: (modelOverRide: LlmOverride) => Promise<void>;
-  setPresentingDocument?: (document: OnyxDocument) => void;
+  setPresentingDocument: (document: OnyxDocument) => void;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
   const processContent = (content: string | JSX.Element) => {
@@ -313,7 +313,7 @@ export const AIMessage = ({
   const anchorCallback = useCallback(
     (props: any) => (
       <MemoizedAnchor
-        updatePresentingDocument={setPresentingDocument}
+        updatePresentingDocument={setPresentingDocument!}
         docs={docs}
       >
         {props.children}
