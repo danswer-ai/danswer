@@ -2,6 +2,7 @@ from langgraph.graph import END
 from langgraph.graph import START
 from langgraph.graph import StateGraph
 
+from onyx.agent_search.answer_query.edges import send_to_expanded_retrieval
 from onyx.agent_search.answer_query.nodes.answer_check import answer_check
 from onyx.agent_search.answer_query.nodes.answer_generation import answer_generation
 from onyx.agent_search.answer_query.nodes.format_answer import format_answer
@@ -24,7 +25,7 @@ def answer_query_graph_builder() -> StateGraph:
 
     expanded_retrieval = expanded_retrieval_graph_builder().compile()
     graph.add_node(
-        node="expanded_retrieval_for_initial_decomp",
+        node="decomped_expanded_retrieval",
         action=expanded_retrieval,
     )
     graph.add_node(
@@ -42,12 +43,13 @@ def answer_query_graph_builder() -> StateGraph:
 
     ### Add edges ###
 
-    graph.add_edge(
-        start_key=START,
-        end_key="expanded_retrieval_for_initial_decomp",
+    graph.add_conditional_edges(
+        source=START,
+        path=send_to_expanded_retrieval,
+        path_map=["decomped_expanded_retrieval"],
     )
     graph.add_edge(
-        start_key="expanded_retrieval_for_initial_decomp",
+        start_key="decomped_expanded_retrieval",
         end_key="answer_generation",
     )
     graph.add_edge(
@@ -83,7 +85,7 @@ if __name__ == "__main__":
             primary_llm=primary_llm,
             fast_llm=fast_llm,
             db_session=db_session,
-            query_to_answer="Who made Excel?",
+            question_to_answer="Who made Excel?",
         )
         output = compiled_graph.invoke(
             input=inputs,

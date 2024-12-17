@@ -10,7 +10,7 @@ def answer_check(state: AnswerQueryState) -> QACheckOutput:
     msg = [
         HumanMessage(
             content=SUB_CHECK_PROMPT.format(
-                question=state["query_to_answer"],
+                question=state["question_to_answer"],
                 base_answer=state["answer"],
             )
         )

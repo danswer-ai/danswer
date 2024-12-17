@@ -14,7 +14,7 @@ def parallel_retrieval_edge(state: ExpandedRetrievalInput) -> list[Send | Hashab
     print(f"parallel_retrieval_edge state: {state.keys()}")
 
     # This should be better...
-    question = state.get("query_to_answer") or state["search_request"].query
+    question = state.get("question_to_answer") or state["search_request"].query
     llm: LLM = state["fast_llm"]
 
     msg = [

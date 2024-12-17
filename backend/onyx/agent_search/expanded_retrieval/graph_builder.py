@@ -8,6 +8,7 @@ from onyx.agent_search.expanded_retrieval.nodes.doc_retrieval import doc_retriev
 from onyx.agent_search.expanded_retrieval.nodes.doc_verification import (
     doc_verification,
 )
+from onyx.agent_search.expanded_retrieval.nodes.format_results import format_results
 from onyx.agent_search.expanded_retrieval.nodes.verification_kickoff import (
     verification_kickoff,
 )
@@ -41,6 +42,10 @@ def expanded_retrieval_graph_builder() -> StateGraph:
         node="doc_reranking",
         action=doc_reranking,
     )
+    graph.add_node(
+        node="format_results",
+        action=format_results,
+    )
 
     ### Add edges ###
 
@@ -59,6 +64,10 @@ def expanded_retrieval_graph_builder() -> StateGraph:
     )
     graph.add_edge(
         start_key="doc_reranking",
+        end_key="format_results",
+    )
+    graph.add_edge(
+        start_key="format_results",
         end_key=END,
     )
 
@@ -82,7 +91,7 @@ if __name__ == "__main__":
             primary_llm=primary_llm,
             fast_llm=fast_llm,
             db_session=db_session,
-            query_to_answer="Who made Excel?",
+            question_to_answer="Who made Excel?",
         )
         for thing in compiled_graph.stream(inputs, debug=True):
             print(thing)

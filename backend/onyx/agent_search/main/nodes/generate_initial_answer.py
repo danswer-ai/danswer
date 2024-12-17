@@ -27,7 +27,7 @@ def generate_initial_answer(state: MainState) -> InitialAnswerOutput:
         ):
             good_qa_list.append(
                 _SUB_QUESTION_ANSWER_TEMPLATE.format(
-                    sub_question=decomp_answer_result.query,
+                    sub_question=decomp_answer_result.question,
                     sub_answer=decomp_answer_result.answer,
                 )
             )
