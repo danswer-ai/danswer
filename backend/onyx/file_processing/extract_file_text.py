@@ -13,6 +13,7 @@ from typing import Dict
 from typing import IO
 
 import chardet
+import pptx  # type: ignore
 from fastapi import UploadFile
 from markitdown import MarkItDown  # type: ignore
 from pypdf import PdfReader
@@ -242,6 +243,18 @@ def read_pdf_file(
     # File is still discoverable by title
     # but the contents are not included as they cannot be parsed
     return "", metadata
+
+
+def pptx_to_text(file: IO[Any]) -> str:
+    presentation = pptx.Presentation(file)
+    text_content = []
+    for slide_number, slide in enumerate(presentation.slides, start=1):
+        extracted_text = f"\nSlide {slide_number}:\n"
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                extracted_text += shape.text + "\n"
+        text_content.append(extracted_text)
+    return TEXT_SECTION_SEPARATOR.join(text_content)
 
 
 def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:

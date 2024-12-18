@@ -28,7 +28,7 @@ from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 
-
+TEXT_SECTION_SEPARATOR = "\n\n"
 # these errors don't represent a failure in the connector, but simply files
 # that can't / shouldn't be indexed
 ERRORS_TO_CONTINUE_ON = [
@@ -44,89 +44,109 @@ def _extract_sections_basic(
     """
     Extracts text from a Google Drive file based on its MIME type.
 
-    This function handles different file types:
-    - Google Sheets are processed using specialized logic via the Sheets API
-    - Other Google formats use MarkItDown when possible
-    - If configured, falls back to Unstructured for text extraction
+    This function uses a combination of specialized extraction methods and
+    fallback approaches to handle various file types effectively.
 
-    The function returns a list of Section objects, each containing a link and the extracted text.
+    Args:
+        file_meta: Dict with file metadata (id, name, mimeType, webViewLink)
+        service: Authorized GoogleDriveService instance
 
-    file_meta: Dict with file metadata (id, name, mimeType, webViewLink)
-    service: Authorized GoogleDriveService instance
-
-    Returns: List of Section objects
+    Returns:
+        List of Section objects containing extracted text
     """
     mime_type = file_meta["mimeType"]
     link = file_meta["webViewLink"]
-    file_id = file_meta["id"]
+    file_meta["id"]
 
-    # If mime_type not recognized, fallback to at least returning something with the link.
+    # Handle unsupported MIME types
     if mime_type not in {item.value for item in GDriveMimeType}:
         return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
-    # Handle Google Sheets separately
+    # Specialized handling for Google Sheets
     if mime_type == GDriveMimeType.SPREADSHEET.value:
-        # Attempt Sheets API extraction
         try:
             return _extract_google_sheets(file_meta, service)
         except Exception as e:
             logger.warning(
-                f"Ran into exception '{e}' when pulling data from Google "
-                f"Sheet '{file_meta['name']}'. Falling back to basic extraction."
+                f"Error extracting data from Google Sheet '{file_meta['name']}': {e}. "
+                "Falling back to basic extraction."
             )
-    # Handle PDF files
-    if mime_type == GDriveMimeType.PDF.value:
-        response = service.files().get_media(fileId=file_meta["id"]).execute()
-        if get_unstructured_api_key():
-            return [
-                Section(
-                    link=link,
-                    text=unstructured_to_text(
-                        file=io.BytesIO(response),
-                        file_name=file_meta.get("name", file_meta["id"]),
-                    ),
-                )
-            ]
-        else:
-            text, _ = read_pdf_file(file=io.BytesIO(response))
-            return [Section(link=link, text=text)]
 
-    # From here on, either it’s not a spreadsheet or the spreadsheet extraction failed.
-    # Try exporting the file for Drive’s native formats or just downloading for
-    # non-native MS Office/PDF, etc.
+    # PDF handling
+    if mime_type == GDriveMimeType.PDF.value:
+        return _extract_pdf_content(file_meta, service)
+
+    # PowerPoint (Google Slides & MS PowerPoint) handling
+    if mime_type in [GDriveMimeType.PPT.value, GDriveMimeType.POWERPOINT.value]:
+        return _extract_presentation_content(file_meta, service)
+
+    # General handling for Google-native and text-based formats
+    return _extract_general_content(file_meta, service)
+
+
+def _extract_pdf_content(
+    file_meta: dict[str, Any], service: GoogleDriveService
+) -> list[Section]:
+    response = service.files().get_media(fileId=file_meta["id"]).execute()
+    if get_unstructured_api_key():
+        text = unstructured_to_text(
+            file=io.BytesIO(response),
+            file_name=file_meta.get("name", file_meta["id"]),
+        )
+    else:
+        text, _ = read_pdf_file(file=io.BytesIO(response))
+    return [Section(link=file_meta["webViewLink"], text=text)]
+
+
+def _extract_presentation_content(
+    file_meta: dict[str, Any], service: GoogleDriveService
+) -> list[Section]:
     try:
-        # If it's a Google-native doc or ppt, we can export to text/plain.
-        # If it's a Google-native spreadsheet (and we reached here), we treat it as text/csv.
-        drive_export_mime = None
+        text = (
+            service.files()
+            .export(fileId=file_meta["id"], mimeType="text/plain")
+            .execute()
+            .decode("utf-8")
+        )
+        return [Section(link=file_meta["webViewLink"], text=text)]
+    except Exception:
+        logger.exception("Error extracting presentation text.")
+        return [
+            Section(link=file_meta["webViewLink"], text=UNSUPPORTED_FILE_TYPE_CONTENT)
+        ]
+
+
+def _extract_general_content(
+    file_meta: dict[str, Any], service: GoogleDriveService
+) -> list[Section]:
+    try:
+        mime_type = file_meta["mimeType"]
         if mime_type in [
             GDriveMimeType.DOC.value,
-            GDriveMimeType.PPT.value,
             GDriveMimeType.SPREADSHEET.value,
+            GDriveMimeType.PPT.value,
         ]:
-            # Decide on export type
-            drive_export_mime = (
+            export_mime_type = (
                 "text/csv"
                 if mime_type == GDriveMimeType.SPREADSHEET.value
                 else "text/plain"
             )
-            content = (
+            text = (
                 service.files()
-                .export(fileId=file_id, mimeType=drive_export_mime)
+                .export(fileId=file_meta["id"], mimeType=export_mime_type)
                 .execute()
+                .decode("utf-8")
             )
         else:
-            # Non-native files (e.g., PDF, MS Word, etc.) -> direct download
-            content = service.files().get_media(fileId=file_id).execute()
+            content = service.files().get_media(fileId=file_meta["id"]).execute()
+            text = _convert_gdrive_content_to_text(content, file_meta)
 
-        print(type(content))
-        print("THAT WAS THE TYPE OF THE CONTENT")
-        # Convert the content to text via MarkItDown or Unstructured
-        text_extracted = _convert_gdrive_content_to_text(content, file_meta)
-        return [Section(link=link, text=text_extracted)]
-
+        return [Section(link=file_meta["webViewLink"], text=text)]
     except Exception:
-        logger.exception("Unexpected error extracting text from file.")
-        return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
+        logger.exception("Error extracting file content.")
+        return [
+            Section(link=file_meta["webViewLink"], text=UNSUPPORTED_FILE_TYPE_CONTENT)
+        ]
 
 
 def _extract_google_sheets(
