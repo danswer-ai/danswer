@@ -453,7 +453,9 @@ class DefaultMultiLLM(LLM):
         if LOG_DANSWER_MODEL_INTERACTIONS:
             self.log_model_configs()
 
-        if DISABLE_LITELLM_STREAMING:
+        if (
+            DISABLE_LITELLM_STREAMING or self.config.model_name == "o1-2024-12-17"
+        ):  # TODO: remove once litellm supports streaming
             yield self.invoke(prompt, tools, tool_choice, structured_response_format)
             return
 
