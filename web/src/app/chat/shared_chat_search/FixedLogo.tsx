@@ -40,7 +40,7 @@ export function LogoComponent({
               {enterpriseSettings.application_name}
             </HeaderTitle>
             {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-              <p className="text-xs text-subtle">Powered by Onyx</p>
+              <p className="text-xs text-left text-subtle">Powered by Onyx</p>
             )}
           </div>
         </>
