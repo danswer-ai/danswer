@@ -9,18 +9,23 @@ import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 import { LogoType } from "@/components/logo/Logo";
 import { EnterpriseSettings } from "@/app/admin/settings/interfaces";
+import { useRouter } from "next/navigation";
 
 export function LogoComponent({
   enterpriseSettings,
   backgroundToggled,
   show,
+  isAdmin,
 }: {
   enterpriseSettings: EnterpriseSettings | null;
   backgroundToggled?: boolean;
   show?: boolean;
+  isAdmin?: boolean;
 }) {
+  const router = useRouter();
   return (
-    <div
+    <button
+      onClick={isAdmin ? () => router.push("/chat") : () => {}}
       className={`max-w-[200px] ${
         !show && "mobile:hidden"
       } flex items-center gap-x-1`}
@@ -35,14 +40,14 @@ export function LogoComponent({
               {enterpriseSettings.application_name}
             </HeaderTitle>
             {!NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED && (
-              <p className="text-xs text-subtle">Powered by Onyx</p>
+              <p className="text-xs text-left text-subtle">Powered by Onyx</p>
             )}
           </div>
         </>
       ) : (
         <LogoType />
       )}
-    </div>
+    </button>
   );
 }
 

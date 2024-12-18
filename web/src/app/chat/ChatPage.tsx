@@ -2168,7 +2168,6 @@ export function ChatPage({
                 fixed
                 right-0
                 z-[1000]
-
                 bg-background
                 h-screen
                 transition-all

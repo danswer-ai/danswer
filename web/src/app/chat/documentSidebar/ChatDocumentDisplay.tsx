@@ -81,6 +81,8 @@ export function ChatDocumentDisplay({
     }
   };
 
+  const hasMetadata =
+    document.updated_at || Object.keys(document.metadata).length > 0;
   return (
     <div className={`opacity-100 ${modal ? "w-[90vw]" : "w-full"}`}>
       <div
@@ -107,8 +109,14 @@ export function ChatDocumentDisplay({
                 : document.semantic_identifier || document.document_id}
             </div>
           </div>
-          <DocumentMetadataBlock modal={modal} document={document} />
-          <div className="line-clamp-3 pt-2 text-sm font-normal leading-snug text-gray-600">
+          {hasMetadata && (
+            <DocumentMetadataBlock modal={modal} document={document} />
+          )}
+          <div
+            className={`line-clamp-3 text-sm font-normal leading-snug text-gray-600 ${
+              hasMetadata ? "mt-2" : ""
+            }`}
+          >
             {buildDocumentSummaryDisplay(
               document.match_highlights,
               document.blurb
