@@ -1,36 +1,78 @@
+from operator import add
 from typing import Annotated
 from typing import TypedDict
+
+from pydantic import BaseModel
 
 from onyx.agent_search.core_state import PrimaryState
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
 from onyx.context.search.models import InferenceSection
 
 
-class DocRetrievalOutput(TypedDict, total=False):
-    retrieved_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+### Models ###
 
 
-class DocVerificationOutput(TypedDict, total=False):
+class QueryResult(BaseModel):
+    query: str
+    documents_for_query: list[InferenceSection]
+
+
+class ExpandedRetrievalResult(BaseModel):
+    expanded_queries_results: list[QueryResult]
+    all_documents: list[InferenceSection]
+
+
+### States ###
+## Update States
+
+
+class DocVerificationUpdate(TypedDict):
     verified_documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
-class DocRerankingOutput(TypedDict, total=False):
+class DocRerankingUpdate(TypedDict):
     reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+
+
+class QueryExpansionUpdate(TypedDict):
+    expanded_queries: list[str]
+
+
+class DocRetrievalUpdate(TypedDict):
+    expanded_retrieval_results: Annotated[list[QueryResult], add]
+    retrieved_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+
+
+## Graph State
 
 
 class ExpandedRetrievalState(
     PrimaryState,
-    DocRetrievalOutput,
-    DocVerificationOutput,
-    DocRerankingOutput,
-    total=True,
+    DocRetrievalUpdate,
+    DocVerificationUpdate,
+    DocRerankingUpdate,
+    QueryExpansionUpdate,
 ):
-    query_to_answer: str
+    question: str
 
 
-class ExpandedRetrievalInput(PrimaryState, total=True):
-    query_to_answer: str
+## Graph Output State
 
 
 class ExpandedRetrievalOutput(TypedDict):
-    reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    expanded_retrieval_result: ExpandedRetrievalResult
+
+
+## Input States
+
+
+class ExpandedRetrievalInput(PrimaryState):
+    question: str
+
+
+class DocVerificationInput(PrimaryState):
+    doc_to_verify: InferenceSection
+
+
+class RetrievalInput(PrimaryState):
+    query_to_retrieve: str

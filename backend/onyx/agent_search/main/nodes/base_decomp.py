@@ -1,12 +1,12 @@
 from langchain_core.messages import HumanMessage
 
-from onyx.agent_search.main.states import BaseDecompOutput
+from onyx.agent_search.main.states import BaseDecompUpdate
 from onyx.agent_search.main.states import MainState
 from onyx.agent_search.shared_graph_utils.prompts import INITIAL_DECOMPOSITION_PROMPT
 from onyx.agent_search.shared_graph_utils.utils import clean_and_parse_list_string
 
 
-def main_decomp_base(state: MainState) -> BaseDecompOutput:
+def main_decomp_base(state: MainState) -> BaseDecompUpdate:
     question = state["search_request"].query
 
     msg = [
@@ -26,6 +26,6 @@ def main_decomp_base(state: MainState) -> BaseDecompOutput:
         sub_question["sub_question"].strip() for sub_question in list_of_subquestions
     ]
 
-    return BaseDecompOutput(
-        initial_decomp_queries=decomp_list,
+    return BaseDecompUpdate(
+        initial_decomp_questions=decomp_list,
     )

@@ -2,12 +2,14 @@ from langgraph.graph import END
 from langgraph.graph import START
 from langgraph.graph import StateGraph
 
-from onyx.agent_search.answer_query.nodes.answer_check import answer_check
-from onyx.agent_search.answer_query.nodes.answer_generation import answer_generation
-from onyx.agent_search.answer_query.nodes.format_answer import format_answer
-from onyx.agent_search.answer_query.states import AnswerQueryInput
-from onyx.agent_search.answer_query.states import AnswerQueryOutput
-from onyx.agent_search.answer_query.states import AnswerQueryState
+from onyx.agent_search.answer_question.edges import send_to_expanded_retrieval
+from onyx.agent_search.answer_question.nodes.answer_check import answer_check
+from onyx.agent_search.answer_question.nodes.answer_generation import answer_generation
+from onyx.agent_search.answer_question.nodes.format_answer import format_answer
+from onyx.agent_search.answer_question.nodes.ingest_retrieval import ingest_retrieval
+from onyx.agent_search.answer_question.states import AnswerQuestionInput
+from onyx.agent_search.answer_question.states import AnswerQuestionOutput
+from onyx.agent_search.answer_question.states import AnswerQuestionState
 from onyx.agent_search.expanded_retrieval.graph_builder import (
     expanded_retrieval_graph_builder,
 )
@@ -15,16 +17,16 @@ from onyx.agent_search.expanded_retrieval.graph_builder import (
 
 def answer_query_graph_builder() -> StateGraph:
     graph = StateGraph(
-        state_schema=AnswerQueryState,
-        input=AnswerQueryInput,
-        output=AnswerQueryOutput,
+        state_schema=AnswerQuestionState,
+        input=AnswerQuestionInput,
+        output=AnswerQuestionOutput,
     )
 
     ### Add nodes ###
 
     expanded_retrieval = expanded_retrieval_graph_builder().compile()
     graph.add_node(
-        node="expanded_retrieval_for_initial_decomp",
+        node="decomped_expanded_retrieval",
         action=expanded_retrieval,
     )
     graph.add_node(
@@ -39,15 +41,24 @@ def answer_query_graph_builder() -> StateGraph:
         node="format_answer",
         action=format_answer,
     )
+    graph.add_node(
+        node="ingest_retrieval",
+        action=ingest_retrieval,
+    )
 
     ### Add edges ###
 
-    graph.add_edge(
-        start_key=START,
-        end_key="expanded_retrieval_for_initial_decomp",
+    graph.add_conditional_edges(
+        source=START,
+        path=send_to_expanded_retrieval,
+        path_map=["decomped_expanded_retrieval"],
     )
     graph.add_edge(
-        start_key="expanded_retrieval_for_initial_decomp",
+        start_key="decomped_expanded_retrieval",
+        end_key="ingest_retrieval",
+    )
+    graph.add_edge(
+        start_key="ingest_retrieval",
         end_key="answer_generation",
     )
     graph.add_edge(
@@ -75,26 +86,21 @@ if __name__ == "__main__":
     compiled_graph = graph.compile()
     primary_llm, fast_llm = get_default_llms()
     search_request = SearchRequest(
-        query="Who made Excel and what other products did they make?",
+        query="what can you do with onyx or danswer?",
     )
     with get_session_context_manager() as db_session:
-        inputs = AnswerQueryInput(
+        inputs = AnswerQuestionInput(
             search_request=search_request,
             primary_llm=primary_llm,
             fast_llm=fast_llm,
             db_session=db_session,
-            query_to_answer="Who made Excel?",
+            question="what can you do with onyx?",
         )
-        output = compiled_graph.invoke(
+        for thing in compiled_graph.stream(
             input=inputs,
             # debug=True,
             # subgraphs=True,
-        )
-        print(output)
-        # for namespace, chunk in compiled_graph.stream(
-        #     input=inputs,
-        #     # debug=True,
-        #     subgraphs=True,
-        # ):
-        #     print(namespace)
-        #     print(chunk)
+        ):
+            print(thing)
+        # output = compiled_graph.invoke(inputs)
+        # print(output)

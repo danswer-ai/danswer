@@ -8,6 +8,8 @@ from onyx.agent_search.expanded_retrieval.nodes.doc_retrieval import doc_retriev
 from onyx.agent_search.expanded_retrieval.nodes.doc_verification import (
     doc_verification,
 )
+from onyx.agent_search.expanded_retrieval.nodes.expand_queries import expand_queries
+from onyx.agent_search.expanded_retrieval.nodes.format_results import format_results
 from onyx.agent_search.expanded_retrieval.nodes.verification_kickoff import (
     verification_kickoff,
 )
@@ -26,6 +28,11 @@ def expanded_retrieval_graph_builder() -> StateGraph:
     ### Add nodes ###
 
     graph.add_node(
+        node="expand_queries",
+        action=expand_queries,
+    )
+
+    graph.add_node(
         node="doc_retrieval",
         action=doc_retrieval,
     )
@@ -41,11 +48,19 @@ def expanded_retrieval_graph_builder() -> StateGraph:
         node="doc_reranking",
         action=doc_reranking,
     )
+    graph.add_node(
+        node="format_results",
+        action=format_results,
+    )
 
     ### Add edges ###
+    graph.add_edge(
+        start_key=START,
+        end_key="expand_queries",
+    )
 
     graph.add_conditional_edges(
-        source=START,
+        source="expand_queries",
         path=parallel_retrieval_edge,
         path_map=["doc_retrieval"],
     )
@@ -59,6 +74,10 @@ def expanded_retrieval_graph_builder() -> StateGraph:
     )
     graph.add_edge(
         start_key="doc_reranking",
+        end_key="format_results",
+    )
+    graph.add_edge(
+        start_key="format_results",
         end_key=END,
     )
 
@@ -74,7 +93,7 @@ if __name__ == "__main__":
     compiled_graph = graph.compile()
     primary_llm, fast_llm = get_default_llms()
     search_request = SearchRequest(
-        query="Who made Excel and what other products did they make?",
+        query="what can you do with onyx or danswer?",
     )
     with get_session_context_manager() as db_session:
         inputs = ExpandedRetrievalInput(
@@ -82,7 +101,11 @@ if __name__ == "__main__":
             primary_llm=primary_llm,
             fast_llm=fast_llm,
             db_session=db_session,
-            query_to_answer="Who made Excel?",
+            question="what can you do with onyx?",
         )
-        for thing in compiled_graph.stream(inputs, debug=True):
+        for thing in compiled_graph.stream(
+            input=inputs,
+            # debug=True,
+            subgraphs=True,
+        ):
             print(thing)

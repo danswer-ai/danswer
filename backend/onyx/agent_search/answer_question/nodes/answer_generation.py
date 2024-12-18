@@ -1,21 +1,21 @@
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import merge_message_runs
 
-from onyx.agent_search.answer_query.states import AnswerQueryState
-from onyx.agent_search.answer_query.states import QAGenerationOutput
+from onyx.agent_search.answer_question.states import AnswerQuestionState
+from onyx.agent_search.answer_question.states import QAGenerationUpdate
 from onyx.agent_search.shared_graph_utils.prompts import BASE_RAG_PROMPT
 from onyx.agent_search.shared_graph_utils.utils import format_docs
 
 
-def answer_generation(state: AnswerQueryState) -> QAGenerationOutput:
-    query = state["query_to_answer"]
-    docs = state["reranked_documents"]
+def answer_generation(state: AnswerQuestionState) -> QAGenerationUpdate:
+    question = state["question"]
+    docs = state["documents"]
 
     print(f"Number of verified retrieval docs: {len(docs)}")
 
     msg = [
         HumanMessage(
-            content=BASE_RAG_PROMPT.format(question=query, context=format_docs(docs))
+            content=BASE_RAG_PROMPT.format(question=question, context=format_docs(docs))
         )
     ]
 
@@ -27,6 +27,6 @@ def answer_generation(state: AnswerQueryState) -> QAGenerationOutput:
     )
 
     answer_str = merge_message_runs(response, chunk_separator="")[0].content
-    return QAGenerationOutput(
+    return QAGenerationUpdate(
         answer=answer_str,
     )

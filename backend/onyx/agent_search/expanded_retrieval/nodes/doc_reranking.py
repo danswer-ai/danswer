@@ -1,11 +1,9 @@
-from onyx.agent_search.expanded_retrieval.states import DocRerankingOutput
+from onyx.agent_search.expanded_retrieval.states import DocRerankingUpdate
 from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalState
 
 
-def doc_reranking(state: ExpandedRetrievalState) -> DocRerankingOutput:
-    print(f"doc_reranking state: {state.keys()}")
-
+def doc_reranking(state: ExpandedRetrievalState) -> DocRerankingUpdate:
     verified_documents = state["verified_documents"]
     reranked_documents = verified_documents
 
-    return DocRerankingOutput(reranked_documents=reranked_documents)
+    return DocRerankingUpdate(reranked_documents=reranked_documents)

@@ -1,16 +1,16 @@
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import merge_message_runs
 
-from onyx.agent_search.answer_query.states import AnswerQueryState
-from onyx.agent_search.answer_query.states import QACheckOutput
+from onyx.agent_search.answer_question.states import AnswerQuestionState
+from onyx.agent_search.answer_question.states import QACheckUpdate
 from onyx.agent_search.shared_graph_utils.prompts import SUB_CHECK_PROMPT
 
 
-def answer_check(state: AnswerQueryState) -> QACheckOutput:
+def answer_check(state: AnswerQuestionState) -> QACheckUpdate:
     msg = [
         HumanMessage(
             content=SUB_CHECK_PROMPT.format(
-                question=state["query_to_answer"],
+                question=state["question"],
                 base_answer=state["answer"],
             )
         )
@@ -23,8 +23,8 @@ def answer_check(state: AnswerQueryState) -> QACheckOutput:
         )
     )
 
-    response_str = merge_message_runs(response, chunk_separator="")[0].content
+    quality_str = merge_message_runs(response, chunk_separator="")[0].content
 
-    return QACheckOutput(
-        answer_quality=response_str,
+    return QACheckUpdate(
+        answer_quality=quality_str,
     )
