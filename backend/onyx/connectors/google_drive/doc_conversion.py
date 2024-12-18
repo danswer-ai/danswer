@@ -4,6 +4,7 @@ from datetime import timezone
 
 from googleapiclient.discovery import build  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
+from markitdown import MarkItDown
 
 from onyx.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from onyx.configs.constants import DocumentSource
@@ -19,9 +20,6 @@ from onyx.connectors.google_utils.resources import GoogleDriveService
 from onyx.connectors.models import Document
 from onyx.connectors.models import Section
 from onyx.connectors.models import SlimDocument
-from onyx.file_processing.extract_file_text import docx_to_text
-from onyx.file_processing.extract_file_text import pptx_to_text
-from onyx.file_processing.extract_file_text import read_pdf_file
 from onyx.file_processing.unstructured import get_unstructured_api_key
 from onyx.file_processing.unstructured import unstructured_to_text
 from onyx.utils.logger import setup_logger
@@ -49,6 +47,8 @@ def _extract_sections_basic(
         return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
     try:
+        md = MarkItDown()
+
         if mime_type == GDriveMimeType.SPREADSHEET.value:
             try:
                 sheets_service = build(
@@ -120,13 +120,13 @@ def _extract_sections_basic(
                 if mime_type != GDriveMimeType.SPREADSHEET.value
                 else "text/csv"
             )
-            text = (
+            content = (
                 service.files()
                 .export(fileId=file["id"], mimeType=export_mime_type)
                 .execute()
-                .decode("utf-8")
             )
-            return [Section(link=link, text=text)]
+            result = md.convert(io.BytesIO(content))
+            return [Section(link=link, text=result.text_content)]
 
         elif mime_type in [
             GDriveMimeType.PLAIN_TEXT.value,
@@ -158,17 +158,8 @@ def _extract_sections_basic(
                     )
                 ]
 
-            if mime_type == GDriveMimeType.WORD_DOC.value:
-                return [
-                    Section(link=link, text=docx_to_text(file=io.BytesIO(response)))
-                ]
-            elif mime_type == GDriveMimeType.PDF.value:
-                text, _ = read_pdf_file(file=io.BytesIO(response))
-                return [Section(link=link, text=text)]
-            elif mime_type == GDriveMimeType.POWERPOINT.value:
-                return [
-                    Section(link=link, text=pptx_to_text(file=io.BytesIO(response)))
-                ]
+            result = md.convert(io.BytesIO(response))
+            return [Section(link=link, text=result.text_content)]
 
         return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 

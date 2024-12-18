@@ -13,11 +13,8 @@ from typing import Dict
 from typing import IO
 
 import chardet
-import docx  # type: ignore
-import openpyxl  # type: ignore
-import pptx  # type: ignore
-from docx import Document
 from fastapi import UploadFile
+from markitdown import MarkItDown
 from pypdf import PdfReader
 from pypdf.errors import PdfStreamError
 
@@ -187,9 +184,9 @@ def read_text_file(
 
 def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
     """Extract text from a PDF file."""
-    # Return only the extracted text from read_pdf_file
-    text, _ = read_pdf_file(file, pdf_pass)
-    return text
+    md = MarkItDown()
+    result = md.convert(file)
+    return result.text_content
 
 
 def read_pdf_file(
@@ -248,67 +245,15 @@ def read_pdf_file(
 
 
 def docx_to_text(file: IO[Any]) -> str:
-    def is_simple_table(table: docx.table.Table) -> bool:
-        for row in table.rows:
-            # No omitted cells
-            if row.grid_cols_before > 0 or row.grid_cols_after > 0:
-                return False
-
-            # No nested tables
-            if any(cell.tables for cell in row.cells):
-                return False
-
-        return True
-
-    def extract_cell_text(cell: docx.table._Cell) -> str:
-        cell_paragraphs = [para.text.strip() for para in cell.paragraphs]
-        return " ".join(p for p in cell_paragraphs if p) or "N/A"
-
-    paragraphs = []
-    doc = docx.Document(file)
-    for item in doc.iter_inner_content():
-        if isinstance(item, docx.text.paragraph.Paragraph):
-            paragraphs.append(item.text)
-
-        elif isinstance(item, docx.table.Table):
-            if not item.rows or not is_simple_table(item):
-                continue
-
-            # Every row is a new line, joined with a single newline
-            table_content = "\n".join(
-                [
-                    ",\t".join(extract_cell_text(cell) for cell in row.cells)
-                    for row in item.rows
-                ]
-            )
-            paragraphs.append(table_content)
-
-    # Docx already has good spacing between paragraphs
-    return "\n".join(paragraphs)
+    md = MarkItDown()
+    result = md.convert(file)
+    return result.text_content
 
 
 def pptx_to_text(file: IO[Any]) -> str:
-    presentation = pptx.Presentation(file)
-    text_content = []
-    for slide_number, slide in enumerate(presentation.slides, start=1):
-        extracted_text = f"\nSlide {slide_number}:\n"
-        for shape in slide.shapes:
-            if hasattr(shape, "text"):
-                extracted_text += shape.text + "\n"
-        text_content.append(extracted_text)
-    return TEXT_SECTION_SEPARATOR.join(text_content)
-
-
-def xlsx_to_text(file: IO[Any]) -> str:
-    workbook = openpyxl.load_workbook(file, read_only=True)
-    text_content = []
-    for sheet in workbook.worksheets:
-        sheet_string = "\n".join(
-            ",".join(map(str, row))
-            for row in sheet.iter_rows(min_row=1, values_only=True)
-        )
-        text_content.append(sheet_string)
-    return TEXT_SECTION_SEPARATOR.join(text_content)
+    md = MarkItDown()
+    result = md.convert(file)
+    return result.text_content
 
 
 def eml_to_text(file: IO[Any]) -> str:
@@ -345,10 +290,6 @@ def extract_file_text(
     extension: str | None = None,
 ) -> str:
     extension_to_function: dict[str, Callable[[IO[Any]], str]] = {
-        ".pdf": pdf_to_text,
-        ".docx": docx_to_text,
-        ".pptx": pptx_to_text,
-        ".xlsx": xlsx_to_text,
         ".eml": eml_to_text,
         ".epub": epub_to_text,
         ".html": parse_html_page_basic,
@@ -358,6 +299,8 @@ def extract_file_text(
         if get_unstructured_api_key():
             return unstructured_to_text(file, file_name)
 
+        md = MarkItDown()
+
         if file_name or extension:
             if extension is not None:
                 final_extension = extension
@@ -365,6 +308,12 @@ def extract_file_text(
                 final_extension = get_file_ext(file_name)
 
             if is_valid_file_ext(final_extension):
+                if final_extension in [".pdf", ".docx", ".pptx", ".xlsx"]:
+                    with BytesIO(file.read()) as file_like_object:
+                        result = md.convert_stream(
+                            file_like_object, file_extension=final_extension
+                        )
+                    return result.text_content
                 return extension_to_function.get(final_extension, file_io_to_text)(file)
 
         # Either the file somehow has no name or the extension is not one that we recognize
@@ -382,29 +331,37 @@ def extract_file_text(
         return ""
 
 
-def convert_docx_to_txt(
+def convert_docx_to_markdown(
     file: UploadFile, file_store: FileStore, file_path: str
 ) -> None:
-    file.file.seek(0)
-    docx_content = file.file.read()
-    doc = Document(BytesIO(docx_content))
+    try:
+        # Read the file content
+        file_content = file.file.read()
 
-    # Extract text from the document
-    full_text = []
-    for para in doc.paragraphs:
-        full_text.append(para.text)
+        if not file_content:
+            raise ValueError(f"File {file.filename} is empty")
 
-    # Join the extracted text
-    text_content = "\n".join(full_text)
+        # Reset the file pointer to the beginning
+        file.file.seek(0)
 
-    txt_file_path = docx_to_txt_filename(file_path)
-    file_store.save_file(
-        file_name=txt_file_path,
-        content=BytesIO(text_content.encode("utf-8")),
-        display_name=file.filename,
-        file_origin=FileOrigin.CONNECTOR,
-        file_type="text/plain",
-    )
+        text_content = extract_file_text(
+            file=file.file, file_name=file.filename or "", extension=".docx"
+        )
+
+        if not text_content:
+            raise ValueError(f"Failed to extract text from {file.filename}")
+
+        txt_file_path = docx_to_txt_filename(file_path)
+        file_store.save_file(
+            file_name=txt_file_path,
+            content=BytesIO(text_content.encode("utf-8")),
+            display_name=file.filename,
+            file_origin=FileOrigin.CONNECTOR,
+            file_type="text/plain",
+        )
+    except Exception as e:
+        logger.error(f"Error converting DOCX to Markdown: {str(e)}")
+        raise RuntimeError(f"Failed to process file {file.filename}: {str(e)}") from e
 
 
 def docx_to_txt_filename(file_path: str) -> str:
