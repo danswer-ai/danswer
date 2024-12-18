@@ -7,6 +7,7 @@ from onyx.agent_search.expanded_retrieval.graph_builder import (
     expanded_retrieval_graph_builder,
 )
 from onyx.agent_search.main.edges import parallelize_decompozed_answer_queries
+from onyx.agent_search.main.edges import send_to_initial_retrieval
 from onyx.agent_search.main.nodes.base_decomp import main_decomp_base
 from onyx.agent_search.main.nodes.generate_initial_answer import (
     generate_initial_answer,
@@ -56,6 +57,16 @@ def main_graph_builder() -> StateGraph:
 
     ### Add edges ###
 
+    graph.add_conditional_edges(
+        source=START,
+        path=send_to_initial_retrieval,
+        path_map=["initial_retrieval"],
+    )
+    graph.add_edge(
+        start_key="initial_retrieval",
+        end_key="ingest_initial_retrieval",
+    )
+
     graph.add_edge(
         start_key=START,
         end_key="base_decomp",
@@ -63,11 +74,7 @@ def main_graph_builder() -> StateGraph:
     graph.add_conditional_edges(
         source="base_decomp",
         path=parallelize_decompozed_answer_queries,
-        path_map=["answer_query", "initial_retrieval"],
-    )
-    graph.add_edge(
-        start_key="initial_retrieval",
-        end_key="ingest_initial_retrieval",
+        path_map=["answer_query"],
     )
     graph.add_edge(
         start_key="answer_query",
