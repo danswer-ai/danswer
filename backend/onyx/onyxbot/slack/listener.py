@@ -162,7 +162,6 @@ class SlackbotHandler:
                 active_tenants_gauge.labels(namespace=POD_NAMESPACE, pod=POD_NAME).set(
                     len(self.tenant_ids)
                 )
-                logger.debug(f"Current active tenants: {len(self.tenant_ids)}")
             except Exception as e:
                 logger.exception(f"Error in Slack acquisition: {e}")
             self._shutdown_event.wait(timeout=TENANT_ACQUISITION_INTERVAL)
@@ -171,7 +170,6 @@ class SlackbotHandler:
         while not self._shutdown_event.is_set():
             try:
                 self.send_heartbeats()
-                logger.debug(f"Sent heartbeats for {len(self.tenant_ids)} tenants")
             except Exception as e:
                 logger.exception(f"Error in heartbeat loop: {e}")
             self._shutdown_event.wait(timeout=TENANT_HEARTBEAT_INTERVAL)
@@ -188,9 +186,6 @@ class SlackbotHandler:
         # If the tokens are not set, we need to close the socket client and delete the tokens
         # for the tenant and app
         if not slack_bot_tokens:
-            logger.debug(
-                f"No Slack bot token found for tenant {tenant_id}, bot {bot.id}"
-            )
             if tenant_bot_pair in self.socket_clients:
                 asyncio.run(self.socket_clients[tenant_bot_pair].close())
                 del self.socket_clients[tenant_bot_pair]
@@ -234,7 +229,6 @@ class SlackbotHandler:
                 continue
 
             if tenant_id in self.tenant_ids:
-                logger.debug(f"Tenant {tenant_id} already in self.tenant_ids")
                 continue
 
             if len(self.tenant_ids) >= MAX_TENANTS_PER_POD:
@@ -252,11 +246,9 @@ class SlackbotHandler:
                 ex=TENANT_LOCK_EXPIRATION,
             )
             if not acquired and not DEV_MODE:
-                logger.debug(f"Another pod holds the lock for tenant {tenant_id}")
                 continue
 
             logger.debug(f"Acquired lock for tenant {tenant_id}")
-
             self.tenant_ids.add(tenant_id)
 
         for tenant_id in self.tenant_ids:
@@ -738,6 +730,9 @@ def create_process_slack_event() -> (
         # Always respond right away, if Slack doesn't receive these frequently enough
         # it will assume the Bot is DEAD!!! :(
         acknowledge_message(req, client)
+        logger.debug(
+            f"Received Slack request of type: '{req.type}' for tenant, {client.tenant_id}"
+        )
 
         try:
             if req.type == "interactive":
