@@ -228,6 +228,8 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
+        await self.validate_password(user_create.password, user_create)
+
         user_count: int | None = None
         referral_source = (
             request.cookies.get("referral_source", None)
