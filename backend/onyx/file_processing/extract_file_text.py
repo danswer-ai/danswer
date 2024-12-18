@@ -57,6 +57,9 @@ VALID_FILE_EXTENSIONS = PLAIN_TEXT_FILE_EXTENSIONS + [
     ".html",
 ]
 
+# These are the file extensions that we use markitdown for
+MARKITDOWN_FILE_EXTENSIONS = [".docx", ".pptx", ".xlsx"]
+
 
 def is_text_file_extension(file_name: str) -> bool:
     return any(file_name.endswith(ext) for ext in PLAIN_TEXT_FILE_EXTENSIONS)
@@ -69,6 +72,10 @@ def get_file_ext(file_path_or_name: str | Path) -> str:
 
 def is_valid_file_ext(ext: str) -> bool:
     return ext in VALID_FILE_EXTENSIONS
+
+
+def is_markitdown_file_ext(ext: str) -> bool:
+    return ext in MARKITDOWN_FILE_EXTENSIONS
 
 
 def is_text_file(file: IO[bytes]) -> bool:
@@ -237,6 +244,13 @@ def read_pdf_file(
     return "", metadata
 
 
+def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
+    """Extract text from a PDF file."""
+    # Return only the extracted text from read_pdf_file
+    text, _ = read_pdf_file(file, pdf_pass)
+    return text
+
+
 def eml_to_text(file: IO[Any]) -> str:
     text_file = io.TextIOWrapper(file, encoding=detect_encoding(file))
     parser = EmailParser()
@@ -271,6 +285,7 @@ def extract_file_text(
     extension: str | None = None,
 ) -> str:
     extension_to_function: dict[str, Callable[[IO[Any]], str]] = {
+        ".pdf": pdf_to_text,
         ".eml": eml_to_text,
         ".epub": epub_to_text,
         ".html": parse_html_page_basic,
@@ -289,7 +304,7 @@ def extract_file_text(
                 final_extension = get_file_ext(file_name)
 
             if is_valid_file_ext(final_extension):
-                if final_extension in [".pdf", ".docx", ".pptx", ".xlsx"]:
+                if is_markitdown_file_ext(final_extension):
                     with BytesIO(file.read()) as file_like_object:
                         result = md.convert_stream(
                             file_like_object, file_extension=final_extension
