@@ -11,6 +11,10 @@ def format_answer(state: AnswerQueryState) -> AnswerQueryOutput:
                 quality=state["answer_quality"],
                 answer=state["answer"],
                 documents=state["documents"],
+                ranking_scores=state["ranking_scores"],
+                original_question_ranking_scores=state[
+                    "original_question_ranking_scores"
+                ],
             )
         ],
     )

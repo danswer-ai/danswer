@@ -102,5 +102,6 @@ if __name__ == "__main__":
             # debug=True,
             subgraphs=True,
         ):
-            # print(thing)
-            print()
+            print(thing)
+        # print(compiled_graph.stream(input=inputs))
+        print("DOONNEE")

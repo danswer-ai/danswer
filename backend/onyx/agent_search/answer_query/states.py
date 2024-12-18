@@ -1,3 +1,4 @@
+from operator import add
 from typing import Annotated
 from typing import TypedDict
 
@@ -25,7 +26,10 @@ class QAGenerationOutput(TypedDict, total=False):
 
 
 class ExpandedRetrievalOutput(TypedDict):
+    documents: Annotated[list[InferenceSection], dedup_inference_sections]
     reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    original_question_ranking_scores: Annotated[list[dict[str, float]], add]
+    ranking_scores: Annotated[list[dict[str, float]], add]
 
 
 class AnswerQueryState(
@@ -33,15 +37,16 @@ class AnswerQueryState(
     QACheckOutput,
     QAGenerationOutput,
     ExpandedRetrievalOutput,
-    DocRerankingOutput,
     total=True,
 ):
     query_to_answer: str
 
 
-class AnswerQueryInput(PrimaryState, total=True):
+class AnswerQueryInput(PrimaryState, QAGenerationOutput, total=True):
     query_to_answer: str
 
 
-class AnswerQueryOutput(TypedDict):
+class AnswerQueryOutput(DocRerankingOutput):
     decomp_answer_results: list[SearchAnswerResults]
+    original_question_ranking_scores: Annotated[list[dict[str, float]], add]
+    ranking_scores: Annotated[list[dict[str, float]], add]

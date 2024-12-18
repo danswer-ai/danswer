@@ -27,6 +27,8 @@ class MainState(
     original_question_documents: Annotated[
         list[InferenceSection], dedup_inference_sections
     ]
+    ranking_scores: Annotated[list[dict[str, float]], add]
+    original_question_ranking_scores: Annotated[list[dict[str, float]], add]
 
 
 class MainInput(PrimaryState, total=True):
