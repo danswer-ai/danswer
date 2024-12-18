@@ -28,7 +28,6 @@ from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
 
-TEXT_SECTION_SEPARATOR = "\n\n"
 # these errors don't represent a failure in the connector, but simply files
 # that can't / shouldn't be indexed
 ERRORS_TO_CONTINUE_ON = [
