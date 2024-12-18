@@ -491,12 +491,13 @@ PARSE_WITH_TRAFILATURA = os.environ.get("PARSE_WITH_TRAFILATURA", "").lower() ==
 _LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS = os.environ.get(
     "LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS", ""
 )
+LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS: dict[str, str] | None = None
 try:
     LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS = cast(
         dict[str, str], json.loads(_LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS)
     )
 except json.JSONDecodeError:
-    LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS = None
+    pass
 
 #####
 # Enterprise Edition Configs
