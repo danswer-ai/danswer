@@ -1,8 +1,8 @@
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import merge_message_runs
 
-from onyx.agent_search.answer_query.states import AnswerQueryState
-from onyx.agent_search.answer_query.states import QAGenerationOutput
+from onyx.agent_search.answer_question.states import AnswerQueryState
+from onyx.agent_search.answer_question.states import QAGenerationOutput
 from onyx.agent_search.shared_graph_utils.prompts import BASE_RAG_PROMPT
 from onyx.agent_search.shared_graph_utils.utils import format_docs
 

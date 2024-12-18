@@ -1,4 +1,4 @@
-from onyx.agent_search.answer_query.states import AnswerQueryOutput
+from onyx.agent_search.answer_question.states import AnswerQueryOutput
 from onyx.agent_search.main.states import DecompAnswersOutput
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
 

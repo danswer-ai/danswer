@@ -2,7 +2,7 @@ from langgraph.graph import END
 from langgraph.graph import START
 from langgraph.graph import StateGraph
 
-from onyx.agent_search.answer_query.graph_builder import answer_query_graph_builder
+from onyx.agent_search.answer_question.graph_builder import answer_query_graph_builder
 from onyx.agent_search.expanded_retrieval.graph_builder import (
     expanded_retrieval_graph_builder,
 )

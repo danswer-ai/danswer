@@ -2,7 +2,7 @@ from collections.abc import Hashable
 
 from langgraph.types import Send
 
-from onyx.agent_search.answer_query.states import AnswerQueryInput
+from onyx.agent_search.answer_question.states import AnswerQueryInput
 from onyx.agent_search.main.states import MainState
 
 

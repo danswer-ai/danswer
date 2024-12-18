@@ -2,7 +2,7 @@ from operator import add
 from typing import Annotated
 from typing import TypedDict
 
-from onyx.agent_search.answer_query.states import SearchAnswerResults
+from onyx.agent_search.answer_question.states import SearchAnswerResults
 from onyx.agent_search.core_state import PrimaryState
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
 from onyx.context.search.models import InferenceSection
