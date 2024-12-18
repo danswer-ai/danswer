@@ -23,8 +23,8 @@ def answer_check(state: AnswerQuestionState) -> QACheckUpdate:
         )
     )
 
-    response_str = merge_message_runs(response, chunk_separator="")[0].content
+    quality_str = merge_message_runs(response, chunk_separator="")[0].content
 
     return QACheckUpdate(
-        answer_quality=response_str,
+        answer_quality=quality_str,
     )

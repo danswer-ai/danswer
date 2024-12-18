@@ -13,7 +13,7 @@ from onyx.context.search.models import InferenceSection
 ### Models ###
 
 
-class SearchAnswerResults(BaseModel):
+class QuestionAnswerResults(BaseModel):
     question: str
     answer: str
     quality: str
@@ -69,4 +69,4 @@ class AnswerQuestionOutput(TypedDict):
       results in a list so the add operator is used to add them together.
     """
 
-    answer_results: Annotated[list[SearchAnswerResults], add]
+    answer_results: Annotated[list[QuestionAnswerResults], add]

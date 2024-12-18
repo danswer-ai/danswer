@@ -43,7 +43,7 @@ class ExpandedRetrievalState(
     DocVerificationUpdate,
     DocRerankingUpdate,
 ):
-    starting_query: str
+    question: str
 
 
 ## Graph Output State
@@ -58,7 +58,7 @@ class ExpandedRetrievalOutput(TypedDict):
 
 
 class ExpandedRetrievalInput(PrimaryState):
-    starting_query: str
+    question: str
 
 
 class RetrievalInput(PrimaryState):

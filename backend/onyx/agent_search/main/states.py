@@ -2,7 +2,7 @@ from operator import add
 from typing import Annotated
 from typing import TypedDict
 
-from onyx.agent_search.answer_question.states import SearchAnswerResults
+from onyx.agent_search.answer_question.states import QuestionAnswerResults
 from onyx.agent_search.core_state import PrimaryState
 from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalResult
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
@@ -23,7 +23,7 @@ class InitialAnswerUpdate(TypedDict):
 
 class DecompAnswersUpdate(TypedDict):
     documents: Annotated[list[InferenceSection], dedup_inference_sections]
-    decomp_answer_results: Annotated[list[SearchAnswerResults], add]
+    decomp_answer_results: Annotated[list[QuestionAnswerResults], add]
 
 
 class ExpandedRetrievalUpdate(TypedDict):
