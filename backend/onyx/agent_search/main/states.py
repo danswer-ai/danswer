@@ -4,28 +4,37 @@ from typing import TypedDict
 
 from onyx.agent_search.answer_question.states import SearchAnswerResults
 from onyx.agent_search.core_state import PrimaryState
+from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalResult
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
 from onyx.context.search.models import InferenceSection
 
 
-class BaseDecompOutput(TypedDict):
+class BaseDecompUpdate(TypedDict):
     initial_decomp_questions: list[str]
 
 
-class InitialAnswerOutput(TypedDict):
+class InitialAnswerUpdate(TypedDict):
     initial_answer: str
 
 
-class DecompAnswersOutput(TypedDict):
+class DecompAnswersUpdate(TypedDict):
     documents: Annotated[list[InferenceSection], dedup_inference_sections]
     decomp_answer_results: Annotated[list[SearchAnswerResults], add]
 
 
+class ExpandedRetrievalUpdate(TypedDict):
+    all_original_question_documents: Annotated[
+        list[InferenceSection], dedup_inference_sections
+    ]
+    original_question_retrieval_results: list[ExpandedRetrievalResult]
+
+
 class MainState(
     PrimaryState,
-    BaseDecompOutput,
-    InitialAnswerOutput,
-    DecompAnswersOutput,
+    BaseDecompUpdate,
+    InitialAnswerUpdate,
+    DecompAnswersUpdate,
+    ExpandedRetrievalUpdate,
 ):
     pass
 

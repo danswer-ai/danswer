@@ -12,6 +12,9 @@ from onyx.agent_search.main.nodes.generate_initial_answer import (
     generate_initial_answer,
 )
 from onyx.agent_search.main.nodes.ingest_answers import ingest_answers
+from onyx.agent_search.main.nodes.ingest_initial_retrieval import (
+    ingest_initial_retrieval,
+)
 from onyx.agent_search.main.states import MainInput
 from onyx.agent_search.main.states import MainState
 
@@ -35,22 +38,30 @@ def main_graph_builder() -> StateGraph:
     )
     expanded_retrieval_subgraph = expanded_retrieval_graph_builder().compile()
     graph.add_node(
-        node="expanded_retrieval",
+        node="initial_retrieval",
         action=expanded_retrieval_subgraph,
-    )
-    graph.add_node(
-        node="generate_initial_answer",
-        action=generate_initial_answer,
     )
     graph.add_node(
         node="ingest_answers",
         action=ingest_answers,
     )
+    graph.add_node(
+        node="ingest_initial_retrieval",
+        action=ingest_initial_retrieval,
+    )
+    graph.add_node(
+        node="generate_initial_answer",
+        action=generate_initial_answer,
+    )
 
     ### Add edges ###
     graph.add_edge(
         start_key=START,
-        end_key="expanded_retrieval",
+        end_key="initial_retrieval",
+    )
+    graph.add_edge(
+        start_key="initial_retrieval",
+        end_key="ingest_initial_retrieval",
     )
 
     graph.add_edge(
@@ -63,11 +74,12 @@ def main_graph_builder() -> StateGraph:
         path_map=["answer_query"],
     )
     graph.add_edge(
-        start_key=["answer_query", "expanded_retrieval"],
+        start_key="answer_query",
         end_key="ingest_answers",
     )
+
     graph.add_edge(
-        start_key="ingest_answers",
+        start_key=["ingest_answers", "ingest_initial_retrieval"],
         end_key="generate_initial_answer",
     )
     graph.add_edge(
