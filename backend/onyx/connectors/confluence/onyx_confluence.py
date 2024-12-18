@@ -1,6 +1,8 @@
 import io
 import math
 import time
+from abc import ABC
+from abc import abstractmethod
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import Any
@@ -11,6 +13,7 @@ from urllib.parse import quote
 import bs4
 from atlassian import Confluence  # type:ignore
 from redis import Redis
+from redis.lock import Lock as RedisLock
 from requests import HTTPError
 
 from ee.onyx.configs.app_configs import OAUTH_CONFLUENCE_CLOUD_CLIENT_ID
@@ -23,6 +26,7 @@ from onyx.file_processing.extract_file_text import extract_file_text
 from onyx.file_processing.html_utils import format_document_soup
 from onyx.redis.redis_pool import get_redis_client
 from onyx.utils.logger import setup_logger
+
 
 logger = setup_logger()
 
@@ -38,6 +42,21 @@ _REPLACEMENT_EXPANSIONS = "body.view.value"
 
 _USER_NOT_FOUND = "Unknown Confluence User"
 _USER_ID_TO_DISPLAY_NAME_CACHE: dict[str, str | None] = {}
+
+
+class OAuthRefreshInterface(ABC):
+    """Defines a callback interface to be passed to the rate limiting function.
+
+    The interface is used by the
+    """
+
+    @abstractmethod
+    def lock_and_refresh(self) -> bool:
+        """Lock and refresh the OAuth Token"""
+
+    @abstractmethod
+    def release(self) -> None:
+        """Release the lock."""
 
 
 class ConfluenceRateLimitError(Exception):
@@ -95,47 +114,74 @@ def _handle_http_error(e: HTTPError, attempt: int) -> int:
 # https://developer.atlassian.com/cloud/confluence/rate-limiting/
 # this uses the native rate limiting option provided by the
 # confluence client and otherwise applies a simpler set of error handling
-def handle_confluence_rate_limit(confluence_call: F) -> F:
+def handle_confluence_rate_limit(
+    confluence_call: F, oauth_refresh_callback: OAuthRefreshInterface | None = None
+) -> F:
     def wrapped_call(*args: list[Any], **kwargs: Any) -> Any:
         MAX_RETRIES = 5
 
         TIMEOUT = 600
         timeout_at = time.monotonic() + TIMEOUT
 
-        for attempt in range(MAX_RETRIES):
-            if time.monotonic() > timeout_at:
-                raise TimeoutError(
-                    f"Confluence call attempts took longer than {TIMEOUT} seconds."
-                )
+        try:
+            for attempt in range(MAX_RETRIES):
+                if time.monotonic() > timeout_at:
+                    raise TimeoutError(
+                        f"Confluence call attempts took longer than {TIMEOUT} seconds."
+                    )
 
-            try:
-                # we're relying more on the client to rate limit itself
-                # and applying our own retries in a more specific set of circumstances
-                return confluence_call(*args, **kwargs)
-            except HTTPError as e:
-                delay_until = _handle_http_error(e, attempt)
-                logger.warning(
-                    f"HTTPError in confluence call. "
-                    f"Retrying in {delay_until} seconds..."
-                )
-                while time.monotonic() < delay_until:
-                    # in the future, check a signal here to exit
-                    time.sleep(1)
-            except AttributeError as e:
-                # Some error within the Confluence library, unclear why it fails.
-                # Users reported it to be intermittent, so just retry
-                if attempt == MAX_RETRIES - 1:
-                    raise e
+                if oauth_refresh_callback:
+                    oauth_refresh_callback.lock_and_refresh()
 
-                logger.exception(
-                    "Confluence Client raised an AttributeError. Retrying..."
-                )
-                time.sleep(5)
+                try:
+                    # we're relying more on the client to rate limit itself
+                    # and applying our own retries in a more specific set of circumstances
+                    return confluence_call(*args, **kwargs)
+                except HTTPError as e:
+                    delay_until = _handle_http_error(e, attempt)
+                    logger.warning(
+                        f"HTTPError in confluence call. "
+                        f"Retrying in {delay_until} seconds..."
+                    )
+                    while time.monotonic() < delay_until:
+                        # in the future, check a signal here to exit
+                        time.sleep(1)
+                except AttributeError as e:
+                    # Some error within the Confluence library, unclear why it fails.
+                    # Users reported it to be intermittent, so just retry
+                    if attempt == MAX_RETRIES - 1:
+                        raise e
+
+                    logger.exception(
+                        "Confluence Client raised an AttributeError. Retrying..."
+                    )
+                    time.sleep(5)
+        finally:
+            if oauth_refresh_callback:
+                oauth_refresh_callback.release()
 
     return cast(F, wrapped_call)
 
 
 _DEFAULT_PAGINATION_LIMIT = 1000
+
+
+class OAuthRefresh(OAuthRefreshInterface):
+    REFRESH_KEY: str = "da_lock:connector:confluence_token_refresh"
+    LOCK_TIMEOUT = 900
+
+    def __init__(self):
+        self.redis_client: Redis = get_redis_client()
+        self.redis_lock: RedisLock | None = None
+
+    @abstractmethod
+    def lock_and_refresh(self) -> bool:
+        """Lock and refresh the OAuth Token"""
+        self.redis_lock = self.redis_client.lock(self.REFRESH_KEY, timeout=900)
+
+    @abstractmethod
+    def release(self) -> None:
+        """Release the lock."""
 
 
 class OnyxConfluence:
@@ -151,8 +197,6 @@ class OnyxConfluence:
         self._kwargs = kwargs
 
         self._confluence = Confluence(url)
-
-        self.redis_client: Redis = get_redis_client()
 
         # super(OnyxConfluence, self).__init__(url, *args, **kwargs)
         # self._wrap_methods()
@@ -174,7 +218,7 @@ class OnyxConfluence:
         if expand:
             params["expand"] = expand
         try:
-            response = self.get(url, params=params)
+            response = self._confluence.get(url, params=params)
         except HTTPError as e:
             if e.response.status_code == 403:
                 raise ApiPermissionError(
@@ -183,18 +227,18 @@ class OnyxConfluence:
             raise
         return response
 
-    def _wrap_methods(self) -> None:
-        """
-        For each attribute that is callable (i.e., a method) and doesn't start with an underscore,
-        wrap it with handle_confluence_rate_limit.
-        """
-        for attr_name in dir(self):
-            if callable(getattr(self, attr_name)) and not attr_name.startswith("_"):
-                setattr(
-                    self,
-                    attr_name,
-                    handle_confluence_rate_limit(getattr(self, attr_name)),
-                )
+    # def _wrap_methods(self) -> None:
+    #     """
+    #     For each attribute that is callable (i.e., a method) and doesn't start with an underscore,
+    #     wrap it with handle_confluence_rate_limit.
+    #     """
+    #     for attr_name in dir(self):
+    #         if callable(getattr(self, attr_name)) and not attr_name.startswith("_"):
+    #             setattr(
+    #                 self,
+    #                 attr_name,
+    #                 handle_confluence_rate_limit(getattr(self, attr_name)),
+    #             )
 
     def _ensure_token_valid(self) -> None:
         if self._token_is_expired():
@@ -239,7 +283,7 @@ class OnyxConfluence:
         while url_suffix:
             try:
                 logger.debug(f"Making confluence call to {url_suffix}")
-                next_response = self.get(url_suffix)
+                next_response = self._confluence.get(url_suffix)
             except Exception as e:
                 logger.warning(f"Error in confluence call to {url_suffix}")
 
@@ -318,7 +362,7 @@ class OnyxConfluence:
         Otherwise it's very similar to the content/search endpoint.
         """
         cql = "type=user"
-        url = "rest/api/search/user" if self.cloud else "rest/api/search"
+        url = "rest/api/search/user" if self._confluence.cloud else "rest/api/search"
         expand_string = f"&expand={expand}" if expand else ""
         url += f"?cql={cql}{expand_string}"
         yield from self._paginate_url(url, limit)
@@ -332,8 +376,8 @@ class OnyxConfluence:
         This is not an SQL like query.
         It's a confluence specific endpoint that can be used to fetch groups.
         """
-        user_field = "accountId" if self.cloud else "key"
-        user_value = user["accountId"] if self.cloud else user["userKey"]
+        user_field = "accountId" if self._confluence.cloud else "key"
+        user_value = user["accountId"] if self._confluence.cloud else user["userKey"]
         # Server uses userKey (but calls it key during the API call), Cloud uses accountId
         user_query = f"{user_field}={quote(user_value)}"
 
