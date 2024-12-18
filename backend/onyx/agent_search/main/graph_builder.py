@@ -11,6 +11,7 @@ from onyx.agent_search.main.nodes.base_decomp import main_decomp_base
 from onyx.agent_search.main.nodes.generate_initial_answer import (
     generate_initial_answer,
 )
+from onyx.agent_search.main.nodes.ingest_answers import ingest_answers
 from onyx.agent_search.main.states import MainInput
 from onyx.agent_search.main.states import MainState
 
@@ -41,6 +42,10 @@ def main_graph_builder() -> StateGraph:
         node="generate_initial_answer",
         action=generate_initial_answer,
     )
+    graph.add_node(
+        node="ingest_answers",
+        action=ingest_answers,
+    )
 
     ### Add edges ###
     graph.add_edge(
@@ -59,6 +64,10 @@ def main_graph_builder() -> StateGraph:
     )
     graph.add_edge(
         start_key=["answer_query", "expanded_retrieval"],
+        end_key="ingest_answers",
+    )
+    graph.add_edge(
+        start_key="ingest_answers",
         end_key="generate_initial_answer",
     )
     graph.add_edge(
@@ -78,7 +87,7 @@ if __name__ == "__main__":
     compiled_graph = graph.compile()
     primary_llm, fast_llm = get_default_llms()
     search_request = SearchRequest(
-        query="If i am familiar with the function that I need, how can I type it into a cell?",
+        query="what can you do with onyx or danswer?",
     )
     with get_session_context_manager() as db_session:
         inputs = MainInput(

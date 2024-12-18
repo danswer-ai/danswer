@@ -1,3 +1,5 @@
+from operator import add
+from typing import Annotated
 from typing import TypedDict
 
 from pydantic import BaseModel
@@ -39,4 +41,10 @@ class AnswerQueryInput(PrimaryState, total=True):
 
 
 class AnswerQueryOutput(TypedDict):
-    answer_result: SearchAnswerResults
+    """
+    This is a list of results even though each call of this subgraph only returns one result.
+    This is because if we parallelize the answer query subgraph, there will be multiple
+      results in a list so the add operator is used to add them together.
+    """
+
+    answer_results: Annotated[list[SearchAnswerResults], add]

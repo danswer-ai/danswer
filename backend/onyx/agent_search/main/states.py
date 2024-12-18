@@ -8,25 +8,29 @@ from onyx.agent_search.shared_graph_utils.operators import dedup_inference_secti
 from onyx.context.search.models import InferenceSection
 
 
-class BaseDecompOutput(TypedDict, total=False):
+class BaseDecompOutput(TypedDict):
     initial_decomp_questions: list[str]
 
 
-class InitialAnswerOutput(TypedDict, total=False):
+class InitialAnswerOutput(TypedDict):
     initial_answer: str
+
+
+class DecompAnswersOutput(TypedDict):
+    documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    decomp_answer_results: Annotated[list[SearchAnswerResults], add]
 
 
 class MainState(
     PrimaryState,
     BaseDecompOutput,
     InitialAnswerOutput,
-    total=True,
+    DecompAnswersOutput,
 ):
-    documents: Annotated[list[InferenceSection], dedup_inference_sections]
-    decomp_answer_results: Annotated[list[SearchAnswerResults], add]
+    pass
 
 
-class MainInput(PrimaryState, total=True):
+class MainInput(PrimaryState):
     pass
 
 
