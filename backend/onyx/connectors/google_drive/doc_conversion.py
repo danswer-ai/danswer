@@ -20,10 +20,13 @@ from onyx.connectors.google_utils.resources import GoogleDriveService
 from onyx.connectors.models import Document
 from onyx.connectors.models import Section
 from onyx.connectors.models import SlimDocument
+from onyx.file_processing.extract_file_text import docx_to_text
+from onyx.file_processing.extract_file_text import pptx_to_text
 from onyx.file_processing.extract_file_text import read_pdf_file
 from onyx.file_processing.unstructured import get_unstructured_api_key
 from onyx.file_processing.unstructured import unstructured_to_text
 from onyx.utils.logger import setup_logger
+
 
 logger = setup_logger()
 
@@ -36,21 +39,88 @@ ERRORS_TO_CONTINUE_ON = [
 ]
 
 
+def convert_drive_item_to_document(
+    file: GoogleDriveFileType,
+    drive_service: GoogleDriveService,
+    docs_service: GoogleDocsService,
+) -> Document | None:
+    """
+    Converts a Google Drive file into an internal Document object, extracting
+    the text and organizing it into sections. Uses specialized methods for Google Docs
+    to preserve structure. Falls back to basic extraction for all other formats.
+    """
+    try:
+        # Skip shortcuts and folders
+        if file.get("mimeType") == DRIVE_SHORTCUT_TYPE:
+            logger.info("Ignoring Drive Shortcut Filetype")
+            return None
+        if file.get("mimeType") == DRIVE_FOLDER_TYPE:
+            logger.info("Ignoring Drive Folder Filetype")
+            return None
+
+        sections: list[Section] = []
+
+        # Special handling for Google Docs to preserve structure
+        if file.get("mimeType") == GDriveMimeType.DOC.value:
+            try:
+                sections = get_document_sections(docs_service, file["id"])
+            except Exception as e:
+                logger.warning(
+                    f"Exception '{e}' when pulling sections from Google Doc '{file['name']}'. "
+                    "Falling back to basic extraction."
+                )
+
+        # If not a GDoc or GDoc extraction failed
+        if not sections:
+            try:
+                sections = _extract_sections_basic(file, drive_service)
+            except HttpError as e:
+                reason = e.error_details[0]["reason"] if e.error_details else e.reason
+                message = e.error_details[0]["message"] if e.error_details else e.reason
+                if e.status_code == 403 and reason in ERRORS_TO_CONTINUE_ON:
+                    logger.warning(
+                        f"Could not export file '{file['name']}' due to '{message}', skipping..."
+                    )
+                    return None
+                raise
+
+        if not sections:
+            return None
+
+        return Document(
+            id=file["webViewLink"],
+            sections=sections,
+            source=DocumentSource.GOOGLE_DRIVE,
+            semantic_identifier=file["name"],
+            doc_updated_at=datetime.fromisoformat(file["modifiedTime"]).astimezone(
+                timezone.utc
+            ),
+            metadata={}
+            if any(section.text for section in sections)
+            else {IGNORE_FOR_QA: "True"},
+            additional_info=file.get("id"),
+        )
+    except Exception as e:
+        if not CONTINUE_ON_CONNECTOR_FAILURE:
+            raise e
+        logger.exception("Ran into exception when pulling a file from Google Drive")
+        return None
+
+
 def _extract_sections_basic(
-    file: dict[str, str], service: GoogleDriveService
+    file: GoogleDriveFileType, service: GoogleDriveService
 ) -> list[Section]:
     """
     Extracts text from a Google Drive file based on its MIME type.
-
-    Uses a combination of specialized extraction methods and
-    fallback approaches to handle various file types effectively.
     """
     mime_type = file["mimeType"]
     link = file["webViewLink"]
-    file["id"]
 
     # Handle unsupported MIME types
     if mime_type not in {item.value for item in GDriveMimeType}:
+        logger.debug(
+            f"Unsupported MIME type '{mime_type}' for file '{file.get('name')}'"
+        )
         return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
     # Specialized handling for Google Sheets
@@ -60,80 +130,11 @@ def _extract_sections_basic(
         except Exception as e:
             logger.warning(
                 f"Error extracting data from Google Sheet '{file['name']}': {e}. "
-                "Falling back to basic extraction."
+                "Falling back to basic content extraction."
             )
 
-    # PDF handling
-    if mime_type == GDriveMimeType.PDF.value:
-        return _extract_pdf_content(file, service)
-
-    # PowerPoint (Google Slides & MS PowerPoint) handling
-    if mime_type in [GDriveMimeType.PPT.value, GDriveMimeType.POWERPOINT.value]:
-        return _extract_presentation_content(file, service)
-
-    # General handling for Google-native and text-based formats
+    # For other types
     return _extract_general_content(file, service)
-
-
-def _extract_pdf_content(
-    file: dict[str, str], service: GoogleDriveService
-) -> list[Section]:
-    response = service.files().get_media(fileId=file["id"]).execute()
-    if get_unstructured_api_key():
-        text = unstructured_to_text(
-            file=io.BytesIO(response),
-            file_name=file.get("name", file["id"]),
-        )
-    else:
-        text, _ = read_pdf_file(file=io.BytesIO(response))
-    return [Section(link=file["webViewLink"], text=text)]
-
-
-def _extract_presentation_content(
-    file: dict[str, str], service: GoogleDriveService
-) -> list[Section]:
-    try:
-        text = (
-            service.files()
-            .export(fileId=file["id"], mimeType="text/plain")
-            .execute()
-            .decode("utf-8")
-        )
-        return [Section(link=file["webViewLink"], text=text)]
-    except Exception:
-        logger.exception("Error extracting presentation text.")
-        return [Section(link=file["webViewLink"], text=UNSUPPORTED_FILE_TYPE_CONTENT)]
-
-
-def _extract_general_content(
-    file: dict[str, str], service: GoogleDriveService
-) -> list[Section]:
-    try:
-        mime_type = file["mimeType"]
-        if mime_type in [
-            GDriveMimeType.DOC.value,
-            GDriveMimeType.SPREADSHEET.value,
-            GDriveMimeType.PPT.value,
-        ]:
-            export_mime_type = (
-                "text/csv"
-                if mime_type == GDriveMimeType.SPREADSHEET.value
-                else "text/plain"
-            )
-            text = (
-                service.files()
-                .export(fileId=file["id"], mimeType=export_mime_type)
-                .execute()
-                .decode("utf-8")
-            )
-        else:
-            content = service.files().get_media(fileId=file["id"]).execute()
-            text = _convert_gdrive_content_to_text(content, file)
-
-        return [Section(link=file["webViewLink"], text=text)]
-    except Exception:
-        logger.exception("Error extracting file content.")
-        return [Section(link=file["webViewLink"], text=UNSUPPORTED_FILE_TYPE_CONTENT)]
 
 
 def _extract_google_sheets(
@@ -142,11 +143,6 @@ def _extract_google_sheets(
     """
     Specialized extraction logic for Google Sheets.
     Iterates through each sheet, fetches all data, and returns a list of Section objects.
-
-    file: The Google Drive file metadata dictionary.
-    service: A GoogleDriveService instance with Sheets API authorized credentials.
-
-    Returns: List of Section objects, each corresponding to one sheet in the spreadsheet.
     """
     link = file["webViewLink"]
     file_id = file["id"]
@@ -155,7 +151,7 @@ def _extract_google_sheets(
     spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=file_id).execute()
 
     sections: list[Section] = []
-    for sheet in spreadsheet["sheets"]:
+    for sheet in spreadsheet.get("sheets", []):
         sheet_name = sheet["properties"]["title"]
         sheet_id = sheet["properties"]["sheetId"]
 
@@ -188,107 +184,167 @@ def _extract_google_sheets(
 
                 sections.append(Section(link=f"{link}#gid={sheet_id}", text=text))
         except HttpError as e:
-            logger.warning(f"Error fetching data for sheet '{sheet_name}': {e}")
-            # Continue with next sheet
+            logger.warning(
+                f"Error fetching data for sheet '{sheet_name}' in '{file.get('name')}' : {e}"
+            )
             continue
 
     return sections
 
 
-def _convert_gdrive_content_to_text(content: bytes, file: dict[str, str]) -> str:
+def _extract_general_content(
+    file: dict[str, str], service: GoogleDriveService
+) -> list[Section]:
     """
-    Converts raw bytes from a Google Drive "export" or "get_media" to text.
-    Tries Unstructured first if available, otherwise uses MarkItDown.
-    This method does not deal with Google Sheets (handled separately).
+    Extracts general file content for files other than Google Sheets.
+    - PDF: Revert to read_pdf_file
+    - DOCX: Unstructured, then docx_to_text, then MarkItDown.
+    - PPTX: Unstructured, then pptx_to_text, then MarkItDown.
+    - TXT: Decode the content; if empty, log.
+    - Google Docs/Slides: Export as text/plain and return directly.
     """
-    file_name = file.get("name", "")  # Or something like "Unknown_file"
+    link = file["webViewLink"]
+    mime_type = file["mimeType"]
+    file_id = file["id"]
+    file_name = file.get("name", file_id)
+
+    try:
+        # Google Docs and Google Slides (internal GDrive formats)
+        if (
+            mime_type == GDriveMimeType.DOC.value
+            or mime_type == GDriveMimeType.PPT.value
+        ):
+            logger.debug(f"Extracting Google-native doc/presentation: {file_name}")
+            export_mime_type = "text/plain"
+            content = (
+                service.files()
+                .export(fileId=file_id, mimeType=export_mime_type)
+                .execute()
+            )
+            text = content.decode("utf-8", errors="replace").strip()
+            if not text:
+                logger.warning(
+                    f"No text extracted from Google Docs/Slides file '{file_name}'."
+                )
+                text = UNSUPPORTED_FILE_TYPE_CONTENT
+            return [Section(link=link, text=text)]
+
+        # For all other formats, get raw content
+        content = service.files().get_media(fileId=file_id).execute()
+
+        if mime_type == GDriveMimeType.PDF.value:
+            # Revert to original PDF extraction
+            logger.debug(f"Extracting PDF content for '{file_name}'")
+            text, _ = read_pdf_file(file=io.BytesIO(content))
+            if not text:
+                logger.warning(
+                    f"No text extracted from PDF '{file_name}' with read_pdf_file."
+                )
+                text = UNSUPPORTED_FILE_TYPE_CONTENT
+            return [Section(link=link, text=text)]
+
+        if mime_type == GDriveMimeType.WORD_DOC.value:
+            logger.debug(f"Extracting DOCX content for '{file_name}'")
+            return [
+                Section(link=link, text=_extract_docx_pptx_txt(content, file, "docx"))
+            ]
+
+        if mime_type == GDriveMimeType.POWERPOINT.value:
+            logger.debug(f"Extracting PPTX content for '{file_name}'")
+            return [
+                Section(link=link, text=_extract_docx_pptx_txt(content, file, "pptx"))
+            ]
+
+        if (
+            mime_type == GDriveMimeType.PLAIN_TEXT.value
+            or mime_type == GDriveMimeType.MARKDOWN.value
+        ):
+            logger.debug(f"Extracting plain text/markdown content for '{file_name}'")
+            text = content.decode("utf-8", errors="replace").strip()
+            if not text:
+                logger.warning(
+                    f"No text extracted from TXT/MD '{file_name}'. Returning unsupported message."
+                )
+                text = UNSUPPORTED_FILE_TYPE_CONTENT
+            return [Section(link=link, text=text)]
+
+        # If we reach here, it's some other format supported by MarkItDown/unstructured
+        logger.debug(f"Trying MarkItDown/unstructured fallback for '{file_name}'")
+        text = _extract_docx_pptx_txt(content, file, None)  # generic fallback
+        return [Section(link=link, text=text)]
+
+    except Exception as e:
+        logger.error(
+            f"Error extracting file content for '{file_name}': {e}", exc_info=True
+        )
+        return [Section(link=link, text=UNSUPPORTED_FILE_TYPE_CONTENT)]
+
+
+def _extract_docx_pptx_txt(
+    content: bytes, file: dict[str, str], file_type: str | None
+) -> str:
+    """
+    Attempts to extract text from DOCX, PPTX, or any supported format using:
+    1. unstructured (if configured)
+    2. docx_to_text/pptx_to_text if known format
+    3. MarkItDown fallback
+    """
+    file_name = file.get("name", file["id"])
+
+    # 1. Try unstructured first
     if get_unstructured_api_key():
         try:
-            return unstructured_to_text(io.BytesIO(content), file_name)
+            logger.debug(f"Attempting unstructured extraction for '{file_name}'...")
+            text = unstructured_to_text(io.BytesIO(content), file_name)
+            if text.strip():
+                return text
+            else:
+                logger.warning(f"Unstructured returned empty text for '{file_name}'.")
         except Exception as e:
-            logger.warning(
-                f"Unstructured parsing failed for {file_name}; "
-                f"falling back to MarkItDown. Reason: {str(e)}"
-            )
+            logger.warning(f"Unstructured extraction failed for '{file_name}': {e}")
 
-    # Fallback to MarkItDown
-    md = MarkItDown()
-    result = md.convert(io.BytesIO(content))
-    if result is None:
-        raise ValueError(
-            "Failed to convert content to text. ",
-            f"Content type: {type(content)}, ",
-            f"Content length: {len(content)}, ",
-            f"File name: {file_name}",
-        )
-    return result.text_content
+    # 2. If format is docx or pptx, try direct extraction methods
+    if file_type == "docx":
+        try:
+            logger.debug(f"Trying docx_to_text for '{file_name}'...")
+            text = docx_to_text(file=io.BytesIO(content))
+            if text.strip():
+                return text
+            else:
+                logger.warning(f"docx_to_text returned empty for '{file_name}'.")
+        except Exception as e:
+            logger.warning(f"docx_to_text failed for '{file_name}': {e}")
 
+    if file_type == "pptx":
+        try:
+            logger.debug(f"Trying pptx_to_text for '{file_name}'...")
+            text = pptx_to_text(file=io.BytesIO(content))
+            if text.strip():
+                return text
+            else:
+                logger.warning(f"pptx_to_text returned empty for '{file_name}'.")
+        except Exception as e:
+            logger.warning(f"pptx_to_text failed for '{file_name}': {e}")
 
-def convert_drive_item_to_document(
-    file: GoogleDriveFileType,
-    drive_service: GoogleDriveService,
-    docs_service: GoogleDocsService,
-) -> Document | None:
+    # 3. Fallback to MarkItDown
     try:
-        # Skip files that are shortcuts
-        if file.get("mimeType") == DRIVE_SHORTCUT_TYPE:
-            logger.info("Ignoring Drive Shortcut Filetype")
-            return None
-        # Skip files that are folders
-        if file.get("mimeType") == DRIVE_FOLDER_TYPE:
-            logger.info("Ignoring Drive Folder Filetype")
-            return None
-
-        sections: list[Section] = []
-
-        # Special handling for Google Docs to preserve structure, link
-        # to headers
-        if file.get("mimeType") == GDriveMimeType.DOC.value:
-            try:
-                sections = get_document_sections(docs_service, file["id"])
-            except Exception as e:
-                logger.warning(
-                    f"Ran into exception '{e}' when pulling sections from Google Doc '{file['name']}'."
-                    " Falling back to basic extraction."
-                )
-        # NOTE: this will run for either (1) the above failed or (2) the file is not a Google Doc
-        if not sections:
-            try:
-                # For all other file types just extract the text
-                sections = _extract_sections_basic(file, drive_service)
-
-            except HttpError as e:
-                reason = e.error_details[0]["reason"] if e.error_details else e.reason
-                message = e.error_details[0]["message"] if e.error_details else e.reason
-                if e.status_code == 403 and reason in ERRORS_TO_CONTINUE_ON:
-                    logger.warning(
-                        f"Could not export file '{file['name']}' due to '{message}', skipping..."
-                    )
-                    return None
-
-                raise
-        if not sections:
-            return None
-
-        return Document(
-            id=file["webViewLink"],
-            sections=sections,
-            source=DocumentSource.GOOGLE_DRIVE,
-            semantic_identifier=file["name"],
-            doc_updated_at=datetime.fromisoformat(file["modifiedTime"]).astimezone(
-                timezone.utc
-            ),
-            metadata={}
-            if any(section.text for section in sections)
-            else {IGNORE_FOR_QA: "True"},
-            additional_info=file.get("id"),
-        )
+        logger.debug(f"Falling back to MarkItDown for '{file_name}'...")
+        md = MarkItDown()
+        result = md.convert(io.BytesIO(content))
+        if result and result.text_content and result.text_content.strip():
+            return result.text_content
+        else:
+            logger.warning(f"MarkItDown returned empty text for '{file_name}'.")
     except Exception as e:
-        if not CONTINUE_ON_CONNECTOR_FAILURE:
-            raise e
+        logger.error(
+            f"MarkItDown conversion failed for '{file_name}': {e}", exc_info=True
+        )
 
-        logger.exception("Ran into exception when pulling a file from Google Drive")
-    return None
+    # If all methods fail or return empty, return unsupported message
+    logger.error(
+        f"All extraction methods failed for '{file_name}', returning unsupported file message."
+    )
+    return UNSUPPORTED_FILE_TYPE_CONTENT
 
 
 def build_slim_document(file: GoogleDriveFileType) -> SlimDocument | None:
