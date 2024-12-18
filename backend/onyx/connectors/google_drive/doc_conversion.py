@@ -1,7 +1,6 @@
 import io
 from datetime import datetime
 from datetime import timezone
-from typing import Any
 
 from googleapiclient.discovery import build  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
@@ -38,7 +37,7 @@ ERRORS_TO_CONTINUE_ON = [
 
 
 def _extract_sections_basic(
-    file_meta: dict[str, Any], service: GoogleDriveService
+    file_meta: dict[str, str], service: GoogleDriveService
 ) -> list[Section]:
     """
     Extracts text from a Google Drive file based on its MIME type.
@@ -84,7 +83,7 @@ def _extract_sections_basic(
 
 
 def _extract_pdf_content(
-    file_meta: dict[str, Any], service: GoogleDriveService
+    file_meta: dict[str, str], service: GoogleDriveService
 ) -> list[Section]:
     response = service.files().get_media(fileId=file_meta["id"]).execute()
     if get_unstructured_api_key():
@@ -98,7 +97,7 @@ def _extract_pdf_content(
 
 
 def _extract_presentation_content(
-    file_meta: dict[str, Any], service: GoogleDriveService
+    file_meta: dict[str, str], service: GoogleDriveService
 ) -> list[Section]:
     try:
         text = (
@@ -116,7 +115,7 @@ def _extract_presentation_content(
 
 
 def _extract_general_content(
-    file_meta: dict[str, Any], service: GoogleDriveService
+    file_meta: dict[str, str], service: GoogleDriveService
 ) -> list[Section]:
     try:
         mime_type = file_meta["mimeType"]
@@ -149,7 +148,7 @@ def _extract_general_content(
 
 
 def _extract_google_sheets(
-    file_meta: dict[str, Any], service: GoogleDriveService
+    file_meta: dict[str, str], service: GoogleDriveService
 ) -> list[Section]:
     """
     Specialized extraction logic for Google Sheets.
@@ -207,7 +206,7 @@ def _extract_google_sheets(
     return sections
 
 
-def _convert_gdrive_content_to_text(content: bytes, file_meta: dict[str, Any]) -> str:
+def _convert_gdrive_content_to_text(content: bytes, file_meta: dict[str, str]) -> str:
     """
     Converts raw bytes from a Google Drive "export" or "get_media" to text.
     Tries Unstructured first if available, otherwise uses MarkItDown.
