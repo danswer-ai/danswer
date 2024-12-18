@@ -27,5 +27,5 @@ def main_decomp_base(state: MainState) -> BaseDecompOutput:
     ]
 
     return BaseDecompOutput(
-        initial_decomp_queries=decomp_list,
+        initial_decomp_questions=decomp_list,
     )

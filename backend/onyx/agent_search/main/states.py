@@ -9,7 +9,7 @@ from onyx.context.search.models import InferenceSection
 
 
 class BaseDecompOutput(TypedDict, total=False):
-    initial_decomp_queries: list[str]
+    initial_decomp_questions: list[str]
 
 
 class InitialAnswerOutput(TypedDict, total=False):

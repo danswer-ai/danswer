@@ -8,14 +8,14 @@ from onyx.agent_search.shared_graph_utils.utils import format_docs
 
 
 def answer_generation(state: AnswerQueryState) -> QAGenerationOutput:
-    query = state["question"]
+    question = state["question"]
     docs = state["documents"]
 
     print(f"Number of verified retrieval docs: {len(docs)}")
 
     msg = [
         HumanMessage(
-            content=BASE_RAG_PROMPT.format(question=query, context=format_docs(docs))
+            content=BASE_RAG_PROMPT.format(question=question, context=format_docs(docs))
         )
     ]
 

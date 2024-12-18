@@ -12,10 +12,10 @@ def parallelize_decompozed_answer_queries(state: MainState) -> list[Send | Hasha
             "answer_query",
             AnswerQueryInput(
                 **state,
-                question=query,
+                question=question,
             ),
         )
-        for query in state["initial_decomp_queries"]
+        for question in state["initial_decomp_questions"]
     ]
 
 

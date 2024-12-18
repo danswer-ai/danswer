@@ -16,12 +16,6 @@ class ExpandedRetrievalResult(BaseModel):
     ]
 
 
-# class RetrievalResult(BaseModel):
-#     starting_query: str
-#     expanded_retrieval_results: list[ExpandedRetrievalResult]
-#     documents: Annotated[list[InferenceSection], dedup_inference_sections]
-
-
 class DocRetrievalOutput(TypedDict, total=False):
     expanded_retrieval_results: Annotated[list[ExpandedRetrievalResult], add]
     retrieved_documents: Annotated[list[InferenceSection], dedup_inference_sections]
