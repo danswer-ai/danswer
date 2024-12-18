@@ -57,6 +57,7 @@ from onyx.auth.schemas import UserRole
 from onyx.auth.schemas import UserUpdate
 from onyx.configs.app_configs import AUTH_TYPE
 from onyx.configs.app_configs import DISABLE_AUTH
+from onyx.configs.app_configs import EMAIL_CONFIGURED
 from onyx.configs.app_configs import REQUIRE_EMAIL_VERIFICATION
 from onyx.configs.app_configs import SESSION_EXPIRE_TIME_SECONDS
 from onyx.configs.app_configs import TRACK_EXTERNAL_IDP_EXPIRY
@@ -470,7 +471,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
     ) -> None:
-        logger.notice(f"User {user.id} has forgot their password. Reset token: {token}")
+        if not EMAIL_CONFIGURED:
+            logger.error(
+                "User forgot their password but email is not configured.",
+                extra={"user_email": user.email},
+            )
+            return
         send_forgot_password_email(user.email, token)
 
     async def on_after_request_verify(

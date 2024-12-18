@@ -3,6 +3,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from textwrap import dedent
 
+from onyx.configs.app_configs import EMAIL_CONFIGURED
 from onyx.configs.app_configs import EMAIL_FROM
 from onyx.configs.app_configs import SMTP_PASS
 from onyx.configs.app_configs import SMTP_PORT
@@ -10,6 +11,9 @@ from onyx.configs.app_configs import SMTP_SERVER
 from onyx.configs.app_configs import SMTP_USER
 from onyx.configs.app_configs import WEB_DOMAIN
 from onyx.db.models import User
+from onyx.setup import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def send_email(
@@ -18,6 +22,9 @@ def send_email(
     body: str,
     mail_from: str = EMAIL_FROM,
 ) -> None:
+    if not EMAIL_CONFIGURED:
+        raise ValueError("Email is not configured.")
+
     msg = MIMEMultipart()
     msg["Subject"] = subject
     msg["To"] = user_email
