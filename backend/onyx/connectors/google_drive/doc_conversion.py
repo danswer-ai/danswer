@@ -213,10 +213,6 @@ def _convert_gdrive_content_to_text(content: bytes, file_meta: dict[str, Any]) -
     Converts raw bytes from a Google Drive "export" or "get_media" to text.
     Tries Unstructured first if available, otherwise uses MarkItDown.
     This method does not deal with Google Sheets (handled separately).
-
-    :param content: Raw bytes from Google Drive export or direct media download.
-    :param file_meta: Metadata of the file including its name and ID.
-    :return: Extracted text.
     """
     file_name = file_meta.get("name", "")  # Or something like "Unknown_file"
     if get_unstructured_api_key():
@@ -227,16 +223,10 @@ def _convert_gdrive_content_to_text(content: bytes, file_meta: dict[str, Any]) -
                 f"Unstructured parsing failed for {file_name}; "
                 f"falling back to MarkItDown. Reason: {str(e)}"
             )
-    print("CONTENT IS")
-    print(content)
 
-    print("TYPE IS")
-    print(type(content))
     # Fallback to MarkItDown
     md = MarkItDown()
     result = md.convert(io.BytesIO(content))
-    print("RESULT IS")
-    print(result)
     if result is None:
         raise ValueError(
             "Failed to convert content to text. ",
