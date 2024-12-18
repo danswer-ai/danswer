@@ -228,6 +228,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
+        # We verify the password here to make sure it's valid before we proceed
         await self.validate_password(user_create.password, user_create)
 
         user_count: int | None = None
