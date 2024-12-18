@@ -6,6 +6,7 @@ from onyx.agent_search.answer_question.edges import send_to_expanded_retrieval
 from onyx.agent_search.answer_question.nodes.answer_check import answer_check
 from onyx.agent_search.answer_question.nodes.answer_generation import answer_generation
 from onyx.agent_search.answer_question.nodes.format_answer import format_answer
+from onyx.agent_search.answer_question.nodes.ingest_retrieval import ingest_retrieval
 from onyx.agent_search.answer_question.states import AnswerQuestionInput
 from onyx.agent_search.answer_question.states import AnswerQuestionOutput
 from onyx.agent_search.answer_question.states import AnswerQuestionState
@@ -40,6 +41,10 @@ def answer_query_graph_builder() -> StateGraph:
         node="format_answer",
         action=format_answer,
     )
+    graph.add_node(
+        node="ingest_retrieval",
+        action=ingest_retrieval,
+    )
 
     ### Add edges ###
 
@@ -50,6 +55,10 @@ def answer_query_graph_builder() -> StateGraph:
     )
     graph.add_edge(
         start_key="decomped_expanded_retrieval",
+        end_key="ingest_retrieval",
+    )
+    graph.add_edge(
+        start_key="ingest_retrieval",
         end_key="answer_generation",
     )
     graph.add_edge(
