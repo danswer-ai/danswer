@@ -4,7 +4,7 @@ from datetime import timezone
 
 from googleapiclient.discovery import build  # type: ignore
 from googleapiclient.errors import HttpError  # type: ignore
-from markitdown import MarkItDown
+from markitdown import MarkItDown  # type: ignore
 
 from onyx.configs.app_configs import CONTINUE_ON_CONNECTOR_FAILURE
 from onyx.configs.constants import DocumentSource

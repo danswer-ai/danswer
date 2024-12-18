@@ -14,7 +14,7 @@ from typing import IO
 
 import chardet
 from fastapi import UploadFile
-from markitdown import MarkItDown
+from markitdown import MarkItDown  # type: ignore
 from pypdf import PdfReader
 from pypdf.errors import PdfStreamError
 
@@ -182,13 +182,6 @@ def read_text_file(
     return file_content_raw, metadata
 
 
-def pdf_to_text(file: IO[Any], pdf_pass: str | None = None) -> str:
-    """Extract text from a PDF file."""
-    md = MarkItDown()
-    result = md.convert(file)
-    return result.text_content
-
-
 def read_pdf_file(
     file: IO[Any],
     pdf_pass: str | None = None,
@@ -242,18 +235,6 @@ def read_pdf_file(
     # File is still discoverable by title
     # but the contents are not included as they cannot be parsed
     return "", metadata
-
-
-def docx_to_text(file: IO[Any]) -> str:
-    md = MarkItDown()
-    result = md.convert(file)
-    return result.text_content
-
-
-def pptx_to_text(file: IO[Any]) -> str:
-    md = MarkItDown()
-    result = md.convert(file)
-    return result.text_content
 
 
 def eml_to_text(file: IO[Any]) -> str:

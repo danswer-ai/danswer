@@ -36,7 +36,7 @@ export const MinimalMarkdown: React.FC<MinimalMarkdownProps> = ({
 
   return (
     <ReactMarkdown
-      className="prose max-w-full text-base"
+      className={`prose max-w-full text-base ${className}`}
       components={markdownComponents}
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
