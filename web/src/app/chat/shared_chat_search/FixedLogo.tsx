@@ -9,6 +9,7 @@ import { useContext } from "react";
 import { FiSidebar } from "react-icons/fi";
 import { LogoType } from "@/components/logo/Logo";
 import { EnterpriseSettings } from "@/app/admin/settings/interfaces";
+import { useRouter } from "next/navigation";
 
 export function LogoComponent({
   enterpriseSettings,
@@ -21,13 +22,10 @@ export function LogoComponent({
   show?: boolean;
   isAdmin?: boolean;
 }) {
+  const router = useRouter();
   return (
     <button
-      onClick={
-        isAdmin
-          ? () => (window.location.href = "/admin/indexing/status")
-          : undefined
-      }
+      onClick={isAdmin ? () => router.push("/admin/indexing/status") : () => {}}
       className={`max-w-[200px] ${
         !show && "mobile:hidden"
       } flex items-center gap-x-1`}
