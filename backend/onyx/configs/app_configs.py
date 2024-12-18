@@ -1,6 +1,7 @@
 import json
 import os
 import urllib.parse
+from typing import cast
 
 from onyx.configs.constants import AuthType
 from onyx.configs.constants import DocumentIndexType
@@ -486,6 +487,21 @@ VESPA_REQUEST_TIMEOUT = int(os.environ.get("VESPA_REQUEST_TIMEOUT") or "15")
 SYSTEM_RECURSION_LIMIT = int(os.environ.get("SYSTEM_RECURSION_LIMIT") or "1000")
 
 PARSE_WITH_TRAFILATURA = os.environ.get("PARSE_WITH_TRAFILATURA", "").lower() == "true"
+
+# allow for custom error messages for different errors returned by litellm
+# for example, can specify: {"Violated content safety policy": "EVIL REQUEST!!!"}
+# to make it so that if an LLM call returns an error containing "Violated content safety policy"
+# the end user will see "EVIL REQUEST!!!" instead of the default error message.
+_LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS = os.environ.get(
+    "LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS", ""
+)
+LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS: dict[str, str] | None = None
+try:
+    LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS = cast(
+        dict[str, str], json.loads(_LITELLM_CUSTOM_ERROR_MESSAGE_MAPPINGS)
+    )
+except json.JSONDecodeError:
+    pass
 
 #####
 # Enterprise Edition Configs
