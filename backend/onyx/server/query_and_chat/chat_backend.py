@@ -759,6 +759,8 @@ def fetch_chat_file(
             file_id = txt_file_id
 
     media_type = file_record.file_type
+    print("MEDIA TYPE IS")
+    print(media_type)
     file_io = file_store.read_file(file_id, mode="b")
 
     return StreamingResponse(file_io, media_type=media_type)

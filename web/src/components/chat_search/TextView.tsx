@@ -66,6 +66,10 @@ export default function TextView({
       const contentType =
         response.headers.get("Content-Type") || "application/octet-stream";
       setFileType(contentType);
+      console.log("Have fetched blob");
+
+      console.log("the blob's type is");
+      console.log(blob.type);
 
       if (isMarkdownFormat(blob.type)) {
         const text = await blob.text();
