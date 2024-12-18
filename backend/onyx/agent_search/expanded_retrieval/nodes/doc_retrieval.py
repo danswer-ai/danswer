@@ -22,7 +22,7 @@ def doc_retrieval(state: RetrieveInput) -> DocRetrievalOutput:
     Returns:
         state (dict): New key added to state, documents, that contains retrieved documents
     """
-    print(f"doc_retrieval state: {state.keys()}")
+    # print(f"doc_retrieval state: {state.keys()}")
 
     documents: list[InferenceSection] = []
     llm = state["primary_llm"]

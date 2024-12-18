@@ -12,7 +12,7 @@ from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalState
 def verification_kickoff(
     state: ExpandedRetrievalState,
 ) -> Command[Literal["doc_verification"]]:
-    print(f"verification_kickoff state: {state.keys()}")
+    # print(f"verification_kickoff state: {state.keys()}")
 
     documents = state["retrieved_documents"]
     return Command(

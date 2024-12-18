@@ -23,7 +23,7 @@ def doc_verification(state: DocVerificationInput) -> DocVerificationOutput:
         dict: ict: The updated state with the final decision
     """
 
-    print(f"doc_verification state: {state.keys()}")
+    # print(f"doc_verification state: {state.keys()}")
 
     # original_query = state["search_request"].query
     relevant_query = state.get("query_to_answer") or state["search_request"].query

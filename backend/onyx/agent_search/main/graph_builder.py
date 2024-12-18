@@ -87,7 +87,9 @@ if __name__ == "__main__":
     primary_llm, fast_llm = get_default_llms()
     search_request = SearchRequest(
         # query="If i am familiar with the function that I need, how can I type it into a cell?",
-        query="What are the temperatures in Hawaii and New York?",
+        # query="What are the temperatures in Hawaii and New York?",
+        query="""What are the pros and cons of using a vertical action items bar in Sourcegraph, and
+        what are the goals defined for the navigation redesign?""",
     )
     with get_session_context_manager() as db_session:
         inputs = MainInput(
@@ -102,6 +104,7 @@ if __name__ == "__main__":
             # debug=True,
             subgraphs=True,
         ):
-            print(thing)
+            pass
+            # print(thing)
         # print(compiled_graph.stream(input=inputs))
         print("DOONNEE")
