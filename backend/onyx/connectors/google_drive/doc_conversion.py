@@ -21,6 +21,7 @@ from onyx.connectors.google_utils.resources import GoogleDriveService
 from onyx.connectors.models import Document
 from onyx.connectors.models import Section
 from onyx.connectors.models import SlimDocument
+from onyx.file_processing.extract_file_text import read_pdf_file
 from onyx.file_processing.unstructured import get_unstructured_api_key
 from onyx.file_processing.unstructured import unstructured_to_text
 from onyx.utils.logger import setup_logger
@@ -73,6 +74,22 @@ def _extract_sections_basic(
                 f"Ran into exception '{e}' when pulling data from Google "
                 f"Sheet '{file_meta['name']}'. Falling back to basic extraction."
             )
+    # Handle PDF files
+    if mime_type == GDriveMimeType.PDF.value:
+        response = service.files().get_media(fileId=file_meta["id"]).execute()
+        if get_unstructured_api_key():
+            return [
+                Section(
+                    link=link,
+                    text=unstructured_to_text(
+                        file=io.BytesIO(response),
+                        file_name=file_meta.get("name", file_meta["id"]),
+                    ),
+                )
+            ]
+        else:
+            text, _ = read_pdf_file(file=io.BytesIO(response))
+            return [Section(link=link, text=text)]
 
     # From here on, either it’s not a spreadsheet or the spreadsheet extraction failed.
     # Try exporting the file for Drive’s native formats or just downloading for
@@ -200,6 +217,13 @@ def _convert_gdrive_content_to_text(content: bytes, file_meta: dict[str, Any]) -
     result = md.convert(io.BytesIO(content))
     print("RESULT IS")
     print(result)
+    if result is None:
+        raise ValueError(
+            "Failed to convert content to text. ",
+            f"Content type: {type(content)}, ",
+            f"Content length: {len(content)}, ",
+            f"File name: {file_name}",
+        )
     return result.text_content
 
 
