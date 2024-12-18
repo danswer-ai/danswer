@@ -55,14 +55,6 @@ def main_graph_builder() -> StateGraph:
     )
 
     ### Add edges ###
-    graph.add_edge(
-        start_key=START,
-        end_key="initial_retrieval",
-    )
-    graph.add_edge(
-        start_key="initial_retrieval",
-        end_key="ingest_initial_retrieval",
-    )
 
     graph.add_edge(
         start_key=START,
@@ -71,7 +63,11 @@ def main_graph_builder() -> StateGraph:
     graph.add_conditional_edges(
         source="base_decomp",
         path=parallelize_decompozed_answer_queries,
-        path_map=["answer_query"],
+        path_map=["answer_query", "initial_retrieval"],
+    )
+    graph.add_edge(
+        start_key="initial_retrieval",
+        end_key="ingest_initial_retrieval",
     )
     graph.add_edge(
         start_key="answer_query",

@@ -8,6 +8,7 @@ from onyx.agent_search.expanded_retrieval.nodes.doc_retrieval import doc_retriev
 from onyx.agent_search.expanded_retrieval.nodes.doc_verification import (
     doc_verification,
 )
+from onyx.agent_search.expanded_retrieval.nodes.expand_queries import expand_queries
 from onyx.agent_search.expanded_retrieval.nodes.format_results import format_results
 from onyx.agent_search.expanded_retrieval.nodes.verification_kickoff import (
     verification_kickoff,
@@ -25,6 +26,11 @@ def expanded_retrieval_graph_builder() -> StateGraph:
     )
 
     ### Add nodes ###
+
+    graph.add_node(
+        node="expand_queries",
+        action=expand_queries,
+    )
 
     graph.add_node(
         node="doc_retrieval",
@@ -48,9 +54,13 @@ def expanded_retrieval_graph_builder() -> StateGraph:
     )
 
     ### Add edges ###
+    graph.add_edge(
+        start_key=START,
+        end_key="expand_queries",
+    )
 
     graph.add_conditional_edges(
-        source=START,
+        source="expand_queries",
         path=parallel_retrieval_edge,
         path_map=["doc_retrieval"],
     )

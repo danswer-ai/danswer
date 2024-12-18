@@ -34,6 +34,10 @@ class DocRerankingUpdate(TypedDict):
     reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
+class QueryExpansionUpdate(TypedDict):
+    expanded_queries: list[str]
+
+
 class DocRetrievalUpdate(TypedDict):
     expanded_retrieval_results: Annotated[list[QueryResult], add]
     retrieved_documents: Annotated[list[InferenceSection], dedup_inference_sections]
@@ -47,6 +51,7 @@ class ExpandedRetrievalState(
     DocRetrievalUpdate,
     DocVerificationUpdate,
     DocRerankingUpdate,
+    QueryExpansionUpdate,
 ):
     question: str
 
