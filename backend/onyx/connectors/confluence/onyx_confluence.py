@@ -10,6 +10,7 @@ from urllib.parse import quote
 
 import bs4
 from atlassian import Confluence  # type:ignore
+from redis import Redis
 from requests import HTTPError
 
 from ee.onyx.configs.app_configs import OAUTH_CONFLUENCE_CLOUD_CLIENT_ID
@@ -20,6 +21,7 @@ from onyx.configs.app_configs import CONFLUENCE_CONNECTOR_ATTACHMENT_SIZE_THRESH
 from onyx.connectors.confluence.utils import validate_attachment_filetype
 from onyx.file_processing.extract_file_text import extract_file_text
 from onyx.file_processing.html_utils import format_document_soup
+from onyx.redis.redis_pool import get_redis_client
 from onyx.utils.logger import setup_logger
 
 logger = setup_logger()
@@ -136,7 +138,7 @@ def handle_confluence_rate_limit(confluence_call: F) -> F:
 _DEFAULT_PAGINATION_LIMIT = 1000
 
 
-class OnyxConfluence(Confluence):
+class OnyxConfluence:
     """
     This is a custom Confluence class that overrides the default Confluence class to add a custom CQL method.
     This is necessary because the default Confluence class does not properly support cql expansions.
@@ -144,8 +146,16 @@ class OnyxConfluence(Confluence):
     """
 
     def __init__(self, url: str, *args: Any, **kwargs: Any) -> None:
-        super(OnyxConfluence, self).__init__(url, *args, **kwargs)
-        self._wrap_methods()
+        self._url = url
+        self._args = args
+        self._kwargs = kwargs
+
+        self._confluence = Confluence(url)
+
+        self.redis_client: Redis = get_redis_client()
+
+        # super(OnyxConfluence, self).__init__(url, *args, **kwargs)
+        # self._wrap_methods()
 
     def get_current_user(self, expand: str | None = None) -> Any:
         """
@@ -185,6 +195,34 @@ class OnyxConfluence(Confluence):
                     attr_name,
                     handle_confluence_rate_limit(getattr(self, attr_name)),
                 )
+
+    def _ensure_token_valid(self) -> None:
+        if self._token_is_expired():
+            self._refresh_token()
+            # Re-init the Confluence client with the originally stored args
+            self._confluence = Confluence(self._url, *self._args, **self._kwargs)
+
+    def __getattr__(self, name: str):
+        """Dynamically intercept attribute/method access."""
+        attr = getattr(self._confluence, name, None)
+        if attr is None:
+            # The underlying Confluence client doesn't have this attribute
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            )
+
+        # skip methods that start with "_"
+        if callable(attr) and not name.startswith("_"):
+            rate_limited_method = handle_confluence_rate_limit(attr)
+
+            def wrapped_method(*args, **kwargs):
+                self._ensure_token_valid()
+                return rate_limited_method(*args, **kwargs)
+
+            return wrapped_method
+
+        # If it's not a method, just return it after ensuring token validity
+        return attr
 
     def _paginate_url(
         self, url_suffix: str, limit: int | None = None
