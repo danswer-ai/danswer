@@ -12,9 +12,14 @@ from onyx.context.search.models import InferenceSection
 ### Models ###
 
 
+class QueryResult(BaseModel):
+    query: str
+    documents_for_query: list[InferenceSection]
+
+
 class ExpandedRetrievalResult(BaseModel):
-    expanded_query: str
-    expanded_retrieval_documents: list[InferenceSection]
+    expanded_queries_results: list[QueryResult]
+    all_documents: list[InferenceSection]
 
 
 ### States ###
@@ -30,7 +35,7 @@ class DocRerankingUpdate(TypedDict):
 
 
 class DocRetrievalUpdate(TypedDict):
-    expanded_retrieval_results: Annotated[list[ExpandedRetrievalResult], add]
+    expanded_retrieval_results: Annotated[list[QueryResult], add]
     retrieved_documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
@@ -50,8 +55,7 @@ class ExpandedRetrievalState(
 
 
 class ExpandedRetrievalOutput(TypedDict):
-    expanded_retrieval_results: list[ExpandedRetrievalResult]
-    documents: Annotated[list[InferenceSection], dedup_inference_sections]
+    expanded_retrieval_result: ExpandedRetrievalResult
 
 
 ## Input States
@@ -59,6 +63,10 @@ class ExpandedRetrievalOutput(TypedDict):
 
 class ExpandedRetrievalInput(PrimaryState):
     question: str
+
+
+class DocVerificationInput(PrimaryState):
+    doc_to_verify: InferenceSection
 
 
 class RetrievalInput(PrimaryState):

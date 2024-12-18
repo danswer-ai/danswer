@@ -5,7 +5,7 @@ from typing import TypedDict
 from pydantic import BaseModel
 
 from onyx.agent_search.core_state import PrimaryState
-from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalResult
+from onyx.agent_search.expanded_retrieval.states import QueryResult
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
 from onyx.context.search.models import InferenceSection
 
@@ -17,7 +17,7 @@ class QuestionAnswerResults(BaseModel):
     question: str
     answer: str
     quality: str
-    expanded_retrieval_results: list[ExpandedRetrievalResult]
+    expanded_retrieval_results: list[QueryResult]
     documents: list[InferenceSection]
 
 
@@ -35,8 +35,8 @@ class QAGenerationUpdate(TypedDict):
 
 
 class RetrievalIngestionUpdate(TypedDict):
+    expanded_retrieval_results: list[QueryResult]
     documents: Annotated[list[InferenceSection], dedup_inference_sections]
-    expanded_retrieval_results: list[ExpandedRetrievalResult]
 
 
 ## Graph State
@@ -47,7 +47,6 @@ class AnswerQuestionState(
     QAGenerationUpdate,
     QACheckUpdate,
     RetrievalIngestionUpdate,
-    total=True,
 ):
     question: str
 

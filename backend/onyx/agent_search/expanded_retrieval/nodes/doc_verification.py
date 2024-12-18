@@ -1,15 +1,10 @@
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import merge_message_runs
 
+from onyx.agent_search.expanded_retrieval.states import DocVerificationInput
 from onyx.agent_search.expanded_retrieval.states import DocVerificationUpdate
-from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalState
 from onyx.agent_search.shared_graph_utils.models import BinaryDecision
 from onyx.agent_search.shared_graph_utils.prompts import VERIFIER_PROMPT
-from onyx.context.search.models import InferenceSection
-
-
-class DocVerificationInput(ExpandedRetrievalState, total=True):
-    doc_to_verify: InferenceSection
 
 
 def doc_verification(state: DocVerificationInput) -> DocVerificationUpdate:
@@ -17,13 +12,11 @@ def doc_verification(state: DocVerificationInput) -> DocVerificationUpdate:
     Check whether the document is relevant for the original user question
 
     Args:
-        state (VerifierState): The current state
+        state (DocVerificationInput): The current state
 
-    Returns:
-        dict: ict: The updated state with the final decision
+    Updates:
+        verified_documents: list[InferenceSection]
     """
-
-    print(f"doc_verification state: {state.keys()}")
 
     original_query = state["search_request"].query
     doc_to_verify = state["doc_to_verify"]
@@ -48,8 +41,6 @@ def doc_verification(state: DocVerificationInput) -> DocVerificationUpdate:
     # Convert string response to proper dictionary format
     decision_dict = {"decision": response_string.lower()}
     formatted_response = BinaryDecision.model_validate(decision_dict)
-
-    print(f"Verdict: {formatted_response.decision}")
 
     verified_documents = []
     if formatted_response.decision == "yes":

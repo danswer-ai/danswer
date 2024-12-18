@@ -12,6 +12,6 @@ def send_to_expanded_retrieval(state: AnswerQuestionInput) -> Send | Hashable:
         "decomped_expanded_retrieval",
         ExpandedRetrievalInput(
             **extract_primary_fields(state),
-            starting_query=state["question"],
+            question=state["question"],
         ),
     )

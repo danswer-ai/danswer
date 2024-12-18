@@ -42,12 +42,12 @@ def main_graph_builder() -> StateGraph:
         action=expanded_retrieval_subgraph,
     )
     graph.add_node(
-        node="ingest_answers",
-        action=ingest_answers,
-    )
-    graph.add_node(
         node="ingest_initial_retrieval",
         action=ingest_initial_retrieval,
+    )
+    graph.add_node(
+        node="ingest_answers",
+        action=ingest_answers,
     )
     graph.add_node(
         node="generate_initial_answer",

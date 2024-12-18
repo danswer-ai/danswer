@@ -91,7 +91,7 @@ if __name__ == "__main__":
             primary_llm=primary_llm,
             fast_llm=fast_llm,
             db_session=db_session,
-            starting_query="what can you do with onyx?",
+            question="what can you do with onyx?",
         )
         for thing in compiled_graph.stream(
             input=inputs,

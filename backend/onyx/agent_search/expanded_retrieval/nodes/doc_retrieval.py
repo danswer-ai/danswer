@@ -1,5 +1,5 @@
 from onyx.agent_search.expanded_retrieval.states import DocRetrievalUpdate
-from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalResult
+from onyx.agent_search.expanded_retrieval.states import QueryResult
 from onyx.agent_search.expanded_retrieval.states import RetrievalInput
 from onyx.context.search.models import InferenceSection
 from onyx.context.search.models import SearchRequest
@@ -7,7 +7,6 @@ from onyx.context.search.pipeline import SearchPipeline
 
 
 def doc_retrieval(state: RetrievalInput) -> DocRetrievalUpdate:
-    # def doc_retrieval(state: RetrieveInput) -> Command[Literal["doc_verification"]]:
     """
     Retrieve documents
 
@@ -33,10 +32,9 @@ def doc_retrieval(state: RetrievalInput) -> DocRetrievalUpdate:
         db_session=state["db_session"],
     ).reranked_sections
 
-    print(f"retrieved documents: {len(documents)}")
-    expanded_retrieval_result = ExpandedRetrievalResult(
-        expanded_query=query_to_retrieve,
-        expanded_retrieval_documents=documents[:4],
+    expanded_retrieval_result = QueryResult(
+        query=query_to_retrieve,
+        documents_for_query=documents[:4],
     )
     return DocRetrievalUpdate(
         expanded_retrieval_results=[expanded_retrieval_result],

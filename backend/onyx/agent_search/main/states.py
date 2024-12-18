@@ -4,7 +4,7 @@ from typing import TypedDict
 
 from onyx.agent_search.answer_question.states import QuestionAnswerResults
 from onyx.agent_search.core_state import PrimaryState
-from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalResult
+from onyx.agent_search.expanded_retrieval.states import QueryResult
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
 from onyx.context.search.models import InferenceSection
 
@@ -30,7 +30,7 @@ class ExpandedRetrievalUpdate(TypedDict):
     all_original_question_documents: Annotated[
         list[InferenceSection], dedup_inference_sections
     ]
-    original_question_retrieval_results: list[ExpandedRetrievalResult]
+    original_question_retrieval_results: list[QueryResult]
 
 
 ## Graph State
