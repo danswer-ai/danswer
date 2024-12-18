@@ -59,3 +59,17 @@ export function extractCodeText(
 
   return codeText || "";
 }
+
+export const preprocessLaTeX = (content: string) => {
+  // Replace block-level LaTeX delimiters \[ \] with $$ $$
+  const blockProcessedContent = content.replace(
+    /\\\[([\s\S]*?)\\\]/g,
+    (_, equation) => `$$${equation}$$`
+  );
+  // Replace inline LaTeX delimiters \( \) with $ $
+  const inlineProcessedContent = blockProcessedContent.replace(
+    /\\\(([\s\S]*?)\\\)/g,
+    (_, equation) => `$${equation}$`
+  );
+  return inlineProcessedContent;
+};
