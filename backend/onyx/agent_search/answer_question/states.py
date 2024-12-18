@@ -10,6 +10,9 @@ from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalResult
 from onyx.context.search.models import InferenceSection
 
 
+### Models ###
+
+
 class SearchAnswerResults(BaseModel):
     question: str
     answer: str
@@ -18,29 +21,43 @@ class SearchAnswerResults(BaseModel):
     documents: list[InferenceSection]
 
 
-class QACheckOutput(TypedDict, total=False):
+### States ###
+
+## Update States
+
+
+class QACheckUpdate(TypedDict):
     answer_quality: str
 
 
-class QAGenerationOutput(TypedDict, total=False):
+class QAGenerationUpdate(TypedDict):
     answer: str
 
 
-class AnswerQueryState(
+## Graph State
+
+
+class AnswerQuestionState(
     PrimaryState,
     ExpandedRetrievalOutput,
-    QAGenerationOutput,
-    QACheckOutput,
+    QAGenerationUpdate,
+    QACheckUpdate,
     total=True,
 ):
     question: str
 
 
-class AnswerQueryInput(PrimaryState, total=True):
+## Input State
+
+
+class AnswerQuestionInput(PrimaryState):
     question: str
 
 
-class AnswerQueryOutput(TypedDict):
+## Graph Output State
+
+
+class AnswerQuestionOutput(TypedDict):
     """
     This is a list of results even though each call of this subgraph only returns one result.
     This is because if we parallelize the answer query subgraph, there will be multiple

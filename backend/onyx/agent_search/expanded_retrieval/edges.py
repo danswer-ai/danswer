@@ -4,7 +4,8 @@ from langchain_core.messages import HumanMessage
 from langchain_core.messages import merge_message_runs
 from langgraph.types import Send
 
-from onyx.agent_search.expanded_retrieval.nodes.doc_retrieval import RetrieveInput
+from onyx.agent_search.core_state import extract_primary_fields
+from onyx.agent_search.expanded_retrieval.nodes.doc_retrieval import RetrievalInput
 from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalInput
 from onyx.agent_search.shared_graph_utils.prompts import REWRITE_PROMPT_MULTI_ORIGINAL
 from onyx.llm.interfaces import LLM
@@ -38,7 +39,10 @@ def parallel_retrieval_edge(state: ExpandedRetrievalInput) -> list[Send | Hashab
     return [
         Send(
             "doc_retrieval",
-            RetrieveInput(query_to_retrieve=query, **state),
+            RetrievalInput(
+                query_to_retrieve=query,
+                **extract_primary_fields(state),
+            ),
         )
         for query in rewritten_queries
     ]

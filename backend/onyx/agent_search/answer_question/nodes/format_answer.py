@@ -1,10 +1,10 @@
-from onyx.agent_search.answer_question.states import AnswerQueryOutput
-from onyx.agent_search.answer_question.states import AnswerQueryState
+from onyx.agent_search.answer_question.states import AnswerQuestionOutput
+from onyx.agent_search.answer_question.states import AnswerQuestionState
 from onyx.agent_search.answer_question.states import SearchAnswerResults
 
 
-def format_answer(state: AnswerQueryState) -> AnswerQueryOutput:
-    return AnswerQueryOutput(
+def format_answer(state: AnswerQuestionState) -> AnswerQuestionOutput:
+    return AnswerQuestionOutput(
         answer_results=[
             SearchAnswerResults(
                 question=state["question"],

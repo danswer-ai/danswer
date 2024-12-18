@@ -1,7 +1,7 @@
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import merge_message_runs
 
-from onyx.agent_search.expanded_retrieval.states import DocVerificationOutput
+from onyx.agent_search.expanded_retrieval.states import DocVerificationUpdate
 from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalState
 from onyx.agent_search.shared_graph_utils.models import BinaryDecision
 from onyx.agent_search.shared_graph_utils.prompts import VERIFIER_PROMPT
@@ -12,7 +12,7 @@ class DocVerificationInput(ExpandedRetrievalState, total=True):
     doc_to_verify: InferenceSection
 
 
-def doc_verification(state: DocVerificationInput) -> DocVerificationOutput:
+def doc_verification(state: DocVerificationInput) -> DocVerificationUpdate:
     """
     Check whether the document is relevant for the original user question
 
@@ -55,6 +55,6 @@ def doc_verification(state: DocVerificationInput) -> DocVerificationOutput:
     if formatted_response.decision == "yes":
         verified_documents.append(doc_to_verify)
 
-    return DocVerificationOutput(
+    return DocVerificationUpdate(
         verified_documents=verified_documents,
     )

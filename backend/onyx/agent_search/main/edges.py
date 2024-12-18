@@ -2,7 +2,7 @@ from collections.abc import Hashable
 
 from langgraph.types import Send
 
-from onyx.agent_search.answer_question.states import AnswerQueryInput
+from onyx.agent_search.answer_question.states import AnswerQuestionInput
 from onyx.agent_search.core_state import extract_primary_fields
 from onyx.agent_search.main.states import MainState
 
@@ -11,7 +11,7 @@ def parallelize_decompozed_answer_queries(state: MainState) -> list[Send | Hasha
     return [
         Send(
             "answer_query",
-            AnswerQueryInput(
+            AnswerQuestionInput(
                 **extract_primary_fields(state),
                 question=question,
             ),

@@ -8,6 +8,10 @@ from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalResult
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
 from onyx.context.search.models import InferenceSection
 
+### States ###
+
+## Update States
+
 
 class BaseDecompUpdate(TypedDict):
     initial_decomp_questions: list[str]
@@ -29,6 +33,9 @@ class ExpandedRetrievalUpdate(TypedDict):
     original_question_retrieval_results: list[ExpandedRetrievalResult]
 
 
+## Graph State
+
+
 class MainState(
     PrimaryState,
     BaseDecompUpdate,
@@ -39,8 +46,14 @@ class MainState(
     pass
 
 
+## Input States
+
+
 class MainInput(PrimaryState):
     pass
+
+
+## Graph Output State
 
 
 class MainOutput(TypedDict):

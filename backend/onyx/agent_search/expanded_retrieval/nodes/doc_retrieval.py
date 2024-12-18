@@ -1,34 +1,29 @@
-from onyx.agent_search.expanded_retrieval.states import DocRetrievalOutput
+from onyx.agent_search.expanded_retrieval.states import DocRetrievalUpdate
 from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalResult
-from onyx.agent_search.expanded_retrieval.states import ExpandedRetrievalState
+from onyx.agent_search.expanded_retrieval.states import RetrievalInput
 from onyx.context.search.models import InferenceSection
 from onyx.context.search.models import SearchRequest
 from onyx.context.search.pipeline import SearchPipeline
 
 
-class RetrieveInput(ExpandedRetrievalState):
-    query_to_retrieve: str
-
-
-def doc_retrieval(state: RetrieveInput) -> DocRetrievalOutput:
+def doc_retrieval(state: RetrievalInput) -> DocRetrievalUpdate:
     # def doc_retrieval(state: RetrieveInput) -> Command[Literal["doc_verification"]]:
     """
     Retrieve documents
 
     Args:
-        state (dict): The current graph state
+        state (RetrievalInput): Primary state + the query to retrieve
 
-    Returns:
-        state (dict): New key added to state, documents, that contains retrieved documents
+    Updates:
+        expanded_retrieval_results: list[ExpandedRetrievalResult]
+        retrieved_documents: list[InferenceSection]
     """
-    print(f"doc_retrieval state: {state.keys()}")
 
-    documents: list[InferenceSection] = []
     llm = state["primary_llm"]
     fast_llm = state["fast_llm"]
     query_to_retrieve = state["query_to_retrieve"]
 
-    documents = SearchPipeline(
+    documents: list[InferenceSection] = SearchPipeline(
         search_request=SearchRequest(
             query=query_to_retrieve,
         ),
@@ -43,7 +38,7 @@ def doc_retrieval(state: RetrieveInput) -> DocRetrievalOutput:
         expanded_query=query_to_retrieve,
         expanded_retrieval_documents=documents[:4],
     )
-    return DocRetrievalOutput(
+    return DocRetrievalUpdate(
         expanded_retrieval_results=[expanded_retrieval_result],
         retrieved_documents=documents[:4],
     )

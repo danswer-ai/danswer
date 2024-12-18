@@ -9,24 +9,44 @@ from onyx.agent_search.shared_graph_utils.operators import dedup_inference_secti
 from onyx.context.search.models import InferenceSection
 
 
+### Models ###
+
+
 class ExpandedRetrievalResult(BaseModel):
     expanded_query: str
-    expanded_retrieval_documents: Annotated[
-        list[InferenceSection], dedup_inference_sections
-    ]
+    expanded_retrieval_documents: list[InferenceSection]
 
 
-class DocRetrievalOutput(TypedDict, total=False):
+### States ###
+## Update States
+
+
+class DocVerificationUpdate(TypedDict):
+    verified_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+
+
+class DocRerankingUpdate(TypedDict):
+    reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+
+
+class DocRetrievalUpdate(TypedDict):
     expanded_retrieval_results: Annotated[list[ExpandedRetrievalResult], add]
     retrieved_documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
-class DocVerificationOutput(TypedDict, total=False):
-    verified_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+## Graph State
 
 
-class DocRerankingOutput(TypedDict, total=False):
-    reranked_documents: Annotated[list[InferenceSection], dedup_inference_sections]
+class ExpandedRetrievalState(
+    PrimaryState,
+    DocRetrievalUpdate,
+    DocVerificationUpdate,
+    DocRerankingUpdate,
+):
+    starting_query: str
+
+
+## Graph Output State
 
 
 class ExpandedRetrievalOutput(TypedDict):
@@ -34,15 +54,12 @@ class ExpandedRetrievalOutput(TypedDict):
     documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
-class ExpandedRetrievalState(
-    PrimaryState,
-    DocRetrievalOutput,
-    DocVerificationOutput,
-    DocRerankingOutput,
-    total=True,
-):
+## Input States
+
+
+class ExpandedRetrievalInput(PrimaryState):
     starting_query: str
 
 
-class ExpandedRetrievalInput(PrimaryState, total=True):
-    starting_query: str
+class RetrievalInput(PrimaryState):
+    query_to_retrieve: str
