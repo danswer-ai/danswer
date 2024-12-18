@@ -25,7 +25,7 @@ export function LogoComponent({
   const router = useRouter();
   return (
     <button
-      onClick={isAdmin ? () => router.push("/admin/indexing/status") : () => {}}
+      onClick={isAdmin ? () => router.push("/chat") : () => {}}
       className={`max-w-[200px] ${
         !show && "mobile:hidden"
       } flex items-center gap-x-1`}
