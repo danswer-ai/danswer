@@ -532,7 +532,8 @@ def associate_credential_to_connector(
         )
 
         return response
-    except IntegrityError:
+    except IntegrityError as e:
+        logger.error(f"IntegrityError: {e}")
         raise HTTPException(status_code=400, detail="Name must be unique")
 
 
