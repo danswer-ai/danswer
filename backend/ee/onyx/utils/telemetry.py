@@ -14,5 +14,6 @@ def event_telemetry(
     event: str,
     properties: dict | None = None,
 ) -> None:
+    print("event_telemetry")
     logger.info(f"Capturing Posthog event: {distinct_id} {event} {properties}")
     posthog.capture(distinct_id, event, properties)
