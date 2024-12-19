@@ -313,7 +313,7 @@ export const AIMessage = ({
   const anchorCallback = useCallback(
     (props: any) => (
       <MemoizedAnchor
-        updatePresentingDocument={setPresentingDocument}
+        updatePresentingDocument={setPresentingDocument!}
         docs={docs}
       >
         {props.children}
@@ -393,21 +393,16 @@ export const AIMessage = ({
                   <div className="max-w-message-max break-words">
                     {!toolCall || toolCall.tool_name === SEARCH_TOOL_NAME ? (
                       <>
-                        {query !== undefined &&
-                          handleShowRetrieved !== undefined &&
-                          !retrievalDisabled && (
-                            <div className="mb-1">
-                              <SearchSummary
-                                index={index || 0}
-                                query={query}
-                                finished={toolCall?.tool_result != undefined}
-                                hasDocs={hasDocs || false}
-                                messageId={messageId}
-                                handleShowRetrieved={handleShowRetrieved}
-                                handleSearchQueryEdit={handleSearchQueryEdit}
-                              />
-                            </div>
-                          )}
+                        {query !== undefined && !retrievalDisabled && (
+                          <div className="mb-1">
+                            <SearchSummary
+                              index={index || 0}
+                              query={query}
+                              finished={toolCall?.tool_result != undefined}
+                              handleSearchQueryEdit={handleSearchQueryEdit}
+                            />
+                          </div>
+                        )}
                         {handleForceSearch &&
                           content &&
                           query === undefined &&

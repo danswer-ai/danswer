@@ -6,6 +6,7 @@ import { BackendChatSession } from "../../interfaces";
 import {
   buildLatestMessageChain,
   getCitedDocumentsFromMessage,
+  getHumanAndAIMessageFromMessageNumber,
   processRawChatHistory,
 } from "../../lib";
 import { AIMessage, HumanMessage } from "../../message/Messages";
@@ -19,6 +20,12 @@ import { Persona } from "@/app/admin/assistants/interfaces";
 import { Button } from "@/components/ui/button";
 import { OnyxDocument } from "@/lib/search/interfaces";
 import TextView from "@/components/chat_search/TextView";
+import { ChatFilters } from "../../documentSidebar/ChatFilters";
+import { Modal } from "@/components/Modal";
+import FunctionalHeader from "@/components/chat_search/Header";
+import { MinimalMarkdown } from "@/components/chat_search/MinimalMarkdown";
+import FixedLogo from "../../shared_chat_search/FixedLogo";
+import { useDocumentSelection } from "../../useDocumentSelection";
 
 function BackToOnyxButton() {
   const router = useRouter();
@@ -42,9 +49,17 @@ export function SharedChatDisplay({
   chatSession: BackendChatSession | null;
   persona: Persona;
 }) {
+  const settings = useContext(SettingsContext);
+  const [documentSidebarToggled, setDocumentSidebarToggled] = useState(false);
+  const [selectedMessageForDocDisplay, setSelectedMessageForDocDisplay] =
+    useState<number | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [presentingDocument, setPresentingDocument] =
     useState<OnyxDocument | null>(null);
+
+  const toggleDocumentSidebar = () => {
+    setDocumentSidebarToggled(!documentSidebarToggled);
+  };
 
   useEffect(() => {
     Prism.highlightAll();
@@ -62,11 +77,31 @@ export function SharedChatDisplay({
       </div>
     );
   }
+  const [
+    selectedDocuments,
+    toggleDocumentSelection,
+    clearSelectedDocuments,
+    selectedDocumentTokens,
+  ] = useDocumentSelection();
 
   const messages = buildLatestMessageChain(
     processRawChatHistory(chatSession.messages)
   );
 
+  const messagesWithDocuments = messages.map((message) => ({
+    ...message,
+    documents: message.documents || [],
+  }));
+
+  useEffect(() => {
+    messagesWithDocuments.forEach((message) => {
+      console.log(
+        `Message ID ${message.messageId} documents:`,
+        message.documents
+      );
+    });
+  }, []);
+  console.log("selectedDocuments", selectedDocuments);
   return (
     <>
       {presentingDocument && (
@@ -75,8 +110,96 @@ export function SharedChatDisplay({
           onClose={() => setPresentingDocument(null)}
         />
       )}
-      <div className="w-full h-[100dvh] overflow-hidden">
-        <div className="flex max-h-full overflow-hidden pb-[72px]">
+      {documentSidebarToggled && settings?.isMobile && (
+        <div className="md:hidden">
+          <Modal noPadding noScroll>
+            <ChatFilters
+              selectedMessage={null}
+              toggleDocumentSelection={() => {
+                setDocumentSidebarToggled(true);
+              }}
+              clearSelectedDocuments={() => {}}
+              selectedDocumentTokens={0}
+              maxTokens={0}
+              initialWidth={400}
+              isOpen={true}
+              setPresentingDocument={setPresentingDocument}
+              modal={true}
+              ccPairs={[]}
+              tags={[]}
+              documentSets={[]}
+              showFilters={false}
+              closeSidebar={() => {
+                setDocumentSidebarToggled(false);
+              }}
+              selectedDocuments={[]}
+            />
+          </Modal>
+        </div>
+      )}
+      <div className="px-2">
+        <div className="w-full h-[100dvh] flex flex-col overflow-hidden">
+          <div className="flex max-h-full overflow-hidden pb-[72px]">
+            <FunctionalHeader
+              sidebarToggled={false}
+              toggleSidebar={() => {}}
+              page="chat"
+              reset={() => {}}
+            />
+          </div>
+          {!settings?.isMobile && (
+            <div
+              style={{ transition: "width 0.30s ease-out" }}
+              className={`
+                flex-none 
+                fixed
+                right-0
+                z-[1000]
+                bg-background-100
+                h-screen
+                transition-all
+                bg-opacity-8
+                duration-300
+                ease-in-out
+                transition-all
+                bg-opacity-100
+                duration-300
+                ease-in-out
+                
+                h-full
+                ${documentSidebarToggled ? "w-[400px]" : "w-[0px]"}
+            `}
+            >
+              <ChatFilters
+                selectedMessage={
+                  selectedMessageForDocDisplay
+                    ? messages.find(
+                        (message) =>
+                          message.messageId === selectedMessageForDocDisplay
+                      ) || null
+                    : null
+                }
+                toggleDocumentSelection={() => {
+                  setDocumentSidebarToggled(true);
+                }}
+                clearSelectedDocuments={() => {}}
+                selectedDocumentTokens={0}
+                maxTokens={0}
+                initialWidth={400}
+                isOpen={true}
+                setPresentingDocument={setPresentingDocument}
+                modal={true}
+                ccPairs={[]}
+                tags={[]}
+                documentSets={[]}
+                showFilters={false}
+                closeSidebar={() => {
+                  setDocumentSidebarToggled(false);
+                }}
+                selectedDocuments={selectedDocuments}
+              />
+            </div>
+          )}
           <div className="flex w-full overflow-hidden overflow-y-scroll">
             <div className="w-full h-full flex-col flex max-w-message-max mx-auto">
               <div className="px-5 pt-8">
@@ -87,7 +210,6 @@ export function SharedChatDisplay({
                 <p className="text-emphasis">
                   {humanReadableFormat(chatSession.time_created)}
                 </p>
-
                 <Separator />
               </div>
               {isReady ? (
@@ -106,6 +228,13 @@ export function SharedChatDisplay({
                       return (
                         <AIMessage
                           shared
+                          query={message.query || undefined}
+                          hasDocs={
+                            (message.documents &&
+                              message.documents.length > 0) === true
+                          }
+                          toolCall={message.toolCall}
+                          docs={message.documents}
                           setPresentingDocument={setPresentingDocument}
                           currentPersona={persona}
                           key={message.messageId}
@@ -113,6 +242,20 @@ export function SharedChatDisplay({
                           content={message.message}
                           files={message.files || []}
                           citedDocuments={getCitedDocumentsFromMessage(message)}
+                          // toggleDocumentSelection={() => {
+                          //   setDocumentSidebarToggled(true);
+                          // }}
+                          toggleDocumentSelection={() => {
+                            if (
+                              !documentSidebarToggled ||
+                              (documentSidebarToggled &&
+                                selectedMessageForDocDisplay ===
+                                  message.messageId)
+                            ) {
+                              toggleDocumentSidebar();
+                            }
+                            setSelectedMessageForDocDisplay(message.messageId);
+                          }}
                           isComplete
                         />
                       );
@@ -126,10 +269,36 @@ export function SharedChatDisplay({
                   </div>
                 </div>
               )}
+
+              {settings?.enterpriseSettings
+                ?.custom_lower_disclaimer_content && (
+                <div className="mobile:hidden mt-4 flex items-center justify-center relative w-[95%] mx-auto">
+                  <div className="text-sm text-text-500 max-w-searchbar-max px-4 text-center">
+                    <MinimalMarkdown
+                      content={
+                        settings.enterpriseSettings
+                          .custom_lower_disclaimer_content
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+              {settings?.enterpriseSettings?.use_custom_logotype && (
+                <div className="hidden lg:block absolute right-0 bottom-0">
+                  <img
+                    src="/api/enterprise-settings/logotype"
+                    alt="logotype"
+                    style={{ objectFit: "contain" }}
+                    className="w-fit h-8"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
 
+        <FixedLogo backgroundToggled={false} />
         <BackToOnyxButton />
       </div>
     </>
