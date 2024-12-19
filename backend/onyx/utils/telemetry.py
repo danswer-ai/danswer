@@ -16,14 +16,12 @@ from onyx.db.milestone import create_milestone_if_not_exists
 from onyx.db.models import User
 from onyx.key_value_store.factory import get_kv_store
 from onyx.key_value_store.interface import KvKeyNotFoundError
-from onyx.setup import setup_logger
 from onyx.utils.variable_functionality import (
     fetch_versioned_implementation_with_fallback,
 )
 from onyx.utils.variable_functionality import noop_fallback
 from shared_configs.configs import MULTI_TENANT
 
-logger = setup_logger()
 
 _DANSWER_TELEMETRY_ENDPOINT = "https://telemetry.onyx.app/anonymous_telemetry"
 _CACHED_UUID: str | None = None
@@ -120,12 +118,12 @@ def mt_cloud_telemetry(
     event: MilestoneRecordType,
     properties: dict | None = None,
 ) -> None:
-    logger.info(f"mt_cloud_telemetry {distinct_id} {event} {properties}")
+    print(f"mt_cloud_telemetry {distinct_id} {event} {properties}")
     if not MULTI_TENANT:
-        logger.info("mt_cloud_telemetry not MULTI_TENANT")
+        print("mt_cloud_telemetry not MULTI_TENANT")
         return
 
-    logger.info("mt_cloud_telemetry MULTI_TENANT")
+    print("mt_cloud_telemetry MULTI_TENANT")
     # MIT version should not need to include any Posthog code
     # This is only for Onyx MT Cloud, this code should also never be hit, no reason for any orgs to
     # be running the Multi Tenant version of Onyx.
@@ -143,11 +141,11 @@ def create_milestone_and_report(
     properties: dict | None,
     db_session: Session,
 ) -> None:
-    logger.info(f"create_milestone_and_report {user} {event_type} {db_session}")
+    print(f"create_milestone_and_report {user} {event_type} {db_session}")
     _, is_new = create_milestone_if_not_exists(user, event_type, db_session)
-    logger.info(f"create_milestone_and_report {is_new}")
+    print(f"create_milestone_and_report {is_new}")
     if is_new:
-        logger.info("create_milestone_and_report is_new")
+        print("create_milestone_and_report is_new")
         mt_cloud_telemetry(
             distinct_id=distinct_id,
             event=event_type,
