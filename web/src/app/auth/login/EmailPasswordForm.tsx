@@ -57,10 +57,14 @@ export function EmailPasswordForm({
                 errorMsg =
                   "An account already exists with the specified email.";
               }
+              if (response.status === 429) {
+                errorMsg = "Too many requests. Please try again later.";
+              }
               setPopup({
                 type: "error",
                 message: `Failed to sign up - ${errorMsg}`,
               });
+              setIsWorking(false);
               return;
             }
           }
@@ -86,6 +90,9 @@ export function EmailPasswordForm({
               errorMsg = "Invalid email or password";
             } else if (errorDetail === "NO_WEB_LOGIN_AND_HAS_NO_PASSWORD") {
               errorMsg = "Create an account to set a password";
+            }
+            if (loginResponse.status === 429) {
+              errorMsg = "Too many requests. Please try again later.";
             }
             setPopup({
               type: "error",
