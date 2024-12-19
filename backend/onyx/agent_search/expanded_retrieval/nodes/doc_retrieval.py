@@ -35,6 +35,8 @@ def doc_retrieval(state: RetrievalInput) -> DocRetrievalUpdate:
     expanded_retrieval_result = QueryResult(
         query=query_to_retrieve,
         documents_for_query=documents[:4],
+        chunk_ids=[],
+        stats={},
     )
     return DocRetrievalUpdate(
         expanded_retrieval_results=[expanded_retrieval_result],
