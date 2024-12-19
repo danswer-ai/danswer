@@ -7,7 +7,7 @@ import { DocumentUpdatedAtBadge } from "@/components/search/DocumentUpdatedAtBad
 import { MetadataBadge } from "@/components/MetadataBadge";
 import { WebResultIcon } from "@/components/WebResultIcon";
 import { Dispatch, SetStateAction } from "react";
-import { ValidSources } from "@/lib/types";
+import { openDocument } from "@/lib/search/utils";
 
 interface DocumentDisplayProps {
   closeSidebar: () => void;
@@ -73,14 +73,6 @@ export function ChatDocumentDisplay({
     return null;
   }
 
-  const handleViewFile = async () => {
-    if (document.source_type == ValidSources.File && setPresentingDocument) {
-      setPresentingDocument(document);
-    } else if (document.link) {
-      window.open(document.link, "_blank");
-    }
-  };
-
   const hasMetadata =
     document.updated_at || Object.keys(document.metadata).length > 0;
   return (
@@ -91,7 +83,7 @@ export function ChatDocumentDisplay({
         }`}
       >
         <button
-          onClick={handleViewFile}
+          onClick={() => openDocument(document, setPresentingDocument)}
           className="cursor-pointer text-left flex flex-col px-2 py-1.5"
         >
           <div className="line-clamp-1 mb-1 flex h-6 items-center gap-2 text-xs">

@@ -310,6 +310,9 @@ def associate_default_cc_pair(db_session: Session) -> None:
     if existing_association is not None:
         return
 
+    # DefaultCCPair has id 1 since it is the first CC pair created
+    # It is DEFAULT_CC_PAIR_ID, but can't set it explicitly because it messed with the
+    # auto-incrementing id
     association = ConnectorCredentialPair(
         connector_id=0,
         credential_id=0,
