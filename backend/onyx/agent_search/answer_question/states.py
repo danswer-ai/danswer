@@ -4,7 +4,7 @@ from typing import TypedDict
 
 from pydantic import BaseModel
 
-from onyx.agent_search.core_state import PrimaryState
+from onyx.agent_search.core_state import CoreState
 from onyx.agent_search.expanded_retrieval.states import QueryResult
 from onyx.agent_search.shared_graph_utils.operators import dedup_inference_sections
 from onyx.context.search.models import InferenceSection
@@ -39,23 +39,23 @@ class RetrievalIngestionUpdate(TypedDict):
     documents: Annotated[list[InferenceSection], dedup_inference_sections]
 
 
+## Graph Input State
+
+
+class AnswerQuestionInput(CoreState):
+    question: str
+
+
 ## Graph State
 
 
 class AnswerQuestionState(
-    PrimaryState,
+    AnswerQuestionInput,
     QAGenerationUpdate,
     QACheckUpdate,
     RetrievalIngestionUpdate,
 ):
-    question: str
-
-
-## Input State
-
-
-class AnswerQuestionInput(PrimaryState):
-    question: str
+    pass
 
 
 ## Graph Output State

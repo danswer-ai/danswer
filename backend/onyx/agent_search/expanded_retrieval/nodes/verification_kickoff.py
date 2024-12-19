@@ -3,7 +3,7 @@ from typing import Literal
 from langgraph.types import Command
 from langgraph.types import Send
 
-from onyx.agent_search.core_state import extract_primary_fields
+from onyx.agent_search.core_state import extract_core_fields
 from onyx.agent_search.expanded_retrieval.nodes.doc_verification import (
     DocVerificationInput,
 )
@@ -23,7 +23,7 @@ def verification_kickoff(
                 node="doc_verification",
                 arg=DocVerificationInput(
                     doc_to_verify=doc,
-                    **extract_primary_fields(state),
+                    **extract_core_fields(state),
                 ),
             )
             for doc in documents
