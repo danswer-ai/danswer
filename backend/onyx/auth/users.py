@@ -73,6 +73,7 @@ from onyx.configs.constants import AuthType
 from onyx.configs.constants import DANSWER_API_KEY_DUMMY_EMAIL_DOMAIN
 from onyx.configs.constants import DANSWER_API_KEY_PREFIX
 from onyx.configs.constants import MilestoneRecordType
+from onyx.configs.constants import OnyxRedisLocks
 from onyx.configs.constants import PASSWORD_SPECIAL_CHARS
 from onyx.configs.constants import UNNAMED_KEY_PLACEHOLDER
 from onyx.db.api_key import fetch_user_for_api_key
@@ -88,7 +89,7 @@ from onyx.db.models import AccessToken
 from onyx.db.models import OAuthAccount
 from onyx.db.models import User
 from onyx.db.users import get_user_by_email
-from onyx.server.utils import BasicAuthenticationError
+from onyx.redis.redis_pool import get_redis_client
 from onyx.utils.logger import setup_logger
 from onyx.utils.telemetry import create_milestone_and_report
 from onyx.utils.telemetry import optional_telemetry
@@ -100,6 +101,11 @@ from shared_configs.configs import MULTI_TENANT
 from shared_configs.contextvars import CURRENT_TENANT_ID_CONTEXTVAR
 
 logger = setup_logger()
+
+
+class BasicAuthenticationError(HTTPException):
+    def __init__(self, detail: str):
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
 
 def is_user_admin(user: User | None) -> bool:
@@ -140,6 +146,16 @@ def user_needs_to_be_verified() -> bool:
     # For other auth types, if the user is authenticated it's assumed that
     # the user is already verified via the external IDP
     return False
+
+
+def anonymous_user_enabled() -> bool:
+    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
+    redis_client = get_redis_client(tenant_id=tenant_id)
+    value = redis_client.get(OnyxRedisLocks.ANONYMOUS_USER_ENABLED)
+    assert isinstance(value, bytes)
+    if value is None:
+        return False
+    return int(value.decode("utf-8")) == 1
 
 
 def verify_email_is_invited(email: str) -> None:
@@ -705,32 +721,37 @@ async def optional_user(
 
 async def double_check_user(
     user: User | None,
-    optional: bool = DISABLE_AUTH,
     include_expired: bool = False,
+    allow_anonymous_access: bool = False,
 ) -> User | None:
-    if optional:
+    if DISABLE_AUTH:
         return None
 
-    if user is None:
-        raise BasicAuthenticationError(
-            detail="Access denied. User is not authenticated.",
-        )
+    if user is not None:
+        # If user attempted to authenticate, verify them, do not default
+        # to anonymous access if it fails.
+        if user_needs_to_be_verified() and not user.is_verified:
+            raise BasicAuthenticationError(
+                detail="Access denied. User is not verified.",
+            )
 
-    if user_needs_to_be_verified() and not user.is_verified:
-        raise BasicAuthenticationError(
-            detail="Access denied. User is not verified.",
-        )
+        if (
+            user.oidc_expiry
+            and user.oidc_expiry < datetime.now(timezone.utc)
+            and not include_expired
+        ):
+            raise BasicAuthenticationError(
+                detail="Access denied. User's OIDC token has expired.",
+            )
 
-    if (
-        user.oidc_expiry
-        and user.oidc_expiry < datetime.now(timezone.utc)
-        and not include_expired
-    ):
-        raise BasicAuthenticationError(
-            detail="Access denied. User's OIDC token has expired.",
-        )
+        return user
 
-    return user
+    if allow_anonymous_access:
+        return None
+
+    raise BasicAuthenticationError(
+        detail="Access denied. User is not authenticated.",
+    )
 
 
 async def current_user_with_expired_token(
@@ -743,6 +764,14 @@ async def current_limited_user(
     user: User | None = Depends(optional_user),
 ) -> User | None:
     return await double_check_user(user)
+
+
+async def current_chat_accesssible_user(
+    user: User | None = Depends(optional_user),
+) -> User | None:
+    return await double_check_user(
+        user, allow_anonymous_access=anonymous_user_enabled()
+    )
 
 
 async def current_user(
