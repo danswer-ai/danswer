@@ -5,6 +5,7 @@ from datetime import datetime
 from datetime import timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import cast
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -228,6 +229,11 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> User:
+        # We verify the password here to make sure it's valid before we proceed
+        await self.validate_password(
+            user_create.password, cast(schemas.UC, user_create)
+        )
+
         user_count: int | None = None
         referral_source = (
             request.cookies.get("referral_source", None)
