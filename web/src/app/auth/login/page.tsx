@@ -42,7 +42,7 @@ const Page = async (props: {
 
   // simply take the user to the home page if Auth is disabled
   if (authTypeMetadata?.authType === "disabled") {
-    return redirect("/");
+    return redirect("/chat");
   }
 
   // if user is already logged in, take them to the main app page
@@ -50,12 +50,13 @@ const Page = async (props: {
   if (
     currentUser &&
     currentUser.is_active &&
+    !currentUser.is_anonymous_user &&
     (secondsTillExpiration === null || secondsTillExpiration > 0)
   ) {
     if (authTypeMetadata?.requiresVerification && !currentUser.is_verified) {
       return redirect("/auth/waiting-on-verification");
     }
-    return redirect("/");
+    return redirect("/chat");
   }
 
   // get where to send the user to authenticate
@@ -105,7 +106,9 @@ const Page = async (props: {
               <Text className="mt-4 mx-auto">
                 Don&apos;t have an account?{" "}
                 <Link
-                  href={`/auth/signup${searchParams?.next ? `?next=${searchParams.next}` : ""}`}
+                  href={`/auth/signup${
+                    searchParams?.next ? `?next=${searchParams.next}` : ""
+                  }`}
                   className="text-link font-medium"
                 >
                   Create an account
@@ -127,7 +130,9 @@ const Page = async (props: {
               <Text className="mt-4 mx-auto">
                 Don&apos;t have an account?{" "}
                 <Link
-                  href={`/auth/signup${searchParams?.next ? `?next=${searchParams.next}` : ""}`}
+                  href={`/auth/signup${
+                    searchParams?.next ? `?next=${searchParams.next}` : ""
+                  }`}
                   className="text-link font-medium"
                 >
                   Create an account
