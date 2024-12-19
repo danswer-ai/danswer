@@ -299,6 +299,7 @@ const MODEL_DISPLAY_NAMES: { [key: string]: string } = {
   // OpenAI models
   "o1-mini": "O1 Mini",
   "o1-preview": "O1 Preview",
+  "o1-2024-12-17": "O1",
   "gpt-4": "GPT 4",
   "gpt-4o": "GPT 4o",
   "gpt-4o-2024-08-06": "GPT 4o (Structured Outputs)",
