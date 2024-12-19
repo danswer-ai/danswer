@@ -15,10 +15,7 @@ from onyx.db.models import Persona__User
 from onyx.db.models import SamlAccount
 from onyx.db.models import User
 from onyx.db.models import User__UserGroup
-from onyx.setup import setup_logger
 from onyx.utils.variable_functionality import fetch_ee_implementation_or_noop
-
-logger = setup_logger()
 
 
 def validate_user_role_update(requested_role: UserRole, current_role: UserRole) -> None:
@@ -235,5 +232,3 @@ def delete_user_from_db(
         if remaining_user_email != user_to_delete.email
     ]
     write_invited_users(remaining_users)
-
-    logger.info(f"Deleted user {user_to_delete.email}")
