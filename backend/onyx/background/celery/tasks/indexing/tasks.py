@@ -29,7 +29,6 @@ from onyx.configs.constants import OnyxCeleryPriority
 from onyx.configs.constants import OnyxCeleryQueues
 from onyx.configs.constants import OnyxCeleryTask
 from onyx.configs.constants import OnyxRedisLocks
-from onyx.configs.constants import OnyxRedisSignals
 from onyx.db.connector import mark_ccpair_with_indexing_trigger
 from onyx.db.connector_credential_pair import fetch_connector_credential_pairs
 from onyx.db.connector_credential_pair import get_connector_credential_pair_from_id
@@ -176,7 +175,7 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
 
     # we need to use celery's redis client to access its redis data
     # (which lives on a different db number)
-    redis_client_celery: Redis = self.app.broker_connection().channel().client  # type: ignore
+    # redis_client_celery: Redis = self.app.broker_connection().channel().client  # type: ignore
 
     lock_beat: RedisLock = redis_client.lock(
         OnyxRedisLocks.CHECK_INDEXING_BEAT_LOCK,
@@ -319,20 +318,23 @@ def check_for_indexing(self: Task, *, tenant_id: str | None) -> int | None:
                     attempt.id, db_session, failure_reason=failure_reason
                 )
 
-        # we want to run this less frequently than the overall task
-        if not redis_client.exists(OnyxRedisSignals.VALIDATE_INDEXING_FENCES):
-            # clear any indexing fences that don't have associated celery tasks in progress
-            # tasks can be in the queue in redis, in reserved tasks (prefetched by the worker),
-            # or be currently executing
-            try:
-                task_logger.info("Validating indexing fences...")
-                validate_indexing_fences(
-                    tenant_id, self.app, redis_client, redis_client_celery, lock_beat
-                )
-            except Exception:
-                task_logger.exception("Exception while validating indexing fences")
+        # rkuo: The following code logically appears to work, but the celery inspect code may be unstable
+        # turning off for the moment to see if it helps cloud stability
 
-            redis_client.set(OnyxRedisSignals.VALIDATE_INDEXING_FENCES, 1, ex=60)
+        # we want to run this less frequently than the overall task
+        # if not redis_client.exists(OnyxRedisSignals.VALIDATE_INDEXING_FENCES):
+        #     # clear any indexing fences that don't have associated celery tasks in progress
+        #     # tasks can be in the queue in redis, in reserved tasks (prefetched by the worker),
+        #     # or be currently executing
+        #     try:
+        #         task_logger.info("Validating indexing fences...")
+        #         validate_indexing_fences(
+        #             tenant_id, self.app, redis_client, redis_client_celery, lock_beat
+        #         )
+        #     except Exception:
+        #         task_logger.exception("Exception while validating indexing fences")
+
+        #     redis_client.set(OnyxRedisSignals.VALIDATE_INDEXING_FENCES, 1, ex=60)
 
     except SoftTimeLimitExceeded:
         task_logger.info(
