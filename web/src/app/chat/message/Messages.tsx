@@ -66,12 +66,16 @@ import RegenerateOption from "../RegenerateOption";
 import { LlmOverride } from "@/lib/hooks";
 import { ContinueGenerating } from "./ContinueMessage";
 import { MemoizedAnchor, MemoizedParagraph } from "./MemoizedTextComponents";
-import { extractCodeText } from "./codeUtils";
+import { extractCodeText, preprocessLaTeX } from "./codeUtils";
 import ToolResult from "../../../components/tools/ToolResult";
 import CsvContent from "../../../components/tools/CSVContent";
 import SourceCard, {
   SeeMoreBlock,
 } from "@/components/chat_search/sources/SourceCard";
+
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 const TOOLS_WITH_CUSTOM_HANDLING = [
   SEARCH_TOOL_NAME,
@@ -224,6 +228,7 @@ export const AIMessage = ({
   setPresentingDocument?: (document: OnyxDocument) => void;
 }) => {
   const toolCallGenerating = toolCall && !toolCall.tool_result;
+
   const processContent = (content: string | JSX.Element) => {
     if (typeof content !== "string") {
       return content;
@@ -242,12 +247,16 @@ export const AIMessage = ({
 
       const lastMatch = matches[matches.length - 1];
       if (!lastMatch.endsWith("```")) {
-        return content;
+        return preprocessLaTeX(content);
       }
     }
 
-    return content + (!isComplete && !toolCallGenerating ? " [*]() " : "");
+    return (
+      preprocessLaTeX(content) +
+      (!isComplete && !toolCallGenerating ? " [*]() " : "")
+    );
   };
+
   const finalContent = processContent(content as string);
 
   const [isRegenerateHovered, setIsRegenerateHovered] = useState(false);
@@ -356,8 +365,8 @@ export const AIMessage = ({
       <ReactMarkdown
         className="prose max-w-full text-base"
         components={markdownComponents}
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[[rehypePrism, { ignoreMissing: true }], rehypeKatex]}
       >
         {finalContent as string}
       </ReactMarkdown>
