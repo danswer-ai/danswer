@@ -13,7 +13,6 @@ import Link from "next/link";
 import { SignInButton } from "../login/SignInButton";
 import AuthFlowContainer from "@/components/auth/AuthFlowContainer";
 import ReferralSourceSelector from "./ReferralSourceSelector";
-import { Separator } from "@/components/ui/separator";
 
 const Page = async (props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -43,7 +42,7 @@ const Page = async (props: {
   }
 
   // if user is already logged in, take them to the main app page
-  if (currentUser && currentUser.is_active) {
+  if (currentUser && currentUser.is_active && !currentUser.is_anonymous_user) {
     if (!authTypeMetadata?.requiresVerification || currentUser.is_verified) {
       return redirect("/chat");
     }

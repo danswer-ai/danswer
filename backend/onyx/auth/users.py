@@ -149,12 +149,16 @@ def user_needs_to_be_verified() -> bool:
 
 
 def anonymous_user_enabled() -> bool:
-    tenant_id = CURRENT_TENANT_ID_CONTEXTVAR.get()
-    redis_client = get_redis_client(tenant_id=tenant_id)
+    if MULTI_TENANT:
+        return False
+
+    redis_client = get_redis_client(tenant_id=None)
     value = redis_client.get(OnyxRedisLocks.ANONYMOUS_USER_ENABLED)
-    assert isinstance(value, bytes)
+
     if value is None:
         return False
+
+    assert isinstance(value, bytes)
     return int(value.decode("utf-8")) == 1
 
 

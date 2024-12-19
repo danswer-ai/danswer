@@ -108,7 +108,7 @@ export default function FunctionalHeader({
           </div>
 
           <div className="absolute right-0 mobile:top-2 desktop:top-0 flex">
-            {setSharingModalVisible && (
+            {setSharingModalVisible && !hideUserDropdown && (
               <div
                 onClick={() => setSharingModalVisible(true)}
                 className="mobile:hidden mr-2 my-auto rounded cursor-pointer hover:bg-hover-light"
