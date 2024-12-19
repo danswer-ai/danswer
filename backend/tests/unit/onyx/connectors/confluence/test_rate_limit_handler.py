@@ -4,7 +4,7 @@ import pytest
 from requests import HTTPError
 
 from onyx.connectors.confluence.onyx_confluence import (
-    handle_confluence_rate_limit,
+    make_rate_limited_confluence_method,
 )
 
 
@@ -55,7 +55,7 @@ def test_non_rate_limit_error(mock_confluence_call: Mock) -> None:
         response=Mock(status_code=500, text="Internal Server Error")
     )
 
-    handled_call = handle_confluence_rate_limit(mock_confluence_call)
+    handled_call = make_rate_limited_confluence_method(mock_confluence_call)
 
     with pytest.raises(HTTPError):
         handled_call()

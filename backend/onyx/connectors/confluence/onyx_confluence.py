@@ -47,7 +47,9 @@ _USER_ID_TO_DISPLAY_NAME_CACHE: dict[str, str | None] = {}
 class OAuthRefreshInterface(ABC):
     """Defines a callback interface to be passed to the rate limiting function.
 
-    The interface is used by the
+    The interface is used to globally lock operations that use shared credentials. It
+    would be bad for one operation to renew a credential while another operation is using it.
+
     """
 
     @abstractmethod
@@ -114,7 +116,7 @@ def _handle_http_error(e: HTTPError, attempt: int) -> int:
 # https://developer.atlassian.com/cloud/confluence/rate-limiting/
 # this uses the native rate limiting option provided by the
 # confluence client and otherwise applies a simpler set of error handling
-def handle_confluence_rate_limit(
+def make_rate_limited_confluence_method(
     confluence_call: F, oauth_refresh_callback: OAuthRefreshInterface | None = None
 ) -> F:
     def wrapped_call(*args: list[Any], **kwargs: Any) -> Any:
@@ -167,21 +169,33 @@ _DEFAULT_PAGINATION_LIMIT = 1000
 
 
 class OAuthRefresh(OAuthRefreshInterface):
+    """Callback class for the rate limiting wrapper to use in between retries"""
+
     REFRESH_KEY: str = "da_lock:connector:confluence_token_refresh"
     LOCK_TIMEOUT = 900
 
     def __init__(self):
         self.redis_client: Redis = get_redis_client()
-        self.redis_lock: RedisLock | None = None
+        self.redis_lock: RedisLock = self.redis_client.lock(
+            self.REFRESH_KEY, timeout=self.LOCK_TIMEOUT
+        )
 
     @abstractmethod
-    def lock_and_refresh(self) -> bool:
+    def acquire_and_refresh(self) -> bool:
         """Lock and refresh the OAuth Token"""
-        self.redis_lock = self.redis_client.lock(self.REFRESH_KEY, timeout=900)
+        self.redis_lock.acquire(blocking_timeout=self.LOCK_TIMEOUT)
 
     @abstractmethod
     def release(self) -> None:
         """Release the lock."""
+        try:
+            if not self.redis_lock.owned():
+                logger.error("redis_lock is no longer owned by this class!")
+                return
+
+            self.redis_lock.release()
+        except Exception:
+            logger.exception("Failed to check if primary worker lock is owned")
 
 
 class OnyxConfluence:
@@ -197,6 +211,7 @@ class OnyxConfluence:
         self._kwargs = kwargs
 
         self._confluence = Confluence(url)
+        self._oauth_refresh_callback = OAuthRefresh()
 
         # super(OnyxConfluence, self).__init__(url, *args, **kwargs)
         # self._wrap_methods()
@@ -240,11 +255,11 @@ class OnyxConfluence:
     #                 handle_confluence_rate_limit(getattr(self, attr_name)),
     #             )
 
-    def _ensure_token_valid(self) -> None:
-        if self._token_is_expired():
-            self._refresh_token()
-            # Re-init the Confluence client with the originally stored args
-            self._confluence = Confluence(self._url, *self._args, **self._kwargs)
+    # def _ensure_token_valid(self) -> None:
+    #     if self._token_is_expired():
+    #         self._refresh_token()
+    #         # Re-init the Confluence client with the originally stored args
+    #         self._confluence = Confluence(self._url, *self._args, **self._kwargs)
 
     def __getattr__(self, name: str):
         """Dynamically intercept attribute/method access."""
@@ -257,10 +272,11 @@ class OnyxConfluence:
 
         # skip methods that start with "_"
         if callable(attr) and not name.startswith("_"):
-            rate_limited_method = handle_confluence_rate_limit(attr)
+            rate_limited_method = make_rate_limited_confluence_method(
+                attr, self._oauth_refresh_callback
+            )
 
             def wrapped_method(*args, **kwargs):
-                self._ensure_token_valid()
                 return rate_limited_method(*args, **kwargs)
 
             return wrapped_method
