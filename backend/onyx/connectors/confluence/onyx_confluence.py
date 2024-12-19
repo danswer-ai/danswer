@@ -13,6 +13,7 @@ from urllib.parse import quote
 import bs4
 from atlassian import Confluence  # type:ignore
 from redis import Redis
+from redis.exceptions import LockError
 from redis.lock import Lock as RedisLock
 from requests import HTTPError
 
@@ -26,7 +27,6 @@ from onyx.file_processing.extract_file_text import extract_file_text
 from onyx.file_processing.html_utils import format_document_soup
 from onyx.redis.redis_pool import get_redis_client
 from onyx.utils.logger import setup_logger
-
 
 logger = setup_logger()
 
@@ -180,12 +180,15 @@ class OAuthRefresh(OAuthRefreshInterface):
             self.REFRESH_KEY, timeout=self.LOCK_TIMEOUT
         )
 
-    @abstractmethod
     def acquire_and_refresh(self) -> bool:
         """Lock and refresh the OAuth Token"""
-        self.redis_lock.acquire(blocking_timeout=self.LOCK_TIMEOUT)
+        acquired = self.redis_lock.acquire(blocking_timeout=self.LOCK_TIMEOUT)
+        if not acquired:
+            raise LockError(
+                f"Could not acquire the lock refresh tokens within the specified timeout. timeout={self.LOCK_TIMEOUT}s"
+            )
+        # credentials
 
-    @abstractmethod
     def release(self) -> None:
         """Release the lock."""
         try:
@@ -196,6 +199,30 @@ class OAuthRefresh(OAuthRefreshInterface):
             self.redis_lock.release()
         except Exception:
             logger.exception("Failed to check if primary worker lock is owned")
+
+
+# class OnyxOAuthProvider():
+#     """This class needs to provide the ability to:
+#     1. read / write credentials
+#     2. refresh credentials
+#     3. distributed lock/release (to prevent multiple processes using the credential
+#     from causing a race condition)
+#     """
+
+#     REFRESH_KEY: str = "da_lock:connector:confluence_token_refresh"
+#     LOCK_TIMEOUT = 900
+
+#     def __init__(self):
+#         self.redis_client: Redis = get_redis_client()
+#         self.redis_lock: RedisLock = self.redis_client.lock(
+#             self.REFRESH_KEY, timeout=self.LOCK_TIMEOUT
+#         )
+
+#     def read_credentials():
+#         pass
+
+#     def write_credentials(credentials: dict[str, Any]):
+#         pass
 
 
 class OnyxConfluence:
