@@ -39,13 +39,13 @@ const Page = async (props: {
 
   // simply take the user to the home page if Auth is disabled
   if (authTypeMetadata?.authType === "disabled") {
-    return redirect("/");
+    return redirect("/chat");
   }
 
   // if user is already logged in, take them to the main app page
   if (currentUser && currentUser.is_active) {
     if (!authTypeMetadata?.requiresVerification || currentUser.is_verified) {
-      return redirect("/");
+      return redirect("/chat");
     }
     return redirect("/auth/waiting-on-verification");
   }
@@ -53,7 +53,7 @@ const Page = async (props: {
 
   // only enable this page if basic login is enabled
   if (authTypeMetadata?.authType !== "basic" && !cloud) {
-    return redirect("/");
+    return redirect("/chat");
   }
 
   let authUrl: string | null = null;
