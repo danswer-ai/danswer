@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
+from onyx.configs.constants import DEFAULT_CC_PAIR_ID
 from onyx.configs.constants import DocumentSource
 from onyx.db.connector import fetch_connector_by_id
 from onyx.db.credentials import fetch_credential_by_id
@@ -310,7 +311,10 @@ def associate_default_cc_pair(db_session: Session) -> None:
     if existing_association is not None:
         return
 
+    # DefaultCCPair has id 1 since it is the first CC pair created
+    # Specifying it explicitly here to keep consistent with existing deployments
     association = ConnectorCredentialPair(
+        id=DEFAULT_CC_PAIR_ID,
         connector_id=0,
         credential_id=0,
         access_type=AccessType.PUBLIC,

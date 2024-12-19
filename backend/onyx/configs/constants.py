@@ -36,6 +36,8 @@ DISABLED_GEN_AI_MSG = (
 
 DEFAULT_PERSONA_ID = 0
 
+DEFAULT_CC_PAIR_ID = 1
+
 # Postgres connection constants for application_name
 POSTGRES_WEB_APP_NAME = "web"
 POSTGRES_INDEXER_APP_NAME = "indexer"
