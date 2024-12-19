@@ -184,10 +184,7 @@ def get_chat_session(
         persona_name=chat_session.persona.name if chat_session.persona else None,
         current_alternate_model=chat_session.current_alternate_model,
         messages=[
-            translate_db_message_to_chat_message_detail(
-                msg, remove_doc_content=is_shared  # if shared, don't leak doc content
-            )
-            for msg in session_messages
+            translate_db_message_to_chat_message_detail(msg) for msg in session_messages
         ],
         time_created=chat_session.time_created,
         shared_status=chat_session.shared_status,

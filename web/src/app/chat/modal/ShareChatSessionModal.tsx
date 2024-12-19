@@ -158,9 +158,9 @@ export function ShareChatSessionModal({
               <div>
                 <Callout type="warning" title="Warning" className="mb-4">
                   Ensure that all content in the chat is safe to share with the
-                  whole organization. The content of the retrieved documents
-                  will not be visible, but the names of cited documents as well
-                  as the AI and human messages will be visible.
+                  whole organization. The &quot;blurb&quot; (a short snippet) of
+                  the retrieved documents, names of cited documents, links, as
+                  well as the AI and human messages will be visible.
                 </Callout>
                 <div className="flex w-full justify-between">
                   <Button
