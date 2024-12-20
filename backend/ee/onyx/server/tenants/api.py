@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
 from fastapi import Response
+from sqlalchemy.orm import Session
 
 from ee.onyx.auth.users import current_cloud_superuser
 from ee.onyx.configs.app_configs import STRIPE_SECRET_KEY
@@ -13,14 +14,19 @@ from ee.onyx.server.tenants.models import BillingInformation
 from ee.onyx.server.tenants.models import ImpersonateRequest
 from ee.onyx.server.tenants.models import ProductGatingRequest
 from ee.onyx.server.tenants.user_mapping import get_tenant_id_for_email
+from ee.onyx.server.tenants.user_mapping import remove_users_from_tenant
 from onyx.auth.users import auth_backend
 from onyx.auth.users import current_admin_user
 from onyx.auth.users import get_jwt_strategy
 from onyx.auth.users import User
 from onyx.configs.app_configs import WEB_DOMAIN
+from onyx.db.engine import get_current_tenant_id
+from onyx.db.engine import get_session
 from onyx.db.engine import get_session_with_tenant
 from onyx.db.notification import create_notification
+from onyx.db.users import delete_user_from_db
 from onyx.db.users import get_user_by_email
+from onyx.server.manage.models import UserByEmail
 from onyx.server.settings.store import load_settings
 from onyx.server.settings.store import store_settings
 from onyx.utils.logger import setup_logger
@@ -114,3 +120,20 @@ async def impersonate_user(
         samesite="lax",
     )
     return response
+
+
+@router.post("/leave-organization")
+async def leave_organization(
+    user_email: UserByEmail,
+    _: User | None = Depends(current_admin_user),
+    db_session: Session = Depends(get_session),
+    tenant_id: str = Depends(get_current_tenant_id),
+) -> None:
+    user_to_delete = get_user_by_email(
+        email=user_email.user_email, db_session=db_session
+    )
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    delete_user_from_db(user_to_delete, db_session)
+    remove_users_from_tenant([user_to_delete.email], tenant_id)
