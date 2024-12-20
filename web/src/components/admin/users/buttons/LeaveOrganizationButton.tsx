@@ -15,7 +15,7 @@ export const LeaveOrganizationButton = ({
   mutate: () => void;
 }) => {
   const { trigger, isMutating } = useSWRMutation(
-    "/api/manage/admin/leave-organization",
+    "/api/tenants/leave-organization",
     userMutationFetcher,
     {
       onSuccess: () => {

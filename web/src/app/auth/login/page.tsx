@@ -72,6 +72,9 @@ const Page = async (props: {
     return redirect(authUrl);
   }
 
+  console.log("LL");
+  console.log(authUrl);
+  console.log(authTypeMetadata);
   return (
     <AuthFlowContainer>
       <div className="absolute top-10x w-full">
@@ -100,12 +103,13 @@ const Page = async (props: {
               <div className="flex-grow border-t border-gray-300"></div>
             </div>
             <EmailPasswordForm shouldVerify={true} nextUrl={nextUrl} />
-
             <div className="flex">
               <Text className="mt-4 mx-auto">
                 Don&apos;t have an account?{" "}
                 <Link
-                  href={`/auth/signup${searchParams?.next ? `?next=${searchParams.next}` : ""}`}
+                  href={`/auth/signup${
+                    searchParams?.next ? `?next=${searchParams.next}` : ""
+                  }`}
                   className="text-link font-medium"
                 >
                   Create an account
@@ -127,7 +131,9 @@ const Page = async (props: {
               <Text className="mt-4 mx-auto">
                 Don&apos;t have an account?{" "}
                 <Link
-                  href={`/auth/signup${searchParams?.next ? `?next=${searchParams.next}` : ""}`}
+                  href={`/auth/signup${
+                    searchParams?.next ? `?next=${searchParams.next}` : ""
+                  }`}
                   className="text-link font-medium"
                 >
                   Create an account
